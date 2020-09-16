@@ -528,6 +528,13 @@ class Evb
 public:
    std::mutex fLock;
 
+public:
+   bool fInitDone = false;
+   MVOdb* fOdbSettings  = NULL;
+   MVOdb* fOdbConfig    = NULL;
+   MVOdb* fOdbStatus    = NULL;
+   MVOdb* fOdbVariables = NULL;
+
 public: // settings
    double   fMaxAgeSec = 2.0;
    double   fMaxDeadSec = 15.0;
@@ -621,10 +628,13 @@ public: // output queue
    std::vector<double> fPrevCountThr0;
    std::vector<double> fPrevCountThr1;
 
- public: // member functions
-   Evb(MVOdb* settings, MVOdb* config, MVOdb* status); // ctor
+ public: // public functions
+   Evb(MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables); // ctor
    ~Evb(); // dtor
-   void AddBank(int imodule, uint32_t ts, BankBuf *b);
+   void InitEvbLocked();
+   void AddBankLocked(int imodule, uint32_t ts, BankBuf *b);
+
+ public: // internal functions
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
    void CheckEvent(EvbEvent *e, bool last_event);
    void BuildSlot(int slot, EvbEventBuf *m);
@@ -632,9 +642,9 @@ public: // output queue
    void Print() const;
    void PrintEvents() const;
    void LogPwbCounters() const;
-   void WriteSyncStatus(MVOdb* odb) const;
-   void WriteEvbStatus(MVOdb* odb);
-   void WriteVariables(MVOdb* odb);
+   void WriteSyncStatus() const;
+   void WriteEvbStatus();
+   void WriteVariables();
    void ResetPerSecond();
    void ComputePerSecond();
    void UpdateCounters(const EvbEvent* e);
@@ -642,6 +652,7 @@ public: // output queue
    EvbEvent* GetNext();
    EvbEvent* Get();
    EvbEvent* GetLastEvent();
+   bool Tick(bool build_last);
 };
 
 void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwrite = true)
@@ -667,11 +678,22 @@ int get_vector_element(const std::vector<int>& v, unsigned i)
 static bool gKludgeTdcKillFirstEvent = false;
 static bool gKludgeTdcLastEvent = false;
 
-Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
+Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables) // ctor
 {
    printf("Evb: constructor!\n");
+   fOdbSettings = settings;
+   fOdbConfig = config;
+   fOdbStatus = status;
+   fOdbVariables = variables;
+}
 
-   //double adc_ts_freq, double feam_ts_freq, double eps_sec, int max_skew, int max_dead, bool clock_drift); // ctor
+void Evb::InitEvbLocked()
+{
+   if (fInitDone)
+      return;
+   fInitDone = true;
+
+   printf("Evb: Init!\n");
 
    // race condition against fectrl... fNumBanks = GetNumBanks();
 
@@ -681,16 +703,16 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    bool clock_drift = true;
    int pop_threshold = fSync.fPopThreshold;
 
-   settings->RD("eps_sec", &eps_sec, true);
+   fOdbSettings->RD("eps_sec", &eps_sec, true);
    //settings->RI("max_skew", &max_skew, true);
-   settings->RD("max_age_sec", &fMaxAgeSec, true);
-   settings->RD("max_dead_sec", &fMaxDeadSec, true);
-   settings->RI("max_dead", &max_dead, true);
-   settings->RB("clock_drift", &clock_drift, true);
-   settings->RI("sync_pop_threshold", &pop_threshold, true);
+   fOdbSettings->RD("max_age_sec", &fMaxAgeSec, true);
+   fOdbSettings->RD("max_dead_sec", &fMaxDeadSec, true);
+   fOdbSettings->RI("max_dead", &max_dead, true);
+   fOdbSettings->RB("clock_drift", &clock_drift, true);
+   fOdbSettings->RI("sync_pop_threshold", &pop_threshold, true);
 
-   settings->RB("print_incomplete", &fPrintIncomplete, true);
-   settings->RB("print_all", &fPrintAll, true);
+   fOdbSettings->RB("print_incomplete", &fPrintIncomplete, true);
+   fOdbSettings->RB("print_all", &fPrintAll, true);
 
    fMaxDead = max_dead;
    fEpsSec = eps_sec;
@@ -703,8 +725,8 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    double rel = 0;
    int buf_max = 1000;
    
-   settings->RD("sync_eps_sec", &eps, true);
-   settings->RB("trace_sync", &fSync.fTrace, true);
+   fOdbSettings->RD("sync_eps_sec", &eps, true);
+   fOdbSettings->RB("trace_sync", &fSync.fTrace, true);
    
    fSync.SetDeadMin(fMaxDead);
 
@@ -716,11 +738,11 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
    std::vector<int> nbanks;
    std::vector<double> tsfreq;
 
-   config->RSA("name", &name, false, 0, 0);
-   config->RIA("type", &type, false, 0);
-   config->RIA("module", &module, false, 0);
-   config->RIA("nbanks", &nbanks, false, 0);
-   config->RDA("tsfreq", &tsfreq, false, 0);
+   fOdbConfig->RSA("name", &name, false, 0, 0);
+   fOdbConfig->RIA("type", &type, false, 0);
+   fOdbConfig->RIA("module", &module, false, 0);
+   fOdbConfig->RIA("nbanks", &nbanks, false, 0);
+   fOdbConfig->RDA("tsfreq", &tsfreq, false, 0);
 
    assert(name.size() == type.size());
    assert(name.size() == module.size());
@@ -889,11 +911,11 @@ Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status) // ctor
 
    fPrevTime = 0;
 
-   cm_msg(MINFO, "Evb::Evb", "Evb: configured %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_trg, count_adc, count_tdc, count_pwb);
+   cm_msg(MINFO, "Evb::InitEvbLocked", "Event builder configured with %d slots: %d TRG, %d ADC, %d TDC, %d PWB", fNumSlots, count_trg, count_adc, count_tdc, count_pwb);
 
    ResetPerSecond();
-   WriteSyncStatus(status);
-   WriteEvbStatus(status);
+   WriteSyncStatus();
+   WriteEvbStatus();
 
    fMaxDt = 0;
    fMinDt = 0;
@@ -977,57 +999,58 @@ void Evb::LogPwbCounters() const
    }
 }
 
-void Evb::WriteSyncStatus(MVOdb* odb) const
+void Evb::WriteSyncStatus() const
 {
-   odb->WI("sync_min", fSync.fMin);
-   odb->WI("sync_max", fSync.fMax);
-   odb->WB("sync_ok",  fSync.fSyncOk);
-   odb->WB("sync_failed",   fSync.fSyncFailed);
-   odb->WB("sync_overflow", fSync.fOverflow);
+   fOdbStatus->WI("sync_min", fSync.fMin);
+   fOdbStatus->WI("sync_max", fSync.fMax);
+   fOdbStatus->WB("sync_ok",  fSync.fSyncOk);
+   fOdbStatus->WB("sync_failed",   fSync.fSyncFailed);
+   fOdbStatus->WB("sync_overflow", fSync.fOverflow);
 }
 
-void Evb::WriteEvbStatus(MVOdb* odb)
+void Evb::WriteEvbStatus()
 {
-   odb->WI("events_in",        fCountInput);
-   odb->WI("unknown",          fCountUnknown);
-   odb->WI("complete",         fCountComplete);
-   odb->WI("incomplete",       fCountIncomplete);
-   odb->WI("pop_age",          fCountPopAge);
-   odb->WI("pop_following",    fCountPopFollowingComplete);
-   odb->WI("pop_last",         fCountPopLast);
-   odb->WI("error",            fCountError);
-   odb->WI("per_slot_errors",  fCountSlotErrors);
-   odb->WI("count_dead_slots", fCountDeadSlots);
-   odb->WI("evb_queue_size",   fEventsSizeMax);
+   if (!fInitDone) return;
+   fOdbStatus->WI("events_in",        fCountInput);
+   fOdbStatus->WI("unknown",          fCountUnknown);
+   fOdbStatus->WI("complete",         fCountComplete);
+   fOdbStatus->WI("incomplete",       fCountIncomplete);
+   fOdbStatus->WI("pop_age",          fCountPopAge);
+   fOdbStatus->WI("pop_following",    fCountPopFollowingComplete);
+   fOdbStatus->WI("pop_last",         fCountPopLast);
+   fOdbStatus->WI("error",            fCountError);
+   fOdbStatus->WI("per_slot_errors",  fCountSlotErrors);
+   fOdbStatus->WI("count_dead_slots", fCountDeadSlots);
+   fOdbStatus->WI("evb_queue_size",   fEventsSizeMax);
    fEventsSizeMax = 0;
-   odb->WI("evb_queue_size_max", fEventsSizeMaxEver);
+   fOdbStatus->WI("evb_queue_size_max", fEventsSizeMaxEver);
    if (fSendQueue) {
-      odb->WI("send_queue_size",  fSendQueue->fMaxSize);
+      fOdbStatus->WI("send_queue_size",  fSendQueue->fMaxSize);
       fSendQueue->fMaxSize = 0;
-      odb->WI("send_queue_size_max", fSendQueue->fMaxSizeEver);
+      fOdbStatus->WI("send_queue_size_max", fSendQueue->fMaxSizeEver);
    }
 
-   odb->WSA("names", fSlotName, 32);
-   odb->WIA("dead", fDeadSlots);
-   odb->WIA("incomplete_count", fCountSlotIncomplete);
-   odb->WDA("skew_time", fSkewTimeSec);
-   odb->WDA("packets_count", fCountPackets);
-   odb->WDA("bytes_count", fCountBytes);
-   odb->WDA("packets_per_second", fPacketsPerSec);
-   odb->WDA("bytes_per_second", fBytesPerSec);
-   odb->WIA("sent_min", fSentMin);
-   odb->WIA("sent_max", fSentMax);
-   odb->WDA("sent_ave", fSentAve);
-   odb->WIA("thr_min", fThrMin);
-   odb->WIA("thr_max", fThrMax);
-   odb->WDA("thr_ave", fThrAve);
-   odb->WIA("errors", fCountErrors);
-   odb->WIA("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsed);
-   odb->WIA("pwb_event_fifo_wr_max_used", fPwbEventFifoWrMaxUsed);
-   odb->WIA("pwb_event_fifo_rd_max_used", fPwbEventFifoRdMaxUsed);
-   odb->WIA("pwb_event_fifo_wr_used", fPwbEventFifoWrUsed);
-   odb->WIA("pwb_event_fifo_rd_used", fPwbEventFifoRdUsed);
-   odb->WIA("pwb_event_fifo_overflows", fPwbEventFifoOverflows);
+   fOdbStatus->WSA("names", fSlotName, 32);
+   fOdbStatus->WIA("dead", fDeadSlots);
+   fOdbStatus->WIA("incomplete_count", fCountSlotIncomplete);
+   fOdbStatus->WDA("skew_time", fSkewTimeSec);
+   fOdbStatus->WDA("packets_count", fCountPackets);
+   fOdbStatus->WDA("bytes_count", fCountBytes);
+   fOdbStatus->WDA("packets_per_second", fPacketsPerSec);
+   fOdbStatus->WDA("bytes_per_second", fBytesPerSec);
+   fOdbStatus->WIA("sent_min", fSentMin);
+   fOdbStatus->WIA("sent_max", fSentMax);
+   fOdbStatus->WDA("sent_ave", fSentAve);
+   fOdbStatus->WIA("thr_min", fThrMin);
+   fOdbStatus->WIA("thr_max", fThrMax);
+   fOdbStatus->WDA("thr_ave", fThrAve);
+   fOdbStatus->WIA("errors", fCountErrors);
+   fOdbStatus->WIA("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsed);
+   fOdbStatus->WIA("pwb_event_fifo_wr_max_used", fPwbEventFifoWrMaxUsed);
+   fOdbStatus->WIA("pwb_event_fifo_rd_max_used", fPwbEventFifoRdMaxUsed);
+   fOdbStatus->WIA("pwb_event_fifo_wr_used", fPwbEventFifoWrUsed);
+   fOdbStatus->WIA("pwb_event_fifo_rd_used", fPwbEventFifoRdUsed);
+   fOdbStatus->WIA("pwb_event_fifo_overflows", fPwbEventFifoOverflows);
    
    //for (unsigned i=0; i<fPwbEventFifoWrMaxUsed.size(); i++) {
    //   fPwbEventFifoWrMaxUsed[i] = fPwbEventFifoWrUsed[i];
@@ -1035,29 +1058,29 @@ void Evb::WriteEvbStatus(MVOdb* odb)
    //}
 }
 
-void Evb::WriteVariables(MVOdb* odb)
+void Evb::WriteVariables()
 {
-   odb->WD("skew_sec", fSkewMax);
+   fOdbVariables->WD("skew_sec", fSkewMax);
    fSkewMax = 0;
-   odb->WD("skew_max_sec", fSkewMaxEver);
+   fOdbVariables->WD("skew_max_sec", fSkewMaxEver);
 
-   odb->WD("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsedEver);
-   odb->WD("pwb_event_fifo_used", fPwbEventFifoWrMaxUsedAll);
+   fOdbVariables->WD("pwb_sca_fifo_max_used", fPwbScaFifoMaxUsedEver);
+   fOdbVariables->WD("pwb_event_fifo_used", fPwbEventFifoWrMaxUsedAll);
    fPwbEventFifoWrMaxUsedAll = 0;
-   odb->WD("pwb_event_fifo_max_used", fPwbEventFifoWrMaxUsedEver);
+   fOdbVariables->WD("pwb_event_fifo_max_used", fPwbEventFifoWrMaxUsedEver);
 
-   odb->WD("pwb_event_fifo_overflows", fPwbEventFifoOverflowsAll);
+   fOdbVariables->WD("pwb_event_fifo_overflows", fPwbEventFifoOverflowsAll);
    fPwbEventFifoOverflowsAll = 0;
-   odb->WD("pwb_event_fifo_overflows_sum", fPwbEventFifoOverflowsEver);
+   fOdbVariables->WD("pwb_event_fifo_overflows_sum", fPwbEventFifoOverflowsEver);
 
-   odb->WD("event_size", fSendQueue->fMaxEventSize);
+   fOdbVariables->WD("event_size", fSendQueue->fMaxEventSize);
    fSendQueue->fMaxEventSize = 0;
-   odb->WD("event_size_max", fSendQueue->fMaxEventSizeEver);
+   fOdbVariables->WD("event_size_max", fSendQueue->fMaxEventSizeEver);
 
-   odb->WD("event_count", fSendQueue->fEventCount);
+   fOdbVariables->WD("event_count", fSendQueue->fEventCount);
    fSendQueue->fEventCount = 0;
 
-   odb->WD("byte_count", fSendQueue->fByteCount);
+   fOdbVariables->WD("byte_count", fSendQueue->fByteCount);
    fSendQueue->fByteCount = 0;
 }
 
@@ -1505,7 +1528,50 @@ EvbEvent* Evb::Get()
    return e;
 }
 
-void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
+bool Evb::Tick(bool build_last)
+{
+   //DWORD t1 = ss_millitime();
+   
+   EvbEvent* e = Get();
+   
+   if (!e && build_last) {
+      e = GetLastEvent();
+   }
+   
+   //DWORD t2 = ss_millitime();
+   //DWORD dt = t2 - t1;
+   //if (dt > 0) {
+   //   printf("Get() took %d ms\n", dt);
+   //}
+
+   if (!e)
+      return false;
+   
+   //printf("Have EvbEvent: ");
+   //e->Print();
+   //printf("\n");
+   
+   FragmentBuf* f = e->banks;
+   e->banks = NULL;
+   delete e;
+   e = NULL;
+   
+   if (!f) {
+      return false;
+   }
+
+   if (fCountOut == 0) {
+      cm_msg(MINFO, "build_thread", "Event builder built the first event");
+   }
+      
+   fCountOut++;
+   fSendQueue->PushEvent(f);
+   f = NULL;
+
+   return true;
+}
+
+void Evb::AddBankLocked(int imodule, uint32_t ts, BankBuf* b)
 {
    assert(imodule >= 0);
    assert(imodule < (int)fBuf.size());
@@ -1536,107 +1602,7 @@ void Evb::AddBank(int imodule, uint32_t ts, BankBuf* b)
    fBuf[imodule].push_back(m);
 }
 
-std::vector<BankBuf*> gBankBuf;
-
-void XAddBank(int islot, uint32_t ts, BankBuf* b)
-{
-   b->xslot = islot;
-   b->xts = ts;
-   gBankBuf.push_back(b);
-}
-
-bool XFlushBank(Evb* evb)
-{
-   bool flushed_at_least_one = false;
-   std::lock_guard<std::mutex> lock(evb->fLock);
-   int size = gBankBuf.size();
-   for (int i=0; i<size; i++) {
-      BankBuf* b = gBankBuf[i];
-      gBankBuf[i] = NULL;
-      evb->AddBank(b->xslot, b->xts, b);
-      flushed_at_least_one = true;
-   }
-   gBankBuf.clear();
-   return flushed_at_least_one;
-}
-
-bool AddAdcBank(Evb* evb, int imodule, const void* pbank, int bklen)
-{
-   Alpha16info info;
-   int status = info.Unpack(pbank, bklen);
-
-   if (status != 0) {
-      // FIXME: unpacking error
-      printf("unpacking error!\n");
-      return false;
-   }
-
-#if 0
-   if (imodule == 20) {
-      printf("Unpack info status: %d\n", status);
-      info.Print();
-   }
-#endif
-
-#if 0
-   if (imodule == 20) {
-      printf("type %3d, chan %2d, TS 0x%08x\n", info.channelType, info.channelId, info.eventTimestamp);
-      //info.Print();
-      gEvb->fSync.fModules[8].DumpBuf();
-   }
-#endif
-   
-   int xmodule = imodule;
-
-   if (info.channelType == 128) {
-      xmodule += 100;
-   }
-
-   int islot = get_vector_element(evb->fAdcSlot, xmodule);
-
-   //printf("adc module %d slot %d\n", imodule, islot);
-
-   if (islot < 0) {
-      return false;
-   }
-
-   char cname = 0;
-   if (info.channelId <= 9) {
-      cname = '0' + info.channelId;
-   } else {
-      cname = 'A' + info.channelId - 10;
-   }
-
-   // FIXME: not locked!
-   evb->fLastTimeSec[islot] = TMFE::GetTime();
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   char newname[5];
-
-   if (info.channelType == 0) {
-      sprintf(newname, "%c%02d%c", 'B', imodule, cname);
-      //printf("bank name [%s]\n", newname);
-   } else if (info.channelType == 128) {
-      sprintf(newname, "%c%02d%c", 'C', imodule, cname);
-   } else {
-      sprintf(newname, "XX%02d", imodule);
-   }
-
-#if 0
-   if (info.channelType == 128) {
-      printf("bank %s islot %d imodule %d xmodule %d channel %d timestamp 0x%08x\n", newname, islot, imodule, xmodule, info.channelId, info.eventTimestamp);
-   }
-#endif
-
-   BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen, 1);
-
-   XAddBank(islot, info.eventTimestamp, b);
-
-   return true;
-};
-
-int CountBits(uint32_t bitmap)
+static int CountBits(uint32_t bitmap)
 {
    int count = 0;
    while (bitmap != 0) {
@@ -1647,74 +1613,224 @@ int CountBits(uint32_t bitmap)
    return count;
 }
 
-bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
-{
-   int jslot = get_vector_element(evb->fPwbSlot, imodule);
+//static int gFirstEventIn = 0;
+//static int gFirstEventOut = 0;
 
-   if (jslot < 0) {
-      return false;
+class Handler
+{
+public:
+   TMFE* fMfe = NULL;
+
+public:
+   std::vector<BankBuf*> fBankBuf;
+
+public:
+   Handler() // ctor
+   {
    }
 
-   const uint32_t *p32 = (const uint32_t*)pbank;
-   const int n32 = bklen/4;
-
-   if (0) {
-      unsigned nprint = n32;
-      nprint=10;
-      for (unsigned i=0; i<nprint; i++) {
-         printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
-         //e->udpData.push_back(p32[i]);
+   ~Handler() // dtor
+   {
+      if (!fBankBuf.empty()) {
+         int count = 0;
+         for (unsigned i=0; i<fBankBuf.size(); i++) {
+            BankBuf* b = fBankBuf[i];
+            if (b) {
+               delete b;
+               fBankBuf[i] = NULL;
+               count++;
+            }
+         }
+         if (count>0) {
+            fMfe->Msg(MERROR, "Handler::dtor", "Deleted %d buffered banks", count);
+         }
       }
    }
 
-   uint32_t DEVICE_ID   = p32[0];
-   uint32_t PKT_SEQ     = p32[1];
-   uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
-   uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
-   uint32_t FLAGS       = (p32[2] >> 24) & 0xFF;
-   uint16_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
-   uint32_t CHUNK_LEN   = (p32[3] >> 16) & 0xFFFF;
-   uint32_t HEADER_CRC  = p32[4];
-   uint32_t end_of_payload = 5*4 + CHUNK_LEN;
-   uint32_t payload_crc = p32[end_of_payload/4];
+public:
+   void XAddBank(int islot, uint32_t ts, BankBuf* b)
+   {
+      b->xslot = islot;
+      b->xts = ts;
+      fBankBuf.push_back(b);
+   }
+
+   bool XFlushBank(Evb* evb)
+   {
+      bool flushed_at_least_one = false;
+      std::lock_guard<std::mutex> lock(evb->fLock);
+      size_t size = fBankBuf.size();
+      for (size_t i=0; i<size; i++) {
+         BankBuf* b = fBankBuf[i];
+         fBankBuf[i] = NULL;
+         evb->AddBankLocked(b->xslot, b->xts, b);
+         flushed_at_least_one = true;
+      }
+      fBankBuf.clear();
+      return flushed_at_least_one;
+      // implicit unlock
+   }
+
+public:
+   bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
+   {
+      //printf("AddTrgBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
+      
+      AlphaTPacket p;
+      p.Unpack(pbank, bklen);
+      
+      //p.Print();
+      //printf("\n");
+      
+      int imodule = 1;
+      
+      int islot = get_vector_element(evb->fTrgSlot, imodule);
+      
+      if (islot < 0) {
+         return false;
+      }
+      
+      // FIXME: not locked!
+      evb->fLastTimeSec[islot] = TMFE::GetTime();
+      evb->fCountPackets[islot] += 1;
+      evb->fCountBytes[islot] += bklen;
+      
+      uint32_t ts = p.ts_625;
+      
+      BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
+      
+      XAddBank(islot, ts, b);
+      
+      return true;
+   }
+
+   bool AddAdcBank(Evb* evb, int imodule, const void* pbank, int bklen)
+   {
+      Alpha16info info;
+      int status = info.Unpack(pbank, bklen);
+      
+      if (status != 0) {
+         // FIXME: unpacking error
+         printf("unpacking error!\n");
+         return false;
+      }
+      
+#if 0
+      if (imodule == 20) {
+         printf("Unpack info status: %d\n", status);
+         info.Print();
+      }
+#endif
+      
+#if 0
+      if (imodule == 20) {
+         printf("type %3d, chan %2d, TS 0x%08x\n", info.channelType, info.channelId, info.eventTimestamp);
+         //info.Print();
+         gEvb->fSync.fModules[8].DumpBuf();
+      }
+#endif
+      
+      int xmodule = imodule;
+      
+      if (info.channelType == 128) {
+         xmodule += 100;
+      }
+      
+      int islot = get_vector_element(evb->fAdcSlot, xmodule);
+      
+      //printf("adc module %d slot %d\n", imodule, islot);
+      
+      if (islot < 0) {
+         return false;
+      }
+      
+      char cname = 0;
+      if (info.channelId <= 9) {
+         cname = '0' + info.channelId;
+      } else {
+         cname = 'A' + info.channelId - 10;
+      }
+      
+      // FIXME: not locked!
+      evb->fLastTimeSec[islot] = TMFE::GetTime();
+      evb->fCountPackets[islot] += 1;
+      evb->fCountBytes[islot] += bklen;
+      
+      char newname[5];
+      
+      if (info.channelType == 0) {
+         sprintf(newname, "%c%02d%c", 'B', imodule, cname);
+         //printf("bank name [%s]\n", newname);
+      } else if (info.channelType == 128) {
+         sprintf(newname, "%c%02d%c", 'C', imodule, cname);
+      } else {
+         sprintf(newname, "XX%02d", imodule);
+      }
+      
+#if 0
+      if (info.channelType == 128) {
+         printf("bank %s islot %d imodule %d xmodule %d channel %d timestamp 0x%08x\n", newname, islot, imodule, xmodule, info.channelId, info.eventTimestamp);
+      }
+#endif
+      
+      BankBuf *b = new BankBuf(newname, TID_BYTE, pbank, bklen, 1);
+      
+      XAddBank(islot, info.eventTimestamp, b);
+      
+      return true;
+   };
    
-   if (0) {
-      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
-             DEVICE_ID,
-             PKT_SEQ,
-             CHANNEL_SEQ,
-             CHANNEL_ID,
-             FLAGS,
-             CHUNK_ID,
-             CHUNK_LEN,
-             HEADER_CRC,
-             bklen,
-             end_of_payload,
-             payload_crc);
-   }
+   bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, int bklen, int bktype)
+   {
+      int jslot = get_vector_element(evb->fPwbSlot, imodule);
+      
+      if (jslot < 0) {
+         return false;
+      }
 
-   PwbData* dj = &evb->fPwbData[jslot];
+      const uint32_t *p32 = (const uint32_t*)pbank;
+      const int n32 = bklen/4;
 
-   bool bad_pkt_seq = false;
+      if (0) {
+         unsigned nprint = n32;
+         nprint=10;
+         for (unsigned i=0; i<nprint; i++) {
+            printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+            //e->udpData.push_back(p32[i]);
+         }
+      }
 
-   if (PKT_SEQ < dj->pkt_seq) {
-      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
-             DEVICE_ID,
-             PKT_SEQ,
-             CHANNEL_SEQ,
-             CHANNEL_ID,
-             FLAGS,
-             CHUNK_ID,
-             dj->pkt_seq,
-             PKT_SEQ);
-      //d->count_bad_pkt_seq++;
-      //d->count_error++;
-      //bad_pkt_seq = true;
-      cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", dj->pkt_seq, PKT_SEQ);
-   }
+      uint32_t DEVICE_ID   = p32[0];
+      uint32_t PKT_SEQ     = p32[1];
+      uint32_t CHANNEL_SEQ = (p32[2] >>  0) & 0xFFFF;
+      uint32_t CHANNEL_ID  = (p32[2] >> 16) & 0xFF;
+      uint32_t FLAGS       = (p32[2] >> 24) & 0xFF;
+      uint16_t CHUNK_ID    = (p32[3] >>  0) & 0xFFFF;
+      uint32_t CHUNK_LEN   = (p32[3] >> 16) & 0xFFFF;
+      uint32_t HEADER_CRC  = p32[4];
+      uint32_t end_of_payload = 5*4 + CHUNK_LEN;
+      uint32_t payload_crc = p32[end_of_payload/4];
+   
+      if (0) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, LEN 0x%04x, CRC 0x%08x, bank bytes %d, end of payload %d, CRC 0x%08x\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID,
+                CHUNK_LEN,
+                HEADER_CRC,
+                bklen,
+                end_of_payload,
+                payload_crc);
+      }
 
-   if (dj->pkt_seq != 0) {
-      if (dj->pkt_seq+1 != PKT_SEQ) {
+      PwbData* dj = &evb->fPwbData[jslot];
+
+      bool bad_pkt_seq = false;
+
+      if (PKT_SEQ < dj->pkt_seq) {
          printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
                 DEVICE_ID,
                 PKT_SEQ,
@@ -1724,677 +1840,696 @@ bool AddPwbBank(Evb* evb, int imodule, const char* bkname, const char* pbank, in
                 CHUNK_ID,
                 dj->pkt_seq,
                 PKT_SEQ);
-         dj->count_bad_pkt_seq++;
+         //d->count_bad_pkt_seq++;
+         //d->count_error++;
+         //bad_pkt_seq = true;
+         cm_msg(MERROR, "AddPwbBank", "UDP packet out of order or counter wraparound: 0x%08x -> 0x%08x", dj->pkt_seq, PKT_SEQ);
+      }
+
+      if (dj->pkt_seq != 0) {
+         if (dj->pkt_seq+1 != PKT_SEQ) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: PKT_SEQ jump 0x%08x to 0x%08x\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   dj->pkt_seq,
+                   PKT_SEQ);
+            dj->count_bad_pkt_seq++;
+            dj->count_error++;
+            evb->fCountErrors[jslot]++;
+            evb->fCountSlotErrors++; // FIXME: not locked!
+            bad_pkt_seq = true;
+            if (dj->count_bad_pkt_seq < 100) {
+               cm_msg(MERROR, "AddPwbBank", "slot %d name %s: wrong PWB UDP packet order: 0x%08x -> 0x%08x, %d missing? count %d", jslot, evb->fSlotName[jslot].c_str(), dj->pkt_seq, PKT_SEQ, PKT_SEQ-dj->pkt_seq-1, dj->count_bad_pkt_seq);
+            }
+         }
+      }
+
+      dj->pkt_seq = PKT_SEQ;
+
+      if (CHANNEL_ID > 3) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID);
+         dj->count_bad_channel_id++;
          dj->count_error++;
          evb->fCountErrors[jslot]++;
-         evb->fCountSlotErrors++; // FIXME: not locked!
-         bad_pkt_seq = true;
-         if (dj->count_bad_pkt_seq < 100) {
-            cm_msg(MERROR, "AddPwbBank", "slot %d name %s: wrong PWB UDP packet order: 0x%08x -> 0x%08x, %d missing? count %d", jslot, evb->fSlotName[jslot].c_str(), dj->pkt_seq, PKT_SEQ, PKT_SEQ-dj->pkt_seq-1, dj->count_bad_pkt_seq);
-         }
-      }
-   }
-
-   dj->pkt_seq = PKT_SEQ;
-
-   if (CHANNEL_ID > 3) {
-      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: invalid CHANNEL_ID\n",
-             DEVICE_ID,
-             PKT_SEQ,
-             CHANNEL_SEQ,
-             CHANNEL_ID,
-             FLAGS,
-             CHUNK_ID);
-      dj->count_bad_channel_id++;
-      dj->count_error++;
-      evb->fCountErrors[jslot]++;
-      evb->fCountSlotErrors++; // FIXME: no locked!
-      return false;
-   }
-   
-   int islot = jslot + CHANNEL_ID;
-   
-   // FIXME: not locked!
-   evb->fLastTimeSec[islot] = TMFE::GetTime();
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   //printf("pwb module %d slot %d/%d\n", imodule, jslot, islot);
-
-   PwbData* d = &evb->fPwbData[islot];
-
-   if (0) {
-      printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
-             DEVICE_ID,
-             PKT_SEQ,
-             CHANNEL_SEQ,
-             CHANNEL_ID,
-             FLAGS,
-             CHUNK_ID);
-   }
-   
-   bool trace = false;
-
-   uint32_t ts = 0;
-
-   int waiting_incr = 0;
-
-   if (CHUNK_ID == 0) {
-      if (0) {
-         for (unsigned i=5; i<20; i++) {
-            printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
-            //e->udpData.push_back(p32[i]);
-         }
-      }
-      
-      int FormatRevision  = (p32[5]>> 0) & 0xFF;
-      //int ScaId           = (p32[5]>> 8) & 0xFF;
-      //int CompressionType = (p32[5]>>16) & 0xFF;
-      //int TriggerSource   = (p32[5]>>24) & 0xFF;
-
-      uint32_t TriggerTimestamp1 = 0;
-      uint32_t ScaChannelsSent1 = 0;
-      uint32_t ScaChannelsSent2 = 0;
-      uint32_t ScaChannelsSent3 = 0;
-      uint32_t ScaChannelsThreshold1 = 0;
-      uint32_t ScaChannelsThreshold2 = 0;
-      uint32_t ScaChannelsThreshold3 = 0;
-      
-      if ((FormatRevision == 0) || (FormatRevision == 1)) {
-         //uint32_t HardwareId1 = p32[6];
-         //
-         //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
-         //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
-         
-         // NB timestamp clock is 125 MHz
-         
-         TriggerTimestamp1 = p32[8];
-         
-         //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
-         //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
-         
-         //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
-         //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
-         
-         ScaChannelsSent1 = p32[11];
-         ScaChannelsSent2 = p32[12];
-         
-         ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
-         ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
-         
-         ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
-         ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
-         
-         ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
-         ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
-      } else if ((FormatRevision == 2)) {
-         const uint32_t *w32 = p32+4;
-         TriggerTimestamp1 = w32[4];
-
-         ScaChannelsSent1 = w32[7];
-         ScaChannelsSent2 = w32[8];
-         ScaChannelsSent3 = (w32[9]>> 0) & 0xFFFF;
-
-         ScaChannelsThreshold1 = (w32[9]>>16) & 0xFFFF;
-         ScaChannelsThreshold1 |= ((w32[10] & 0xFFFF) << 16) & 0xFFFF0000;
-         ScaChannelsThreshold2 = (w32[10]>>16) & 0xFFFF;
-         ScaChannelsThreshold2 |= ((w32[11] & 0xFFFF) << 16) & 0xFFFF0000;
-         ScaChannelsThreshold3 = (w32[11]>>16) & 0xFFFF;
-
-         uint32_t w13 = w32[13];
-         int ScaFifoMaxUsed  = (w13 & 0x0000FFFF);
-         int EventFifoWrUsed = (w13 & 0xFF000000) >> 24;
-         int EventFifoRdUsed = (w13 & 0x00FF0000) >> 16;
-
-         evb->fPwbScaFifoMaxUsed[islot] = ScaFifoMaxUsed;
-         if (ScaFifoMaxUsed > evb->fPwbScaFifoMaxUsedEver)
-            evb->fPwbScaFifoMaxUsedEver = ScaFifoMaxUsed;
-
-         evb->fPwbEventFifoWrUsed[islot] = EventFifoWrUsed;
-         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsed[islot])
-            evb->fPwbEventFifoWrMaxUsed[islot] = EventFifoWrUsed;
-         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedAll)
-            evb->fPwbEventFifoWrMaxUsedAll = EventFifoWrUsed;
-         if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedEver)
-            evb->fPwbEventFifoWrMaxUsedEver = EventFifoWrUsed;
-
-         evb->fPwbEventFifoRdUsed[islot] = EventFifoRdUsed;
-         if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsed[islot])
-            evb->fPwbEventFifoRdMaxUsed[islot] = EventFifoRdUsed;
-         //if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsedAll)
-         //   evb->fPwbEventFifoRdMaxUsedAll = EventFifoRdUsed;
-
-         if (EventFifoWrUsed == 31) { // overflow
-            evb->fPwbEventFifoOverflows[islot] += 1;
-            evb->fPwbEventFifoOverflowsAll += 1;
-            evb->fPwbEventFifoOverflowsEver += 1;
-         }
-
-         //printf("module %d, slot %d, word 13: 0x%08x, sca fifo max used: %d, event fifo used: %d, %d, max used: %d, %d\n", imodule, islot, w13, ScaFifoMaxUsed, EventFifoWrUsed, EventFifoRdUsed, evb->fPwbEventFifoWrMaxUsed[islot], evb->fPwbEventFifoRdMaxUsed[islot]);
-      } else {
-         printf("Error: invalid format revision %d\n", FormatRevision);
-         d->count_bad_format_revision++;
-         d->count_error++;
-         evb->fCountErrors[islot]++;
          evb->fCountSlotErrors++; // FIXME: no locked!
          return false;
       }
+   
+      int islot = jslot + CHANNEL_ID;
+   
+      // FIXME: not locked!
+      evb->fLastTimeSec[islot] = TMFE::GetTime();
+      evb->fCountPackets[islot] += 1;
+      evb->fCountBytes[islot] += bklen;
 
-      ts = TriggerTimestamp1;
+      //printf("pwb module %d slot %d/%d\n", imodule, jslot, islot);
+
+      PwbData* d = &evb->fPwbData[islot];
+
+      if (0) {
+         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x\n",
+                DEVICE_ID,
+                PKT_SEQ,
+                CHANNEL_SEQ,
+                CHANNEL_ID,
+                FLAGS,
+                CHUNK_ID);
+      }
+   
+      bool trace = false;
+
+      uint32_t ts = 0;
+
+      int waiting_incr = 0;
+
+      if (CHUNK_ID == 0) {
+         if (0) {
+            for (unsigned i=5; i<20; i++) {
+               printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
+               //e->udpData.push_back(p32[i]);
+            }
+         }
       
-      d->cnt = 1;
-      d->ts  = ts;
+         int FormatRevision  = (p32[5]>> 0) & 0xFF;
+         //int ScaId           = (p32[5]>> 8) & 0xFF;
+         //int CompressionType = (p32[5]>>16) & 0xFF;
+         //int TriggerSource   = (p32[5]>>24) & 0xFF;
+
+         uint32_t TriggerTimestamp1 = 0;
+         uint32_t ScaChannelsSent1 = 0;
+         uint32_t ScaChannelsSent2 = 0;
+         uint32_t ScaChannelsSent3 = 0;
+         uint32_t ScaChannelsThreshold1 = 0;
+         uint32_t ScaChannelsThreshold2 = 0;
+         uint32_t ScaChannelsThreshold3 = 0;
+      
+         if ((FormatRevision == 0) || (FormatRevision == 1)) {
+            //uint32_t HardwareId1 = p32[6];
+            //
+            //uint32_t HardwareId2 = (p32[7]>> 0) & 0xFFFF;
+            //int TriggerDelay     = (p32[7]>>16) & 0xFFFF;
+         
+            // NB timestamp clock is 125 MHz
+         
+            TriggerTimestamp1 = p32[8];
+         
+            //uint32_t TriggerTimestamp2 = (p32[9]>> 0) & 0xFFFF;
+            //uint32_t Reserved1         = (p32[9]>>16) & 0xFFFF;
+         
+            //int ScaLastCell = (p32[10]>> 0) & 0xFFFF;
+            //int ScaSamples  = (p32[10]>>16) & 0xFFFF;
+         
+            ScaChannelsSent1 = p32[11];
+            ScaChannelsSent2 = p32[12];
+         
+            ScaChannelsSent3 = (p32[13]>> 0) & 0xFFFF;
+            ScaChannelsThreshold1 = (p32[13]>>16) & 0xFFFF;
+         
+            ScaChannelsThreshold1 |= ((p32[14] & 0xFFFF) << 16) & 0xFFFF0000;
+            ScaChannelsThreshold2 = (p32[14]>>16) & 0xFFFF;
+         
+            ScaChannelsThreshold2 |= ((p32[15] & 0xFFFF) << 16) & 0xFFFF0000;
+            ScaChannelsThreshold3 = (p32[15]>>16) & 0xFFFF;
+         } else if ((FormatRevision == 2)) {
+            const uint32_t *w32 = p32+4;
+            TriggerTimestamp1 = w32[4];
+
+            ScaChannelsSent1 = w32[7];
+            ScaChannelsSent2 = w32[8];
+            ScaChannelsSent3 = (w32[9]>> 0) & 0xFFFF;
+
+            ScaChannelsThreshold1 = (w32[9]>>16) & 0xFFFF;
+            ScaChannelsThreshold1 |= ((w32[10] & 0xFFFF) << 16) & 0xFFFF0000;
+            ScaChannelsThreshold2 = (w32[10]>>16) & 0xFFFF;
+            ScaChannelsThreshold2 |= ((w32[11] & 0xFFFF) << 16) & 0xFFFF0000;
+            ScaChannelsThreshold3 = (w32[11]>>16) & 0xFFFF;
+
+            uint32_t w13 = w32[13];
+            int ScaFifoMaxUsed  = (w13 & 0x0000FFFF);
+            int EventFifoWrUsed = (w13 & 0xFF000000) >> 24;
+            int EventFifoRdUsed = (w13 & 0x00FF0000) >> 16;
+
+            evb->fPwbScaFifoMaxUsed[islot] = ScaFifoMaxUsed;
+            if (ScaFifoMaxUsed > evb->fPwbScaFifoMaxUsedEver)
+               evb->fPwbScaFifoMaxUsedEver = ScaFifoMaxUsed;
+
+            evb->fPwbEventFifoWrUsed[islot] = EventFifoWrUsed;
+            if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsed[islot])
+               evb->fPwbEventFifoWrMaxUsed[islot] = EventFifoWrUsed;
+            if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedAll)
+               evb->fPwbEventFifoWrMaxUsedAll = EventFifoWrUsed;
+            if (EventFifoWrUsed > evb->fPwbEventFifoWrMaxUsedEver)
+               evb->fPwbEventFifoWrMaxUsedEver = EventFifoWrUsed;
+
+            evb->fPwbEventFifoRdUsed[islot] = EventFifoRdUsed;
+            if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsed[islot])
+               evb->fPwbEventFifoRdMaxUsed[islot] = EventFifoRdUsed;
+            //if (EventFifoRdUsed > evb->fPwbEventFifoRdMaxUsedAll)
+            //   evb->fPwbEventFifoRdMaxUsedAll = EventFifoRdUsed;
+
+            if (EventFifoWrUsed == 31) { // overflow
+               evb->fPwbEventFifoOverflows[islot] += 1;
+               evb->fPwbEventFifoOverflowsAll += 1;
+               evb->fPwbEventFifoOverflowsEver += 1;
+            }
+
+            //printf("module %d, slot %d, word 13: 0x%08x, sca fifo max used: %d, event fifo used: %d, %d, max used: %d, %d\n", imodule, islot, w13, ScaFifoMaxUsed, EventFifoWrUsed, EventFifoRdUsed, evb->fPwbEventFifoWrMaxUsed[islot], evb->fPwbEventFifoRdMaxUsed[islot]);
+         } else {
+            printf("Error: invalid format revision %d\n", FormatRevision);
+            d->count_bad_format_revision++;
+            d->count_error++;
+            evb->fCountErrors[islot]++;
+            evb->fCountSlotErrors++; // FIXME: no locked!
+            return false;
+         }
+
+         ts = TriggerTimestamp1;
+      
+         d->cnt = 1;
+         d->ts  = ts;
 
 #if 1
-      int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
-      int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
+         int sent_bits = CountBits(ScaChannelsSent1) + CountBits(ScaChannelsSent2) + CountBits(ScaChannelsSent3);
+         int threshold_bits = CountBits(ScaChannelsThreshold1) + CountBits(ScaChannelsThreshold2) + CountBits(ScaChannelsThreshold3);
 
-      d->sent_bits = sent_bits;
-      d->threshold_bits = threshold_bits;
+         d->sent_bits = sent_bits;
+         d->threshold_bits = threshold_bits;
 
-      //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
+         //printf("sent_bits: 0x%08x 0x%08x 0x%08x -> %d bits, threshold bits %d\n", ScaChannelsSent1, ScaChannelsSent2, ScaChannelsSent3, sent_bits, threshold_bits);
       
-      // FIXME: not locked!
-      if (sent_bits > evb->fSentMax[islot])
-         evb->fSentMax[islot] = sent_bits;
-      if ((evb->fSentMin[islot] == 0) || (sent_bits < evb->fSentMin[islot]))
-         evb->fSentMin[islot] = sent_bits;
-      evb->fCountSent0[islot] += 1;
-      evb->fCountSent1[islot] += sent_bits;
+         // FIXME: not locked!
+         if (sent_bits > evb->fSentMax[islot])
+            evb->fSentMax[islot] = sent_bits;
+         if ((evb->fSentMin[islot] == 0) || (sent_bits < evb->fSentMin[islot]))
+            evb->fSentMin[islot] = sent_bits;
+         evb->fCountSent0[islot] += 1;
+         evb->fCountSent1[islot] += sent_bits;
 
-      if (threshold_bits > evb->fThrMax[islot])
-         evb->fThrMax[islot] = threshold_bits;
-      if ((evb->fThrMin[islot] == 0) || (threshold_bits < evb->fThrMin[islot]))
-         evb->fThrMin[islot] = threshold_bits;
-      evb->fCountThr0[islot] += 1;
-      evb->fCountThr1[islot] += threshold_bits;
+         if (threshold_bits > evb->fThrMax[islot])
+            evb->fThrMax[islot] = threshold_bits;
+         if ((evb->fThrMin[islot] == 0) || (threshold_bits < evb->fThrMin[islot]))
+            evb->fThrMin[islot] = threshold_bits;
+         evb->fCountThr0[islot] += 1;
+         evb->fCountThr1[islot] += threshold_bits;
 #endif
 
-      if (d->chunk_id != 0) {
-         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
-                DEVICE_ID,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                d->chunk_id);
-         d->count_lost_footer++;
-         d->count_error++;
-         evb->fCountErrors[islot]++;
-         evb->fCountSlotErrors++; // FIXME: not locked!
-      }
+         if (d->chunk_id != 0) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event footer\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   d->chunk_id);
+            d->count_lost_footer++;
+            d->count_error++;
+            evb->fCountErrors[islot]++;
+            evb->fCountSlotErrors++; // FIXME: not locked!
+         }
 
-      d->chunk_id = 0;
+         d->chunk_id = 0;
 
-      if (trace) {
-         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
-                DEVICE_ID,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                TriggerTimestamp1
-                );
-      }
+         if (trace) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   TriggerTimestamp1
+                   );
+         }
 
-      if (0) {
-         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x header\n",
-                islot,
-                bkname,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                TriggerTimestamp1
-                );
-      }
+         if (0) {
+            printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x header\n",
+                   islot,
+                   bkname,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   TriggerTimestamp1
+                   );
+         }
 
 #if 0      
-      if (0) {
-         printf("H F 0x%02x, Sca 0x%02x, C 0x%02x, T 0x%02x, H 0x%08x, 0x%04x, Delay 0x%04x, TS 0x%08x, 0x%04x, R1 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x, Sent 0x%08x 0x%08x 0x%08x, Thr 0x%08x 0x%08x 0x%08x, R2 0x%04x\n",
-                FormatRevision,
-                ScaId,
-                CompressionType,
-                TriggerSource,
-                HardwareId1, HardwareId2,
-                TriggerDelay,
-                TriggerTimestamp1, TriggerTimestamp2,
-                Reserved1,
-                ScaLastCell,
-                ScaSamples,
-                ScaChannelsSent1,
-                ScaChannelsSent2,
-                ScaChannelsSent3,
-                ScaChannelsThreshold1,
-                ScaChannelsThreshold2,
-                ScaChannelsThreshold3,
-                Reserved2);
-      }
+         if (0) {
+            printf("H F 0x%02x, Sca 0x%02x, C 0x%02x, T 0x%02x, H 0x%08x, 0x%04x, Delay 0x%04x, TS 0x%08x, 0x%04x, R1 0x%04x, SCA LastCell 0x%04x, Samples 0x%04x, Sent 0x%08x 0x%08x 0x%08x, Thr 0x%08x 0x%08x 0x%08x, R2 0x%04x\n",
+                   FormatRevision,
+                   ScaId,
+                   CompressionType,
+                   TriggerSource,
+                   HardwareId1, HardwareId2,
+                   TriggerDelay,
+                   TriggerTimestamp1, TriggerTimestamp2,
+                   Reserved1,
+                   ScaLastCell,
+                   ScaSamples,
+                   ScaChannelsSent1,
+                   ScaChannelsSent2,
+                   ScaChannelsSent3,
+                   ScaChannelsThreshold1,
+                   ScaChannelsThreshold2,
+                   ScaChannelsThreshold3,
+                   Reserved2);
+         }
 #endif
-   } else {
-      ts = d->ts;
-      d->cnt++;
-      if (!bad_pkt_seq) {
-         if (CHUNK_ID <= d->chunk_id) {
-            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event header\n",
-                   DEVICE_ID,
+      } else {
+         ts = d->ts;
+         d->cnt++;
+         if (!bad_pkt_seq) {
+            if (CHUNK_ID <= d->chunk_id) {
+               printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: last chunk_id 0x%04x, lost event header\n",
+                      DEVICE_ID,
+                      PKT_SEQ,
+                      CHANNEL_SEQ,
+                      CHANNEL_ID,
+                      FLAGS,
+                      CHUNK_ID,
+                      d->chunk_id);
+               d->count_lost_header++;
+               d->count_error++;
+               evb->fCountErrors[islot]++;
+               evb->fCountSlotErrors++; // FIXME: not locked!
+            } else if (CHUNK_ID != d->chunk_id+1) {
+               printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
+                      DEVICE_ID,
+                      PKT_SEQ,
+                      CHANNEL_SEQ,
+                      CHANNEL_ID,
+                      FLAGS,
+                      CHUNK_ID,
+                      d->chunk_id);
+               d->count_bad_chunk_id++;
+               d->count_error++;
+               evb->fCountErrors[islot]++;
+               evb->fCountSlotErrors++; // FIXME: not locked!
+            }
+         }
+         d->chunk_id = CHUNK_ID;
+
+         if (0) {
+            printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
+                   islot,
+                   bkname,
                    PKT_SEQ,
                    CHANNEL_SEQ,
                    CHANNEL_ID,
                    FLAGS,
                    CHUNK_ID,
-                   d->chunk_id);
-            d->count_lost_header++;
-            d->count_error++;
-            evb->fCountErrors[islot]++;
-            evb->fCountSlotErrors++; // FIXME: not locked!
-         } else if (CHUNK_ID != d->chunk_id+1) {
-            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x -- Error: bad CHUNK_ID, last chunk_id 0x%04x\n",
-                   DEVICE_ID,
-                   PKT_SEQ,
-                   CHANNEL_SEQ,
-                   CHANNEL_ID,
-                   FLAGS,
-                   CHUNK_ID,
-                   d->chunk_id);
-            d->count_bad_chunk_id++;
-            d->count_error++;
-            evb->fCountErrors[islot]++;
-            evb->fCountSlotErrors++; // FIXME: not locked!
+                   ts
+                   );
          }
       }
-      d->chunk_id = CHUNK_ID;
 
-      if (0) {
-         printf("slot %2d, bank %s, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x\n",
-                islot,
-                bkname,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                ts
-                );
+      if (FLAGS & 1) {
+         if (trace) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   d->ts,
+                   d->cnt);
+         }
+         d->cnt = 0;
+         d->ts = 0;
+         d->chunk_id = 0;
+         waiting_incr = 1;
+      } else {
+         if (0 && trace) {
+            printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
+                   DEVICE_ID,
+                   PKT_SEQ,
+                   CHANNEL_SEQ,
+                   CHANNEL_ID,
+                   FLAGS,
+                   CHUNK_ID,
+                   d->ts,
+                   d->cnt);
+         }
       }
-   }
-
-   if (FLAGS & 1) {
-      if (trace) {
-         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, LAST of %d packets\n",
-                DEVICE_ID,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                d->ts,
-                d->cnt);
-      }
-      d->cnt = 0;
-      d->ts = 0;
-      d->chunk_id = 0;
-      waiting_incr = 1;
-   } else {
-      if (0 && trace) {
-         printf("ID 0x%08x, PKT_SEQ 0x%08x, CHAN SEQ 0x%04x, ID 0x%02x, FLAGS 0x%02x, CHUNK ID 0x%04x, TS 0x%08x, count %d\n",
-                DEVICE_ID,
-                PKT_SEQ,
-                CHANNEL_SEQ,
-                CHANNEL_ID,
-                FLAGS,
-                CHUNK_ID,
-                d->ts,
-                d->cnt);
-      }
-   }
       
-   if (0) {
-      printf("PWB timestamp 0x%08x\n", ts);
-      return false;
-   }
+      if (0) {
+         printf("PWB timestamp 0x%08x\n", ts);
+         return false;
+      }
 
-   if (ts == 0) {
-      return false;
-   }
+      if (ts == 0) {
+         return false;
+      }
 
-   char nbkname[5];
-   nbkname[0] = 'P';
-   nbkname[1] = 'C';
-   nbkname[2] = bkname[2];
-   nbkname[3] = bkname[3];
-   nbkname[4] = 0;
+      char nbkname[5];
+      nbkname[0] = 'P';
+      nbkname[1] = 'C';
+      nbkname[2] = bkname[2];
+      nbkname[3] = bkname[3];
+      nbkname[4] = 0;
 
-   BankBuf *b = new BankBuf(nbkname, TID_BYTE, pbank, bklen, waiting_incr);
+      BankBuf *b = new BankBuf(nbkname, TID_BYTE, pbank, bklen, waiting_incr);
 
-   XAddBank(islot, ts, b);
+      XAddBank(islot, ts, b);
    
-   return true;
-}
-
-bool AddTrgBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
-{
-   //printf("AddTrgBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
-
-   AlphaTPacket p;
-   p.Unpack(pbank, bklen);
-
-   //p.Print();
-   //printf("\n");
-
-   int imodule = 1;
-
-   int islot = get_vector_element(evb->fTrgSlot, imodule);
-
-   if (islot < 0) {
-      return false;
-   }
-
-   // FIXME: not locked!
-   evb->fLastTimeSec[islot] = TMFE::GetTime();
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   uint32_t ts = p.ts_625;
-
-   BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
-
-   XAddBank(islot, ts, b);
-   
-   return true;
-}
-
-bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
-{
-   //printf("AddTdcBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
-
-   if (gKludgeTdcKillFirstEvent) {
-      gKludgeTdcKillFirstEvent = false;
-      cm_msg(MINFO, "AddTdcBank", "Kludge: killing first TDC event");
       return true;
    }
+
+   bool AddTdcBank(Evb* evb, const char* bkname, const char* pbank, int bklen, int bktype)
+   {
+      //printf("AddTdcBank: name [%s] len %d type %d, tid_size %d\n", bkname, bklen, bktype, rpc_tid_size(bktype));
       
-   if (0) {
-      const uint32_t* p32 = (const uint32_t*)pbank;
+      if (gKludgeTdcKillFirstEvent) {
+         gKludgeTdcKillFirstEvent = false;
+         cm_msg(MINFO, "AddTdcBank", "Kludge: killing first TDC event");
+         return true;
+      }
       
-      for (int i=0; i<20; i++) {
-         printf("tdc[%d]: 0x%08x 0x%08x\n", i, p32[i], getUint32(pbank, i*4));
-      }
-   }
-   
-   uint32_t fpga0_mark = getUint32(pbank, 6*4);
-   uint32_t fpga0_header = getUint32(pbank, 7*4);
-   uint32_t fpga0_epoch  = getUint32(pbank, 8*4);
-   uint32_t fpga0_hit    = getUint32(pbank, 9*4);
-
-   uint32_t ts = fpga0_epoch & 0x0FFFFFFF;
-
-   if (0) {
-      printf("fpga0: mark 0x%08x, h 0x%08x, e 0x%08x, h 0x%08x, ts 0x%08x\n",
-             fpga0_mark,
-             fpga0_header,
-             fpga0_epoch,
-             fpga0_hit,
-             ts);
-   }
-
-   int imodule = 0;
-
-   int islot = get_vector_element(evb->fTdcSlot, imodule);
-
-   if (islot < 0) {
-      return false;
-   }
-
-   // FIXME: not locked!
-   evb->fLastTimeSec[islot] = TMFE::GetTime();
-   evb->fCountPackets[islot] += 1;
-   evb->fCountBytes[islot] += bklen;
-
-   BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
-
-   XAddBank(islot, ts, b);
-   
-   return true;
-}
-
-static int gFirstEventIn = 0;
-static int gFirstEventOut = 0;
-
-void event_handler(Evb* evb, HNDLE hBuf, HNDLE id, EVENT_HEADER *pheader, void *pevent)
-{
-   bool first_event = false;
-
-   if (gFirstEventIn == 0) {
-      cm_msg(MINFO, "event_handler", "Event builder received the first event");
-      gFirstEventIn = 1;
-      first_event = true;
-   }
-
-   evb->fCountInput++;
-
-   //char banklist[STRING_BANKLIST_MAX];
-   //int nbanks = bk_list(pevent, banklist);
-
-   if (verbose) {
-      //printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d, Banks: %d (%s)\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size, nbanks, banklist);
-      printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size);
-   }
-   
-   //if (nbanks < 1)
-   //return;
-
-#if 0
-   if (gEvb) {
-      int sz = gEvb->fEvents.size();
-      if (sz > 100) {
-         cm_msg(MERROR, "event_handler", "evb stall, fEvents.size is %d", sz);
-         {
-            std::lock_guard<std::mutex> lock(gEvbLock);
-            gEvb->PrintEvents();
+      if (0) {
+         const uint32_t* p32 = (const uint32_t*)pbank;
+         
+         for (int i=0; i<20; i++) {
+            printf("tdc[%d]: 0x%08x 0x%08x\n", i, p32[i], getUint32(pbank, i*4));
          }
-         sleep(1);
       }
-   }
-#endif
-   
-   FragmentBuf* buf = NULL;
-
-   BANK32* bhptr = NULL;
-   while (1) {
-      char *pdata;
-      bk_iterate32(pevent, &bhptr, &pdata);
-      if (bhptr == NULL) {
-         break;
-      }
-
-      char name[5];
-      name[0] = bhptr->name[0];
-      name[1] = bhptr->name[1];
-      name[2] = bhptr->name[2];
-      name[3] = bhptr->name[3];
-      name[4] = 0;
-
-      if (first_event) {
-         printf("first event bank: %s\n", name);
-      }
-
-      //printf("bk_iterate32 bhptr %p, pdata %p, name %s [%s], type %d, size %d\n", bhptr, pdata, bhptr->name, name, bhptr->type, bhptr->data_size);
-
-      //int status;
-      //DWORD bklen, bktype;
-      //void* pbank;
-      //std::string name;
-      //name += banklist[i*4+0];
-      //name += banklist[i*4+1];
-      //name += banklist[i*4+2];
-      //name += banklist[i*4+3];
-      //      
-      //status = bk_find((BANK_HEADER*)pevent, name.c_str(), &bklen, &bktype, &pbank);
-      //
-      //if (status != SUCCESS)
-      //continue;
-
-      //printf("bk_find status %d, name [%s], bklen %d, bktype %d\n", status, &banklist[i*4], bklen, bktype);
-
-      const char* pbank = pdata;
-      int bktype = bhptr->type;
-      int bklen = bhptr->data_size; // new bklen is size in bytes, old bklen returned by bk_find() is in units of rpc_tid_size(tid)
-
-      if (bklen <= 0 || bklen > 10000) {
-         cm_msg(MERROR, "event_handler", "Bank [%s] type %d invalid length %d", name, bktype, bklen);
-         cm_msg_flush_buffer();
-         abort();
-      }
-
-      bool handled = false;
-
-      if (name[0]=='A' && name[1]=='A') {
-         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddAdcBank(evb, imodule, pbank, bklen);
-      } else if (name[0]=='P' && name[1]=='B') {
-         int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
-         handled = AddPwbBank(evb, imodule, name, (const char*)pbank, bklen, bktype);
-      } else if (name[0]=='A' && name[1]=='T') {
-         handled = AddTrgBank(evb, name, (const char*)pbank, bklen, bktype);
-      } else if (name[0]=='T' && name[1]=='R' && name[2]=='B' && name[3]=='A') {
-         handled = AddTdcBank(evb, name, (const char*)pbank, bklen, bktype);
-      }
-
-      if (!handled) {
-         if (!buf)
-            buf = new FragmentBuf();
-         //printf("unknown bank %s\n", name.c_str());
-         BankBuf *bank = new BankBuf(name, bktype, (char*)pbank, bklen, 1);
-         buf->push_back(bank);
-      }
-   }
-
-   if (0) {
-      evb->fSync.Dump();
-      evb->fSync.Print();
-      printf("\n");
-   }
-
-   if (1) {
-      static bool ok = false;
-      static bool failed = false;
       
-      if (ok != evb->fSync.fSyncOk) {
-         if (evb->fSync.fSyncOk) {
-            int count_dead = 0;
-            std::string deaders = "";
-            for (unsigned i=0; i<evb->fSync.fModules.size(); i++) {
-               if (evb->fSync.fModules[i].fDead) {
-                  if (count_dead > 0)
-                     deaders += ", ";
-                  deaders += evb->fSlotName[i];
-                  count_dead++;
-               }
-            }
-            if (count_dead > 0) {
-               cm_msg(MERROR, "event_handler", "Event builder timestamp sync successful. %d dead modules: %s", count_dead, deaders.c_str());
-            } else {
-               cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
-            }
-         }
-         ok = evb->fSync.fSyncOk;
+      uint32_t fpga0_mark = getUint32(pbank, 6*4);
+      uint32_t fpga0_header = getUint32(pbank, 7*4);
+      uint32_t fpga0_epoch  = getUint32(pbank, 8*4);
+      uint32_t fpga0_hit    = getUint32(pbank, 9*4);
+      
+      uint32_t ts = fpga0_epoch & 0x0FFFFFFF;
+      
+      if (0) {
+         printf("fpga0: mark 0x%08x, h 0x%08x, e 0x%08x, h 0x%08x, ts 0x%08x\n",
+                fpga0_mark,
+                fpga0_header,
+                fpga0_epoch,
+                fpga0_hit,
+                ts);
       }
-
-      if (failed != evb->fSync.fSyncFailed) {
-         if (evb->fSync.fSyncFailed) {
-            cm_msg(MERROR, "event_handler", "Event builder timestamp sync FAILED");
-         }
-         failed = evb->fSync.fSyncFailed;
+      
+      int imodule = 0;
+      
+      int islot = get_vector_element(evb->fTdcSlot, imodule);
+      
+      if (islot < 0) {
+         return false;
       }
+      
+      // FIXME: not locked!
+      evb->fLastTimeSec[islot] = TMFE::GetTime();
+      evb->fCountPackets[islot] += 1;
+      evb->fCountBytes[islot] += bklen;
+      
+      BankBuf *b = new BankBuf(bkname, TID_DWORD, pbank, bklen, 1);
+      
+      XAddBank(islot, ts, b);
+      
+      return true;
    }
-   //printf("EVB %d %d\n", , gEvb->fSync.fSyncFailed);
 
-   if (buf) {
-      assert(buf->size() != 0);
-
-      if (evb->fCountUnknown == 0) {
-         cm_msg(MERROR, "read_event", "Event builder received first unknown event");
+public:
+   void HandleEvent(Evb* evb, EVENT_HEADER *pheader, void *pevent)
+   {
+      if (!evb->fInitDone) {
+         std::lock_guard<std::mutex> lock(evb->fLock);
+         evb->InitEvbLocked();
+         // implicit unlock
       }
 
-      evb->fCountUnknown++;
-
-      evb->fSendQueue->PushEvent(buf);
-      buf = NULL;
-   }
-}
-
-//bool run_threads = true;
-
-bool build(Evb* evb, bool build_last)
-{
-   FragmentBuf* f = NULL;
-   
-   //printf("build_thread 111!\n");
-   
-   //printf("build_thread 222! f=%p\n", f);
-   
-   if (!f) {
-      std::lock_guard<std::mutex> lock(evb->fLock);
+      evb->fCountInput++;
+      
+      if (verbose) {
+         //printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d, Banks: %d (%s)\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size, nbanks, banklist);
+         printf("event_handler: Evid: 0x%x, Mask: 0x%x, Serial: %d, Size: %d\n", pheader->event_id, pheader->trigger_mask, pheader->serial_number, pheader->data_size);
+      }
+      
+      FragmentBuf* buf = NULL;
+      
+      BANK32* bhptr = NULL;
+      while (1) {
+         char *pdata;
+         bk_iterate32(pevent, &bhptr, &pdata);
+         if (bhptr == NULL) {
+            break;
+         }
+         
+         char name[5];
+         name[0] = bhptr->name[0];
+         name[1] = bhptr->name[1];
+         name[2] = bhptr->name[2];
+         name[3] = bhptr->name[3];
+         name[4] = 0;
+         
+         //printf("bk_iterate32 bhptr %p, pdata %p, name %s [%s], type %d, size %d\n", bhptr, pdata, bhptr->name, name, bhptr->type, bhptr->data_size);
+         
+         const char* pbank = pdata;
+         int bktype = bhptr->type;
+         int bklen = bhptr->data_size;
+         
+         if (bklen <= 0 || bklen > 10000) {
+            fMfe->Msg(MERROR, "Handler::HandleEvent", "Bank [%s] type %d invalid length %d", name, bktype, bklen);
+            return;
+         }
+         
+         bool handled = false;
+         
+         if (name[0]=='A' && name[1]=='A') {
+            int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
+            handled = AddAdcBank(evb, imodule, pbank, bklen);
+         } else if (name[0]=='P' && name[1]=='B') {
+            int imodule = (name[2]-'0')*10 + (name[3]-'0')*1;
+            handled = AddPwbBank(evb, imodule, name, (const char*)pbank, bklen, bktype);
+         } else if (name[0]=='A' && name[1]=='T') {
+            handled = AddTrgBank(evb, name, (const char*)pbank, bklen, bktype);
+         } else if (name[0]=='T' && name[1]=='R' && name[2]=='B' && name[3]=='A') {
+            handled = AddTdcBank(evb, name, (const char*)pbank, bklen, bktype);
+         }
+         
+         if (!handled) {
+            if (!buf)
+               buf = new FragmentBuf();
+            //printf("unknown bank %s\n", name.c_str());
+            BankBuf *bank = new BankBuf(name, bktype, (char*)pbank, bklen, 1);
+            buf->push_back(bank);
+         }
+      }
+      
+      if (0) {
+         evb->fSync.Dump();
+         evb->fSync.Print();
+         printf("\n");
+      }
       
       if (1) {
-         //DWORD t1 = ss_millitime();
+         static bool ok = false;
+         static bool failed = false;
          
-         EvbEvent* e = evb->Get();
-
-         if (!e && build_last) {
-            e = evb->GetLastEvent();
+         if (ok != evb->fSync.fSyncOk) {
+            if (evb->fSync.fSyncOk) {
+               int count_dead = 0;
+               std::string deaders = "";
+               for (unsigned i=0; i<evb->fSync.fModules.size(); i++) {
+                  if (evb->fSync.fModules[i].fDead) {
+                     if (count_dead > 0)
+                        deaders += ", ";
+                     deaders += evb->fSlotName[i];
+                     count_dead++;
+                  }
+               }
+               if (count_dead > 0) {
+                  cm_msg(MERROR, "event_handler", "Event builder timestamp sync successful. %d dead modules: %s", count_dead, deaders.c_str());
+               } else {
+                  cm_msg(MINFO, "event_handler", "Event builder timestamp sync successful");
+               }
+            }
+            ok = evb->fSync.fSyncOk;
          }
          
-         //DWORD t2 = ss_millitime();
-         //DWORD dt = t2 - t1;
-         //if (dt > 0) {
-         //   printf("Get() took %d ms\n", dt);
-         //}
-         
-         if (e) {
-            if (gFirstEventOut == 0) {
-               cm_msg(MINFO, "build_thread", "Event builder built the first event");
-               gFirstEventOut = 1;
+         if (failed != evb->fSync.fSyncFailed) {
+            if (evb->fSync.fSyncFailed) {
+               cm_msg(MERROR, "event_handler", "Event builder timestamp sync FAILED");
             }
-            
-            //printf("Have EvbEvent: ");
-            //e->Print();
-            //printf("\n");
-            
-            f = e->banks;
-            e->banks = NULL;
-            delete e;
+            failed = evb->fSync.fSyncFailed;
          }
       }
       
-      // implicit unlock of gEvbLock
+      if (buf) {
+         assert(buf->size() != 0);
+         
+         if (evb->fCountUnknown == 0) {
+            cm_msg(MERROR, "read_event", "Event builder received first unknown event");
+         }
+         
+         evb->fCountUnknown++;
+         
+         evb->fSendQueue->PushEvent(buf);
+         buf = NULL;
+      }
    }
-   
-   //printf("build_thread 333! f=%p\n", f);
-   
-   if (!f) {
-      return false;
+};
+
+class BufferReader
+{
+public:
+   TMFE* fMfe = NULL;
+
+public:
+   std::mutex  fLock;
+   std::string fBufName;
+   int fBh = -1; // MIDAS event buffer handle
+   int fReqId = -1; // MIDAS event request ID
+
+public:
+   int fEventsIn = 0;
+
+public:
+   bool OpenBuffer(const char* bufname)
+   {
+      if (fBh >= 0)
+         return true;
+      
+      int status;
+      int evid = -1;
+      int trigmask = 0xFFFF;
+
+      fBufName = bufname;
+      fBh = -1;
+      
+      status = bm_open_buffer(bufname, 0, &fBh);
+      if (status != BM_SUCCESS && status != BM_CREATED) {
+         cm_msg(MERROR, "frontend_init", "Error: bm_open_buffer(\"%s\") status %d", bufname, status);
+         fBh = -1;
+         return false;
+      }
+      
+      fReqId = -1;
+      status = bm_request_event(fBh, evid, trigmask, GET_ALL, &fReqId, NULL);
+      if (status != BM_SUCCESS) {
+         cm_msg(MERROR, "frontend_init", "Error: bm_request_event() status %d", status);
+         fReqId = -1;
+         return false;
+      }
+
+      fMfe->Msg(MINFO, "frontend_init", "Event builder reading from buffer \"%s\", evid %d, trigmask 0x%x", bufname, evid, trigmask);
+      
+      return true;
    }
 
-   if (evb->fSendQueue) {
-      evb->fCountOut++;
-      evb->fSendQueue->PushEvent(f);
-      f = NULL;
+   bool CloseBuffer()
+   {
+      int status;
+      bool ok = true;
+      
+      if (fBh >= 0) {
+         if (fReqId >= 0) {
+            status = bm_remove_event_request(fBh, fReqId);
+            
+            if (status != BM_SUCCESS) {
+               fMfe->Msg(MERROR, "Reader::CloseBuffer", "bm_remove_event_request(%d,%d) status %d", fBh, fReqId, status);
+               ok = false;
+            }
+            
+            fReqId = -1;
+         }
+
+         status = bm_close_buffer(fBh);
+
+         if (status != BM_SUCCESS) {
+            fMfe->Msg(MERROR, "Reader::CloseBuffer", "bm_close_buffer(%d) status %d", fBh, status);
+            ok = false;
+         }
+         
+         fBh = -1;
+      }
+
+      return ok;
    }
 
-   //printf("build_thread 444! f=%p\n", f);
-   
-   if (f) {
-      delete f;
-      f = NULL;
+   EVENT_HEADER* ReadEvent()
+   {
+      if (fBh < 0)
+         return NULL;
+
+      EVENT_HEADER* pheader = NULL;
+
+      int status = bm_receive_event_alloc(fBh, &pheader, BM_NO_WAIT);
+      //printf("bh %d, size %d, status %d\n", fBh, pheader->data_size, status);
+      if (status == BM_ASYNC_RETURN) {
+         return NULL;
+      }
+      if (status != BM_SUCCESS) {
+         fMfe->Msg(MERROR, "BufferReader::ReadEvent", "bm_receive_event() returned %d", status);
+         fBh = -1;
+         return NULL;
+      }
+
+      if (fEventsIn == 0) {
+         fMfe->Msg(MINFO, "Handler::HandleEvent", "Event builder received the first event from \"%s\"", fBufName.c_str());
+      }
+
+      fEventsIn++;
+
+      return pheader;
    }
 
-   return true;
-}
+public:
+   bool TickLocked(Evb* evb, Handler* handler)
+   {
+      EVENT_HEADER* pevent = ReadEvent();
+      if (pevent == NULL)
+         return false;
+
+      handler->HandleEvent(evb, pevent, pevent+1);
+
+      free(pevent);
+      pevent = NULL;
+
+      //XFlushBank(evb);
+
+      return true;
+   }
+
+   bool BeginRunLocked()
+   {
+      fEventsIn = 0;
+      return true;
+   }
+
+   bool EndRunLocked(Evb* evb, Handler* handler)
+   {
+      int count = 0;
+      while (1) {
+         bool done_something = TickLocked(evb, handler);
+         if (!done_something)
+            break;
+         count++;
+      }
+      if (count) {
+         fMfe->Msg(MINFO, "Reader::EndRunLocked", "At end of run read %d additional events from \"%s\"", count, fBufName.c_str());
+      }
+
+      CloseBuffer();
+
+      return true;
+   }
+};
+
+//bool run_threads = true;
 
 #if 0
 int build_thread(void*evbptr)
@@ -2412,57 +2547,6 @@ int build_thread(void*evbptr)
 
    printf("build_thread finished!\n");
    return 0;
-}
-#endif
-
-static void handle_event(Evb* evb, EVENT_HEADER* pevent)
-{
-   // FIXME: gEvb can still be deleted while we are inside the event_handler(), this will cause a crash!
-   //DWORD t1 = ss_millitime();
-
-   event_handler(evb, 0, 0, pevent, pevent+1);
-
-   //DWORD t2 = ss_millitime();
-   //DWORD dt = t2-t1;
-   //if (dt > 1) {
-   //   printf("event_handler time %d\n", (int)dt);
-   //}
-   
-   //DWORD t3 = ss_millitime();
-
-   XFlushBank(evb);
-
-   //DWORD t4 = ss_millitime();
-   //DWORD dt34 = t4-t3;
-   //if (dt34 > 1) {
-   //   printf("XFlushBank time %d\n", (int)dt34);
-   //}
-}
-
-#if 0
-bool handle(Evb* evb)
-{
-   EVENT_HEADER* pevent = NULL;
-   {
-      std::lock_guard<std::mutex> lock(gEhBufLock);
-      if (!gEhBuf.empty()) {
-         pevent = gEhBuf.front();
-         gEhBuf.pop_front();
-      }
-   }
-   
-   if (!pevent) {
-      return false;
-   }
-   
-   handle_event(evb, pevent);
-   
-   if (pevent) {
-      free(pevent);
-      pevent = NULL;
-   }
-
-   return true;
 }
 #endif
 
@@ -2486,11 +2570,13 @@ int handler_thread(void* evbptr)
 }
 #endif
 
+#if 0
 struct read_thread_data
 {
    int num_bh;
    int bh[10];
 };
+#endif
 
 #if 0
 int read_thread(void*arg)
@@ -2512,33 +2598,6 @@ int read_thread(void*arg)
    return 0;
 }
 #endif
-
-int open_buffer(const char* bufname)
-{
-   int status;
-   int evid = -1;
-   int trigmask = 0xFFFF;
-
-   int bh = 0;
-
-   status = bm_open_buffer(bufname, 0, &bh);
-   if (status != BM_SUCCESS && status != BM_CREATED) {
-      cm_msg(MERROR, "frontend_init", "Error: bm_open_buffer(\"%s\") status %d", bufname, status);
-      return -1;
-   }
-   
-   int reqid = 0;
-   //status = bm_request_event(bh, evid, trigmask, GET_ALL, &reqid, event_handler);
-   status = bm_request_event(bh, evid, trigmask, GET_ALL, &reqid, NULL);
-   if (status != BM_SUCCESS) {
-      cm_msg(MERROR, "frontend_init", "Error: bm_request_event() status %d", status);
-      return -1;
-   }
-
-   cm_msg(MINFO, "frontend_init", "Event builder reading from buffer \"%s\", evid %d, trigmask 0x%x", bufname, evid, trigmask);
-
-   return bh;
-}
 
 void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
 {
@@ -2571,9 +2630,9 @@ void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
    evb->Print();
    
    evb->ComputePerSecond();
-   evb->WriteSyncStatus(status);
-   evb->WriteEvbStatus(status);
-   evb->WriteVariables(eq->fOdbEqVariables);
+   evb->WriteSyncStatus();
+   evb->WriteEvbStatus();
+   evb->WriteVariables();
 }
 
 class EvbEq:
@@ -2587,9 +2646,6 @@ public: // TMFE
 public: // methods
    EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
    virtual ~EvbEq(); // dtor
-   bool Init();
-   void InitEvb();
-   bool ReadBuffers(void);
    bool Build(bool build_last);
 
 public: // handlers for MIDAS callbacks
@@ -2599,7 +2655,11 @@ public: // handlers for MIDAS callbacks
 
 public:
    Evb* fEvb = NULL;
-   struct read_thread_data fData;
+   //struct read_thread_data fData;
+   BufferReader fReaderTRG;
+   BufferReader fReaderUDP;
+   BufferReader fReaderTDC;
+   Handler fHandler;
 
 public: // ODB
    MVOdb* fSettings = NULL;
@@ -2611,6 +2671,11 @@ EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
 {
    fMfe = mfe;
    fEq = eq;
+
+   fReaderTRG.fMfe = mfe;
+   fReaderTDC.fMfe = mfe;
+   fReaderUDP.fMfe = mfe;
+   fHandler.fMfe = mfe;
 
    fSettings = eq->fOdbEqSettings;
    fConfig   = mfe->fOdbRoot->Chdir("Equipment/Ctrl/EvbConfig", false);
@@ -2624,24 +2689,6 @@ EvbEq::~EvbEq()
       delete fEvb;
       fEvb = NULL;
    }
-}
-
-bool EvbEq::Init()
-{
-   //xdata.evb = evb;
-   fData.num_bh = 3;
-   fData.bh[0] = open_buffer("BUFTRG");
-   fData.bh[1] = open_buffer("BUFTDC");
-   fData.bh[2] = open_buffer("BUFUDP");
-
-   if (fData.bh[0] < 0)
-      return false;
-   if (fData.bh[1] < 0)
-      return false;
-   if (fData.bh[2] < 0)
-      return false;
-
-   return true;
 }
 
 void EvbEq::HandlePeriodic()
@@ -2662,41 +2709,40 @@ void EvbEq::HandleBeginRun()
 
    fEq->SetStatus("Begin run...", "#00FF00");
 
-   //if (fEvb) {
-   //   fEvb->fLock.lock();
-   //   delete fEvb;
-   //   fEvb = NULL;
-   //}
-
-   fEq->ZeroStatistics();
-   fEq->WriteStatistics();
-
-   //fEvb = new Evb(fSettings, fConfig, fStatus);
-   //report_evb_unlocked(fEq, fEvb, fStatus);
-
-   gFirstEventIn = 0;
-   gFirstEventOut = 0;
-}
-
-void EvbEq::InitEvb()
-{
    if (fEvb) {
       fEvb->fLock.lock();
       delete fEvb;
       fEvb = NULL;
    }
 
+   fEvb = new Evb(fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
+   fEvb->fSendQueue = new SendQueue(fMfe, fEq);
+
+   report_evb_unlocked(fEq, fEvb, fStatus);
+
    fEq->ZeroStatistics();
    fEq->WriteStatistics();
 
-   fEvb = new Evb(fSettings, fConfig, fStatus);
-   fEvb->fSendQueue = new SendQueue(fMfe, fEq);
-   report_evb_unlocked(fEq, fEvb, fStatus);
+   bool ok = true;
+
+   ok &= fReaderTRG.OpenBuffer("BUFTRG");
+   ok &= fReaderTDC.OpenBuffer("BUFTDC");
+   ok &= fReaderUDP.OpenBuffer("BUFUDP");
+
+   ok &= fReaderTRG.BeginRunLocked();
+   ok &= fReaderTDC.BeginRunLocked();
+   ok &= fReaderUDP.BeginRunLocked();
 }
 
 void EvbEq::HandleEndRun()
 {
    printf("EvbEq::HandleEndRun!\n");
+
+   bool ok = true;
+
+   ok &= fReaderTRG.EndRunLocked(fEvb, &fHandler);
+   ok &= fReaderTDC.EndRunLocked(fEvb, &fHandler);
+   ok &= fReaderUDP.EndRunLocked(fEvb, &fHandler);
 
 #if 0
    int count_gehbuf = 0;
@@ -2766,56 +2812,15 @@ void EvbEq::HandleEndRun()
    fEq->WriteStatistics();
 }
 
-bool EvbEq::ReadBuffers()
-{
-   bool read_something = false;
-   for (int i=0; i<fData.num_bh; i++) {
-      int bh = fData.bh[i];
-      EVENT_HEADER* pevent = NULL;
-      int status = bm_receive_event_alloc(bh, &pevent, BM_NO_WAIT);
-      //printf("bh[%d] %d, bufsize %d, size %d, status %d\n", i, bh, bufsize, size, status);
-      if (status == BM_ASYNC_RETURN) {
-         continue;
-      }
-      if (status != BM_SUCCESS) {
-         printf("bm_receive_event() returned %d\n", status);
-         cm_msg(MERROR, "read_thread", "bm_receive_event() returned %d, stopping the thread", status);
-         return false;
-      }
-      
-      read_something = true;
-      
-#if 0
-      {
-         std::lock_guard<std::mutex> lock(gEhBufLock);
-         gEhBuf.push_back(pevent);
-         pevent = NULL;
-         int size = gEhBuf.size();
-         if (size > size_gehbuf_max)
-            size_gehbuf_max = size;
-      }
-#endif
-
-      if (!fEvb) {
-         InitEvb();
-      }
-
-      handle_event(fEvb, pevent);
-
-      free(pevent);
-   }
-
-   return read_something;
-}
-
 bool EvbEq::Build(bool build_last)
 {
-   bool done_something = ReadBuffers();
+   bool done_something = false;
    if (fEvb) {
-      done_something |= build(fEvb, build_last);
-#if 0
-      done_something |= handle(fEvb);
-#endif
+      done_something |= fReaderTRG.TickLocked(fEvb, &fHandler);
+      done_something |= fReaderTDC.TickLocked(fEvb, &fHandler);
+      done_something |= fReaderUDP.TickLocked(fEvb, &fHandler);
+      done_something |= fHandler.XFlushBank(fEvb);
+      done_something |= fEvb->Tick(build_last);
       done_something |= fEvb->fSendQueue->SendNextEvent();
    }
    return done_something;
@@ -2862,12 +2867,6 @@ int main(int argc, char* argv[])
    mfe->RegisterEquipment(eq);
 
    EvbEq* evbeq = new EvbEq(mfe, eq);
-
-   bool ok = evbeq->Init();
-   if (!ok) {
-      printf("evb init failed!\n");
-      return 1;
-   }
 
    mfe->RegisterRpcHandler(evbeq);
 
