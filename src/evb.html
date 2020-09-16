@@ -78,6 +78,22 @@
               </td>
 	    </tr>
 	    <tr align=center>
+	      <td align=left>Buffer BUFTRG reader queue</td>
+	      <td><span id=reader_buftrg_queue_size>reader_buftrg_queue_size</span>&nbsp;/&nbsp;<span id=reader_buftrg_queue_size_max>reader_buftrg_queue_size_max</span></td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Buffer BUFTDC reader queue</td>
+	      <td><span id=reader_buftdc_queue_size>reader_buftdc_queue_size</span>&nbsp;/&nbsp;<span id=reader_buftdc_queue_size_max>reader_buftdc_queue_size_max</span></td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Buffer BUFUDP reader queue</td>
+	      <td><span id=reader_bufudp_queue_size>reader_bufudp_queue_size</span>&nbsp;/&nbsp;<span id=reader_bufudp_queue_size_max>reader_bufudp_queue_size_max</span></td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Event builder queue</td>
+	      <td><span id=evb_queue_size>evb_queue_size</span>&nbsp;/&nbsp;<span id=evb_queue_size_max>evb_queue_size_max</span></td>
+	    </tr>
+	    <tr align=center>
 	      <td align=left>Pop</td>
 	      <td>age: <span id=pop_age>pop_age</span>, following: <span id=pop_following>pop_following</span>, last: <span id=pop_last>pop_last</span></td>
 	    </tr>
@@ -307,6 +323,18 @@
 
        set_text("pwb_event_fifo_overflows", v.pwb_event_fifo_overflows);
        set_text("pwb_event_fifo_overflows_sum", v.pwb_event_fifo_overflows_sum);
+
+       set_text("reader_buftrg_queue_size", status.reader_buftrg_queue_size);
+       set_text("reader_buftrg_queue_size_max", status.reader_buftrg_queue_size_max);
+
+       set_text("reader_buftdc_queue_size", status.reader_buftdc_queue_size);
+       set_text("reader_buftdc_queue_size_max", status.reader_buftdc_queue_size_max);
+
+       set_text("reader_bufudp_queue_size", status.reader_bufudp_queue_size);
+       set_text("reader_bufudp_queue_size_max", status.reader_bufudp_queue_size_max);
+
+       set_text("evb_queue_size", status.evb_queue_size);
+       set_text("evb_queue_size_max", status.evb_queue_size_max);
 
        set_text("pop_age", status.pop_age);
        set_text("pop_following", status.pop_following);

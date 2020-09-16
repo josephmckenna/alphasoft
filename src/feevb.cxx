@@ -1774,9 +1774,25 @@ public:
       // implicit unlock
    }
 
+   double fLastTime = 0;
+
    bool XMaybeFlushBank(Evb* evb)
    {
-      return XFlushBank(evb);
+      if (fBankBuf.size() > 1000) {
+         return XFlushBank(evb);
+      }
+
+      double now = TMFE::GetTime();
+      if (fLastTime == 0)
+         fLastTime = now;
+
+      double elapsed = now - fLastTime;
+      if (elapsed > 0.010) {
+         fLastTime = now;
+         return XFlushBank(evb);
+      }
+
+      return false;
    }
 
 public:
