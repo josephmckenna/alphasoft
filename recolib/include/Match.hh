@@ -11,6 +11,7 @@
 #include "TFile.h"
 #include "manalyzer.h"
 
+#include <mutex>          // std::mutex
 
 class Match
 {
@@ -52,13 +53,14 @@ private:
    std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
 
-   void CentreOfGravity( std::vector<signal> &vsig );
-   int CentreOfGravity_blobs( std::vector<signal> &vsig );
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig );
-   void CentreOfGravity_nofit( std::vector<signal> &vsig );
-   void CentreOfGravity_single_peak( std::vector<signal> &vsig );
-   void CentreOfGravity_multi_peak( std::vector<signal> &vsig );
-   void CentreOfGravity_histoblobs( std::vector<signal> &vsig );
+   void CentreOfGravity( std::vector<signal> &vsig ); // #0
+   //  void CentreOfGravity_blobs( std::vector<signal> &vsig,  std::vector<signal> &padcog ); // #6
+   void CentreOfGravity_blobs( std::vector<signal> &vsig); // #6
+   void CentreOfGravity_nohisto( std::vector<signal> &vsig ); // #2
+   void CentreOfGravity_nofit( std::vector<signal> &vsig ); // #1
+   void CentreOfGravity_single_peak( std::vector<signal> &vsig ); // #3
+   void CentreOfGravity_multi_peak( std::vector<signal> &vsig ); // #4
+   void CentreOfGravity_histoblobs( std::vector<signal> &vsig ); // #6
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -96,7 +98,13 @@ private:
    TH2D* hcogpadsint;
    TH2D* hcogpadsampamp;
 
+   TH1D* htimecog;
+   TH1D* htimeblobs;
+   TH1D* htimefit;
+
    padmap pmap;
+
+   std::mutex mtx;
 
 public:
    Match(AnaSettings* ana_settings);
