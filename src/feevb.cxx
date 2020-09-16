@@ -423,6 +423,26 @@ public:
 
       return done_something;
    }
+
+   void WriteStatus(MVOdb* odb)
+   {
+      odb->WI("send_queue_size",  fMaxSize);
+      fMaxSize = 0;
+      odb->WI("send_queue_size_max", fMaxSizeEver);
+   }
+
+   void WriteVariables(MVOdb* odb)
+   {
+      odb->WD("event_size", fMaxEventSize);
+      fMaxEventSize = 0;
+      odb->WD("event_size_max", fMaxEventSizeEver);
+
+      odb->WD("event_count", fEventCount);
+      fEventCount = 0;
+
+      odb->WD("byte_count", fByteCount);
+      fByteCount = 0;
+   }
 };
 
 struct EvbEventBuf
@@ -1105,11 +1125,6 @@ void Evb::WriteEvbStatus()
    fOdbStatus->WI("evb_queue_size",   fEventsSizeMax);
    fEventsSizeMax = 0;
    fOdbStatus->WI("evb_queue_size_max", fEventsSizeMaxEver);
-   if (fSendQueue) {
-      fOdbStatus->WI("send_queue_size",  fSendQueue->fMaxSize);
-      fSendQueue->fMaxSize = 0;
-      fOdbStatus->WI("send_queue_size_max", fSendQueue->fMaxSizeEver);
-   }
 
    fOdbStatus->WSA("names", fSlotName, 32);
    fOdbStatus->WIA("dead", fDeadSlots);
@@ -1153,16 +1168,6 @@ void Evb::WriteVariables()
    fOdbVariables->WD("pwb_event_fifo_overflows", fPwbEventFifoOverflowsAll);
    fPwbEventFifoOverflowsAll = 0;
    fOdbVariables->WD("pwb_event_fifo_overflows_sum", fPwbEventFifoOverflowsEver);
-
-   fOdbVariables->WD("event_size", fSendQueue->fMaxEventSize);
-   fSendQueue->fMaxEventSize = 0;
-   fOdbVariables->WD("event_size_max", fSendQueue->fMaxEventSizeEver);
-
-   fOdbVariables->WD("event_count", fSendQueue->fEventCount);
-   fSendQueue->fEventCount = 0;
-
-   fOdbVariables->WD("byte_count", fSendQueue->fByteCount);
-   fSendQueue->fByteCount = 0;
 }
 
 void Evb::ResetPerSecond()
@@ -1704,6 +1709,8 @@ public:
 
 public:
    std::vector<BankBuf*> fBankBuf;
+   int fMaxSize = 0;
+   int fMaxSizeEver = 0;
 
 public:
    Handler(TMFE* mfe) // ctor
@@ -1735,6 +1742,13 @@ public:
       b->xslot = islot;
       b->xts = ts;
       fBankBuf.push_back(b);
+
+      int size = fBankBuf.size();
+      if (size > fMaxSize)
+         fMaxSize = size;
+      if (size > fMaxSizeEver)
+         fMaxSizeEver = size;
+      
    }
 
    bool XFlushBank(Evb* evb)
@@ -2530,6 +2544,17 @@ public:
       // implicit unlock
    }
 
+public:
+   void WriteStatus(MVOdb* odb)
+   {
+      std::string n1 = "reader_" + fBufName + "_queue_size"; 
+      std::string n2 = "reader_" + fBufName + "_queue_size_max";
+
+      odb->WI(n1.c_str(), fHandler->fMaxSize);
+      fHandler->fMaxSize = 0;
+      odb->WI(n2.c_str(), fHandler->fMaxSizeEver);
+   }
+
 private:
    bool OpenBuffer()
    {
@@ -2676,6 +2701,8 @@ public:
       std::lock_guard<std::mutex> lock(fLock);
       bool ok = true;
       fEventsIn = 0;
+      fHandler->fMaxSize = 0;
+      fHandler->fMaxSizeEver = 0;
       ok &= OpenBuffer();
       return true;
       // implicit unlock
@@ -2706,112 +2733,6 @@ public:
    }
 };
 
-//bool run_threads = true;
-
-#if 0
-int build_thread(void*evbptr)
-{
-   printf("build_thread started!\n");
-
-   Evb* evb = (Evb*)evbptr;
-
-   while (run_threads) {
-      bool done_something = build(evb);
-      if (!done_something) {
-         ss_sleep(1);
-      }
-   }
-
-   printf("build_thread finished!\n");
-   return 0;
-}
-#endif
-
-#if 0
-int handler_thread(void* evbptr)
-{
-   printf("handler_thread started, arg %p!\n", evbptr);
-
-   Evb* evb = (Evb*)evbptr;
-
-   while (run_threads) {
-      bool done_something = handle(evb);
-      if (!done_something) {
-         //printf("sleep!\n");
-         ss_sleep(2);
-      }
-   }
-
-   printf("handler_thread finished!\n");
-   return 0;
-}
-#endif
-
-#if 0
-struct read_thread_data
-{
-   int num_bh;
-   int bh[10];
-};
-#endif
-
-#if 0
-int read_thread(void*arg)
-{
-   printf("read_thread started, arg %p!\n", arg);
-
-   read_thread_data* data = (read_thread_data*)arg;
-
-   while (run_threads) {
-      bool read_something = read_buffers(NULL, data);
-         
-      if (!read_something) {
-         ss_sleep(2);
-         continue;
-      }
-   }
-
-   printf("read_thread finished!\n");
-   return 0;
-}
-#endif
-
-void report_evb_unlocked(TMFeEquipment* eq, Evb* evb, MVOdb* status)
-{
-   int count_dead_slots = 0;
-   for (unsigned i=0; i<evb->fNumSlots; i++) {
-      if (evb->fSync.fModules[i].fDead) {
-         evb->fDeadSlots[i] = true;
-         count_dead_slots++;
-      } else {
-         evb->fDeadSlots[i] = false;
-      }
-   }
-   evb->fCountDeadSlots = count_dead_slots;
-   
-   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d",
-                             evb->fCountDeadSlots,
-                             evb->fCountInput,
-                             evb->fCountUnknown,
-                             evb->fCountOut,
-                             evb->fCountComplete, evb->fCountIncomplete, evb->fCountError,
-                             evb->fCountSlotErrors
-                             );
-
-   if (evb->fCountDeadSlots > 0 || evb->fCountIncomplete > 0 || evb->fCountError > 0 || evb->fCountSlotErrors > 0 || evb->fCountUnknown > 0) {
-      eq->SetStatus(st.c_str(), "yellow");
-   } else {
-      eq->SetStatus(st.c_str(), "#00FF00");
-   }
-   
-   evb->Print();
-   
-   evb->ComputePerSecond();
-   evb->WriteSyncStatus();
-   evb->WriteEvbStatus();
-   evb->WriteVariables();
-}
-
 class EvbEq:
    public TMFeRpcHandlerInterface,
    public TMFePeriodicHandlerInterface
@@ -2823,7 +2744,8 @@ public: // TMFE
 public: // methods
    EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
    virtual ~EvbEq(); // dtor
-   //bool Build(bool build_last);
+   void ReportEvb();
+   void Report();
 
 public: // handlers for MIDAS callbacks
    void HandlePeriodic();
@@ -2841,6 +2763,7 @@ public: // ODB
    MVOdb* fSettings = NULL;
    MVOdb* fConfig = NULL;
    MVOdb* fStatus = NULL;
+   MVOdb* fVariables = NULL;
 };
 
 EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
@@ -2861,6 +2784,7 @@ EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
    fSendQueue->StartThread();
 
    fSettings = eq->fOdbEqSettings;
+   fVariables = eq->fOdbEqVariables;
    fConfig   = mfe->fOdbRoot->Chdir("Equipment/Ctrl/EvbConfig", false);
    fStatus   = eq->fOdbEq->Chdir("EvbStatus", true);
 }
@@ -2894,14 +2818,70 @@ EvbEq::~EvbEq()
    }
 }
 
+void EvbEq::ReportEvb()
+{
+   assert(fEvb);
+
+   int count_dead_slots = 0;
+   for (unsigned i=0; i<fEvb->fNumSlots; i++) {
+      if (fEvb->fSync.fModules[i].fDead) {
+         fEvb->fDeadSlots[i] = true;
+         count_dead_slots++;
+      } else {
+         fEvb->fDeadSlots[i] = false;
+      }
+   }
+   fEvb->fCountDeadSlots = count_dead_slots;
+   
+   std::string st = msprintf("dead %d, in %d, unknown %d, built %d (complete %d, incomplete %d, with errors %d), per-slot errors %d",
+                             fEvb->fCountDeadSlots,
+                             fEvb->fCountInput,
+                             fEvb->fCountUnknown,
+                             fEvb->fCountOut,
+                             fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError,
+                             fEvb->fCountSlotErrors
+                             );
+
+   if (fEvb->fCountDeadSlots > 0 ||
+       fEvb->fCountIncomplete > 0 ||
+       fEvb->fCountError > 0 ||
+       fEvb->fCountSlotErrors > 0 ||
+       fEvb->fCountUnknown > 0) {
+      fEq->SetStatus(st.c_str(), "yellow");
+   } else {
+      fEq->SetStatus(st.c_str(), "#00FF00");
+   }
+   
+   fEvb->Print();
+   
+   fEvb->ComputePerSecond();
+   fEvb->WriteSyncStatus();
+   fEvb->WriteEvbStatus();
+   fEvb->WriteVariables();
+}
+
+void EvbEq::Report()
+{
+   if (fEvb)
+      ReportEvb();
+
+   fReaderTRG->WriteStatus(fStatus);
+   fReaderTDC->WriteStatus(fStatus);
+   fReaderUDP->WriteStatus(fStatus);
+
+   fSendQueue->WriteStatus(fStatus);
+   fSendQueue->WriteVariables(fVariables);   
+}
+
 void EvbEq::HandlePeriodic()
 {
    //printf("EvbEq::HandlePeriodic!\n");
 
    if (fEvb) {
       fEvb->CheckDeadSlots();
-      report_evb_unlocked(fEq, fEvb, fStatus);
    }
+
+   Report();
 
    fEq->WriteStatistics();
 }
@@ -2923,10 +2903,10 @@ void EvbEq::HandleBeginRun()
       fEvb = NULL;
    }
 
-   fEvb = new Evb(fMfe, fSendQueue, fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
+   fEvb = new Evb(fMfe, fSendQueue, fSettings, fConfig, fStatus, fVariables);
    fEvb->StartThread();
 
-   report_evb_unlocked(fEq, fEvb, fStatus);
+   Report();
 
    fEq->ZeroStatistics();
    fEq->WriteStatistics();
@@ -2949,21 +2929,6 @@ void EvbEq::HandleEndRun()
    ok &= fReaderTRG->EndRun();
    ok &= fReaderTDC->EndRun();
    ok &= fReaderUDP->EndRun();
-
-#if 0
-   // build the last remaining events
-   int count_build = 0;
-   while (1) {
-      bool done_something = Build(true);
-      if (!done_something)
-         break;
-      count_build++;
-   }
-
-   if (count_build) {
-      fMfe->Msg(MLOG, "HandleEndRun", "HandleEndRun: %d loops of Build()", count_build);
-   }
-#endif
 
    if (fEvb) {
       std::lock_guard<std::mutex> lock(fEvb->fLock);
@@ -3021,12 +2986,7 @@ void EvbEq::HandleEndRun()
       cm_msg(MLOG, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, unknown %d, out %d, lost at end of run %d, per-slot errors %d", fEvb->fCountInput, fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError, fEvb->fCountUnknown, fEvb->fCountOut, count_lost, fEvb->fCountSlotErrors);
    }
 
-   //if (fEvb) {
-   //   report_evb_unlocked(fEq, fEvb, fStatus);
-   //   fEvb->fLock.lock();
-   //   delete fEvb;
-   //   fEvb = NULL;
-   //}
+   Report();
 
    fEq->WriteStatistics();
 }
