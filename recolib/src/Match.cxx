@@ -93,7 +93,7 @@ void Match::Setup(TFile* OutputFile)
       //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);      
       htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,1000.);
       htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,1000.);
-      htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,1000.);
+      htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
     }
 }
 
