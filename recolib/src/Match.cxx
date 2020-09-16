@@ -91,8 +91,8 @@ void Match::Setup(TFile* OutputFile)
       hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
       hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
       //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);      
-      htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,1000.);
-      htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,1000.);
+      htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,10000.);
+      htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,10000.);
       htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
     }
 }
