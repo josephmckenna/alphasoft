@@ -194,10 +194,6 @@ struct Alpha16info
    };
 };
 
-//static std::deque<EVENT_HEADER*> gEhBuf;
-//static std::mutex gEhBufLock;
-//static int size_gehbuf_max = 0;
-
 class InputQueue
 {
 public:
@@ -386,8 +382,6 @@ public:
 
 struct EvbEventBuf
 {
-   //FragmentBuf* buf;
-
    uint32_t ts;
    int epoch;
    double time;
@@ -526,6 +520,7 @@ struct PwbData
 class Evb
 {
 public:
+   TMFE* fMfe = NULL;
    std::mutex fLock;
 
 public:
@@ -629,16 +624,19 @@ public: // output queue
    std::vector<double> fPrevCountThr1;
 
  public: // public functions
-   Evb(MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables); // ctor
+   Evb(TMFE* mfe, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables); // ctor
    ~Evb(); // dtor
    void InitEvbLocked();
    void AddBankLocked(int imodule, uint32_t ts, BankBuf *b);
+   bool BuildLocked();
+   EvbEvent* GetLocked();
+   EvbEvent* GetLastEventLocked();
+   bool TickLocked(bool build_last);
 
  public: // internal functions
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
    void CheckEvent(EvbEvent *e, bool last_event);
    void BuildSlot(int slot, EvbEventBuf *m);
-   void Build();
    void Print() const;
    void PrintEvents() const;
    void LogPwbCounters() const;
@@ -650,12 +648,9 @@ public: // output queue
    void UpdateCounters(const EvbEvent* e);
    void CheckDeadSlots();
    EvbEvent* GetNext();
-   EvbEvent* Get();
-   EvbEvent* GetLastEvent();
-   bool Tick(bool build_last);
 };
 
-void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwrite = true)
+static void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwrite = true)
 {
    assert(i<1000); // protect against crazy value
    while (i>=v->size()) {
@@ -667,7 +662,7 @@ void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwri
    }
 }
 
-int get_vector_element(const std::vector<int>& v, unsigned i)
+static int get_vector_element(const std::vector<int>& v, unsigned i)
 {
    if (i>=v.size())
       return -1;
@@ -678,9 +673,10 @@ int get_vector_element(const std::vector<int>& v, unsigned i)
 static bool gKludgeTdcKillFirstEvent = false;
 static bool gKludgeTdcLastEvent = false;
 
-Evb::Evb(MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables) // ctor
+Evb::Evb(TMFE* mfe, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables) // ctor
 {
    printf("Evb: constructor!\n");
+   fMfe = mfe;
    fOdbSettings = settings;
    fOdbConfig = config;
    fOdbStatus = status;
@@ -694,8 +690,6 @@ void Evb::InitEvbLocked()
    fInitDone = true;
 
    printf("Evb: Init!\n");
-
-   // race condition against fectrl... fNumBanks = GetNumBanks();
 
    double eps_sec = 50.0*1e-6;
    //int max_skew = 10;
@@ -1326,8 +1320,11 @@ void Evb::BuildSlot(int slot, EvbEventBuf *m)
    CheckEvent(e, false);
 }
 
-void Evb::Build()
+bool Evb::BuildLocked()
 {
+   if (!fSync.fSyncOk)
+      return false;
+   bool done_something = false;
    //DWORD t1 = ss_millitime();
    //int loops = 0;
    int num_slots = fBuf.size();
@@ -1336,6 +1333,7 @@ void Evb::Build()
          EvbEventBuf* m = fBuf[slot].front();
          fBuf[slot].pop_front();
          BuildSlot(slot, m);
+         done_something = true;
          //loops++;
       }
    }
@@ -1344,6 +1342,7 @@ void Evb::Build()
    //if (dt > 1) {
    //   printf("Build() took %d ms, %d loops\n", dt, loops);
    //}
+   return done_something;
 }
 
 void Evb::CheckDeadSlots()
@@ -1415,10 +1414,8 @@ void Evb::UpdateCounters(const EvbEvent* e)
    }
 }
 
-EvbEvent* Evb::GetLastEvent()
+EvbEvent* Evb::GetLastEventLocked()
 {
-   Build();
-   
    if (fEvents.size() < 1)
       return NULL;
    
@@ -1488,16 +1485,9 @@ EvbEvent* Evb::GetNext()
    return NULL;
 }
 
-EvbEvent* Evb::Get()
+EvbEvent* Evb::GetLocked()
 {
-   //DWORD t1 = ss_millitime();
-   if (fSync.fSyncOk)
-      Build();
-   //DWORD t2 = ss_millitime();
-   
    if (fEvents.size() < 1) {
-      //DWORD dt = t2-t1;
-      //printf("Get() t1t2 %d\n", t2-t1);
       return NULL;
    }
 
@@ -1528,14 +1518,18 @@ EvbEvent* Evb::Get()
    return e;
 }
 
-bool Evb::Tick(bool build_last)
+bool Evb::TickLocked(bool build_last)
 {
    //DWORD t1 = ss_millitime();
+
+   bool done_something = false;
+
+   done_something |= BuildLocked();
    
-   EvbEvent* e = Get();
+   EvbEvent* e = GetLocked();
    
    if (!e && build_last) {
-      e = GetLastEvent();
+      e = GetLastEventLocked();
    }
    
    //DWORD t2 = ss_millitime();
@@ -1545,7 +1539,7 @@ bool Evb::Tick(bool build_last)
    //}
 
    if (!e)
-      return false;
+      return done_something;
    
    //printf("Have EvbEvent: ");
    //e->Print();
@@ -1557,11 +1551,11 @@ bool Evb::Tick(bool build_last)
    e = NULL;
    
    if (!f) {
-      return false;
+      return done_something;
    }
 
    if (fCountOut == 0) {
-      cm_msg(MINFO, "build_thread", "Event builder built the first event");
+      fMfe->Msg(MINFO, "build_thread", "Event builder built the first event");
    }
       
    fCountOut++;
@@ -2655,7 +2649,6 @@ public: // handlers for MIDAS callbacks
 
 public:
    Evb* fEvb = NULL;
-   //struct read_thread_data fData;
    BufferReader fReaderTRG;
    BufferReader fReaderUDP;
    BufferReader fReaderTDC;
@@ -2715,7 +2708,7 @@ void EvbEq::HandleBeginRun()
       fEvb = NULL;
    }
 
-   fEvb = new Evb(fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
+   fEvb = new Evb(fMfe, fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
    fEvb->fSendQueue = new SendQueue(fMfe, fEq);
 
    report_evb_unlocked(fEq, fEvb, fStatus);
@@ -2744,22 +2737,6 @@ void EvbEq::HandleEndRun()
    ok &= fReaderTDC.EndRunLocked(fEvb, &fHandler);
    ok &= fReaderUDP.EndRunLocked(fEvb, &fHandler);
 
-#if 0
-   int count_gehbuf = 0;
-   while (1) {
-      std::lock_guard<std::mutex> lock(gEhBufLock);
-      if (gEhBuf.empty()) {
-         break;
-      }
-      if (count_gehbuf == 0) {
-         printf("waiting for gEhBuf!\n");
-      }
-      count_gehbuf++;
-      ss_sleep(10);
-   }
-   printf("done waiting for gEhBuf, %d loops\n", count_gehbuf);
-#endif
-
    // build the last remaining events
    int count_build = 0;
    while (1) {
@@ -2782,7 +2759,7 @@ void EvbEq::HandleEndRun()
       int count_lost = 0;
 
       while (1) {
-         EvbEvent *e = fEvb->GetLastEvent();
+         EvbEvent *e = fEvb->GetLastEventLocked();
          if (!e)
             break;
 
@@ -2820,7 +2797,7 @@ bool EvbEq::Build(bool build_last)
       done_something |= fReaderTDC.TickLocked(fEvb, &fHandler);
       done_something |= fReaderUDP.TickLocked(fEvb, &fHandler);
       done_something |= fHandler.XFlushBank(fEvb);
-      done_something |= fEvb->Tick(build_last);
+      done_something |= fEvb->TickLocked(build_last);
       done_something |= fEvb->fSendQueue->SendNextEvent();
    }
    return done_something;
