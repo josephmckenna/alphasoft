@@ -5,9 +5,40 @@ void plotPadSigma()
 {
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   gDirectory->cd("padmatch");
+
+  TString cname="ccogdiag";
+  cname += GetRunNumber(TString(fin->GetName()));
+  TCanvas* c0 = new TCanvas(cname,cname,1800,1900);
+  c0->Divide(3,2);
+  TH1D* hcognpeaks = (TH1D*) gROOT->FindObject("hcognpeaks");
+  //hcognpeaks->GetXaxis()->CenterLabels();
+  c0->cd(1);
+  hcognpeaks->Draw();
+  TH1D* hcogerr = (TH1D*) gROOT->FindObject("hcogerr");
+  hcogerr->GetXaxis()->SetRangeUser(0.,5.);
+  c0->cd(2);
+  hcogerr->Draw();
+  TH1D* hcogsigma = (TH1D*) gROOT->FindObject("hcogsigma");
+  hcogsigma->GetXaxis()->SetRangeUser(0.,35.);
+  c0->cd(3);
+  hcogsigma->Draw();
+  TH1D* htcog = (TH1D*) gROOT->FindObject("htimecog");
+  c0->cd(4);
+  htcog->Draw();
+  gPad->SetLogy();
+  TH1D* htblob = (TH1D*) gROOT->FindObject("htimeblobs");
+  c0->cd(5);
+  htblob->Draw();
+  gPad->SetLogy();
+  TH1D* htfit = (TH1D*) gROOT->FindObject("htimefit");
+  c0->cd(6);
+  htfit->Draw();
+  gPad->SetLogy();
+  c0->SaveAs(".pdf");
+
   TH2D* hps = (TH2D*) gROOT->FindObject("hcogpadssigma");
   hps->SetStats(kFALSE);
-  TString cname = "PadSigmaR"; cname += GetRunNumber(TString(fin->GetName()));
+  cname = "PadSigmaR"; cname += GetRunNumber(TString(fin->GetName()));
   TCanvas* c1 = new TCanvas(cname,cname,1400,2500);
   c1->Divide(1,3);
   c1->cd(1);
