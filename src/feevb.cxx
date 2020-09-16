@@ -20,6 +20,7 @@
 #include <vector>
 #include <deque>
 #include <mutex>
+#include <thread>
 
 #include "midas.h"
 #include "msystem.h" // rb_get_buffer_level()
@@ -262,6 +263,10 @@ public: // internal data
    char* fEventBuf = NULL;
 
 public:
+   bool fRunThread = false;
+   std::thread* fThread = NULL;
+
+public:
    SendQueue(TMFE* mfe, TMFeEquipment* eq) // ctor
    {
       fMfe = mfe;
@@ -270,6 +275,8 @@ public:
 
    ~SendQueue() // dtor
    {
+      StopThread();
+
       {
          std::lock_guard<std::mutex> lock(fLock);
          if (fBuf.size() > 0) {
@@ -288,6 +295,44 @@ public:
          fEventBuf = NULL;
          fEventBufSize = 0;
       }
+   }
+
+public:
+   void SendQueueThread()
+   {
+      printf("SendQueueThread: Thread for event sender started\n");
+      while (fRunThread) {
+         for (int i=0; i<1000; i++) {
+            bool done_something = Tick();
+            if (!done_something)
+               break;
+         }
+         ::usleep(100000);
+      }
+      printf("SendQueueThread: Thread for event sender stopped\n");
+   }
+
+   void StartThread()
+   {
+      assert(fThread==NULL);
+      fRunThread = true;
+      fThread = new std::thread(&SendQueue::SendQueueThread, this);
+   }
+
+   void StopThread()
+   {
+      assert(fThread);
+      fRunThread = false;
+      fThread->join();
+      delete fThread;
+      fThread = NULL;
+   }
+
+   int GetQueueSize()
+   {
+      std::lock_guard<std::mutex> lock(fLock);
+      return fBuf.size();
+      // implicit unlock
    }
 
    void PushEvent(FragmentBuf* f)
@@ -347,7 +392,7 @@ public:
       return true;
    }
 
-   bool SendNextEvent()
+   bool Tick()
    {
       FragmentBuf* f = NULL;
 
@@ -530,6 +575,9 @@ public:
    MVOdb* fOdbStatus    = NULL;
    MVOdb* fOdbVariables = NULL;
 
+public:
+   SendQueue* fSendQueue = NULL;
+
 public: // settings
    double   fMaxAgeSec = 2.0;
    double   fMaxDeadSec = 15.0;
@@ -550,8 +598,7 @@ public: // configuration maps, etc
    std::vector<int> fSlotType; // module type for each slot
    std::vector<std::string> fSlotName; // module name for each slot
 
-public: // output queue
-   SendQueue* fSendQueue = NULL;
+   //public: // output queue
 
  public: // event builder state
    TsSync fSync;
@@ -624,7 +671,7 @@ public: // output queue
    std::vector<double> fPrevCountThr1;
 
  public: // public functions
-   Evb(TMFE* mfe, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables); // ctor
+   Evb(TMFE* mfe, SendQueue* send_queue, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables); // ctor
    ~Evb(); // dtor
    void InitEvbLocked();
    void AddBankLocked(int imodule, uint32_t ts, BankBuf *b);
@@ -632,6 +679,13 @@ public: // output queue
    EvbEvent* GetLocked();
    EvbEvent* GetLastEventLocked();
    bool TickLocked(bool build_last);
+
+ public:
+   bool fRunThread = false;
+   std::thread* fThread = NULL;
+   void EvbThread();
+   void StartThread();
+   void StopThread();
 
  public: // internal functions
    EvbEvent* FindEvent(double t, int index, EvbEventBuf *m);
@@ -649,6 +703,40 @@ public: // output queue
    void CheckDeadSlots();
    EvbEvent* GetNext();
 };
+
+void Evb::EvbThread()
+{
+   printf("EvbThread: Thread for event builder started\n");
+   while (fRunThread) {
+      {
+         std::lock_guard<std::mutex> lock(fLock);
+         for (int i=0; i<1000; i++) {
+            bool done_something = TickLocked(false);
+            if (!done_something)
+               break;
+         }
+         // implicit unlock
+      }
+      ::usleep(100000);
+   }
+   printf("EvbThread: Thread for event builder stopped\n");
+}
+
+void Evb::StartThread()
+{
+   assert(fThread==NULL);
+   fRunThread = true;
+   fThread = new std::thread(&Evb::EvbThread, this);
+}
+
+void Evb::StopThread()
+{
+   assert(fThread);
+   fRunThread = false;
+   fThread->join();
+   delete fThread;
+   fThread = NULL;
+}
 
 static void set_vector_element(std::vector<int>* v, unsigned i, int value, bool overwrite = true)
 {
@@ -673,10 +761,11 @@ static int get_vector_element(const std::vector<int>& v, unsigned i)
 static bool gKludgeTdcKillFirstEvent = false;
 static bool gKludgeTdcLastEvent = false;
 
-Evb::Evb(TMFE* mfe, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables) // ctor
+Evb::Evb(TMFE* mfe, SendQueue* send_queue, MVOdb* settings, MVOdb* config, MVOdb* status, MVOdb* variables) // ctor
 {
    printf("Evb: constructor!\n");
    fMfe = mfe;
+   fSendQueue = send_queue;
    fOdbSettings = settings;
    fOdbConfig = config;
    fOdbStatus = status;
@@ -917,10 +1006,8 @@ void Evb::InitEvbLocked()
 
 Evb::~Evb()
 {
-   if (fSendQueue) {
-      delete fSendQueue;
-      fSendQueue = NULL;
-   }
+   if (fThread)
+      StopThread();
 
    printf("Evb: max dt: %.0f ns, min dt: %.0f ns\n", fMaxDt*1e9, fMinDt*1e9);
    printf("Evb: dtor!\n");
@@ -1619,8 +1706,9 @@ public:
    std::vector<BankBuf*> fBankBuf;
 
 public:
-   Handler() // ctor
+   Handler(TMFE* mfe) // ctor
    {
+      fMfe = mfe;
    }
 
    ~Handler() // dtor
@@ -1651,6 +1739,13 @@ public:
 
    bool XFlushBank(Evb* evb)
    {
+      if (!evb) {
+         if (fBankBuf.empty())
+            return false;
+         fMfe->Msg(MERROR, "Handler::XFlushBank", "XFlushBank: Have %d buffered banks but no EVB", (int)fBankBuf.size());
+         return false;
+      }
+
       bool flushed_at_least_one = false;
       std::lock_guard<std::mutex> lock(evb->fLock);
       size_t size = fBankBuf.size();
@@ -1663,6 +1758,11 @@ public:
       fBankBuf.clear();
       return flushed_at_least_one;
       // implicit unlock
+   }
+
+   bool XMaybeFlushBank(Evb* evb)
+   {
+      return XFlushBank(evb);
    }
 
 public:
@@ -2389,10 +2489,49 @@ public:
    int fReqId = -1; // MIDAS event request ID
 
 public:
+   Evb* fEvb = NULL;
+   Handler* fHandler = NULL;
+
+public:
    int fEventsIn = 0;
 
 public:
-   bool OpenBuffer(const char* bufname)
+   std::thread* fThread = NULL;
+   bool fRunThread = false;
+
+public:
+   BufferReader(TMFE* mfe, const char* bufname) // ctor
+   {
+      fMfe = mfe;
+      fBufName = bufname;
+      fHandler = new Handler(mfe);
+   }
+
+   ~BufferReader() // dtor
+   {
+      if (fThread)
+         StopThread();
+
+      CloseBuffer();
+
+      if (fHandler) {
+         delete fHandler;
+         fHandler = NULL;
+      }
+
+      fEvb = NULL;
+   }
+
+public:
+   void SetEvb(Evb* evb)
+   {
+      std::lock_guard<std::mutex> lock(fLock);
+      fEvb = evb;
+      // implicit unlock
+   }
+
+private:
+   bool OpenBuffer()
    {
       if (fBh >= 0)
          return true;
@@ -2401,12 +2540,11 @@ public:
       int evid = -1;
       int trigmask = 0xFFFF;
 
-      fBufName = bufname;
       fBh = -1;
       
-      status = bm_open_buffer(bufname, 0, &fBh);
+      status = bm_open_buffer(fBufName.c_str(), 0, &fBh);
       if (status != BM_SUCCESS && status != BM_CREATED) {
-         cm_msg(MERROR, "frontend_init", "Error: bm_open_buffer(\"%s\") status %d", bufname, status);
+         cm_msg(MERROR, "frontend_init", "Error: bm_open_buffer(\"%s\") status %d", fBufName.c_str(), status);
          fBh = -1;
          return false;
       }
@@ -2419,7 +2557,7 @@ public:
          return false;
       }
 
-      fMfe->Msg(MINFO, "frontend_init", "Event builder reading from buffer \"%s\", evid %d, trigmask 0x%x", bufname, evid, trigmask);
+      fMfe->Msg(MINFO, "frontend_init", "Event builder reading from buffer \"%s\", evid %d, trigmask 0x%x", fBufName.c_str(), evid, trigmask);
       
       return true;
    }
@@ -2482,33 +2620,75 @@ public:
    }
 
 public:
-   bool TickLocked(Evb* evb, Handler* handler)
+   bool TickLocked()
    {
       EVENT_HEADER* pevent = ReadEvent();
       if (pevent == NULL)
          return false;
 
-      handler->HandleEvent(evb, pevent, pevent+1);
+      fHandler->HandleEvent(fEvb, pevent, pevent+1);
 
       free(pevent);
       pevent = NULL;
 
-      //XFlushBank(evb);
-
       return true;
    }
 
-   bool BeginRunLocked()
+public:
+   void BufferReaderThread()
    {
+      printf("BufferReaderThread: Thread for event buffer \"%s\" started\n", fBufName.c_str());
+      while (fRunThread) {
+         {
+            std::lock_guard<std::mutex> lock(fLock);
+            for (int i=0; i<1000; i++) {
+               bool done_something = TickLocked();
+               if (!done_something)
+                  break;
+            }
+            fHandler->XMaybeFlushBank(fEvb);
+            // implicit unlock
+         }
+         ::usleep(100000);
+      }
+      printf("BufferReaderThread: Thread for event buffer \"%s\" stopped\n", fBufName.c_str());
+   }
+
+   void StartThread()
+   {
+      assert(fThread==NULL);
+      fRunThread = true;
+      fThread = new std::thread(&BufferReader::BufferReaderThread, this);
+   }
+
+   void StopThread()
+   {
+      assert(fThread);
+      fRunThread = false;
+      fThread->join();
+      delete fThread;
+      fThread = NULL;
+   }
+
+public:
+   bool BeginRun()
+   {
+      std::lock_guard<std::mutex> lock(fLock);
+      bool ok = true;
       fEventsIn = 0;
+      ok &= OpenBuffer();
       return true;
+      // implicit unlock
    }
 
-   bool EndRunLocked(Evb* evb, Handler* handler)
+public:
+   bool EndRun()
    {
+      std::lock_guard<std::mutex> lock(fLock);
+
       int count = 0;
       while (1) {
-         bool done_something = TickLocked(evb, handler);
+         bool done_something = TickLocked();
          if (!done_something)
             break;
          count++;
@@ -2519,7 +2699,10 @@ public:
 
       CloseBuffer();
 
+      fHandler->XFlushBank(fEvb);
+
       return true;
+      // implicit unlock
    }
 };
 
@@ -2640,7 +2823,7 @@ public: // TMFE
 public: // methods
    EvbEq(TMFE* mfe, TMFeEquipment* eq); // ctor
    virtual ~EvbEq(); // dtor
-   bool Build(bool build_last);
+   //bool Build(bool build_last);
 
 public: // handlers for MIDAS callbacks
    void HandlePeriodic();
@@ -2648,11 +2831,11 @@ public: // handlers for MIDAS callbacks
    void HandleEndRun();
 
 public:
+   BufferReader* fReaderTRG = NULL;
+   BufferReader* fReaderUDP = NULL;
+   BufferReader* fReaderTDC = NULL;
    Evb* fEvb = NULL;
-   BufferReader fReaderTRG;
-   BufferReader fReaderUDP;
-   BufferReader fReaderTDC;
-   Handler fHandler;
+   SendQueue* fSendQueue = NULL;
 
 public: // ODB
    MVOdb* fSettings = NULL;
@@ -2665,10 +2848,17 @@ EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
    fMfe = mfe;
    fEq = eq;
 
-   fReaderTRG.fMfe = mfe;
-   fReaderTDC.fMfe = mfe;
-   fReaderUDP.fMfe = mfe;
-   fHandler.fMfe = mfe;
+   fReaderTRG = new BufferReader(fMfe, "BUFTRG");
+   fReaderTDC = new BufferReader(fMfe, "BUFTDC");
+   fReaderUDP = new BufferReader(fMfe, "BUFUDP");
+
+   fReaderTRG->StartThread();
+   fReaderTDC->StartThread();
+   fReaderUDP->StartThread();
+
+   fSendQueue = new SendQueue(fMfe, fEq);
+
+   fSendQueue->StartThread();
 
    fSettings = eq->fOdbEqSettings;
    fConfig   = mfe->fOdbRoot->Chdir("Equipment/Ctrl/EvbConfig", false);
@@ -2677,10 +2867,30 @@ EvbEq::EvbEq(TMFE* mfe, TMFeEquipment* eq) // ctor
 
 EvbEq::~EvbEq()
 {
+   if (fReaderTRG) {
+      delete fReaderTRG;
+      fReaderTRG = NULL;
+   }
+
+   if (fReaderTDC) {
+      delete fReaderTDC;
+      fReaderTDC = NULL;
+   }
+
+   if (fReaderUDP) {
+      delete fReaderUDP;
+      fReaderUDP = NULL;
+   }
+
    if (fEvb) {
       fEvb->fLock.lock();
       delete fEvb;
       fEvb = NULL;
+   }
+
+   if (fSendQueue) {
+      delete fSendQueue;
+      fSendQueue = NULL;
    }
 }
 
@@ -2702,29 +2912,32 @@ void EvbEq::HandleBeginRun()
 
    fEq->SetStatus("Begin run...", "#00FF00");
 
+   bool ok = true;
+
    if (fEvb) {
+      fReaderTRG->SetEvb(NULL);
+      fReaderTDC->SetEvb(NULL);
+      fReaderUDP->SetEvb(NULL);
       fEvb->fLock.lock();
       delete fEvb;
       fEvb = NULL;
    }
 
-   fEvb = new Evb(fMfe, fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
-   fEvb->fSendQueue = new SendQueue(fMfe, fEq);
+   fEvb = new Evb(fMfe, fSendQueue, fSettings, fConfig, fStatus, fEq->fOdbEqVariables);
+   fEvb->StartThread();
 
    report_evb_unlocked(fEq, fEvb, fStatus);
 
    fEq->ZeroStatistics();
    fEq->WriteStatistics();
 
-   bool ok = true;
+   fReaderTRG->SetEvb(fEvb);
+   fReaderTDC->SetEvb(fEvb);
+   fReaderUDP->SetEvb(fEvb);
 
-   ok &= fReaderTRG.OpenBuffer("BUFTRG");
-   ok &= fReaderTDC.OpenBuffer("BUFTDC");
-   ok &= fReaderUDP.OpenBuffer("BUFUDP");
-
-   ok &= fReaderTRG.BeginRunLocked();
-   ok &= fReaderTDC.BeginRunLocked();
-   ok &= fReaderUDP.BeginRunLocked();
+   ok &= fReaderTRG->BeginRun();
+   ok &= fReaderTDC->BeginRun();
+   ok &= fReaderUDP->BeginRun();
 }
 
 void EvbEq::HandleEndRun()
@@ -2733,10 +2946,11 @@ void EvbEq::HandleEndRun()
 
    bool ok = true;
 
-   ok &= fReaderTRG.EndRunLocked(fEvb, &fHandler);
-   ok &= fReaderTDC.EndRunLocked(fEvb, &fHandler);
-   ok &= fReaderUDP.EndRunLocked(fEvb, &fHandler);
+   ok &= fReaderTRG->EndRun();
+   ok &= fReaderTDC->EndRun();
+   ok &= fReaderUDP->EndRun();
 
+#if 0
    // build the last remaining events
    int count_build = 0;
    while (1) {
@@ -2749,9 +2963,37 @@ void EvbEq::HandleEndRun()
    if (count_build) {
       fMfe->Msg(MLOG, "HandleEndRun", "HandleEndRun: %d loops of Build()", count_build);
    }
+#endif
 
    if (fEvb) {
       std::lock_guard<std::mutex> lock(fEvb->fLock);
+
+      fEvb->BuildLocked();
+
+      int count = 0;
+      while (1) {
+         bool done_something = fEvb->TickLocked(true);
+         if (!done_something)
+            break;
+         count++;
+      }
+
+      if (count) {
+         fMfe->Msg(MLOG, "HandleEndRun", "HandleEndRun: %d loops of Evb->TickLocked(true)", count);
+      }
+
+      count = 0;
+      while (1) {
+         int num = fSendQueue->GetQueueSize();
+         if (num == 0)
+            break;
+         count++;
+         ::usleep(100000);
+      }
+
+      if (count) {
+         fMfe->Msg(MLOG, "HandleEndRun", "HandleEndRun: %d loops of waiting for the send queue to drain", count);
+      }
 
       printf("end_of_run: Evb state:\n");
       fEvb->Print();
@@ -2779,29 +3021,30 @@ void EvbEq::HandleEndRun()
       cm_msg(MLOG, "end_of_run", "end_of_run: %d in, complete %d, incomplete %d, with errors %d, unknown %d, out %d, lost at end of run %d, per-slot errors %d", fEvb->fCountInput, fEvb->fCountComplete, fEvb->fCountIncomplete, fEvb->fCountError, fEvb->fCountUnknown, fEvb->fCountOut, count_lost, fEvb->fCountSlotErrors);
    }
 
-   if (fEvb) {
-      report_evb_unlocked(fEq, fEvb, fStatus);
-      fEvb->fLock.lock();
-      delete fEvb;
-      fEvb = NULL;
-   }
+   //if (fEvb) {
+   //   report_evb_unlocked(fEq, fEvb, fStatus);
+   //   fEvb->fLock.lock();
+   //   delete fEvb;
+   //   fEvb = NULL;
+   //}
 
    fEq->WriteStatistics();
 }
 
+#if 0
 bool EvbEq::Build(bool build_last)
 {
    bool done_something = false;
    if (fEvb) {
-      done_something |= fReaderTRG.TickLocked(fEvb, &fHandler);
-      done_something |= fReaderTDC.TickLocked(fEvb, &fHandler);
-      done_something |= fReaderUDP.TickLocked(fEvb, &fHandler);
-      done_something |= fHandler.XFlushBank(fEvb);
-      done_something |= fEvb->TickLocked(build_last);
-      done_something |= fEvb->fSendQueue->SendNextEvent();
+      //done_something |= fReaderTRG->TickLocked(true);
+      //done_something |= fReaderTDC->TickLocked(true);
+      //done_something |= fReaderUDP->TickLocked(true);
+      //done_something |= fEvb->TickLocked(build_last);
+      //done_something |= fEvb->fSendQueue->Tick();
    }
    return done_something;
 }
+#endif
 
 void HotStart(TMFE*mfe, TMFeRpcHandlerInterface*iface)
 {
@@ -2865,12 +3108,12 @@ int main(int argc, char* argv[])
    HotStart(mfe, evbeq);
 
    while (!mfe->fShutdownRequested) {
-      bool done_something = evbeq->Build(false);
-      if (!done_something) {
-         mfe->PollMidas(10);
-      } else {
-         mfe->PollMidas(0);
-      }
+      //bool done_something = evbeq->Build(false);
+      //if (!done_something) {
+      mfe->PollMidas(10);
+      //} else {
+      //mfe->PollMidas(0);
+      //}
    }
 
    delete evbeq;
