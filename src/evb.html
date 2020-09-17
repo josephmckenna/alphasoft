@@ -86,6 +86,10 @@
 	      <td><span id=reader_buftdc_queue_size>reader_buftdc_queue_size</span>&nbsp;/&nbsp;<span id=reader_buftdc_queue_size_max>reader_buftdc_queue_size_max</span></td>
 	    </tr>
 	    <tr align=center>
+	      <td align=left>Buffer BUFADC reader queue</td>
+	      <td><span id=reader_bufadc_queue_size>reader_bufadc_queue_size</span>&nbsp;/&nbsp;<span id=reader_bufadc_queue_size_max>reader_bufadc_queue_size_max</span></td>
+	    </tr>
+	    <tr align=center>
 	      <td align=left>Buffer BUFUDP reader queue</td>
 	      <td><span id=reader_bufudp_queue_size>reader_bufudp_queue_size</span>&nbsp;/&nbsp;<span id=reader_bufudp_queue_size_max>reader_bufudp_queue_size_max</span></td>
 	    </tr>
@@ -329,6 +333,9 @@
 
        set_text("reader_buftdc_queue_size", status.reader_buftdc_queue_size);
        set_text("reader_buftdc_queue_size_max", status.reader_buftdc_queue_size_max);
+
+       set_text("reader_bufadc_queue_size", status.reader_bufadc_queue_size);
+       set_text("reader_bufadc_queue_size_max", status.reader_bufadc_queue_size_max);
 
        set_text("reader_bufudp_queue_size", status.reader_bufudp_queue_size);
        set_text("reader_bufudp_queue_size_max", status.reader_bufudp_queue_size_max);
