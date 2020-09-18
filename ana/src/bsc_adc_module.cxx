@@ -57,8 +57,8 @@ private:
    TH2D* hFitStartTime = NULL;
    TH2D* hFitEndTime = NULL;
    TH1D* hNumChan = NULL;
-   TH1D* hTimeDiff = NULL;
-   TH1D* hTimeDiffSameEnd = NULL;
+   TH1D* hTimeDiffA = NULL;
+   TH1D* hTimeDiffB = NULL;
    TH2D* hTimeDiffBothBars = NULL;
    TH1D* hTimeDiffDiff = NULL;
    TH1D* hTOF = NULL;
@@ -98,8 +98,8 @@ public:
       hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
       hFitEndTime = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]",400,1200,2000,400,1200,2000);
       hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",7,-0.5,6.5);
-      hTimeDiff = new TH1D("hTimeDiff","ADC time diff between top and bottom ends;Time difference [ns]",100,-50,50);
-      hTimeDiffSameEnd = new TH1D("hTimeDiffSameEnd","ADC time diff between same end of different bars;Time difference [ns]",100,-50,50);
+      hTimeDiffA = new TH1D("hTimeDiffA","ADC time diff between top and bottom ends;Time difference [ns]",100,-50,50);
+      hTimeDiffB = new TH1D("hTimeDiffB","ADC time diff between top and bottom ends;Time difference [ns]",100,-50,50);
       hTimeDiffBothBars = new TH2D("hTimeDiffBothBars","ADC time diff between top and bottom ends of bar A, compared to bar B;Time difference bar A [ns];Time difference bar B [ns]",100,-50,50,100,-50,50);
       hTimeDiffDiff = new TH1D("hTimeDiffDiff","Difference between bar A and bar B time differences;Time difference difference [ns]",100,-50,50);
       hTOF = new TH1D("hTOF","Time of flight;TOF [ns]",100,-50,50);
@@ -144,8 +144,8 @@ public:
       delete hFitStartTime;
       delete hFitEndTime;
       delete hNumChan;
-      delete hTimeDiff;
-      delete hTimeDiffSameEnd;
+      delete hTimeDiffA;
+      delete hTimeDiffB;
       delete hTimeDiffBothBars;
       delete hTimeDiffDiff;
       delete hTOF;
@@ -211,10 +211,10 @@ public:
       std::vector<Alpha16Channel*> channels = data->hits;
       TBarEvent* BarEvent = new TBarEvent();
       std::map<int,bool> chans_hit;
-      chans_hit[4]=false;
+      chans_hit[0]=false;
       chans_hit[5]=false;
-      chans_hit[12]=false;
-      chans_hit[13]=false;
+      chans_hit[15]=false;
+      chans_hit[9]=false;
       std::map<int,double> adc_times;
 
       for(unsigned int i = 0; i < channels.size(); ++i)
@@ -224,7 +224,7 @@ public:
 
             // CHANNEL CUTS
             if( chan >= 16 ) continue; // it's AW
-            if( chan!=4 and chan!=5 and chan!=12 and chan!=13 ) continue; //wrong channel
+            if( chan!=0 and chan!=5 and chan!=9 and chan!=15 ) continue; //wrong channel
             //if( ch->bsc_bar < 0 ) continue;
 
             // CALCULATE BASELINE
@@ -305,6 +305,7 @@ public:
                                       hSampleWaveforms[hit_num]->SetBinError(bin_num,100);
                                    }
                              }
+                          std::cout<<"GS sample waveform #"<<hit_num<<" on channel "<<chan<<std::endl;
                           // Fits with skewed gaussian
                           TF1 *sgf = new TF1("sgf","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
                           sgf->SetParameters(max,imax,5,0.2);
@@ -347,52 +348,35 @@ public:
          }
 
       // MULTIPLE CHANNEL COINCIDENCE
-      bool barA_hit = chans_hit[4] and chans_hit[13];
+      bool barA_hit = chans_hit[9] and chans_hit[15];
       if (barA_hit) {
          hCount->Fill(1);
       }
-      bool barB_hit = chans_hit[5] and chans_hit[12];
+      bool barB_hit = chans_hit[5] and chans_hit[0];
       if (barB_hit) {
          hCount->Fill(2);
       }
-      bool top_coincidence = chans_hit[4] and chans_hit[5];
-      if (top_coincidence) {
-         hCount->Fill(4);
-      }
-      bool bottom_coincidence = chans_hit[12] and chans_hit[13];
-      if (bottom_coincidence) {
-         hCount->Fill(5);
-      }
-      bool coincidence = chans_hit[4] and chans_hit[5] and chans_hit[12] and chans_hit[13];
+      bool coincidence = chans_hit[0] and chans_hit[5] and chans_hit[15] and chans_hit[9];
       if (coincidence) {
-         std::cout<<"GS: 4 channel coincidence!"<<std::endl;
-         std::cout<<"Channel 4 time = "<<adc_times[4]<<std::endl;
-         std::cout<<"Channel 5 time = "<<adc_times[5]<<std::endl;
-         std::cout<<"Channel 12 time = "<<adc_times[12]<<std::endl;
-         std::cout<<"Channel 13 time = "<<adc_times[13]<<std::endl;
          hCount->Fill(3);
 
-         double time_diff_A = adc_times[4]-adc_times[13];
-         double time_sum_A = adc_times[4]+adc_times[13];
-         double time_diff_B = adc_times[5]-adc_times[12];
-         double time_sum_B = adc_times[5]+adc_times[12];
-         double time_diff_top = adc_times[4]-adc_times[5];
-         double time_diff_bottom = adc_times[13]-adc_times[12];
+         double time_diff_A = adc_times[9]-adc_times[15];
+         double time_sum_A = adc_times[9]+adc_times[15];
+         double time_diff_B = adc_times[5]-adc_times[0];
+         double time_sum_B = adc_times[5]+adc_times[0];
          double TOF = time_sum_B/2. - time_sum_A/2.;
 
-         hTimeDiff->Fill(time_diff_A);
+         hTimeDiffA->Fill(time_diff_A);
          hTimeSum->Fill(time_sum_A);
-         hTimeDiff->Fill(time_diff_B);
+         hTimeDiffB->Fill(time_diff_B);
          hTimeSum->Fill(time_sum_B);
-         hTimeDiffSameEnd->Fill(time_diff_top);
-         hTimeDiffSameEnd->Fill(time_diff_bottom);
          hTimeDiffBothBars->Fill(time_diff_A,time_diff_B);
          hTimeDiffDiff->Fill(time_diff_B-time_diff_A);
          hTOF->Fill(TOF);
 
       }
 
-      hNumChan->Fill(chans_hit[4]+chans_hit[5]+chans_hit[12]+chans_hit[13]);
+      hNumChan->Fill(chans_hit[0]+chans_hit[5]+chans_hit[15]+chans_hit[9]);
       hCount->Fill(0);
 
 
