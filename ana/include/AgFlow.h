@@ -305,7 +305,7 @@ class AgAnalysisFlow: public TAFlowEvent
 
 };
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 class AgSignalsFlow: public TAFlowEvent
 {
 public:

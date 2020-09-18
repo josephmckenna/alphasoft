@@ -2,7 +2,7 @@
 #define __UTILS__ 1
 
 #include <vector>
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "NeuralFinder.hh"
 
 #include "Reco.hh"
@@ -28,11 +28,12 @@ private:
 
 public:
    Utils(double);
-   Utils(std::string, double, bool);
+   //Utils(std::string, double, bool);
    Utils(std::string,double);
 
    TCanvas* csig=0;
    TCanvas* creco=0;
+   void MakeCanvases();
 
    void BookG4Histos();
    void BookRecoHistos();
@@ -67,6 +68,7 @@ public:
    void Draw(std::vector<signal>* awsig,
              std::vector<signal>* padsig, std::vector<signal>* combpads,
              bool norm=true);
+   void Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, bool norm=true);
    void PrintSignals(std::vector<signal>* sig);
    TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
    TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);

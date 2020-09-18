@@ -13,12 +13,6 @@
 #include "AgFlow.h"
 
 #include <TTree.h>
-#include "TSeqCollection.h"
-// #include <TH1D.h>
-// #include <TH2D.h>
-#include <TMath.h>
-#include <TCanvas.h>
-#include <TGraph.h>
 
 #include "TPCconstants.hh"
 #include "LookUpTable.hh"
@@ -90,6 +84,8 @@ private:
 
    bool fiducialization; // exclude points in the inhomogeneous field regions
    double z_fid; // region of inhomogeneous field
+
+   double MagneticField;
  
 public:
    TStoreEvent *analyzed_event;
@@ -100,7 +96,7 @@ public:
                                                  r( f->ana_settings, f->fMagneticField)
    {
       printf("RecoRun::ctor!\n");
-      //MagneticField = fFlags->fMagneticField;
+      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;
       z_fid=650.; // mm
@@ -179,7 +175,7 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if( fTrace )
-         printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
+         printf("RecoRun::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -241,7 +237,7 @@ public:
       START_TIMER
       #endif   
 
-      std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
+      if( fTrace ) printf("RecoRun::AnalyzeFlowEvent Event # %d\n");
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
@@ -256,11 +252,11 @@ public:
             int AW,PAD,SP=-1;
             AW=PAD=SP;
             if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
-            printf("RecoModule::Analyze, AW # signals %d\n", AW);
+            printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
             if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
-            printf("RecoModule::Analyze, PAD # signals %d\n", PAD);
+            printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
             if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
-            printf("RecoModule::Analyze, SP # %d\n", SP);
+            printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
       if (!SigFlow->matchSig)
       {
@@ -272,7 +268,7 @@ public:
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
-            std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+            std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
@@ -291,29 +287,32 @@ public:
             else
                r.AddSpacePoint( SigFlow->matchSig, z_fid );
       
-            printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
+            //printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
             r.FindTracks(fFlags->finder);
-            printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
+            //printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
+            //if( fTrace ) 
+            printf("RecoRun::AnalyzeFlowEvent  Points: %d  Tracks: %d\n",
+                                r.GetNumberOfPoints(),
+                                r.GetNumberOfTracks());
+
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new Ag2DAnalysisReportFlow(flow,
                                                            {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
                                                            {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
             timer_start=CLOCK_NOW
 #endif
-            if( fFlags->fMagneticField == 0. )
-               {
-                  int nlin = r.FitLines();
-                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-               }
+
+            int nlin=0;
+            if( MagneticField < 0.5 ) nlin = r.FitLines();
 
             int nhel = r.FitHelix();
-            std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+            if( fTrace ) printf("RecoRun::AnalyzeFlowEvent lines %d, helices %d\n",nlin,nhel);           
 
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status = r.RecVertex( &theVertex );
-            std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
+            if( fTrace ) std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
             analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
             analyzed_event->SetVertexStatus( status );
@@ -321,26 +320,18 @@ public:
                {
                   analyzed_event->SetVertex(*(theVertex.GetVertex()));
                   analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-                  theVertex.Print("rphi");
+                  if( fTrace ) theVertex.Print("rphi");
                }
             else
-               std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+               std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
-      
-      // AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      // //If have barrel scintilator, add to TStoreEvent
-      // if (bf)
-      //    {
-      //       //bf->BarEvent->Print();
-      //       analyzed_event->AddBarrelHits(bf->BarEvent);
-      //    }
 
       EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
       EventTree->Fill();
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
-      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
+      //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
 #ifdef _TIME_ANALYSIS_
       if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
 #endif

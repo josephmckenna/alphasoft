@@ -8,7 +8,7 @@
 #include <TH2D.h>
 #include <TClonesArray.h>
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "AnaSettings.h"
 
 #include "LookUpTable.hh"

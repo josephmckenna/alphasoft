@@ -662,7 +662,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          if(peak_h > fPWBThres)
             {
                if(fTrace)
-                  std::cout<<"\tsignal above threshold ch: "<<i<<" index: "<<index<<std::endl;
+                  std::cout<<"\tsignal above threshold ch: "<<i<<" index: "<<index<<" p.h.: "<<peak_h<<std::endl;
 
                // SUBTRACT PEDESTAL
                waveform->massage(ped,fPwbRescale.at(pad_index));

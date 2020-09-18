@@ -5,9 +5,13 @@
 #include "TF1.h"
 #include "TCanvas.h"
 
-#include <chrono>
+#include <Math/MinimizerOptions.h>
 
 #include "fitSignals.hh"
+
+#include <chrono>
+#include <thread>       // std::thread
+#include <functional>   // std::ref
 
 Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 {
@@ -48,7 +52,6 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
 
   phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
   zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
-  //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);
 }
 
 Match::~Match()
@@ -59,7 +62,8 @@ void Match::Init()
   fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
-  std::cout<<"Match::Init!"<<std::endl;
+  if(fDebug) std::cout<<"Match::Init!"<<std::endl;
+  ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
 }
 
 void Match::Setup(TFile* OutputFile)
@@ -86,6 +90,10 @@ void Match::Setup(TFile* OutputFile)
       hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
       hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
       hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
+      //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);      
+      htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,1000.);
+      htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,1000.);
+      htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
     }
 }
 
@@ -107,14 +115,14 @@ std::set<short> Match::PartionBySector(std::vector<signal>* padsignals,
 
 std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& sig )
 {
-  if( fTrace ) std::cout<<"Match::PartitionByTime  "<<sig.size()<<std::endl;
+  if( fDebug ) std::cout<<"Match::PartitionByTime  "<<sig.size()<<std::endl;
   std::multiset<signal, signal::timeorder> sig_bytime(sig.begin(),
 						      sig.end());
   double temp=-999999.;
   std::vector< std::vector<signal> > pad_bytime;
   for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
     {
-      if( fTrace ) isig->print();
+      if( fDebug ) isig->print();
       //      if( isig->t > temp ) // 
       if( (isig->t - temp) > fCoincTime )
 	{
@@ -126,7 +134,7 @@ std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& 
 	pad_bytime.back().push_back( *isig );
     }
   sig_bytime.clear();
-  if( fTrace ) std::cout<<"Match::PartitionByTime # of time partitions: "<<pad_bytime.size()<<std::endl;
+  if( fDebug ) std::cout<<"Match::PartitionByTime # of time partitions: "<<pad_bytime.size()<<std::endl;
   return pad_bytime;
 }
 
@@ -136,13 +144,13 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   // combine pads in the same column only
   std::vector< std::vector<signal> > pad_bysec;
   std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
-  std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
+  if( fTrace ) std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
   std::vector< std::vector<signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
       if( sector < 0 || sector > 31 ) continue;
-      if( fTrace )
+      if( fDebug )
 	std::cout<<"Match::CombPads sec: "<<sector
 		 <<" = sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
@@ -161,72 +169,106 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   return comb;
 }
 
-void Match::CombinePads(std::vector<signal>* padsignals)
+void Match::CombinePads(std::vector< std::vector<signal> > *comb)
 {
-  //ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
-  std::vector< std::vector<signal> > comb = CombPads( padsignals );
   fCombinedPads=new std::vector<signal>;
-  if( comb.size()==0 ) return;
+  if( comb->size()==0 ) return;
  
   if( fTrace ) 
     {
-      std::cout<<"Match::CombinePads comb size: "<<comb.size()<<"\t";
+      std::cout<<"Match::CombinePads comb size: "<<comb->size()<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
-      std::cout<<"Match::CombinePads sssigv: ";      
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-	{
-	  std::cout<<sigv->size()<<" ";
-	}
+      std::cout<<"Match::CombinePads sssigv: ";
+      if( fDebug ) {
+	for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+	  {
+	    std::cout<<sigv->size()<<" ";
+	  }
+      }
       std::cout<<"\n";
     }
    
   switch(CentreOfGravityFunction) {
   case 0: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    auto start = std::chrono::high_resolution_clock::now();
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv ){
       CentreOfGravity(*sigv);
+    }
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+    if( fTrace ) 
+      std::cout << "Match::CombinePads Time taken CentreOfGravity: "
+		<< duration.count() << " us" << std::endl; 
+    if( diagnostic ) htimecog->Fill(duration.count());
     break;
   }
   case 1: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_nofit(*sigv);
     break;
   }
   case 2: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_nohisto(*sigv);
     break;
   }
   case 3: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_single_peak(*sigv);
     break;
   }
   case 4: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_multi_peak(*sigv);
     break;
   }
   case 5: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
       CentreOfGravity_histoblobs(*sigv);
     break;
   }
  case 6: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
+    std::vector<std::thread> cogthread;
+    auto start = std::chrono::high_resolution_clock::now();
+    //for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+    //std::vector<signal> out;
+    for( unsigned i=0; i<comb->size(); ++i)
       {
-	int nsig = sigv->size();
-	int ncog = CentreOfGravity_blobs(*sigv);
-	if( fTrace ) 
-	  std::cout<<"Match::CombinePads in: "<<nsig
-		   <<" out: "<<ncog<<"\n"<<std::endl;
-      }
+	//cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,std::ref(comb->at(i)),std::ref(out)) );
+	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,std::ref(comb->at(i))) );
+	// int ncog = CentreOfGravity_blobs(*sigv);
+	// if( fTrace ) {
+	//   int nsig = sigv->size();
+	//   std::cout<<"Match::CombinePads in: "<<nsig
+	// 	   <<" out: "<<ncog << std::endl; 
+	// }
+      }   
+    // for (unsigned i=0; i<cogthread.size(); i++) {
+    //   cogthread[i]->join();
+    //   delete cogthread[i];
+    // }
+    for( auto& th : cogthread ) th.join();
+    //for( auto& s: out ) fCombinedPads->emplace_back(s);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    if( diagnostic ) htimecog->Fill(duration.count());
+    if( fTrace ) {
+      std::cout<<"Match::CombinePads Time taken CentreOfGravity_blobs: "
+		<< duration.count() << " us" << std::endl; 
+    }
     break;
- }
+   }
   }
 
-  for (uint i=0; i<comb.size(); i++)
-    comb.at(i).clear();
-  comb.clear();
+  for (uint i=0; i<comb->size(); i++)
+    comb->at(i).clear();
+  comb->clear();
+}
+
+void Match::CombinePads(std::vector<signal>* padsignals)
+{
+  std::vector< std::vector<signal> > comb = CombPads( padsignals );
+  CombinePads(&comb);
 }
 
 void Match::CentreOfGravity( std::vector<signal> &vsig )
@@ -241,6 +283,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
   //      std::cout<<hname<<std::endl;
+  auto start = std::chrono::high_resolution_clock::now();
   TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   for( auto& s: vsig )
     {
@@ -255,18 +298,24 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
   int error_level_save = gErrorIgnoreLevel;
   gErrorIgnoreLevel = kFatal;
   spec.Search(hh,1,"nodraw");
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
   int nfound = spec.GetNPeaks();
+
   if( diagnostic )
-    hcognpeaks ->Fill(nfound);
+    {
+      htimeblobs->Fill(duration.count());
+      hcognpeaks ->Fill(nfound);
+    }
 
   gErrorIgnoreLevel = error_level_save;
 
-  if( fTrace )
+  if( fDebug )
     std::cout<<"Match::CentreOfGravity nfound: "<<nfound<<" @ t: "<<time<<std::endl;
   if( nfound > 1 && hh->GetRMS() < spectrum_width_min )
     {
       nfound = 1;
-      if( fTrace )
+      if( fDebug )
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
@@ -284,7 +333,11 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
       ff->SetParameter(1,peakx[i]);
       ff->SetParameter(2,padSigma);
 
+      start = std::chrono::high_resolution_clock::now();
       int r = hh->Fit(ff,"B0NQ","");
+      stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      if( diagnostic ) htimefit->Fill(duration.count());
 #ifdef RESCUE_FIT
       bool stat=true;
 #endif
@@ -316,7 +369,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	    {
 	      // create new signal with combined pads
 	      fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
-	      if( fTrace )
+	      if( fDebug )
 		std::cout<<"Combination Found! s: "<<col
 			 <<" i: "<<row
 			 <<" t: "<<time
@@ -369,7 +422,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	      // create new signal with combined pads
 	      CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
 
-	      if( fTrace )
+	      if( fDebug )
 		std::cout<<"at last Found! s: "<<col
 			 <<" i: "<<index
 			 <<" t: "<<time
@@ -667,7 +720,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
 
-		  if( fTrace ){
+		  if( fDebug ){
 		    std::cout<<"Combination Found! s: "<<col
 			     <<" i: "<<index
 			     <<" t: "<<time
@@ -676,7 +729,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 			     <<" err: "<<err<<std::endl;
 		  }
 		} else {
-		if( fTrace ){
+		if( fDebug ){
 		  std::cout<<"Bad Combination Found! (z outside TPC) s: "<<col
 			   <<" i: "<<index
 			   <<" t: "<<time
@@ -688,7 +741,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 	    }
 	  else // fit is crazy
 	    {
-	      if( fTrace )
+	      if( fDebug )
 		std::cout<<"Combination NOT found... position error: "<<err
 			 <<" or sigma: "<<sigma<<std::endl;
 #ifdef RESCUE_FIT
@@ -734,7 +787,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 	      // create new signal with combined pads
 	      fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, zed_err );
 
-	      if( fTrace )
+	      if( fDebug )
 		std::cout<<"at last Found! s: "<<col
 			 <<" i: "<<index
 			 <<" t: "<<time
@@ -755,18 +808,20 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
+//void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal>& padcog)
+void Match::CentreOfGravity_blobs( std::vector<signal>& vsig )
 {
   int nPositions=0;
-  if(int(vsig.size()) < padsNmin) return -1;
+  if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
 
   std::vector<signal> vsig_sorted(vsig);
   signal::indexorder sigcmp_z;
+  auto start = std::chrono::high_resolution_clock::now();
   std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
   std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
-
+  
   int nfound = blobs.size();
   if( fTrace )
     std::cout<<"MatchModule::CentreOfGravity_blobs nfound: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
@@ -784,29 +839,33 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	}
       if(!grass)
 	{
-	  // std::cout << blobs[i].first << '\t';
+	  if( fDebug ) 
+	    std::cout << blobs[i].first << '\t';
 	  peakx.push_back(blobs[i].first);
 	  peaky.push_back(blobs[i].second);
 	}
-      // else
-      // 	{
-      // 	  //std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
-      // 	}
+      else
+      	{
+      	  if( fDebug ) std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+      	}
     }
-  // std::cout << std::endl;
+  if( fDebug ) std::cout << "\n";
 
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+ 
   nfound=int(peakx.size());
-  if( fTrace )
+  if( fDebug )
     std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
     // assert(int(peakx.size())==nfound);
 
   if(diagnostic)
     {
+      htimeblobs->Fill(duration.count());
       hcognpeaks->Fill(nfound);
       // hcognpeaksrms->Fill(rms, nfound);
       // hcognpeakswidth->Fill(width, nfound);
     }
-
 
   fitSignals ffs( vsig_sorted, nfound );
   for(int i = 0; i < nfound; ++i)
@@ -822,7 +881,11 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
   //   std::cout<<*it<<", ";
   // std::cout<<"\n";
 
+  start = std::chrono::high_resolution_clock::now();
   ffs.Fit();
+  stop = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  if( diagnostic ) htimefit->Fill(duration.count());
   int r = ffs.GetStat();
   if( r==1 ) // it's good
     {
@@ -856,12 +919,15 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 	      fabs(sigma-padSigma)/padSigma < padSigmaD )
 	    {
 	      if( fabs(pos) < ALPHAg::_halflength )
-	      //if( row>=0 && row<576 )
 		{
+		  mtx.lock();
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
+		  mtx.unlock();
+		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
+		  //padcog.push_back(pad_cog);
 		  ++nPositions;
-		  if( fTrace )
+		  if( fDebug )
 		    std::cout<<"CoG_blobs Combination Found! s: "<<col
 			     <<" i: "<<row
 			     <<" t: "<<time
@@ -871,7 +937,7 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
 		}
 	      else
 		{
-		  if( fTrace )
+		  if( fDebug )
 		    std::cout<<"CoG_blobs Bad Combination Found! (z outside TPC) s: "<<col
 			     <<" i: "<<row
 			     <<" t: "<<time
@@ -897,7 +963,7 @@ int Match::CentreOfGravity_blobs( std::vector<signal> &vsig )
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
 
-  return nPositions;
+  //  return nPositions;
 }
 
 void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
@@ -1500,6 +1566,58 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
 	    }
 	}
     }
+  if( fTrace )
+    std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  if( int(spacepoints->size()) != Nmatch )
+    std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
+}
+
+void Match::MatchElectrodes(std::vector<signal>* awsignals, 
+			    std::vector<signal>* pdsignals)
+{
+  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
+						     awsignals->end());
+  std::multiset<signal, signal::timeorder> pad_bytime(pdsignals->begin(),
+						      pdsignals->end());
+  if(spacepoints) delete spacepoints;
+  spacepoints=new std::vector< std::pair<signal,signal> >;
+  int Nmatch=0;
+  for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+    {
+      if( iaw->t < 0. ) continue;
+      short sector = short(iaw->idx/8);
+      short secwire = short(iaw->idx%8);
+      if( fTrace )
+	std::cout<<"Match::Match aw: "<<iaw->idx
+		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
+      for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
+	{
+	  if( ipd->t < 0. ) continue;
+	  bool tmatch=false;
+	  bool pmatch=false;
+
+          bool ampCut = (charge_dist_scale==0);
+
+	  double delta = fabs( iaw->t - ipd->t );
+	  if( delta < fCoincTime ) tmatch=true;
+
+	  if( sector == ipd->sec ) pmatch=true;
+
+          if( !ampCut ){
+              ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
+          }
+
+	  if( tmatch && pmatch && ampCut )
+	    {
+	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
+	      //pad_bytime.erase( ipd );
+	      ++Nmatch;
+	      if( fTrace )
+		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
+			 <<"\tpad err: "<<ipd->errz<<std::endl;
+	    }
+	}
+    }
   //  if( fTrace )
   std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
@@ -1743,9 +1861,9 @@ void Match::CombPoints()
     std::cerr<<"Match::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
 	     <<"\t"<<m<<std::endl;
 
-  if( fTrace )
-    std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
-
   spacepoints->assign( merged.begin(), merged.end() );
-  std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+  if( fTrace ) {
+    std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
+    std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+  }
 }

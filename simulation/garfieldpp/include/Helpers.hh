@@ -5,6 +5,8 @@
 #include <TMath.h>
 #include <TVector3.h>
 #include <TH1D.h>
+#include <TH2D.h>
+#include <TCanvas.h>
 
 #include "Medium.hh"
 #include "MediumMagboltz.hh"
@@ -60,7 +62,7 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
   unsigned int nBins;
   s->GetTimeWindow(Tstart, BinWidth, nBins);
   double Tstop = Tstart + BinWidth * double(nBins) ;
-
+  std::cout<<"Plotting: "<<electrode->Data()<<" from: "<<Tstart<<" to: "<<Tstop<<" ns in "<<nBins<<" bins"<<std::endl;
   TString hname  = TString::Format("h%s", electrode->Data());
   TString htitle = TString::Format("Signal %s;t [ns];", electrode->Data());
   if(conv)
@@ -76,6 +78,9 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
   for(unsigned int b=1; b<=nBins; ++b)
     hs.SetBinContent(b,s->GetSignal(electrode->Data(),b));
 
+  int mbin=hs.GetMinimumBin();
+  std::cout<<hs.GetName()<<" peak "<<hs.GetBinContent(mbin)<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
+  
   return hs;
 }
 
@@ -156,6 +161,32 @@ void Polar2Cartesian(const double r, const double theta,
 {
   x0 = r * cos(M_PI * theta / 180.);
   y0 = r * sin(M_PI * theta / 180.);
+}
+
+
+TH2D _hEv;
+TH2D _hrE;
+TH2D _hrv;
+double ElectricFieldHisto(double x, double y, double z, Sensor* s)
+{
+  // Electric and Magnetic Fields
+  double Ex,Ey,Ez,VV,Bx,By,Bz;
+  int dummy;
+  // Drift Velocity
+  Medium* m;
+  double Vx,Vy,Vz;
+  s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,dummy);
+  s->MagneticField(x,y,z,Bx,By,Bz,dummy);
+  m->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  // Lorentz Angle
+  TVector3 V(Vx,Vy,Vz);
+  TVector3 E(Ex,Ey,Ez);
+
+  double Emag=E.Mag(),Vmag=V.Mag(),r=TMath::Sqrt(x*x+y*y);
+  _hEv.Fill(Emag,Vmag);
+  _hrE.Fill(r,Emag);
+  _hrv.Fill(r,Vmag);
+  return TMath::Pi()-V.Angle(E);
 }
 
 /* emacs
