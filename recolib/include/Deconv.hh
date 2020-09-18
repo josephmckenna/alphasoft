@@ -9,7 +9,7 @@
 #include <set>
 #include <algorithm>
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "AnaSettings.h"
 
 #include <TClonesArray.h>
@@ -82,7 +82,6 @@ private:
    std::vector<double> resRMS_a;
    std::vector<double> resRMS_p;
 
-   void Setup();
 
    int ReadResponseFile(const double awbin, const double padbin);
    int ReadAWResponseFile( const double awbin );
@@ -240,6 +239,7 @@ public:
    Deconv(AnaSettings*);
    ~Deconv();
 
+   void Setup();
    void SetupADCs(int run, bool norm=false, bool diag=false);
    void SetupPWBs(int run, bool norm=false, bool diag=false);
 

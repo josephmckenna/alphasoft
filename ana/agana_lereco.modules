@@ -1,0 +1,27 @@
+# uncomment and define analyzer modules here
+# Any line with a '#' in it will be ignored!
+
+#Tracking with LE detection in place of deconv:
+eos_module.o handle_sequencer.o chrono_module.o
+ncfm.o unpack_module.o
+Alpha16.o
+TsSync.o Feam.o Tdc.o FeamEVB.o FeamAsm.o
+PwbAsm.o AgEvent.o AgEVB.o TrgAsm.o
+Unpack.o AgAsm.o
+
+# AC
+bsc_adc_module.o     
+# NM
+bsc_tdc_module.o
+
+leaw_module.o lepad_module.o spacepoint_module.o reco_module.o
+
+# GS
+bv_tpc_matching_module.o
+
+histo_module.o
+phspectrum_module.o
+calib_module.o
+display_module.o
+official_time_module.o
+AnalysisReport_module.o

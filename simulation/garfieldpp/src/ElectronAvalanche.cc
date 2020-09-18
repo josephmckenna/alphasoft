@@ -335,8 +335,8 @@ int main(int argc, char * argv[])
     {
       cerr<<"Apply the transfer function"<<endl;
       // Apply the transfer function
-      sensor.ConvoluteSignal();
-      ROsens.ConvoluteSignal();
+      sensor.ConvoluteSignals();
+      ROsens.ConvoluteSignals();
     }
 
   // WIRES SIGNALS

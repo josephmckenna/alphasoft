@@ -23,6 +23,7 @@ cache:
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
+    - bin/
 
 #Global before script (cc7)
 before_script:
@@ -117,6 +118,18 @@ build-fedora-clang:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+build-cc7-cmake:
+  stage: build
+  script:
+    - echo "Building"
+    - scripts/ccomp.sh clean all
+    - scripts/ccomp.sh ci | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
 build-cc7:
   stage: build
   script: 
@@ -129,22 +142,6 @@ build-cc7:
     paths:
       - BuildLog.txt
       - ana/include/GitInfo.h
-
-
-build-cc7-cmake:
-  stage: build
-  script:
-    - echo "Building"
-    - rm -rf build
-    - mkdir build
-    - cd build
-    - cmake3 ../
-    - make 2>&1 | tee ../BuildLog.txt
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-
 
 #simulation:
 #  stage: test_more
@@ -175,19 +172,16 @@ test:
     - . agconfig.sh
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/*.exe
+    - ls -l $AGRELEASE/bin/*.exe
     - ./RunChecker.sh
     - cd -
     - mkdir -p public
     - cp -v testlogs/* public/
-    #- rm -f agdaq_centos7.tar.gz
-    #- tar -vzcf agdaq_centos7.tar.gz --exclude=*.gz --exclude=.git --exclude=*.lz4 --exclude=*.root --exclude=public --exclude=testlogs --exclude=scripts/UnitTest .
   dependencies:
-    - build-cc7
+    - build-cc7-cmake
   artifacts:
     when: on_success
     paths:
-    #- agdaq_centos7.tar.gz
     - public
     - variables
     when: on_failure

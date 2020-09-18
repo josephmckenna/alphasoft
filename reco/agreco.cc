@@ -14,7 +14,7 @@ using namespace std;
 #include <TRegexp.h>
 
 #include "TStoreEvent.hh"
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "AnaSettings.h"
 
 #include "TSpacePoint.hh"

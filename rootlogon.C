@@ -26,13 +26,13 @@
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
-  // TString libreco(basedir); libreco += "/recolib/libAGTPC";
+  // TString libreco(basedir); libreco += "/recolib/libagtpc";
   // gSystem->Load(libreco.Data());
 
-  // TString libana(basedir); libana += "/analib/libagana";
+  // TString libana(basedir); libana += "/analib/libanalib";
   // gSystem->Load(libana.Data());
 
-  TString libname("libAGTPC.so");
+  TString libname("libagtpc.so");
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
@@ -44,7 +44,7 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
  
-  libname="libagana.so";
+  libname="libanalib.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );

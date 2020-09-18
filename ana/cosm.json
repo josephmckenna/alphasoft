@@ -6,6 +6,18 @@
 	"PADthr" :   10
     },
 
+   "LEModule": {
+        "ADCrms"  : 1000,
+        "PWBrms"  :  100,
+	"ADCthr"  :  750,
+	"PWBthr"  :  100,
+        "ADCgain" :    1.33333,
+        "PWBgain" :    1,
+        "ADCtime" : -535,
+        "PWBtime" : -390,
+        "CFDfrac" :    0.6
+   },
+
     "MatchModule": {
 	"CentreOfGravityMethod": "CentreOfGravity_blobs",
         "maxPadGroups": 10,
