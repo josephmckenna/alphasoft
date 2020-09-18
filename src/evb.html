@@ -26,7 +26,6 @@
 	  <table align=center>
 	    <tr align=center>
 	      <td>Dead</td>
-	      <td>Input</td>
 	      <td>Unknown</td>
 	      <td>Complete</td>
 	      <td>Incomplete</td>
@@ -38,7 +37,6 @@
 	    </tr>
 	    <tr align=center>
 	      <td id=dead>Dead</td>
-	      <td id=input>Input</td>
 	      <td id=unknown>Unknown</td>
 	      <td id=complete>Complete</td>
 	      <td id=incomplete>Incomplete</td>
@@ -56,46 +54,69 @@
 	<div align=center>
 	  <table align=center>
 	    <tr align=center>
-	      <td align=left>Skew</td>
+	      <td align=left>Time skew</td>
 	      <td>
                 <span id=skew>skew</span>&nbsp;/&nbsp;<span id=skew_max>skew_max</span>
               </td>
+	      <td align=left>sec, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>PWB sca fifo used</td>
 	      <td id=pwb_sca_fifo_max_used>pwb_sca_fifo_max_used</td>
+	      <td align=left>adc samples, max used since power up</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>PWB event fifo used</td>
 	      <td>
                 <span id=pwb_event_fifo_used>pwb_event_fifo_used</span>&nbsp;/&nbsp;<span id=pwb_event_fifo_max_used>pwb_event_fifo_max_used</span>
               </td>
+	      <td align=left>32 slots, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>PWB event fifo overflows</td>
 	      <td>
                 <span id=pwb_event_fifo_overflows>pwb_event_fifo_overflows</span>&nbsp;/&nbsp;<span id=pwb_event_fifo_overflows_sum>pwb_event_fifo_overflows_sum</span>
               </td>
+	      <td align=left>now / total this run</td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Pads/event thr</td>
+	      <td>
+                <span id=pwb_pads_thr>pwb_pads_thr</span>&nbsp;/&nbsp;<span id=pwb_pads_thr_max>pwb_pads_thr_max</span>
+              </td>
+	      <td align=left>ave / max</td>
+	    </tr>
+	    <tr align=center>
+	      <td align=left>Pads/event sent</td>
+	      <td>
+                <span id=pwb_pads_sent>pwb_pads_sent</span>&nbsp;/&nbsp;<span id=pwb_pads_sent_max>pwb_pads_sent_max</span>
+              </td>
+	      <td align=left>ave / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Buffer BUFTRG reader queue</td>
 	      <td><span id=reader_buftrg_queue_size>reader_buftrg_queue_size</span>&nbsp;/&nbsp;<span id=reader_buftrg_queue_size_max>reader_buftrg_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Buffer BUFTDC reader queue</td>
 	      <td><span id=reader_buftdc_queue_size>reader_buftdc_queue_size</span>&nbsp;/&nbsp;<span id=reader_buftdc_queue_size_max>reader_buftdc_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Buffer BUFADC reader queue</td>
 	      <td><span id=reader_bufadc_queue_size>reader_bufadc_queue_size</span>&nbsp;/&nbsp;<span id=reader_bufadc_queue_size_max>reader_bufadc_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Buffer BUFUDP reader queue</td>
 	      <td><span id=reader_bufudp_queue_size>reader_bufudp_queue_size</span>&nbsp;/&nbsp;<span id=reader_bufudp_queue_size_max>reader_bufudp_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Event builder queue</td>
 	      <td><span id=evb_queue_size>evb_queue_size</span>&nbsp;/&nbsp;<span id=evb_queue_size_max>evb_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Pop</td>
@@ -104,10 +125,12 @@
 	    <tr align=center>
 	      <td align=left>Send queue</td>
 	      <td><span id=send_queue_size>send_queue_size</span>&nbsp;/&nbsp;<span id=send_queue_size_max>send_queue_size_max</span></td>
+	      <td align=left>events, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Event size</td>
 	      <td><span id=event_size>event_size</span>&nbsp;/&nbsp;<span id=event_size_max>event_size_max</span></td>
+	      <td align=left>bytes, now / max</td>
 	    </tr>
 	    <tr align=center>
 	      <td align=left>Evb output</td>
@@ -125,14 +148,14 @@
 	      <td>Name</td>
 	      <td>Dead</td>
 	      <td>Skew</td>
-	      <td>Incomplete count</td>
+	      <td>Incom-plete count</td>
 	      <td>Errors</td>
 	      <td>Packets count</td>
 	      <!--- <td>Bytes count</td> --->
 	      <td>Packets per second</td>
 	      <td>Bytes per second</td>
-	      <td>Sent min/max/ave</td>
-	      <td>Thr min/max/ave</td>
+	      <td>Pads/event<br>Sent&nbsp;min/max</td>
+	      <td>Pads/Event<br>Thr&nbsp;ave/max</td>
 	      <td>PWB FIFOs</td>
 	    </tr>
 	    <tr id="datatable_last" align=center>
@@ -278,7 +301,7 @@
        //set_text("sca_gain", s.sca_gain);
 
        set_text("dead", status.count_dead_slots);
-       set_text("input", status.events_in);
+       //set_text("input", status.events_in);
        set_text("complete", status.complete);
        set_text("incomplete", status.incomplete);
        set_text("witherrors", status.error);
@@ -328,6 +351,12 @@
        set_text("pwb_event_fifo_overflows", v.pwb_event_fifo_overflows);
        set_text("pwb_event_fifo_overflows_sum", v.pwb_event_fifo_overflows_sum);
 
+       set_text("pwb_pads_thr", v.pwb_pads_per_event_thr.toFixed(2));
+       set_text("pwb_pads_thr_max", status.pwb_pads_per_event_thr_max.toFixed(2));
+
+       set_text("pwb_pads_sent", v.pwb_pads_per_event_sent.toFixed(2));
+       set_text("pwb_pads_sent_max", status.pwb_pads_per_event_sent_max.toFixed(2));
+
        set_text("reader_buftrg_queue_size", status.reader_buftrg_queue_size);
        set_text("reader_buftrg_queue_size_max", status.reader_buftrg_queue_size_max);
 
@@ -371,9 +400,24 @@
           set_text("slot"+i, i);
           set_text("name"+i, status.names[i]);
           set_text("dead"+i, status.dead[i]);
+          if (status.dead[i]) {
+            set_colour("dead"+i, "red");
+          } else {
+            set_colour("dead"+i, "");
+          }
           set_text("skew"+i, status.skew_time[i].toFixed(3));
           set_text("incomplete"+i, status.incomplete_count[i]);
+          if (status.incomplete_count[i]) {
+            set_colour("incomplete"+i, "yellow");
+          } else {
+            set_colour("incomplete"+i, "");
+          }
           set_text("errors"+i, status.errors[i]);
+          if (status.errors[i]) {
+            set_colour("errors"+i, "yellow");
+          } else {
+            set_colour("errors"+i, "");
+          }
           set_text("packets"+i, status.packets_count[i]);
           //set_text("bytes"+i, status.bytes_count[i]);
           set_text("pps"+i, status.packets_per_second[i].toFixed(0));
@@ -383,13 +427,19 @@
           //set_text("smax"+i, status.sent_max[i]);
           //set_text("save"+i, status.sent_ave[i].toFixed(2));
 
-          set_text("sent"+i, status.sent_min[i] + " / " + status.sent_max[i] + " / " + status.sent_ave[i].toFixed(2));
-          set_text("thr"+i, status.thr_min[i] + " / " + status.thr_max[i] + " / " + status.thr_ave[i].toFixed(2));
+          set_text("sent"+i, status.sent_ave[i].toFixed(2) + "&nbsp;/&nbsp;" + status.sent_ave_max[i].toFixed(2));
+          set_text("thr"+i, status.thr_ave[i].toFixed(2) + "&nbsp;/&nbsp;" + status.thr_ave_max[i].toFixed(2));
+
+          //set_text("sent"+i, status.sent_min[i] + "&nbsp;/&nbsp;" + status.sent_ave[i].toFixed(2));
+          //set_text("thr"+i, status.thr_min[i] + "&nbsp;/&nbsp;" + status.thr_ave[i].toFixed(2));
 
           //set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "/" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i] + "/" + status.pwb_event_fifo_rd_used[i] + ":" + status.pwb_event_fifo_rd_max_used[i]);
           set_text("fifo"+i, status.pwb_sca_fifo_max_used[i] + "&nbsp;/&nbsp;" + status.pwb_event_fifo_wr_used[i] + ":" + status.pwb_event_fifo_wr_max_used[i]);
-
-          //      set_colour("user_page"+i, "gray");
+          if (status.pwb_event_fifo_wr_max_used[i]>=31) {
+            set_colour("fifo"+i, "yellow");
+          } else {
+            set_colour("fifo"+i, "");
+          }
           //set_text("acc_trig"+i, v.pwb_trigger_total_accepted[i].toFixed(0));
           //set_text("drop_trig"+i, v.pwb_trigger_total_dropped[i].toFixed(0));
        }
