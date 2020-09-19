@@ -190,16 +190,16 @@ void Match::CombinePads(std::vector< std::vector<signal> > *comb)
    
   switch(CentreOfGravityFunction) {
   case 0: {
-    auto start = std::chrono::high_resolution_clock::now();
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv ){
+      auto start = std::chrono::high_resolution_clock::now();
       CentreOfGravity(*sigv);
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+      if( fTrace ) 
+	std::cout << "Match::CombinePads Time taken CentreOfGravity: "
+		  << duration.count() << " us" << std::endl; 
+      if( diagnostic ) htimecog->Fill(duration.count());
     }
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
-    if( fTrace ) 
-      std::cout << "Match::CombinePads Time taken CentreOfGravity: "
-		<< duration.count() << " us" << std::endl; 
-    if( diagnostic ) htimecog->Fill(duration.count());
     break;
   }
   case 1: {
@@ -229,37 +229,30 @@ void Match::CombinePads(std::vector< std::vector<signal> > *comb)
   }
  case 6: {
     std::vector<std::thread> cogthread;
-    auto start = std::chrono::high_resolution_clock::now();
-    //for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-    //std::vector<signal> out;
+    std::vector<std::chrono::high_resolution_clock::time_point> cogstart;
     for( unsigned i=0; i<comb->size(); ++i)
       {
-	//cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,std::ref(comb->at(i)),std::ref(out)) );
-	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,std::ref(comb->at(i))) );
-	// int ncog = CentreOfGravity_blobs(*sigv);
-	// if( fTrace ) {
-	//   int nsig = sigv->size();
-	//   std::cout<<"Match::CombinePads in: "<<nsig
-	// 	   <<" out: "<<ncog << std::endl; 
-	// }
+	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,
+					 std::ref(comb->at(i))) );
+	cogstart.push_back( std::chrono::high_resolution_clock::now() );
       }   
-    // for (unsigned i=0; i<cogthread.size(); i++) {
-    //   cogthread[i]->join();
-    //   delete cogthread[i];
-    // }
-    for( auto& th : cogthread ) th.join();
-    //for( auto& s: out ) fCombinedPads->emplace_back(s);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    if( diagnostic ) htimecog->Fill(duration.count());
-    if( fTrace ) {
-      std::cout<<"Match::CombinePads Time taken CentreOfGravity_blobs: "
-		<< duration.count() << " us" << std::endl; 
-    }
+    //for( auto& th : cogthread )
+    for( auto th=cogthread.begin();th!=cogthread.end();++th)
+      {
+	th->join();
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto start = cogstart.at( std::distance(cogthread.begin(),th) );
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	if( diagnostic ) htimecog->Fill(duration.count());
+	if( fTrace ) {
+	  std::cout<<"Match::CombinePads Time taken CentreOfGravity_blobs: "
+		   << duration.count() << " us" << std::endl; 
+	}
+      }
     break;
    }
   }
-
+  
   for (uint i=0; i<comb->size(); i++)
     comb->at(i).clear();
   comb->clear();
