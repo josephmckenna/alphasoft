@@ -140,7 +140,7 @@ public:
       else
          {
             int stat = d.FindAnodeTimes( aw );
-            printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
+            if(fTrace) printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
 
             AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetAnodeSignal());
              

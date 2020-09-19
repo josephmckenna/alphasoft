@@ -61,4 +61,9 @@ alpha2/obj/
 .Aged
 *.time
 build
+<<<<<<< HEAD
 bin
+output
+=======
+bin
+>>>>>>> development

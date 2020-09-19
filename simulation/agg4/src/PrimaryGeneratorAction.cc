@@ -813,6 +813,35 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
+    case 66: // test: single track at fixed location
+      {
+	// MC vertex
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
+        vx = TrapRadius; vy = vz = tt = 0.;
+        TVector3 testp;
+        testp.SetMagThetaPhi(300.*MeV, 10.*TMath::DegToRad(), 
+                             30.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+
+	G4int pdgc=22;
+	if( (anEvent->GetEventID()%2) == 0 )
+	  pdgc = 211;
+	else
+	  pdgc = -211;
+
+	// a 300 MeV pion
+	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,testp.X(),testp.Y(),testp.Z());
+	vt->SetPrimary(pp);
+	anEvent->AddPrimaryVertex(vt);
+
+	E = pp->GetTotalEnergy();
+	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+	break;
+      }
     default:
       {
 	// MC vertex

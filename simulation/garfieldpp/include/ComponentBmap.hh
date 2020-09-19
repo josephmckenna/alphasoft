@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 
-#include "ComponentBase.hh"
+#include "Component.hh"
 #include "ComponentAnalyticField.hh"
 #include "FundamentalConstants.hh"
 

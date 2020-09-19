@@ -90,12 +90,13 @@ echo $SPEEDTEST
 cd $AGRELEASE
 echo "Running..."
 
+cd bin
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
 valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
  
-
+cd $AGRELEASE
 echo "done..."
 echo "check:
   kcachegrind ${SPEEDTEST}

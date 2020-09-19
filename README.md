@@ -7,7 +7,10 @@
 * [rootana][rootanalink]
 
   [rootanalink]: https://midas.triumf.ca/MidasWiki/index.php/ROOTANA
+  
+* [CMake][cmakelink] **version >=3.0**
 
+  [cmakelink]: https://cmake.org/ "CMake website"
 
 OS (strongly recommended):
 
@@ -45,7 +48,13 @@ cmake3 ../
 ccmake3 .
 make -j
 make install 
+```
 
+
+## Alternative way to build+install
+
+```
+cmake3 --build . --target install -- -j`nproc --ignore=2`
 
 ```
 

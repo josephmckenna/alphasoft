@@ -7,7 +7,7 @@
 #include "TFitResult.h"
 #include "Math/MinimizerOptions.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include <set>
 #include <iostream>
 
@@ -28,6 +28,8 @@ public:
    int stop_event = -1;
    AnaSettings* ana_settings=NULL;
    bool fDiag = false;
+   bool fTrace = false;
+
    MatchFlags() // ctor
    { }
 
@@ -39,8 +41,7 @@ class MatchModule: public TARunObject
 {
 public:
    MatchFlags* fFlags = NULL;
-   bool fTrace = false;
-   //bool fTrace = true;
+   bool fTrace;
    int fCounter = 0;
    bool diagnostic = false;
 
@@ -57,6 +58,7 @@ public:
 
       fFlags = f;
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
+      fTrace=fFlags->fTrace; // enable verbosity
    }
 
    ~MatchModule()
@@ -67,20 +69,18 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if(fTrace)
+         printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
-      if(fTrace) 
-         match->SetTrace(true);
+      match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
-      //      if( diagnostic ) 
       match->Setup(runinfo->fRoot->fOutputFile);
    }
    void EndRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("MatchModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       delete match;
    }
 
@@ -98,13 +98,14 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      if(fTrace)
+         printf("MatchModule::Analyze, run %d, counter %d\n",
+                runinfo->fRunNo, fCounter++);
+
       // turn off recostruction
       if (fFlags->fRecOff)
          return flow;
 
-      if(fTrace)
-         printf("MatchModule::Analyze, run %d, counter %d\n",
-                runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -128,6 +129,7 @@ public:
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
+
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif   
@@ -141,17 +143,26 @@ public:
      match->Init();
      if( SigFlow->pdSig )
          {
-            match->CombinePads(SigFlow->pdSig);
-            #ifdef _TIME_ANALYSIS_
+            std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
+#ifdef _TIME_ANALYSIS_
+            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(Comb)",timer_start);
+            timer_start=CLOCK_NOW
+               //START_TIMER
+#endif
+
+            match->CombinePads( &comb );
+#ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
-            #endif
+               //START_TIMER
+#endif
          }
 
       // allow events without pwbs
       if( match->GetCombinedPads() )
          {
-            printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
+            if( fTrace )
+               printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals(match->GetCombinedPads());
             match->MatchElectrodes( SigFlow->awSig );
@@ -171,7 +182,7 @@ public:
       if( match->GetSpacePoints()->size() > 0 )
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
-      ++fCounter;
+      //++fCounter;
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module",timer_start);
       #endif
@@ -217,6 +228,8 @@ public:
                fFlags.fRecOff = true;
             if( args[i] == "--diag" )
                fFlags.fDiag = true;
+            if( args[i] == "--trace" )
+               fFlags.fTrace = true;
             if (args[i] == "--anasettings")
                {
                   i++;

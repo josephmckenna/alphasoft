@@ -7,24 +7,14 @@
 #include <TTree.h>
 #include <TClonesArray.h>
 #include <TApplication.h>
-#include <TCanvas.h>
-#include <TAxis.h>
 #include <TBrowser.h>
 
 #include "argparse.hh"
+#include "fileutility.hh"
+#include "ProcessEvents.hh"
 
 #include "AnaSettings.h"
-
-#include "Deconv.hh"
-#include "Match.hh"
 #include "Reco.hh"
-
-#include "Utils.hh"
-#include "Histo.hh"
-
-#include "TFitVertex.hh"
-
-#include "fileutility.hh"
 
 using namespace std;
 
@@ -32,7 +22,6 @@ int main(int argc, char** argv)
 {
    // make a new ArgumentParser
    ArgumentParser parser;
-   //parser.appName("ALPHA-g Geant4 Analyzer");
    parser.appName(argv[0]);
    // add some arguments
    parser.addArgument("-f","--rootfile",1,false);
@@ -44,6 +33,8 @@ int main(int argc, char** argv)
    parser.addArgument("-v","--verb",1);
    parser.addArgument("--enableMC",1);
    parser.addArgument("-2","--twod",1);
+   parser.addArgument("-l","--led",1);
+
     
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
@@ -109,16 +100,9 @@ int main(int argc, char** argv)
          cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
     }
    AnaSettings* ana_settings = new AnaSettings(settings.c_str());
-   ana_settings->Print();
-
-   Deconv d(settings);
-   d.SetPWBdelay(50.);
-   d.SetPedestalLength(0);
-   //d.SetTrace(true);
    cout<<"--------------------------------------------------"<<endl;
-   cout<<"[main]# Deconv Settings"<<endl;
-   d.PrintADCsettings();
-   d.PrintPWBsettings();
+   cout<<"READ settings file"<<endl;
+   ana_settings->Print();
    cout<<"--------------------------------------------------"<<endl;
 
    finderChoice finder = adaptive;
@@ -144,14 +128,6 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Using track finder: "<<finder<<endl;
    
-   //Match m(settings);
-   Match m(ana_settings);
-   //   m.SetDiagnostic(false);
-   m.SetDiagnostic(true);
-   
-   //ofstream fout("match_goodness.dat", ios::out | ios::app);
-   //ofstream fout("pattrec_goodness.dat", ios::out | ios::app);
-
    double B=1.0;
    if( parser.count("Bfield") )
       {
@@ -160,18 +136,12 @@ int main(int argc, char** argv)
       }
    cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
 
-   //Reco r(settings,B);
-   Reco r(ana_settings,B);
-
-   Reco rMC(settings,B);
-
    bool draw = false;
    if( parser.count("draw") )
       {
          draw = true;
          cout<<"[main]# Drawing Enabled"<<endl;
       }
-
    bool verb = false;
    if( parser.count("verb") )
       {
@@ -190,221 +160,56 @@ int main(int argc, char** argv)
          twod=true;
          cout<<"[main]# PADS Reco Disenabled - AW ONLY!"<<endl;
       }
-
+   bool led=false;
+   if( parser.count("led") )
+      {
+         led=true;
+         cout<<"[main]# Leading edge reconstruction!"<<endl;
+      }
+ 
    TApplication* app=0;
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
 
-   
    string outname("ana");
-   outname += basename(fname);
+   outname += basename(fname); // from fileutility.hh
    cout<<"[main]# saving output to: "<<outname<<endl;
 
-   Utils u(outname,B,draw);
-   TObjString sett = ana_settings->GetSettingsString();
-   u.WriteSettings(&sett);
-   m.Setup(0);
+   ProcessEvents proc(ana_settings,B,outname);
+   if( draw ) proc.SetDraw();
+   proc.SetFinder(finder);
+   if( verb )
+      proc.SetVerboseLevel(2);
 
    for( int i=0; i<Nevents; ++i )
       {
          tSig->GetEntry(i);
+         proc.SetEventNumber(i);
 
-         // anode deconv
-         int nsig = d.FindAnodeTimes( AWsignals );
-         cout<<"[main]# "<<i<<"\tFindAnodeTimes: "<<nsig<<endl;
-         if( nsig == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //      fout<<std::setprecision(15)<<Average( d.GetAnodeDeconvRemainder() )<<"\t";
-
-         if( verb ) u.PrintSignals( d.GetAnodeSignal() );
-         
-         if( !twod )
-            {
-               // pad deconv
-               nsig = d.FindPadTimes( PADsignals );
-               cout<<"[main]# "<<i<<"\tFindPadTimes: "<<nsig<<endl;
-               if( nsig == 0 ) continue;
-               if( nsig > 70000 ) continue;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-               //      fout<<std::setprecision(15)<<Average( d.GetPadDeconvRemainder() )<<endl;
-
-               if( verb ) u.PrintSignals( d.GetPadSignal() );
-         
-               // combine pads
-               m.Init();
-               if(verb) m.SetTrace(true);
-               m.CombinePads( d.GetPadSignal() );
-               m.SetTrace(false);
-               uint npads = m.GetCombinedPads()->size();
-               cout<<"[main]# "<<i<<"\tCombinePads: "<<npads<<endl;
-               //if( npads == 0 ) continue;
-               // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-               
-               if( verb ) u.PrintSignals( m.GetCombinedPads() );
-               
-               if( draw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads(),false);
-               
-               // match electrodes
-               m.MatchElectrodes( d.GetAnodeSignal() );
-            }
+         if(twod)
+            proc.ProcessWaveform_2D(AWsignals);
+         else if(led)
+            proc.ProcessWaveform_led(AWsignals,PADsignals);
          else
-            {
-               m.Init();
-               m.FakePads( d.GetAnodeSignal() );
-            }
-         uint nmatch = m.GetSpacePoints()->size();
-         cout<<"[main]# "<<i<<"\tMatchElectrodes: "<<nmatch<<endl;
-         if( nmatch == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            proc.ProcessWaveform_deconv(AWsignals,PADsignals);
 
-         // combine points
-         m.CombPoints();
-         uint nsp = m.GetSpacePoints()->size();
-         cout<<"[main]# "<<i<<"\tCombinePoints: "<<nsp<<endl;
-         if( nsp == 0 ) continue;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         // reco points
-         if( verb ) r.SetTrace(true);
-         r.AddSpacePoint( m.GetSpacePoints() );
-         cout<<"[main]# "<<i<<"\tspacepoints: "<<r.GetNumberOfPoints()<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //    }
-         // else
-         //    {
-         //       if( verb ) r.SetTrace(true);
-         //       r.AddSpacePoint( d.GetAnodeSignal() );
-         //       cout<<"[main]# "<<i<<"\tspacepoints 2D: "<<r.GetNumberOfPoints()<<endl;
-         //    }
-         //fout<<r.GetNumberOfPoints()<<"\t";
-
-         // find tracks
-         r.SetTrace(true);
-         int ntracks = r.FindTracks(finder);
-         cout<<"[main]# "<<i<<"\tpattrec: "<<ntracks<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         if(finder == neural) 
-            u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-         
-         r.PrintPattRec();
-         cout<<"[main]# "<<i<<"\ttracks: "<<r.GetNumberOfTracks()<<endl;
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         //fout<<r.GetNumberOfTracks()<<"\t";
-
-         //r.SetTrace( true );
-         int nlin = r.FitLines();
-         cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-         //r.SetTrace(true);
-         int nhel = r.FitHelix();
-         r.SetTrace(false);
-         cout<<"[main]# "<<i<<"\thelix: "<<nhel<<endl;
-         u.HelixPlots( r.GetHelices() );
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         //r.SetTrace( false );
-
-         //fout<<fabs(EvaluateMatch_byResZ(r.GetLines()))<<"\t";//<<endl;
-         //fout<<EvaluatePattRec(r.GetLines())<<"\t";
-
-         TFitVertex Vertex(i);
-         int sv = r.RecVertex(&Vertex);
-         cout<<"[main]# "<<i<<"\t";
-         if( sv > 0 ) Vertex.Print();
-         else cout<<"No Vertex\n";
+         proc.ProcessTracks();
 
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
-         cout<<"[main]# "<<i<<"\tMCvertex: "; 
-         mcvtx->Print();
 
-         double res = ALPHAg::kUnknown;
-         if( sv > 0 ) 
-            { 
-               res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
-               u.VertexPlots(&Vertex);
-            }
-         else res = u.PointResolution(r.GetHelices(),mcvtx);
-
-         cout<<"[main]# "<<i<<"\tResolution: ";        
-         auto prec = cout.precision();
-         cout.precision(2);
-         cout<<res<<" mm"<<endl;
-         cout.precision(prec);
-         // cout<<"[main]# "<<i<<"\tUsedHelixPlots: "
-         //     <<Vertex.GetHelixStack()->GetEntriesFast()<<endl;
-         u.UsedHelixPlots( Vertex.GetHelixStack() );
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         //fout<<res<<endl;
-
-         if( tGarf )
-            {
-               
-               tGarf->GetEntry(i);
-               
-               if( draw )
-                  {
-                     u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
-                     if(finder == neural) 
-                        u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-                  }
-               
-               if( enableMC )
-                  {
-                     //================================================================
-                     // MC hits reco
-                     cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-                     
-                     rMC.AddMChits( aw_hits );
-                     cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     // find tracks
-                     int ntracksMC = rMC.FindTracks(finder);
-                     cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     if(finder == neural) 
-                        u.DebugNeuralNet( (NeuralFinder*) rMC.GetTracksFinder() );
-                     
-                     cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     rMC.SetTrace( true );
-                     nlin = rMC.FitLines();
-                     cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-                     nhel = rMC.FitHelix();
-                     cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     rMC.SetTrace( false );
-                     
-                     TFitVertex MCVertex(i);
-                     int svMC = r.RecVertex(&MCVertex);
-                     if( svMC > 0 ) MCVertex.Print();
-                     
-                     res = u.PointResolution(rMC.GetHelices(),mcvtx);
-                     cout<<"[main]# "<<i<<"\tMC Resolution: ";
-                     prec = cout.precision();
-                     cout.precision(2);
-                     cout<<res<<" mm"<<endl;
-                     cout.precision(prec);
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     rMC.Reset();
-                  }
-            }
-         else if( draw )
-            {
-               u.Display(r.GetPoints(), r.GetTracks(), r.GetHelices());
-               if(finder == neural) 
-                  u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-            }
+         proc.ProcessVertex(mcvtx);
          
-         r.Reset();
+         if( tGarf )
+            { 
+               tGarf->GetEntry(i);
+               proc.Finish(garfpp_hits, aw_hits);
+               if( enableMC ) proc.ProcessMonteCarlo(aw_hits,mcvtx);
+            }
+         else
+            proc.Finish();  
 
       }// events loop
-   //fout.close();
    
    cout<<"[main]# Finished"<<endl;
    if( draw ){

@@ -10,7 +10,7 @@
 #include <TClonesArray.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "TStoreEvent.hh"
 
 class TCosmic;

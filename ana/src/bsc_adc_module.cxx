@@ -107,7 +107,8 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-
+      if( fFlags->fPrint ) printf("BscModule::Analyze, run %d\n", runinfo->fRunNo);
+         
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -133,7 +134,8 @@ public:
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
-      std::cout<<"BscModule::AnalyzeFlowEvent(...) has "<<BarEvent->GetNBars()<<" hits"<<std::endl;
+      if( fFlags->fPrint )
+         printf("BscModule::AnalyzeFlowEvent(...) has %d hits\n",BarEvent->GetNBars());
 
       flow = new AgBarEventFlow(flow, BarEvent);
 
