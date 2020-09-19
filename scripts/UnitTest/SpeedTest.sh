@@ -85,12 +85,13 @@ echo $SPEEDTEST
 cd $AGRELEASE
 echo "Running..."
 
+cd $AGRELEASE/bin
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./agana.exe ${Event_Limit} run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
+valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./agana.exe ${Event_Limit} -O${AGRELEASE}/run${RUNNO}sub000speedtest.root run${RUNNO}sub000.mid.lz4 &> ${ALPHATEST}
  
-
+cd $AGRELEASE
 echo "done..."
 echo "check:
   kcachegrind ${SPEEDTEST}

@@ -60,14 +60,6 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
       fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
-   // std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
-   // TObjString sett = ana_settings->GetSettingsString();
-   // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-   // if( bytes_written > 0 )
-   //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-   // else
-   //    std::cout<<" FAILED"<<std::endl;
-
    track_not_advancing = 0;
    points_cut = 0;
    rad_cut = 0;
@@ -151,7 +143,7 @@ void Reco::UseSTRfromData(int runNumber)
 
 Reco::~Reco()
 {
-   delete ana_settings;
+   //   delete ana_settings;
    //if(pattrec) delete pattrec;
    delete fSTR;
 }
@@ -534,17 +526,9 @@ int Reco::RecVertex(TFitVertex* Vertex)
 
 void Reco::Reset()
 {
-   // if( pattrec ) 
-   //    { 
-         //       //std::cout<<"Reco::Reset() deleting pattrec"<<std::endl;
-   delete pattrec;
-         //      }
-   //   fTrace=false;
-   // fPointsArray.clear();
-   // fTracksArray.clear();
-   // fLinesArray.clear();
-   // fHelixArray.clear();
+   if(pattrec) delete pattrec;
    
+   //   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
    for (size_t i=0; i<fHelixArray.size(); i++)
       delete fHelixArray.at(i);
    fHelixArray.clear();
@@ -555,6 +539,7 @@ void Reco::Reset()
    for (size_t i=0; i<fTracksArray.size(); i++)
       delete fTracksArray.at(i);
    fTracksArray.clear(); 
+   //   std::cout<<" Reco::Reset() Delete Points"<<std::endl;
    for (size_t i=0; i<fPointsArray.size(); i++)
       delete fPointsArray.at(i);
    fPointsArray.clear(); 

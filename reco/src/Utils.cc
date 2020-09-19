@@ -29,28 +29,35 @@ Utils::Utils(double B):fHisto(),pmap(),
    
    creco = new TCanvas("creco","creco",2400,2400);
    creco->Divide(2,2);
+
+   MakeCanvases();
 }
 
-Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
-                                                     fMagneticField(B),tmax(4500.)
-{
-   BookG4Histos();
-   BookAGG4Histos();
+// Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
+//                                                      fMagneticField(B),tmax(4500.)
+// {
+//    // BookG4Histos();
+//    // BookAGG4Histos();
 
-   if( draw )
-      {
-         csig = new TCanvas("csig","csig",2400,2400);
-         csig->Divide(2,2);
+//    if( draw )
+//       {
          
-         creco = new TCanvas("creco","creco",2400,2400);
-         creco->Divide(2,2);
-      }
-}
+//       }
+// }
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
 {
-   BookRecoHistos();
+   //   BookRecoHistos();
+}
+
+void Utils::MakeCanvases()
+{
+   csig = new TCanvas("csig","csig",2400,2400);
+   csig->Divide(2,2);
+   
+   creco = new TCanvas("creco","creco",2400,2400);
+   creco->Divide(2,2);
 }
 
 void Utils::BookG4Histos()
@@ -594,14 +601,16 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
                                        TMath::MaxElement(gxy->GetN(),gxy->GetY())*1.1);
          c->cd(2);
          grz->Draw("AP");
-         grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
-                                       TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+         // grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
+         //                               TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+         grz->GetXaxis()->SetRangeUser(109.,190.);
          grz->GetYaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetY())*0.9,
                                        TMath::MaxElement(grz->GetN(),grz->GetY())*1.1);
          c->cd(3);
          grphi->Draw("AP");
-         grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
-                                         TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+         // grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
+         //                                 TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+         grphi->GetXaxis()->SetRangeUser(109.,190.);
          grphi->GetYaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetY())*0.9,
                                          TMath::MaxElement(grphi->GetN(),grphi->GetY())*1.1);
          c->cd(4);
@@ -888,6 +897,60 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig,
    csig->cd(4);
    hoccaw->Draw("hist");
    hocccombpads->Draw("histsame");
+   gPad->SetGridx();
+   hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
+   hoccaw->GetXaxis()->SetLabelSize(0.02);
+}
+
+void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, bool norm)
+{
+   TH1D* haw=PlotSignals( awsig, "anodes" );
+   if(norm) haw->Scale(1./haw->Integral());
+   else haw->Scale(10.);
+   haw->SetLineColor(kRed);
+   //cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
+   csig->cd(1);
+   haw->Draw("hist");
+   haw->SetTitle("Deconv Times");
+   haw->GetXaxis()->SetRangeUser(0.,tmax);
+
+   TH1D* hpads = PlotSignals( padsig, "pads" );
+   if(norm) hpads->Scale(1./hpads->Integral());
+   hpads->SetLineColor(kBlue);
+   csig->cd(1);
+   hpads->Draw("histsame");
+
+   TLegend* leg = new TLegend(0.7,0.8,0.95,0.95);
+   if(norm) leg->AddEntry(haw,"anodes", "l");
+   else leg->AddEntry(haw,"anodes x10", "l");
+   leg->AddEntry(hpads,"pads", "l");
+   csig->cd(1);
+   leg->Draw("same");
+
+   // TH1D* hcombpads = PlotSignals( combpads, "combinedpads" );
+   // if(norm) hcombpads->Scale(1./hcombpads->Integral());
+   // hcombpads->SetLineColor(kBlue);
+   // csig->cd(2);
+   // haw->Draw("hist");
+   // hcombpads->Draw("histsame");
+
+   TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
+   //TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
+   csig->cd(3);
+   //hmatch->Draw("colz");
+   hmatch->Draw("*");
+   hmatch->GetXaxis()->SetRangeUser(0.,tmax);
+   hmatch->GetYaxis()->SetRangeUser(0.,tmax);
+   
+   TH1D* hoccaw = PlotOccupancy( awsig, "anodes" );
+   if(norm) hoccaw->Scale(1./hoccaw->Integral());
+   hoccaw->SetLineColor(kRed);
+   TH1D* hoccpadsig = PlotOccupancy( padsig, "pads" );
+   if(norm) hoccpadsig->Scale(1./hoccpadsig->Integral());
+   hoccpadsig->SetLineColor(kBlue);
+   csig->cd(4);
+   hoccaw->Draw("hist");
+   hoccpadsig->Draw("histsame");
    gPad->SetGridx();
    hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
    hoccaw->GetXaxis()->SetLabelSize(0.02);

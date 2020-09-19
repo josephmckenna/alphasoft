@@ -1,6 +1,8 @@
 #
 # Makefile for the ALPHA-g analyzer
 #
+# Authors: KO, AC and JTMK 
+#
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))

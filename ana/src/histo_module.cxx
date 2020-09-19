@@ -3,7 +3,7 @@
 #include "TH2D.h"
 #include "TProfile.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include <set>
 #include <iostream>
 
@@ -437,6 +437,18 @@ public:
 
       if( fTrace )
          {
+            if( SigFlow->adc32max )
+               printf("HistoModule::Analyze, ADC # signals %d\n", 
+                      int(SigFlow->adc32max->size()));
+            else
+               printf("HistoModule::Analyze, NO ADC signals\n");
+
+            if( SigFlow->pwbMax )
+               printf("HistoModule::Analyze, PWB # signals %d\n", 
+                      int(SigFlow->pwbMax->size()));
+            else
+               printf("HistoModule::Analyze, NO PWB signals\n");
+
             if( SigFlow->awSig )
                printf("HistoModule::Analyze, AW # signals %d\n", 
                       int(SigFlow->awSig->size()));
@@ -462,18 +474,22 @@ public:
       START_TIMER
       #endif   
 
+      if( SigFlow->adc32max )
+         {
 
-      if( fTrace )
-         printf("HistoModule::AnalyzeFlowEvent, ADC Diagnostic start\n");
-      //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
-      ADCdiagnostic(SigFlow->adc32max);
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, ADC Diagnostic start\n");
+            //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+            ADCdiagnostic(SigFlow->adc32max);
+         }
 
-      if( SigFlow->pwbMax ){
-          if( fTrace )
-              printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
-      //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
-          PWBdiagnostic(SigFlow->pwbMax);
-      }
+      if( SigFlow->pwbMax )
+         {
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
+            //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+            PWBdiagnostic(SigFlow->pwbMax);
+         }
 
       if( fTrace )
          printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
@@ -567,10 +583,8 @@ public:
 
    void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
-      //std::cout<<"HistoModule::PWBdiagnostic"<<std::endl;
       if( wfamp->size() > 0 )
          {
-            //std::cout<<"HistoModule::PWBdiagnostic: there are WF!"<<std::endl;
             for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
                {
                   double pad_index = double(pmap->index(sig->sec,sig->idx));

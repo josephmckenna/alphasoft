@@ -77,6 +77,8 @@ public:
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
 
       d.PrintPWBsettings();
+
+      d.SetTrace(fTrace);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -151,7 +153,7 @@ public:
       else
          {
              int stat = d.FindPadTimes(pwb);
-             printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
+             if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
              if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
 
              if( fFlags->fDiag )

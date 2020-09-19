@@ -1,4 +1,4 @@
-#include "SignalsType.h"  
+#include "SignalsType.hh"
 
 map<int,double> ReadDataFile()
 {
