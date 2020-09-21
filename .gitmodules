@@ -9,3 +9,9 @@
 	path = simulation/submodules/garfieldpp
 	url = https://gitlab.cern.ch/garfield/garfieldpp.git
 	branch = master
+[submodule "agcfmdb"]
+	path = agcfmdb
+	url = git@bitbucket.org:teamalphag/agcfmdb.git
+[submodule "agana"]
+	path = agana
+	url = git@bitbucket.org:teamalphag/agana.git
