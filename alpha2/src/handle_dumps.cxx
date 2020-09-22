@@ -10,6 +10,7 @@
 #include "midasio.h"
 #include "TSISEvent.h"
 #include "TSpill.h"
+#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "AnalysisTimer.h"

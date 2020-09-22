@@ -8,6 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "AnalysisTimer.h"

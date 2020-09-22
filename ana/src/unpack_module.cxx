@@ -15,6 +15,7 @@
 #include "AgEVB.h"
 #include "AgAsm.h"
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "ncfm.h"
 

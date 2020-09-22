@@ -11,6 +11,7 @@ endef
 
 OBJDIR=obj
 SRCDIR=src
+#SRCDIR +=../agana
 INCDIR=include
 BINDIR=..
 
@@ -38,6 +39,7 @@ LIBS     += -L$(shell root-config --libdir)
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
 INCS += -I../analib/include
+INCS += -I../agana
 INCS += -I../aged/include
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
@@ -96,6 +98,10 @@ $(BINDIR)/%.exe: $(MAIN) $(USER_LIBS) $(ALL_DEPS) $(MODS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
+
+$(OBJDIR)/%.o: $(AGRELEASE)/agana/%.cxx
+	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
+
 
 clean::
 	-rm -f $(OBJDIR)/*.o *.a $(BINS)

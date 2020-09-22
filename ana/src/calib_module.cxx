@@ -24,6 +24,7 @@
 
 #include "manalyzer.h"
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 

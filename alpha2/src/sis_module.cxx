@@ -18,6 +18,7 @@
 #include <fstream>
 #include "AnalysisTimer.h"
 
+#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "TSISEvent.h"

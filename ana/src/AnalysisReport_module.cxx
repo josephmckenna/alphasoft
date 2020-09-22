@@ -16,6 +16,7 @@
 #include "TH2D.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "GitInfo.h"
 #include "AnalysisTimer.h"

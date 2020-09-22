@@ -62,7 +62,7 @@ libaged.so: $(DEPS)
 libagana.so: $(DEPS)
 	make -C analib $(MFLAGS)
 
-agana: | $(AGLIBS)
+agana: $(AGLIBS)
 	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
