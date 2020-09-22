@@ -5,7 +5,7 @@
 //
 
 #include <stdio.h>
-#include <cassert>
+#include <assert.h>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -99,7 +99,7 @@ public:
          printf("UnpackModule::ctor!\n");
 
       fFlags   = flags;
-      fCfm     = new Ncfm(getenv("AG_CFM"));
+      fCfm     = new Ncfm("agcfmdb");
    }
 
    ~UnpackModule()
@@ -137,7 +137,14 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       int adc32_rev = 0;
-      if (runinfo->fRunNo >= 1694) {
+      if (0) {
+      } else if (runinfo->fRunNo >= 902660) {
+         adc32_rev = 11;
+      } else if (runinfo->fRunNo >= 900000) {
+         adc32_rev = 1;
+      } else if (runinfo->fRunNo >= 2724) {
+         adc32_rev = 11;
+      } else if (runinfo->fRunNo >= 1694) {
          adc32_rev = 1;
       }
 
@@ -577,7 +584,7 @@ public:
             const int n32 = pwb_bank->data_size/4;
 
             if (0) {
-               unsigned nprint = n32;
+               unsigned nprint = pwb_bank->data_size/4;
                nprint=10;
                for (unsigned i=0; i<nprint; i++) {
                   printf("PB05[%d]: 0x%08x (%d)\n", i, p32[i], p32[i]);
