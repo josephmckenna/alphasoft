@@ -1,4 +1,6 @@
 #include "AgFlow.h"
+#include "RecoFlow.h"
+
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"

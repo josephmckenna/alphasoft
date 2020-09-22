@@ -10,6 +10,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "TTree.h"
 #include "TSeq_Event.h"

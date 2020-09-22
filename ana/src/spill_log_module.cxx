@@ -16,6 +16,7 @@
 #include <TEnv.h>
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "chrono_module.h"
 #include "TChrono_Event.h"

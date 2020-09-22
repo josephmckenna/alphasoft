@@ -13,6 +13,7 @@ class AgSignalsFlow;
 class AgBarEventFlow;
 class TBarEvent;
 #include "AgFlow.h"
+#include "RecoFlow.h"
 class TARunInfo;
 class PWindow;
 struct ImageData;

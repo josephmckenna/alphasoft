@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"

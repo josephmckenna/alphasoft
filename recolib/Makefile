@@ -8,8 +8,9 @@ ROO=rootcint
 
 INCS += -Iinclude
 INCS += -I../ana/include
-INCS +=  -I../analib/include
-INCS +=  -I../simulation/geant4/include
+INCS += -I../analib/include
+INCS += -I../agana
+INCS += -I../simulation/geant4/include
 INCS += -I$(ROOTANASYS)/include
 
 LDFLAGS=$(shell root-config --ldflags)

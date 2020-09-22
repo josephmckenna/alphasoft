@@ -18,6 +18,7 @@
 #include "TStoreHelix.hh"
 #include "TBarEvent.hh"
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #define STRETCH             4
 
