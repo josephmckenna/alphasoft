@@ -12,6 +12,10 @@
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
 
+  TString incag("-I"); incag += basedir; incag += "/agana";
+  cout<<"Including: "<<incag<<endl;
+  gSystem->AddIncludePath(incag.Data());
+
   TString increco("-I"); increco += basedir; increco += "/recolib/include";
   cout<<"Including: "<<increco<<endl;
   gSystem->AddIncludePath(increco.Data());
