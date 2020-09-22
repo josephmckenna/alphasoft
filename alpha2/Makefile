@@ -60,7 +60,7 @@ $(foreach BIN,$(BINS),$(eval $(call get_modules,ALL_DEPS,${BIN})))
 $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lagana -lagtpc
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc
 #USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo
