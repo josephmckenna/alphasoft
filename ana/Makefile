@@ -62,8 +62,8 @@ $(foreach BIN,$(BINS),$(eval $(call get_modules,ALL_DEPS,${BIN})))
 $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
-RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
-#USER_LIBS = libagana.so libAGTPC.so libaged.so
+RLIBS = -L../recolib -L../aged -L../analib -lanalib -lagtpc -laged
+#USER_LIBS = libanalib.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe

@@ -7,10 +7,10 @@ ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
 DEPS = buildrootana
 endif
 
-AGLIBS = libagana.so libAGTPC.so libaged.so
+AGLIBS = libanalib.so libagtpc.so libaged.so
 AGBIN  = agana reco
 
-A2LIBS = libagana.so libAGTPC.so alpha2libs
+A2LIBS = libanalib.so libagtpc.so alpha2libs
 A2BIN  = alpha2
 
 
@@ -53,13 +53,13 @@ cclean:
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
 
-libAGTPC.so: $(DEPS)
+libagtpc.so: $(DEPS)
 	make -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
 	make -C aged $(MFLAGS)
 
-libagana.so: $(DEPS)
+libanalib.so: $(DEPS)
 	make -C analib $(MFLAGS)
 
 agana: $(AGLIBS)
