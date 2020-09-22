@@ -22,21 +22,21 @@ SRC=$(wildcard src/*.cxx) $(DICT)
 SRC:= $(patsubst src/%.cxx,obj/%.o,$(SRC))
 
 all: CXXFLAGS=-g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
-all: linkdirs libAGTPC.so
+all: linkdirs libagtpc.so
 
 debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-debug: linkdirs libAGTPC.so
+debug: linkdirs libagtpc.so
 
 native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
-native: linkdirs libAGTPC.so
+native: linkdirs libagtpc.so
 
 O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-O2: linkdirs libAGTPC.so
+O2: linkdirs libagtpc.so
 
 linkdirs:
 	mkdir -p obj
 
-libAGTPC.so: $(SRC)
+libagtpc.so: $(SRC)
 	$(CXX) -shared $(CXXFLAGS) $(INCS) -o $@ $(LDFLAGS) $(LDLIBS) $^
 
 $(DICT): $(INC)
@@ -46,4 +46,4 @@ obj/%.o: src/%.cxx include/%.hh
 	$(CXX) -c $(CXXFLAGS) -o $@ $(INCS)  -c $<
 
 clean:
-	rm -f obj/*.o libAGTPC.so agtpc.cc agtpc_rdict.pcm
+	rm -f obj/*.o libagtpc.so agtpc.cc agtpc_rdict.pcm

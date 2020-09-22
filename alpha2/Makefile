@@ -60,8 +60,8 @@ $(foreach BIN,$(BINS),$(eval $(call get_modules,ALL_DEPS,${BIN})))
 $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lagana -lAGTPC
-#USER_LIBS = libagana.so libAGTPC.so libaged.so
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lagana -lagtpc
+#USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/alphaOnline.exe
