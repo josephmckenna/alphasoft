@@ -1233,18 +1233,32 @@ void ProcessData( TFile* fin )
 //   return run;
 // }
 
+void ReadSettings( TObjString* sett )
+{
+  TString str = sett->GetString();
+  fout<<"\n-----------------------------------\n"<<
+    str<<"\n-----------------------------------"<<endl;
+  // cout<<"\n-----------------------------------\n"<<
+  //   str<<"\n-----------------------------------"<<endl;  
+}
+
+
 void copy_file( const char* srce_file, const char* dest_file )
 {
   ifstream srce( srce_file, std::ios::binary ) ;
   ofstream dest( dest_file, std::ios::binary ) ;
   dest << srce.rdbuf() ;
 }
+
 void ReadEventTree()
 {
   cout<<"DATA"<<endl;
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   TString fname(fin->GetName());
   cout<<fname<<" FOUND"<<endl;
+
+  TObjString* sett = (TObjString*) gROOT->FindObject("ana_settings");
+  cout<<sett->GetString()<<endl;
 
   RunNumber = GetRunNumber( fname );
   cout<<"Run # "<<RunNumber<<endl;
@@ -1258,6 +1272,8 @@ void ReadEventTree()
   fout<<"Filename: "<<fname<<endl;
 
   ProcessData( fin );
+
+  ReadSettings( sett );
 
   fout.close();
 
