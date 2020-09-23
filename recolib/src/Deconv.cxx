@@ -134,6 +134,8 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
        run == 3210 || run == 3245 ||
        run == 3874 || run == 3858 ) // TrigCoinc
          fADCdelay = 0.;
+
+   if( run > 903837 ) fADCdelay = -100.;
 }
 
 void Deconv::SetupPWBs(int run, bool norm, bool diag)
