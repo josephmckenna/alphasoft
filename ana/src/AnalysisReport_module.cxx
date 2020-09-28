@@ -361,6 +361,7 @@ public:
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="AnalysisReport";
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
    }

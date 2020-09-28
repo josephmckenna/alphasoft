@@ -163,6 +163,7 @@ public:
                                                   fCoincTime(20.),fpc_timecut(300.) // ns
 
    {
+      ModuleName="Histo Module";
       diagnostics=f->fDiag;
    }
 
@@ -425,16 +426,27 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
-      if(!diagnostics) return flow;
-
+      if(!diagnostics)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-     
+      }
+           
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if( fTrace )
          {
             if( SigFlow->adc32max )

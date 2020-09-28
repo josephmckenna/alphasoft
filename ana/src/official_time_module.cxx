@@ -59,6 +59,7 @@ public:
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Official Time";
       if (fTrace)
          printf("OfficialTime::ctor!\n");
    }
@@ -271,7 +272,11 @@ public:
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      if (fFlags->fNoSync) return flow;
+      if (fFlags->fNoSync)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif   
