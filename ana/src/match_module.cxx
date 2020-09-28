@@ -171,6 +171,7 @@ public:
      if( SigFlow->pdSig )
          {
             std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
+            flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
@@ -178,6 +179,7 @@ public:
 #endif
 
             match->CombinePads( &comb );
+            flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
