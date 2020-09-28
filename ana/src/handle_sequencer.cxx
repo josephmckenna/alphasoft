@@ -147,9 +147,7 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif      
 
       const char* bkptr = sq->data;
       int bklen = sq->size;
@@ -182,9 +180,7 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
-         #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)",timer_start);
-         #endif
+         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
          return flow;
          }  
       free(buf);
@@ -301,13 +297,6 @@ public:
 #if HANDLE_SEQ_IN_SIDE_THREAD
       //I am done with the SEQText, lets free up some memory
       sq->Clear();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
-      #endif
-#else
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
-      #endif
 #endif
       return flow;
    }

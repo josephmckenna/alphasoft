@@ -321,9 +321,6 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif      
 
       bool short_tpc = (runinfo->fRunNo < 1450);
 
@@ -546,9 +543,6 @@ public:
          e->Print();
          printf("\n");
       }
-         #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)",timer_start);
-         #endif
          return new AgEventFlow(flow, e);
       }
 
@@ -791,9 +785,6 @@ public:
             runinfo->AddToFlowQueue(new AgEventFlow(NULL, e));
          }
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module",timer_start);
-      #endif
       return flow;
    }
 

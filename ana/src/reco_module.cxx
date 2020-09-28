@@ -185,7 +185,7 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-
+      START_TIMER
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
@@ -237,10 +237,6 @@ public:
                   return flow;
                }
          }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
-
       if( fTrace ) printf("RecoRun::AnalyzeFlowEvent Event # %d\n");
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
@@ -268,18 +264,12 @@ public:
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
           flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
-#endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
             flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
-#endif
          }
 
       if (!skip_reco)
@@ -302,13 +292,6 @@ public:
             printf("RecoRun::AnalyzeFlowEvent  Points: %d  Tracks: %d\n",
                                 r.GetNumberOfPoints(),
                                 r.GetNumberOfTracks());
-
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new Ag2DAnalysisReportFlow(flow,
-                                                           {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                           {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
-            timer_start=CLOCK_NOW
-#endif
 
             int nlin=0;
             if( MagneticField < 0.5 ) nlin = r.FitLines();
@@ -339,9 +322,6 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
       //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
-#endif
       if (!skip_reco) r.Reset();
       return flow;
    }

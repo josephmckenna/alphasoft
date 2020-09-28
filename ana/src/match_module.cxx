@@ -154,9 +154,8 @@ public:
          return flow;
       }
 
-      #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif   
+
       if( ! SigFlow->awSig )
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -172,19 +171,11 @@ public:
          {
             std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
             flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
-               //START_TIMER
-#endif
 
             match->CombinePads( &comb );
             flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
-               //START_TIMER
-#endif
          }
 
       // allow events without pwbs
@@ -212,9 +203,6 @@ public:
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
       //++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module",timer_start);
-      #endif
       return flow;
    }
 };

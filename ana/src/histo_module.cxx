@@ -482,9 +482,7 @@ public:
 
       // if( !SigFlow->awSig ) return flow;
       // if( SigFlow->awSig->size() == 0 ) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+
 
       if( SigFlow->adc32max )
          {
@@ -519,9 +517,6 @@ public:
          SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module",timer_start);
-      #endif
       return flow;
    }
 

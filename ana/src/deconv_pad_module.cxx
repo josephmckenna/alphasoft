@@ -157,10 +157,6 @@ public:
             printf("DeconvPADModule::Analyze NO SignalsFlow?");
             return flow;
          }
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
       
       const FeamEvent* pwb = e->feam;
       if( !pwb ) // allow for events without pwbs
@@ -185,9 +181,6 @@ public:
              if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_pad_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }

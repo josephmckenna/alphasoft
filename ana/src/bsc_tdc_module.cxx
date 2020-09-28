@@ -137,10 +137,6 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
 
       AgEvent* age = ef->fEvent;
       if(!age)
@@ -175,9 +171,6 @@ public:
          }
       else
          std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-     #ifdef _TIME_ANALYSIS_
-        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
-     #endif
 
       return flow;
    }
