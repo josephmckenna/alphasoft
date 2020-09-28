@@ -65,6 +65,7 @@ public:
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="ChronoModule";
       if (fTrace)
          printf("Chrono::ctor!\n");
    }
@@ -357,7 +358,10 @@ struct ChronoChannelEvent {
       //std::cout<<"Chrono::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 10 ) // sequencer event id
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif

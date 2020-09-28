@@ -94,6 +94,7 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
+      ModuleName="Unpack Module";
       if (fTrace)
          printf("UnpackModule::ctor!\n");
 
@@ -308,11 +309,18 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      
       if (fFlags->fUnpackOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       if (event->event_id != 1)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif      

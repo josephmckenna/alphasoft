@@ -52,6 +52,7 @@ public:
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
+      ModuleName="Handle Sequencer";
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
    }
@@ -107,7 +108,10 @@ public:
       //std::cout<<"HandleSequencer::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 8 ) // sequencer event id
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif      
@@ -139,7 +143,10 @@ public:
    {
       SEQTextFlow* sq=flow->Find<SEQTextFlow>();
       if (!sq)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif      

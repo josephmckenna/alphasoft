@@ -46,7 +46,9 @@ public:
    PHspectrum(TARunInfo* runinfo, PHspectrumFlags* f):TARunObject(runinfo),
                                                       fFlags(f),pmap(0),
                                                       fNtracks(1),fCoincTime(20.)
-   {}
+   {
+      ModuleName="PHspectrum Module";
+   }
    ~PHspectrum() {}
 
    void BeginRun(TARunInfo* runinfo)
@@ -76,16 +78,32 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if(!fFlags->fEnabled) return flow;
-
+      if(!fFlags->fEnabled)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       AgAnalysisFlow* AnaFlow = flow->Find<AgAnalysisFlow>();
-      if( !AnaFlow ) return flow;
+      if( !AnaFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       TStoreEvent* e = AnaFlow->fEvent;
-      if( !e ) return flow;
-
+      if( !e )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       std::vector<signal>* adc32 = SigFlow->adc32max;
       std::vector<signal>* pwb = SigFlow->pwbMax;
       

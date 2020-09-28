@@ -95,6 +95,7 @@ public:
                                                  fFlags(f),
                                                  r( f->ana_settings, f->fMagneticField)
    {
+      ModuleName="RecoModule";
       printf("RecoRun::ctor!\n");
       MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
@@ -180,7 +181,10 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
 
       AgEvent* age = ef->fEvent;
 
@@ -243,6 +247,7 @@ public:
       if( !SigFlow ) 
       {
          delete analyzed_event;
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
       
