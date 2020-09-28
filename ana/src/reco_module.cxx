@@ -267,6 +267,7 @@ public:
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
+          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
 #endif
@@ -275,6 +276,7 @@ public:
          {
             std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
+            flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
 #ifdef _TIME_ANALYSIS_
             if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
