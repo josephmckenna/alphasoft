@@ -36,6 +36,7 @@ public:
    Dumper(TARunInfo* runinfo, DumperFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Dumper Module";
       if (fTrace)
          printf("Dumper::ctor!\n");
    }
@@ -77,17 +78,18 @@ public:
    {
       AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
       if (!fe)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       TAlphaEvent* alphaEvent=fe->alphaevent;
       SilEventsFlow* sf=flow->Find<SilEventsFlow>();
       if (!sf)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       TSiliconEvent* siliconEvent=sf->silevent;
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
-      
-      
       OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();
@@ -228,9 +230,6 @@ public:
         delete S0valuesraw;
       }
       flow=new A2OnlineMVAFlow(flow,OnlineVars);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"dumper_module",timer_start);
-      #endif
       return flow; 
   }
 };
