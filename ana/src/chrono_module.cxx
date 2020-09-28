@@ -362,9 +362,6 @@ struct ChronoChannelEvent {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;
@@ -478,9 +475,6 @@ struct ChronoChannelEvent {
       if (ChronoEventsFlow->size()==0) return flow;
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module",timer_start);
-      #endif
       return flow;
    }
 

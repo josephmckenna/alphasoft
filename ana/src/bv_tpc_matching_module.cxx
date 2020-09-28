@@ -202,10 +202,6 @@ public:
       analyzed_event->SetID( age->counter );
       analyzed_event->SetRunTime( age->time );
 
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
          // Main functions
       if( MagneticField > 0. )
          {
@@ -240,10 +236,6 @@ public:
 
       
       //AgBarEventFlow 
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
-      #endif
 
       return flow;
    }

@@ -224,9 +224,6 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
 
       if( !SigFlow->awSig )
       {
@@ -245,9 +242,6 @@ public:
       else
          printf("CalibRun::Analyze, No signals to Analyze\n");
 
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module",timer_start);
-      #endif
       return flow;
    }
 

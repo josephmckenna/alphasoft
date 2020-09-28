@@ -110,18 +110,11 @@ public:
       std::vector<signal>* aws = SigFlow->awSig;
       std::vector<signal>* pads = SigFlow->pdSig;
 
-#ifdef _TIME_ANALYSIS_
-      START_TIMER
-#endif
-
       if( fFlags->fMagneticField > 0. )
          HelPHspect(e,*adc32,*pwb,*aws,*pads);
       else
          LinePHspect(e,*adc32,*pwb,*aws,*pads);
       
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"PHspectrum_module",timer_start);
-#endif
       return flow;
    }
 

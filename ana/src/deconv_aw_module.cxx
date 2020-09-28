@@ -151,10 +151,8 @@ public:
          {
             std::cout<<"DeconvAWModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
-            #endif
-               return flow;
+            flow = new UserProfilerFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
+            return flow;
          }
       else
          {
@@ -175,9 +173,6 @@ public:
             flow = flow_sig;
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_aw_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }

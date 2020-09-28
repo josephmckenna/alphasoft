@@ -142,10 +142,6 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
 
       printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
@@ -160,9 +156,6 @@ public:
          flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          printf("Aged::ShowEvent is %d\n",flags);
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
-      #endif
       return flow;
    }
 
