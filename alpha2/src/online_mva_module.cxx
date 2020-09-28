@@ -44,6 +44,7 @@ public:
    OnlineMVA(TARunInfo* runinfo, OnlineMVAFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Online MVA Module";
       if (fTrace)
          printf("OnlineMVA::ctor!\n");
       
@@ -101,7 +102,10 @@ public:
    {
       A2OnlineMVAFlow* dumper_flow=flow->Find<A2OnlineMVAFlow>();
       if (!dumper_flow)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       OnlineMVAStruct* OnlineVars=dumper_flow->dumper_event;
 
       //    "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "", "nCT", "nGT"
@@ -119,12 +123,6 @@ public:
       double rfout=r->GetMvaValue(input_vals);
       dumper_flow->rfout=rfout;
       dumper_flow->pass_online_mva=(rfout>grfcut);
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"OnlineMVA_module",timer_start);
-      #endif
       return flow; 
   }
 
