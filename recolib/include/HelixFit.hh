@@ -6,6 +6,8 @@
 #include "Minuit2/FCNBase.h"
 #include "TSpacePoint.hh"
 #include <TVector3.h>
+#include <iostream>
+#include <iomanip>
 
 class HelixFunction {
 public:
