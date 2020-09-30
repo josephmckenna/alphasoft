@@ -468,7 +468,7 @@ class AgTrigUdpFlow: public TAFlowEvent
 
 #include "AnalysisTimer.h"
 //#define CLOCK_NOW clock();
-#define CLOCK_TYPE std::chrono::time_point<std::chrono::system_clock>
+#define CLOCK_TYPE std::chrono::high_resolution_clock::time_point
 #define CLOCK_NOW std::chrono::high_resolution_clock::now();
 #define START_TIMER auto timer_start=CLOCK_NOW
 //#define START_TIMER auto timer_start=std::chrono::high_resolution_clock::now();
