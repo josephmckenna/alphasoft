@@ -310,8 +310,8 @@ public:
    EOS(TARunInfo* runinfo, EOSFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="EOS Module";
       if (!fFlags->fEOS) return;
-      
       if (fTrace)
          printf("EOS::ctor!\n");
       //TString n="/Experiment/Name";

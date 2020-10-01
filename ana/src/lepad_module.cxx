@@ -53,6 +53,7 @@ public:
                                                    fFlags(f)
       
    {
+      ModuleName="LEpadModule";
       if (fTrace) printf("LEpadModule::ctor!\n");
    }
 
@@ -92,45 +93,57 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
       if(fTrace)
          printf("LEpadModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
-         return flow;
-
-      const AgEvent* e = ef->fEvent;
-      if (fFlags->fTimeCut)
       {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      const AgEvent* e = ef->fEvent;
+            if (fFlags->fTimeCut)
+      {
+         if (e->time<fFlags->start_time)
+         {
+           *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
+         if (e->time>fFlags->stop_time)
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
 
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
          if (e->counter>fFlags->stop_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
 
       AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
       if( !flow_sig ) 
          {
             printf("LEpadModule::Analyze NO SignalsFlow?\n");
+            *flags|=TAFlag_SKIP_PROFILE;
             return flow;
          }
 
-      #ifdef _TIME_ANALYSIS_
-      //clock_t timer_start(clock());
-      START_TIMER
-      #endif   
-      
       const FeamEvent* pwb = e->feam;
       if( !pwb ) // allow for events without pwbs
          {
@@ -147,10 +160,6 @@ public:
 
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"LEpad_module",timer_start);
-      #endif
- 
       return flow;
    }
 

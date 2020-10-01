@@ -90,6 +90,7 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="SpillLog";
       if (fTrace)
          printf("SpillLog::ctor!\n");
       
@@ -350,10 +351,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif 
-
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
@@ -384,9 +381,10 @@ public:
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
             SaveToTree(runinfo,s);
          }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
-      #endif
+      }
+      else
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
       }
       return flow;
    }

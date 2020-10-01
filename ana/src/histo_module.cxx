@@ -165,6 +165,7 @@ public:
                                                   fCoincTime(20.),fpc_timecut(300.) // ns
 
    {
+      ModuleName="Histo Module";
       diagnostics=f->fDiag;
    }
 
@@ -427,16 +428,27 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
-      if(!diagnostics) return flow;
-
+      if(!diagnostics)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-     
+      }
+           
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if( fTrace )
          {
             if( SigFlow->adc32max )
@@ -472,9 +484,7 @@ public:
 
       // if( !SigFlow->awSig ) return flow;
       // if( SigFlow->awSig->size() == 0 ) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+
 
       if( SigFlow->adc32max )
          {
@@ -509,9 +519,6 @@ public:
          SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module",timer_start);
-      #endif
       return flow;
    }
 
