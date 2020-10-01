@@ -78,6 +78,7 @@ public:
                                                 //fTdelay(gMinTime)//,
                                                 fTdelay(0.)
    {
+      ModuleName="Calib Module";
       printf("CalibRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
    }
@@ -201,25 +202,36 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( !fFlags->fCalibOn ) return flow;
-
+      if( !fFlags->fCalibOn )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if(fTrace)
          printf("CalibRun::Analyze, run %d, counter %d\n", runinfo->fRunNo, fCounter);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if( !ef || !ef->fEvent || !ef->fEvent->a16)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+      }
 
-      if( !SigFlow->awSig ) return flow;
-
+      if( !SigFlow->awSig )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if( SigFlow->awSig->size() > 0 )
          {
             printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
@@ -231,9 +243,6 @@ public:
       else
          printf("CalibRun::Analyze, No signals to Analyze\n");
 
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"calib_module",timer_start);
-      #endif
       return flow;
    }
 

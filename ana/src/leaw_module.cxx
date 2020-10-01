@@ -51,6 +51,7 @@ public:
    LEawModule(TARunInfo* runinfo, LEawFlags* f): TARunObject(runinfo),
                                                  fFlags( f )
    {
+      ModuleName="LEawModule";
       if (fTrace)
          printf("LEawModule::ctor!\n");
    }
@@ -96,47 +97,58 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      START_TIMER
       if(fTrace)
          printf("LEawModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
 
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
       {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
+         if (e->time<fFlags->start_time)
+         {
+           *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
+         if (e->time>fFlags->stop_time)
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
 
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
          if (e->counter>fFlags->stop_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
-
-      #ifdef _TIME_ANALYSIS_
-      // clock_t timer_start(clock());
-      START_TIMER
-      #endif   
 
       const Alpha16Event* aw = e->a16;
       if( !aw )
          {
             std::cout<<"LEawModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"LEaw_module (No Alpha16Event)",timer_start);
-            #endif
-               return flow;
+            flow = new UserProfilerFlow(flow,"LEaw_module (No Alpha16Event)",timer_start);
+            return flow;
          }
       else
          {
@@ -154,9 +166,6 @@ public:
             flow = flow_sig;
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"LEaw_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }
