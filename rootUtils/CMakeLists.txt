@@ -23,20 +23,6 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
-add_custom_target(
-    sis_database ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/main.db
-    )
-
-add_custom_command(
-    OUTPUT
-        #${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_SOURCE_DIR}/main.db    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/build_db.sh 
-    )
-
-
 # Directories
 add_subdirectory(src)
 
@@ -58,15 +44,24 @@ include(${ROOT_USE_FILE})
 # Include directories
 include_directories(include include)
 include_directories(include .) #Used for RootUtils
-#include_directories(include $ENV{AGRELEASE}/recolib/include)
+include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
+include_directories(include $ENV{AGRELEASE}/a2lib/include)
+include_directories(include $ENV{AGRELEASE}/alpha2/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.cxx)
-file(GLOB C_SOURCES src/*.c)
-add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
-target_link_libraries(alpha2 ${ROOT_LIBRARIES})
+file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
+add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
+target_link_libraries(rootUtils ${ROOT_LIBRARIES})
+
+install(TARGETS rootUtils DESTINATION lib)
+
+add_custom_command( TARGET rootUtils POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
+                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
+                  )

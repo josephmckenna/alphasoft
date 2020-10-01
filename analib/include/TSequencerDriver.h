@@ -67,7 +67,7 @@ class TSequencerDriver : public TObject
     if (AnalogueMap) delete AnalogueMap;
     if (HVMap)       delete HVMap;
   }
-  void Clear()
+  void Clear(Option_t * option)
   {
     SeqNum   =0;
     SeqName  ="";

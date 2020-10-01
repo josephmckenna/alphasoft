@@ -90,7 +90,6 @@ TString MakeAutoPlotsFolder(TString subFolder)
   return savFolder;
 }
 
-
 TString MakeAutoPlotsFolder(TString subFolder,TString rootdir)
 {
   if( !IsPathExist(rootdir) ) return MakeAutoPlotsFolder(subFolder);
@@ -133,7 +132,6 @@ TString MakeAutoPlotsFolder(TString subFolder,TString rootdir)
   delete TS1;
   return savFolder;
 }
-
 
 /* emacs
  * Local Variables:

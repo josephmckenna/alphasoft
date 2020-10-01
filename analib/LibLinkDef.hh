@@ -33,8 +33,6 @@
 #pragma link C++ class  TAGSpillSequencerData+;
 
 #pragma link C++ class  AnaSettings+;
-#pragma link C++ function  RootUtils+;
-#pragma link C++ class TAGPlot+;
 
 #pragma link C++ class Seq+;
 #pragma link C++ class Seq_DriverConsts+;
