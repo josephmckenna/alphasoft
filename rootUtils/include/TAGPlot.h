@@ -22,7 +22,7 @@
 
 #include "TStyle.h"
 #include "chrono_module.h"
-#include "RootUtils/RootUtils.h"
+#include "RootUtils.h"
 
 
 //using namespace TRootUtils;
@@ -32,7 +32,7 @@
 //extern Bool_t gApplyCuts;
 //extern Double_t grfcut;
 
-struct VertexEvent {
+struct AGVertexEvent {
         Int_t runNumber; // I don't get set yet...
         Int_t EventNo;
         Int_t CutsResult;
@@ -139,7 +139,7 @@ private:
   //Double_t gZcutMax;
   //Double_t gZcutMin;
   //Double_t grfcut;
-  std::vector<VertexEvent> VertexEvents;
+  std::vector<AGVertexEvent> VertexEvents;
   std::vector<ChronoPlotEvent> ChronoPlotEvents;
 
   std::vector<HelixEvent> HelixEvents;

@@ -574,6 +574,65 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 	
 }
 
+
+
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+{
+   std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
+   for (size_t i=0; i<hh.size(); i++)
+      hh[i]->Draw();
+}
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills)
+{
+   std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,spills);
+   for (size_t i=0; i<hh.size(); i++)
+      hh[i]->Draw();
+}
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+{
+   std::vector<TA2Spill*> s=Get_A2_Spills(runNumber,description,repetition);
+   
+   std::vector<TH1D*> hh=Get_SIS(runNumber,SIS_Channel,s);
+   for (size_t i=0; i<hh.size(); i++)
+      hh[i]->Draw();
+}
+
+void Plot_SVD(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
+{
+   TA2Plot* Plot=new TA2Plot();
+   Plot->AddTimeGates(runNumber,tmin,tmax);
+   //Slow part, read all data in 1 pass over each tree so is efficient
+   Plot->LoadData();
+   TCanvas* c=Plot->DrawCanvas("cVTX");
+   c->Draw();
+}
+
+void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills)
+{
+   std::vector<double> tmin;
+   std::vector<double> tmax;
+   for (auto & spill: spills)
+   {
+      if (spill->ScalerData)
+      {
+         tmin.push_back(spill->ScalerData->StartTime);
+         tmax.push_back(spill->ScalerData->StopTime);
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return Plot_SVD(runNumber,tmin,tmax);
+}
+
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition)
+{
+   std::vector<TA2Spill*> s=Get_A2_Spills(runNumber,description,repetition);
+   return Plot_SVD(runNumber,s);
+}
+
+
 /* emacs
  * Local Variables:
  * tab-width: 8
