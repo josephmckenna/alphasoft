@@ -46,9 +46,9 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   return 1;
 }
 
-std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
+std::vector<asignal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
 {
-  std::vector<signal>* sanodes = new std::vector<signal>;
+  std::vector<asignal>* sanodes = new std::vector<asignal>;
   sanodes->reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
@@ -73,9 +73,9 @@ std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
   return sanodes;
 }
 
-std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
+std::vector<asignal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
 {
-  std::vector<signal>* spads = new std::vector<signal>;
+  std::vector<asignal>* spads = new std::vector<asignal>;
   spads->reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
@@ -114,7 +114,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 {
   int Nentries = AWsignals->GetEntries();
 
-  std::vector<signal>* sanodes = new std::vector<signal>;
+  std::vector<asignal>* sanodes = new std::vector<asignal>;
   sanodes->reserve(Nentries);
    
   // find intresting channels
@@ -149,7 +149,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 int Ledge::FindPadTimes(TClonesArray* PADsignals)
 {
   int Nentries = PADsignals->GetEntries();
-  std::vector<signal>* spads = new std::vector<signal>;
+  std::vector<asignal>* spads = new std::vector<asignal>;
   spads->reserve(Nentries);
 
   std::string delimiter = "_";

@@ -69,19 +69,19 @@ public:
    };
 };
 
-class signal: public electrode
+class asignal: public electrode
 {
 public:
    double t, height, errh, z, errz;
    double phi, errphi;
 
-  signal():electrode(),
+  asignal():electrode(),
 	   t(ALPHAg::kUnknown),height(0.),errh(ALPHAg::kUnknown),
      z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
 	   phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {}
 
-   signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
+   asignal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
                                                                        t(tt)
    {
       height = hh/gain;  // should the gain be used here?
@@ -94,7 +94,7 @@ public:
       }
    }
 
-  signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
+  asignal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
 						 t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
 						 phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {
@@ -102,7 +102,7 @@ public:
     errh = eh/gain;
   }
 
-  signal(int ii, double tt, double hh, double eh):electrode(ii),
+  asignal(int ii, double tt, double hh, double eh):electrode(ii),
      t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown)
   {
     height = hh/gain;
@@ -110,7 +110,7 @@ public:
     SetAnodeCoords();
   }
 
-  signal(short ss, int ii,
+  asignal(short ss, int ii,
 	 double tt, double hh, double eh,
 	 double zz, double ez=ALPHAg::kUnknown):electrode(ss, ii),
 					t(tt),z(zz),errz(ez),
@@ -120,7 +120,7 @@ public:
     errh = eh/gain;
   }
 
-   signal(const signal &sig):electrode(sig),
+   asignal(const asignal &sig):electrode(sig),
                              t(sig.t), height(sig.height), errh(sig.errh),
                              z(sig.z), errz(sig.errz),
                              phi(sig.phi), errphi(sig.errphi)
@@ -144,25 +144,25 @@ public:
    }
 
    struct indexorder {       // to sort signals by wire/pad number
-      bool operator() (const signal& lhs, const signal& rhs) const {
+      bool operator() (const asignal& lhs, const asignal& rhs) const {
          return lhs.idx<rhs.idx || (lhs.idx==rhs.idx && lhs.sec<rhs.sec);
       }
    };
 
    struct timeorder{        // to sort signals by time
-      bool operator() (const signal& lhs, const signal& rhs) const {
+      bool operator() (const asignal& lhs, const asignal& rhs) const {
          return lhs.t<rhs.t;
       }
    };
 
    struct heightorder {       // to sort signals by signal size
-      bool operator() (const signal& lhs, const signal& rhs) const {
+      bool operator() (const asignal& lhs, const asignal& rhs) const {
          return lhs.height>rhs.height;
       }
    };
 
    struct sectororder {       // to sort signals by wire/pad number
-      bool operator() (const signal& lhs, const signal& rhs) const {
+      bool operator() (const asignal& lhs, const asignal& rhs) const {
          return lhs.sec<rhs.sec;
       }
    };

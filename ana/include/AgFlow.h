@@ -309,21 +309,21 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<signal>* awSig;
-  std::vector<signal>* pdSig;
-  std::vector< std::pair<signal,signal> >* matchSig;
+  std::vector<asignal>* awSig;
+  std::vector<asignal>* pdSig;
+  std::vector< std::pair<asignal,asignal> >* matchSig;
 
   std::vector<wf_ref>* AWwf;
   std::vector<wf_ref>* PADwf;
 
-  std::vector<signal>* adc32max;
-   //  std::vector<signal> adc32range;
-  std::vector<signal>* pwbMax;
-   //  std::vector<signal> pwbRange;
+  std::vector<asignal>* adc32max;
+   //  std::vector<asignal> adc32range;
+  std::vector<asignal>* pwbMax;
+   //  std::vector<asignal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> *s):
+		std::vector<asignal> *s):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -336,8 +336,8 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<signal>* s,
-  		std::vector<signal>* p):
+  		std::vector<asignal>* s,
+  		std::vector<asignal>* p):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -350,7 +350,7 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal>* s,std::vector<signal>* p,
+		std::vector<asignal>* s,std::vector<asignal>* p,
 		std::vector<wf_ref>* awf, std::vector<wf_ref>* pwf):
     TAFlowEvent(flow)
   {
@@ -415,12 +415,12 @@ public:
     delete pdSig;
     pdSig=0;
   }
-  void AddPadSignals( std::vector<signal>* s )
+  void AddPadSignals( std::vector<asignal>* s )
   {
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<signal,signal> >*ss )
+  void AddMatchSignals( std::vector< std::pair<asignal,asignal> >*ss )
   {
     matchSig=ss;
   }
@@ -441,12 +441,12 @@ public:
     PADwf=pf;
   }
 
-   void AddAdcPeaks(std::vector<signal>* s)
+   void AddAdcPeaks(std::vector<asignal>* s)
    {
       adc32max=s;
    }
 
-   void AddPwbPeaks(std::vector<signal>* s)
+   void AddPwbPeaks(std::vector<asignal>* s)
    {
       pwbMax=s;
    }
