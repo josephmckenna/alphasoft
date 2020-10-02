@@ -520,7 +520,7 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   void AWdiagnostic(std::vector<signal> *sanode)
+   void AWdiagnostic(std::vector<asignal> *sanode)
    {
       int nbot=0,ntop=0;
       for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
@@ -557,7 +557,7 @@ public:
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
    }
 
-   void ADCdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void ADCdiagnostic(std::vector<asignal> *wfamp/*, std::vector<asignal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -581,7 +581,7 @@ public:
       //    }
    }
 
-   void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void PWBdiagnostic(std::vector<asignal> *wfamp/*, std::vector<asignal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -630,7 +630,7 @@ public:
       //    }
    }
 
-   void PADdiagnostic(std::vector<signal> *spad)
+   void PADdiagnostic(std::vector<asignal> *spad)
    {
       int nhit=0;
       //std::cout<<"HistoModule::PADdiagnostic()"<<std::endl;
@@ -656,12 +656,12 @@ public:
       std::cout<<"HistoModule::PADdiagnostic # hit: "<<nhit<<std::endl;
    }
 
-   void MatchDiagnostic(std::vector<signal>* awsignals, 
-                        std::vector<signal>* padsignals)
+   void MatchDiagnostic(std::vector<asignal>* awsignals, 
+                        std::vector<asignal>* padsignals)
    {
-      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+      std::multiset<asignal, asignal::timeorder> aw_bytime(awsignals->begin(), 
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
+      std::multiset<asignal, asignal::timeorder> pad_bytime(padsignals->begin(), 
                                                           padsignals->end());
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
@@ -722,7 +722,7 @@ public:
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
 
-   void SigSpacePointsDiagnostic( std::vector< std::pair<signal,signal> >* sp )
+   void SigSpacePointsDiagnostic( std::vector< std::pair<asignal,asignal> >* sp )
    {
       hNsp->Fill(sp->size());
 

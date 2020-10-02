@@ -110,8 +110,8 @@ private:
    std::vector<electrode>* fAnodeIndex;
    std::vector<electrode>* fPadIndex;
 
-   std::vector<signal>* sanode;
-   std::vector<signal>* spad;
+   std::vector<asignal>* sanode;
+   std::vector<asignal>* spad;
 
    std::set<double>* aTimes;
    std::set<double>* pTimes;
@@ -125,10 +125,10 @@ private:
    std::vector<wf_ref>* feamwaveforms;
 
    // waveform max
-   std::vector<signal> fAdcPeaks;
-   std::vector<signal> fAdcRange;
-   std::vector<signal> fPwbPeaks;
-   std::vector<signal> fPwbRange;
+   std::vector<asignal> fAdcPeaks;
+   std::vector<asignal> fAdcRange;
+   std::vector<asignal> fPwbPeaks;
+   std::vector<asignal> fPwbRange;
 
    // anodes
    TH1D* hAvgRMSBot;
@@ -564,7 +564,7 @@ public:
       fAnodeIndex=new std::vector<electrode>;
       fAnodeIndex->reserve( channels.size() );
 
-      sanode=new std::vector<signal>;
+      sanode=new std::vector<asignal>;
       sanode->reserve(channels.size());
 
       aTimes=new std::set<double>;
@@ -720,7 +720,7 @@ public:
       fPadIndex=new std::vector<electrode>;
       fPadIndex->reserve( channels.size() );
 
-      spad=new std::vector<signal>;
+      spad=new std::vector<asignal>;
       spad->reserve(channels.size());
 
       pTimes=new std::set<double>;
@@ -1011,7 +1011,7 @@ public:
    }
 
    int Deconv( std::vector<wfholder*>* subtracted,
-               std::vector<signal>* fSignals, std::set<double>* fTimes,
+               std::vector<asignal>* fSignals, std::set<double>* fTimes,
                std::vector<electrode>* fElectrodeIndex,
                std::vector<double> &fResponse, int theBin, bool isanode )
    {

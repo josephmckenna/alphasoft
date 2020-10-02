@@ -86,11 +86,11 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) return flow;
 
-      std::vector<signal>* adc32 = SigFlow->adc32max;
-      std::vector<signal>* pwb = SigFlow->pwbMax;
+      std::vector<asignal>* adc32 = SigFlow->adc32max;
+      std::vector<asignal>* pwb = SigFlow->pwbMax;
       
-      std::vector<signal>* aws = SigFlow->awSig;
-      std::vector<signal>* pads = SigFlow->pdSig;
+      std::vector<asignal>* aws = SigFlow->awSig;
+      std::vector<asignal>* pads = SigFlow->pdSig;
 
 #ifdef _TIME_ANALYSIS_
       START_TIMER
@@ -108,8 +108,8 @@ public:
    }
 
    void FillHistos(const TObjArray* points,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<asignal> &adc32, std::vector<asignal> &pwb,
+                   std::vector<asignal> &aws, std::vector<asignal> &pads)
    {
       int nPoints = points->GetEntriesFast();
       std::cout<<"PHspectrum::FillHistos() # of points: "<<nPoints<<std::endl;
@@ -153,8 +153,8 @@ public:
    }
 
    void HelPHspect(TStoreEvent* anEvent,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<asignal> &adc32, std::vector<asignal> &pwb,
+                   std::vector<asignal> &aws, std::vector<asignal> &pads)
    {
       const TObjArray* helices = anEvent->GetHelixArray();
       int nTracks = helices->GetEntriesFast();
@@ -169,8 +169,8 @@ public:
    }// function: HelPHspect
 
    void LinePHspect(TStoreEvent* anEvent,
-                    std::vector<signal> &adc32, std::vector<signal> &pwb,
-                    std::vector<signal> &aws, std::vector<signal> &pads)
+                    std::vector<asignal> &adc32, std::vector<asignal> &pwb,
+                    std::vector<asignal> &aws, std::vector<asignal> &pads)
    {
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();
