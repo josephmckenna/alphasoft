@@ -339,7 +339,7 @@ void DisplayHisto()
     // deconv signals histos
     cname = "deconv";
     cname+=tag;
-    TCanvas* cdec = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+    TCanvas* cdec = new TCanvas(cname.Data(),cname.Data(),1900,1000);
     cdec->Divide(3,2);
 
     cdec->cd(1);
