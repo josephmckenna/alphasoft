@@ -189,12 +189,16 @@ public:
             int sample_length = int(ch->adc_samples.size());
             for (int ii=0; ii<sample_length; ii++)
                {
+                  // Exit if the pulse starts by going negative, then positive (its noise)
+                  if (ch->adc_samples.at(ii) - baseline < -1*threshold && start_time==0) {start_time = -1; break;}
+                  // Pulse start time is the first time it goes above threshold
                   if (ch->adc_samples.at(ii) - baseline > threshold && start_time==0) start_time = ii;
+                  // Pulse end time is the first time it goes back below threshold
                   if (ch->adc_samples.at(ii) - baseline < threshold && start_time!=0) { end_time = ii; break; }
                }
 
             // Exit if there is no pulse
-            if (start_time==0 or end_time==0) continue;
+            if (start_time<=0 or end_time<=0) continue;
 
             // Exit if the pulser is too small
             if (amp<amplitude_cut) continue;
