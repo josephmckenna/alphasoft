@@ -195,7 +195,8 @@ public:
       hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
       hErrTop = new TH1D("hErrTop","Reconstructed Avalanche Error Size Top",200,0.,100.);
       hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
-      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
+      //  hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
+      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",225,0.,3600.);
       hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
       hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
 
@@ -251,7 +252,8 @@ public:
 
       hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
       hErrPad = new TH1D("hErrPad","Reconstructed Avalanche Error Size Pad",200,0.,100.);
-      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
+      //hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
+      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",225,0.,3600.);
 
       hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
       
@@ -320,7 +322,10 @@ public:
                         256,0.,256.,32,0.,32.);
 
       hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
-      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
+      //      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
+      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",
+                                    225,0.,3600.,225,0.,3600.);
+                                    // 201,0.,3200.,201,0.,3200.);
       hawcol_deltat_sec = new TH2D("hawcol_deltat_sec","AW vs PAD col with Matching Time;AW;PAD COL",256,0.,256.,32,0.,32.);
       
       hawcol_match = new TH2D("hawcol_match",
