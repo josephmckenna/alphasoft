@@ -11,6 +11,8 @@
 #include "AnalysisTimer.h"
 #include "AnaSettings.h"
 
+#include <cctype>
+
 class PHspectrumFlags
 {
 public:  
@@ -211,7 +213,7 @@ public:
             if( args[i] == "--phspect" ) 
                {
                   fFlags.fEnabled = true;
-                  if( args[i+1].front() != '-' )
+                  if( std::isdigit(args[i+1][0]) )
                      fFlags.fNtracks = std::stoi(args[i+1]);
                }
             if( args[i] == "--anasettings" ) json=args[i+1];
