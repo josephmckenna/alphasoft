@@ -165,7 +165,7 @@ void MakeHistos()
   hpzed->SetStats(kFALSE);
 
   // spacepoints from tracks
-  hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",300,-1.,600.);
+  hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",201,-1.,200.);
   hpattreceff->SetLineWidth(2);
   hspxy = new TH2D("hspxy","Spacepoints in Tracks;x [mm];y [mm]",
 		   100,-190.,190.,100,-190.,190.);
@@ -238,7 +238,7 @@ void MakeHistos()
 		  100,0.,2000.,200,-1000.,1000.);
 
   // reco helices spacepoints
-  hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",300,-1.,600.);
+  hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",201,-1.,200.);
   hhpattreceff->SetLineWidth(2);;
   hhspxy = new TH2D("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
 		    100,-190.,190.,100,-190.,190.);
@@ -349,7 +349,8 @@ void DisplayHisto()
     if( hhpad->GetEntries() > 0. )
       {
 	hhpad->Draw("same");
-	hht->GetXaxis()->SetRangeUser(0.,2100.);
+	//hht->GetXaxis()->SetRangeUser(0.,2100.);
+	hht->GetXaxis()->SetRangeUser(0.,1500.);
 	hht->GetYaxis()->SetRangeUser(0.,
 				      hht->GetBinContent(hht->GetMaximumBin()) > hhpad->GetBinContent(hhpad->GetMaximumBin()) ?
 				      hht->GetBinContent(hht->GetMaximumBin())*1.1 : hhpad->GetBinContent(hhpad->GetMaximumBin())*1.1
@@ -367,7 +368,8 @@ void DisplayHisto()
       {
 	cdec->cd(4);
 	hmatch->Draw();
-	hmatch->GetXaxis()->SetRangeUser(0.,2100.);
+	//	hmatch->GetXaxis()->SetRangeUser(0.,2100.);
+	hmatch->GetXaxis()->SetRangeUser(0.,1500.);
       }
 
     cdec->cd(2);
@@ -401,8 +403,10 @@ void DisplayHisto()
 	cdec->cd(5);
 	hawpadsector->SetStats(kFALSE);
 	//  hawpadsector->RebinX();
-	hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
-	hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
+	// hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
+	// hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
+	hawpadsector->GetXaxis()->SetRangeUser(10.,3200.);
+	hawpadsector->GetYaxis()->SetRangeUser(10.,3200.);
 	hawpadsector->Draw("colz");
 
 	cdec->cd(6);
@@ -594,7 +598,7 @@ void DisplayHisto()
     {
       cname = "chel";
       cname+=tag;
-      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1700,800);
       chel->Divide(2,1);
       chel->cd(1);
       hNhel->Draw();
