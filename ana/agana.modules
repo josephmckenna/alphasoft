@@ -13,9 +13,9 @@ Unpack.o AgAsm.o
 #bscint_adc_module.o 
 # AC
 bsc_adc_module.o     
-##tdc_module.o
+#tdc_module.o
 # NM
-#bsc_tdc_module.o
+bsc_tdc_module.o
 #fast_deconv_module.o match_module.o reco_module.o
 #deconv_module.o match_module.o reco_module.o
 #deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o

@@ -20,7 +20,6 @@ private:
   //ADC data'
   double fADCTime=-1;
   double fAmp=-1;
-  double fIntegral=-1;
   bool fTDCMatched=false;
 
 public:
@@ -29,16 +28,14 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
-  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime, double _fIntegral) 
+  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime) 
   {
      fBarID=_fBarID;
      fAmp=_fAmp;
      fADCTime=_fADCTime;
-     fIntegral=_fIntegral;
   }
-  void SetTDCHit(int _fBarID, double _fTDCTime)
+  void SetTDCHit(double _fTDCTime)
   {
-     assert(fBarID==_fBarID);
      fTDCTime=_fTDCTime;
      fTDCMatched=true;
   } 
@@ -47,7 +44,6 @@ public:
   int GetBar() const {return fBarID;}
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
-  double GetIntegral() const {return fIntegral;}
   double GetTDCTime() const {return fTDCTime; }
   void GetXY(double &x, double &y)
   {
@@ -78,13 +74,15 @@ public:
 
   void SetBotHit(EndHit* _fBotHit)
   {
-     fBarID=_fBotHit->GetBar();
      fBotHit=_fBotHit;
   }
   void SetTopHit(EndHit* _fTopHit)
   {
-     assert(fBarID+64==_fTopHit->GetBar());
      fTopHit=_fTopHit;
+  }
+  void SetBar(int _fBarID)
+  {
+     fBarID=_fBarID;
   }
   void SetTPCHit(TVector3 _fTPC)
   {
@@ -165,18 +163,19 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddBarHit(EndHit* fBotHit, EndHit* fTopHit)
+  void AddBarHit(EndHit* fBotHit, EndHit* fTopHit, int fBarID)
   {
     BarHit* b = new BarHit;
     b->SetBotHit(fBotHit);
     b->SetTopHit(fTopHit);
+    b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
 
-  void AddADCHit(int fBarID, double fAmp, double fADCTime, double fIntegral)
+  void AddADCHit(int fBarID, double fAmp, double fADCTime)
   {
      EndHit* hit = new EndHit;
-     hit->SetADCHit( fBarID, fAmp, fADCTime, fIntegral);
+     hit->SetADCHit( fBarID, fAmp, fADCTime);
      AddEndHit(hit);
   }
 
