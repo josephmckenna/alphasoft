@@ -77,16 +77,16 @@ public:
       gDirectory->mkdir("bsc_tdc_module")->cd();
 
       // Histogramm declaration
-      hTdcAdcTime = new TH2D("hTdcAdcTime","adc vs tdc time;adc time;tdc time",200,1200,1600,200,-1.6e-6,0);
-      hBestChan = new TH2D("hBestChan","tdc channel of best matching hit;adc channel;tdc channel",16,-0.5,15.5,16,-0.5,15.5);
-      hBestTime = new TH2D("hBestTime","adc vs tdc time for best matching hit;adc time;tdc time",200,1200,1600,200,-1.6e-6,-1.2e-6);
-      hMatchedTime = new TH2D("hMatchedTime","adc vs tdc time for matched hit on correct channel;adc time;tdc time",200,1200,1600,200,-1.6e-6,-1.2e-6);
-      hMatchedChan = new TH2D("hMatchedChan","adc and tdc channels used for matching;adc channel;tdc channel",16,-0.5,15.5,16,-0.5,15.5);
+      hTdcAdcTime = new TH2D("hTdcAdcTime","adc vs tdc time;adc time;tdc time",250,1000,1500,200,-2.0e-6,0);
+      hTdcAdcChan = new TH2D("hTdcAdcChan","Hits on each channel;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
+      hBestChan = new TH2D("hBestChan","tdc channel of best matching hit;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
+      hBestTime = new TH2D("hBestTime","adc vs tdc time for best matching hit;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedTime = new TH2D("hMatchedTime","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedChan = new TH2D("hMatchedChan","adc and tdc channels used for matching;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
       hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",100,-0.5,99.5);
       hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in correct channel;Number of tdc hits",30,-0.5,29.5);
       hBestDelta = new TH2D("hBestDelta","Time difference between covnverted adc time and tdc time for best match;Channel;Delta t [s]",16,-0.5,15.5,200,-40e-9,40e-9);
       hMatchedDelta = new TH2D("hMatchedDelta","Time difference between covnverted adc time and tdc time for matched hit on correct channel;Channel;Delta t [s]",16,-0.5,15.5,200,-40e-9,40e-9);
-      hTdcAdcChan = new TH2D("hTdcAdcChan","Hits on each channel;adc channel;tdc channel",16,-0.5,15.5,16,-0.5,15.5);
       hBarADiffTdc = new TH1D("hBarADiffTdc","TDC time difference between ends of bar A;Time [s]",200,-20e-9,20e-9);
       hBarBDiffTdc = new TH1D("hBarBDiffTdc","TDC time difference between ends of bar B;Time [s]",200,-20e-9,20e-9);
       hBarADiffAdc = new TH1D("hBarADiffAdc","TDC time difference between ends of bar A;Time [s]",200,-20e-9,20e-9);
