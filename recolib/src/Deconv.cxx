@@ -499,7 +499,7 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
    
    if( fDiagnostic ) 
       {
-         fAdcPeaks = new std::vector<signal>;
+         fAdcPeaks = new std::vector<asignal>;
          fAdcPeaks->reserve( channels.size() );
       }
    if( fAged ) 
@@ -603,7 +603,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
 
    if( fDiagnostic ) 
       {
-         fPwbPeaks = new std::vector<signal>;
+         fPwbPeaks = new std::vector<asignal>;
          fPwbPeaks->reserve( channels.size() );
       }
    if( fAged ) 
@@ -712,14 +712,14 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    return nsig;
 }
 
-std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
+std::vector<asignal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
                                             std::vector<electrode> &fElectrodeIndex,
                                             std::vector<double> &fResponse, int theBin, bool isanode)
 {
 
    if(subtracted->size()==0) return 0;
    int nsamples = subtracted->back()->h->size();
-   std::vector<signal>* fSignals=new std::vector<signal>;
+   std::vector<asignal>* fSignals=new std::vector<asignal>;
    fSignals->reserve(nsamples-theBin);
    assert(nsamples < 1000);
    if( fTrace )

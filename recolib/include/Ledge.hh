@@ -42,11 +42,11 @@ public:
   int FindAnodeTimes(TClonesArray*);
   int FindPadTimes(TClonesArray*);
   
-  std::vector<signal>* Analyze(std::vector<Alpha16Channel*> );
-  std::vector<signal>* Analyze(std::vector<FeamChannel*> );
+  std::vector<asignal>* Analyze(std::vector<Alpha16Channel*> );
+  std::vector<asignal>* Analyze(std::vector<FeamChannel*> );
   int Analyze(const std::vector<int>*, double& time, double& amp, double& err);
 
-  inline std::vector<signal>* GetSignal() { return fSignals; }
+  inline std::vector<asignal>* GetSignal() { return fSignals; }
   
   inline void SetPedestalLength(int l)          { fBaseline = l; }
   inline void SetGain(double g)                 { fGain = g; }
@@ -70,7 +70,7 @@ private:
 
   double fMaxTime;
 
-  std::vector<signal>* fSignals;
+  std::vector<asignal>* fSignals;
 
   bool fDebug;
 

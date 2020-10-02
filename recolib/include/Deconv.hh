@@ -75,8 +75,8 @@ private:
    std::vector<electrode> fAnodeIndex;
    std::vector<electrode> fPadIndex;
 
-   std::vector<signal>* sanode;
-   std::vector<signal>* spad;
+   std::vector<asignal>* sanode;
+   std::vector<asignal>* spad;
 
    // check
    std::vector<double> resRMS_a;
@@ -91,7 +91,7 @@ private:
    int ReadADCRescaleFile();
    int ReadPWBRescaleFile();
 
-   std::vector<signal>* Deconvolution( std::vector<wfholder*>* subtracted,
+   std::vector<asignal>* Deconvolution( std::vector<wfholder*>* subtracted,
                                        std::vector<electrode> &fElectrodeIndex,
                                        std::vector<double> &fResponse, int theBin, bool isanode);
 
@@ -228,10 +228,10 @@ private:
    std::vector<wf_ref>* feamwaveforms;
 
    // waveform max
-   std::vector<signal>* fAdcPeaks;
-   //std::vector<signal>* fAdcRange;
-   std::vector<signal>* fPwbPeaks;
-   // std::vector<signal>* fPwbRange;
+   std::vector<asignal>* fAdcPeaks;
+   //std::vector<asignal>* fAdcRange;
+   std::vector<asignal>* fPwbPeaks;
+   // std::vector<asignal>* fPwbRange;
 
 public:
    Deconv(double adc, double pwb, double aw, double pad);
@@ -249,11 +249,11 @@ public:
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);
 
-   inline std::vector<signal>* GetAnodeSignal() { return sanode; }
-   inline std::vector<signal>* GetPadSignal()  { return spad; }
+   inline std::vector<asignal>* GetAnodeSignal() { return sanode; }
+   inline std::vector<asignal>* GetPadSignal()  { return spad; }
 
-   inline std::vector<signal>* GetAdcPeaks() { return fAdcPeaks; }
-   inline std::vector<signal>* GetPWBPeaks() { return fPwbPeaks; }
+   inline std::vector<asignal>* GetAdcPeaks() { return fAdcPeaks; }
+   inline std::vector<asignal>* GetPWBPeaks() { return fPwbPeaks; }
 
    inline std::vector<wf_ref>* GetAWwaveforms()  { return wirewaveforms; }
    inline std::vector<wf_ref>* GetPADwaveforms() { return feamwaveforms; }

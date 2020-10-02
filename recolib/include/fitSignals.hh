@@ -89,7 +89,7 @@ private:
 class GaussFcn: public ROOT::Minuit2::FCNBase 
 {
 public:
-  GaussFcn(std::vector<signal> &s):fSignals(s),theErrorDef(1.)
+  GaussFcn(std::vector<asignal> &s):fSignals(s),theErrorDef(1.)
    {
       //      std::cout<<"GaussFcn signals size: "<<fSignals.size()<<std::endl;
    }
@@ -100,20 +100,20 @@ public:
   virtual double Up() const {return theErrorDef;}
   inline void SetErrorDef(double def) {theErrorDef = def;}
 
-  inline const std::vector<signal>* GetData() const { return &fSignals; }
+  inline const std::vector<asignal>* GetData() const { return &fSignals; }
 
   void TestSignals() const;
 
 private:
-  std::vector<signal> fSignals;
+  std::vector<asignal> fSignals;
   double theErrorDef;
 };
 
 class fitSignals
 {
 public:
-  //  fitSignals(std::vector<signal>);
-  fitSignals(std::vector<signal>, int n=1);
+  //  fitSignals(std::vector<asignal>);
+  fitSignals(std::vector<asignal>, int n=1);
   ~fitSignals() {}
 
   inline void SetStart(double* s) { for(uint i=0; i<fNpar; ++i) fStart[i]=s[i]; }
@@ -171,8 +171,8 @@ private:
   std::vector<double> fSigmaError;
 };
 
-void SignalsStatistics(std::vector<signal>::const_iterator first,
-		       std::vector<signal>::const_iterator last, 
+void SignalsStatistics(std::vector<asignal>::const_iterator first,
+		       std::vector<asignal>::const_iterator last, 
 		       double& mean, double& rms);
 
 #endif
