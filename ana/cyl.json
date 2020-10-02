@@ -1,0 +1,68 @@
+{
+    "DeconvModule": {
+	"ADCthr" : 2000,
+	"PWBthr" :  100,
+	"AWthr"  :  100,
+	"PADthr" :    5
+    },
+
+   "LEModule": {
+        "ADCrms"  : 1000,
+        "PWBrms"  :  100,
+	"ADCthr"  :  750,
+	"PWBthr"  :  100,
+        "ADCgain" :    1.33333,
+        "PWBgain" :    1,
+        "ADCtime" : -535,
+        "PWBtime" : -390,
+        "CFDfrac" :    0.6
+   },
+
+    "MatchModule": {
+	"CentreOfGravityMethod": "CentreOfGravity_blobs",
+        "maxPadGroups": 10,
+        "padSigma": 7,
+        "padSigmaD": 0.75,
+        "padFitErrThres": 0.5,
+        "use_mean_on_spectrum": false,
+        "spectrum_mean_multiplyer": 0.3333333333,
+        "spectrum_cut": 10,
+        "spectrum_width_min": 0,
+        "padsNmin": 4,
+        "coincTime": 20,
+	"grassCut" : 0.1,
+	"goodDist" : 40.0,
+	"pad_charge_dist_scale": 0
+    },
+
+    "RecoModule": {
+        "NhitsCut": 5000,
+        "PointsDistCut": 8.1,
+        "MaxIncreseAdapt": 45.1,
+        "NpointsCut": 7,
+        "SeedRadCut": 168,
+        "SmallRadCut": 110,
+        "LastPointRadCut": 135,
+        "LineChi2Cut": 9000000000,
+        "LineChi2Min": 0,
+        "HelChi2RCut": 9000000000,
+        "HelChi2ZCut": 9000000000,
+        "HelChi2RMin": 1e-06,
+        "HelChi2ZMin": 1e-06,
+        "HelDcut": 110,
+        "VtxChi2Cut": 12,
+        "Lambda_NN": 5,
+        "Alpha_NN": 5,
+        "B_NN": 0.2,
+        "T_NN": 10,
+        "C_NN": 10,
+        "Mu_NN": 1,
+        "CosCut_NN": 0.9,
+        "VThres_NN": 0.6,
+        "DNormXY_NN": 10,
+        "DNormZ_NN": 2,
+        "TScale_NN": 0.4,
+        "MaxIt_NN": 20,
+        "ItThres_NN": 0.0005
+    }
+}
