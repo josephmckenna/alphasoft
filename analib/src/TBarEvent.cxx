@@ -41,7 +41,7 @@ EndHit::EndHit()
 void EndHit::Print()
 {
   std::cout<<"EndHit::Print() -- Bar ID:"<<fBarID<<std::endl;
-  std::cout<<"ADC time: "<<fADCTime<<" Amplitude: "<<fAmp<<" Integral: "<<fIntegral<<std::endl;
+  std::cout<<"ADC time: "<<fADCTime<<" Amplitude: "<<fAmp<<std::endl;
   std::cout<<"TDC Matched? "<<fTDCMatched;
   if (fTDCMatched) std::cout<<" TDC time: "<<fTDCTime;
   std::cout<<std::endl;
