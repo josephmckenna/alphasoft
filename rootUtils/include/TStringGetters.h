@@ -7,7 +7,6 @@ TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, In
 
 TString MakeAutoPlotsFolder(TString subFolder);
 TString MakeAutoPlotsFolder(TString subFolder,TString rootdir);
-
 /* emacs
  * Local Variables:
  * tab-width: 8
