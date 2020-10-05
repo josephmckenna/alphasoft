@@ -46,6 +46,8 @@ private:
    TH2D* hMatchedDelta = NULL;
    TH2D* hDiffAdc = NULL;
    TH2D* hDiffTdc = NULL;
+   TH1D* hTOFADC = NULL;
+   TH1D* hTOFTDC = NULL;
 
    // Counter initialization
    int c_adc = 0;
@@ -75,10 +77,13 @@ public:
       hTdcAdcBar = new TH2D("hTdcAdcBar","Hits on each bar;adc bar;tdc bar",128,-0.5,127.5,128,-0.5,127.5);
       hMatchedTime = new TH2D("hMatchedTime","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
       hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",100,-0.5,99.5);
-      hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in corresponding to ADC hit;Number of tdc hits",30,-0.5,29.5);
+      hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in channel corresponding to ADC hit;Number of tdc hits",30,-0.5,29.5);
       hMatchedDelta = new TH2D("hMatchedDelta","Time difference between covnverted adc time and tdc time for matched hit on correct channel;Bar end number;Delta t [s]",128,-0.5,127.5,200,-40e-9,40e-9);
-      hDiffAdc = new TH2D("hDiffAdc","ADC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-30e-9,30e-9);
-      hDiffTdc = new TH2D("hDiffTdc","TDC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-30e-9,30e-9);
+      hDiffAdc = new TH2D("hDiffAdc","ADC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-50e-9,50e-9);
+      hDiffTdc = new TH2D("hDiffTdc","TDC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-50e-9,50e-9);
+      hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-1000e-9,1000e-9);
+      hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-20e-9,20e-9);
+
 
       // Load Bscint tdc map
       TString mapfile=getenv("AGRELEASE");
@@ -119,6 +124,8 @@ public:
       delete hMatchedDelta;
       delete hDiffAdc;
       delete hDiffTdc;
+      delete hTOFADC;
+      delete hTOFTDC;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -164,6 +171,7 @@ public:
                   AddTDCdata(barEvt,tdc,trig);
                   CombineEnds(barEvt);
                   CalculateZ(barEvt);
+                  CalculateTOF(barEvt);
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
@@ -303,6 +311,29 @@ public:
 
    }
 
+   void CalculateTOF(TBarEvent* barEvt) {
+         
+      std::vector<BarHit*> barhits = barEvt->GetBars();
+      for (int i=0;i<barhits.size();i++)
+         {
+            BarHit* hit1 = barhits.at(i);
+            int bar1 = hit1->GetBar();
+            for (int j=i+1;j<barhits.size();j++)
+               {
+                  BarHit* hit2 = barhits.at(j);
+                  int bar2 = hit2->GetBar();
+                  if (bar1==bar2) continue;
+                  double t_ADC_1 = (hit1->GetTopHit()->GetADCTime() + hit1->GetBotHit()->GetADCTime())/2.;
+                  double t_ADC_2 = (hit2->GetTopHit()->GetADCTime() + hit2->GetBotHit()->GetADCTime())/2.;
+                  double t_TDC_1 = (hit1->GetTopHit()->GetTDCTime() + hit1->GetBotHit()->GetTDCTime())/2.;
+                  double t_TDC_2 = (hit2->GetTopHit()->GetTDCTime() + hit2->GetBotHit()->GetTDCTime())/2.;
+                  double TOF_ADC = TMath::Abs(t_ADC_1 - t_ADC_2);
+                  double TOF_TDC = TMath::Abs(t_TDC_1 - t_TDC_2);
+                  hTOFADC->Fill(TOF_ADC);
+                  hTOFTDC->Fill(TOF_TDC);
+               }
+         }
+   }
 
    //________________________________
    // HELPER FUNCTIONS
