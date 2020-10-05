@@ -128,12 +128,9 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
        run == 3260 || run == 3263 || run == 3265 ||
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
          fADCdelay = -400.;
-   if( run == 3170 || run == 3195 || run == 3190 ||
-       run == 3187 || run == 3186 || run == 3184 ||
-       run == 3181 || run == 3178 || run == 3208 ||
-       run == 3210 || run == 3245 ||
-       run == 3874 || run == 3858 ) // TrigCoinc
-         fADCdelay = 0.;
+
+   if( run > 903837 && run < 903900) fADCdelay = -100.;
+   else if( run > 903900 ) fADCdelay = -80.;
 }
 
 void Deconv::SetupPWBs(int run, bool norm, bool diag)
@@ -182,12 +179,6 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 2282 && run < 2724 )
-      fPWBdelay = 0.;
-   else if( run >= 2724 && run < 3032 ) // new FMC-32
-      fPWBdelay = 0.;
-   else if( run >= 3032 )
-      fPWBdelay = 0.;
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
@@ -197,12 +188,9 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
       
       fPWBdelay = -100.;
 
-   if( run == 3170 || run == 3195 || run == 3190 ||
-       run == 3187 || run == 3186 || run == 3184 ||
-       run == 3181 || run == 3178 || run == 3208 ||
-       run == 3210 || run == 3245 ||
-       run == 3874 || run == 3858 ) // TrigCoinc
-      fPWBdelay = 0.;
+   if( run > 903900)// fPWBdelay = -96.;
+      fPWBdelay = -112.;
+
    
    // electrodes masking
    if( run == 0 )
@@ -256,6 +244,17 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
          fPadRowMask.push_back(503);
          fPadRowMask.push_back(504);
          fPadRowMask.push_back(554);
+      }
+   else if( run == 903941 )
+      {
+         fPadSecMask.push_back(17);
+         fPadSecMask.push_back(18);
+         fPadSecMask.push_back(19);
+         fPadSecMask.push_back(20);
+         fPadRowMask.push_back(400);
+         for(int x=396; x<408; ++x) fPadRowMask.push_back(x);
+         for(int x=432; x<459; ++x) fPadRowMask.push_back(x);
+         for(int x=460; x<468; ++x) fPadRowMask.push_back(x);
       }
 }
 

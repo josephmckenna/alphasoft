@@ -131,11 +131,6 @@ private:
   
    std::vector<double> fStep;
    std::vector<double> fStart;
-   int print_level;
-  
-   int fStat;
-   int fDoF;
-   double fchi2;
 
    double fc;
    double fRc;
@@ -159,8 +154,14 @@ private:
 
    int fBranch;
 
+   int fStat;
+   int fDoF;
+   double fchi2;
+
    TVector3 fMomentum;  // MeV/c
    TVector3 fMomentumError;
+
+   int print_level;
 };
 
 #endif // _MN_HELIXFIT_H_

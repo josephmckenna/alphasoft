@@ -26,6 +26,7 @@ public:
    AnaSettings* ana_settings=0;
 
    bool fPWBnorm = false;
+   bool fTrace = false;
    
 public:
    DeconvPadFlags() // ctor
@@ -40,15 +41,12 @@ class DeconvPADModule: public TARunObject
 {
 public:
    DeconvPadFlags* fFlags = 0;
-   //bool fTrace = true;
-   bool fTrace = false;
+   bool fTrace=false;
    int fCounter = 0;
 
 private:
    Deconv d;
-   // pwb map
-   std::ofstream pwbmap;
-
+  
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvPadFlags* f): TARunObject(runinfo),
@@ -80,15 +78,13 @@ public:
 
       d.PrintPWBsettings();
 
-      d.SetTrace(fTrace);
+      d.SetTrace(fFlags->fTrace);
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       
       printf("DeconvPADModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      if( fFlags->fPWBmap ){}// pwbmap.close();
-      //delete pmap;  
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -245,8 +241,8 @@ public:
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
 
-         if( args[i] == "--pwbmap" )
-            fFlags.fPWBmap = true;
+         if( args[i] == "--trace" )
+            fFlags.fTrace = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
 

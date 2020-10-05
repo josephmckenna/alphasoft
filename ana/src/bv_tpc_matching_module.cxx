@@ -101,7 +101,7 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      printf("matchingmodule::begin!");
+      printf("matchingmodule::begin!\n");
 
       analyzed_event = new TBarEvent;
       BscTree = new TTree("BscEventTree", "BscEventTree");
@@ -203,23 +203,36 @@ public:
       analyzed_event->SetID( age->counter );
       analyzed_event->SetRunTime( age->time );
 
-         // Main functions
+      
+      //Root's fitting routines are often not thread safe
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
+      
+      std::vector<TVector3> points;
+      // Main functions
       if( MagneticField > 0. )
          {
-            std::vector<TVector3> helix_points = GetHelices(flow);
-            MatchPoints(flow, helix_points);
-            TimeWalkCorrection(flow);
-            FillHistos(flow);
-            TimeOfFlight(flow, helix_points);
+      points = GetHelices(flow);
+      //std::vector<TVector3> helix_points = GetHelices(flow);
+            // MatchPoints(flow, helix_points);
+            // TimeWalkCorrection(flow);
+            // FillHistos(flow);
+            // TimeOfFlight(flow, helix_points);
          }
       else
          {
-            std::vector<TVector3> line_points = GetLines(flow);
-            MatchPoints(flow, line_points);
-            TimeWalkCorrection(flow);
-            FillHistos(flow);
-            TimeOfFlight(flow, line_points);
+      points = GetLines(flow);
+      //std::vector<TVector3> line_points = GetLines(flow);
+            // MatchPoints(flow, line_points);
+            // TimeWalkCorrection(flow);
+            // FillHistos(flow);
+            // TimeOfFlight(flow, line_points);
          }
+      MatchPoints(flow, points);
+      TimeWalkCorrection(flow);
+      FillHistos(flow);
+      TimeOfFlight(flow, points);
 
       TBarEvent* evt = bf->BarEvent;
       if( evt )
@@ -363,7 +376,7 @@ public:
             int bar = hit->GetBar();
             double topamp = hit->GetTopHit()->GetAmp();
             double botamp = hit->GetBotHit()->GetAmp();
-            double botminustop = hit->GetTDCBot() - hit->GetTDCTop();
+            // double botminustop = hit->GetTDCBot() - hit->GetTDCTop(); -- unused - AC 2/10/2020
             if (hit->IsTPCMatched())
                {
                   double ztpc = hit->GetTPC().z();
