@@ -93,9 +93,7 @@ HelixFit::HelixFit(std::vector<TSpacePoint*> p): theFCNpos(p),theFCNneg(p),fNpar
 						 ferr2c(ALPHAg::kUnknown),ferr2Rc(ALPHAg::kUnknown),
 						 ferr2phi0(ALPHAg::kUnknown),ferr2D(ALPHAg::kUnknown),
 						 ferr2lambda(ALPHAg::kUnknown),ferr2z0(ALPHAg::kUnknown),
-  fBranch(0),
-  print_level(-1),
-  fStat(-1),fchi2(-1.)                                              
+                                                 fBranch(0),fStat(-1),fchi2(-1.), print_level(-1)
 {
   fDoF = p.size() - fNpar;
   fMomentum.SetXYZ(0.0,0.0,0.0);

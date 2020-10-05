@@ -11,7 +11,7 @@
 	branch = master
 [submodule "agcfmdb"]
 	path = agcfmdb
-	url = git@bitbucket.org:teamalphag/agcfmdb.git
+	url = https://bitbucket.org/teamalphag/agcfmdb.git
 [submodule "agana"]
 	path = agana
-	url = git@bitbucket.org:teamalphag/agana.git
+	url = https://bitbucket.org/teamalphag/agana.git

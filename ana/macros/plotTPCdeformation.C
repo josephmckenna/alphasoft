@@ -1,4 +1,4 @@
-#include "SignalsType.h"
+#include "SignalsType.hh"
 padmap pads;
 int //rowhot = 150, 
  rowhot = 140,
@@ -547,7 +547,7 @@ void plotTPCdeformation()
   ReadMap();
 
   deformation(fin);
-  //  phspectrum(fin);
-  //  phspectrum_tracks(fin);
-  //  multiphspectrum_tracks(fin);
+  phspectrum(fin);
+  phspectrum_tracks(fin);
+  multiphspectrum_tracks(fin);
 }
