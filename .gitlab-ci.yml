@@ -172,13 +172,14 @@ test:
     - . agconfig.sh
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/bin/*.exe
+    - ls -l $AGRELEASE/*.exe
     - ./RunChecker.sh
     - cd -
     - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
-    - build-cc7-cmake
+#    - build-cc7-cmake
+    - build-cc7
   artifacts:
     when: on_success
     paths:

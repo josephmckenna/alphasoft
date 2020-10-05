@@ -5,6 +5,9 @@
 #ifndef _PlotGetters_
 #define _PlotGetters_
 
+
+#include "TA2Plot.h"
+
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition=1, Int_t offset=0);
 void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
@@ -48,6 +51,18 @@ void SaveCanvas();
 void SaveCanvas(Int_t runNumber, const char* Description);
 void SaveCanvas(TString Description);
 void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription);
+
+
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range = -1);
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills);
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition);
+
+
+
+void Plot_SVD(Int_t runNumber, std::vector<double> tmin, std::vector<double> tmax);
+void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills);
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition);
+
 
 #endif
 

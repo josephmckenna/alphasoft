@@ -54,6 +54,7 @@ public:
    SpacepointModule(TARunInfo* runinfo, SpacepointFlags* f)
       : TARunObject(runinfo)
    {
+      ModuleName="SpacePoint Module";
       if (fTrace)
          printf("SpacepointModule::ctor!\n");
 
@@ -102,39 +103,60 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
       if(fTrace)
          printf("SpacepointModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       if (fFlags->fTimeCut)
          {
             if (ef->fEvent->time<fFlags->start_time)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
             if (ef->fEvent->time>fFlags->stop_time)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
          }
 
       if (fFlags->fEventRangeCut)
          {
             if (ef->fEvent->counter<fFlags->start_event)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
             if (ef->fEvent->counter>fFlags->stop_event)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
          }
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-      #ifdef _TIME_ANALYSIS_
-      //clock_t timer_start=clock();
-      START_TIMER
-      #endif   
-      if( ! SigFlow->awSig ) return flow;
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      if( ! SigFlow->awSig )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       if( fTrace )
          printf("SpacepointModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
       
@@ -163,9 +185,6 @@ public:
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spacepoint_module",timer_start);
-      #endif
       return flow;
    }
 };

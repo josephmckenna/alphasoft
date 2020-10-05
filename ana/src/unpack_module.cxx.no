@@ -95,6 +95,7 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
+      ModuleName="Unpack Module";
       if (fTrace)
          printf("UnpackModule::ctor!\n");
 
@@ -316,14 +317,18 @@ public:
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      
       if (fFlags->fUnpackOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       if (event->event_id != 1)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif      
+      }
 
       bool short_tpc = (runinfo->fRunNo < 1450);
 
@@ -546,9 +551,6 @@ public:
          e->Print();
          printf("\n");
       }
-         #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module(AgAsm)",timer_start);
-         #endif
          return new AgEventFlow(flow, e);
       }
 
@@ -791,9 +793,6 @@ public:
             runinfo->AddToFlowQueue(new AgEventFlow(NULL, e));
          }
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"unpack_module",timer_start);
-      #endif
       return flow;
    }
 
