@@ -12,6 +12,7 @@
 #include "TObjArray.h"
 #include "TClonesArray.h"
 #include "TString.h"
+#include "TObjString.h"
 #include "TVector3.h"
 
 #include "TF1.h"
@@ -24,4 +25,5 @@
 #include "TStoreEvent.hh"
 #include "TSpacePoint.hh"
 
-#include "RootUtils/TStringGetters.h"
+#include "IntGetters.h"
+#include "TStringGetters.h"
