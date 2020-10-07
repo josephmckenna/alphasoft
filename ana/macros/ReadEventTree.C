@@ -150,7 +150,8 @@ void MakeHistos()
   hpxy->SetStats(kFALSE);
   hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,61,109.,174.);
   hpzr->SetStats(kFALSE);
-  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
+  //  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
+  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,256,0.,360.);
   hpzp->SetStats(kFALSE);
   // hprp = new TH2D("hprp","Spacepoints;r [mm];#phi [deg]",100,108.,175.,180,0.,360.);
   hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",100,0.,TMath::TwoPi(),61,109.,174.);
@@ -173,8 +174,10 @@ void MakeHistos()
   hspzr = new TH2D("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
 		   600,-1200.,1200.,61,109.,174.);
   hspzr->SetStats(kFALSE);
+  // hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
+  // 		   600,-1200.,1200.,100,0.,360.);
   hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
-		   600,-1200.,1200.,100,0.,360.);
+		   600,-1200.,1200.,256,0.,360.);
   hspzp->SetStats(kFALSE);
 
   hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
