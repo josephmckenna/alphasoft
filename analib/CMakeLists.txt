@@ -24,7 +24,6 @@ if ($ENV{CLICOLOR_FORCE})
 endif ()
 
 # Directories
-add_subdirectory(RootUtils)
 add_subdirectory(src)
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
@@ -44,7 +43,7 @@ include(${ROOT_USE_FILE})
 
 # Include directories
 include_directories(include include)
-include_directories(include .) #Used for RootUtils
+#include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/a2lib/include)
@@ -53,7 +52,7 @@ include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx RootUtils/*.cxx)
+file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 target_link_libraries(analib ${ROOT_LIBRARIES})
 
@@ -62,5 +61,5 @@ install(TARGETS analib DESTINATION lib)
 add_custom_command( TARGET analib POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
                     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-		    )
+                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
+                  )

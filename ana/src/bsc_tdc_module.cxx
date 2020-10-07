@@ -61,6 +61,7 @@ public:
    tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
       TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="bsc tdc module";
       printf("tdcmodule::ctor!\n");
    }
 
@@ -133,15 +134,18 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
+      }
 
       AgEvent* age = ef->fEvent;
-      if(!age) return flow;
-
+      if(!age)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
       TrigEvent* trig = age->trig;
@@ -168,9 +172,6 @@ public:
          }
       else
          std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-     #ifdef _TIME_ANALYSIS_
-        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
-     #endif
 
       return flow;
    }

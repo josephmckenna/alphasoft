@@ -125,7 +125,7 @@ class PedModule_vf48: public TARunObject
 {
 public:
    PedFlags* fFlags = NULL;
-   TString modulename;
+
    TSettings *SettingsDB = NULL;
    TVF48SiMap *gVF48SiMap = NULL;
    
@@ -148,9 +148,7 @@ public:
    PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-      modulename="ped_module_vf48(";
-      modulename+=fFlags->ProcessVF48;
-      modulename+=")";
+      ModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 
       // load the sqlite3 db
       char dbName[255]; 
@@ -262,22 +260,31 @@ public:
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
 
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
+      }
       if (!fe->vf48event)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
+      }
       CountVF48Module(fe->vf48event,fFlags->ProcessVF48);
 
       //flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,modulename.Data(),timer_start);
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
       #endif
       return flow;
    }

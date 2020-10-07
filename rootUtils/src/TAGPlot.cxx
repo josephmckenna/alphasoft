@@ -172,7 +172,7 @@ void TAGPlot::AddToTAGPlot(TString file)
 
 void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset)
 {
-  VertexEvent Event;
+  AGVertexEvent Event;
   TVector3 vtx = event->GetVertex();
   Event.EventNo= event->GetEventNumber();
 

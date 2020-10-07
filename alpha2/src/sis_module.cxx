@@ -63,6 +63,7 @@ public:
    SIS(TARunInfo* runinfo, SISFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="sis_module";
       if (fTrace)
          printf("SIS::ctor!\n");
    }
@@ -145,13 +146,11 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       if (event->event_id != 11)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
       event->FindAllBanks();
 
       //void* ptr[NUM_SIS_MODULES];
@@ -195,22 +194,18 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
       flow=mf;
 
-      #ifdef _TIME_ANALYSIS_
-        if (TimeModules) flow=new AgAnalysisReportFlow(flow,"SIS_module(unpack)",timer_start);
-      #endif
       return flow;
    }
 
 TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       SISModuleFlow* mf=flow->Find<SISModuleFlow>();
       if (!mf)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      
-      
+      }
+
       SISEventFlow* sf=new SISEventFlow(flow);
       int size[NUM_SIS_MODULES];
       uint32_t* sis[NUM_SIS_MODULES];
@@ -266,9 +261,6 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
             SaveToTree(runinfo,sf->sis_events[j].at(i));
          }
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"sis_module",timer_start);
-      #endif
       return flow;
    }
 

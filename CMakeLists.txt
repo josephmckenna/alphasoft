@@ -36,6 +36,7 @@ endif ()
 #Universal libraries
 add_subdirectory(analib)
 add_subdirectory(recolib)
+add_subdirectory(rootUtils)
 #AG libraries
 if (BUILD_AG)
    add_subdirectory(aged)

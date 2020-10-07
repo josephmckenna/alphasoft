@@ -17,12 +17,12 @@ Bool_t ChronoboxesHaveChannel(Int_t runNumber, const char* Name)
    return kFALSE;
 }
 
-
 Bool_t IsPathExist(const TString &s)
 {
   struct stat buffer;
   return stat(s.Data(), &buffer)==0;
 }
+
 
 
 /* emacs

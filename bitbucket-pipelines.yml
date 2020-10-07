@@ -13,7 +13,7 @@ pipelines:
         #caches:
         #  - rootana-folders
         script: # Modify the commands below to build your repository.
-            - git submodule update --init
+            - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
@@ -30,7 +30,7 @@ pipelines:
         #caches:
         #  - rootana-folders
         script: # Modify the commands below to build your repository.
-            - git submodule update --init
+            - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
@@ -46,7 +46,7 @@ pipelines:
      - step:
         name: Update rootana and build
         script: 
-            - git submodule update --init
+            - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
             - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh

@@ -45,7 +45,7 @@ before_script:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn
+    - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -172,13 +172,14 @@ test:
     - . agconfig.sh
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/bin/*.exe
+    - ls -l $AGRELEASE/*.exe
     - ./RunChecker.sh
     - cd -
     - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
-    - build-cc7-cmake
+#    - build-cc7-cmake
+    - build-cc7
   artifacts:
     when: on_success
     paths:
