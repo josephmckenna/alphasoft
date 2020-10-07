@@ -1,4 +1,6 @@
 #include "SignalsType.hh"
+#include "IntGetters.h"
+
 padmap pads;
 int //rowhot = 150, 
  rowhot = 140,
@@ -356,6 +358,7 @@ void deformation(TFile* fin)
   
   TH2D* hpadocc = (TH2D*) gROOT->FindObject("hOccPad");
   hpadocc->SetStats(kFALSE);
+  hpadocc->SetMinimum(1000);
 
   if( RunNumber == 4318 || RunNumber == 4335 || RunNumber == 3875 )
     {
@@ -410,9 +413,10 @@ void deformation(TFile* fin)
 
   TH2D* hscamp = new TH2D("hscaamp","Average Maximum WF Amplitude by AFTER;Along the axis;Along the Circle",16,0.,16.,16,0.,16.);
   hscamp->SetStats(kFALSE);
-
+ 
   TH2D* hpadamp = new TH2D("hpadamp","Average Maximum WF Amplitude",576,0.,576.,32,0.,32.);
   hpadamp->SetStats(kFALSE);
+ 
 
   for(int b=1; b<=p->GetNbinsX(); ++b)
     {
@@ -426,10 +430,15 @@ void deformation(TFile* fin)
       robin[bin]=std::make_pair(GetPWB(s,r),GetSCA(s,r));
 
       hscamp->Fill(sca_row,sca_col,amp);
-      hpadamp->SetBinContent(r+1,s+1,amp);
+      //hpadamp->SetBinContent(r+1,s+1,amp);
+      hpadamp->Fill(r,s,amp);
     }
   hscamp->Scale(1./72.);
-  GainCorrection( hscamp );
+  // GainCorrection( hscamp );
+  hscamp->SetMinimum(1100.);
+  hpadamp->SetMinimum(700.);
+  hpadamp->SetMaximum(2500.);
+
 
   TString cname = "PadOccupancyR";
   cname += RunNumber;
@@ -467,13 +476,15 @@ void deformation(TFile* fin)
   if(saveas) c2->SaveAs(".pdf");
 
   cout<<hpadamp->GetName()<<"\t";
-  mb = hpadamp->GetMaximumBin(),bx,by,bz;
+  mb = hpadamp->GetMaximumBin();
   hpadamp->GetBinXYZ(mb,bx,by,bz);
   cout<<"Max bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<"\t";
-  hpadamp->GetXaxis()->SetRange(25,576-25);
-  mb = hpadamp->GetMinimumBin();
-  hpadamp->GetBinXYZ(mb,bx,by,bz);
-  cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<endl;
+  cout<<"\nUncomment me"<<endl;
+  // hpadamp->GetXaxis()->SetRange(25,576-25);
+  // mb = hpadamp->GetMinimumBin();
+  // hpadamp->GetBinXYZ(mb,bx,by,bz);
+  // cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<endl;
+  cout<<"till here"<<endl;
 
   // cname = "PadOverflowR";
   // cname += RunNumber;
@@ -490,7 +501,7 @@ void deformation(TFile* fin)
   cname = "AFTERampR";
   cname += RunNumber;
   TCanvas* c4 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  hscamp->Draw("colz");
+  hscamp->Draw("colztext");
   c4->Update();
   TPaletteAxis *pal4 = (TPaletteAxis*) hscamp->GetListOfFunctions()->FindObject("palette");
   pal4->SetX1NDC(0.91);
@@ -544,10 +555,10 @@ void plotTPCdeformation()
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   RunNumber = GetRunNumber( fin->GetName() );
   cout<<"Run Number: "<<RunNumber<<endl;
-  ReadMap();
+  //  ReadMap();
 
   deformation(fin);
-  phspectrum(fin);
-  phspectrum_tracks(fin);
-  multiphspectrum_tracks(fin);
+  // phspectrum(fin);
+  // phspectrum_tracks(fin);
+  // multiphspectrum_tracks(fin);
 }

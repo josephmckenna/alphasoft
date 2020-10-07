@@ -40,51 +40,25 @@
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
-  // TString libreco(basedir); libreco += "/recolib/libagtpc";
-  // gSystem->Load(libreco.Data());
 
-  // TString libana(basedir); libana += "/analib/libanalib";
-  // gSystem->Load(libana.Data());
-
-  TString libname("libAGTPC.so");
+  TString libname("libagtpc.so");
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-<<<<<<< HEAD
-=======
-  libname="libagana.so";
+  libname="libanalib.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
->>>>>>> A2
   libname="libalpha2.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
  
-<<<<<<< HEAD
-  libname="libanalib.so";
-=======
-  libname="librootUtils.so";
->>>>>>> A2
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
-<<<<<<< HEAD
-
-  gROOT->ProcessLine("#include \"analib/RootUtils/RootUtils.h\"");
-=======
-
-  gROOT->ProcessLine("#include \"rootUtils/include/A2RootUtils.h\"");
-
-  gROOT->ProcessLine("#include \"rootUtils/include/RootUtils.h\"");
->>>>>>> A2
   
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
