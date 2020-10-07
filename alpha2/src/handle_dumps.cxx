@@ -50,6 +50,7 @@ public:
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Handle Dumps";
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
@@ -116,17 +117,23 @@ public:
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       if( me->event_id != 8 ) // sequencer event id
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
       if (!DumpFlow)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       uint ndumps=DumpFlow->DumpMarkers.size();
       if (!ndumps)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       int iSeq=DumpFlow->SequencerNum;
       {
       //Lock scope
@@ -145,17 +152,11 @@ public:
       
       }
       //dumplist[iSeq].Print();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
-      #endif
       return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
@@ -235,11 +236,6 @@ public:
       }
 
       flow=f;
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
-      #endif
-
       return flow; 
    }
 

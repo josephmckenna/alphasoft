@@ -109,6 +109,7 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Spill Log Module";
       if (fTrace)
          printf("SpillLog::ctor!\n");
    }
@@ -422,11 +423,12 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      if (!gIsOnline) return flow;
-       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif 
+      if (!gIsOnline)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      time(&gTime);  /* get current time; same as: timer = time(NULL)  */
 
       const AGSpillFlow* SpillFlow= flow->Find<AGSpillFlow>();
       if (SpillFlow)
@@ -459,10 +461,6 @@ public:
             SaveToTree(runinfo,s);
          }
       }
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
-      #endif
       return flow;
    }
 

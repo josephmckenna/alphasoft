@@ -10,16 +10,16 @@ SRCDIR=src
 #CXX=$(shell root-config --cxx)
 ROO=rootcint
 
-INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
+INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I../a2lib/include -I$(INCDIR) -I.
 
 LDFLAGS=$(shell root-config --ldflags) -fPIC
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
 
 INC= $(wildcard $(INCDIR)/*.h)
 INC+=$(wildcard $(INCDIR)/*.hh)
 INC+=LibLinkDef.hh
 
-DICT=a2lib.cc
+DICT=rootUtilslib.cc
 
 SRC=$(wildcard $(SRCDIR)/*.cxx) $(DICT)
 SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
@@ -29,25 +29,24 @@ SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
 
 all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 all: CFLAGS=-O3 -g -Wall -Wuninitialized -fPIC 
-all: linkdirs libalpha2.so
+all: linkdirs librootUtils.so
 
 debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 debug: CFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC 
-debug: linkdirs libalpha2.so
+debug: linkdirs librootUtils.so
 
 native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
 native: CFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC   -march=native
-native: linkdirs libalpha2.so
+native: linkdirs librootUtils.so
 
 O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
 O2: CFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC
-O2: linkdirs libalpha2.so
+O2: linkdirs librootUtils.so
 
 linkdirs:
 	mkdir -p $(OBJDIR)
-	$(shell bash build_db.sh)
 
-libalpha2.so: $(SRC)
+librootUtils.so: $(SRC)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $(INCS) $^
 
 $(DICT): $(INC)
@@ -58,4 +57,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 
 
 clean:
-	rm -f $(OBJDIR)/*.o libalpha2.so a2lib.cc a2lib_rdict.pcm main.db
+	rm -f $(OBJDIR)/*.o librootUtils.so rootUtilslib.cc rootUtilslib_rdict.pcm

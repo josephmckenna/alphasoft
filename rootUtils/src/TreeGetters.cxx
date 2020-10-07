@@ -75,6 +75,31 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
    return t;
 }
 
+// ALPHA 2 Getters:
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber)
+{
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("SISEventTree", f);
+   return t;
+}
+
+TTreeReader* Get_A2_SVD_Tree(Int_t runNumber)
+{
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("SVDOfficialA2Time",f);
+   return t;
+}
+TTreeReader* Get_A2SpillTree(Int_t runNumber)
+{
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("A2SpillTree", f);
+   return t;
+}
+
+
+
+
+
 /* emacs
  * Local Variables:
  * tab-width: 8
