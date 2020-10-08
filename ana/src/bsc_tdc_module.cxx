@@ -40,13 +40,16 @@ private:
    //Histogramm declaration
    TH2D* hTdcAdcChan = NULL;
    TH2D* hTdcAdcTime = NULL;
-   TH2D* hBestTime = NULL;
-   TH2D* hBestChan = NULL;
+   TH2D* hGoodTime = NULL;
    TH2D* hMatchedTime = NULL;
+   TH2D* hMatchedTime1 = NULL;
+   TH2D* hMatchedTime2 = NULL;
+   TH2D* hMatchedTime3 = NULL;
+   TH2D* hMatchedTime4 = NULL;
    TH2D* hMatchedChan = NULL;
    TH1D* hNTdcHits = NULL;
    TH1D* hNMatchedHits = NULL;
-   TH2D* hBestDelta = NULL;
+   TH2D* hGoodDelta = NULL;
    TH2D* hMatchedDelta = NULL;
    TH1D* hBarADiffTdc = NULL;
    TH1D* hBarBDiffTdc = NULL;
@@ -54,6 +57,7 @@ private:
    TH1D* hBarBDiffAdc = NULL;
    TH1D* hTOFADC = NULL;
    TH1D* hTOFTDC = NULL;
+   TH2D* hNMatchedByChan = NULL;
 
    // Counter initialization
    int c_adc = 0;
@@ -81,20 +85,24 @@ public:
       // Histogramm declaration
       hTdcAdcTime = new TH2D("hTdcAdcTime","adc vs tdc time;adc time;tdc time",250,1000,1500,200,-2.0e-6,0);
       hTdcAdcChan = new TH2D("hTdcAdcChan","Hits on each channel;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
-      hBestChan = new TH2D("hBestChan","tdc channel of best matching hit;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
-      hBestTime = new TH2D("hBestTime","adc vs tdc time for best matching hit;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hGoodTime = new TH2D("hGoodTime","adc vs tdc time for possible matches;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
       hMatchedTime = new TH2D("hMatchedTime","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedTime1 = new TH2D("hMatchedTime1","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedTime2 = new TH2D("hMatchedTime2","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedTime3 = new TH2D("hMatchedTime3","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
+      hMatchedTime4 = new TH2D("hMatchedTime4","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
       hMatchedChan = new TH2D("hMatchedChan","adc and tdc channels used for matching;adc channel;tdc channel",16,-0.5,15.5,16,0.5,16.5);
       hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",100,-0.5,99.5);
       hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in correct channel;Number of tdc hits",30,-0.5,29.5);
-      hBestDelta = new TH2D("hBestDelta","Time difference between covnverted adc time and tdc time for best match;Channel;Delta t [s]",16,-0.5,15.5,200,-40e-9,40e-9);
+      hGoodDelta = new TH2D("hGoodDelta","Time difference between covnverted adc time and tdc time for possible matchs;Channel;Delta t [s]",16,-0.5,15.5,200,-40e-9,40e-9);
       hMatchedDelta = new TH2D("hMatchedDelta","Time difference between covnverted adc time and tdc time for matched hit on correct channel;Channel;Delta t [s]",16,-0.5,15.5,200,-40e-9,40e-9);
       hBarADiffTdc = new TH1D("hBarADiffTdc","TDC time difference between ends of bar A;Time [s]",200,-10e-9,10e-9);
       hBarBDiffTdc = new TH1D("hBarBDiffTdc","TDC time difference between ends of bar B;Time [s]",200,-10e-9,10e-9);
-      hBarADiffAdc = new TH1D("hBarADiffAdc","TDC time difference between ends of bar A;Time [s]",200,-10e-9,10e-9);
-      hBarBDiffAdc = new TH1D("hBarBDiffAdc","TDC time difference between ends of bar B;Time [s]",200,-20e-9,20e-9);
+      hBarADiffAdc = new TH1D("hBarADiffAdc","ADC time difference between ends of bar A;Time [s]",200,-10e-9,10e-9);
+      hBarBDiffAdc = new TH1D("hBarBDiffAdc","ADC time difference between ends of bar B;Time [s]",200,-20e-9,20e-9);
       hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-100e-9,100e-9);
       hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-5e-9,5e-9);
+      hNMatchedByChan = new TH2D("hNMatchedByChan","Number of TDC hits in correct channel;adc channel;Number of tdc hits",16,-0.5,15.5,30,-0.5,29.5);
 
 
       // Load Bscint tdc map
@@ -131,12 +139,15 @@ public:
       delete hTdcAdcChan;
       delete hTdcAdcTime;
       delete hMatchedTime;
+      delete hMatchedTime1;
+      delete hMatchedTime2;
+      delete hMatchedTime3;
+      delete hMatchedTime4;
       delete hMatchedChan;
-      delete hBestTime;
-      delete hBestChan;
+      delete hGoodTime;
       delete hNTdcHits;
       delete hNMatchedHits;
-      delete hBestDelta;
+      delete hGoodDelta;
       delete hMatchedDelta;
       delete hBarADiffTdc;
       delete hBarBDiffTdc;
@@ -144,6 +155,7 @@ public:
       delete hBarBDiffAdc;
       delete hTOFADC;
       delete hTOFTDC;
+      delete hNMatchedByChan;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -230,10 +242,6 @@ public:
             double n_hits = 0;
             double n_good = 0;
 
-            TdcHit* best_match_chan = NULL;
-            double tdc_time_chan = 0;
-            double smallest_delta_chan = 1;
-
             // Convert adc time
             double linM = 0.000000001; // from ns to s
             double linB = -2782862e-12;
@@ -267,44 +275,42 @@ public:
                   // Gets hit time
                   double hit_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
                   double final_time = hit_time-trig_time;
-
-                  // Find tdc hit with closest time to converted adc time
                   double delta = converted_time - final_time;
-                  if (TMath::Abs(delta)<TMath::Abs(smallest_delta))
+
+                  // Find tdc hit with closest time to converted adc time on correct channel
+                  if (TMath::Abs(delta)<TMath::Abs(smallest_delta) and int(tdchit->chan)==tdc_chan)
                      {
                         smallest_delta = delta;
                         best_match = tdchit;
                         tdc_time = final_time;
                      }  
 
-                  // Find tdc hit with closest time to converted adc time on correct channel
-                  if (TMath::Abs(delta)<TMath::Abs(smallest_delta_chan) and int(tdchit->chan)==tdc_chan)
-                     {
-                        smallest_delta_chan = delta;
-                        best_match_chan = tdchit;
-                        tdc_time_chan = final_time;
-                     }  
-
-
                   // Fills histograms
                   hTdcAdcChan->Fill(int(endhit->GetBar()),int(tdchit->chan));
                   hTdcAdcTime->Fill(endhit->GetADCTime(),final_time);
+                  if (int(tdchit->chan)==tdc_chan)
+                     {
+                        hGoodTime->Fill(endhit->GetADCTime(),final_time);
+                        hGoodDelta->Fill(endhit->GetADCTime(),delta);
+                     }  
 
 
                }
 
             // Fills histograms
-            hMatchedTime->Fill(endhit->GetADCTime(),tdc_time_chan);
-            if (best_match_chan) hMatchedChan->Fill(endhit->GetBar(),int(best_match_chan->chan));
-            hBestTime->Fill(endhit->GetADCTime(),tdc_time);
-            if (best_match) hBestChan->Fill(endhit->GetBar(),int(best_match->chan));
+            hMatchedTime->Fill(endhit->GetADCTime(),tdc_time);
+            if (endhit->GetBar()==0) hMatchedTime1->Fill(endhit->GetADCTime(),tdc_time);
+            if (endhit->GetBar()==5) hMatchedTime2->Fill(endhit->GetADCTime(),tdc_time);
+            if (endhit->GetBar()==10) hMatchedTime3->Fill(endhit->GetADCTime(),tdc_time);
+            if (endhit->GetBar()==15) hMatchedTime4->Fill(endhit->GetADCTime(),tdc_time);
+            if (best_match) hMatchedChan->Fill(endhit->GetBar(),int(best_match->chan));
             hNTdcHits->Fill(n_hits);
             hNMatchedHits->Fill(n_good);
-            hMatchedDelta->Fill(endhit->GetBar(),smallest_delta_chan);
-            hBestDelta->Fill(endhit->GetBar(),smallest_delta);
+            hNMatchedByChan->Fill(int(endhit->GetBar()),n_good);
+            hMatchedDelta->Fill(endhit->GetBar(),smallest_delta);
 
             // Writes tdc data to hit
-            endhit->SetTDCHit(tdc_time_chan);
+            endhit->SetTDCHit(tdc_time);
             c_adctdc+=1;
          }
 
