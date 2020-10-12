@@ -20,28 +20,28 @@ private:
    bool fDebug;
    bool diagnostic;
 
-   AnaSettings* ana_settings;
-   double fCoincTime; // ns
+   const AnaSettings* ana_settings;
+   const double fCoincTime; // ns
 
-   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
-   int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
-   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
-   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
-   double padFitErrThres; // max. accepted error on pad gaussian fit mean
-   bool use_mean_on_spectrum;
-   double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
-   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
-   double spectrum_width_min;
+   const int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
+   const int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
+   const double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
+   const double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
+   const double padFitErrThres; // max. accepted error on pad gaussian fit mean
+   const bool use_mean_on_spectrum;
+   const double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
+   const double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
+   const double spectrum_width_min;
 
-   double grassCut;       // don't consider peaks smaller than grassCut factor of a
-   double goodDist;       // neighbouring peak, if that peak is closer than goodDist
+   const double grassCut;       // don't consider peaks smaller than grassCut factor of a
+   const double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
-   double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
-   double padThr;               // needed for wire-dependent pad threshold
+   const double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
+   const double padThr;               // needed for wire-dependent pad threshold
 
-   double phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
-   double zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
-   int CentreOfGravityFunction = -1;
+   const double phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
+   const double zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
+   int CentreOfGravityFunction = -1; //One day we can maybe make this const :)
 
    double relCharge[8] = {1., 1.33687717, 1.50890722, 1.56355571, 1.56355571, 1.50890722, 1.33687717, 1.};
 
@@ -107,7 +107,7 @@ private:
    std::mutex mtx;
 
 public:
-   Match(AnaSettings* ana_settings);
+   Match(const AnaSettings* ana_settings);
    Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
    ~Match();
 
