@@ -58,11 +58,25 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo)
    {
-      ModuleName="Match Module";
+
       if (fTrace)
-         printf("MatchModule::ctor!\n");
+        printf("MatchModule::ctor!\n");
 
       fFlags = f;
+
+      //First thread
+      if (fFlags->ThreadID < 0)
+        ModuleName="Match Module (CombPads)";
+      //Multithreaded fitting
+      else if ( fFlags->ThreadID < fFlags->TotalThreads ) 
+        ModuleName="Match Module (Combine " +
+          std::to_string(fFlags->ThreadID) + 
+          "/" +
+          std::to_string(fFlags->TotalThreads) +
+          ")";
+      else if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
+        ModuleName="Match Module (spacepoints)";
+
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
       fTrace=fFlags->fTrace; // enable verbosity
    }
@@ -326,10 +340,82 @@ public:
 
 
 static TARegister tar(new MatchModuleFactory);
-static TARegister tar1(new MatchModuleFactory_CombineAPad(0,4));
-static TARegister tar2(new MatchModuleFactory_CombineAPad(1,4));
-static TARegister tar3(new MatchModuleFactory_CombineAPad(2,4));
-static TARegister tar4(new MatchModuleFactory_CombineAPad(3,4));
+//Choose how many threads you want here (2,4,8,16, 32 or 64)... more threads need more ram
+#define MAX_THREADS 32
+static TARegister tar1(new MatchModuleFactory_CombineAPad(0,MAX_THREADS));
+static TARegister tar2(new MatchModuleFactory_CombineAPad(1,MAX_THREADS));
+#if MAX_THREADS>2
+static TARegister tar3(new MatchModuleFactory_CombineAPad(2,MAX_THREADS));
+static TARegister tar4(new MatchModuleFactory_CombineAPad(3,MAX_THREADS));
+#endif
+#if MAX_THREADS>4
+static TARegister tar5(new MatchModuleFactory_CombineAPad(4,MAX_THREADS));
+static TARegister tar6(new MatchModuleFactory_CombineAPad(5,MAX_THREADS));
+static TARegister tar7(new MatchModuleFactory_CombineAPad(6,MAX_THREADS));
+static TARegister tar8(new MatchModuleFactory_CombineAPad(7,MAX_THREADS));
+#endif
+#if MAX_THREADS>8
+static TARegister tar9(new MatchModuleFactory_CombineAPad(8,MAX_THREADS));
+static TARegister tar10(new MatchModuleFactory_CombineAPad(9,MAX_THREADS));
+static TARegister tar11(new MatchModuleFactory_CombineAPad(10,MAX_THREADS));
+static TARegister tar12(new MatchModuleFactory_CombineAPad(11,MAX_THREADS));
+static TARegister tar13(new MatchModuleFactory_CombineAPad(12,MAX_THREADS));
+static TARegister tar14(new MatchModuleFactory_CombineAPad(13,MAX_THREADS));
+static TARegister tar15(new MatchModuleFactory_CombineAPad(14,MAX_THREADS));
+static TARegister tar16(new MatchModuleFactory_CombineAPad(15,MAX_THREADS));
+#endif
+#if MAX_THREADS>16
+static TARegister tar17(new MatchModuleFactory_CombineAPad(16,MAX_THREADS));
+static TARegister tar18(new MatchModuleFactory_CombineAPad(17,MAX_THREADS));
+static TARegister tar19(new MatchModuleFactory_CombineAPad(18,MAX_THREADS));
+static TARegister tar20(new MatchModuleFactory_CombineAPad(19,MAX_THREADS));
+static TARegister tar21(new MatchModuleFactory_CombineAPad(20,MAX_THREADS));
+static TARegister tar22(new MatchModuleFactory_CombineAPad(21,MAX_THREADS));
+static TARegister tar23(new MatchModuleFactory_CombineAPad(22,MAX_THREADS));
+static TARegister tar24(new MatchModuleFactory_CombineAPad(23,MAX_THREADS));
+static TARegister tar25(new MatchModuleFactory_CombineAPad(24,MAX_THREADS));
+static TARegister tar26(new MatchModuleFactory_CombineAPad(25,MAX_THREADS));
+static TARegister tar27(new MatchModuleFactory_CombineAPad(26,MAX_THREADS));
+static TARegister tar28(new MatchModuleFactory_CombineAPad(27,MAX_THREADS));
+static TARegister tar29(new MatchModuleFactory_CombineAPad(28,MAX_THREADS));
+static TARegister tar30(new MatchModuleFactory_CombineAPad(29,MAX_THREADS));
+static TARegister tar31(new MatchModuleFactory_CombineAPad(30,MAX_THREADS));
+static TARegister tar32(new MatchModuleFactory_CombineAPad(31,MAX_THREADS));
+#endif
+#if MAX_THREADS>32
+static TARegister tar33(new MatchModuleFactory_CombineAPad(32,MAX_THREADS));
+static TARegister tar34(new MatchModuleFactory_CombineAPad(33,MAX_THREADS));
+static TARegister tar35(new MatchModuleFactory_CombineAPad(34,MAX_THREADS));
+static TARegister tar36(new MatchModuleFactory_CombineAPad(35,MAX_THREADS));
+static TARegister tar37(new MatchModuleFactory_CombineAPad(36,MAX_THREADS));
+static TARegister tar38(new MatchModuleFactory_CombineAPad(37,MAX_THREADS));
+static TARegister tar39(new MatchModuleFactory_CombineAPad(38,MAX_THREADS));
+static TARegister tar40(new MatchModuleFactory_CombineAPad(39,MAX_THREADS));
+static TARegister tar41(new MatchModuleFactory_CombineAPad(40,MAX_THREADS));
+static TARegister tar42(new MatchModuleFactory_CombineAPad(41,MAX_THREADS));
+static TARegister tar43(new MatchModuleFactory_CombineAPad(42,MAX_THREADS));
+static TARegister tar44(new MatchModuleFactory_CombineAPad(43,MAX_THREADS));
+static TARegister tar45(new MatchModuleFactory_CombineAPad(44,MAX_THREADS));
+static TARegister tar46(new MatchModuleFactory_CombineAPad(45,MAX_THREADS));
+static TARegister tar47(new MatchModuleFactory_CombineAPad(46,MAX_THREADS));
+static TARegister tar48(new MatchModuleFactory_CombineAPad(47,MAX_THREADS));
+static TARegister tar49(new MatchModuleFactory_CombineAPad(48,MAX_THREADS));
+static TARegister tar50(new MatchModuleFactory_CombineAPad(49,MAX_THREADS));
+static TARegister tar51(new MatchModuleFactory_CombineAPad(50,MAX_THREADS));
+static TARegister tar52(new MatchModuleFactory_CombineAPad(51,MAX_THREADS));
+static TARegister tar53(new MatchModuleFactory_CombineAPad(52,MAX_THREADS));
+static TARegister tar54(new MatchModuleFactory_CombineAPad(53,MAX_THREADS));
+static TARegister tar55(new MatchModuleFactory_CombineAPad(54,MAX_THREADS));
+static TARegister tar56(new MatchModuleFactory_CombineAPad(55,MAX_THREADS));
+static TARegister tar57(new MatchModuleFactory_CombineAPad(56,MAX_THREADS));
+static TARegister tar58(new MatchModuleFactory_CombineAPad(57,MAX_THREADS));
+static TARegister tar59(new MatchModuleFactory_CombineAPad(58,MAX_THREADS));
+static TARegister tar60(new MatchModuleFactory_CombineAPad(59,MAX_THREADS));
+static TARegister tar61(new MatchModuleFactory_CombineAPad(60,MAX_THREADS));
+static TARegister tar62(new MatchModuleFactory_CombineAPad(61,MAX_THREADS));
+static TARegister tar63(new MatchModuleFactory_CombineAPad(62,MAX_THREADS));
+static TARegister tar64(new MatchModuleFactory_CombineAPad(63,MAX_THREADS));
+#endif
 static TARegister tarend(new MatchModuleFactoryFinish);
 
 
