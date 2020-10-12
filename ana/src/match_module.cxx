@@ -79,6 +79,7 @@ public:
       match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
       match->Setup(runinfo->fRoot->fOutputFile);
+      match->Init();
    }
    void EndRun(TARunInfo* runinfo)
    {
@@ -168,29 +169,28 @@ public:
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
       }  
-     match->Init();
-     std::vector<signal>* combinedPads = NULL;
+
      if( SigFlow->pdSig )
          {
             std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
             flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
 
-            combinedPads = match->CombinePads( &comb );
+            SigFlow->combinedPads = match->CombinePads( &comb );
             flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
          }
 
       // allow events without pwbs
       std::vector< std::pair<signal,signal> >* spacepoints = NULL;
-      if( combinedPads )
+      if( SigFlow->combinedPads )
          {
             if( fTrace )
-               printf("MatchModule::Analyze, combined pads # %d\n", int(combinedPads->size()));
+               printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
-            SigFlow->AddPadSignals( combinedPads );
+            SigFlow->AddPadSignals( SigFlow->combinedPads );
             spacepoints =
-               match->MatchElectrodes( SigFlow->awSig,combinedPads );
+               match->MatchElectrodes( SigFlow->awSig,SigFlow->combinedPads );
             spacepoints = match->CombPoints(spacepoints);
          }
       else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
