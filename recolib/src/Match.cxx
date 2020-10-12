@@ -59,7 +59,6 @@ Match::~Match()
 
 void Match::Init()
 {
-  fCombinedPads=NULL;//new std::vector<signal>;
   spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
   if(fDebug) std::cout<<"Match::Init!"<<std::endl;
@@ -77,7 +76,7 @@ void Match::Setup(TFile* OutputFile)
         }
       else
 	gFile->cd();
-      hcognpeaks = new TH1D("hcognpeaks","CombPads CoG - Number of Avals",int(maxPadGroups+1.),
+      hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
       hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
 			       0.,maxPadGroups+1.);
@@ -97,12 +96,12 @@ void Match::Setup(TFile* OutputFile)
     }
 }
 
-std::set<short> Match::PartionBySector(std::vector<signal>* padsignals, 
-				       std::vector< std::vector<signal> >& pad_bysec)
+std::pair<std::set<short>,std::vector< std::vector<signal> >> Match::PartitionBySector(std::vector<signal>* padsignals)
 {
-  std::set<short> secs;
-  pad_bysec.clear();
+  std::vector< std::vector<signal> > pad_bysec;
   pad_bysec.resize(32);
+
+  std::set<short> secs;
 
   for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
     {
@@ -110,7 +109,7 @@ std::set<short> Match::PartionBySector(std::vector<signal>* padsignals,
       secs.insert( ipd->sec );
       pad_bysec.at(ipd->sec).push_back(*ipd);
     }
-  return secs;
+  return {secs,pad_bysec};
 }
 
 std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& sig )
@@ -140,28 +139,34 @@ std::vector< std::vector<signal> > Match::PartitionByTime( std::vector<signal>& 
 
 std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals)
 {
-  if( fTrace ) std::cout<<"Match::CombPads!"<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::CombPads!"<<std::endl;
+
   // combine pads in the same column only
   std::vector< std::vector<signal> > pad_bysec;
-  std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
-  if( fTrace ) std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
+  std::set<short> secs;
+  std::tie(secs, pad_bysec) = PartitionBySector( padsignals ) ;
+  
+  if( fTrace )
+    std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
+
   std::vector< std::vector<signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
       if( sector < 0 || sector > 31 ) continue;
       if( fDebug )
-	std::cout<<"Match::CombPads sec: "<<sector
-		 <<" = sector: "<<pad_bysec[sector].at(0).sec
-		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
+        std::cout<<"Match::CombPads sec: "<<sector
+         <<" = sector: "<<pad_bysec[sector].at(0).sec
+         <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
       std::vector< std::vector<signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
-	{
-	  if( it->size() <= 2 ) continue; // it->size() <= padsNmin
-	  if( it->begin()->t < 0. ) continue;
-	  comb.push_back( *it );
-	}
+        {
+          if( it->size() <= 2 ) continue; // it->size() <= padsNmin
+          if( it->begin()->t < 0. ) continue;
+          comb.push_back( *it );
+        }
       pad_bytime.clear();
     }
   secs.clear();
@@ -169,21 +174,22 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   return comb;
 }
 
-void Match::CombinePads(std::vector< std::vector<signal> > *comb)
+std::vector<signal>* Match::CombinePads(std::vector< std::vector<signal> > *comb)
 {
-  fCombinedPads=new std::vector<signal>;
-  if( comb->size()==0 ) return;
- 
+
+  if( comb->size()==0 ) return NULL;
+  std::vector<signal>* CombinedPads=new std::vector<signal>;
+
   if( fTrace ) 
     {
       std::cout<<"Match::CombinePads comb size: "<<comb->size()<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
       std::cout<<"Match::CombinePads sssigv: ";
       if( fDebug ) {
-	for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-	  {
-	    std::cout<<sigv->size()<<" ";
-	  }
+        for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+          {
+            std::cout<<sigv->size()<<" ";
+          }
       }
       std::cout<<"\n";
     }
@@ -192,39 +198,39 @@ void Match::CombinePads(std::vector< std::vector<signal> > *comb)
   case 0: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv ){
       auto start = std::chrono::high_resolution_clock::now();
-      CentreOfGravity(*sigv);
+      CentreOfGravity(*sigv,CombinedPads);
       auto stop = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
       if( fTrace ) 
-	std::cout << "Match::CombinePads Time taken CentreOfGravity: "
-		  << duration.count() << " us" << std::endl; 
+        std::cout << "Match::CombinePads Time taken CentreOfGravity: "
+                  << duration.count() << " us" << std::endl; 
       if( diagnostic ) htimecog->Fill(duration.count());
     }
     break;
   }
   case 1: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-      CentreOfGravity_nofit(*sigv);
+      CentreOfGravity_nofit(*sigv,CombinedPads);
     break;
   }
   case 2: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-      CentreOfGravity_nohisto(*sigv);
+      CentreOfGravity_nohisto(*sigv,CombinedPads);
     break;
   }
   case 3: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-      CentreOfGravity_single_peak(*sigv);
+      CentreOfGravity_single_peak(*sigv,CombinedPads);
     break;
   }
   case 4: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-      CentreOfGravity_multi_peak(*sigv);
+      CentreOfGravity_multi_peak(*sigv,CombinedPads);
     break;
   }
   case 5: {
     for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
-      CentreOfGravity_histoblobs(*sigv);
+      CentreOfGravity_histoblobs(*sigv,CombinedPads);
     break;
   }
  case 6: {
@@ -233,7 +239,7 @@ void Match::CombinePads(std::vector< std::vector<signal> > *comb)
     for( unsigned i=0; i<comb->size(); ++i)
       {
 	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,
-					 std::ref(comb->at(i))) );
+					 std::ref(comb->at(i)), CombinedPads ) );
 	cogstart.push_back( std::chrono::high_resolution_clock::now() );
       }   
     //for( auto& th : cogthread )
@@ -252,10 +258,7 @@ void Match::CombinePads(std::vector< std::vector<signal> > *comb)
     break;
    }
   }
-  
-  for (uint i=0; i<comb->size(); i++)
-    comb->at(i).clear();
-  comb->clear();
+  return CombinedPads;
 }
 
 void Match::CombinePads(std::vector<signal>* padsignals)
@@ -264,7 +267,7 @@ void Match::CombinePads(std::vector<signal>* padsignals)
   CombinePads(&comb);
 }
 
-void Match::CentreOfGravity( std::vector<signal> &vsig )
+void Match::CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
 {
   if(!vsig.size()) return;
 
@@ -361,7 +364,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig )
 	    //if( err < padFitErrThres && sigma > 0. )
 	    {
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
+	      CombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
 	      if( fDebug )
 		std::cout<<"Combination Found! s: "<<col
 			 <<" i: "<<row
@@ -562,7 +565,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<signa
   return blobs;
 }
 
-void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
+void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
 {
   if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
@@ -711,7 +714,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 	      if( abs(pos) < ALPHAg::_halflength )
 		{
 		  // create new signal with combined pads
-		  fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
+		  CombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
 
 		  if( fDebug ){
 		    std::cout<<"Combination Found! s: "<<col
@@ -778,7 +781,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, zed_err );
+	      CombinedPads->emplace_back( col, index, time, amp, amp_err, pos, zed_err );
 
 	      if( fDebug )
 		std::cout<<"at last Found! s: "<<col
@@ -802,7 +805,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<signal> &vsig )
 }
 
 //void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal>& padcog)
-void Match::CentreOfGravity_blobs( std::vector<signal>& vsig )
+void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal>* CombinedPads )
 {
   int nPositions=0;
   if(int(vsig.size()) < padsNmin) return;
@@ -915,7 +918,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig )
 		{
 		  mtx.lock();
 		  // create new signal with combined pads
-		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
+		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
 		  mtx.unlock();
 		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
@@ -959,7 +962,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig )
   //  return nPositions;
 }
 
-void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
+void Match::CentreOfGravity_nofit( std::vector<signal> &vsig, std::vector<signal>* CombinedPads  )
 {
   if(!vsig.size()) return;
   double time = vsig.begin()->t;
@@ -1027,7 +1030,7 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
 	  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	  // create new signal with combined pads
-	  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	  CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
 	  if( fTrace )
 	    std::cout<<"Combination Found! s: "<<col
@@ -1045,7 +1048,7 @@ void Match::CentreOfGravity_nofit( std::vector<signal> &vsig )
 }
 
 
-void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
+void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
 {
   if(!vsig.size()) return;
 
@@ -1106,7 +1109,7 @@ void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	      CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
 	      if( fTrace )
 		std::cout<<"Combination Found! s: "<<col
@@ -1158,7 +1161,7 @@ void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
+	      CombinedPads->emplace_back( col, index, time, amp, pos, zed_err );
 
 	      if( fTrace )
 		std::cout<<"at last Found! s: "<<col
@@ -1181,7 +1184,7 @@ void Match::CentreOfGravity_single_peak( std::vector<signal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
+void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
 {
 
   if(!vsig.size()) return;
@@ -1271,7 +1274,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	      // create new signal with combined pads
-	      fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	      CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
 	      if( fTrace )
 		std::cout<<"Combination Found! s: "<<col
@@ -1347,7 +1350,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<signal> &vsig )
 }
 
 
-void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
+void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
 {
   if(!vsig.size()) return;
   double time = vsig.begin()->t;
@@ -1496,7 +1499,7 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
 	  int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
 	  // create new signal with combined pads
-	  fCombinedPads->emplace_back( col, index, time, amp, pos, err );
+	  CombinedPads->emplace_back( col, index, time, amp, pos, err );
 
 	  if( fTrace )
 	    std::cout<<"Combination Found! s: "<<col
@@ -1514,12 +1517,12 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<signal>* awsignals)
+void Match::MatchElectrodes(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads )
 {
   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
-  std::multiset<signal, signal::timeorder> pad_bytime(fCombinedPads->begin(),
-						      fCombinedPads->end());
+  std::multiset<signal, signal::timeorder> pad_bytime(CombinedPads->begin(),
+						      CombinedPads->end());
   if (spacepoints) delete spacepoints;
   spacepoints=new std::vector< std::pair<signal,signal> >;
   int Nmatch=0;
@@ -1565,57 +1568,6 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals)
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<signal>* awsignals, 
-			    std::vector<signal>* pdsignals)
-{
-  std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
-						     awsignals->end());
-  std::multiset<signal, signal::timeorder> pad_bytime(pdsignals->begin(),
-						      pdsignals->end());
-  if(spacepoints) delete spacepoints;
-  spacepoints=new std::vector< std::pair<signal,signal> >;
-  int Nmatch=0;
-  for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
-    {
-      if( iaw->t < 0. ) continue;
-      short sector = short(iaw->idx/8);
-      short secwire = short(iaw->idx%8);
-      if( fTrace )
-	std::cout<<"Match::Match aw: "<<iaw->idx
-		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
-      for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
-	{
-	  if( ipd->t < 0. ) continue;
-	  bool tmatch=false;
-	  bool pmatch=false;
-
-          bool ampCut = (charge_dist_scale==0);
-
-	  double delta = fabs( iaw->t - ipd->t );
-	  if( delta < fCoincTime ) tmatch=true;
-
-	  if( sector == ipd->sec ) pmatch=true;
-
-          if( !ampCut ){
-              ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
-          }
-
-	  if( tmatch && pmatch && ampCut )
-	    {
-	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
-	      //pad_bytime.erase( ipd );
-	      ++Nmatch;
-	      if( fTrace )
-		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
-			 <<"\tpad err: "<<ipd->errz<<std::endl;
-	    }
-	}
-    }
-  //  if( fTrace )
-  std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
-  if( int(spacepoints->size()) != Nmatch )
-    std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
-}
 
 void Match::FakePads(std::vector<signal>* awsignals)
 {
