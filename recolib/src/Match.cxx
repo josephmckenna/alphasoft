@@ -59,7 +59,6 @@ Match::~Match()
 
 void Match::Init()
 {
-  spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
   if(fDebug) std::cout<<"Match::Init!"<<std::endl;
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
@@ -1517,14 +1516,14 @@ void Match::CentreOfGravity_nohisto( std::vector<signal> &vsig, std::vector<sign
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads )
+std::vector< std::pair<signal,signal> >* Match::MatchElectrodes(std::vector<signal>* awsignals, std::vector<signal>* CombinedPads )
 {
   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
   std::multiset<signal, signal::timeorder> pad_bytime(CombinedPads->begin(),
 						      CombinedPads->end());
-  if (spacepoints) delete spacepoints;
-  spacepoints=new std::vector< std::pair<signal,signal> >;
+
+  std::vector< std::pair<signal,signal> >* spacepoints=new std::vector< std::pair<signal,signal> >;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
@@ -1566,15 +1565,15 @@ void Match::MatchElectrodes(std::vector<signal>* awsignals, std::vector<signal>*
     std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
+  return spacepoints;
 }
 
 
-void Match::FakePads(std::vector<signal>* awsignals)
+std::vector< std::pair<signal,signal> >*  Match::FakePads(std::vector<signal>* awsignals)
 {
   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
-  if (spacepoints) spacepoints->clear();
-  spacepoints=new std::vector<std::pair < signal, signal>>;
+  std::vector< std::pair<signal,signal> >* spacepoints=new std::vector<std::pair < signal, signal>>;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
@@ -1589,6 +1588,7 @@ void Match::FakePads(std::vector<signal>* awsignals)
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
+  return spacepoints;
 }
 
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
@@ -1748,7 +1748,7 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& me
   return np;
 }
 
-void Match::CombPoints()
+std::vector< std::pair<signal,signal> >* Match::CombPoints(std::vector< std::pair<signal,signal> >* spacepoints)
 {
   if( fTrace )
     std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
@@ -1811,4 +1811,5 @@ void Match::CombPoints()
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
     std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
   }
+  return spacepoints;
 }

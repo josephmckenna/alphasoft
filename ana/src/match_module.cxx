@@ -182,28 +182,30 @@ public:
          }
 
       // allow events without pwbs
+      std::vector< std::pair<signal,signal> >* spacepoints = NULL;
       if( combinedPads )
          {
             if( fTrace )
                printf("MatchModule::Analyze, combined pads # %d\n", int(combinedPads->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
             SigFlow->AddPadSignals( combinedPads );
-            match->MatchElectrodes( SigFlow->awSig,combinedPads );
-            match->CombPoints();
+            spacepoints =
+               match->MatchElectrodes( SigFlow->awSig,combinedPads );
+            spacepoints = match->CombPoints(spacepoints);
          }
       else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
          {
             printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
 //delete match->GetCombinedPads();?
-            match->FakePads( SigFlow->awSig );
+            spacepoints = match->FakePads( SigFlow->awSig );
          }
 
-      if( match->GetSpacePoints() )
-         printf("MatchModule::Analyze, Spacepoints # %d\n", int(match->GetSpacePoints()->size()));
+      if( spacepoints )
+         printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
       else
          printf("MatchModule::Analyze Spacepoints should exists at this point\n");
-      if( match->GetSpacePoints()->size() > 0 )
-         SigFlow->AddMatchSignals( match->GetSpacePoints() );
+      if( spacepoints->size() > 0 )
+         SigFlow->AddMatchSignals( spacepoints );
 
       //++fCounter;
       return flow;

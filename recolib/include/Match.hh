@@ -48,7 +48,7 @@ private:
    //bool diagnostic;
 
    //std::vector<signal>* fCombinedPads;
-   std::vector< std::pair<signal,signal> >* spacepoints;
+   //std::vector< std::pair<signal,signal> >* spacepoints;
 
    std::pair<std::set<short>,std::vector< std::vector<signal> >> PartitionBySector(std::vector<signal>* padsignals);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
@@ -119,12 +119,11 @@ public:
    std::vector<signal>* CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
 
    void MatchElectrodes(std::vector<signal>* awsignals);
-   void MatchElectrodes(std::vector<signal>* awsignals,
+   std::vector< std::pair<signal,signal> >* MatchElectrodes(std::vector<signal>* awsignals,
                         std::vector<signal>* padsignals);
-   void CombPoints();
-   void FakePads(std::vector<signal>* awsignals);
+   std::vector< std::pair<signal,signal> >*  FakePads(std::vector<signal>* awsignals);
 
-   std::vector< std::pair<signal,signal> >* GetSpacePoints() { return spacepoints; }
+   std::vector< std::pair<signal,signal> >* CombPoints(std::vector< std::pair<signal,signal> >* spacepoints);
 
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }
