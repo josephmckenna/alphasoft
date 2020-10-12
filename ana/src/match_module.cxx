@@ -32,8 +32,8 @@ public:
    bool fDiag = false;
    bool fTrace = false;
 
-   int CombineAPad=-1;
-
+   int ThreadID=-1;
+   int TotalThreads=0;
    MatchFlags() // ctor
    { }
 
@@ -48,6 +48,7 @@ public:
    bool fTrace;
    int fCounter = 0;
    bool diagnostic = false;
+   
 
 private:
    Match* match;
@@ -159,8 +160,6 @@ public:
          return flow;
       }
 
-      START_TIMER
-
       if( ! SigFlow->awSig )
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -171,46 +170,59 @@ public:
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
       }  
+     
+      if( SigFlow->pdSig )
+        {
+            //I am the first thread... 
+            if (fFlags->ThreadID < 0)
+            {
+               SigFlow->comb = match->CombPads( SigFlow->pdSig );
+               return flow;
+            }
+            else if ( fFlags->ThreadID < fFlags->TotalThreads )  //else process comb in multiple threads
+            {
+               size_t start=floor(SigFlow->comb.size() * fFlags->ThreadID/fFlags->TotalThreads);
+               size_t stop=floor( SigFlow->comb.size() * (fFlags->ThreadID + 1) / fFlags->TotalThreads);
 
-     if( SigFlow->pdSig )
-         {
-            SigFlow->comb = match->CombPads( SigFlow->pdSig );
-            flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
-            timer_start=CLOCK_NOW
+               //std::cout<<"SIZE:"<<SigFlow->comb.size()<<"\t"<<start<<" - "<<stop<<std::endl;
+               for (size_t i=start; i<stop; i++)
+                  SigFlow->combinedPads = match->CombineAPad( &SigFlow->comb,SigFlow->combinedPads,i );
+               return flow;
+            }
+        }
+      
+      //Ending thread
+      if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
+      {
+         // allow events without pwbs
+         std::vector< std::pair<signal,signal> >* spacepoints = NULL;
+         if( SigFlow->combinedPads )
+            {
+               if( fTrace )
+                  printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
+               SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
+               SigFlow->AddPadSignals( SigFlow->combinedPads );
+               spacepoints =
+                  match->MatchElectrodes( SigFlow->awSig,SigFlow->combinedPads );
+               spacepoints = match->CombPoints(spacepoints);
+            }
+         else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
+            {
+               printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
+   //delete match->GetCombinedPads();?
+               spacepoints = match->FakePads( SigFlow->awSig );
+            }
 
-            for (size_t i=0; i<SigFlow->comb.size(); i++)
-               SigFlow->combinedPads = match->CombineAPad( &SigFlow->comb,SigFlow->combinedPads,i );
-            flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
-            timer_start=CLOCK_NOW
-         }
+         if( spacepoints )
+            printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
+         else
+            printf("MatchModule::Analyze Spacepoints should exists at this point\n");
+         if( spacepoints->size() > 0 )
+            SigFlow->AddMatchSignals( spacepoints );
 
-      // allow events without pwbs
-      std::vector< std::pair<signal,signal> >* spacepoints = NULL;
-      if( SigFlow->combinedPads )
-         {
-            if( fTrace )
-               printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
-            SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
-            SigFlow->AddPadSignals( SigFlow->combinedPads );
-            spacepoints =
-               match->MatchElectrodes( SigFlow->awSig,SigFlow->combinedPads );
-            spacepoints = match->CombPoints(spacepoints);
-         }
-      else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
-         {
-            printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
-//delete match->GetCombinedPads();?
-            spacepoints = match->FakePads( SigFlow->awSig );
-         }
-
-      if( spacepoints )
-         printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
-      else
-         printf("MatchModule::Analyze Spacepoints should exists at this point\n");
-      if( spacepoints->size() > 0 )
-         SigFlow->AddMatchSignals( spacepoints );
-
-      //++fCounter;
+         //++fCounter;
+         return flow;
+      }
       return flow;
    }
 };
@@ -265,7 +277,9 @@ public:
       fFlags.ana_settings=new AnaSettings(json);
       fFlags.ana_settings->Print();
    }
-
+    MatchModuleFactory()
+    {
+    }
    void Finish()
    {
       printf("MatchModuleFactory::Finish!\n");
@@ -278,7 +292,45 @@ public:
    }
 };
 
+
+class MatchModuleFactory_CombineAPad: public MatchModuleFactory
+{
+public:
+   MatchModuleFactory_CombineAPad(int ThreadIndex, int NThreads)
+   {
+       fFlags.ThreadID=ThreadIndex;
+       fFlags.TotalThreads=NThreads;
+   }
+
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new MatchModule(runinfo, &fFlags);
+   }
+};
+class MatchModuleFactoryFinish: public MatchModuleFactory
+{
+public:
+   MatchModuleFactoryFinish()
+   {
+       fFlags.ThreadID=1;
+       fFlags.TotalThreads=0;
+   }
+
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new MatchModule(runinfo, &fFlags);
+   }
+};
+
+
 static TARegister tar(new MatchModuleFactory);
+static TARegister tar1(new MatchModuleFactory_CombineAPad(0,4));
+static TARegister tar2(new MatchModuleFactory_CombineAPad(1,4));
+static TARegister tar3(new MatchModuleFactory_CombineAPad(2,4));
+static TARegister tar4(new MatchModuleFactory_CombineAPad(3,4));
+static TARegister tarend(new MatchModuleFactoryFinish);
 
 
 /* emacs
