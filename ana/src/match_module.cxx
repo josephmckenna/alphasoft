@@ -169,25 +169,26 @@ public:
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
       }  
      match->Init();
+     std::vector<signal>* combinedPads = NULL;
      if( SigFlow->pdSig )
          {
             std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
             flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
 
-            match->CombinePads( &comb );
+            combinedPads = match->CombinePads( &comb );
             flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
          }
 
       // allow events without pwbs
-      if( match->GetCombinedPads() )
+      if( combinedPads )
          {
             if( fTrace )
-               printf("MatchModule::Analyze, combined pads # %d\n", int(match->GetCombinedPads()->size()));
+               printf("MatchModule::Analyze, combined pads # %d\n", int(combinedPads->size()));
             SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
-            SigFlow->AddPadSignals(match->GetCombinedPads());
-            match->MatchElectrodes( SigFlow->awSig );
+            SigFlow->AddPadSignals( combinedPads );
+            match->MatchElectrodes( SigFlow->awSig,combinedPads );
             match->CombPoints();
          }
       else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3

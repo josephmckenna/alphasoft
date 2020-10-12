@@ -47,20 +47,20 @@ private:
 
    //bool diagnostic;
 
-   std::vector<signal>* fCombinedPads;
+   //std::vector<signal>* fCombinedPads;
    std::vector< std::pair<signal,signal> >* spacepoints;
 
-   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
+   std::pair<std::set<short>,std::vector< std::vector<signal> >> PartitionBySector(std::vector<signal>* padsignals);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
 
-   void CentreOfGravity( std::vector<signal> &vsig ); // #0
+   void CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #0
    //  void CentreOfGravity_blobs( std::vector<signal> &vsig,  std::vector<signal> &padcog ); // #6
-   void CentreOfGravity_blobs( std::vector<signal> &vsig); // #6
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig ); // #2
-   void CentreOfGravity_nofit( std::vector<signal> &vsig ); // #1
-   void CentreOfGravity_single_peak( std::vector<signal> &vsig ); // #3
-   void CentreOfGravity_multi_peak( std::vector<signal> &vsig ); // #4
-   void CentreOfGravity_histoblobs( std::vector<signal> &vsig ); // #6
+   void CentreOfGravity_blobs( std::vector<signal> &vsig, std::vector<signal>* combpads); // #6
+   void CentreOfGravity_nohisto( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #2
+   void CentreOfGravity_nofit( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #1
+   void CentreOfGravity_single_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #3
+   void CentreOfGravity_multi_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #4
+   void CentreOfGravity_histoblobs( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #6
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -116,7 +116,7 @@ public:
 
    std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
    void CombinePads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
+   std::vector<signal>* CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
 
    void MatchElectrodes(std::vector<signal>* awsignals);
    void MatchElectrodes(std::vector<signal>* awsignals,
@@ -124,7 +124,6 @@ public:
    void CombPoints();
    void FakePads(std::vector<signal>* awsignals);
 
-   std::vector<signal>* GetCombinedPads() { return fCombinedPads; }
    std::vector< std::pair<signal,signal> >* GetSpacePoints() { return spacepoints; }
 
    void SetTrace(bool t) { fTrace=t; }
