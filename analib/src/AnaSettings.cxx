@@ -135,7 +135,7 @@ AnaSettings::~AnaSettings()
 {}
 
 //Test function
-bool AnaSettings::HasVar(char* module, const char* var)
+bool AnaSettings::HasVar(char* module, const char* var) const
 {
    std::cout<<"hi"<<std::endl;
    std::cout<<settings.at(module)<<std::endl;
@@ -143,22 +143,22 @@ bool AnaSettings::HasVar(char* module, const char* var)
    return false;
 }
 
-double AnaSettings::GetDouble(const char* module, const char* var)
+double AnaSettings::GetDouble(const char* module, const char* var) const
 {
   return double(settings.at(module).at(var));
 }
 
-int AnaSettings::GetInt(const char* mod, const char* var)
+int AnaSettings::GetInt(const char* mod, const char* var) const
 {
   return int(settings.at(mod).at(var));
 }
 
-bool AnaSettings::GetBool(const char* module, const char* var)
+bool AnaSettings::GetBool(const char* module, const char* var) const
 {
   return bool(settings.at(module).at(var));
 }
 
-std::string AnaSettings::GetString(const char* mod, const char* var)
+std::string AnaSettings::GetString(const char* mod, const char* var) const
 {
   std::string s = settings.at(mod).at(var);
   return s;
