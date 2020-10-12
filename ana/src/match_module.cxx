@@ -341,7 +341,7 @@ public:
 
 static TARegister tar(new MatchModuleFactory);
 //Choose how many threads you want here (2,4,8,16, 32 or 64)... more threads need more ram
-#define MAX_THREADS 32
+#define MAX_THREADS 64
 static TARegister tar1(new MatchModuleFactory_CombineAPad(0,MAX_THREADS));
 static TARegister tar2(new MatchModuleFactory_CombineAPad(1,MAX_THREADS));
 #if MAX_THREADS>2
