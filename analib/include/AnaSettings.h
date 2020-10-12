@@ -20,12 +20,12 @@ class AnaSettings
    virtual ~AnaSettings();
    std::string removeComments(std::string prgm); //Convert hjson to json in memory
    
-   bool HasVar(char* module, const char* var);
+   bool HasVar(char* module, const char* var) const;
    
-   double GetDouble(const char* Module, const char* Variable);
-   int GetInt(const char* Module, const char* Variable);
-   bool GetBool(const char* module, const char* var);
-   std::string GetString(const char* Module, const char* Variable);
+   double GetDouble(const char* Module, const char* Variable) const;
+   int GetInt(const char* Module, const char* Variable) const;
+   bool GetBool(const char* module, const char* var) const;
+   std::string GetString(const char* Module, const char* Variable) const;
    virtual void Print();
 
    const json* GetSettings() const { return &settings; }
