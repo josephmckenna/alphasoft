@@ -170,6 +170,56 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
   return comb;
 }
 
+std::vector<signal>* Match::CombineAPad(std::vector< std::vector<signal> > *comb,std::vector<signal>* CombinedPads, size_t PadNo)
+{
+  if (PadNo==0)
+    CombinedPads=new std::vector<signal>;
+
+  if (PadNo > comb->size())
+    return CombinedPads;
+
+  switch(CentreOfGravityFunction)
+  {
+    case 0: 
+    {
+      CentreOfGravity(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 1:
+    {
+      CentreOfGravity_nofit(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 2:
+    {
+      CentreOfGravity_nohisto(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 3:
+    {
+      CentreOfGravity_single_peak(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 4:
+    {
+      CentreOfGravity_multi_peak(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 5:
+    {
+      CentreOfGravity_histoblobs(comb->at(PadNo),CombinedPads);
+      break;
+    }
+    case 6:
+    {
+      CentreOfGravity_blobs(comb->at(PadNo), CombinedPads);
+      break;
+    }
+  }
+  return CombinedPads;
+}
+
+
 std::vector<signal>* Match::CombinePads(std::vector< std::vector<signal> > *comb)
 {
 
