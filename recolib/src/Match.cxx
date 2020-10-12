@@ -13,26 +13,26 @@
 #include <thread>       // std::thread
 #include <functional>   // std::ref
 
-Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
+Match::Match(const AnaSettings* ana_set):
+   fTrace(false),
+   fDebug(false),
+   ana_settings(ana_set),
+   fCoincTime(     ana_settings->GetDouble("MatchModule","coincTime")),
+   maxPadGroups(   ana_settings->GetDouble("MatchModule","maxPadGroups")),
+   padsNmin(       ana_settings->GetInt("MatchModule","padsNmin")),
+   padSigma(       ana_settings->GetDouble("MatchModule","padSigma")),
+   padSigmaD(      ana_settings->GetDouble("MatchModule","padSigmaD")),
+   padFitErrThres( ana_settings->GetDouble("MatchModule","padFitErrThres")),
+   use_mean_on_spectrum(ana_settings->GetBool("MatchModule","use_mean_on_spectrum")),
+   spectrum_mean_multiplyer(ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer")),
+   spectrum_cut(   ana_settings->GetDouble("MatchModule","spectrum_cut")),
+   spectrum_width_min(ana_settings->GetDouble("MatchModule","spectrum_width_min")),
+   grassCut(       ana_settings->GetDouble("MatchModule","grassCut")),
+   goodDist(       ana_settings->GetDouble("MatchModule","goodDist")),
+   charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
+   padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
-  ana_settings=ana_set;
   std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
-  fCoincTime = ana_settings->GetDouble("MatchModule","coincTime");
-  maxPadGroups = ana_settings->GetDouble("MatchModule","maxPadGroups");
-  padsNmin = ana_settings->GetInt("MatchModule","padsNmin");
-  padSigma = ana_settings->GetDouble("MatchModule","padSigma");
-  padSigmaD = ana_settings->GetDouble("MatchModule","padSigmaD");
-  padFitErrThres = ana_settings->GetDouble("MatchModule","padFitErrThres");
-  use_mean_on_spectrum=ana_settings->GetBool("MatchModule","use_mean_on_spectrum");
-  spectrum_mean_multiplyer = ana_settings->GetDouble("MatchModule","spectrum_mean_multiplyer");
-  spectrum_cut = ana_settings->GetDouble("MatchModule","spectrum_cut");
-  spectrum_width_min = ana_settings->GetDouble("MatchModule","spectrum_width_min");
-
-  grassCut = ana_settings->GetDouble("MatchModule","grassCut");
-  goodDist = ana_settings->GetDouble("MatchModule","goodDist");
-
-  charge_dist_scale=ana_settings->GetDouble("MatchModule","pad_charge_dist_scale");
-  padThr = ana_settings->GetDouble("DeconvModule","PADthr"); // This DeconvModule setting is also needed here, for wire-dependent threshold
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=0;
@@ -49,9 +49,6 @@ Match::Match(AnaSettings* ana_set):fTrace(false),fDebug(false)
     }
   else
     std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
-
-  phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
-  zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
 }
 
 Match::~Match()
