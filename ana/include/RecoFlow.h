@@ -215,6 +215,7 @@ public:
   std::vector<signal>* awSig;
   std::vector<signal>* pdSig;
 
+  std::vector< std::vector<signal> > comb; //Intermediary within match_modules
   std::vector<signal>* combinedPads; //Intermediary within match_modules
 
   std::vector< std::pair<signal,signal> >* matchSig;

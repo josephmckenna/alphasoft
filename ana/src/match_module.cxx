@@ -32,6 +32,8 @@ public:
    bool fDiag = false;
    bool fTrace = false;
 
+   int CombineAPad=-1;
+
    MatchFlags() // ctor
    { }
 
@@ -172,11 +174,12 @@ public:
 
      if( SigFlow->pdSig )
          {
-            std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
+            SigFlow->comb = match->CombPads( SigFlow->pdSig );
             flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
 
-            SigFlow->combinedPads = match->CombinePads( &comb );
+            for (size_t i=0; i<SigFlow->comb.size(); i++)
+               SigFlow->combinedPads = match->CombineAPad( &SigFlow->comb,SigFlow->combinedPads,i );
             flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
          }
@@ -276,6 +279,7 @@ public:
 };
 
 static TARegister tar(new MatchModuleFactory);
+
 
 /* emacs
  * Local Variables:
