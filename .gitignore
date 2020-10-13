@@ -30,6 +30,7 @@ history/
 firmware/
 analib/analib.cc
 reco/agtpc.cc
+rootUtils/rootUtilslib.cc
 *_rdict.pcm
 *.log
 *.log.nopid
