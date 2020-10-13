@@ -214,6 +214,10 @@ class AgSignalsFlow: public TAFlowEvent
 public:
   std::vector<signal>* awSig;
   std::vector<signal>* pdSig;
+
+  std::vector< std::vector<signal> > comb; //Intermediary within match_modules
+  std::vector<signal>* combinedPads; //Intermediary within match_modules
+
   std::vector< std::pair<signal,signal> >* matchSig;
 
   std::vector<wf_ref>* AWwf;
@@ -233,6 +237,7 @@ public:
     PADwf=NULL;
     awSig=s;
     pdSig=NULL;
+    combinedPads=NULL;
     matchSig=NULL;
     adc32max=NULL;
     pwbMax=NULL;
@@ -247,6 +252,7 @@ public:
     PADwf=NULL;
     awSig=s;
     pdSig=p;
+    combinedPads=NULL;
     matchSig=NULL;   
     adc32max=NULL;
     pwbMax=NULL;
@@ -261,6 +267,7 @@ public:
     PADwf=pwf;
     awSig=s;
     pdSig=p;
+    combinedPads=NULL;
     matchSig=NULL;   
     adc32max=NULL;
     pwbMax=NULL;

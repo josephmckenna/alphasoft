@@ -164,25 +164,27 @@ public:
          printf("SpacepointModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
          
      match->Init();
+     std::vector< std::pair<signal,signal> >* spacepoints = NULL;
      if( SigFlow->pdSig )
          {
-            match->MatchElectrodes( SigFlow->awSig, SigFlow->pdSig );
+            spacepoints =
+               match->MatchElectrodes( SigFlow->awSig, SigFlow->pdSig );
             //match->CombPoints();
          }
       else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
          {
             printf("SpacepointModule::Analyze, NO combined pads, Set Z=0\n");
 //delete match->GetCombinedPads();?
-            match->FakePads( SigFlow->awSig );
+            spacepoints = match->FakePads( SigFlow->awSig );
          }
 
-      if( match->GetSpacePoints() )
-         printf("SpacepointModule::Analyze, Spacepoints # %d\n", int(match->GetSpacePoints()->size()));
+      if( spacepoints )
+         printf("SpacepointModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
       else
          printf("SpacepointModule::Analyze Spacepoints should exists at this point\n");
 
-      if( match->GetSpacePoints()->size() > 0 )
-         SigFlow->AddMatchSignals( match->GetSpacePoints() );
+      if( spacepoints->size() > 0 )
+         SigFlow->AddMatchSignals( spacepoints );
 
       ++fCounter;
       return flow;

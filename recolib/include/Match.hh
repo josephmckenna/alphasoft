@@ -20,47 +20,47 @@ private:
    bool fDebug;
    bool diagnostic;
 
-   AnaSettings* ana_settings;
-   double fCoincTime; // ns
+   const AnaSettings* ana_settings;
+   const double fCoincTime; // ns
 
-   int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
-   int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
-   double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
-   double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
-   double padFitErrThres; // max. accepted error on pad gaussian fit mean
-   bool use_mean_on_spectrum;
-   double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
-   double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
-   double spectrum_width_min;
+   const int maxPadGroups; // max. number of separate groups of pads coincident with single wire signal
+   const int padsNmin;     // minimum number of coincident pad hits to attempt reconstructing a point
+   const double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
+   const double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
+   const double padFitErrThres; // max. accepted error on pad gaussian fit mean
+   const bool use_mean_on_spectrum;
+   const double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
+   const double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
+   const double spectrum_width_min;
 
-   double grassCut;       // don't consider peaks smaller than grassCut factor of a
-   double goodDist;       // neighbouring peak, if that peak is closer than goodDist
+   const double grassCut;       // don't consider peaks smaller than grassCut factor of a
+   const double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
-   double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
-   double padThr;               // needed for wire-dependent pad threshold
+   const double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
+   const double padThr;               // needed for wire-dependent pad threshold
 
-   double phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
-   double zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
-   int CentreOfGravityFunction = -1;
+   const double phi_err = ALPHAg::_anodepitch*ALPHAg::_sq12;
+   const double zed_err = ALPHAg::_padpitch*ALPHAg::_sq12;
+   int CentreOfGravityFunction = -1; //One day we can maybe make this const :)
 
    double relCharge[8] = {1., 1.33687717, 1.50890722, 1.56355571, 1.56355571, 1.50890722, 1.33687717, 1.};
 
    //bool diagnostic;
 
-   std::vector<signal>* fCombinedPads;
-   std::vector< std::pair<signal,signal> >* spacepoints;
+   //std::vector<signal>* fCombinedPads;
+   //std::vector< std::pair<signal,signal> >* spacepoints;
 
-   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
+   std::pair<std::set<short>,std::vector< std::vector<signal> >> PartitionBySector(std::vector<signal>* padsignals);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
 
-   void CentreOfGravity( std::vector<signal> &vsig ); // #0
+   void CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #0
    //  void CentreOfGravity_blobs( std::vector<signal> &vsig,  std::vector<signal> &padcog ); // #6
-   void CentreOfGravity_blobs( std::vector<signal> &vsig); // #6
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig ); // #2
-   void CentreOfGravity_nofit( std::vector<signal> &vsig ); // #1
-   void CentreOfGravity_single_peak( std::vector<signal> &vsig ); // #3
-   void CentreOfGravity_multi_peak( std::vector<signal> &vsig ); // #4
-   void CentreOfGravity_histoblobs( std::vector<signal> &vsig ); // #6
+   void CentreOfGravity_blobs( std::vector<signal> &vsig, std::vector<signal>* combpads); // #6
+   void CentreOfGravity_nohisto( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #2
+   void CentreOfGravity_nofit( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #1
+   void CentreOfGravity_single_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #3
+   void CentreOfGravity_multi_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #4
+   void CentreOfGravity_histoblobs( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #6
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -107,7 +107,7 @@ private:
    std::mutex mtx;
 
 public:
-   Match(AnaSettings* ana_settings);
+   Match(const AnaSettings* ana_settings);
    Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
    ~Match();
 
@@ -116,16 +116,15 @@ public:
 
    std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
    void CombinePads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
+   std::vector<signal>* CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
+   std::vector<signal>* CombineAPad(std::vector< std::vector<signal> > *comb,std::vector<signal>* CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
 
    void MatchElectrodes(std::vector<signal>* awsignals);
-   void MatchElectrodes(std::vector<signal>* awsignals,
+   std::vector< std::pair<signal,signal> >* MatchElectrodes(std::vector<signal>* awsignals,
                         std::vector<signal>* padsignals);
-   void CombPoints();
-   void FakePads(std::vector<signal>* awsignals);
+   std::vector< std::pair<signal,signal> >*  FakePads(std::vector<signal>* awsignals);
 
-   std::vector<signal>* GetCombinedPads() { return fCombinedPads; }
-   std::vector< std::pair<signal,signal> >* GetSpacePoints() { return spacepoints; }
+   std::vector< std::pair<signal,signal> >* CombPoints(std::vector< std::pair<signal,signal> >* spacepoints);
 
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }
