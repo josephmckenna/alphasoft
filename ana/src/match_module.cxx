@@ -187,13 +187,22 @@ public:
      
       if( SigFlow->pdSig )
         {
+            // -----------------
             //I am the first thread... 
+            // -----------------
             if (fFlags->ThreadID < 0)
             {
                SigFlow->comb = match->CombPads( SigFlow->pdSig );
+               //Prepare pointer for next threads...
+               //... should we only make this pointer if SigFlow->comb.size()>0 ?...
+               // if we dont set this pointer, then the analysis will try to fake pads for us
+               SigFlow->combinedPads=new std::vector<signal>;
                return flow;
             }
-            else if ( fFlags->ThreadID < fFlags->TotalThreads )  //else process comb in multiple threads
+            // -----------------
+            //else process comb in multiple threads, the number of these is defined by MAX_THREADS below
+            // -----------------
+            else if ( fFlags->ThreadID < fFlags->TotalThreads )  
             {
                size_t start=floor(SigFlow->comb.size() * fFlags->ThreadID/fFlags->TotalThreads);
                size_t stop=floor( SigFlow->comb.size() * (fFlags->ThreadID + 1) / fFlags->TotalThreads);
@@ -204,8 +213,9 @@ public:
                return flow;
             }
         }
-      
-      //Ending thread
+      // -----------------
+      // Ending thread
+      // -----------------
       if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
       {
          // allow events without pwbs

@@ -172,8 +172,6 @@ std::vector<std::vector<signal>> Match::CombPads(std::vector<signal>* padsignals
 
 std::vector<signal>* Match::CombineAPad(std::vector< std::vector<signal> > *comb,std::vector<signal>* CombinedPads, size_t PadNo)
 {
-  if (PadNo==0)
-    CombinedPads=new std::vector<signal>;
 
   if (PadNo > comb->size())
     return CombinedPads;
