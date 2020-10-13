@@ -38,6 +38,7 @@ ana/include/GitInfo.h
 *.list
 scripts/__pycache__/
 AutoPlots/
+RunLogs/
 *.csv
 *.ods
 scripts/UnitTest/*.out
@@ -61,9 +62,6 @@ alpha2/obj/
 .Aged
 *.time
 build
-<<<<<<< HEAD
 bin
 output
-=======
-bin
->>>>>>> development
+*.save
