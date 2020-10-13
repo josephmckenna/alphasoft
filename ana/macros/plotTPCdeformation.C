@@ -435,9 +435,10 @@ void deformation(TFile* fin)
     }
   hscamp->Scale(1./72.);
   // GainCorrection( hscamp );
-  hscamp->SetMinimum(1100.);
-  hpadamp->SetMinimum(700.);
-  hpadamp->SetMaximum(2500.);
+  // hscamp->SetMinimum(1000.);
+  // hpadamp->SetMinimum(1000.);
+  // hpadamp->SetMaximum(1700.);
+
 
 
   TString cname = "PadOccupancyR";
