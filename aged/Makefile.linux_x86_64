@@ -27,9 +27,9 @@ LDCC_SHARED   = g++
 LDSO_FLAGS    = -shared -elf
 CC_LD_FLAGS   = -shared -elf
 
-XINCS         = -I/usr/X11R6/include/X11/ -I/usr/X11R6/include
+XINCS         = -I/usr/X11R6/include/X11/ -I/usr/X11R6/include -I/usr/include/freetype2
 XFLAGS        = $(XINCS) $(shell freetype-config --cflags)
-XLIBS         = -L/usr/X11R6/lib -lXm -lXp -lXmu -lXft -lXt -lXrender -lX11
+XLIBS         = -L/usr/X11R6/lib -lXm -lXmu -lXft -lXt -lXrender -lX11
 
 ROOTINCS      = -I$(ROOTANASYS)/include -I../ana/include -I../recolib/include -I../analib/include -I../agana -I../a2lib/include -Iinclude
 ROOTFLAGS     = $(shell root-config --cflags) -fPIC $(ROOTINCS)
