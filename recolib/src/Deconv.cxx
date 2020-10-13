@@ -249,12 +249,21 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
       {
          fPadSecMask.push_back(17);
          fPadSecMask.push_back(18);
-         // fPadSecMask.push_back(19);
-         // fPadSecMask.push_back(20);
-         // for(int x=396; x<408; ++x) fPadRowMask.push_back(x);
-         // for(int x=432; x<459; ++x) fPadRowMask.push_back(x);
-         // for(int x=460; x<468; ++x) fPadRowMask.push_back(x);
          for(int x=432; x<468; ++x) fPadRowMask.push_back(x);
+      }
+   else if( run == 903863 || run == 903865 )
+      {
+         fPadSecMask.push_back(11);
+         fPadRowMask.push_back(324);
+      }
+   else if( run == 903867 )
+      {
+         fPadSecMask.push_back(11);
+         fPadRowMask.push_back(324);
+         
+         fPadSecMask.push_back(13);
+         fPadRowMask.push_back(287);
+         fPadRowMask.push_back(288);
       }
 }
 
