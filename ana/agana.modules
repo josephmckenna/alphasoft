@@ -13,13 +13,10 @@ Unpack.o AgAsm.o
 #bscint_adc_module.o 
 # AC
 bsc_adc_module.o     
-##tdc_module.o
 # NM
 bsc_tdc_module.o
-#fast_deconv_module.o match_module.o reco_module.o
-#deconv_module.o match_module.o reco_module.o
+# rTPC tracking chain
 deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
-#adc_module.o pwb_module.o feam_module.o tpc_tree_module.o
 # GS
 bv_tpc_matching_module.o
 # AC
