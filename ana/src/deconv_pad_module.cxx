@@ -55,6 +55,7 @@ public:
                                                            d( f->ana_settings )
       
    {
+      ModuleName="DeconvPADModule";
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");
    }
@@ -105,31 +106,49 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
       if(fTrace)
          printf("DeconvPADModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
 
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
       {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
+         if (e->time<fFlags->start_time)
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
+         if (e->time>fFlags->stop_time)
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
 
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
+      
          if (e->counter>fFlags->stop_event)
-           return flow;
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
+         }
       }
 
       AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
@@ -138,10 +157,6 @@ public:
             printf("DeconvPADModule::Analyze NO SignalsFlow?");
             return flow;
          }
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
       
       const FeamEvent* pwb = e->feam;
       if( !pwb ) // allow for events without pwbs
@@ -166,9 +181,6 @@ public:
              if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_pad_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }

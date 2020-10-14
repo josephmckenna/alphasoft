@@ -146,6 +146,7 @@ public:
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="hybrid_hits_module";
       if (fTrace)
          printf("HitModule::ctor!\n");
    }
@@ -205,16 +206,25 @@ public:
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       if (!fe->vf48event)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventsFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
@@ -228,7 +238,6 @@ class HitModule_vf48: public TARunObject
 {
 public:
    HitFlags* fFlags = NULL;
-   TString modulename;
    TSettings *SettingsDB = NULL;
    TVF48SiMap *gVF48SiMap = NULL;
 
@@ -256,9 +265,7 @@ public:
    HitModule_vf48(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
-      modulename="hybrid_hits_module_vf48(";
-      modulename+=fFlags->ProcessVF48;
-      modulename+=")";
+      ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 
       // load the sqlite3 db
       char dbName[255]; 
@@ -442,24 +449,36 @@ public:
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       
       SilEventsFlow* sf=flow->Find<SilEventsFlow>();
       if (!sf)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       TSiliconEvent* SiliconEvent=sf->silevent;
       if (!SiliconEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       SiliconEvent=AddVF48Module(fe->vf48event,fFlags->ProcessVF48, SiliconEvent);
       #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,modulename.Data(),timer_start);
+         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
       #endif
       return flow;
    }

@@ -53,6 +53,7 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo)
    {
+      ModuleName="Match Module";
       if (fTrace)
          printf("MatchModule::ctor!\n");
 
@@ -104,58 +105,77 @@ public:
 
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
+      
 
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       if (fFlags->fTimeCut)
          {
             if (ef->fEvent->time<fFlags->start_time)
-               return flow;
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
+                return flow;
+            }
             if (ef->fEvent->time>fFlags->stop_time)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
          }
 
       if (fFlags->fEventRangeCut)
          {
             if (ef->fEvent->counter<fFlags->start_event)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
             if (ef->fEvent->counter>fFlags->stop_event)
+            {
+               *flags|=TAFlag_SKIP_PROFILE;
                return flow;
+            }
          }
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
+      if( !SigFlow ) 
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
 
-      #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif   
-      if( ! SigFlow->awSig ) return flow;
+
+      if( ! SigFlow->awSig )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       if( fTrace )
+      {
          printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-      
-      if( fTrace )
          printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-         
+      }  
      match->Init();
      if( SigFlow->pdSig )
          {
             std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(Comb)",timer_start);
+            flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
-               //START_TIMER
-#endif
 
             match->CombinePads( &comb );
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module(CombinePads)",timer_start);
+            flow = new UserProfilerFlow(flow,"match_module(CombinePads)",timer_start);
             timer_start=CLOCK_NOW
-               //START_TIMER
-#endif
          }
 
       // allow events without pwbs
@@ -183,9 +203,6 @@ public:
          SigFlow->AddMatchSignals( match->GetSpacePoints() );
 
       //++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"match_module",timer_start);
-      #endif
       return flow;
    }
 };
