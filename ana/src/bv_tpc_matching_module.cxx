@@ -242,7 +242,7 @@ public:
 
             for(int i=0; i<evt->GetNEnds(); ++i)
                analyzed_event->AddEndHit(evt->GetEndHits().at(i));
-            
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);            
             BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
             BscTree->Fill();
          }
