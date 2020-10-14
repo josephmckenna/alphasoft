@@ -134,15 +134,15 @@ public:
       std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
       r.SetFudgeFactors(f_rfudge,f_pfudge);
 
-
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
-      analyzed_event = new TStoreEvent;
-      EventTree = new TTree("StoreEventTree", "StoreEventTree");
-      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
-      delete analyzed_event;
-      analyzed_event=NULL;
-
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+         analyzed_event = new TStoreEvent;
+         EventTree = new TTree("StoreEventTree", "StoreEventTree");
+         EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+         delete analyzed_event;
+         analyzed_event=NULL;
+      }
       //if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
   
       std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
@@ -316,9 +316,12 @@ public:
             else
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
-
-      EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-      EventTree->Fill();
+ 
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
+         EventTree->Fill();
+      }
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
