@@ -59,6 +59,7 @@ public:
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Official Time";
       if (fTrace)
          printf("OfficialTime::ctor!\n");
    }
@@ -271,10 +272,11 @@ public:
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      if (fFlags->fNoSync) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+      if (fFlags->fNoSync)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if( 0 )
          std::cout<<"OfficialTime::Analyze   Event # "<<me->serial_number<<std::endl;
@@ -315,9 +317,6 @@ public:
          TPCts.push_back(age->time);
          TPCMatchTime();
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_time_module",timer_start);
-      #endif
       return flow;
    }
 
