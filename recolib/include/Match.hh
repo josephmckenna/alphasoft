@@ -86,21 +86,22 @@ private:
    std::vector<std::pair<double, double> > FindBlobs(const std::vector<signal> &sigs,
                                                      int ifirst, int ilast);
 
-   TH1D *hsigCoarse, *hsig;
 
-   TH1D* hcognpeaks;
-   TH2D* hcognpeaksrms;
-   TH2D* hcognpeakswidth;
-   TH1D* hcogsigma;
-   TH1D* hcogerr;
-   TH2D* hcogpadssigma;
-   TH2D* hcogpadsamp;
-   TH2D* hcogpadsint;
-   TH2D* hcogpadsampamp;
-
-   TH1D* htimecog;
-   TH1D* htimeblobs;
-   TH1D* htimefit;
+   //Use static to share these histograms between all instances of Match
+   static TH1D *hsigCoarse;
+   static TH1D *hsig;
+   static TH1D* hcognpeaks;
+   static TH2D* hcognpeaksrms;
+   static TH2D* hcognpeakswidth;
+   static TH1D* hcogsigma;
+   static TH1D* hcogerr;
+   static TH2D* hcogpadssigma;
+   static TH2D* hcogpadsamp;
+   static TH2D* hcogpadsint;
+   static TH2D* hcogpadsampamp;
+   static TH1D* htimecog;
+   static TH1D* htimeblobs;
+   static TH1D* htimefit;
 
    padmap pmap;
 
@@ -130,6 +131,9 @@ public:
    void SetDebug(bool d) { fDebug=d; }
    void SetDiagnostic(bool d) { diagnostic=d; }
 };
+
+
+
 
 #endif
 
