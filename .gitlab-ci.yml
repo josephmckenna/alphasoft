@@ -55,7 +55,7 @@ build-ubuntu:
   before_script:
     #Set up agana environment variables
     - . agconfig.sh
-    - apt-get install libfreetype6-dev libXmu libXmu-dev
+    - apt-get install libfreetype6-dev libxmu-dev
     #- apt-get install valgrind
   script:
     - echo "Building"
