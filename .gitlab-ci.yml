@@ -55,12 +55,14 @@ build-ubuntu:
   before_script:
     #Set up agana environment variables
     - . agconfig.sh
-    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
-    - sudo apt update
-    - sudo apt-get install -y x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev x11proto-core-dev libx11-6 libxau-dev libxpm-dev libmotif-dev libxt6 libxm4 libx11-dev libxext-dev libxmuu-dev
-    - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
-    - sudo apt update
-    - sudo apt install -y libxp6 libxp-dev
+    - apt-get install dpkg-dev cmake g++ gcc binutils libx11-dev libxpm-dev \
+libxft-dev libxext-dev python openssl-dev
+    - apt-get install gfortran libpcre3-dev \
+xlibmesa-glu-dev libglew1.5-dev libftgl-dev \
+libmysqlclient-dev libfftw3-dev libcfitsio-dev \
+graphviz-dev libavahi-compat-libdnssd-dev \
+libldap2-dev python-dev libxml2-dev libkrb5-dev \
+libgsl0-dev libqt4-dev
   script:
     - echo "Building"
     - make clean
