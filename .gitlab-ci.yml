@@ -55,6 +55,7 @@ build-ubuntu:
   before_script:
     #Set up agana environment variables
     - . agconfig.sh
+    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
     - apt-get install libfreetype6-dev libxmu-dev
     #- apt-get install valgrind
   script:
