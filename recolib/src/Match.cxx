@@ -13,6 +13,24 @@
 #include <thread>       // std::thread
 #include <functional>   // std::ref
 
+//Null static pointers to histograms (histograms static so can be shared 
+//between Match instances in multithreaded mode)
+TH1D* Match::hsigCoarse=NULL;
+TH1D* Match::hsig=NULL;
+TH1D* Match::hcognpeaks=NULL;
+TH2D* Match::hcognpeaksrms=NULL;
+TH2D* Match::hcognpeakswidth=NULL;
+TH1D* Match::hcogsigma=NULL;
+TH1D* Match::hcogerr=NULL;
+TH2D* Match::hcogpadssigma=NULL;
+TH2D* Match::hcogpadsamp=NULL;
+TH2D* Match::hcogpadsint=NULL;
+TH2D* Match::hcogpadsampamp=NULL;
+TH1D* Match::htimecog=NULL;
+TH1D* Match::htimeblobs=NULL;
+TH1D* Match::htimefit=NULL;
+
+
 Match::Match(const AnaSettings* ana_set):
    fTrace(false),
    fDebug(false),
@@ -32,6 +50,8 @@ Match::Match(const AnaSettings* ana_set):
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
+
+
   std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
@@ -65,32 +85,45 @@ void Match::Setup(TFile* OutputFile)
 {
   if( diagnostic )
     {
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if( OutputFile )
         { 
-	  OutputFile->cd(); // select correct ROOT directory
-	  if( !gDirectory->cd() )
-	    gDirectory->mkdir("padmatch")->cd();
+          OutputFile->cd(); // select correct ROOT directory
+          if( !gDirectory->cd() )
+            gDirectory->mkdir("padmatch")->cd();
         }
       else
-	gFile->cd();
+        gFile->cd();
 
-      hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
+      if (!hcognpeaks)
+         hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
-      hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
+      if (!hcognpeaksrms)
+        hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
 			       0.,maxPadGroups+1.);
-      hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
+      if (!hcognpeakswidth)
+        hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
 				 0.,maxPadGroups+1.);
-      hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
-      hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
+      if (!hcogsigma)
+        hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
+      if (!hcogerr)
+        hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
 
-      hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
-      hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
-      hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
-      hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
+      if (!hcogpadssigma)
+        hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
+      if (!hcogpadsamp)
+        hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
+      if (!hcogpadsint)
+        hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
+      if (!hcogpadsampamp)
+        hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
       //  hsig = new TH1D("hpadRowSig","sigma of pad combination fit",1000,0,50);      
-      htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,10000.);
-      htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,10000.);
-      htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
+      if (!htimecog)
+        htimecog = new TH1D("htimecog","Timing of Cog;Time [us]",1000,0.,10000.);
+      if (!htimeblobs)
+        htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,10000.);
+      if (!htimefit)
+        htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
     }
 }
 
@@ -946,7 +979,9 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 
 	  if( diagnostic )
 	    {
-	      hcogsigma->Fill(sigma);
+	      mtx.lock();
+
+        hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
 	      hcogpadssigma->Fill(double(index),sigma);
@@ -955,6 +990,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	      double totq = sqrt(2.*M_PI)*sigma*amp;
 	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
+        mtx.unlock();
 	    }
 
 	  if( err < padFitErrThres &&
