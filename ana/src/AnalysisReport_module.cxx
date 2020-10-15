@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <unistd.h> // readlink()
 
 #include "manalyzer.h"
 #include "midasio.h"
