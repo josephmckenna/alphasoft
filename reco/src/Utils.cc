@@ -826,13 +826,13 @@ void Utils::DrawTPCxy(TCanvas* c)
    FWrz->Draw("same");
 }
 
-void Utils::PrintSignals(std::vector<signal>* sig)
+void Utils::PrintSignals(std::vector<asignal>* sig)
 {
    for(auto s: *sig)
       s.print();
 }
 
-TH1D* Utils::PlotSignals(std::vector<signal>* sig, std::string name)
+TH1D* Utils::PlotSignals(std::vector<asignal>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hsig"<<name;
@@ -847,8 +847,8 @@ TH1D* Utils::PlotSignals(std::vector<signal>* sig, std::string name)
    return h;
 }
 
-void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, 
-                 std::vector<signal>* combpads, bool norm)
+void Utils::Draw(std::vector<asignal>* awsig, std::vector<asignal>* padsig, 
+                 std::vector<asignal>* combpads, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
    if(norm) haw->Scale(1./haw->Integral());
@@ -902,7 +902,7 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig,
    hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
-void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, bool norm)
+void Utils::Draw(std::vector<asignal>* awsig, std::vector<asignal>* padsig, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
    if(norm) haw->Scale(1./haw->Integral());
@@ -957,7 +957,7 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, bool n
 }
 
 
-TH1D* Utils::PlotOccupancy(std::vector<signal>* sig, std::string name)
+TH1D* Utils::PlotOccupancy(std::vector<asignal>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hocc"<<name;
@@ -982,12 +982,12 @@ TH1D* Utils::PlotOccupancy(std::vector<signal>* sig, std::string name)
    return h;
 }
 
-TH2D* Utils::PlotSignals(std::vector<signal>* awsignals,
-                         std::vector<signal>* padsignals, std::string type)
+TH2D* Utils::PlotSignals(std::vector<asignal>* awsignals,
+                         std::vector<asignal>* padsignals, std::string type)
 {
-   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
+   std::multiset<asignal, asignal::timeorder> aw_bytime(awsignals->begin(),
                                                       awsignals->end());
-   std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(),
+   std::multiset<asignal, asignal::timeorder> pad_bytime(padsignals->begin(),
                                                        padsignals->end());
    int Nmatch=0;
    std::ostringstream hname;

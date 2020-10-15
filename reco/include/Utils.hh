@@ -65,15 +65,15 @@ public:
    void DrawTPCxy(TCanvas* c);
    
 
-   void Draw(std::vector<signal>* awsig,
-             std::vector<signal>* padsig, std::vector<signal>* combpads,
+   void Draw(std::vector<asignal>* awsig,
+             std::vector<asignal>* padsig, std::vector<asignal>* combpads,
              bool norm=true);
-   void Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, bool norm=true);
-   void PrintSignals(std::vector<signal>* sig);
-   TH1D* PlotSignals(std::vector<signal>* sig, std::string name);
-   TH1D* PlotOccupancy(std::vector<signal>* sig, std::string name);
-   TH2D* PlotSignals(std::vector<signal>* awsignals,
-                     std::vector<signal>* padsignals, std::string type="none");
+   void Draw(std::vector<asignal>* awsig, std::vector<asignal>* padsig, bool norm=true);
+   void PrintSignals(std::vector<asignal>* sig);
+   TH1D* PlotSignals(std::vector<asignal>* sig, std::string name);
+   TH1D* PlotOccupancy(std::vector<asignal>* sig, std::string name);
+   TH2D* PlotSignals(std::vector<asignal>* awsignals,
+                     std::vector<asignal>* padsignals, std::string type="none");
    
    double Average(std::vector<double>* v);
    
