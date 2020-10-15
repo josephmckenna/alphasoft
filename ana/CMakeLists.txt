@@ -52,7 +52,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Spectrum)
+find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 link_libraries(${ROOT_LIBRARIES})
 
 ##Horrible horrible hack to get the libs for rootana (from rootana/include/rootana_cflags.txt )
@@ -120,7 +120,10 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} Xt Xm Minuit2 rootana analib agtpc aged )
+
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} rootana analib agtpc aged )
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )
