@@ -68,10 +68,12 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
 	  OutputFile->cd(); // select correct ROOT directory
-	  gDirectory->mkdir("padmatch")->cd();
+	  if( !gDirectory->cd() )
+	    gDirectory->mkdir("padmatch")->cd();
         }
       else
 	gFile->cd();
+
       hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
       hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
