@@ -83,7 +83,6 @@ void Match::Setup(TFile* OutputFile)
 {
   if( diagnostic )
     {
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
@@ -978,7 +977,6 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	  if( diagnostic )
 	    {
 	      mtx.lock();
-
 	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
