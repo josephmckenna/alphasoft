@@ -54,7 +54,6 @@ build-ubuntu:
   #Overwrite global before script
   before_script:
     #Set up agana environment variables
-    - lsb_release -a
     - . agconfig.sh
     - add-apt-repository universe multiverse
     #- apt update
