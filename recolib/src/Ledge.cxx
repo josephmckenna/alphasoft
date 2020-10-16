@@ -155,7 +155,7 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
   std::string delimiter = "_";
 
   // find intresting channels
-  unsigned int index=0; //wfholder index -- unused 14 Oct 2020  -- AC
+  //  unsigned int index=0; //wfholder index -- unused 14 Oct 2020  -- AC
   for( int j=0; j<Nentries; ++j )
     {
       TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
