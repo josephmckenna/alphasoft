@@ -54,8 +54,10 @@ build-ubuntu:
   #Overwrite global before script
   before_script:
     #Set up agana environment variables
+    - lsb_release -a
     - . agconfig.sh
-    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
+    - add-apt-repository universe multiverse
+    #- apt update
     - apt-get install libfreetype6-dev libxmu-dev
     #- apt-get install valgrind
   script:
