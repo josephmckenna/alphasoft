@@ -32,7 +32,8 @@ FILE *openFile(const char *name_, const char *mode, const char *searchPath)
     strcpy(openFileName,name_);
     fp = openPlainFile(openFileName,mode);
     if (!fp) {
-        char    *name=NULL;
+      //char    *name=NULL;
+        char *name=(char*) malloc(sizeof(name_));
         strcpy(name,name_);
         /* remove any path specification from 'name' */
         pt2 = strrchr(name,'/');
@@ -73,6 +74,7 @@ FILE *openFile(const char *name_, const char *mode, const char *searchPath)
                 path = pt2 + 1;
             }
         }
+	free(name);
     }
     return(fp);
 }
