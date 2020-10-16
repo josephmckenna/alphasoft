@@ -56,7 +56,7 @@ build-ubuntu:
     #Set up agana environment variables
     - . agconfig.sh
     - apt update
-    - apt-get install libfreetype6-dev libxmu-dev -y
+    - apt-get install libfreetype6-dev libxmu-dev lesstif2-dev -y
     #- apt-get install valgrind
   script:
     - echo "Building"
