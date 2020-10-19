@@ -119,7 +119,7 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(${bin} analib)
+    link_directories(${bin} $ENV{AGRELEASE}/analib)
 
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
