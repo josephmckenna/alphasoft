@@ -47,7 +47,7 @@ before_script:
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
 
-build-ubuntu:
+build-ubuntu-cmake:
   #Overwrite global image
   image: rootproject/root:6.22.02-ubuntu20.04
   stage: build
@@ -61,7 +61,7 @@ build-ubuntu:
   script:
     - echo "Building"
     - make clean
-    - make 2>&1 | tee BuildLog.txt
+    - make cmake 2>&1 | tee BuildLog.txt
     - cd ..
   cache:
     untracked: true
