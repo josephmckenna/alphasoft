@@ -95,6 +95,9 @@ public:
       match=new Match(fFlags->ana_settings);
       match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
+#ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif
       match->Setup(runinfo->fRoot->fOutputFile);
       match->Init();
    }

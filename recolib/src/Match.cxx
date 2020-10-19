@@ -50,8 +50,6 @@ Match::Match(const AnaSettings* ana_set):
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
-
-
   std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
@@ -85,7 +83,6 @@ void Match::Setup(TFile* OutputFile)
 {
   if( diagnostic )
     {
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
@@ -980,8 +977,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	  if( diagnostic )
 	    {
 	      mtx.lock();
-
-        hcogsigma->Fill(sigma);
+	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
 	      hcogpadssigma->Fill(double(index),sigma);
@@ -990,7 +986,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	      double totq = sqrt(2.*M_PI)*sigma*amp;
 	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
-        mtx.unlock();
+	      mtx.unlock();
 	    }
 
 	  if( err < padFitErrThres &&
