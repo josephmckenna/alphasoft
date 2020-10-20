@@ -245,6 +245,12 @@ fi
 
 
 
+if [ -z "$(ls -A agana)" ]; then
+    git submodule update agana
+    git submodule update agcfmdb
+fi
+
+
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
