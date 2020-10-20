@@ -86,8 +86,10 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
-          if( !gDirectory->cd() )
+          if( !gDirectory->cd("padmatch") )
             gDirectory->mkdir("padmatch")->cd();
+	  else 
+	    gDirectory->cd("padmatch");
         }
       else
         gFile->cd();
@@ -976,7 +978,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 
 	  if( diagnostic )
 	    {
-	      mtx.lock();
+	      // mtx.lock();
 	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
@@ -986,7 +988,7 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	      double totq = sqrt(2.*M_PI)*sigma*amp;
 	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
-	      mtx.unlock();
+	      // mtx.unlock();
 	    }
 
 	  if( err < padFitErrThres &&
