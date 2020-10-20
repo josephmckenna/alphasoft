@@ -130,6 +130,9 @@ void SignalsStatistics(std::vector<asignal>::const_iterator first,
 #include <fstream>
 #include <chrono>
 
+using namespace std;
+using namespace std::chrono;
+
 int main(int argc, char** argv)
 {
    double amp=1.,mean=0.,stddev=1.;

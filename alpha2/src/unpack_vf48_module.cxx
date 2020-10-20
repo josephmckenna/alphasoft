@@ -89,6 +89,7 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
+      ModuleName="unpack_module_stream";
       if (fTrace)
          printf("UnpackModule::ctor!\n");
       vfu = new UnpackVF48();
@@ -260,10 +261,16 @@ public:
 
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
+      }
 
       if (event->event_id != 11)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
@@ -295,6 +302,7 @@ public:
       }
       else
       {
+         *flags |= TAFlag_SKIP_PROFILE;
           delete d;
       }
       SendQueueToFlow(runinfo);
@@ -310,14 +318,19 @@ public:
 
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
       VF48data* d=NULL;
       VF48DataFlow* data_flow=flow->Find<VF48DataFlow>();
       if (data_flow)
          d=data_flow->data;
       else
+      {
+         *flags |= TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
