@@ -197,7 +197,8 @@ public:
       hErrTop = new TH1D("hErrTop","Reconstructed Avalanche Error Size Top",200,0.,100.);
       hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
       //  hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
-      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",225,0.,3600.);
+      // hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",225,0.,3600.);
+      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",138,0.,4384.);
       hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
       hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
 
@@ -254,7 +255,8 @@ public:
       hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
       hErrPad = new TH1D("hErrPad","Reconstructed Avalanche Error Size Pad",200,0.,100.);
       //hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
-      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",225,0.,3600.);
+      //   hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",225,0.,3600.);
+      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",138,0.,4384.);
 
       hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
       
