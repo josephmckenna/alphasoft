@@ -36,6 +36,7 @@ public:
    DisplayRun(TARunInfo* runinfo, bool mode)
       : TARunObject(runinfo), aged(NULL), fBatch(mode)
    {
+      ModuleName="Display Module";
       printf("DisplayRun::ctor!\n");
    }
 
@@ -94,38 +95,53 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fBatch ) return flow;
-
+      if( fBatch )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       //printf("DisplayModule::Analyze, run %d\n",runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgEvent* age = ef->fEvent;
       
       if( !age->feam || !age->a16 )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       // DISPLAY low-level stuff here
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       // DISPLAY high-level stuff here
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
-        return flow;
-
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       // DISPLAY BSC stuff here
       AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
       if( !bar_flow || !bar_flow->BarEvent)
-        return flow;
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
 
       printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
@@ -140,9 +156,6 @@ public:
          flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          printf("Aged::ShowEvent is %d\n",flags);
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
-      #endif
       return flow;
    }
 

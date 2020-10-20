@@ -47,7 +47,7 @@ public:
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-
+      ModuleName="bsc adc module";
    }
 
    ~BscModule()
@@ -112,10 +112,11 @@ public:
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif      
+      }
+   
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16;
 
@@ -138,11 +139,6 @@ public:
          printf("BscModule::AnalyzeFlowEvent(...) has %d hits\n",BarEvent->GetNBars());
 
       flow = new AgBarEventFlow(flow, BarEvent);
-
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
-#endif
-
       return flow;
    }
 

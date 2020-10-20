@@ -46,6 +46,7 @@ public:
    CoincModule(TARunInfo* runinfo): TARunObject(runinfo),
                                     fCoincTime(16.)
    {
+      ModuleName="Coinc Module";
       if(fTrace)
          printf("CoincModule::ctor!\n");
    }
@@ -151,18 +152,24 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgAwHitsFlow* eawh = flow->Find<AgAwHitsFlow>();
       AgPadHitsFlow* eph = flow->Find<AgPadHitsFlow>();
       if (!eawh)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       if (!eph)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
          
-      #ifdef _TIME_ANALYSIS_
-        START_TIMER
-      #endif   
             if( fTrace )
                printf("coinc event %d, time %f, anode wire hits: %d, pad hits: %d\n", ef->fEvent->counter, ef->fEvent->time,
                       (int)eawh->fAwHits.size(), (int)eph->fPadHits.size());
@@ -214,10 +221,6 @@ public:
                      }// loop aw
                } // loop pads
             h_coinc->Fill(counter);
-         
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"coinc_module",timer_start);
-      #endif
       return flow;
    }
 

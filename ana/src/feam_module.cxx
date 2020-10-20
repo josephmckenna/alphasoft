@@ -518,6 +518,7 @@ public:
    FeamModule(TARunInfo* runinfo, FeamFlags* f)
       : TARunObject(runinfo)
    {
+      ModuleName="FeamModule";
       if (fTrace)
          printf("FeamModule::ctor!\n");
 
@@ -882,19 +883,27 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 
       if (!fFlags->fDoPads)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
-         return flow;
-
-      FeamEvent* e = ef->fEvent->feam;
-
-      if (!e) {
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
+      
+      FeamEvent* e = ef->fEvent->feam;
 
+      if (!e)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if (1) {
          printf("Have FEAM event: ");
          e->Print();
@@ -913,15 +922,13 @@ public:
          }
       }
 
-      if (e->error) {
+      if (e->error)
+      {
          //delete e;
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
       
-      //
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
       bool doPrint = false;
 
       // got all the data here
@@ -1509,9 +1516,6 @@ public:
       }
 
       hnhitchan->Fill(nhitchan);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"feam_module",timer_start);
-      #endif
       return flow;
    }
 
