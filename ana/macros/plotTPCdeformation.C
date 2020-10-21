@@ -1,19 +1,15 @@
 #include "SignalsType.hh"
 #include "IntGetters.h"
+#include "TPCconstants.hh"
 
 padmap pads;
-int //rowhot = 150, 
- rowhot = 140,
+int  rowhot = 140,
   sechot = 7,
-//rowhot = 115,
-//  sechot = 8,
-//  rowcold = 300, 
   rowcold = 290, 
-// rowcold = 295,
   seccold = 24;
-//seccold = 23;
 
 int RunNumber=0;
+double Nevents=0;
 
 bool saveas=true;
 bool NevtNorm=false;
@@ -22,9 +18,11 @@ std::map<std::pair<int,int>,int> padmap;
 char sca[2][2] = {{'A','D'},{'B','C'}};
 std::map<int,std::pair<string,string>> robin;
 
+
 void ReadMap()
 {
   TString fname = TString::Format("%s/ana/pad.map",getenv("AGRELEASE"));
+  cout<<fname<<endl;
   ifstream f(fname.Data());
   int s,r,m;
   while(1)
@@ -34,6 +32,7 @@ void ReadMap()
       pair<int,int> p = std::make_pair(s,r);
       padmap[p]=m;
     }
+  cout<<"Pad map size: "<<padmap.size()<<endl;
   f.close();
 }
 
@@ -304,6 +303,7 @@ void multiphspectrum_tracks( TFile* fin )
 
 void GainCorrection(TH2D* hsca)
 {
+  cout<<"Gain Correction"<<endl;
   int minbin = hsca->GetMinimumBin();
   int maxbin = hsca->GetMaximumBin();
   cout<<"min bin: "<<minbin<<"\tmax bin: "<<maxbin<<endl;
@@ -319,30 +319,118 @@ void GainCorrection(TH2D* hsca)
   TH2D* hsca_ratio = (TH2D*) hsca->Clone();
   hsca_ratio->SetTitle("Possible SCA Gain Assignment");
   
+  std::string foutname="sca_gain_correction_R";
+  foutname+=std::to_string(RunNumber);
+  foutname+=".dat";
+  ofstream fout(foutname);
   for(int bx=1; bx<=hsca->GetNbinsX(); ++bx)
     for(int by=1; by<=hsca->GetNbinsY(); ++by)
       {
 	double bc = hsca_ratio->GetBinContent(bx,by);
-	double sca_gain = round(bc/min);
+	//double sca_gain = round(bc/min);
+	double sca_gain = bc/min;
 	hsca_ratio->SetBinContent(bx,by,sca_gain);
 	//	  hsca_ratio->SetBinContent(bx,by,(bc-min)/min);
 	int bin = hsca_ratio->GetBin(bx,by);
-	cout<<robin[bin].first<<"\t"<<robin[bin].second<<"\t"<<sca_gain<<endl;
+	fout<<robin[bin].first<<"\t"<<robin[bin].second<<"\t"<<sca_gain<<endl;
       }
+  cout<<"robin size: "<<robin.size()<<endl;
+  fout.close();
   
-  TString cname = "AFTERamptextR";
-  cname += RunNumber;
-  TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  hsca->Draw("coltext");
-  c1->SetGrid();
-  c1->SaveAs(".pdf");
+  // cname = "AFTERamptextR";
+  // cname += RunNumber;
+  // TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  // hsca->Draw("coltext");
+  // c1->SetGrid();
+  // c1->SaveAs(".pdf");
 
-  cname = "AFTERratioR";
+  TString cname = "AFTERratioR";
   cname += RunNumber;
   TCanvas* c2 = new TCanvas(cname.Data(),cname.Data(),1900,1200);
   hsca_ratio->Draw("textcol");
   c2->SetGrid();
   c2->SaveAs(".pdf");
+}
+
+
+void OverFlowCalc(TH2D* hOF, TH2D* hocc)
+{
+  hOF->SetStats(kFALSE);
+  cout<<hOF->GetName()<<" Entries: "<<hOF->GetEntries()<<endl;
+
+  TH2D* hofl = new TH2D("hofl","Number of Overflow/Occupancy Pads;row;sec;N",576,0.,576.,32,0.,32.);
+  hofl->SetStats(kFALSE);
+  hofl->Divide(hOF,hocc);
+
+  TH2D* hscaoverflow = new TH2D("hscaoverflow","Overflow Frequency by AFTER;Along the axis;Along the Circle",16,0.,16.,16,0.,16.);
+  hscaoverflow->SetStats(kFALSE);
+
+  TH2D* hscaofl = new TH2D("hscaofl","Number of Overflow/Occupancy AFTER;row;sec;N",16,0.,16.,16,0.,16.);
+  hscaofl->SetStats(kFALSE);
+
+  for(int r = 0; r<576; ++r)
+    {
+      int sca_row = r/36;
+      for(int s = 0; s<32; ++s)
+  	{
+  	  int sca_col = (s-1)/2;
+  	  if( s == 0 ) sca_col = 15;
+  	  int bin = hOF->GetBin(r+1,s+1);
+  	  double amp = hOF->GetBinContent( bin );
+  	  hscaoverflow->Fill(sca_row,sca_col,amp);
+
+  	  double occ = hocc->GetBinContent( bin );
+  	  if( occ > 0. )
+  	    {
+  	      double ratio = amp / occ;
+  	      hscaofl->Fill(sca_row,sca_col,ratio);
+  	    }
+  	}
+    }
+
+
+  TString cname = "PadOverflowR";
+  cname += RunNumber;
+  if( NevtNorm ) hOF->Scale(1./Nevents);
+  else cname+= "_NoNorm";
+  TCanvas* c3 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hOF->Draw("colz");
+  c3->Update();
+  TPaletteAxis *pal3 = (TPaletteAxis*) hOF->GetListOfFunctions()->FindObject("palette");
+  pal3->SetX1NDC(0.91);
+  pal3->SetX2NDC(0.92);
+  if(saveas) c3->SaveAs(".pdf");
+
+  cname = "PadOverflowOverOccupancyR";
+  cname += RunNumber;
+  TCanvas* ca = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hofl->Draw("colz");
+  ca->Update();
+  TPaletteAxis *pala = (TPaletteAxis*) hofl->GetListOfFunctions()->FindObject("palette");
+  pala->SetX1NDC(0.91);
+  pala->SetX2NDC(0.92);
+  if(saveas) ca->SaveAs(".pdf");
+
+ 
+  cname = "AFTEROverflowOverOccupancyR";
+  cname += RunNumber;
+  TCanvas* cb = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hscaofl->Draw("colz");
+  cb->Update();
+  TPaletteAxis *palb = (TPaletteAxis*) hscaofl->GetListOfFunctions()->FindObject("palette");
+  palb->SetX1NDC(0.91);
+  palb->SetX2NDC(0.92);
+  if(saveas) cb->SaveAs(".pdf");
+
+  cname = "AFTERoverflowR";
+  cname += RunNumber;
+  TCanvas* c5 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
+  hscaoverflow->Draw("colz");
+  c5->Update();
+  TPaletteAxis *pal5 = (TPaletteAxis*) hscaoverflow->GetListOfFunctions()->FindObject("palette");
+  pal5->SetX1NDC(0.91);
+  pal5->SetX2NDC(0.92);
+  if(saveas) c5->SaveAs(".pdf");
 }
 
 void deformation(TFile* fin)
@@ -351,61 +439,28 @@ void deformation(TFile* fin)
 
   gDirectory->cd("match_el");
   TH1D* hnm = (TH1D*) gROOT->FindObject("hNmatch");
-  double Nevents = (double) hnm->GetEntries();
+  Nevents = (double) hnm->GetEntries();
+  cout<<"Number of events for "<<RunNumber<<" is "<<Nevents<<endl; 
 
   gDirectory->cd("/");
   gDirectory->cd("paddeconv");
   
   TH2D* hpadocc = (TH2D*) gROOT->FindObject("hOccPad");
   hpadocc->SetStats(kFALSE);
-  hpadocc->SetMinimum(1000);
-
-  if( RunNumber == 4318 || RunNumber == 4335 || RunNumber == 3875 )
-    {
-      int bin = hpadocc->GetBin(504,22);
-      hpadocc->SetBinContent(bin,0.);
-    }
-  // else if( RunNumber == 3875 )
-  //   {
-  //     int bin = hpadocc->GetBin(504,22);
-  //     hpadocc->SetBinContent(bin,0.);
-  //   }
-
-  //TH2D* hOF = (TH2D*) gROOT->FindObject("hPadOverflow");
-  //hOF->SetStats(kFALSE);
-
-  // TH2D* hofl = new TH2D("hofl","Number of Overflow/Occupancy Pads;row;sec;N",576,0.,576.,32,0.,32.);
-  // hofl->SetStats(kFALSE);
-  // hofl->Divide(hOF,hpadocc);
-
-  // TH2D* hscaoverflow = new TH2D("hscaoverflow","Overflow Frequency by AFTER;Along the axis;Along the Circle",16,0.,16.,16,0.,16.);
-  // hscaoverflow->SetStats(kFALSE);
-
-  // TH2D* hscaofl = new TH2D("hscaofl","Number of Overflow/Occupancy AFTER;row;sec;N",16,0.,16.,16,0.,16.);
-  // hscaofl->SetStats(kFALSE);
-
-  // for(int r = 0; r<576; ++r)
-  //   {
-  //     int sca_row = r/36;
-  //     for(int s = 0; s<32; ++s)
-  // 	{
-  // 	  int sca_col = (s-1)/2;
-  // 	  if( s == 0 ) sca_col = 15;
-  // 	  int bin = hOF->GetBin(r+1,s+1);
-  // 	  double amp = hOF->GetBinContent( bin );
-  // 	  hscaoverflow->Fill(sca_row,sca_col,amp);
-
-  // 	  double occ = hpadocc->GetBinContent( bin );
-  // 	  if( occ > 0. )
-  // 	    {
-  // 	      double ratio = amp / occ;
-  // 	      hscaofl->Fill(sca_row,sca_col,ratio);
-  // 	    }
-  // 	}
-  //   }
+  cout<<hpadocc->GetName()<<"   min: "<<hpadocc->GetMinimum()<<"   max: "<<hpadocc->GetMaximum()<<endl;
+  //  hpadocc->SetMinimum(4000);
+  //  hpadocc->SetMaximum(7000);
   
-  //gDirectory->cd("paddeconv/pwbwf");
   gDirectory->cd("pwbwf");
+  TH2D* hOF = (TH2D*) gROOT->FindObject("hPadOverflow");
+  // TH2D* hOF = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+  // 		       576,0.,ALPHAg::_padrow,32,0.,ALPHAg::_padcol);
+ 
+  if( hOF )
+    OverFlowCalc(hOF, hpadocc);
+  else
+    cout<<"no OF found"<<endl;
+  
   TProfile* p = (TProfile*) gROOT->FindObject("hPwbAmp_prox");
   p->SetStats(kFALSE);
   p->SetMinimum(0.);
@@ -430,15 +485,13 @@ void deformation(TFile* fin)
       robin[bin]=std::make_pair(GetPWB(s,r),GetSCA(s,r));
 
       hscamp->Fill(sca_row,sca_col,amp);
-      //hpadamp->SetBinContent(r+1,s+1,amp);
       hpadamp->Fill(r,s,amp);
     }
   hscamp->Scale(1./72.);
-  // GainCorrection( hscamp );
+  GainCorrection( hscamp );
   // hscamp->SetMinimum(1000.);
-  // hpadamp->SetMinimum(1000.);
-  // hpadamp->SetMaximum(1700.);
-
+  // hpadamp->SetMinimum(500.);
+  // hpadamp->SetMaximum(1800.);
 
 
   TString cname = "PadOccupancyR";
@@ -480,74 +533,32 @@ void deformation(TFile* fin)
   mb = hpadamp->GetMaximumBin();
   hpadamp->GetBinXYZ(mb,bx,by,bz);
   cout<<"Max bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<"\t";
-  cout<<"\nUncomment me"<<endl;
-  // hpadamp->GetXaxis()->SetRange(25,576-25);
-  // mb = hpadamp->GetMinimumBin();
-  // hpadamp->GetBinXYZ(mb,bx,by,bz);
-  // cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<endl;
-  cout<<"till here"<<endl;
+  hpadamp->GetXaxis()->SetRange(25,576-25);
+  mb = hpadamp->GetMinimumBin();
+  hpadamp->GetBinXYZ(mb,bx,by,bz);
+  cout<<"Min bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadamp->GetBinContent(mb)<<endl;
 
-  // cname = "PadOverflowR";
-  // cname += RunNumber;
-  // if( NevtNorm ) hOF->Scale(1./Nevents);
-  // else cname+= "_NoNorm";
-  // TCanvas* c3 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  // hOF->Draw("colz");
-  // c3->Update();
-  // TPaletteAxis *pal3 = (TPaletteAxis*) hOF->GetListOfFunctions()->FindObject("palette");
-  // pal3->SetX1NDC(0.91);
-  // pal3->SetX2NDC(0.92);
-  // if(saveas) c3->SaveAs(".pdf");
+  
 
   cname = "AFTERampR";
   cname += RunNumber;
   TCanvas* c4 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  hscamp->Draw("colztext");
-  c4->Update();
-  TPaletteAxis *pal4 = (TPaletteAxis*) hscamp->GetListOfFunctions()->FindObject("palette");
-  pal4->SetX1NDC(0.91);
-  pal4->SetX2NDC(0.92);
+  //hscamp->Draw("colztext");
+  hscamp->Draw("coltext");
+  // c4->Update();
+  // TPaletteAxis *pal4 = (TPaletteAxis*) hscamp->GetListOfFunctions()->FindObject("palette");
+  // pal4->SetX1NDC(0.91);
+  // pal4->SetX2NDC(0.92);
   if(saveas) c4->SaveAs(".pdf");
 
-  // cname = "AFTERoverflowR";
-  // cname += RunNumber;
-  // TCanvas* c5 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  // hscaoverflow->Draw("colz");
-  // c5->Update();
-  // TPaletteAxis *pal5 = (TPaletteAxis*) hscaoverflow->GetListOfFunctions()->FindObject("palette");
-  // pal5->SetX1NDC(0.91);
-  // pal5->SetX2NDC(0.92);
-  // if(saveas) c5->SaveAs(".pdf");
+ 
   
-
   cname = "PadAMPR";
   cname += RunNumber;
   TCanvas* c6 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   p->Draw();
   if(saveas) c6->SaveAs(".pdf");
-
-  // cname = "PadOverflowOverOccupancyR";
-  // cname += RunNumber;
-  // TCanvas* ca = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  // hofl->Draw("colz");
-  // ca->Update();
-  // TPaletteAxis *pala = (TPaletteAxis*) hofl->GetListOfFunctions()->FindObject("palette");
-  // pala->SetX1NDC(0.91);
-  // pala->SetX2NDC(0.92);
-  // if(saveas) ca->SaveAs(".pdf");
-
- 
   
-  // cname = "AFTEROverflowOverOccupancyR";
-  // cname += RunNumber;
-  // TCanvas* cb = new TCanvas(cname.Data(),cname.Data(),1800,1200);
-  // hscaofl->Draw("colz");
-  // cb->Update();
-  // TPaletteAxis *palb = (TPaletteAxis*) hscaofl->GetListOfFunctions()->FindObject("palette");
-  // palb->SetX1NDC(0.91);
-  // palb->SetX2NDC(0.92);
-  // if(saveas) cb->SaveAs(".pdf");
-
 }
 
 
@@ -556,10 +567,10 @@ void plotTPCdeformation()
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   RunNumber = GetRunNumber( fin->GetName() );
   cout<<"Run Number: "<<RunNumber<<endl;
-  //  ReadMap();
+  ReadMap();
 
   deformation(fin);
-  // phspectrum(fin);
+  phspectrum(fin);
   // phspectrum_tracks(fin);
   // multiphspectrum_tracks(fin);
-}
+ }
