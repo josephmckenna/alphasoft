@@ -104,8 +104,8 @@ public:
          return flow;
       }
       
-      std::vector<signal>* adc32 = SigFlow->adc32max;
-      std::vector<signal>* pwb = SigFlow->pwbMax;
+      std::vector<asignal>* adc32 = SigFlow->adc32max;
+      std::vector<asignal>* pwb = SigFlow->pwbMax;
       
       std::vector<asignal>* aws = SigFlow->awSig;
       std::vector<asignal>* pads = SigFlow->pdSig;

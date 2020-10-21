@@ -552,7 +552,8 @@ public:
       fFlags.PrintA2(rough_time);
       std::cout <<"Time of Last Event: "<<fFlags.last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
-      std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
+      std::cout <<"Analysis run on host: ";
+      if(getenv("HOSTNAME")!=nullptr) {std::cout << getenv("HOSTNAME") << std::endl;} else { std::cout << "UNKNOWN" << std::endl;}
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);
