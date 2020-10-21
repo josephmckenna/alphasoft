@@ -116,7 +116,7 @@ public:
    void Setup(TFile* OutputFile);
 
    std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector<signal>* padsignals);
+    std::vector<signal>* CombinePads(std::vector<signal>* padsignals);
    std::vector<signal>* CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
    std::vector<signal>* CombineAPad(std::vector< std::vector<signal> > *comb,std::vector<signal>* CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
 

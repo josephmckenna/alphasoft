@@ -339,10 +339,10 @@ std::vector<signal>* Match::CombinePads(std::vector< std::vector<signal> > *comb
   return CombinedPads;
 }
 
-void Match::CombinePads(std::vector<signal>* padsignals)
+ std::vector<signal>* Match::CombinePads(std::vector<signal>* padsignals)
 {
   std::vector< std::vector<signal> > comb = CombPads( padsignals );
-  CombinePads(&comb);
+  return CombinePads(&comb);
 }
 
 void Match::CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* CombinedPads )
