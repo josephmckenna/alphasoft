@@ -193,8 +193,6 @@ int main(int argc, char** argv)
          else
             proc.ProcessWaveform_deconv(AWsignals,PADsignals);
 
-         proc.ProcessTracks();
-
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
 
