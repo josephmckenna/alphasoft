@@ -42,6 +42,7 @@ find_package(ROOT REQUIRED COMPONENTS)
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 #include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)

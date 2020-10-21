@@ -74,6 +74,7 @@ link_directories($ENV{ROOTANASYS}/lib)
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include)
 include_directories($ENV{AGRELEASE}/recolib/include)
 include_directories($ENV{AGRELEASE}/analib/include)
@@ -121,7 +122,7 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(${bin} analib)
+    link_directories(${bin} analib agana)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} Xt Xm Minuit2 rootana analib agtpc aged )
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
