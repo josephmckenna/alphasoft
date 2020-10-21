@@ -56,6 +56,7 @@ include_directories (${FREETYPE_INCLUDE_DIRS})
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
