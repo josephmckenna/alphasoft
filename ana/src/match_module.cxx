@@ -169,7 +169,7 @@ public:
      match->Init();
      if( SigFlow->pdSig )
          {
-            std::vector< std::vector<signal> > comb = match->CombPads( SigFlow->pdSig );
+            std::vector< std::vector<asignal> > comb = match->CombPads( SigFlow->pdSig );
             flow = new UserProfilerFlow(flow,"match_module(Comb)",timer_start);
             timer_start=CLOCK_NOW
 
