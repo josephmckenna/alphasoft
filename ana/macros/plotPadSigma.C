@@ -1,4 +1,6 @@
 #include "SignalsType.hh"
+#include "IntGetters.h"
+
 padmap pads;
 
 void plotPadSigma()
@@ -38,6 +40,8 @@ void plotPadSigma()
 
   TH2D* hps = (TH2D*) gROOT->FindObject("hcogpadssigma");
   hps->SetStats(kFALSE);
+  // hps->RebinY(10);
+  //  hps->GetYaxis()->SetRangeUser(0.,70.);
   cname = "PadSigmaR"; cname += GetRunNumber(TString(fin->GetName()));
   TCanvas* c1 = new TCanvas(cname,cname,1400,2500);
   c1->Divide(1,3);
@@ -60,6 +64,8 @@ void plotPadSigma()
   TH2D* hPadSigma = new TH2D("hPadSigma","Induced Charge Sigma;row;sec;[mm]",
 			     576,-0.5,575.5,32,-0.5,31.5);
   hPadSigma->SetStats(kFALSE);
+  hPadSigma->SetMinimum(3.1);
+  hPadSigma->SetMaximum(8.6);
   for(int bx=1; bx<=hps->GetNbinsX(); ++bx)
     {
       TString hname=TString::Format("%s_%d",hps->GetName(),bx);
@@ -112,6 +118,7 @@ void plotPadSigma()
   TH2D* hPadQAmp = new TH2D("hPadQAmp","Induced Charge Amplitude;row;sec;[a.u.]",
   			     576,-0.5,575.5,32,-0.5,31.5);
   hPadQAmp->SetStats(kFALSE);
+  hPadQAmp->SetMinimum(500);
   for(int b=1; b<=hpax->GetNbinsX(); ++b)
     {
       int row,sec;
@@ -152,6 +159,7 @@ void plotPadSigma()
   TH2D* hPadQInt = new TH2D("hPadQInt","Induced Charge Integral;row;sec;[a.u.]",
 			    576,-0.5,575.5,32,-0.5,31.5);
   hPadQInt->SetStats(kFALSE);
+  hPadQInt->SetMinimum(1500.);
   for(int b=1; b<=hpix->GetNbinsX(); ++b)
     {
       int row,sec;
