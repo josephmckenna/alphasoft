@@ -47,7 +47,7 @@ elif [[ "$1" == "ci" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     ls -lh $AGRELEASE/bin
@@ -75,11 +75,13 @@ elif [[ "$1" == "build" ]]; then
 
 elif [[ "$1" == "help" ]]; then
     echo "Options are:"
-    echo "- clean"
+    echo "- clean [all]"
     echo "- update (build only)"
     echo "- install"
     echo "- wA2"
     echo "- nosim (build and install)"
+    echo "- debug (build with debug symbols and install)"
+    echo "- build (build optimized code and install)"
     echo " "
     echo "Default: build and install"
 
