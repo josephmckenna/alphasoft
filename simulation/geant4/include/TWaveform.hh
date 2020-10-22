@@ -25,7 +25,7 @@ public:
   //  inline std::vector<double> GetWaveform() { return fWaveform; }
   //  inline double GetWaveformAt(uint i) { return fWaveform.at(i); }
   inline std::vector<int> GetWaveform() { return fWaveform; }
-  inline int GetWaveformAt(uint i) { return fWaveform.at(i); }
+  inline int GetWaveformAt(size_t i) { return fWaveform.at(i); }
 
   inline void SetElectrode( std::string n ) { fName = n; }
   inline void SetElectrode( char* n ) { fName = n; }
@@ -36,7 +36,7 @@ public:
   // inline void SetWaveformAt( uint i, double v) { fWaveform[i] = v; }
   // inline void PushBack(double v) { fWaveform.push_back(v); }
   inline void SetWaveform( std::vector<int> wf ) { fWaveform = wf; }
-  inline void SetWaveformAt( uint i, int v) { fWaveform[i] = v; }
+  inline void SetWaveformAt( size_t i, int v) { fWaveform[i] = v; }
   inline void PushBack(int v) { fWaveform.push_back(v); }
 
 ClassDef(TWaveform,1)
