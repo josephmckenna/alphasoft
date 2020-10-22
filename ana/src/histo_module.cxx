@@ -99,6 +99,8 @@ private:
    TH2D* hPwbRange;
    TProfile* hPwbRange_prox;
    //   std::map<int,TH2D*> hPwbTimeRange;
+   
+   TH2D* hPadOverflow;
 
    TH1D* hPwbWfAmp;
    TH1D* hPwbWfRange;
@@ -274,6 +276,9 @@ public:
       hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
                                     32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5100.);
       hPwbRange_prox->SetMinimum(0.);
+
+      hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+                              576,0.,ALPHAg::_padrow,32,0.,ALPHAg::_padcol);
 
       hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4200.);
       hPwbWfRange = new TH1D("hPwbWfRange","PWB WF amp",500,-100.,5100.);
@@ -607,7 +612,9 @@ public:
                   hPwbAmp->Fill(pad_index,sig->height);
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
-                  
+                  if( sig->height > 4091. )
+                     hPadOverflow->Fill(double(sig->idx),double(sig->sec));
+
                   hPwbWfAmp->Fill(sig->height);
    
                   int time = int(1.e-3*sig->t-1.6);
