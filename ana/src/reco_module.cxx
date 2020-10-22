@@ -28,7 +28,7 @@
 #include "TStoreEvent.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "json.hpp"
 
 #include "Reco.hh"

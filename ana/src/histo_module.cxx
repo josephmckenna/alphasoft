@@ -155,7 +155,7 @@ private:
    TH2D* hAmpSpPadCol;
    TH2D* hAmpSpPadRow;
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
 public:
    HistoModule(TARunInfo* runinfo, HistoFlags* f):TARunObject(runinfo),
@@ -401,7 +401,7 @@ public:
       hAmpSpPadRow = new TH2D("hAmpSpPadRow","Reconstructed Avalanche Size Vs Pad Rows W/ Spacepoint;row;amp",
                               576,0.,576,500,0.,5000.);
       
-      pmap = new padmap;
+      pmap = new ALPHAg::padmap;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -527,7 +527,7 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   void AWdiagnostic(std::vector<signal> *sanode)
+   void AWdiagnostic(std::vector<ALPHAg::signal> *sanode)
    {
       int nbot=0,ntop=0;
       for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
@@ -564,7 +564,7 @@ public:
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
    }
 
-   void ADCdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void ADCdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -588,7 +588,7 @@ public:
       //    }
    }
 
-   void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void PWBdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -637,7 +637,7 @@ public:
       //    }
    }
 
-   void PADdiagnostic(std::vector<signal> *spad)
+   void PADdiagnostic(std::vector<ALPHAg::signal> *spad)
    {
       int nhit=0;
       //std::cout<<"HistoModule::PADdiagnostic()"<<std::endl;
@@ -663,12 +663,12 @@ public:
       std::cout<<"HistoModule::PADdiagnostic # hit: "<<nhit<<std::endl;
    }
 
-   void MatchDiagnostic(std::vector<signal>* awsignals, 
-                        std::vector<signal>* padsignals)
+   void MatchDiagnostic(std::vector<ALPHAg::signal>* awsignals, 
+                        std::vector<ALPHAg::signal>* padsignals)
    {
-      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(), 
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(), 
                                                           padsignals->end());
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
@@ -729,7 +729,7 @@ public:
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
 
-   void SigSpacePointsDiagnostic( std::vector< std::pair<signal,signal> >* sp )
+   void SigSpacePointsDiagnostic( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* sp )
    {
       hNsp->Fill(sp->size());
 

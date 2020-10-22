@@ -251,13 +251,13 @@ public:
    }
 
 
-   void AnalyzeSignals(std::vector<signal>* awsignals)
+   void AnalyzeSignals(std::vector<ALPHAg::signal>* awsignals)
    {
       double aw_rad = ALPHAg::_anoderadius;
       std::vector<double> intersect;
 
-      std::multiset<signal, signal::heightorder> byheight1, byheight2;
-      std::multiset<signal, signal::timeorder> bytime(awsignals->begin(),
+      std::multiset<ALPHAg::signal, ALPHAg::signal::heightorder> byheight1, byheight2;
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> bytime(awsignals->begin(),
                                                       awsignals->end());
       auto it = bytime.begin();
 

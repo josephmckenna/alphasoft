@@ -7,7 +7,7 @@
 #include "TSpacePoint.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 class PHspectrumFlags
 {
@@ -37,7 +37,7 @@ private:
    TH2D* hpwbphspect;
    TH2D* hadcphspect;
    
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
    int fNtracks;
    double fCoincTime; // ns
@@ -63,7 +63,7 @@ public:
       hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,4200.);
       hadcphspect = new TH2D("hadcphspect","Max ADC P.H.;AW;PH",256,0.,256.,1000,0.,17000.);
 
-      pmap = new padmap;
+      pmap = new ALPHAg::padmap;
 
       fNtracks = fFlags->fNtracks;
       if (fFlags->ana_settings)
@@ -104,11 +104,11 @@ public:
          return flow;
       }
       
-      std::vector<signal>* adc32 = SigFlow->adc32max;
-      std::vector<signal>* pwb = SigFlow->pwbMax;
+      std::vector<ALPHAg::signal>* adc32 = SigFlow->adc32max;
+      std::vector<ALPHAg::signal>* pwb = SigFlow->pwbMax;
       
-      std::vector<signal>* aws = SigFlow->awSig;
-      std::vector<signal>* pads = SigFlow->pdSig;
+      std::vector<ALPHAg::signal>* aws = SigFlow->awSig;
+      std::vector<ALPHAg::signal>* pads = SigFlow->pdSig;
 
       if( fFlags->fMagneticField > 0. )
          HelPHspect(e,*adc32,*pwb,*aws,*pads);
@@ -119,8 +119,8 @@ public:
    }
 
    void FillHistos(const TObjArray* points,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       int nPoints = points->GetEntriesFast();
       std::cout<<"PHspectrum::FillHistos() # of points: "<<nPoints<<std::endl;
@@ -164,8 +164,8 @@ public:
    }
 
    void HelPHspect(TStoreEvent* anEvent,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       const TObjArray* helices = anEvent->GetHelixArray();
       int nTracks = helices->GetEntriesFast();
@@ -180,8 +180,8 @@ public:
    }// function: HelPHspect
 
    void LinePHspect(TStoreEvent* anEvent,
-                    std::vector<signal> &adc32, std::vector<signal> &pwb,
-                    std::vector<signal> &aws, std::vector<signal> &pads)
+                    std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                    std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();
