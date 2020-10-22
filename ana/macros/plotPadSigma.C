@@ -44,9 +44,10 @@ void plotPadSigma()
   //  hps->GetYaxis()->SetRangeUser(0.,70.);
   cname = "PadSigmaR"; cname += GetRunNumber(TString(fin->GetName()));
   TCanvas* c1 = new TCanvas(cname,cname,1400,2500);
-  c1->Divide(1,3);
+  //  c1->Divide(1,3);
+  c1->Divide(1,2);
   c1->cd(1);
-  hps->Draw("colz");
+  //  hps->Draw("colz");
 
   int binymin = hps->GetYaxis()->FindBin(1.5);
   int binymax = hps->GetYaxis()->FindBin(10.);
@@ -55,7 +56,7 @@ void plotPadSigma()
   TProfile* hpsx = hps->ProfileX("hprofpadsigma",binymin,binymax);
   hpsx->SetMarkerStyle(7);
   hpsx->SetLineColor(kBlack);
-  c1->cd(2);
+  // c1->cd(2);
   hpsx->Draw();
   hpsx->Fit("pol0","Q0");
   TF1* favgsig = hpsx->GetFunction("pol0");
@@ -83,7 +84,8 @@ void plotPadSigma()
       int bin = hPadSigma->GetBin(row+1,sec+1);
       hPadSigma->SetBinContent(bin,max_sigma);
     }
-  c1->cd(3);
+  //  c1->cd(3);
+  c1->cd(2);
   hpsmax->Draw();
   c1->SaveAs(".pdf");
 
@@ -100,10 +102,11 @@ void plotPadSigma()
   TH2D* hpa = (TH2D*) gROOT->FindObject("hcogpadsamp");
   hpa->SetStats(kFALSE);
   cname = "PadAmpR"; cname += GetRunNumber(TString(fin->GetName()));
-  TCanvas* c3 = new TCanvas(cname,cname,1400,2500);
-  c3->Divide(1,2);
-  c3->cd(1);
-  hpa->Draw("colz");
+  //  TCanvas* c3 = new TCanvas(cname,cname,1400,2500);
+  TCanvas* c3 = new TCanvas(cname,cname,1400,1500);
+  //  c3->Divide(1,2);
+  //  c3->cd(1);
+  //  hpa->Draw("colz");
 
   binymin = hpa->GetYaxis()->FindBin(50);
   binymax = hpa->GetYaxis()->FindBin(5000.);
@@ -111,8 +114,16 @@ void plotPadSigma()
   TProfile* hpax = hpa->ProfileX("hprofpadamp",binymin,binymax);
   hpax->SetMarkerStyle(7);
   hpax->SetLineColor(kBlack);
-  c3->cd(2);
+  hpax->SetMinimum(0.);
+  //  c3->cd(2);
+  c3->cd();
   hpax->Draw();
+  gPad->Update();
+  TPaveStats *stax = (TPaveStats*)hpax->FindObject("stats");
+  stax->SetX1NDC(0.8);
+  stax->SetX2NDC(0.99);
+  stax->SetY1NDC(0.2);
+  stax->SetY2NDC(0.5);
   c3->SaveAs(".pdf");
 
   TH2D* hPadQAmp = new TH2D("hPadQAmp","Induced Charge Amplitude;row;sec;[a.u.]",
@@ -140,10 +151,11 @@ void plotPadSigma()
   TH2D* hpi = (TH2D*) gROOT->FindObject("hcogpadsint");
   hpi->SetStats(kFALSE);
   cname = "PadIntR"; cname += GetRunNumber(TString(fin->GetName()));
-  TCanvas* c5 = new TCanvas(cname,cname,1400,2500);
-  c5->Divide(1,2);
-  c5->cd(1);
-  hpa->Draw("colz");
+  // TCanvas* c5 = new TCanvas(cname,cname,1400,2500);
+  TCanvas* c5 = new TCanvas(cname,cname,1400,1500);
+  // c5->Divide(1,2);
+  // c5->cd(1);
+  // hpa->Draw("colz");
 
   binymin = hpi->GetYaxis()->FindBin(18);
   //  binymax = hpi->GetYaxis()->FindBin(5000.);
@@ -152,14 +164,21 @@ void plotPadSigma()
   TProfile* hpix = hpi->ProfileX("hprofpadint",binymin,binymax);
   hpix->SetMarkerStyle(7);
   hpix->SetLineColor(kBlack);
-  c5->cd(2);
+  // c5->cd(2);
+  c5->cd();
   hpix->Draw();
+  gPad->Update();
+  TPaveStats *stix = (TPaveStats*)hpix->FindObject("stats");
+  stix->SetX1NDC(0.8);
+  stix->SetX2NDC(0.99);
+  stix->SetY1NDC(0.2);
+  stix->SetY2NDC(0.5);
   c5->SaveAs(".pdf");
 
   TH2D* hPadQInt = new TH2D("hPadQInt","Induced Charge Integral;row;sec;[a.u.]",
 			    576,-0.5,575.5,32,-0.5,31.5);
   hPadQInt->SetStats(kFALSE);
-  hPadQInt->SetMinimum(1500.);
+  hPadQInt->SetMinimum(2000.);
   for(int b=1; b<=hpix->GetNbinsX(); ++b)
     {
       int row,sec;
