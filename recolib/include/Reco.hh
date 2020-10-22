@@ -9,7 +9,7 @@
 #include <TClonesArray.h>
 
 #include "SignalsType.hh"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "LookUpTable.hh"
 #include "TracksFinder.hh"

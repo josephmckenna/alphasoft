@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #include "SignalsType.hh"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include <TClonesArray.h>
 #include <TH1D.h>
