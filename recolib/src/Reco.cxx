@@ -15,6 +15,7 @@
 
 #include <TDirectory.h>
 
+
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        f_rfudge(1.),f_pfudge(1.),
                                        pattrec(0)
@@ -148,7 +149,7 @@ Reco::~Reco()
    delete fSTR;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<asignal,asignal> > *spacepoints )
+void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints )
 {
    int n = 0;
    for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
@@ -191,7 +192,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<asignal,asignal> > *spacepoints
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<asignal,asignal> > *spacepoints, double z_fid )
+void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double z_fid )
 {
    int n = 0;
    for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
@@ -245,7 +246,7 @@ void Reco::AddSpacePoint( const TObjArray* p )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector<asignal> *spacepoints )
+void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
 {
    int n = 0;
    double zed = 0.,zerr=ALPHAg::_padpitch*ALPHAg::_sq12;

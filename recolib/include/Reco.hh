@@ -105,10 +105,10 @@ public:
 
    void AddMChits( const TClonesArray* mchits );
 
-   void AddSpacePoint( std::vector< std::pair<asignal,asignal> > *spacepoints );
-   void AddSpacePoint( std::vector< std::pair<asignal,asignal> > *spacepoints, double zcut );
+   void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints );
+   void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double zcut );
    void AddSpacePoint( const TObjArray* points );
-   void AddSpacePoint( std::vector<asignal> *spacepoints );
+   void AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints );
    int FindTracks(finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
    int FitLines();

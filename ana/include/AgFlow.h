@@ -309,21 +309,21 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<asignal>* awSig;
-  std::vector<asignal>* pdSig;
-  std::vector< std::pair<asignal,asignal> >* matchSig;
+  std::vector<ALPHAg::signal>* awSig;
+  std::vector<ALPHAg::signal>* pdSig;
+  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* matchSig;
 
-  std::vector<wf_ref>* AWwf;
-  std::vector<wf_ref>* PADwf;
+  std::vector<ALPHAg::wf_ref>* AWwf;
+  std::vector<ALPHAg::wf_ref>* PADwf;
 
-  std::vector<asignal>* adc32max;
-   //  std::vector<asignal> adc32range;
-  std::vector<asignal>* pwbMax;
-   //  std::vector<asignal> pwbRange;
+  std::vector<ALPHAg::signal>* adc32max;
+   //  std::vector<signal> adc32range;
+  std::vector<ALPHAg::signal>* pwbMax;
+   //  std::vector<signal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<asignal> *s):
+		std::vector<ALPHAg::signal> *s):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -336,8 +336,8 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<asignal>* s,
-  		std::vector<asignal>* p):
+  		std::vector<ALPHAg::signal>* s,
+  		std::vector<ALPHAg::signal>* p):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -350,8 +350,8 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<asignal>* s,std::vector<asignal>* p,
-		std::vector<wf_ref>* awf, std::vector<wf_ref>* pwf):
+		std::vector<ALPHAg::signal>* s,std::vector<ALPHAg::signal>* p,
+		std::vector<ALPHAg::wf_ref>* awf, std::vector<ALPHAg::wf_ref>* pwf):
     TAFlowEvent(flow)
   {
     AWwf=awf;
@@ -415,38 +415,38 @@ public:
     delete pdSig;
     pdSig=0;
   }
-  void AddPadSignals( std::vector<asignal>* s )
+  void AddPadSignals( std::vector<ALPHAg::signal>* s )
   {
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<asignal,asignal> >*ss )
+  void AddMatchSignals( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*ss )
   {
     matchSig=ss;
   }
 
-  void AddAWWaveforms(std::vector<wf_ref>* af)
+  void AddAWWaveforms(std::vector<ALPHAg::wf_ref>* af)
   {
     AWwf=af;
   }
 
-  void AddPADWaveforms(std::vector<wf_ref>* pf)
+  void AddPADWaveforms(std::vector<ALPHAg::wf_ref>* pf)
   {
     PADwf=pf;
   }
 
-  void AddWaveforms(std::vector<wf_ref>* af, std::vector<wf_ref>* pf)
+  void AddWaveforms(std::vector<ALPHAg::wf_ref>* af, std::vector<ALPHAg::wf_ref>* pf)
   {
     AWwf=af;
     PADwf=pf;
   }
 
-   void AddAdcPeaks(std::vector<asignal>* s)
+   void AddAdcPeaks(std::vector<ALPHAg::signal>* s)
    {
       adc32max=s;
    }
 
-   void AddPwbPeaks(std::vector<asignal>* s)
+   void AddPwbPeaks(std::vector<ALPHAg::signal>* s)
    {
       pwbMax=s;
    }
