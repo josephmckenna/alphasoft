@@ -44,12 +44,14 @@ elif [[ "$1" == "nosim" ]]; then
 
 elif [[ "$1" == "ci" ]]; then
     echo "Building agdaq for CI"
+    #Quit on error (so CI reports failure properly)
+    set -e
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    cmake3 --build . -- -j
+    cmake3 --build . --target install -- -j
     ls -lh $AGRELEASE/bin
     cd $AGRELEASE
 
