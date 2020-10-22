@@ -122,6 +122,9 @@ build-cc7-cmake:
   stage: build
   script:
     - echo "Building"
+    - cd rootana
+    - make
+    - cd ..
     - scripts/ccomp.sh clean all
     - scripts/ccomp.sh ci | tee ../BuildLog.txt
   artifacts:
