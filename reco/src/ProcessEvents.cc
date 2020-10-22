@@ -93,7 +93,7 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    // combine pads
  
    if(kVerb>=2) m.SetTrace(true);
-   std::vector<signal>* CombinedPads = m.CombinePads( d.GetPadSignal() );
+   std::vector<ALPHAg::signal>* CombinedPads = m.CombinePads( d.GetPadSignal() );
    m.SetTrace(false);
    uint npads = CombinedPads->size();
    std::cout<<"[proc]# "<<EventNo<<"\tCombinePads: "<<npads<<std::endl;
@@ -107,7 +107,7 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
 
    // match electrodes
    // Andrea! Does this diff make sense? This function needed two arguments
-   std::vector< std::pair<signal,signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(),d.GetPadSignal() );
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(),d.GetPadSignal() );
 
    ProcessPoints(spacepoints);
 }
@@ -123,12 +123,12 @@ void ProcessEvents::ProcessWaveform_2D(TClonesArray* awsignals)
    if( kVerb>=2 ) u.PrintSignals( d.GetAnodeSignal() );
 
    m.Init();
-   std::vector< std::pair<signal,signal> >* spacepoints = m.FakePads( d.GetAnodeSignal() );
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.FakePads( d.GetAnodeSignal() );
 
    ProcessPoints(spacepoints);
 }
 
-void ProcessEvents::ProcessPoints(std::vector< std::pair<signal,signal> >* spacepoints )
+void ProcessEvents::ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints )
 {
    uint nmatch = spacepoints->size();
    std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<nmatch<<std::endl;
@@ -158,7 +158,7 @@ void ProcessEvents::ProcessWaveform_led(TClonesArray* awsignals, TClonesArray* p
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    //m.SetTrace(true);
-   std::vector< std::pair<signal,signal> >* spacepoints =m.MatchElectrodes( leaw.GetSignal(), lepad.GetSignal() );
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints =m.MatchElectrodes( leaw.GetSignal(), lepad.GetSignal() );
    if( spacepoints )
       std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<spacepoints->size()<<std::endl;
    else
@@ -167,7 +167,7 @@ void ProcessEvents::ProcessWaveform_led(TClonesArray* awsignals, TClonesArray* p
 }
 
 
-void ProcessEvents::ProcessTracks(std::vector< std::pair<signal,signal> >* spacepoints)
+void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints)
 {
    // reco points
    //   if( kVerb>=2 ) 

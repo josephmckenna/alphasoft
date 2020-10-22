@@ -13,7 +13,7 @@
 #include "TClonesArray.h"
 #include "TVector3.h"
 
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "Deconv.hh"
 #include "Ledge.hh"
@@ -48,9 +48,9 @@ public:
 
    void ProcessWaveform_deconv(TClonesArray*,TClonesArray*);
    void ProcessWaveform_led(TClonesArray*,TClonesArray*);
-   void ProcessPoints(std::vector< std::pair<signal,signal> >* spacepoints );
+   void ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints );
    void ProcessWaveform_2D(TClonesArray*);
-   void ProcessTracks(std::vector< std::pair<signal,signal> >* spacepoints);
+   void ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints);
    void ProcessMonteCarlo(TClonesArray*,TVector3*);
    void ProcessVertex(TVector3*);
 

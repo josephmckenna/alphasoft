@@ -37,7 +37,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS)
+find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
@@ -55,7 +55,7 @@ ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
-target_link_libraries(analib ${ROOT_LIBRARIES})
+target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
 
 install(TARGETS analib DESTINATION lib)
 
