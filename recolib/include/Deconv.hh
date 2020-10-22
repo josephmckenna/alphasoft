@@ -72,11 +72,11 @@ private:
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
-   std::vector<electrode> fAnodeIndex;
-   std::vector<electrode> fPadIndex;
+   std::vector<ALPHAg::electrode> fAnodeIndex;
+   std::vector<ALPHAg::electrode> fPadIndex;
 
-   std::vector<asignal>* sanode;
-   std::vector<asignal>* spad;
+   std::vector<ALPHAg::signal>* sanode;
+   std::vector<ALPHAg::signal>* spad;
 
    // check
    std::vector<double> resRMS_a;
@@ -91,27 +91,27 @@ private:
    int ReadADCRescaleFile();
    int ReadPWBRescaleFile();
 
-   std::vector<asignal>* Deconvolution( std::vector<wfholder*>* subtracted,
-                                       std::vector<electrode> &fElectrodeIndex,
+   std::vector<ALPHAg::signal>* Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
+                                       std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                        std::vector<double> &fResponse, int theBin, bool isanode);
 
-   void SubtractAW(wfholder* hist1,
-                   std::vector<wfholder*>* wfmap,
+   void SubtractAW(ALPHAg::wfholder* hist1,
+                   std::vector<ALPHAg::wfholder*>* wfmap,
                    const int b,
-                   const double ne,std::vector<electrode> &fElectrodeIndex,
+                   const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                    std::vector<double> &fResponse, int theBin);
    
-   void SubtractPAD(wfholder* hist1,
-                    std::vector<wfholder*>* wfmap,
+   void SubtractPAD(ALPHAg::wfholder* hist1,
+                    std::vector<ALPHAg::wfholder*>* wfmap,
                     const int b,
-                    const double ne,std::vector<electrode> &fElectrodeIndex,
+                    const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                     std::vector<double> &fResponse, int theBin);
    
-   comp_hist_t wf_comparator;
-   std::vector<wfholder*>* wforder(std::vector<wfholder*>* subtracted, const int b);
+   ALPHAg::comp_hist_t wf_comparator;
+   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const int b);
    
-   std::map<int,wfholder*>* wfordermap(std::vector<wfholder*>* histset,
-                                       std::vector<electrode> &fElectrodeIndex);
+   std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
+                                       std::vector<ALPHAg::electrode> &fElectrodeIndex);
 
    //Take advantage that there are 256 anode wires
    inline bool IsAnodeNeighbour(int w1, int w2, int dist)
@@ -210,7 +210,7 @@ private:
       return sqrt(res);
    }
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
    TH2D* hADCped;
    TProfile* hADCped_prox;
@@ -224,14 +224,14 @@ private:
    TH1D* hAvgRMSTop;
 
    // to use in aged display
-   std::vector<wf_ref>* wirewaveforms;
-   std::vector<wf_ref>* feamwaveforms;
+   std::vector<ALPHAg::wf_ref>* wirewaveforms;
+   std::vector<ALPHAg::wf_ref>* feamwaveforms;
 
    // waveform max
-   std::vector<asignal>* fAdcPeaks;
-   //std::vector<asignal>* fAdcRange;
-   std::vector<asignal>* fPwbPeaks;
-   // std::vector<asignal>* fPwbRange;
+   std::vector<ALPHAg::signal>* fAdcPeaks;
+   //std::vector<signal>* fAdcRange;
+   std::vector<ALPHAg::signal>* fPwbPeaks;
+   // std::vector<signal>* fPwbRange;
 
 public:
    Deconv(double adc, double pwb, double aw, double pad);
@@ -249,14 +249,14 @@ public:
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);
 
-   inline std::vector<asignal>* GetAnodeSignal() { return sanode; }
-   inline std::vector<asignal>* GetPadSignal()  { return spad; }
+   inline std::vector<ALPHAg::signal>* GetAnodeSignal() { return sanode; }
+   inline std::vector<ALPHAg::signal>* GetPadSignal()  { return spad; }
 
-   inline std::vector<asignal>* GetAdcPeaks() { return fAdcPeaks; }
-   inline std::vector<asignal>* GetPWBPeaks() { return fPwbPeaks; }
+   inline std::vector<ALPHAg::signal>* GetAdcPeaks() { return fAdcPeaks; }
+   inline std::vector<ALPHAg::signal>* GetPWBPeaks() { return fPwbPeaks; }
 
-   inline std::vector<wf_ref>* GetAWwaveforms()  { return wirewaveforms; }
-   inline std::vector<wf_ref>* GetPADwaveforms() { return feamwaveforms; }
+   inline std::vector<ALPHAg::wf_ref>* GetAWwaveforms()  { return wirewaveforms; }
+   inline std::vector<ALPHAg::wf_ref>* GetPADwaveforms() { return feamwaveforms; }
 
    inline void SetTrace(bool t)      { fTrace=t; }
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }

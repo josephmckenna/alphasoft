@@ -18,7 +18,7 @@ class Utils
 {
 private:
    Histo fHisto;
-   padmap pmap;
+   ALPHAg::padmap pmap;
    double fMagneticField;
 
    int Npoints=0;
@@ -65,15 +65,15 @@ public:
    void DrawTPCxy(TCanvas* c);
    
 
-   void Draw(std::vector<asignal>* awsig,
-             std::vector<asignal>* padsig, std::vector<asignal>* combpads,
+   void Draw(std::vector<ALPHAg::signal>* awsig,
+             std::vector<ALPHAg::signal>* padsig, std::vector<ALPHAg::signal>* combpads,
              bool norm=true);
-   void Draw(std::vector<asignal>* awsig, std::vector<asignal>* padsig, bool norm=true);
-   void PrintSignals(std::vector<asignal>* sig);
-   TH1D* PlotSignals(std::vector<asignal>* sig, std::string name);
-   TH1D* PlotOccupancy(std::vector<asignal>* sig, std::string name);
-   TH2D* PlotSignals(std::vector<asignal>* awsignals,
-                     std::vector<asignal>* padsignals, std::string type="none");
+   void Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, bool norm=true);
+   void PrintSignals(std::vector<ALPHAg::signal>* sig);
+   TH1D* PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name);
+   TH1D* PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name);
+   TH2D* PlotSignals(std::vector<ALPHAg::signal>* awsignals,
+                     std::vector<ALPHAg::signal>* padsignals, std::string type="none");
    
    double Average(std::vector<double>* v);
    

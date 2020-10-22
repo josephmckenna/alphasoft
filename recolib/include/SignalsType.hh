@@ -7,6 +7,9 @@
 #include <algorithm>
 #include "TPCconstants.hh"
 
+
+namespace ALPHAg {
+
 class electrode
 {
 public:
@@ -69,19 +72,19 @@ public:
    };
 };
 
-class asignal: public electrode
+class signal: public electrode
 {
 public:
    double t, height, errh, z, errz;
    double phi, errphi;
 
-  asignal():electrode(),
+  signal():electrode(),
 	   t(ALPHAg::kUnknown),height(0.),errh(ALPHAg::kUnknown),
      z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
 	   phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {}
 
-   asignal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
+   signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
                                                                        t(tt)
    {
       height = hh/gain;  // should the gain be used here?
@@ -94,7 +97,7 @@ public:
       }
    }
 
-  asignal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
+  signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
 						 t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
 						 phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {
@@ -102,7 +105,7 @@ public:
     errh = eh/gain;
   }
 
-  asignal(int ii, double tt, double hh, double eh):electrode(ii),
+  signal(int ii, double tt, double hh, double eh):electrode(ii),
      t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown)
   {
     height = hh/gain;
@@ -110,7 +113,7 @@ public:
     SetAnodeCoords();
   }
 
-  asignal(short ss, int ii,
+  signal(short ss, int ii,
 	 double tt, double hh, double eh,
 	 double zz, double ez=ALPHAg::kUnknown):electrode(ss, ii),
 					t(tt),z(zz),errz(ez),
@@ -120,7 +123,7 @@ public:
     errh = eh/gain;
   }
 
-   asignal(const asignal &sig):electrode(sig),
+   signal(const signal &sig):electrode(sig),
                              t(sig.t), height(sig.height), errh(sig.errh),
                              z(sig.z), errz(sig.errz),
                              phi(sig.phi), errphi(sig.errphi)
@@ -144,25 +147,25 @@ public:
    }
 
    struct indexorder {       // to sort signals by wire/pad number
-      bool operator() (const asignal& lhs, const asignal& rhs) const {
+      bool operator() (const signal& lhs, const signal& rhs) const {
          return lhs.idx<rhs.idx || (lhs.idx==rhs.idx && lhs.sec<rhs.sec);
       }
    };
 
    struct timeorder{        // to sort signals by time
-      bool operator() (const asignal& lhs, const asignal& rhs) const {
+      bool operator() (const signal& lhs, const signal& rhs) const {
          return lhs.t<rhs.t;
       }
    };
 
    struct heightorder {       // to sort signals by signal size
-      bool operator() (const asignal& lhs, const asignal& rhs) const {
+      bool operator() (const signal& lhs, const signal& rhs) const {
          return lhs.height>rhs.height;
       }
    };
 
    struct sectororder {       // to sort signals by wire/pad number
-      bool operator() (const asignal& lhs, const asignal& rhs) const {
+      bool operator() (const signal& lhs, const signal& rhs) const {
          return lhs.sec<rhs.sec;
       }
    };
@@ -273,6 +276,8 @@ public:
    }
 };
 
+
+} //namespace ALPHAg
 #endif
 
 

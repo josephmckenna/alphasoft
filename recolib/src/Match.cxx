@@ -59,8 +59,8 @@ Match::~Match()
 
 void Match::Init()
 {
-  fCombinedPads=NULL;//new std::vector<asignal>;
-  spacepoints=NULL;//new std::vector< std::pair<asignal,asignal> >;
+  fCombinedPads=NULL;//new std::vector<signal>;
+  spacepoints=NULL;//new std::vector< std::pair<signal,signal> >;
   assert(CentreOfGravityFunction>=0); //CentreOfGravityFunction not set!
   if(fDebug) std::cout<<"Match::Init!"<<std::endl;
   ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
@@ -97,8 +97,8 @@ void Match::Setup(TFile* OutputFile)
     }
 }
 
-std::set<short> Match::PartionBySector(std::vector<asignal>* padsignals, 
-				       std::vector< std::vector<asignal> >& pad_bysec)
+std::set<short> Match::PartionBySector(std::vector<ALPHAg::signal>* padsignals, 
+				       std::vector< std::vector<ALPHAg::signal> >& pad_bysec)
 {
   std::set<short> secs;
   pad_bysec.clear();
@@ -113,13 +113,13 @@ std::set<short> Match::PartionBySector(std::vector<asignal>* padsignals,
   return secs;
 }
 
-std::vector< std::vector<asignal> > Match::PartitionByTime( std::vector<asignal>& sig )
+std::vector< std::vector<ALPHAg::signal> > Match::PartitionByTime( std::vector<ALPHAg::signal>& sig )
 {
   if( fDebug ) std::cout<<"Match::PartitionByTime  "<<sig.size()<<std::endl;
-  std::multiset<asignal, asignal::timeorder> sig_bytime(sig.begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> sig_bytime(sig.begin(),
 						      sig.end());
   double temp=-999999.;
-  std::vector< std::vector<asignal> > pad_bytime;
+  std::vector< std::vector<ALPHAg::signal> > pad_bytime;
   for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
     {
       if( fDebug ) isig->print();
@@ -138,14 +138,14 @@ std::vector< std::vector<asignal> > Match::PartitionByTime( std::vector<asignal>
   return pad_bytime;
 }
 
-std::vector<std::vector<asignal>> Match::CombPads(std::vector<asignal>* padsignals)
+std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::signal>* padsignals)
 {
   if( fTrace ) std::cout<<"Match::CombPads!"<<std::endl;
   // combine pads in the same column only
-  std::vector< std::vector<asignal> > pad_bysec;
+  std::vector< std::vector<ALPHAg::signal> > pad_bysec;
   std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
   if( fTrace ) std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
-  std::vector< std::vector<asignal> > comb;
+  std::vector< std::vector<ALPHAg::signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
@@ -155,7 +155,7 @@ std::vector<std::vector<asignal>> Match::CombPads(std::vector<asignal>* padsigna
 		 <<" = sector: "<<pad_bysec[sector].at(0).sec
 		 <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
-      std::vector< std::vector<asignal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
+      std::vector< std::vector<ALPHAg::signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
       for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
 	{
 	  if( it->size() <= 2 ) continue; // it->size() <= padsNmin
@@ -169,9 +169,9 @@ std::vector<std::vector<asignal>> Match::CombPads(std::vector<asignal>* padsigna
   return comb;
 }
 
-void Match::CombinePads(std::vector< std::vector<asignal> > *comb)
+void Match::CombinePads(std::vector< std::vector<ALPHAg::signal> > *comb)
 {
-  fCombinedPads=new std::vector<asignal>;
+  fCombinedPads=new std::vector<ALPHAg::signal>;
   if( comb->size()==0 ) return;
  
   if( fTrace ) 
@@ -258,13 +258,13 @@ void Match::CombinePads(std::vector< std::vector<asignal> > *comb)
   comb->clear();
 }
 
-void Match::CombinePads(std::vector<asignal>* padsignals)
+void Match::CombinePads(std::vector<ALPHAg::signal>* padsignals)
 {
-  std::vector< std::vector<asignal> > comb = CombPads( padsignals );
+  std::vector< std::vector<ALPHAg::signal> > comb = CombPads( padsignals );
   CombinePads(&comb);
 }
 
-void Match::CentreOfGravity( std::vector<asignal> &vsig )
+void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig )
 {
   if(!vsig.size()) return;
 
@@ -506,15 +506,15 @@ std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vec
 }
 
 // TH1-independent method to find peaks in pad charge distribution
-std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<asignal> &sigs,
+std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> &sigs,
 							 int ifirst, int ilast)
 {
   if(ilast < 0) ilast = sigs.size()-1;
-  std::vector<asignal>::const_iterator first = std::next(sigs.begin(),ifirst);
-  std::vector<asignal>::const_iterator last = std::next(sigs.begin(),ilast);
+  std::vector<ALPHAg::signal>::const_iterator first = std::next(sigs.begin(),ifirst);
+  std::vector<ALPHAg::signal>::const_iterator last = std::next(sigs.begin(),ilast);
   std::vector<std::pair<double, double> > blobs;
 
-  asignal::heightorder sigcmp_h;
+  ALPHAg::signal::heightorder sigcmp_h;
   auto maxit = std::max_element(first, last, sigcmp_h);
   double maxpos = maxit->z;
   double max = maxit->height;
@@ -562,7 +562,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<asign
   return blobs;
 }
 
-void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
+void Match::CentreOfGravity_histoblobs( std::vector<ALPHAg::signal> &vsig )
 {
   if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
@@ -571,7 +571,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
   //      std::cout<<hname<<std::endl;
 
   //////////// Make histo only as big as necessary, does this save time or cost time?
-  // asignal::indexorder sigcmp_i;
+  // signal::indexorder sigcmp_i;
   // auto padBounds = std::minmax_element(vsig.begin(), vsig.end(), sigcmp_i);
   // int p1 = padBounds.first->idx;
   // int p2 = padBounds.second->idx;
@@ -579,7 +579,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
   //////////// Alternatively work with fixed size histo
   TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   ////////////////////////
-  // asignal::heightorder sigcmp_h;
+  // signal::heightorder sigcmp_h;
   // double max = std::max_element(vsig.begin(), vsig.end(), sigcmp_h)->height;
   for( auto& s: vsig )
     {
@@ -610,8 +610,8 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
   }
   std::vector<std::pair<double, double> > blobs = FindBlobs(hh, cumulBins);
   // //// **** and comment this:
-  // std::vector<asignal> vsig_sorted(vsig);
-  // asignal::indexorder sigcmp_z;
+  // std::vector<signal> vsig_sorted(vsig);
+  // signal::indexorder sigcmp_z;
   // std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
   // std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
   //// ************************************
@@ -710,7 +710,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
 
 	      if( abs(pos) < ALPHAg::_halflength )
 		{
-		  // create new asignal with combined pads
+		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, err );
 
 		  if( fDebug ){
@@ -777,7 +777,7 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
 	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
 	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-	      // create new asignal with combined pads
+	      // create new signal with combined pads
 	      fCombinedPads->emplace_back( col, index, time, amp, amp_err, pos, zed_err );
 
 	      if( fDebug )
@@ -801,16 +801,16 @@ void Match::CentreOfGravity_histoblobs( std::vector<asignal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-//void Match::CentreOfGravity_blobs( std::vector<asignal>& vsig, std::vector<asignal>& padcog)
-void Match::CentreOfGravity_blobs( std::vector<asignal>& vsig )
+//void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal>& padcog)
+void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig )
 {
   int nPositions=0;
   if(int(vsig.size()) < padsNmin) return;
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
 
-  std::vector<asignal> vsig_sorted(vsig);
-  asignal::indexorder sigcmp_z;
+  std::vector<ALPHAg::signal> vsig_sorted(vsig);
+  ALPHAg::signal::indexorder sigcmp_z;
   auto start = std::chrono::high_resolution_clock::now();
   std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
   std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
@@ -917,7 +917,7 @@ void Match::CentreOfGravity_blobs( std::vector<asignal>& vsig )
 		  // create new signal with combined pads
 		  fCombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
 		  mtx.unlock();
-		  //asignal pad_cog( col, row, time, amp, amp_err, pos, err );
+		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
 		  ++nPositions;
 		  if( fDebug )
@@ -959,7 +959,7 @@ void Match::CentreOfGravity_blobs( std::vector<asignal>& vsig )
   //  return nPositions;
 }
 
-void Match::CentreOfGravity_nofit( std::vector<asignal> &vsig )
+void Match::CentreOfGravity_nofit( std::vector<ALPHAg::signal> &vsig )
 {
   if(!vsig.size()) return;
   double time = vsig.begin()->t;
@@ -1045,7 +1045,7 @@ void Match::CentreOfGravity_nofit( std::vector<asignal> &vsig )
 }
 
 
-void Match::CentreOfGravity_single_peak( std::vector<asignal> &vsig )
+void Match::CentreOfGravity_single_peak( std::vector<ALPHAg::signal> &vsig )
 {
   if(!vsig.size()) return;
 
@@ -1181,7 +1181,7 @@ void Match::CentreOfGravity_single_peak( std::vector<asignal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::CentreOfGravity_multi_peak( std::vector<asignal> &vsig )
+void Match::CentreOfGravity_multi_peak( std::vector<ALPHAg::signal> &vsig )
 {
 
   if(!vsig.size()) return;
@@ -1196,7 +1196,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<asignal> &vsig )
   //      std::cout<<hname<<std::endl;
   TH1D* hh = new TH1D(hname.Data(),"",int(ALPHAg::_padrow),-ALPHAg::_halflength,ALPHAg::_halflength);
   double total_height=0;
-  for( auto& s: vsig ) //asignal
+  for( auto& s: vsig ) //signal
     {
       // s.print();
       double z = ( double(s.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
@@ -1347,7 +1347,7 @@ void Match::CentreOfGravity_multi_peak( std::vector<asignal> &vsig )
 }
 
 
-void Match::CentreOfGravity_nohisto( std::vector<asignal> &vsig )
+void Match::CentreOfGravity_nohisto( std::vector<ALPHAg::signal> &vsig )
 {
   if(!vsig.size()) return;
   double time = vsig.begin()->t;
@@ -1514,14 +1514,14 @@ void Match::CentreOfGravity_nohisto( std::vector<asignal> &vsig )
     std::cout<<"-------------------------------"<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<asignal>* awsignals)
+void Match::MatchElectrodes(std::vector<ALPHAg::signal>* awsignals)
 {
-  std::multiset<asignal, asignal::timeorder> aw_bytime(awsignals->begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
-  std::multiset<asignal, asignal::timeorder> pad_bytime(fCombinedPads->begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(fCombinedPads->begin(),
 						      fCombinedPads->end());
   if (spacepoints) delete spacepoints;
-  spacepoints=new std::vector< std::pair<asignal,asignal> >;
+  spacepoints=new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
@@ -1565,15 +1565,15 @@ void Match::MatchElectrodes(std::vector<asignal>* awsignals)
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
 
-void Match::MatchElectrodes(std::vector<asignal>* awsignals, 
-			    std::vector<asignal>* pdsignals)
+void Match::MatchElectrodes(std::vector<ALPHAg::signal>* awsignals, 
+			    std::vector<ALPHAg::signal>* pdsignals)
 {
-  std::multiset<asignal, asignal::timeorder> aw_bytime(awsignals->begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
-  std::multiset<asignal, asignal::timeorder> pad_bytime(pdsignals->begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(pdsignals->begin(),
 						      pdsignals->end());
   if(spacepoints) delete spacepoints;
-  spacepoints=new std::vector< std::pair<asignal,asignal> >;
+  spacepoints=new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
@@ -1617,20 +1617,20 @@ void Match::MatchElectrodes(std::vector<asignal>* awsignals,
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
 }
 
-void Match::FakePads(std::vector<asignal>* awsignals)
+void Match::FakePads(std::vector<ALPHAg::signal>* awsignals)
 {
-  std::multiset<asignal, asignal::timeorder> aw_bytime(awsignals->begin(),
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
 						     awsignals->end());
   if (spacepoints) spacepoints->clear();
-  spacepoints=new std::vector<std::pair < asignal, asignal>>;
+  spacepoints=new std::vector<std::pair < ALPHAg::signal, ALPHAg::signal>>;
   int Nmatch=0;
   for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
     {
       if( iaw->t < 0. ) continue;
       short sector = short(iaw->idx/8);
-      //asignal fake_pad( sector, 288, iaw->t, 1., 0.0 );
-      //asignal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
-      asignal fake_pad( sector, 288, iaw->t, 1., 0.0, 0.0, zed_err);
+      //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
+      //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
+      ALPHAg::signal fake_pad( sector, 288, iaw->t, 1., 0.0, 0.0, zed_err);
       spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
       ++Nmatch;
     }
@@ -1640,8 +1640,8 @@ void Match::FakePads(std::vector<asignal>* awsignals)
 }
 
 void Match::SortPointsAW(  const std::pair<double,int>& pos,
-			   std::vector<std::pair<asignal,asignal>*>& vec,
-			   std::map<int,std::vector<std::pair<asignal,asignal>*>,std::greater<int>>& spaw )
+			   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw )
 {
   for(auto& s: vec)
     {
@@ -1654,11 +1654,11 @@ void Match::SortPointsAW(  const std::pair<double,int>& pos,
       spaw[s->first.idx].push_back( s );
     }// vector of sp with same time and row
 }
-void Match::SortPointsAW(  std::vector<std::pair<asignal,asignal>*>& vec,
-			   std::map<int,std::vector<std::pair<asignal,asignal>*>,std::greater<int>>& spaw )
+void Match::SortPointsAW(  std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw )
 //void Match::SortPointsAW(  const std::pair<double,int>& pos,
-//			   std::vector<std::pair<asignal,asignal>*>& vec,
-//			   std::map<int,std::vector<std::pair<asignal,asignal>*>>& spaw )
+//			   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+//			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw )
 {
   for(auto& s: vec)
     {
@@ -1666,8 +1666,8 @@ void Match::SortPointsAW(  std::vector<std::pair<asignal,asignal>*>& vec,
     }// vector of sp with same time and row
 }
 
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<asignal,asignal>*>,std::greater<int>>& spaw,
-			 std::map<int,std::vector<std::pair<asignal,asignal>*>>& merger)
+void Match::CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw,
+			 std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger)
 {
   int m=-1, aw = spaw.begin()->first, q=0;
   for( auto& msp: spaw )
@@ -1701,8 +1701,8 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<asignal,asignal>*>,s
 	}// vector of sp with same time and row and decreasing aw number
     }// map of sp sorted by increasing aw number
 }
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<asignal,asignal>*>>& spaw,
-			 std::map<int,std::vector<std::pair<asignal,asignal>*>>& merger)
+void Match::CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw,
+			 std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger)
 {
   int m=-1, aw = spaw.begin()->first, q=0;
   // std::cout<<"Match::CombPoints() anode: "<<aw
@@ -1736,8 +1736,8 @@ void Match::CombPointsAW(std::map<int,std::vector<std::pair<asignal,asignal>*>>&
     }// map of sp sorted by increasing aw number
 }
 
-uint Match::MergePoints(std::map<int,std::vector<std::pair<asignal,asignal>*>>& merger,
-			std::vector<std::pair<asignal,asignal>>& merged,
+uint Match::MergePoints(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger,
+			std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
 			uint& number_of_merged)
 {
   uint np = 0;
@@ -1802,7 +1802,7 @@ void Match::CombPoints()
     std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
 
   // sort sp by row and time
-  std::map<std::pair<double,int>,std::vector<std::pair<asignal,asignal>*>> combsp;
+  std::map<std::pair<double,int>,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>> combsp;
   for(auto &sp: *spacepoints)
     {
       double time = sp.first.t;
@@ -1814,7 +1814,7 @@ void Match::CombPoints()
   if( fTrace )
     std::cout<<"Match::CombPoints() comb size: "<<combsp.size()<<std::endl;
   uint n=0;
-  std::vector<std::pair<asignal,asignal>> merged;
+  std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>> merged;
   uint m=0;
   for(auto &k: combsp)
     {
@@ -1827,11 +1827,11 @@ void Match::CombPoints()
 		     <<"ns row: "<<k.first.second<<std::endl;
 
 	  // sort sp by decreasing aw number
-	  std::map<int,std::vector<std::pair<asignal,asignal>*>,std::greater<int>> spaw;
+	  std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw;
 	  //                  SortPointsAW( k.first, k.second, spaw );
 	  SortPointsAW( k.second, spaw );
 
-	  std::map<int,std::vector<std::pair<asignal,asignal>*>> merger;
+	  std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>> merger;
 	  CombPointsAW(spaw,merger);
 	  if( 0 )
 	    std::cout<<"Match::CombPoints() merger size: "<<merger.size()<<std::endl;
