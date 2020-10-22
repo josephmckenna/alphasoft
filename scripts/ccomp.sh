@@ -50,8 +50,8 @@ elif [[ "$1" == "ci" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
-    cmake3 --build . -- -j
-    cmake3 --build . --target install -- -j
+    cmake3 --build . 
+    cmake3 --build . --target install
     ls -lh $AGRELEASE/bin
     cd $AGRELEASE
 
