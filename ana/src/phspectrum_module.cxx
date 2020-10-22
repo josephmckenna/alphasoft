@@ -7,7 +7,7 @@
 #include "TSpacePoint.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 class PHspectrumFlags
 {
