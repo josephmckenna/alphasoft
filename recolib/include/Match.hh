@@ -53,14 +53,8 @@ private:
    std::pair<std::set<short>,std::vector< std::vector<signal> >> PartitionBySector(std::vector<signal>* padsignals);
    std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
 
-   void CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #0
-   //  void CentreOfGravity_blobs( std::vector<signal> &vsig,  std::vector<signal> &padcog ); // #6
-   void CentreOfGravity_blobs( std::vector<signal> &vsig, std::vector<signal>* combpads); // #6
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #2
-   void CentreOfGravity_nofit( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #1
-   void CentreOfGravity_single_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #3
-   void CentreOfGravity_multi_peak( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #4
-   void CentreOfGravity_histoblobs( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #6
+   void CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* combpads ); // #1
+   void CentreOfGravity_blobs( std::vector<signal> &vsig, std::vector<signal>* combpads); // #2
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -82,7 +76,7 @@ private:
                     std::vector<std::pair<signal,signal>>& merged,
                     uint& number_of_merged);
 
-   std::vector<std::pair<double, double> > FindBlobs(TH1D *h, const std::vector<int> &cumulBins);
+ 
    std::vector<std::pair<double, double> > FindBlobs(const std::vector<signal> &sigs,
                                                      int ifirst, int ilast);
 
