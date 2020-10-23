@@ -31,6 +31,13 @@ else
   DOBUILD="BUILD"
 fi
 
+if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
+
+
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
   MODULEFLAGS="-- ${MODULEFLAGS}"
   echo "Module flags: ${MODULEFLAGS}"

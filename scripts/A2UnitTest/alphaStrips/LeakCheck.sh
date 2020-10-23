@@ -21,8 +21,6 @@ else
 fi
 
 
-
-
 if [ `echo "$RUNNO" | wc -c` -gt 3 ]; then
   echo "Using run $RUNNO"
 else
@@ -30,6 +28,14 @@ else
   echo "Using default run $RUNNO"
   DOBUILD="BUILD"
 fi
+
+
+if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
+
 
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
   MODULEFLAGS="-- ${MODULEFLAGS}"
