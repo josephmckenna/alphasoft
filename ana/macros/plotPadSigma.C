@@ -1,5 +1,21 @@
+#include <map>
+#include <string>
+
+#include <TString.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TProfile.h>
+#include <TStyle.h>
+#include <TDirectory.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TPaletteAxis.h>
+#include <TPaveStats.h>
+
 #include "SignalsType.hh"
 #include "IntGetters.h"
+#include "TPCconstants.hh"
+
 
 padmap pads;
 
@@ -129,7 +145,7 @@ void plotPadSigma()
   TH2D* hPadQAmp = new TH2D("hPadQAmp","Induced Charge Amplitude;row;sec;[a.u.]",
   			     576,-0.5,575.5,32,-0.5,31.5);
   hPadQAmp->SetStats(kFALSE);
-  hPadQAmp->SetMinimum(500);
+  //  hPadQAmp->SetMinimum(500);
   for(int b=1; b<=hpax->GetNbinsX(); ++b)
     {
       int row,sec;
