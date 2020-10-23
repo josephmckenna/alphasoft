@@ -14,7 +14,7 @@
 #include "AnalysisTimer.h"
 #include "TSystem.h"
 #include <sys/stat.h>
-
+#include "TObjArray.h"
 
 enum EXPERIMENT    { EXP_ALPHA2, EXP_ALPHAg };
 enum FILE_LOCATION { LOCAL, REMOTE, NOT_FOUND };
