@@ -302,9 +302,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* Com
   if(!vsig.size()) return;
 
   //Root's fitting routines are often not thread safe, lock globally
-#ifdef MODULE_MULTITHREAD
-  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif
+  mtx.lock();
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -467,6 +465,7 @@ void Match::CentreOfGravity( std::vector<signal> &vsig, std::vector<signal>* Com
   delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
+  mtx.unlock();
 }
 
 
@@ -623,7 +622,6 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 
 	  if( diagnostic )
 	    {
-	      // mtx.lock();
 	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
@@ -633,7 +631,6 @@ void Match::CentreOfGravity_blobs( std::vector<signal>& vsig, std::vector<signal
 	      double totq = sqrt(2.*M_PI)*sigma*amp;
 	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
-	      // mtx.unlock();
 	    }
 
 	  if( err < padFitErrThres &&
