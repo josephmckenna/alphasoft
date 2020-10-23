@@ -5,7 +5,7 @@
 #include "RecoFlow.h"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "Deconv.hh"
 

@@ -23,7 +23,7 @@
 #include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 class DeconvFlags
 {

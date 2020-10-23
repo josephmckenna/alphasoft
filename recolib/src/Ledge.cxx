@@ -46,9 +46,9 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   return 1;
 }
 
-std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
+std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
 {
-  std::vector<signal>* sanodes = new std::vector<signal>;
+  std::vector<ALPHAg::signal>* sanodes = new std::vector<ALPHAg::signal>;
   sanodes->reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
@@ -56,7 +56,7 @@ std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
       if( ch->adc_chan < 16 ) continue; // it's bv
       int iwire = ch->tpc_wire;
       if( iwire < 0 ) continue;
-      electrode elec(iwire);
+      ALPHAg::electrode elec(iwire);
       double time, amp, err;
       int status = Analyze(&ch->adc_samples,time, amp, err );
       if(fDebug) std::cout<<"Ledge::Analyze Alpha16Channel status: "<<status<<std::endl;
@@ -73,9 +73,9 @@ std::vector<signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
   return sanodes;
 }
 
-std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
+std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
 {
-  std::vector<signal>* spads = new std::vector<signal>;
+  std::vector<ALPHAg::signal>* spads = new std::vector<ALPHAg::signal>;
   spads->reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
@@ -93,7 +93,7 @@ std::vector<signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
       if( row>=576 || row<0 ) continue;
   
       // CREATE electrode
-      electrode elec(col,row);
+      ALPHAg::electrode elec(col,row);
       double time, amp, err;
       int status = Analyze(&ch->adc_samples,time, amp, err );
       if(fDebug) std::cout<<"Ledge::Analyze FeamChannel status: "<<status<<std::endl;
@@ -114,7 +114,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 {
   int Nentries = AWsignals->GetEntries();
 
-  std::vector<signal>* sanodes = new std::vector<signal>;
+  std::vector<ALPHAg::signal>* sanodes = new std::vector<ALPHAg::signal>;
   sanodes->reserve(Nentries);
    
   // find intresting channels
@@ -129,7 +129,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
       int status = Analyze(&data, time, amp, err );
 
       int aw_number = std::stoi( wname.substr(1) );
-      electrode el(aw_number);
+      ALPHAg::electrode el(aw_number);
       if(fDebug) std::cout<<"Ledge::Analyze AWsignals status: "<<status<<std::endl;
       if( status > 0 )
 	{
@@ -149,7 +149,7 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 int Ledge::FindPadTimes(TClonesArray* PADsignals)
 {
   int Nentries = PADsignals->GetEntries();
-  std::vector<signal>* spads = new std::vector<signal>;
+  std::vector<ALPHAg::signal>* spads = new std::vector<ALPHAg::signal>;
   spads->reserve(Nentries);
 
   std::string delimiter = "_";
@@ -184,7 +184,7 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
       // int pad_index = pmap->index(coli,row);
       // assert(!std::isnan(pad_index));
       // CREATE electrode
-      electrode el(col,row);
+      ALPHAg::electrode el(col,row);
   
       if( data.size() == 0 ) continue;
 

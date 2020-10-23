@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-using namespace std;
 #include <sys/stat.h>
 
 #include <TFile.h>
@@ -15,7 +14,7 @@ using namespace std;
 
 #include "TStoreEvent.hh"
 #include "SignalsType.hh"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "TSpacePoint.hh"
 #include "TFitVertex.hh"
@@ -28,7 +27,7 @@ using namespace std;
 #include "Reco.hh"
 #include "Utils.hh"
 
-TString GetTag( string filename )
+TString GetTag( std::string filename )
 {
   TString fname = filename;
   TRegexp re("[0-9][0-9][0-9][0-9]");
@@ -54,80 +53,80 @@ int main(int argc, char** argv)
   // parse the command-line arguments - throws if invalid format
   parser.parse(argc, argv);
 
-  string fname = parser.retrieve<string>("rootfile");
+  std::string fname = parser.retrieve<std::string>("rootfile");
   TFile* fin = TFile::Open(fname.c_str(),"READ");
   if( !fin->IsOpen() ) return 2;
 
   TTree* tEvents = (TTree*) fin->Get("StoreEventTree");
   if( !tEvents ) return 3;
   int Nevents = tEvents->GetEntriesFast();
-  cout<<tEvents->GetTitle()<<"\t"<<Nevents<<endl;
+  std::cout<<tEvents->GetTitle()<<"\t"<<Nevents<<std::endl;
   
   TStoreEvent* anEvent = new TStoreEvent();
   tEvents->SetBranchAddress("StoredEvent", &anEvent);
 
-  string settings="default";
+  std::string settings="default";
   if( parser.count("anasettings") )
     {
-      string fname = parser.retrieve<string>("anasettings");
+      std::string fname = parser.retrieve<std::string>("anasettings");
       struct stat buffer;   
       if( stat(fname.c_str(), &buffer) == 0 )
 	settings = fname;
       else
-	cerr<<"AnaSettings "<<fname<<" doesn't exist"<<endl;
+	std::cerr<<"AnaSettings "<<fname<<" doesn't exist"<<std::endl;
     }
-  cout<<"AnaSettings: "<<settings<<endl;
+  std::cout<<"AnaSettings: "<<settings<<endl;
   AnaSettings* ana_settings = new AnaSettings(settings.c_str());
   ana_settings->Print();
 
   double MagneticField=1.0;
   if( parser.count("Bfield") )
     {
-      string Bfield = parser.retrieve<string>("Bfield");
+      std::string Bfield = parser.retrieve<std::string>("Bfield");
       MagneticField = stod(Bfield);
     }
-  cout<<"Magnetic Field: "<<MagneticField<<" T"<<endl;
+  std::cout<<"Magnetic Field: "<<MagneticField<<" T"<<std::endl;
 
   int Verb = 0;
   if( parser.count("verbose"))
      {
-        string verbosity = parser.retrieve<string>("verbose");
+        std::string verbosity = parser.retrieve<std::string>("verbose");
         Verb = stoi(verbosity);
      }
-  cout<<"Verbose Level set to: "<<Verb<<endl;
+  std::cout<<"Verbose Level set to: "<<Verb<<std::endl;
 
   finderChoice choosen_finder = adaptive;
   if( parser.count("finder") )
     {
-      string cf = parser.retrieve<string>("finder");
+      std::string cf = parser.retrieve<std::string>("finder");
       if( cf == "base") choosen_finder = base;
       else if( cf == "neural") choosen_finder = neural;
       else if( cf == "adaptive") choosen_finder = adaptive;
-      else cerr<<"Unknown track finder mode \""<<cf<<"\", using adaptive"<<endl;
+      else std::cerr<<"Unknown track finder mode \""<<cf<<"\", using adaptive"<<std::endl;
     }
-  cout<<"Using track finder: "<<choosen_finder<<endl;
+  std::cout<<"Using track finder: "<<choosen_finder<<std::endl;
 
 
   if( parser.count("Nevents") )
     {
-      string nev = parser.retrieve<string>("Nevents");
+      std::string nev = parser.retrieve<std::string>("Nevents");
       Nevents = stoi(nev);
     }
-  cout<<"Processing "<<Nevents<<" events"<<endl;
+  std::cout<<"Processing "<<Nevents<<" events"<<std::endl;
 
-  string tag="";
+  std::string tag="";
   if( parser.count("text") )
      {
         tag = "_";
-        tag += parser.retrieve<string>("text");
+        tag += parser.retrieve<std::string>("text");
      }
-  cout<<"Additional Text: "<<tag<<endl;
+  std::cout<<"Additional Text: "<<tag<<std::endl;
 
   std::string foutname("histo");
   foutname+=GetTag(fname);
   foutname+=tag;
   foutname+=".root";
-  cout<<"Output filename: "<<foutname<<endl;
+  std::cout<<"Output filename: "<<foutname<<std::endl;
 
   Utils u(foutname,MagneticField);
   TObjString sett = ana_settings->GetSettingsString();
@@ -150,8 +149,8 @@ int main(int argc, char** argv)
       tEvents->GetEntry(n);
       const TObjArray* points = anEvent->GetSpacePoints();
       if( n%1000 == 0 || Verb > 0 )
-	cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
-	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<endl;
+	std::cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
+	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<std::endl;
       
       u.FillRecoPointsHistos(points);
       // Add Spacepoints
@@ -160,8 +159,8 @@ int main(int argc, char** argv)
       // Tracks Finder
       int nt = r.FindTracks( choosen_finder );
       if( n%1000 == 0 || Verb > 0 )
-	cout<<"\t# of Points: "<<setw(3)<<points->GetEntriesFast()
-            <<"\t# of Tracks: "<<nt<<endl;
+	std::cout<<"\t# of Points: "<<std::setw(3)<<points->GetEntriesFast()
+            <<"\t# of Tracks: "<<nt<<std::endl;
 
       u.FillRecoTracksHisto(r.GetTracks());
       
@@ -170,12 +169,12 @@ int main(int argc, char** argv)
       if( MagneticField > 0. )
          {
             nhel = r.FitHelix();
-            if( Verb > 1 ) cout<<"\tN hel: "<<nhel<<endl;
+            if( Verb > 1 ) std::cout<<"\tN hel: "<<nhel<<std::endl;
          }
       else 
          {
             nlin = r.FitLines();
-            if( Verb > 1 ) cout<<"\tN Lin: "<<nlin<<endl;
+            if( Verb > 1 ) std::cout<<"\tN Lin: "<<nlin<<std::endl;
          }
 
       std::vector<TTrack*>* tracks_array=0;
@@ -203,7 +202,7 @@ int main(int argc, char** argv)
       int cf_status = cosfind.Process();
       if( Verb > 1 )
          {
-            cout<<"CosmicFinder Status: "<<cf_status<<endl;
+            std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
             cosfind.Status();
          }
       
@@ -212,9 +211,9 @@ int main(int argc, char** argv)
       anEvent->Reset();
       r.Reset();
       if( Verb ) 
-         cout<<" ============================================="<<endl;
+         std::cout<<" ============================================="<<std::endl;
     }
-  cout<<"End of run"<<endl;
+  std::cout<<"End of run"<<std::endl;
 
   delete anEvent;
   return 0;

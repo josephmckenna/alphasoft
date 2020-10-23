@@ -39,6 +39,7 @@ add_subdirectory(recolib)
 add_subdirectory(rootUtils)
 #AG libraries
 if (BUILD_AG)
+   add_subdirectory(agana)
    add_subdirectory(aged)
    add_subdirectory(ana)
    add_subdirectory(reco)

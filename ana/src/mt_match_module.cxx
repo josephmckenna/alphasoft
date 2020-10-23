@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "Match.hh"
 
 class MatchFlags

@@ -32,6 +32,14 @@ else
   DOBUILD="BUILD"
 fi
 
+
+if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
+
+
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
   MODULEFLAGS="-- ${MODULEFLAGS}"
   echo "Module flags: ${MODULEFLAGS}"
@@ -94,7 +102,7 @@ cd bin
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
+valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
  
 cd $AGRELEASE
 echo "done..."
