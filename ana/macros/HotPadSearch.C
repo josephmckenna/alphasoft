@@ -1,4 +1,19 @@
+#include <map>
+#include <string>
+
+#include <TString.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TProfile.h>
+#include <TStyle.h>
+#include <TDirectory.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TPaletteAxis.h>
+
+#include "SignalsType.hh"
 #include "IntGetters.h"
+#include "TPCconstants.hh"
 
 TH2D* plot_spacepoints(TFile* fin)
 {
@@ -49,8 +64,8 @@ void HotPadSearch()
   gDirectory->cd("paddeconv");
   TH2D* hocc = (TH2D*)gROOT->FindObject("hOccPad");
   hocc->SetStats(kFALSE);
-  // //hocc->SetMinimum(2000);
-  // //hocc->SetMaximum(5000);
+  // hocc->SetMinimum(2000);
+  //  hocc->SetMaximum(4500.);
   //  hocc->Scale(1./hocc->Integral());
 
   TString cname=TString::Format("coccpadR%d",RunNumber);
