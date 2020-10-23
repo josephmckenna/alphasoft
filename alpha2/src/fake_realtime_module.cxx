@@ -9,6 +9,8 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+//usleep
+#include "unistd.h"
 
 #include "AnalysisTimer.h"
 #include <iostream>

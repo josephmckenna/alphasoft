@@ -7,6 +7,9 @@
 #include <algorithm>
 #include "TPCconstants.hh"
 
+
+namespace ALPHAg {
+
 class electrode
 {
 public:
@@ -273,6 +276,8 @@ public:
    }
 };
 
+
+} //namespace ALPHAg
 #endif
 
 
