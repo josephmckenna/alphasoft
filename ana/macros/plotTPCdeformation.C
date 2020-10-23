@@ -1,6 +1,21 @@
+#include <map>
+#include <string>
+
+#include <TString.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TProfile.h>
+#include <TStyle.h>
+#include <TDirectory.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TPaletteAxis.h>
+
 #include "SignalsType.hh"
 #include "IntGetters.h"
 #include "TPCconstants.hh"
+
+#include "DeformHistoLim.h"
 
 padmap pads;
 int  rowhot = 140,
@@ -38,9 +53,9 @@ void ReadMap()
 
 string GetPWB(int sec, int row)
 {
-  pair<int,int> p = std::make_pair(sec,row);
+  std::pair<int,int> p = std::make_pair(sec,row);
   int pwb = padmap[p];
-  string out("PWB");
+  std::string out("PWB");
   if( pwb < 10 ) out+='0';    
   out+=std::to_string(pwb);
   return out;
@@ -357,10 +372,15 @@ void OverFlowCalc(TH2D* hOF, TH2D* hocc)
 {
   hOF->SetStats(kFALSE);
   cout<<hOF->GetName()<<" Entries: "<<hOF->GetEntries()<<endl;
+  hOF->SetMinimum(min_ofl);
+  hOF->SetMaximum(max_ofl);
 
   TH2D* hofl = new TH2D("hofl","Number of Overflow/Occupancy Pads;row;sec;N",576,0.,576.,32,0.,32.);
   hofl->SetStats(kFALSE);
   hofl->Divide(hOF,hocc);
+  hofl->SetMinimum(1.e-4);
+  hofl->SetMaximum(0.25);
+
 
   TH2D* hscaoverflow = new TH2D("hscaoverflow","Overflow Frequency by AFTER;Along the axis;Along the Circle",16,0.,16.,16,0.,16.);
   hscaoverflow->SetStats(kFALSE);
@@ -395,6 +415,7 @@ void OverFlowCalc(TH2D* hOF, TH2D* hocc)
   else cname+= "_NoNorm";
   TCanvas* c3 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hOF->Draw("colz");
+  c3->ToggleEventStatus();
   c3->Update();
   TPaletteAxis *pal3 = (TPaletteAxis*) hOF->GetListOfFunctions()->FindObject("palette");
   pal3->SetX1NDC(0.91);
@@ -405,6 +426,7 @@ void OverFlowCalc(TH2D* hOF, TH2D* hocc)
   cname += RunNumber;
   TCanvas* ca = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hofl->Draw("colz");
+  ca->ToggleEventStatus();
   ca->Update();
   TPaletteAxis *pala = (TPaletteAxis*) hofl->GetListOfFunctions()->FindObject("palette");
   pala->SetX1NDC(0.91);
@@ -448,14 +470,11 @@ void deformation(TFile* fin)
   TH2D* hpadocc = (TH2D*) gROOT->FindObject("hOccPad");
   hpadocc->SetStats(kFALSE);
   cout<<hpadocc->GetName()<<"   min: "<<hpadocc->GetMinimum()<<"   max: "<<hpadocc->GetMaximum()<<endl;
-  //  hpadocc->SetMinimum(4000);
-  //  hpadocc->SetMaximum(7000);
+  hpadocc->SetMinimum(min_occ);
+  hpadocc->SetMaximum(max_occ);
   
   gDirectory->cd("pwbwf");
   TH2D* hOF = (TH2D*) gROOT->FindObject("hPadOverflow");
-  // TH2D* hOF = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
-  // 		       576,0.,ALPHAg::_padrow,32,0.,ALPHAg::_padcol);
- 
   if( hOF )
     OverFlowCalc(hOF, hpadocc);
   else
@@ -472,7 +491,6 @@ void deformation(TFile* fin)
   TH2D* hpadamp = new TH2D("hpadamp","Average Maximum WF Amplitude",576,0.,576.,32,0.,32.);
   hpadamp->SetStats(kFALSE);
  
-
   for(int b=1; b<=p->GetNbinsX(); ++b)
     {
       double amp = p->GetBinContent( b );
@@ -489,9 +507,9 @@ void deformation(TFile* fin)
     }
   hscamp->Scale(1./72.);
   GainCorrection( hscamp );
-  // hscamp->SetMinimum(1000.);
-  // hpadamp->SetMinimum(500.);
-  // hpadamp->SetMaximum(1800.);
+
+  hpadamp->SetMinimum(min_amp);
+  hpadamp->SetMaximum(max_amp);
 
 
   TString cname = "PadOccupancyR";
@@ -500,6 +518,7 @@ void deformation(TFile* fin)
   else cname+= "_NoNorm";
   TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hpadocc->Draw("colz");
+  c1->ToggleEventStatus();
   c1->Update();
   TPaletteAxis *pal1 = (TPaletteAxis*) hpadocc->GetListOfFunctions()->FindObject("palette");
   pal1->SetX1NDC(0.91);
@@ -510,7 +529,7 @@ void deformation(TFile* fin)
   if( !NevtNorm )
     {
       cout<<hpadocc->GetName()<<"\t";
-      mb = hpadocc->GetMaximumBin(),bx,by,bz;
+      mb = hpadocc->GetMaximumBin();
       hpadocc->GetBinXYZ(mb,bx,by,bz);
       cout<<"Max bin: "<<mb<<" row: "<<bx-1<<" sec: "<<by-1<<"\t"<<hpadocc->GetBinContent(mb)<<"\t";
       hpadocc->GetXaxis()->SetRange(25,576-25);
@@ -523,6 +542,7 @@ void deformation(TFile* fin)
   cname += RunNumber;
   TCanvas* c2 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   hpadamp->Draw("colz");
+  c2->ToggleEventStatus();
   c2->Update();
   TPaletteAxis *pal2 = (TPaletteAxis*) hpadamp->GetListOfFunctions()->FindObject("palette");
   pal2->SetX1NDC(0.91);
@@ -551,26 +571,28 @@ void deformation(TFile* fin)
   // pal4->SetX2NDC(0.92);
   if(saveas) c4->SaveAs(".pdf");
 
- 
-  
+   
   cname = "PadAMPR";
   cname += RunNumber;
   TCanvas* c6 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   p->Draw();
   if(saveas) c6->SaveAs(".pdf");
-  
 }
 
 
 void plotTPCdeformation()
 {
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
+  
   RunNumber = GetRunNumber( fin->GetName() );
   cout<<"Run Number: "<<RunNumber<<endl;
-  ReadMap();
 
+  SetHistoLimits( RunNumber );
+
+  ReadMap();
+  
   deformation(fin);
   phspectrum(fin);
   // phspectrum_tracks(fin);
   // multiphspectrum_tracks(fin);
- }
+}
