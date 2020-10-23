@@ -89,7 +89,7 @@ SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
 set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaStrips.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaStrips.exe ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
 cd $AGRELEASE
 set +x
 
