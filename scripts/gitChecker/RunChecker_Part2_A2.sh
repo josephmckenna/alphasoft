@@ -40,7 +40,7 @@ cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
 
 #Force alphaStrips to run again, since the above is crashing
 cd $AGRELEASE/bin
-./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> S${RUNNO}.log
+./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> ${AGRELEASE}/${GITHASH}/A2LeakTest/S${RUNNO}.log
 #Now test alphaAnalysis
 cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
 ./LeakCheck.sh ${RUNNO} NOBUILD 
