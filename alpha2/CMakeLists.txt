@@ -78,7 +78,6 @@ link_directories($ENV{ROOTANASYS}/lib)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories($ENV{AGRELEASE}/agana)
 include_directories(include)
 
 #Analysis Report needs A2Flow in alpha2...
@@ -130,8 +129,8 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories($ENV{AGRELEASE}/alpha2 $ENV{ROOTANASYS}/lib $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
+    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
     find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} Minuit2 rootana ${LIBSQLITE3}  ${ROOTANALIBS} alpha2 rootana analib agtpc )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBSQLITE3} ${ROOTANALIBS} alpha2 analib rootana)
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

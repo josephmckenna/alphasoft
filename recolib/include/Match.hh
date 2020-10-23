@@ -53,14 +53,8 @@ private:
    std::pair<std::set<short>,std::vector< std::vector<ALPHAg::signal> >> PartitionBySector(std::vector<ALPHAg::signal>* padsignals);
    std::vector< std::vector<ALPHAg::signal> > PartitionByTime( std::vector<ALPHAg::signal>& sig );
 
-   void CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #0
-   //  void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig,  std::vector<ALPHAg::signal> &padcog ); // #6
-   void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads); // #6
-   void CentreOfGravity_nohisto( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #2
-   void CentreOfGravity_nofit( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #1
-   void CentreOfGravity_single_peak( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #3
-   void CentreOfGravity_multi_peak( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #4
-   void CentreOfGravity_histoblobs( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #6
+   void CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #1
+   void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads); // #2
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -82,7 +76,7 @@ private:
                     std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
                     uint& number_of_merged);
 
-   std::vector<std::pair<double, double> > FindBlobs(TH1D *h, const std::vector<int> &cumulBins);
+ 
    std::vector<std::pair<double, double> > FindBlobs(const std::vector<ALPHAg::signal> &sigs,
                                                      int ifirst, int ilast);
 
@@ -116,7 +110,7 @@ public:
    void Setup(TFile* OutputFile);
 
    std::vector<std::vector<ALPHAg::signal>> CombPads(std::vector<ALPHAg::signal>* padsignals);
-    std::vector<ALPHAg::signal>* CombinePads(std::vector<ALPHAg::signal>* padsignals);
+   std::vector<ALPHAg::signal>*  CombinePads(std::vector<ALPHAg::signal>* padsignals);
    std::vector<ALPHAg::signal>* CombinePads(std::vector< std::vector<ALPHAg::signal> > *comb); // this is the used now  -- AC 27-08-2020
    std::vector<ALPHAg::signal>* CombineAPad(std::vector< std::vector<ALPHAg::signal> > *comb,std::vector<ALPHAg::signal>* CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
 
