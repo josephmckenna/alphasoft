@@ -194,7 +194,7 @@ test:
     - testlogs/agana_run*.log
     - testlogs/mt_agana_run*.log
 
-testspeed:
+testleakAg:
   stage: test_more
   script:
     - . agconfig.sh

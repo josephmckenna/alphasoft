@@ -22,8 +22,8 @@ fi
 cd $AGRELEASE/alpha2
 export EOS_MGM_URL=root://eospublic.cern.ch
 
-if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
-  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz .
+if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
 fi
@@ -34,11 +34,15 @@ GITHASH=`git rev-parse --short HEAD`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 
-
+#VALGRIND might be out of memory when running alphaStrips?
 cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
 ./LeakCheck.sh ${RUNNO} NOBUILD 
+
+#Force alphaStrips to run again, since the above is crashing
+cd $AGRELEASE/bin
+./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> S${RUNNO}.log
+#Now test alphaAnalysis
 cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-#./LeakCheck.sh ${RUNNO} NOBUILD 1500
 ./LeakCheck.sh ${RUNNO} NOBUILD 
 
 
