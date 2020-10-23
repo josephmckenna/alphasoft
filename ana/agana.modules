@@ -1,6 +1,9 @@
 # uncomment and define analyzer modules here
 # Any line with a '#' in it will be ignored!
 
+#agana submodule:
+unpack_module.o
+
 #Full reconstruction (development branch style):
 eos_module.o handle_sequencer.o chrono_module.o
 # ncfm.o unpack_module.o

@@ -1,6 +1,10 @@
 # uncomment and define analyzer modules here
 # Any line with a '#' in it will be ignored!
 
+#agana submodule:
+unpack_module.o
+
+
 #Tracking with LE detection in place of deconv:
 eos_module.o handle_sequencer.o chrono_module.o
 # ncfm.o unpack_module.o

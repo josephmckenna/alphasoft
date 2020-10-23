@@ -7,6 +7,15 @@ set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
+    list(FIND ${LIST} ${OLD_VALUE} OLD_VALUE_INDEX)
+    if(OLD_VALUE_INDEX GREATER_EQUAL 0)
+        list(REMOVE_AT ${LIST} ${OLD_VALUE_INDEX})
+        list(INSERT ${LIST} ${OLD_VALUE_INDEX} ${NEW_VALUE})
+    endif()
+endmacro()
+
+
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -116,10 +125,18 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
     string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+
     #Turn string into list
     separate_arguments(MODULES)
     #Prepend path to source files
     list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
+        "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+    )
+
     #message(Modules: ${MODULES})
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main $ENV{AGRELEASE}/agana/unpack_module ${MODULES} )
