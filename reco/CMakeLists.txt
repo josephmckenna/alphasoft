@@ -28,10 +28,14 @@ include_directories(${ROOT_INCLUDE_DIRS})
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
-link_libraries(${ROOT_LIBRARIES} XMLParser XMLIO XMLParser XMLIO)
+link_libraries(${ROOT_LIBRARIES} XMLParser XMLIO XMLParser XMLIO Minuit2)
 
 
 # Include directories
+include_directories($ENV{AGRELEASE}/agana)
+include_directories($ENV{AGRELEASE}/rootUtils/include)
+include_directories($ENV{AGRELEASE}/a2lib/include)
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories($ENV{AGRELEASE}/recolib/include)
 include_directories($ENV{AGRELEASE}/analib)
@@ -46,8 +50,10 @@ ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWav
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
-link_libraries(agtpc analib)
-
+#link_libraries(agtpc analib ${ROOT_LIBRARIES})
+# JOE: This is a temporary hack to build with rootUtils... rootUtils somehow needs splitting for AG and A2
+link_libraries(agtpc analib rootUtils alpha2 Geom ${ROOT_LIBRARIES})
+ 
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )
 add_executable( MainEventTree.exe MainEventTree.cc ${sources} ${headers} )

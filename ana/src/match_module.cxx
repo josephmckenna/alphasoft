@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "Match.hh"
 
 class MatchFlags
@@ -58,9 +58,9 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo)
    {
-
+      ModuleName="Match Module";
       if (fTrace)
-        printf("MatchModule::ctor!\n");
+         printf("MatchModule::ctor!\n");
 
       fFlags = f;
 
@@ -199,7 +199,7 @@ public:
                //Prepare pointer for next threads...
                //... should we only make this pointer if SigFlow->comb.size()>0 ?...
                // if we dont set this pointer, then the analysis will try to fake pads for us
-               SigFlow->combinedPads=new std::vector<signal>;
+               SigFlow->combinedPads=new std::vector<ALPHAg::signal>;
                return flow;
             }
             // -----------------
@@ -222,7 +222,7 @@ public:
       if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
       {
          // allow events without pwbs
-         std::vector< std::pair<signal,signal> >* spacepoints = NULL;
+         std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
          if( SigFlow->combinedPads )
             {
                if( fTrace )
