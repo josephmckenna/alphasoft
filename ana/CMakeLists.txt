@@ -129,7 +129,7 @@ foreach( LIST_FILE ${BINS} )
 
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} rootana analib agtpc aged )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} analib agtpc aged rootana ${ROOTANALIBS} )
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )
