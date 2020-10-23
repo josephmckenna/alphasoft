@@ -14,7 +14,7 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "Match.hh"
 
 class SpacepointFlags
@@ -164,7 +164,7 @@ public:
          printf("SpacepointModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
          
      match->Init();
-     std::vector< std::pair<signal,signal> >* spacepoints = NULL;
+     std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
      if( SigFlow->pdSig )
          {
             spacepoints =

@@ -93,22 +93,23 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    // combine pads
  
    if(kVerb>=2) m.SetTrace(true);
-   m.CombinePads( d.GetPadSignal() );
+   std::vector<ALPHAg::signal>* CombinedPads = m.CombinePads( d.GetPadSignal() );
    m.SetTrace(false);
-   uint npads = m.GetCombinedPads()->size();
+   uint npads = CombinedPads->size();
    std::cout<<"[proc]# "<<EventNo<<"\tCombinePads: "<<npads<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                
-   if( kVerb>=2 ) u.PrintSignals( m.GetCombinedPads() );
+   if( kVerb>=2 ) u.PrintSignals( CombinedPads );
                
-   if( kDraw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),m.GetCombinedPads(),false);
+   if( kDraw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),CombinedPads,false);
                
    if( npads == 0 ) return;
 
    // match electrodes
-   m.MatchElectrodes( d.GetAnodeSignal() );
+   // Andrea! Does this diff make sense? This function needed two arguments
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(),d.GetPadSignal() );
 
-   ProcessPoints();
+   ProcessPoints(spacepoints);
 }
 
 void ProcessEvents::ProcessWaveform_2D(TClonesArray* awsignals)
@@ -122,21 +123,21 @@ void ProcessEvents::ProcessWaveform_2D(TClonesArray* awsignals)
    if( kVerb>=2 ) u.PrintSignals( d.GetAnodeSignal() );
 
    m.Init();
-   m.FakePads( d.GetAnodeSignal() );
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.FakePads( d.GetAnodeSignal() );
 
-   ProcessPoints();
+   ProcessPoints(spacepoints);
 }
 
-void ProcessEvents::ProcessPoints()
+void ProcessEvents::ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints )
 {
-   uint nmatch = m.GetSpacePoints()->size();
+   uint nmatch = spacepoints->size();
    std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<nmatch<<std::endl;
    if( nmatch == 0 ) return;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    // combine points
-   m.CombPoints();
-   uint nsp = m.GetSpacePoints()->size();
+   spacepoints = m.CombPoints( spacepoints );
+   uint nsp = spacepoints->size();
    std::cout<<"[proc]# "<<EventNo<<"\tCombinePoints: "<<nsp<<std::endl;
    if( nsp == 0 ) return;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -157,22 +158,22 @@ void ProcessEvents::ProcessWaveform_led(TClonesArray* awsignals, TClonesArray* p
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    //m.SetTrace(true);
-   m.MatchElectrodes( leaw.GetSignal(), lepad.GetSignal() );
-   if( m.GetSpacePoints() )
-      std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<m.GetSpacePoints()->size()<<std::endl;
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints =m.MatchElectrodes( leaw.GetSignal(), lepad.GetSignal() );
+   if( spacepoints )
+      std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<spacepoints->size()<<std::endl;
    else
       std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: No Spacepoints..."<<std::endl;
    //m.SetTrace(false);
 }
 
 
-void ProcessEvents::ProcessTracks()
+void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints)
 {
    // reco points
    //   if( kVerb>=2 ) 
    //r.SetTrace(true);
-   if( m.GetSpacePoints() ) 
-      r.AddSpacePoint( m.GetSpacePoints() );
+   if( spacepoints ) 
+      r.AddSpacePoint( spacepoints );
    //  else return;
    std::cout<<"[proc]# "<<EventNo<<"\tspacepoints: "<<r.GetNumberOfPoints()<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

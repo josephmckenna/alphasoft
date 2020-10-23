@@ -1,23 +1,29 @@
 {
+    "env": {
+        "AGRELEASE": "{workspaceFolder}"
+    },
     "configurations": [
         {
             "name": "Linux",
             "includePath": [
-                "/home/alpha/packages/root_build/include/**",
-                "${workspaceFolder}/rootana/include/**",
-                "${workspaceFolder}/analib/include/**",
-                "${workspaceFolder}/ana",
+                "${env:ROOTSYS}/include/**",
+                "${env:ROOTANASYS}/include/**",
+                "${env:ROOTANASYS}/manalyzer/**",
+                "${workspaceFolder}/a2lib/include/**",
+                "${workspaceFolder}/agana/**",
+                "${workspaceFolder}/aged/include/**",
+                "${workspaceFolder}/alpha2/include/**",
                 "${workspaceFolder}/ana/include/**",
+                "${workspaceFolder}/analib/include/**",
                 "${workspaceFolder}/reco/include/**",
                 "${workspaceFolder}/recolib/include/**",
-                "${workspaceFolder}/a2lib/include/**",
-                "${workspaceFolder}/alpha2/include/**"
+                "${workspaceFolder}/rootUtils/include/**"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang++",
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++11",
-            "intelliSenseMode": "clang-x64"
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4

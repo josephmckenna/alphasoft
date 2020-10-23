@@ -37,12 +37,13 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit MathMore)
+find_package(ROOT REQUIRED COMPONENTS Minuit MathMore Minuit2 Spectrum)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
