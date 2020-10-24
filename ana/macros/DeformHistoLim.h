@@ -11,6 +11,26 @@ void SetHistoLimits( int run ) {
   if(0)  {
     // donothing 
   }
+ else if( run == 904148 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      max_occ=4000.;
+      min_occ=-1111.;
+      max_amp=1000.;
+      min_amp=100.;
+      max_ofl=100.;
+      min_ofl=1.;
+    }
+ else if( run == 904147 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      max_occ=4000.;
+      min_occ=-1111.;
+      max_amp=1500.;
+      min_amp=100.;
+      max_ofl=100.;
+      min_ofl=1.;
+    }
   else if( run == 904139 )
     {
       cout<<"Setting histo limits for run "<<run<<endl;
@@ -70,5 +90,18 @@ void SetHistoLimits( int run ) {
       min_amp=100.;
       max_ofl=500.;
       min_ofl=1.;
+    }
+  else if( run == 3873 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      min_amp=100.;
+      min_ofl=10.;
+    }
+  else if( run == 3879 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      max_occ=4000.;      
+      min_amp=100.;
+      min_ofl=10.;
     }
 }
