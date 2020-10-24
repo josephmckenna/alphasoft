@@ -921,9 +921,9 @@ void ProcessUsed(TFitHelix* hel)
   huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
 
   const vector<TSpacePoint*> *sp = hel->GetPointsArray();
-  for( int ip = 0; ip<sp->size(); ++ip )
+  for( unsigned int ip = 0; ip<sp->size(); ++ip )
     {
-        TSpacePoint* ap = sp->at(ip);
+      TSpacePoint* ap = sp->at(ip);
       huhspxy->Fill( ap->GetX(), ap->GetY() );
       huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       huhspzr->Fill( ap->GetZ(), ap->GetR() );
