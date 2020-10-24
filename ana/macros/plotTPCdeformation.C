@@ -334,7 +334,8 @@ void GainCorrection(TH2D* hsca)
   TH2D* hsca_ratio = (TH2D*) hsca->Clone();
   hsca_ratio->SetTitle("Possible SCA Gain Assignment");
   
-  std::string foutname="sca_gain_correction_R";
+  std::string foutname=getenv("AGRELEASE");
+  foutname+="/ana/sca_gain_correction_R";
   foutname+=std::to_string(RunNumber);
   foutname+=".dat";
   ofstream fout(foutname);
