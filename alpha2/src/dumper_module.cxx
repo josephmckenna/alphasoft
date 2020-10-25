@@ -77,20 +77,14 @@ public:
   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
       TAlphaEvent* alphaEvent=fe->alphaevent;
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-      {
-         *flags|=TAFlag_SKIP_PROFILE;
-         return flow;
-      }
-      TSiliconEvent* siliconEvent=sf->silevent;
+      TSiliconEvent* siliconEvent=fe->silevent;
       OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();

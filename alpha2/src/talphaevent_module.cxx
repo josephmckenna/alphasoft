@@ -174,14 +174,14 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
-      SilEventsFlow* fe=flow->Find<SilEventsFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
       TSiliconEvent* SiliconEvent=fe->silevent;
-      TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap);
+      TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap,fe->silevent->GetVF48NEvent());
       AlphaEvent->DeleteEvent();
       AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
       AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
@@ -245,7 +245,7 @@ public:
          }
 
          //AlphaEvent is prepared... put it into the flow
-         flow = new AlphaEventFlow(flow,AlphaEvent);
+         fe->alphaevent=AlphaEvent;
       }
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module",timer_start);
@@ -272,7 +272,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -301,7 +301,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -335,7 +335,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -366,7 +366,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -401,7 +401,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -433,7 +433,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -462,7 +462,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -502,7 +502,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -549,7 +549,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -589,7 +589,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -618,7 +618,7 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
@@ -656,8 +656,8 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
-      if (!fe)
+      SilEventFlow* sf=flow->Find<SilEventFlow>();
+      if (!sf)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
@@ -665,7 +665,7 @@ public:
       #ifdef _TIME_ANALYSIS_
          START_TIMER
       #endif
-      AlphaEvent=fe->alphaevent;
+      AlphaEvent=sf->alphaevent;
       if (fFlags->SaveTAlphaEvent)
       {
          #ifdef HAVE_CXX11_THREADS
@@ -681,9 +681,7 @@ public:
             AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
          AlphaEventTree->Fill();
       }
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-         return flow;
+
       TSiliconEvent* SiliconEvent=sf->silevent;
       
       //Record hits
