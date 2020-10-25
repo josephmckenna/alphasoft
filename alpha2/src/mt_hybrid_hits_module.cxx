@@ -226,7 +226,7 @@ public:
          return flow;
       }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
-      flow=new SilEventsFlow(flow,s);
+      flow=new SilEventFlow(flow,s);
       #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"hybrid_hits_module",timer_start);
       #endif
@@ -464,7 +464,7 @@ public:
          return flow;
       }
       
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
+      SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
          *flags|=TAFlag_SKIP_PROFILE;

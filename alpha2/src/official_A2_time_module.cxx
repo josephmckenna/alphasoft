@@ -257,21 +257,16 @@ public:
             //if (e->Channel==CHRONO_SYNC_CHANNEL)
          }
       }
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
       TAlphaEvent* AlphaEvent=fe->alphaevent;
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-      {
-         *flags|=TAFlag_SKIP_PROFILE;
-         return flow;
-      }
-      TSiliconEvent* SiliconEvent=sf->silevent;
-      
+      TSiliconEvent* SiliconEvent=fe->silevent;
+
       TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
       A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
       if (mva)

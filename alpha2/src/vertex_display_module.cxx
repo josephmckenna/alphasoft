@@ -1,7 +1,7 @@
 //
-// handle_sequencer
+// vertex display module
 //
-// A. Capra
+// J McKenna
 //
 
 #include <stdio.h>
@@ -158,7 +158,7 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      SilEventsFlow* fe=flow->Find<SilEventsFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
          *flags|=TAFlag_SKIP_PROFILE;

@@ -28,37 +28,27 @@ class VF48EventFlow: public TAFlowEvent
   }
 };
 #include "TSiliconEvent.h"
-class SilEventsFlow: public TAFlowEvent
+#include "TAlphaEvent.h"
+
+class SilEventFlow: public TAFlowEvent
 {
   public:
      TSiliconEvent* silevent;
+     TAlphaEvent* alphaevent;
   public:
-  SilEventsFlow(TAFlowEvent* flow, TSiliconEvent* s)
+  SilEventFlow(TAFlowEvent* flow, TSiliconEvent* s)
        : TAFlowEvent(flow)
   {
     silevent=s;
+    alphaevent=NULL;
   }
-  ~SilEventsFlow()
+  ~SilEventFlow()
   {
-     if (silevent)
-        delete silevent;
+    if (silevent)
+      delete silevent;
+    if (alphaevent)
+      delete alphaevent;
   }
-};
-#include "TAlphaEvent.h"
-class AlphaEventFlow: public TAFlowEvent
-{
-   public:
-      TAlphaEvent* alphaevent;
-      AlphaEventFlow(TAFlowEvent* flow, TAlphaEvent* a)
-       : TAFlowEvent(flow)
-     {
-        alphaevent=a;
-     }
-     ~AlphaEventFlow()
-     {
-        if (alphaevent)
-            delete alphaevent;
-     }
 };
 
 

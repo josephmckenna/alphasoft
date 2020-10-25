@@ -455,7 +455,7 @@ public:
             fFlags->FillTPCSigFlow(SigFlow);
             continue;
          }
-         SilEventsFlow* SilFlow = dynamic_cast<SilEventsFlow*>(f);
+         SilEventFlow* SilFlow = dynamic_cast<SilEventFlow*>(f);
          if(SilFlow)
          {
             TSiliconEvent* se=SilFlow->silevent;
