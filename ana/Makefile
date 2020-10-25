@@ -6,6 +6,7 @@
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))
+	#Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
 	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o 
 	# wfsuppress.o wfsuppress2.o wfsuppress_pwb.o 
 endef
