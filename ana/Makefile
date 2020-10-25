@@ -6,6 +6,8 @@
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))
+	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o 
+	# wfsuppress.o wfsuppress2.o wfsuppress_pwb.o 
 endef
 
 
@@ -101,7 +103,6 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 
 $(OBJDIR)/%.o: $(AGRELEASE)/agana/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
-
 
 clean::
 	-rm -f $(OBJDIR)/*.o *.a $(BINS)
