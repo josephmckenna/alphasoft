@@ -17,6 +17,7 @@ dumper_module.o
 #online_mva_module.oo 
 online_mva_module.o
 vertex_display_module.o
+A2_display_module.o
 official_A2_time_module.o
 #Spill log dumps:
 handle_dumps.o
