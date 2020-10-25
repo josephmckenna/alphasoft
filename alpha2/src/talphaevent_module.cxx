@@ -181,7 +181,7 @@ public:
          return flow;
       }
       TSiliconEvent* SiliconEvent=fe->silevent;
-      TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap,fe->silevent->GetVF48NEvent());
+      TAlphaEvent* AlphaEvent=new TAlphaEvent(fAlphaEventMap);
       AlphaEvent->DeleteEvent();
       AlphaEvent->SetNHitsCut(fFlags->gNHitsCut);
       AlphaEvent->SetNClusterSigma(fFlags->nClusterSigma);
