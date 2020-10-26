@@ -75,6 +75,16 @@ elif [[ "$1" == "build" ]]; then
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
 
+elif [[ "$1" == "verbose" ]]; then
+    echo "Building agdaq verbosily"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
+    cmake3 --build  . --verbose
+   # time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
+
 elif [[ "$1" == "help" ]]; then
     echo "Options are:"
     echo "- clean [all]"
