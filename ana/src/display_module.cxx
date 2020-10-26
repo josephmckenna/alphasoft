@@ -155,7 +155,7 @@ public:
       analysis_flow->fEvent->Print();
       if (aged) {
          flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
-         printf("Aged::ShowEvent is %d\n",flags);
+         printf("Aged::ShowEvent is %d\n",*flags);
       }
       return flow;
    }
