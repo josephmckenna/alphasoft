@@ -33,7 +33,7 @@ else
 fi
 
 
-if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+if [ ! -f  ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
   eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
@@ -74,9 +74,9 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}
   if [ "$DOBUILD" == "FASTBUILD" ]; then
-    make clean && make -j &> ${BUILDLOG}
+    make clean && make cmake -j &> ${BUILDLOG}
   else
-    make clean && make &> ${BUILDLOG}
+    make clean && make cmake &> ${BUILDLOG}
   fi
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
