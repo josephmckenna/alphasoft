@@ -13,13 +13,13 @@ if [[ "$1" == "clean" ]]; then
 elif [[ "$1" == "update" ]]; then
     echo "Recompiling agdaq"
     cd $AGRELEASE/build
-    time cmake3 --build . -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "install" ]]; then
     echo "Install agdaq"
     cd $AGRELEASE/build
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "wA2" ]]; then
@@ -28,8 +28,8 @@ elif [[ "$1" == "wA2" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=ON
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "nosim" ]]; then
@@ -38,8 +38,8 @@ elif [[ "$1" == "nosim" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF 
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "ci" ]]; then
@@ -61,8 +61,8 @@ elif [[ "$1" == "debug" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "build" ]]; then
@@ -71,8 +71,8 @@ elif [[ "$1" == "build" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Release
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "verbose" ]]; then
@@ -82,7 +82,7 @@ elif [[ "$1" == "verbose" ]]; then
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
     cmake3 --build  . --verbose
-   # time cmake3 --build . --target install -- -j
+   # time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "help" ]]; then
@@ -103,8 +103,8 @@ else
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF 
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 fi
 
