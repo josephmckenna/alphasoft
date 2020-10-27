@@ -418,22 +418,26 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
       for (Int_t n=0; n<fCurrentEvent->GetNSil(); n++) {
         TAlphaEventSil *sil = fCurrentEvent->GetSil(n);
         //printf("nsil: %d sil: %s, z: %s\n",sil->ReturnSilNum(sil->GetName()),sil->GetName(),z);
-        
         //std::cout <<z<<":"<<sil->GetName() <<std::endl;
-        if (fOGLColourScheme && strncmp(z,sil->GetName(),4)==0)
+        if (fOGLColourScheme && 
+           // strncmp(z,sil->GetName(),4)==0)  The Sil Module no longer has a name assigned for speed
+           sil->ReturnSilNum(z)==sil->GetSilNum()) //Use the map to turn the node name into a module number
+        //if (fOGLColourScheme )
         {
-         if (sil->GetNHits()<1 )
-         {
-           nod->SetTransparency(70);
-         }
-         else {
-           //std::cout<<sil->GetNHits()<<std::endl;
-           nod->SetLineColor(kRed);
-         }
+          //std::cout<<sil->ReturnSilNum(z) << "\t"<< n<<"\t"<<sil->GetSilNum()<<std::endl;
+        
+          if (sil->GetNHits()<1 )
+          {
+            nod->SetTransparency(70);
+          }
+          else {
+            nod->SetLineColor(kRed);
+          }
         }
          //prin
         
-        if (strcmp(z,sil->GetName())) continue;
+        //if (strcmp(z,sil->GetName())) continue;
+        if (sil->ReturnSilNum(z)!=sil->GetSilNum()) continue;
         //printf("success!\n");
 
         if (!fOGLColourScheme) nod->SetLineColor(11);
@@ -448,41 +452,40 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
         Int_t NumStripZed = 256;
                     
         //Only draw hit strips if the silicon module has hits (and in OGL mode)
-        if (!fOGLColourScheme || sil->GetNHits()>0)
+        if (!fOGLColourScheme && sil->GetNHits()>0)
         {
-        // Draw hit strips pside
-        Double_t *pside = sil->GetADCp();
-        for (Int_t k=0;k<(NumStripPhi);k++) if (pside[k]) { 
-          //printf("Display -- n: %d, k: %d, phi[k]: %lf\n",n,k,pside[k]);
-          TVector3 a,b;
-          sil->GetStrippStartEnd(k,a,b);
-          TPolyLine3D *lp = new TPolyLine3D(2);
-          lp->SetPoint(0,a.X(),a.Y(),a.Z());
-          lp->SetPoint(1,b.X(),b.Y(),b.Z());
-          lp->SetLineColor(2);
-          lp->SetLineWidth(1);
-          if (fOGLColourScheme)
-            lp->SetLineWidth(2);
-          lp->Draw("same");
-        }
+          // Draw hit strips pside
+          Double_t *pside = sil->GetADCp();
+          for (Int_t k=0;k<(NumStripPhi);k++) if (pside[k]) { 
+            //printf("Display -- n: %d, k: %d, phi[k]: %lf\n",n,k,pside[k]);
+            TVector3 a,b;
+            sil->GetStrippStartEnd(k,a,b);
+            TPolyLine3D *lp = new TPolyLine3D(2);
+            lp->SetPoint(0,a.X(),a.Y(),a.Z());
+            lp->SetPoint(1,b.X(),b.Y(),b.Z());
+            lp->SetLineColor(2);
+            lp->SetLineWidth(1);
+            if (fOGLColourScheme)
+              lp->SetLineWidth(2);
+            lp->Draw("same");
+          }
 
-
-        // Draw hit strips nside
-        Double_t *nside = sil->GetADCn();
-        for (Int_t k=0;k<(NumStripZed);k++) if (nside[k]) { 
-          //printf("Display -- n: %d, k: %d, zeta[k]: %lf\n",n,k,nside[k]);
-          TVector3 a,b;
-          sil->GetStripnStartEnd(k,a,b);
-          TPolyLine3D *lp = new TPolyLine3D(2);
-          lp->SetPoint(0,a.X(),a.Y(),a.Z());
-          lp->SetPoint(1,b.X(),b.Y(),b.Z());
-          lp->SetLineColor(2);
-          lp->SetLineWidth(1);
-          if (fOGLColourScheme)
-            lp->SetLineWidth(2);
-          lp->Draw("same");
-        }    
-							 }   
+          // Draw hit strips nside
+          Double_t *nside = sil->GetADCn();
+          for (Int_t k=0;k<(NumStripZed);k++) if (nside[k]) { 
+            //printf("Display -- n: %d, k: %d, zeta[k]: %lf\n",n,k,nside[k]);
+            TVector3 a,b;
+            sil->GetStripnStartEnd(k,a,b);
+            TPolyLine3D *lp = new TPolyLine3D(2);
+            lp->SetPoint(0,a.X(),a.Y(),a.Z());
+            lp->SetPoint(1,b.X(),b.Y(),b.Z());
+            lp->SetLineColor(2);
+            lp->SetLineWidth(1);
+            if (fOGLColourScheme)
+              lp->SetLineWidth(2);
+            lp->Draw("same");
+          }    
+				}   
       }
     }
   }
@@ -521,11 +524,11 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
       TAlphaEventSil *sil = fCurrentEvent->GetSil(n);
 
       for(Int_t ihit = 0; ihit < sil->GetNHits(); ihit++)
-	{
-	  TAlphaEventHit * h = sil->GetHit(ihit);
-	  Double_t hitSize=0.1;
-	  if (fOGLColourScheme) hitSize=0.4;
-	  TMarker3DBox *hit = new TMarker3DBox(
+        {
+          TAlphaEventHit * h = sil->GetHit(ihit);
+          Double_t hitSize=0.1;
+          if (fOGLColourScheme) hitSize=0.4;
+          TMarker3DBox *hit = new TMarker3DBox(
 					       h->XMRS(), // x center
 					       h->YMRS(), // y center
 					       h->ZMRS(), // z center
@@ -535,11 +538,11 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
 					       0, 
 					       0//h->GetCos()*180/TMath::Pi() // theta wtr to x axis
 					       );
-	  //	  hit->SetLineColor(ihit%6+4); // make the hits different colour
-	  hit->SetLineColor(4);
-	  hit->SetLineWidth(7);
-	  hit->Draw("same");
-	}
+          //	  hit->SetLineColor(ihit%6+4); // make the hits different colour
+          hit->SetLineColor(4);
+          hit->SetLineWidth(7);
+          hit->Draw("same");
+	     }
     }
   
   // ******************************************
