@@ -125,7 +125,6 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
     string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
-
     #Turn string into list
     separate_arguments(MODULES)
     #Prepend path to source files
@@ -139,17 +138,19 @@ foreach( LIST_FILE ${BINS} )
 
     #message(Modules: ${MODULES})
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main $ENV{AGRELEASE}/agana/unpack_module ${MODULES} )
+    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
     add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC agana)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib $ENV{ROOTANASYS}/lib)
+
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
