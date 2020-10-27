@@ -32,8 +32,6 @@
 #pragma link C++ class  TAGSpillScalerData+;
 #pragma link C++ class  TAGSpillSequencerData+;
 
-#pragma link C++ class  AnaSettings+;
-
 #pragma link C++ class Seq+;
 #pragma link C++ class Seq_DriverConsts+;
 #pragma link C++ class TSequencerDriver;

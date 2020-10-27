@@ -24,7 +24,7 @@
 #include "TStoreEvent.hh"
 #include "TSpacePoint.hh"
 
-#include "RootUtils/TStringGetters.h"
+#include "TStringGetters.h"
 
 
 void ReadEventTree(TString fname);

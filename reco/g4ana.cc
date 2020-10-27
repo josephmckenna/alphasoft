@@ -13,10 +13,9 @@
 #include "fileutility.hh"
 #include "ProcessEvents.hh"
 
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "Reco.hh"
 
-using namespace std;
 
 int main(int argc, char** argv)
 {
@@ -39,15 +38,15 @@ int main(int argc, char** argv)
    // parse the command-line arguments - throws if invalid format
    parser.parse(argc, argv);
 
-   string fname = parser.retrieve<string>("rootfile");
+   std::string fname = parser.retrieve<std::string>("rootfile");
    TFile* fin = TFile::Open(fname.c_str(),"READ");
    if( !fin->IsOpen() )
       {
-         cerr<<"[main]# ROOTfile not open... Exiting!"<<endl;
+         std::cerr<<"[main]# ROOTfile not open... Exiting!"<<std::endl;
          return 1;
       }
    else
-      cout<<"[main]# filename: "<<fin->GetName()<<endl;
+      std::cout<<"[main]# filename: "<<fin->GetName()<<std::endl;
 
    TTree* tMC = (TTree*) fin->Get("MCinfo");
    TClonesArray* vtx = new TClonesArray("TVector3");
@@ -65,17 +64,17 @@ int main(int argc, char** argv)
    TTree* tSig =  (TTree*) fin->Get("Signals");
    if( !tSig )
       {
-         cerr<<"[main]# ROOTfile does not contain proper simulation data... Exiting!"<<endl;
+         std::cerr<<"[main]# ROOTfile does not contain proper simulation data... Exiting!"<<std::endl;
          return 1;
       }
    int Nevents = tSig->GetEntriesFast();
-   cout<<"[main]# Signals Tree: "<<tSig->GetTitle()<<"\t Entries: "<<Nevents<<endl;
+   std::cout<<"[main]# Signals Tree: "<<tSig->GetTitle()<<"\t Entries: "<<Nevents<<std::endl;
    if( parser.count("Nevents") )
     {
-       string nev = parser.retrieve<string>("Nevents");
+       std::string nev = parser.retrieve<std::string>("Nevents");
        Nevents = stoi(nev);
     }
-   cout<<"[main]# Processing "<<Nevents<<" events"<<endl;
+   std::cout<<"[main]# Processing "<<Nevents<<" events"<<std::endl;
 
    TClonesArray* AWsignals = new TClonesArray("TWaveform");
    tSig->SetBranchAddress("AW",&AWsignals);
@@ -83,97 +82,97 @@ int main(int argc, char** argv)
    TClonesArray* PADsignals = new TClonesArray("TWaveform");
    tSig->SetBranchAddress("PAD",&PADsignals);
 
-   string json_file = "sim.hjson";
-   ostringstream json_filepath;
+   std::string json_file = "sim.hjson";
+   std::ostringstream json_filepath;
    json_filepath<<getenv("AGRELEASE")<<"/ana/"<<json_file;
-   string settings=json_filepath.str();
+   std::string settings=json_filepath.str();
    if( parser.count("anasettings") )
     {
-      string fname = parser.retrieve<string>("anasettings");
+      std::string fname = parser.retrieve<std::string>("anasettings");
       struct stat buffer;   
       if( stat(fname.c_str(), &buffer) == 0 )
          {
             settings = fname;
-            cout<<"[main]# Loading Ana Settings from: "<<settings<<endl;
+            std::cout<<"[main]# Loading Ana Settings from: "<<settings<<std::endl;
          }
       else
-         cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<endl;
+         std::cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<std::endl;
     }
    AnaSettings* ana_settings = new AnaSettings(settings.c_str());
-   cout<<"--------------------------------------------------"<<endl;
+   std::cout<<"--------------------------------------------------"<<std::endl;
    cout<<"READ settings file"<<endl;
    ana_settings->Print();
-   cout<<"--------------------------------------------------"<<endl;
+   std::cout<<"--------------------------------------------------"<<std::endl;
 
    finderChoice finder = adaptive;
    if( parser.count("finder") )
       {
-         string cf = parser.retrieve<string>("finder");
+         std::string cf = parser.retrieve<std::string>("finder");
          if( cf == "base") 
             {
                finder = base;
-               cout << "[main]# Using basic TracksFinder" << endl;
+               std::cout << "[main]# Using basic TracksFinder" << std::endl;
             }
          else if( cf == "neural") 
             {
                finder = neural;
-               cout << "[main]# Using NeuralFinder" << endl;
+               std::cout << "[main]# Using NeuralFinder" << std::endl;
             }
          else if( cf == "adaptive") 
             {
                finder = adaptive;
-               cout << "[main]# Using AdaptiveFinder" << endl;
+               std::cout << "[main]# Using AdaptiveFinder" << std::endl;
             }
-         else cerr<<"[main]# Unknown track finder mode \""<<cf<<"\", using adaptive"<<endl;
+         else std::cerr<<"[main]# Unknown track finder mode \""<<cf<<"\", using adaptive"<<std::endl;
       }
-   cout<<"[main]# Using track finder: "<<finder<<endl;
+   std::cout<<"[main]# Using track finder: "<<finder<<std::endl;
    
    double B=1.0;
    if( parser.count("Bfield") )
       {
-         string Bfield = parser.retrieve<string>("Bfield");
+         std::string Bfield = parser.retrieve<std::string>("Bfield");
          B = stod(Bfield);
       }
-   cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
+   std::cout<<"[main]# Magnetic Field: "<<B<<" T"<<std::endl;
 
    bool draw = false;
    if( parser.count("draw") )
       {
          draw = true;
-         cout<<"[main]# Drawing Enabled"<<endl;
+         std::cout<<"[main]# Drawing Enabled"<<std::endl;
       }
    bool verb = false;
    if( parser.count("verb") )
       {
          verb = true;
-         cout<<"[main]# Verbosity Enabled"<<endl;
+         std::cout<<"[main]# Verbosity Enabled"<<std::endl;
       }
    bool enableMC=false;
    if( parser.count("enableMC") )
       {
          enableMC=true;
-         cout<<"[main]# MC reco Enabled"<<endl;
+         std::cout<<"[main]# MC reco Enabled"<<std::endl;
       }
    bool twod=false;
    if( parser.count("twod") )
       {
          twod=true;
-         cout<<"[main]# PADS Reco Disenabled - AW ONLY!"<<endl;
+         std::cout<<"[main]# PADS Reco Disenabled - AW ONLY!"<<std::endl;
       }
    bool led=false;
    if( parser.count("led") )
       {
          led=true;
-         cout<<"[main]# Leading edge reconstruction!"<<endl;
+         std::cout<<"[main]# Leading edge reconstruction!"<<std::endl;
       }
  
    TApplication* app=0;
    if( draw )
       app = new TApplication("g4ana",&argc,argv);
 
-   string outname("ana");
+   std::string outname("ana");
    outname += basename(fname); // from fileutility.hh
-   cout<<"[main]# saving output to: "<<outname<<endl;
+   std::cout<<"[main]# saving output to: "<<outname<<std::endl;
 
    ProcessEvents proc(ana_settings,B,outname);
    if( draw ) proc.SetDraw();
@@ -193,8 +192,6 @@ int main(int argc, char** argv)
          else
             proc.ProcessWaveform_deconv(AWsignals,PADsignals);
 
-         proc.ProcessTracks();
-
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
 
@@ -211,12 +208,12 @@ int main(int argc, char** argv)
 
       }// events loop
    
-   cout<<"[main]# Finished"<<endl;
+   std::cout<<"[main]# Finished"<<std::endl;
    if( draw ){
       // new TBrowser;
       app->Run();
    }
-   cout<<"[main]# End Run"<<endl;
+   std::cout<<"[main]# End Run"<<std::endl;
    return 0;
 }
 

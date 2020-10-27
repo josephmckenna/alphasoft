@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <unistd.h> // readlink()
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -15,7 +16,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AgFlow.h"
 #include "RecoFlow.h"
 #include "A2Flow.h"
 #include "GitInfo.h"
@@ -379,14 +379,22 @@ public:
       gDirectory->mkdir("AnalysisReport")->cd();
      
       char result[ 200 ]={0};
-      readlink( "/proc/self/exe", result, 200 );
-      binary_path_full=result;
-      std::size_t found = binary_path_full.find_last_of("/\\");
-      //std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
-      //std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
-   
-      fFlags->binary_path=binary_path_full.substr(0,found);
-      fFlags->binary_name=binary_path_full.substr(found+1);
+      size_t result_len=readlink( "/proc/self/exe", result, 200 );
+      if (result_len)
+      {
+         binary_path_full=result;
+         std::size_t found = binary_path_full.find_last_of("/\\");
+         //std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
+         //std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
+
+         fFlags->binary_path=binary_path_full.substr(0,found);
+         fFlags->binary_name=binary_path_full.substr(found+1);
+      }
+      else
+      {
+         fFlags->binary_path="readlink of /proc/self/exe failed";
+         fFlags->binary_name="readlink of /proc/self/exe failed";
+      }
       
       //      return std::string( result, (count > 0) ? count : 0 );
       //if (fSaveHistograms)
@@ -552,7 +560,8 @@ public:
       fFlags.PrintA2(rough_time);
       std::cout <<"Time of Last Event: "<<fFlags.last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
-      std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
+      std::cout <<"Analysis run on host: ";
+      if(getenv("HOSTNAME")!=nullptr) {std::cout << getenv("HOSTNAME") << std::endl;} else { std::cout << "UNKNOWN" << std::endl;}
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);

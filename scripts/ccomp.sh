@@ -44,12 +44,14 @@ elif [[ "$1" == "nosim" ]]; then
 
 elif [[ "$1" == "ci" ]]; then
     echo "Building agdaq for CI"
+    #Quit on error (so CI reports failure properly)
+    set -e
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+    cmake3 --build . 
+    cmake3 --build . --target install
     ls -lh $AGRELEASE/bin
     cd $AGRELEASE
 
@@ -73,13 +75,25 @@ elif [[ "$1" == "build" ]]; then
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
 
+elif [[ "$1" == "verbose" ]]; then
+    echo "Building agdaq verbosily"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
+    cmake3 --build  . --verbose
+   # time cmake3 --build . --target install -- -j
+    cd $AGRELEASE
+
 elif [[ "$1" == "help" ]]; then
     echo "Options are:"
-    echo "- clean"
+    echo "- clean [all]"
     echo "- update (build only)"
     echo "- install"
     echo "- wA2"
     echo "- nosim (build and install)"
+    echo "- debug (build with debug symbols and install)"
+    echo "- build (build optimized code and install)"
     echo " "
     echo "Default: build and install"
 

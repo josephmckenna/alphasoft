@@ -29,7 +29,7 @@
 #include "TStoreEvent.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "json.hpp"
 
 #include "Reco.hh"
@@ -238,7 +238,8 @@ public:
                   return flow;
                }
          }
-      if( fTrace ) printf("RecoRun::AnalyzeFlowEvent Event # %d\n");
+      if( fTrace )
+         printf("RecoRun::AnalyzeFlowEvent Event # %d\n",age->counter);
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
