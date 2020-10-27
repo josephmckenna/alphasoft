@@ -32,6 +32,14 @@ else
   DOBUILD="BUILD"
 fi
 
+
+if [ ! -f  ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
+
+
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
   MODULEFLAGS="-- ${MODULEFLAGS}"
   echo "Module flags: ${MODULEFLAGS}"
@@ -66,9 +74,9 @@ if [ "$DOBUILD" != "NOBUILD" ]; then
   echo "Recompiling everything..."
   cd ${AGRELEASE}
   if [ "$DOBUILD" == "FASTBUILD" ]; then
-    make clean && make -j &> ${BUILDLOG}
+    make clean && make cmake -j &> ${BUILDLOG}
   else
-    make clean && make &> ${BUILDLOG}
+    make clean && make cmake &> ${BUILDLOG}
   fi
   echo "Recompilation done: chech ${BUILDLOG}"
   WARNING_COUNT=`grep -i warning ${BUILDLOG} | wc -l`
@@ -94,7 +102,7 @@ cd bin
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
+valgrind --tool=callgrind --callgrind-out-file="${SPEEDTEST}" ./alphaAnalysis.exe ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
  
 cd $AGRELEASE
 echo "done..."

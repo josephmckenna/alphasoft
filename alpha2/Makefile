@@ -36,8 +36,8 @@ LIBS     += -L$(shell root-config --libdir)
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
 INCS += -I../ana/include
-INCS += -I../analib/include
 INCS += -I../agana
+INCS += -I../analib/include
 INCS += -I../aged/include
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
