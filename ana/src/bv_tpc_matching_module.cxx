@@ -87,6 +87,7 @@ public:
 
    matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
    {
+      ModuleName="BC/TPC Matching Module";
       printf("matchingmodule::ctor!\n");
       MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
    }
@@ -182,11 +183,18 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      if(!bf) return flow;
-
+      if(!bf)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       AgEvent* age = ef->fEvent;
       // prepare event to store in TTree
       analyzed_event=new TBarEvent();
@@ -194,10 +202,6 @@ public:
       analyzed_event->SetID( age->counter );
       analyzed_event->SetRunTime( age->time );
 
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
          // Main functions
       if( MagneticField > 0. )
          {
@@ -232,10 +236,6 @@ public:
 
       
       //AgBarEventFlow 
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
-      #endif
 
       return flow;
    }

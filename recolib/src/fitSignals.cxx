@@ -13,10 +13,10 @@ double GaussFcn::operator()(const std::vector<double>& par) const
    //GaussFunction gauss(par);
    MultiGaussFunction gauss(par);
 
-   double chi2 = 0.,d;
-   for(const signal &s: fSignals)
+   double chi2 = 0.;
+   for(const ALPHAg::signal &s: fSignals)
       {
-         d = ( gauss(s.z) - s.height ) / s.errh;
+         double d = ( gauss(s.z) - s.height ) / s.errh;
          chi2+=(d*d);
       }
    return chi2;
@@ -26,7 +26,7 @@ void GaussFcn::TestSignals() const
 {
   double mean,rms;
   SignalsStatistics(fSignals.begin(), fSignals.end(), mean, rms);
-  signal::heightorder sigcmp_h;
+  ALPHAg::signal::heightorder sigcmp_h;
   auto maxit = std::max_element(fSignals.begin(), fSignals.end(), sigcmp_h);
   double maxpos = maxit->z;
   double max = maxit->height;
@@ -34,7 +34,7 @@ void GaussFcn::TestSignals() const
   
 }
 
-fitSignals::fitSignals(std::vector<signal> s, int n):theFCN(s),fNpar(3*n),
+fitSignals::fitSignals(std::vector<ALPHAg::signal> s, int n):theFCN(s),fNpar(3*n),
                                                      fStep(3*n,1.e-3),fStart(3*n,0.0),
                                                      print_level(-1),
                                                      fStat(-1),fchi2(-1.),
@@ -55,7 +55,7 @@ fitSignals::fitSignals(std::vector<signal> s, int n):theFCN(s),fNpar(3*n),
 void fitSignals::CalculateDoF()
 {
    fDoF = std::count_if(theFCN.GetData()->begin(), theFCN.GetData()->end(), 
-                        [](signal s){ return s.height > 0.; }) - fNpar;
+                        [](ALPHAg::signal s){ return s.height > 0.; }) - fNpar;
 }
 
 void fitSignals::Fit()
@@ -92,15 +92,15 @@ void fitSignals::Fit()
       std::cout<<"fitSignals::Fit() chi2 = "<<fchi2<<std::endl;
 }
 
-void SignalsStatistics(std::vector<signal>::const_iterator first,
-		       std::vector<signal>::const_iterator last, 
+void SignalsStatistics(std::vector<ALPHAg::signal>::const_iterator first,
+		       std::vector<ALPHAg::signal>::const_iterator last, 
 		       double& mean, double& rms)
 {
   int dimension = last-first;
   // den = sum_i yi --> sum of weights    //signal(ss,ii,tt,hh,eh,zz,(ez))
-  signal res = std::accumulate(first, last, signal(0,0,0.,0.,0.,0.), 
-			       [](const signal &a, const signal &b)
-			       { return signal(0,0,0.,a.height+b.height,0.,a.z+b.z*b.height); });
+  ALPHAg::signal res = std::accumulate(first, last, ALPHAg::signal(0,0,0.,0.,0.,0.), 
+			       [](const ALPHAg::signal &a, const ALPHAg::signal &b)
+			       { return ALPHAg::signal(0,0,0.,a.height+b.height,0.,a.z+b.z*b.height); });
   double den = res.height;
   double num = res.z;
   double norm = (double(dimension)-1.)*den/double(dimension);
@@ -109,11 +109,11 @@ void SignalsStatistics(std::vector<signal>::const_iterator first,
     
   std::vector<double> temp(dimension);
   // calculate the difference from the mean: xi-m
-  std::transform(first, last, temp.begin(),[mean](const signal &s){ return s.z - mean; });
+  std::transform(first, last, temp.begin(),[mean](const ALPHAg::signal &s){ return s.z - mean; });
   // square it: (xi-m)*(xi-m)
   std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
   // multiply by the weights: yi*(xi-m)*(xi-m)
-  std::transform(temp.begin(),temp.end(),first,temp.begin(),[](const double &d, const signal &s){ return d*s.height; });
+  std::transform(temp.begin(),temp.end(),first,temp.begin(),[](const double &d, const ALPHAg::signal &s){ return d*s.height; });
     
   // rms = sqrt( (sum_i yi*(xi-m)*(xi-m))/ norm )
   rms = sqrt( std::accumulate(temp.begin(), temp.end(), 0.) / norm); // rms
@@ -129,6 +129,10 @@ void SignalsStatistics(std::vector<signal>::const_iterator first,
 #include <iostream>
 #include <fstream>
 #include <chrono>
+
+using namespace std;
+using namespace std::chrono;
+
 
 int main(int argc, char** argv)
 {
@@ -229,7 +233,7 @@ int main(int argc, char** argv)
 
    // --------------------------------------------------------------------------------
 
-   std::vector<signal> sigs;
+   std::vector<ALPHAg::signal> sigs;
    for(int b=1; b<=h1->GetNbinsX(); ++b)
       {
          if(h1->GetBinContent(b)){
@@ -284,14 +288,14 @@ int main(int argc, char** argv)
    // -------------------------------------------------------------------------------
    high_resolution_clock::time_point t1_acc = high_resolution_clock::now();
    std::vector<double> heights(sigs.size());
-   std::transform(sigs.begin(), sigs.end(), heights.begin(), [](const signal &s){ return s.height; });
+   std::transform(sigs.begin(), sigs.end(), heights.begin(), [](const ALPHAg::signal &s){ return s.height; });
    std::vector<double> zs(sigs.size());
-   std::transform(sigs.begin(), sigs.end(), zs.begin(), [](const signal &s){ return s.z; });
+   std::transform(sigs.begin(), sigs.end(), zs.begin(), [](const ALPHAg::signal &s){ return s.z; });
    high_resolution_clock::time_point t1_acc_tr = high_resolution_clock::now();
    double den1 = std::accumulate(heights.begin(), heights.end(), 0.0);
    double num1 = std::inner_product( zs.begin(), zs.end(), heights.begin(), 0.0);
    high_resolution_clock::time_point t2_acc = high_resolution_clock::now();
-   signal res2 = std::accumulate(sigs.begin(), sigs.end(), signal(0,0,0,0,0,0), [](const signal &a, const signal &b){ return signal(0,0,0,a.height+b.height,0,a.z+b.z*b.height); });
+   ALPHAg::signal res2 = std::accumulate(sigs.begin(), sigs.end(), ALPHAg::signal(0,0,0,0,0,0), [](const ALPHAg::signal &a, const ALPHAg::signal &b){ return ALPHAg::signal(0,0,0,a.height+b.height,0,a.z+b.z*b.height); });
    double den2 = res2.height;
    double num2 = res2.z;
    high_resolution_clock::time_point t3_acc = high_resolution_clock::now();

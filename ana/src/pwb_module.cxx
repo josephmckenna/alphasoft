@@ -542,6 +542,7 @@ public:
    PwbModule(TARunInfo* runinfo, PwbFlags* f)
       : TARunObject(runinfo)
    {
+      ModuleName="PwbModule";
       if (fTrace)
          printf("PwbModule::ctor!\n");
 
@@ -997,11 +998,16 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
 
       FeamEvent* e = ef->fEvent->feam;
 
-      if (!e) {
+      if (!e)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
 
@@ -1011,15 +1017,13 @@ public:
          printf("\n");
       }
 
-      if (e->error) {
+      if (e->error) 
+      {
          //delete e;
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
-      //
-
+      
       bool doPrint = false;
 
       // create histograms
@@ -1651,9 +1655,6 @@ public:
       }
 #endif
       hnhitchan->Fill(nhitchan);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"pwb_module",timer_start);
-      #endif
       return flow;
    }
 

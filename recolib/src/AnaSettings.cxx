@@ -1,4 +1,4 @@
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 AnaSettings::AnaSettings(const char* name)
 {

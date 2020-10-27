@@ -7,7 +7,7 @@
 #include "TH2D.h"
 
 #include "SignalsType.hh"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "TFile.h"
 #include "manalyzer.h"
 
@@ -47,43 +47,43 @@ private:
 
    //bool diagnostic;
 
-   std::vector<signal>* fCombinedPads;
-   std::vector< std::pair<signal,signal> >* spacepoints;
+   std::vector<ALPHAg::signal>* fCombinedPads;
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints;
 
-   std::set<short> PartionBySector(std::vector<signal>* padsignals, std::vector< std::vector<signal> >& pad_bysec);
-   std::vector< std::vector<signal> > PartitionByTime( std::vector<signal>& sig );
+   std::set<short> PartionBySector(std::vector<ALPHAg::signal>* padsignals, std::vector< std::vector<ALPHAg::signal> >& pad_bysec);
+   std::vector< std::vector<ALPHAg::signal> > PartitionByTime( std::vector<ALPHAg::signal>& sig );
 
-   void CentreOfGravity( std::vector<signal> &vsig ); // #0
-   //  void CentreOfGravity_blobs( std::vector<signal> &vsig,  std::vector<signal> &padcog ); // #6
-   void CentreOfGravity_blobs( std::vector<signal> &vsig); // #6
-   void CentreOfGravity_nohisto( std::vector<signal> &vsig ); // #2
-   void CentreOfGravity_nofit( std::vector<signal> &vsig ); // #1
-   void CentreOfGravity_single_peak( std::vector<signal> &vsig ); // #3
-   void CentreOfGravity_multi_peak( std::vector<signal> &vsig ); // #4
-   void CentreOfGravity_histoblobs( std::vector<signal> &vsig ); // #6
+   void CentreOfGravity( std::vector<ALPHAg::signal> &vsig ); // #0
+   //  void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig,  std::vector<ALPHAg::signal> &padcog ); // #6
+   void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig); // #6
+   void CentreOfGravity_nohisto( std::vector<ALPHAg::signal> &vsig ); // #2
+   void CentreOfGravity_nofit( std::vector<ALPHAg::signal> &vsig ); // #1
+   void CentreOfGravity_single_peak( std::vector<ALPHAg::signal> &vsig ); // #3
+   void CentreOfGravity_multi_peak( std::vector<ALPHAg::signal> &vsig ); // #4
+   void CentreOfGravity_histoblobs( std::vector<ALPHAg::signal> &vsig ); // #6
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
    void SortPointsAW(  const std::pair<double,int>& pos,
-                       std::vector<std::pair<signal,signal>*>& vec,
-                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw );
-   void SortPointsAW(  std::vector<std::pair<signal,signal>*>& vec,
-                       std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw );
+                       std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+                       std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw );
+   void SortPointsAW(  std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+                       std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw );
 
    //  void SortPointsAW(  const std::pair<double,int>& pos,
    //		      std::vector<std::pair<signal,signal>*>& vec,
    //		      std::map<int,std::vector<std::pair<signal,signal>*>>& spaw );
-   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>,std::greater<int>>& spaw,
-                     std::map<int,std::vector<std::pair<signal,signal>*>>& merger);
-   void CombPointsAW(std::map<int,std::vector<std::pair<signal,signal>*>>& spaw,
-                     std::map<int,std::vector<std::pair<signal,signal>*>>& merger);
+   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw,
+                     std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger);
+   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw,
+                     std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger);
 
-   uint MergePoints(std::map<int,std::vector<std::pair<signal,signal>*>>& merger,
-                    std::vector<std::pair<signal,signal>>& merged,
+   uint MergePoints(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger,
+                    std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
                     uint& number_of_merged);
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h, const std::vector<int> &cumulBins);
-   std::vector<std::pair<double, double> > FindBlobs(const std::vector<signal> &sigs,
+   std::vector<std::pair<double, double> > FindBlobs(const std::vector<ALPHAg::signal> &sigs,
                                                      int ifirst, int ilast);
 
    TH1D *hsigCoarse, *hsig;
@@ -102,7 +102,7 @@ private:
    TH1D* htimeblobs;
    TH1D* htimefit;
 
-   padmap pmap;
+   ALPHAg::padmap pmap;
 
    std::mutex mtx;
 
@@ -114,18 +114,18 @@ public:
    void Init();
    void Setup(TFile* OutputFile);
 
-   std::vector<std::vector<signal>> CombPads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector<signal>* padsignals);
-   void CombinePads(std::vector< std::vector<signal> > *comb); // this is the used now  -- AC 27-08-2020
+   std::vector<std::vector<ALPHAg::signal>> CombPads(std::vector<ALPHAg::signal>* padsignals);
+   void CombinePads(std::vector<ALPHAg::signal>* padsignals);
+   void CombinePads(std::vector< std::vector<ALPHAg::signal> > *comb); // this is the used now  -- AC 27-08-2020
 
-   void MatchElectrodes(std::vector<signal>* awsignals);
-   void MatchElectrodes(std::vector<signal>* awsignals,
-                        std::vector<signal>* padsignals);
+   void MatchElectrodes(std::vector<ALPHAg::signal>* awsignals);
+   void MatchElectrodes(std::vector<ALPHAg::signal>* awsignals,
+                        std::vector<ALPHAg::signal>* padsignals);
    void CombPoints();
-   void FakePads(std::vector<signal>* awsignals);
+   void FakePads(std::vector<ALPHAg::signal>* awsignals);
 
-   std::vector<signal>* GetCombinedPads() { return fCombinedPads; }
-   std::vector< std::pair<signal,signal> >* GetSpacePoints() { return spacepoints; }
+   std::vector<ALPHAg::signal>* GetCombinedPads() { return fCombinedPads; }
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* GetSpacePoints() { return spacepoints; }
 
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }

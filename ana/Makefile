@@ -92,7 +92,7 @@ gitinfo:
 
 $(BINDIR)/%.exe: $(MAIN) $(USER_LIBS) $(ALL_DEPS) $(MODS)
 	$(eval $(call get_modules,$@MODS,$@))
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics -lMinuit
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<

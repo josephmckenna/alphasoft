@@ -57,7 +57,7 @@ private:
    TH2D* hlrp;
    TH2D* hlxy;
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
    int fIdx;
    double fRes2;

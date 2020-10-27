@@ -37,10 +37,16 @@ O2: $(ALL) FIN
 native: MFLAGS += native
 native: $(ALL) FIN
 
+ifeq (, $(shell which cmake3))
+CMAKE := cmake
+else
+CMAKE := cmake3
+endif
 
 cmake: buildrootana
+	@echo $(CMAKE)
 	@mkdir -p ${AGRELEASE}/build
-	@cd ${AGRELEASE}/build && cmake3 ../ && make $(MFLAGS) install
+	@cd ${AGRELEASE}/build && $(CMAKE) ../ && make $(MFLAGS) install
 
 BINARIES = $(shell ls alpha2/*.modules ana/*.modules)
 BINARIES := $(patsubst alpha2/%.modules,bin/%.exe,$(BINARIES))
