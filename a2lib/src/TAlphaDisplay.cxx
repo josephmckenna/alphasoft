@@ -436,13 +436,18 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
         }
          //prin
         
-        //if (strcmp(z,sil->GetName())) continue;
+        //if (strcmp(z,sil->GetName())) continue; //sil no longer is set by name
         if (sil->ReturnSilNum(z)!=sil->GetSilNum()) continue;
-        //printf("success!\n");
 
-        if (!fOGLColourScheme) nod->SetLineColor(11);
-        nod->SetLineWidth(2);
-        
+        //Skip other modules if we are only viewing hit modules
+        if (!sil->GetNHits() && fViewHOnly && !fOGLColourScheme) continue;
+
+        if (!fOGLColourScheme)
+        { 
+          nod->SetLineColor(11); //Default colour for modules
+          if (sil->GetNHits())
+            nod->SetLineWidth(2);
+        }
         nod->SetVisibility(View);
         if (fOGLColourScheme) nod->SetVisibility(1);
         if (!View) continue;
@@ -450,8 +455,9 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
         //LGCP PITCH
         Int_t NumStripPhi = 256;
         Int_t NumStripZed = 256;
-                    
+        
         //Only draw hit strips if the silicon module has hits (and in OGL mode)
+        //std::cout<<sil->GetNHits()<<std::endl;
         if (!fOGLColourScheme && sil->GetNHits()>0)
         {
           // Draw hit strips pside
@@ -463,7 +469,7 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
             TPolyLine3D *lp = new TPolyLine3D(2);
             lp->SetPoint(0,a.X(),a.Y(),a.Z());
             lp->SetPoint(1,b.X(),b.Y(),b.Z());
-            lp->SetLineColor(2);
+            lp->SetLineColor(2);  //TODO: Insert colour scale based on cluster signiciance?
             lp->SetLineWidth(1);
             if (fOGLColourScheme)
               lp->SetLineWidth(2);
@@ -479,7 +485,7 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
             TPolyLine3D *lp = new TPolyLine3D(2);
             lp->SetPoint(0,a.X(),a.Y(),a.Z());
             lp->SetPoint(1,b.X(),b.Y(),b.Z());
-            lp->SetLineColor(2);
+            lp->SetLineColor(2);  //TODO: Insert colour scale based on cluster signiciance?
             lp->SetLineWidth(1);
             if (fOGLColourScheme)
               lp->SetLineWidth(2);
