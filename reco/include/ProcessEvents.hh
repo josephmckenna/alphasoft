@@ -13,7 +13,7 @@
 #include "TClonesArray.h"
 #include "TVector3.h"
 
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "Deconv.hh"
 #include "Ledge.hh"

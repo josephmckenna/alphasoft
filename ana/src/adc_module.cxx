@@ -470,6 +470,7 @@ public:
    AdcModule(TARunInfo* runinfo, A16Flags* f)
       : TARunObject(runinfo)
    {
+      ModuleName="AdcModule";
       if (fTrace)
          printf("AdcModule::ctor!\n");
       fFlags = f;
@@ -994,16 +995,17 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
-         return flow;
-
-      Alpha16Event* e = ef->fEvent->a16;
-
-      if (!e) {
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+      Alpha16Event* e = ef->fEvent->a16;
+
+      if (!e)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       if (1) {
          printf("Have ADC event:  ");
          e->Print();
@@ -1054,9 +1056,6 @@ public:
       //*flags |= TAFlag_DISPLAY;
 
       fCounter++;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"adc_module",timer_start);
-      #endif
       return flow;
    }
 

@@ -309,21 +309,21 @@ class AgAnalysisFlow: public TAFlowEvent
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<signal>* awSig;
-  std::vector<signal>* pdSig;
-  std::vector< std::pair<signal,signal> >* matchSig;
+  std::vector<ALPHAg::signal>* awSig;
+  std::vector<ALPHAg::signal>* pdSig;
+  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* matchSig;
 
-  std::vector<wf_ref>* AWwf;
-  std::vector<wf_ref>* PADwf;
+  std::vector<ALPHAg::wf_ref>* AWwf;
+  std::vector<ALPHAg::wf_ref>* PADwf;
 
-  std::vector<signal>* adc32max;
+  std::vector<ALPHAg::signal>* adc32max;
    //  std::vector<signal> adc32range;
-  std::vector<signal>* pwbMax;
+  std::vector<ALPHAg::signal>* pwbMax;
    //  std::vector<signal> pwbRange;
 
 public:
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal> *s):
+		std::vector<ALPHAg::signal> *s):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -336,8 +336,8 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<signal>* s,
-  		std::vector<signal>* p):
+  		std::vector<ALPHAg::signal>* s,
+  		std::vector<ALPHAg::signal>* p):
     TAFlowEvent(flow)
   {
     AWwf=NULL;
@@ -350,8 +350,8 @@ public:
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<signal>* s,std::vector<signal>* p,
-		std::vector<wf_ref>* awf, std::vector<wf_ref>* pwf):
+		std::vector<ALPHAg::signal>* s,std::vector<ALPHAg::signal>* p,
+		std::vector<ALPHAg::wf_ref>* awf, std::vector<ALPHAg::wf_ref>* pwf):
     TAFlowEvent(flow)
   {
     AWwf=awf;
@@ -415,38 +415,38 @@ public:
     delete pdSig;
     pdSig=0;
   }
-  void AddPadSignals( std::vector<signal>* s )
+  void AddPadSignals( std::vector<ALPHAg::signal>* s )
   {
     pdSig=s;
   }
 
-  void AddMatchSignals( std::vector< std::pair<signal,signal> >*ss )
+  void AddMatchSignals( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*ss )
   {
     matchSig=ss;
   }
 
-  void AddAWWaveforms(std::vector<wf_ref>* af)
+  void AddAWWaveforms(std::vector<ALPHAg::wf_ref>* af)
   {
     AWwf=af;
   }
 
-  void AddPADWaveforms(std::vector<wf_ref>* pf)
+  void AddPADWaveforms(std::vector<ALPHAg::wf_ref>* pf)
   {
     PADwf=pf;
   }
 
-  void AddWaveforms(std::vector<wf_ref>* af, std::vector<wf_ref>* pf)
+  void AddWaveforms(std::vector<ALPHAg::wf_ref>* af, std::vector<ALPHAg::wf_ref>* pf)
   {
     AWwf=af;
     PADwf=pf;
   }
 
-   void AddAdcPeaks(std::vector<signal>* s)
+   void AddAdcPeaks(std::vector<ALPHAg::signal>* s)
    {
       adc32max=s;
    }
 
-   void AddPwbPeaks(std::vector<signal>* s)
+   void AddPwbPeaks(std::vector<ALPHAg::signal>* s)
    {
       pwbMax=s;
    }
@@ -465,76 +465,6 @@ class AgTrigUdpFlow: public TAFlowEvent
   ~AgTrigUdpFlow(){}
 };
 
-
-#include "AnalysisTimer.h"
-//#define CLOCK_NOW clock();
-#define CLOCK_TYPE std::chrono::high_resolution_clock::time_point
-#define CLOCK_NOW std::chrono::high_resolution_clock::now();
-#define START_TIMER auto timer_start=CLOCK_NOW
-//#define START_TIMER auto timer_start=std::chrono::high_resolution_clock::now();
-class Ag2DAnalysisReportFlow: public TAFlowEvent
-{
-  public:
-   std::vector<const char*> ModuleName;
-   std::vector<double> SecondAxis;
-  private:
-   CLOCK_TYPE start;
-   CLOCK_TYPE stop;
-  public:
-   double GetTimer()
-   {
-      std::chrono::duration<double> elapsed_seconds = stop - start;
-      return  elapsed_seconds.count();
-      //return (double)(stop - start)/CLOCKS_PER_SEC;
-   }
-
-  Ag2DAnalysisReportFlow(TAFlowEvent* flow, std::vector<const char*> _name, std::vector<double> second_axis, CLOCK_TYPE _start) : TAFlowEvent(flow)
-  {
-     //ModuleName[0] is the main title (also used to fill a 1D histogram)
-     //ModuleName[1+] are addition bits of a title for 2D histogram added to ModuleName[0]
-     ModuleName=_name;
-     start=_start;
-     stop=CLOCK_NOW;
-     SecondAxis=second_axis;
-  }
-
-  ~Ag2DAnalysisReportFlow() // dtor
-   {
-      ModuleName.clear();
-      
-      //if (ModuleName) delete ModuleName;
-      //if (time) delete time;
-      
-   }
-};
-
-class AgAnalysisReportFlow: public TAFlowEvent
-{
-  public:
-   const std::string ModuleName;
-
-  private:
-   CLOCK_TYPE start;
-   CLOCK_TYPE stop;
-  public:
-   double GetTimer()
-   {
-      std::chrono::duration<double> elapsed_seconds = stop - start;
-      return  elapsed_seconds.count();
-      //return (double)(stop - start)/CLOCKS_PER_SEC;
-   }
-   //std::chrono::time_point<std::chrono::high_resolution_clock> time;
-  AgAnalysisReportFlow(TAFlowEvent* flow, const char* _name, CLOCK_TYPE _start) : TAFlowEvent(flow), ModuleName(_name)
-  {
-     start=_start;
-     stop=CLOCK_NOW
-  }
-  ~AgAnalysisReportFlow() // dtor
-   {
-   }
-   
-
-};
 #endif
 
 /* emacs

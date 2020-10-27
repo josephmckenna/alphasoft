@@ -239,7 +239,7 @@ if [ "${1}" = "install_sim" ]; then
   sleep 1
   echo "No really... go get a coffee... this will take some time.."
   sleep 1
-  git submodule update --init 
+  git submodule update --init --recursive
   sim_submodules_firsttimesetup
 fi
 

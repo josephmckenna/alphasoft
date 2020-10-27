@@ -52,12 +52,18 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Spectrum)
+find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 link_libraries(${ROOT_LIBRARIES})
 
 ##Horrible horrible hack to get the libs for rootana (from rootana/include/rootana_cflags.txt )
 list(APPEND ROOTANALIBS z Gui Core Imt RIO Net Hist Graf Graf3d Gpad ROOTVecOps Tree TreePlayer Rint Postscript Matrix Physics MathCore Thread MultiProc ROOTDataFrame m dl Thread XMLParser XMLIO RHTTP XMLParser XMLIO RHTTP)
 link_libraries(${ROOTANALIBS})
+#This below is broken and needs a REGEX wizard:
+#Get the libs for rootana (from rootana/include/rootana_libs.txt )
+#file( READ $ENV{ROOTANASYS}/include/rootana_libs.txt rootana_libs) 
+#string(REPLACE "\n" "" rootana_libs "${rootana_libs}" )
+#list(APPEND ROOTANALIBS ${rootana_libs})
+#link_libraries(rootana ${ROOTANALIBS})
 
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
@@ -119,8 +125,11 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(${bin} analib)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} Xt Xm Minuit2 rootana analib agtpc aged )
+    link_directories(${bin} $ENV{AGRELEASE}/analib)
+
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} analib agtpc aged rootana ${ROOTANALIBS} )
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

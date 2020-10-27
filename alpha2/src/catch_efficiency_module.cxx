@@ -34,6 +34,7 @@ public:
    CatchEfficiencyModule(TARunInfo* runinfo, CatchEfficiencyModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Catch Efficiency";
       if (fTrace)
          printf("CatchEfficiencyModule::ctor!\n");
    }
@@ -75,9 +76,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
@@ -113,18 +111,14 @@ public:
             }
             
          }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"catch_efficiency_module",timer_start);
-      #endif
       }
-
+      else
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+      }
       return flow; 
   }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
-   {
-      return flow;
-   }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
