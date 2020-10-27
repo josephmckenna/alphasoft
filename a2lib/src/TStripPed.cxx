@@ -2,10 +2,10 @@
 //#include <iostream>
 ClassImp(TStripPed);
 
-TStripPed::TStripPed():
-   hmax(512),
+TStripPed::TStripPed(const int nBins, const double binWidth):
+   hmax(nBins),
    hmin(-hmax),
-   strip_bin_width(0.1),
+   strip_bin_width(binWidth),
    strip_bins((hmax-hmin)/strip_bin_width)
 {
    //First pass variables

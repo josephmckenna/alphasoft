@@ -31,7 +31,7 @@ private:
    const double strip_bins;
 
 public:
-   TStripPed();
+   TStripPed(const int nBins, const double binWidth);
    virtual ~TStripPed();
    inline int GetBin(const double &x)
    {
