@@ -124,7 +124,7 @@ public:
                runinfo->fRunNo,
                -1, //FIXME
                -1, //FIXME
-               -1 //FIXME
+               -1. //FIXME
             );
             a2ed = new TAlphaDisplay(text, autosave, runinfo->fRunNo);
             
@@ -140,7 +140,7 @@ public:
             silevent->GetVF48NTrigger(),
             silevent->GetVF48Timestamp()
          )*/
-         
+         //alphaevent->Print();
          TARootHelper::fgApp->Run(kTRUE);
          //flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          //printf("A2ed::ShowEvent is %d\n",flags);
