@@ -70,7 +70,14 @@ elif [[ "$1" == "build" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Release
+    if [[ "$2" == "nosim" ]]; then
+	echo "without Simulation components"
+	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Release
+    else
+	echo "with Simulation components"
+	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Release
+    fi
+
     time cmake3 --build . -- -j
     time cmake3 --build . --target install -- -j
     cd $AGRELEASE
@@ -80,7 +87,8 @@ elif [[ "$1" == "verbose" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+    # -DCMAKE_VERBOSE_MAKEFILE=TRUE
     cmake3 --build  . --verbose
    # time cmake3 --build . --target install -- -j
     cd $AGRELEASE
@@ -93,7 +101,8 @@ elif [[ "$1" == "help" ]]; then
     echo "- wA2"
     echo "- nosim (build and install)"
     echo "- debug (build with debug symbols and install)"
-    echo "- build (build optimized code and install)"
+    echo "- build [nosim] (build optimized code and install)"
+    echo "- verbose (build optimized code with verbose output)"
     echo " "
     echo "Default: build and install"
 
