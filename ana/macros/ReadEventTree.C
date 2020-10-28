@@ -129,19 +129,6 @@ TH2D* hhzr;
 TH2D* hhrp;
 TH2D* hhxy;
 
-// cosmics
-TH1D* hcosaw;
-TH2D* hcospad;
-TH1D* hRes2min;
-TH1D* hdeltaT;
-TH1D* hDCAeq2;
-TH1D* hDCAgr2;
-TH1D* hAngeq2;
-TH1D* hAnggr2;
-TH2D* hAngDCAeq2;
-TH2D* hAngDCAgr2;
-TH1D* hcosphi;
-TH1D* hcostheta;
 
 void MakeHistos()
 {
@@ -328,10 +315,6 @@ void MakeHistos()
 		  100,0.,190.,90,-180.,180.);
   hhxy = new TH2D("hhxy","Helix X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
-
-  // cosmics
-  hRes2min = new TH1D("hRes2","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",
-		      1000,0.,1000.);
 }
 
 void DisplayHisto()
@@ -733,71 +716,6 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  // if(hcosaw->GetEntries())
-  //   {
-  //     cname = "ccos";
-  //     cname+=tag;
-  //     TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
-  //     ccos->Divide(2,2);
-  //     ccos->cd(1);
-  //     hcosaw->Draw();
-  //     ccos->cd(2);
-  //     hcospad->Draw("colz");
-  //     ccos->cd(3);
-  //     hRes2min->Draw();
-  //     ccos->cd(4);
-  //     hdeltaT->Draw("P");
-  //     //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
-  //     //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
-  //     //hdeltaT->Fit(fdeltaT,"0EMW");
-  //     hdeltaT->Fit("expo","Q0EMW");
-  //     TF1* fdeltaT = hdeltaT->GetFunction("expo");
-  //     if( fdeltaT )
-  // 	{
-  // 	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
-  // 	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
-  // 	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-  // 					  RunNumber,rate,rate_err);
-  // 	  cout<<srate<<endl;
-  // 	  fdeltaT->Draw("same");
-  // 	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-  // 	  trate->AddText(srate.Data());
-  // 	  trate->SetFillColor(0);
-  // 	  trate->Draw();
-  // 	}
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosdir";
-  //     cname+=tag;
-  //     TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-  //     ccosdir->Divide(1,2);
-  //     ccosdir->cd(1);
-  //     hcosphi->Draw();
-  //     ccosdir->cd(2);
-  //     hcostheta->Draw();
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosres";
-  //     cname+=tag;
-  //     TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
-  //     ccosres->Divide(3,2);
-  //     ccosres->cd(1);
-  //     hDCAeq2->Draw();
-  //     ccosres->cd(2);
-  //     hAngeq2->Draw();
-  //     ccosres->cd(3);
-  //     hAngDCAeq2->Draw("colz");
-  //     ccosres->cd(4);
-  //     hDCAgr2->Draw();
-  //     ccosres->cd(5);
-  //     hAnggr2->Draw();
-  //     ccosres->cd(6);
-  //     hAngDCAgr2->Draw("colz");
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //   }
 
 }
 
@@ -810,8 +728,6 @@ void ProcessLine(TStoreLine* aLine)
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
   // z axis intersection
-  // TVector3 c = -1.*p;
-  // double num = c.Cross(zaxis) * u.Cross(zaxis);
   double num = zaxis.Cross(p) * u.Cross(zaxis);
   double den = u.Cross(zaxis).Mag2();
 
@@ -1132,43 +1048,6 @@ void GetSignalHistos(TFile* fin)
     }
 }
 
-void GetCosmicHistos(TFile* fin)
-{
-  if( fin->cd("cosmics") )
-    {
-      hcosaw = (TH1D*) gROOT->FindObject("hcosaw");
-      hcospad = (TH2D*) gROOT->FindObject("hcospad");
-      hcospad->SetStats(kFALSE);
-      hRes2min = (TH1D*) gROOT->FindObject("hRes2min");
-      hdeltaT = (TH1D*) gROOT->FindObject("hpois");
-      hdeltaT->SetMarkerColor(kBlack);
-      hdeltaT->SetMarkerStyle(8);
-      hdeltaT->SetLineColor(kBlack);
-
-      hDCAeq2 = (TH1D*) gROOT->FindObject("hDCAeq2");
-      hDCAgr2 = (TH1D*) gROOT->FindObject("hDCAgr2");
-      hAngeq2 = (TH1D*) gROOT->FindObject("hAngeq2");
-      hAnggr2 = (TH1D*) gROOT->FindObject("hAnggr2");
-      hAngDCAeq2 = (TH2D*) gROOT->FindObject("hAngDCAeq2");
-      hAngDCAeq2->SetStats(kFALSE);
-      hAngDCAgr2 = (TH2D*) gROOT->FindObject("hAngDCAgr2");
-      hAngDCAgr2->SetStats(kFALSE);
-
-      hcosphi = (TH1D*) gROOT->FindObject("hcosphi");
-      hcosphi->SetMinimum(0);
-      hcostheta = (TH1D*) gROOT->FindObject("hcostheta");
-
-    }
-}
-
-void GetRecoHistos(TFile* fin)
-{
-  if( fin->cd("reco") )
-    {
-      hsptrp =  (TH2D*) gROOT->FindObject("hsprp");
-      if(hsptrp) hsptrp->SetStats(kFALSE);
-    }
-}
 
 void WriteRunStats()
 {
@@ -1222,8 +1101,6 @@ void ProcessData( TFile* fin )
   ProcessTree( tin );
 
   GetSignalHistos(fin);
-  //  GetRecoHistos(fin);
-  //  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
@@ -1231,14 +1108,6 @@ void ProcessData( TFile* fin )
   cout<<"Write Run Stats"<<endl;
   WriteRunStats();
 }
-
-// int GetRunNumber( TString fname )
-// {
-//   TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-//   int pos = fname.Index(re);
-//   int run = TString(fname(pos,5)).Atoi();
-//   return run;
-// }
 
 void ReadSettings( TObjString* sett )
 {
