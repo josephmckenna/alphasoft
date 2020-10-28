@@ -229,8 +229,6 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
          fPadRowMask.push_back(504);
          fPadRowMask.push_back(505);
       }
-   // if( run >= 3003 )
-   //    fAwMask.push_back(142+256);
    else if( run == 3873 || run == 3864 )
       {
          fPadSecMask.push_back(21);
@@ -245,17 +243,17 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
          fPadRowMask.push_back(504);
          fPadRowMask.push_back(554);
       }
-   else if( run == 903941 )
-      {
-         fPadSecMask.push_back(17);
-         fPadSecMask.push_back(18);
-         for(int x=432; x<468; ++x) fPadRowMask.push_back(x);
-      }
-   else if( run >= 903863 )
+   else if( run > 903862 )
       {
          fPadSecMask.push_back(11);
          fPadRowMask.push_back(324);
          fPadRowMask.push_back(337);
+      }
+   if( run == 903941 )
+      {
+         fPadSecMask.push_back(17);
+         fPadSecMask.push_back(18);
+         for(int x=432; x<468; ++x) fPadRowMask.push_back(x);
       }
 }
 
