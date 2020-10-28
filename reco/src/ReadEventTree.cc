@@ -3,13 +3,6 @@
 void ReadEventTree::MakeHistos()
 {
    std::cout<<"Preparing Histos"<<std::endl;
-   fHisto->Book("hpattreceff","Track Finding Efficiency",201,-1.,200.);
-   fHisto->GetHisto("hpattreceff")->SetLineWidth(2);
- 
-   // //    hdsp = new TH1D("hdsp","Distance Spacepoints;d [mm]",100,0.,50.);
- 
-    fHisto->Book("hNlines","Reconstructed Lines",10,0.,10.);
-    fHisto->Book("hlchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
 
    // spacepoints
    fHisto->Book("hpxy","Spacepoints;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
@@ -30,13 +23,21 @@ void ReadEventTree::MakeHistos()
    fHisto->GetHisto("hpzed")->SetStats(kFALSE);
 
 
-   // tracks and spacepoints
-
+   // tracks (lines) and spacepoints
    fHisto->Book("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
                 600,-1200.,1200.,256,0.,360.);
    fHisto->GetHisto("hspzphi")->SetStats(kFALSE);
    fHisto->Book("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
    fHisto->GetHisto("hspxy")->SetStats(kFALSE);
+
+
+   fHisto->Book("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
+                600,-1200.,1200.,61,109.,174.);
+   fHisto->GetHisto("hspzr")->SetStats(kFALSE);
+  
+   fHisto->Book("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
+                100,0.,TMath::TwoPi(),61,109.,174.);
+   fHisto->GetHisto("hsprp")->SetStats(kFALSE);
 
    int blen = 200;
    double maxlen = 400.;
@@ -146,6 +147,8 @@ void ReadEventTree::MakeHistos()
    fHisto->Book("hlxy","X-Y intersection with min rad;x [mm];y [mm]",
                 100,-190.,190.,100,-190.,190.);
 
+
+   // helices 
    fHisto->Book("hhr","Helix Minimum Radius;r [mm]",200,0.,190.);
    fHisto->Book("hhz","Helix Z intersection with min rad;z [mm]",300,-1200.,1200.);
    fHisto->Book("hhp","Helix #phi intersection with min rad;#phi [deg]",100,-180.,180.);
@@ -160,17 +163,17 @@ void ReadEventTree::MakeHistos()
                 100,-190.,190.,100,-190.,190.);
 
 
-   fHisto->Book("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
-                600,-1200.,1200.,61,109.,174.);
-   fHisto->GetHisto("hspzr")->SetStats(kFALSE);
-  
-   fHisto->Book("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
-                100,0.,TMath::TwoPi(),61,109.,174.);
-   fHisto->GetHisto("hsprp")->SetStats(kFALSE);
 
  
    // line properties
-   fHisto->Book("lhchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
+   fHisto->Book("hNlines","Reconstructed Lines",10,0.,10.);
+   fHisto->Book("hlchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
+
+   fHisto->Book("hpattreceff","Track Finding Efficiency",201,-1.,200.);
+   fHisto->GetHisto("hpattreceff")->SetLineWidth(2);
+
+   fHisto->Book("hsplenchi2","Track Length vs #chi^{2}",blen,0.,maxlen,200,0.,200.);
+      
    fHisto->Book("hlphi","Direction #phi;#phi [deg]",200,-180.,180.);
    fHisto->Book("hltheta","Direction #theta;#theta [deg]",200,0.,180.);
    fHisto->Book("hlthetaphi","Direction #theta Vs. #phi;#theta [deg];#phi [deg]",100,0.,180.,100,-180.,180.);
@@ -328,91 +331,96 @@ void ReadEventTree::DisplayHisto()
    // spacepoints in tracks
    if( fHisto->GetHisto("hspxy")->GetEntries() > 0 )
       {
-         cname = "spacepoints_tracks";
-         cname+=tag;
-         TCanvas* csp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
-         csp->Divide(2,2);
-         csp->cd(1);
-         fHisto->GetHisto("hpattreceff")->Draw();
-         csp->cd(2);
-         fHisto->GetHisto("hspxy")->Draw("colz");
-         csp->cd(3);
-         fHisto->GetHisto("hspzr")->Draw("colz");
-         csp->cd(4);
-         fHisto->GetHisto("hspzphi")->Draw("colz");
-         if( _save_plots )
-            {
-               csp->SaveAs(savFolder+cname+TString(".pdf"));
-               csp->SaveAs(savFolder+cname+TString(".pdf"));
-            }
-
          cname = "spacepoint_lines";
          cname+=tag;
-         TCanvas* csprphi = new TCanvas(cname.Data(),cname.Data(),1600,1000);
-         csprphi->Divide(2,2);
-         csprphi->cd(1);
-         fHisto->GetHisto("hsprp")->Draw("pol surf2");
-         csprphi->cd(2);
-         //if(fHisto->GetHisto("hsptrp) fHisto->GetHisto("hsptrp")->Draw("pol surf2");
-         fHisto->GetHisto("hsplen")->Draw("colz");
-         csprphi->cd(3);
+         TCanvas* csp = new TCanvas(cname.Data(),cname.Data(),1900,1300);
+         csp->Divide(3,2);
+         //csprphi->cd(1);
+         //fHisto->GetHisto("hsprp")->Draw("pol surf2");
+         csp->cd(1);
+         fHisto->GetHisto("hspxy")->Draw("colz");
+         csp->cd(2);
+         fHisto->GetHisto("hspzr")->Draw("colz");
+         csp->cd(3);
+         fHisto->GetHisto("hspzphi")->Draw("colz");
+         csp->cd(4);
+         fHisto->GetHisto("hsplen")->Draw();
+         csp->cd(5);
          fHisto->GetHisto("hsprlen")->Draw("colz");
-         csprphi->cd(4);
+         csp->cd(6);
          fHisto->GetHisto("hspNlen")->Draw("colz");
          if( _save_plots ) {
-            csprphi->SaveAs(savFolder+cname+TString(".pdf"));
-            csprphi->SaveAs(savFolder+cname+TString(".pdf")); }
+            csp->SaveAs(savFolder+cname+TString(".pdf"));
+            csp->SaveAs(savFolder+cname+TString(".pdf")); }
       }
 
    //  if( fHisto->GetHisto("hNlines")->GetEntries() )
    if( fHisto->GetHisto("hlphi")->GetEntries() )
       {
-         cname = "lines";
+         cname = "lines_properties";
          cname+=tag;
-         TCanvas* cl = new TCanvas(cname.Data(),cname.Data(),1800,1400);
-         std::cout<<cname<<std::endl;
-         cl->Divide(3,2);
-         cl->cd(1);
+         TCanvas* clp = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+         clp->Divide(2,2);
+         clp->cd(1);
+         fHisto->GetHisto("hpattreceff")->Draw();
+         clp->cd(2);
+         fHisto->GetHisto("hlchi2")->Draw("HIST");
+         clp->cd(3);
          fHisto->GetHisto("hNlines")->Draw();
          fHisto->GetHisto("hNlines")->GetXaxis()->SetNdivisions(110);
          fHisto->GetHisto("hNlines")->GetXaxis()->CenterLabels();
-         cl->cd(2);
+         clp->cd(4);
+         fHisto->GetHisto("hsplenchi2")->Draw("colz");
+         if( _save_plots )
+            {
+               clp->SaveAs(savFolder+cname+TString(".pdf"));
+               clp->SaveAs(savFolder+cname+TString(".pdf"));
+            }
+
+
+         cname = "lines_angle";
+         cname+=tag;
+         TCanvas* cla = new TCanvas(cname.Data(),cname.Data(),1800,1400);
+         std::cout<<cname<<std::endl;
+         cla->Divide(3,2);
+         
+         cla->cd(1);
          fHisto->GetHisto("hlphi")->Draw();
          fHisto->GetHisto("hlphi")->GetYaxis()->SetRangeUser(0.,fHisto->GetHisto("hlphi")->GetBinContent(fHisto->GetHisto("hlphi")->GetMaximumBin())*1.1);
-         cl->cd(3);
+         cla->cd(2);
          fHisto->GetHisto("hltheta")->Draw();
-         cl->cd(4);
+         cla->cd(3);
+         fHisto->GetHisto("hlthetaphi")->Draw("colz");
+         cla->cd(4);
          fHisto->GetHisto("hlcosang")->Draw();
          fHisto->GetHisto("hlcosang")->GetXaxis()->SetRangeUser(-1.,-0.9);
-         cl->cd(5);
+         cla->cd(5);
          fHisto->GetHisto("hldist")->Draw();
-         cl->cd(6);
+         cla->cd(6);
          fHisto->GetHisto("hlcosangdist")->Draw("colz");
          if( _save_plots ) {
-            cl->SaveAs(savFolder+cname+TString(".pdf"));
-            cl->SaveAs(savFolder+cname+TString(".pdf")); }
+            cla->SaveAs(savFolder+cname+TString(".pdf"));
+            cla->SaveAs(savFolder+cname+TString(".pdf")); }
 
          cname = "lines_intercept";
          cname+=tag;
          TCanvas* cq = new TCanvas(cname.Data(),cname.Data(),2600,1400);
          std::cout<<cname<<std::endl;
-         cq->Divide(4,2);
+         cq->Divide(3,2);
          cq->cd(1);
-         fHisto->GetHisto("hlchi2")->Draw("HIST");
-         cq->cd(2);
          fHisto->GetHisto("hqr")->Draw("HIST");
-         cq->cd(3);
+         cq->cd(2);
          fHisto->GetHisto("hqphi")->Draw("HIST");
-         cq->cd(4);
+         cq->cd(3);
          fHisto->GetHisto("hqz")->Draw("HIST");
-         cq->cd(5);
+         cq->cd(4);
          fHisto->GetHisto("hqxy")->Draw("colz");
-         cq->cd(6);
+         cq->cd(5);
          fHisto->GetHisto("hqzr")->Draw("colz");
-         cq->cd(7);
+         cq->cd(6);
          fHisto->GetHisto("hqzphi")->Draw("colz");
-         cq->cd(8);
-         fHisto->GetHisto("hqrphi")->Draw("colz");
+         // cq->cd(8);
+         // fHisto->GetHisto("hqrphi")->Draw("colz");
          if(_save_plots){
             cq->SaveAs(savFolder+cname+TString(".pdf"));  
             cq->SaveAs(savFolder+cname+TString(".pdf"));}
@@ -672,6 +680,8 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
    fHisto->FillHisto("hsplen", maxd );
    fHisto->FillHisto("hsprlen", ((TSpacePoint*)sp->Last())->GetR(), maxd );
    fHisto->FillHisto("hspNlen", double(sp->GetEntries()), maxd );
+
+   fHisto->FillHisto("hsplenchi2", maxd, aLine->GetChi2());
 }
 
 double ReadEventTree::LineDistance(TStoreLine* l0, TStoreLine* l1)
@@ -806,7 +816,7 @@ void ReadEventTree::ProcessTree( )
          if( Ntracks )
             {
                fHisto->FillHisto("hpattreceff",Npoints/double(Ntracks));
-               //	  std::cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<std::endl;
+               //std::cout<<"PattRecEff: "<<Npoints/double(Ntracks)<<std::endl;
             }
 
          const TObjArray* helices = event->GetHelixArray();
@@ -840,7 +850,7 @@ void ReadEventTree::ProcessTree( )
 
          // cosmic time distribution
          if( Ntracks >= 2 && Ntracks < 4 )
-         //if( Nhelices >= 2 && Nhelices < 4 )
+            //if( Nhelices >= 2 && Nhelices < 4 )
             {
                double delta = (event->GetTimeOfEvent() - temp)*1.e3;
                fHisto->FillHisto("hpois", delta );
