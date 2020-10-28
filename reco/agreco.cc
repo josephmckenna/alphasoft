@@ -129,6 +129,7 @@ int main(int argc, char** argv)
   std::cout<<"Output filename: "<<foutname<<std::endl;
 
   Utils u(foutname,MagneticField);
+  u.BookRecoHistos();
   TObjString sett = ana_settings->GetSettingsString();
   u.WriteSettings(&sett);
 
