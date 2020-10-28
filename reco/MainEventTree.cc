@@ -24,7 +24,8 @@ int main(int argc, char** argv)
    if( plot )
       app = new TApplication("ReadEventTree",&argc,argv);
    
-   ReadEventTree(fname);
+   ReadEventTree reader(fname);
+   reader.ProcessData();
 
    if( plot )
       app->Run();
