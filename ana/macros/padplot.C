@@ -20,8 +20,12 @@
 
 TH2D* hspzp=0;
 TH2D* hsppad=0;
+TH1D* hocc_px=0;
+TH1D* hspzp_px=0;
+TH1D* hsppad_px=0;
 
-padmap pm;
+
+ALPHAg::padmap pm;
 
 void plot_spacepoints(TFile* fin)
 {
@@ -38,7 +42,7 @@ void plot_spacepoints(TFile* fin)
   tin->SetBranchAddress("StoredEvent", &event);
   for(int e=0; e<tin->GetEntries(); ++e)
     {
-      if( e%5000 == 0 ) cout<<"*** "<<e<<endl;
+      if( e%10000 == 0 ) cout<<"*** "<<e<<endl;
       event->Reset();
       tin->GetEntry(e);
       const TObjArray* tracks = event->GetLineArray();
@@ -57,7 +61,9 @@ void plot_spacepoints(TFile* fin)
 	    }
 	}
     }
+  cout<<"spacepoints END"<<endl;
 }
+
 
 void temperature(TH2D* hocc)
 {
@@ -148,27 +154,23 @@ void padplot()
       gROOT->ProcessLine(".q");
     }
 
-  // TObjString* sett = (TObjString*) gROOT->FindObject("ana_settings");
-  // cout<<sett->GetString()<<endl;
-
   gDirectory->cd("paddeconv");
   TH2D* hocc = (TH2D*)gROOT->FindObject("hOccPad");
   hocc->SetStats(kFALSE);
   hocc->SetMinimum(min_occ);
   hocc->SetMaximum(max_occ);
+  // hocc->SetMaximum(8000.);
 
   TString cname=TString::Format("coccpadR%d",RunNumber);
   TCanvas* c1 = new TCanvas(cname,cname,1700,1000);
-  //hocc->Draw("surf2");
-  //hocc->Draw();
   hocc->Draw("colz");
   c1->SaveAs(".pdf");
 
   temperature(hocc);
   
-  TH1D* hocc_px=hocc->ProjectionX();
+  hocc_px=hocc->ProjectionX();
   hocc_px->SetMinimum(0.0);
-  cname=TString::Format("coccpadprofR%d",RunNumber);
+  cname=TString::Format("coccpadprojR%d",RunNumber);
   TCanvas* c3 = new TCanvas(cname,cname,1700,1000);
   hocc_px->Draw();
   c3->Update();
@@ -177,56 +179,61 @@ void padplot()
   stax3->SetX2NDC(0.99);
   stax3->SetY1NDC(0.1);
   stax3->SetY2NDC(0.4);
-
   c3->SaveAs(".pdf");
 
 
-  gDirectory->cd("/");
-  hspzp = (TH2D*)gROOT->FindObject("hspzp");
-  TCanvas* c2;
+  // gDirectory->cd("/");  
+  plot_spacepoints(fin);
   cname=TString::Format("cspZedPhiR%d",RunNumber);
-  if( !hspzp )
-    {
-      plot_spacepoints(fin);
-      c2 = new TCanvas(cname,cname,2100,1900);
-      c2->Divide(2,2);
-
-      TH1D* hspzp_px=hspzp->ProjectionX();
-      hspzp_px->SetMinimum(0.);
-      TString htitle=hspzp->GetTitle();
-      htitle+=" Averaged over #phi";
-      hspzp_px->SetTitle(htitle);
-      c2->cd(2);
-      hspzp_px->Draw();
-      c2->Update();
-      TPaveStats *stax1 = (TPaveStats*)hspzp_px->FindObject("stats");
-      stax1->SetX1NDC(0.8);
-      stax1->SetX2NDC(0.99);
-      stax1->SetY1NDC(0.1);
-      stax1->SetY2NDC(0.4);
-
-      TH1D* hsppad_px=hsppad->ProjectionX();
-      hsppad_px->SetMinimum(0.);
-      htitle=hsppad->GetTitle();
-      htitle+=" Averaged over Sector";
-      hsppad_px->SetTitle(htitle);
-      c2->cd(4);
-      hsppad_px->Draw();
-      c2->Update();
-      TPaveStats *stax2 = (TPaveStats*)hsppad_px->FindObject("stats");
-      stax2->SetX1NDC(0.8);
-      stax2->SetX2NDC(0.99);
-      stax2->SetY1NDC(0.1);
-      stax2->SetY2NDC(0.4);
-
-      c2->cd(3);
-      hsppad->Draw("colz");
-    }
-  else
-    c2 = new TCanvas(cname,cname,1700,1000);
+  TCanvas* c2 = new TCanvas(cname,cname,2100,1900);
+  c2->Divide(2,2);
   c2->cd(1);
   hspzp->Draw("colz");
   //hsp->SetMinimum(5);
+  c2->cd(2);
+  hsppad->Draw("colz");
+
+  cout<<"Get Projections"<<endl;
+
+  hspzp_px=hspzp->ProjectionX();
+  hspzp_px->Scale(1.e2/hspzp_px->Integral());
+  hspzp_px->SetMinimum(0.);
+  hspzp_px->SetStats(kFALSE);
+  hspzp_px->SetLineColor(kRed);
+  hspzp_px->SetMarkerColor(kRed);
+  TString htitle=hspzp->GetTitle();
+  htitle+=" Averaged over #phi";
+  hspzp_px->SetTitle(htitle);
+  cout<<htitle<<endl;
+  c2->cd(3);
+  hspzp_px->Draw();
+  // c2->Update();
+  // TPaveStats *stax1 = (TPaveStats*)hspzp_px->FindObject("stats");
+  // stax1->SetX1NDC(0.8);
+  // stax1->SetX2NDC(0.99);
+  // stax1->SetY1NDC(0.1);
+  // stax1->SetY2NDC(0.4);
+
+  hsppad_px=hsppad->ProjectionX();
+  hsppad_px->Scale(1./hsppad_px->Integral());
+  hsppad_px->SetMinimum(0.);
+  hsppad_px->SetStats(kFALSE);
+  hsppad_px->SetLineColor(kBlue);
+  hsppad_px->SetMarkerColor(kBlue);
+  htitle=hsppad->GetTitle();
+  htitle+=" Averaged over Sector";
+  hsppad_px->SetTitle(htitle);
+  cout<<htitle<<endl;
+  c2->cd(4);
+  hsppad_px->Draw();
+  // c2->Update();
+  // TPaveStats *stax2 = (TPaveStats*)hsppad_px->FindObject("stats");
+  // stax2->SetX1NDC(0.8);
+  // stax2->SetX2NDC(0.99);
+  // stax2->SetY1NDC(0.1);
+  // stax2->SetY2NDC(0.4);
+
+ 
 
   Int_t MaxBin = hspzp->GetMaximumBin();
   Int_t x,y,z;
@@ -238,6 +245,16 @@ void padplot()
   double minval=hspzp->GetBinContent(MinBin); 
   printf("The bin having the maximum value of %1.f is (%d,%d)\n",minval,x,y);
  
-
   c2->SaveAs(".pdf");
+
+
+  cname=TString::Format("cspoccpadprojR%d",RunNumber);
+  TCanvas* c4 = new TCanvas(cname,cname,1700,1000);
+  c4->cd();
+  hsppad_px->Draw();
+  cname=TString::Format("cspoccR%d",RunNumber);
+  TCanvas* c5 = new TCanvas(cname,cname,1700,1000);
+  c5->cd();
+  hspzp_px->Draw();
+
 }

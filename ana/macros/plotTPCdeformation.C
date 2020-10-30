@@ -17,7 +17,7 @@
 
 #include "DeformHistoLim.h"
 
-padmap pads;
+ALPHAg::padmap pads;
 int  rowhot = 140,
   sechot = 7,
   rowcold = 290, 
@@ -379,8 +379,16 @@ void OverFlowCalc(TH2D* hOF, TH2D* hocc)
   TH2D* hofl = new TH2D("hofl","Number of Overflow/Occupancy Pads;row;sec;N",576,0.,576.,32,0.,32.);
   hofl->SetStats(kFALSE);
   hofl->Divide(hOF,hocc);
-  hofl->SetMinimum(1.e-4);
-  hofl->SetMaximum(0.25);
+  double min_olf_ratio=1.e-4;
+  cout<<"---------------------------"<<endl;
+  cout<<"----- dirty trick ---------"<<endl;
+  int tmpbin=hofl->GetBin(326,12);
+  hofl->SetBinContent(tmpbin,min_olf_ratio);
+  tmpbin=hofl->GetBin(327,12);
+  hofl->SetBinContent(tmpbin,min_olf_ratio);
+  cout<<"---------------------------"<<endl;
+  hofl->SetMinimum(min_olf_ratio);
+  //  hofl->SetMaximum(0.25);
 
 
   TH2D* hscaoverflow = new TH2D("hscaoverflow","Overflow Frequency by AFTER;Along the axis;Along the Circle",16,0.,16.,16,0.,16.);

@@ -17,7 +17,7 @@
 #include "TPCconstants.hh"
 
 
-padmap pads;
+ALPHAg::padmap pads;
 
 void plotPadSigma()
 {
