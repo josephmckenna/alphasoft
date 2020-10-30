@@ -39,8 +39,6 @@ void ReadEventTree::MakeHistos()
                 100,0.,TMath::TwoPi(),61,109.,174.);
    fHisto->GetHisto("hsprp")->SetStats(kFALSE);
 
-   int blen = 200;
-   double maxlen = 400.;
    fHisto->Book("hsplen","Distance between First and Last Spacepoint;[mm]",blen,0.,maxlen);
    fHisto->Book("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
                 100,108.,175.,blen,0.,maxlen);
@@ -167,12 +165,12 @@ void ReadEventTree::MakeHistos()
  
    // line properties
    fHisto->Book("hNlines","Reconstructed Lines",10,0.,10.);
-   fHisto->Book("hlchi2","#chi^{2} of Straight Lines",200,0.,600.); // chi^2 of line fit
+   fHisto->Book("hlchi2","#chi^{2} of Straight Lines",500,0.,1000.); // chi^2 of line fit
 
    fHisto->Book("hpattreceff","Track Finding Efficiency",201,-1.,200.);
    fHisto->GetHisto("hpattreceff")->SetLineWidth(2);
 
-   fHisto->Book("hsplenchi2","Track Length vs #chi^{2}",blen,0.,maxlen,200,0.,200.);
+   fHisto->Book("hsplenchi2","Track Length vs #chi^{2}",blen,0.,maxlen,200,0.,1000.);
       
    fHisto->Book("hlphi","Direction #phi;#phi [deg]",200,-180.,180.);
    fHisto->Book("hltheta","Direction #theta;#theta [deg]",200,0.,180.);
@@ -1037,7 +1035,9 @@ void ReadEventTree::copy_file( const char* srce_file, const char* dest_file )
    dest << srce.rdbuf() ;
 }
 
-ReadEventTree::ReadEventTree(TString fname):tag("_R"),RunNumber(0),_save_plots(true)
+ReadEventTree::ReadEventTree(TString fname):tag("_R"),RunNumber(0),
+                                            _save_plots(true),
+                                            blen(200),maxlen(400.)
 {
    std::cout<<"DATA"<<std::endl;
 
