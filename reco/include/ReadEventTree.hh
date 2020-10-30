@@ -63,6 +63,10 @@ private:
    TString savFolder;
    std::ofstream fout;
    bool _save_plots;
+
+   // track length plot parameters
+   int blen; // number of bins
+   double maxlen; // max track length
  
    TFile* fin;
    TTree* tin;
