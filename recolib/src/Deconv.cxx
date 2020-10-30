@@ -247,6 +247,8 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
       {
          fPadSecMask.push_back(11);
          fPadRowMask.push_back(324);
+         fPadRowMask.push_back(325);
+         fPadRowMask.push_back(326);
          fPadRowMask.push_back(337);
       }
    if( run == 903941 )
@@ -632,7 +634,11 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          ALPHAg::electrode el(col,row);
 
          // mask hot pads
-         if( MaskPads(col,row) ) continue;
+         if( MaskPads(col,row) ) 
+            {
+               std::cout<<"Deconv::FindPadTimes(const FeamEvent*) MaskPad sec: "<<col<<", row:"<<row<<std::endl;
+               continue;
+            }
 
          if( ch->adc_samples.size() < 510 )
             {
