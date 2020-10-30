@@ -167,7 +167,7 @@ void ReadEventTree::MakeHistos()
  
    // line properties
    fHisto->Book("hNlines","Reconstructed Lines",10,0.,10.);
-   fHisto->Book("hlchi2","#chi^{2} of Straight Lines",200,0.,200.); // chi^2 of line fit
+   fHisto->Book("hlchi2","#chi^{2} of Straight Lines",200,0.,600.); // chi^2 of line fit
 
    fHisto->Book("hpattreceff","Track Finding Efficiency",201,-1.,200.);
    fHisto->GetHisto("hpattreceff")->SetLineWidth(2);
