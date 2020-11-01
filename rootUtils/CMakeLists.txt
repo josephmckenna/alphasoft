@@ -43,7 +43,6 @@ include(${ROOT_USE_FILE})
 
 # Include directories
 include_directories(include include)
-include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
@@ -56,7 +55,7 @@ ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
-target_link_libraries(rootUtils ${ROOT_LIBRARIES})
+target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib alpha2)
 
 install(TARGETS rootUtils DESTINATION lib)
 
