@@ -111,6 +111,7 @@ public:
 
       if (!a2ed) 
          {
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
             if (!TARootHelper::fgApp)
                TARootHelper::fgApp = new TApplication("A2EventDisplay", NULL, NULL, 0, 0);
 
@@ -132,6 +133,7 @@ public:
 
       //analysis_flow->fEvent->Print();
       if (a2ed && alphaevent) {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
          a2ed->SetEventPointer(alphaevent);
          /*flags=*/a2ed->DrawAllViews(); //? Is this the best draw function to be calling?
          /*flags=a2ed->DrawAllViews(
