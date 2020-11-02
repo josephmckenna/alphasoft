@@ -8,6 +8,12 @@ set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(DEFINED ENV{AGRELEASE})
+   message("AGRELEASE set to " $ENV{AGRELEASE}) 
+else()
+   message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
+endif()
+
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
