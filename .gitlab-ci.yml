@@ -133,6 +133,40 @@ build-cc7-cmake:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+build-cc7-cmake-ag:
+  stage: build
+  script:
+    - echo "Building"
+    - cd rootana
+    - make
+    - cd ..
+    - mkdir build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
+    - make | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-a2:
+  stage: build
+  script:
+    - echo "Building"
+    - cd rootana
+    - make
+    - cd ..
+    - mkdir build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
+    - make | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
 build-cc7:
   stage: build
   script: 
