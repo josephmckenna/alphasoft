@@ -79,7 +79,7 @@ build-fedora:
   stage: build
   before_script:
     #Set up root and dependancies
-    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind
