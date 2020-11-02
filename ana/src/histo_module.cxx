@@ -9,7 +9,6 @@
 #include <set>
 #include <iostream>
 
-#include "AnalysisTimer.h"
 class HistoFlags
 {
 public:

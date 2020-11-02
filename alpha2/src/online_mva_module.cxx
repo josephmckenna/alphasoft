@@ -13,9 +13,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AnalysisTimer.h"
-
-
 #include "../OnlineMVA/weights/alphaClassification_BDTF.class.C"
 class OnlineMVAFlags
 {

@@ -28,9 +28,6 @@
 
 #define HOT_DUMP_LOW_THR 500
 
-
-#include "AnalysisTimer.h"
-
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
 

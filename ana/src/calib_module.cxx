@@ -30,8 +30,6 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
-#include "AnalysisTimer.h"
-
 class CalibFlags
 {
 public:

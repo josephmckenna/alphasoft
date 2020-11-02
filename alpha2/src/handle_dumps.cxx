@@ -13,7 +13,6 @@
 #include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
-#include "AnalysisTimer.h"
 #include "DumpHandling.h"
 #include <iostream>
 class DumpMakerModuleFlags
@@ -122,33 +121,33 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
-      if (!DumpFlow)
+      DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
+      if (!DumpsFlow)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      uint ndumps=DumpFlow->DumpMarkers.size();
+      uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
       {
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      int iSeq=DumpFlow->SequencerNum;
+      int iSeq=DumpsFlow->SequencerNum;
       {
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
       dumplist[iSeq].setup();
       
-      for(auto dump: DumpFlow->DumpMarkers)
+      for(auto dump: DumpsFlow->DumpMarkers)
       {
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpFlow->states);
+      dumplist[iSeq].AddStates(&DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver);
+      dumplist[iSeq].check(DumpsFlow->driver);
       
       }
       //dumplist[iSeq].Print();

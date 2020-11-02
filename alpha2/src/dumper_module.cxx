@@ -13,7 +13,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AnalysisTimer.h"
 #include "generalizedspher.h"
 class DumperFlags
 {

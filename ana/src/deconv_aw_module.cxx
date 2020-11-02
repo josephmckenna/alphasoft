@@ -4,7 +4,6 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 
 #include "Deconv.hh"
@@ -143,9 +142,7 @@ public:
          }
       }
 
-      #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif   
 
       const Alpha16Event* aw = e->a16;
       if( !aw )

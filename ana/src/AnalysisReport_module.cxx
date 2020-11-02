@@ -16,15 +16,18 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
+#ifdef BUILD_AG
 #include "RecoFlow.h"
+#endif
+#ifdef BUILD_A2
 #include "A2Flow.h"
+#endif
 #include "GitInfo.h"
-#include "AnalysisTimer.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
 
-
+#ifdef BUILD_A2
 class A2DumpSummary
 {
 public:
@@ -68,7 +71,8 @@ public:
                    time);
    }
 };
-
+#endif
+#ifdef BUILD_A2
 class A2DumpSummaryList
 {
 public:
@@ -107,7 +111,7 @@ public:
          list[i]->Print();
    }
 };
-
+#endif
 
 class MeanMode
 {
@@ -201,12 +205,13 @@ public:
    MeanMode SVD_Tracks{100};
    MeanMode SVD_Verts{10};
    MeanMode SVD_Pass{2};
-
+#ifdef BUILD_A2
    A2DumpSummaryList DumpLogs;
-
+#endif
    int RunNumber=-1;
    time_t midas_start_time=0;
    time_t midas_stop_time=0;
+#ifdef BUILD_AG
    void FillTPC(TStoreEvent* e)
    {
       if (e->GetNumberOfTracks()>0)
@@ -226,6 +231,8 @@ public:
       last_event_ts = e->GetTimeOfEvent();
       nStoreEvents++;
    }
+#endif
+#ifdef BUILD_AG
    void FillTPCSigFlow(AgSignalsFlow* SigFlow)
    {
       if (SigFlow->awSig)
@@ -236,6 +243,8 @@ public:
          mean_match+=(double)SigFlow->matchSig->size();
       nSigEvents++;
    }
+#endif
+#ifdef BUILD_AG
    void CalculateTPCMeans()
    {
       if (nSigEvents>0)
@@ -256,6 +265,7 @@ public:
       }
       return;
    }
+#endif
    void PrintAG()
    {
       if (nStoreEvents>0)
@@ -270,6 +280,7 @@ public:
       }
       return;
    }
+#ifdef BUILD_A2
    void FillSVD(TSiliconEvent* se)
    {
       SVD_N_RawHits.InsertValue(se->GetNsideNRawHits());
@@ -284,6 +295,7 @@ public:
       nSVDEvents++;
       return;
    }
+#endif
    void PrintA2(int rough_time=-1)
    {
       if(nSVDEvents>0)
@@ -322,6 +334,7 @@ public:
          std::cout<<std::endl;
       }
    }
+
 };
 
    
@@ -331,10 +344,8 @@ public:
 
    bool fTrace = false;
    std::string binary_path_full;
-   
-   AnalysisReportFlags* fFlags;
 
-  
+   AnalysisReportFlags* fFlags;
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -369,12 +380,6 @@ public:
       runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &fFlags->midas_start_time);
       #endif
 
-      //last_module_time= clock();
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
-
-
-      
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
      
@@ -415,9 +420,9 @@ public:
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;
-
+#ifdef BUILD_AG
       fFlags->CalculateTPCMeans();
-
+#endif
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -447,6 +452,7 @@ public:
       for (int ii=FlowEvents-1; ii>=0; ii--)
       {
          f=flowArray[ii];
+#ifdef BUILD_AG
          AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
          if (analyzed_event)
          {
@@ -463,6 +469,8 @@ public:
             fFlags->FillTPCSigFlow(SigFlow);
             continue;
          }
+#endif
+#ifdef BUILD_A2
          SilEventFlow* SilFlow = dynamic_cast<SilEventFlow*>(f);
          if(SilFlow)
          {
@@ -481,6 +489,7 @@ public:
             }
             continue;
          }
+#endif
       }
       return flow;
    }
@@ -512,6 +521,7 @@ public:
          //Ok, lets support both proper and american spellings
          if (args[i] == "--summarise" || args[i] == "--summarize")
          {
+#ifdef BUILD_A2
              while (args[i+1].c_str()[0]!='-')
              {
                 char dump[80];
@@ -519,6 +529,10 @@ public:
                 fFlags.DumpLogs.TrackDump(dump);
                 if (i+1==args.size()) break;
              }
+#else
+             std::cerr<<"--summarise feature only available for ALPHA2"<<std::endl;
+#endif
+
          }
          if (args[i] == "--AnalysisReport")
             fFlags.fSaveHistograms = true;
@@ -528,7 +542,9 @@ public:
 
    void Finish()
    {
+#ifdef BUILD_A2
       fFlags.DumpLogs.Print();
+#endif
       //Git revision date:
       time_t t = GIT_DATE;
       struct tm *tm = localtime(&t);

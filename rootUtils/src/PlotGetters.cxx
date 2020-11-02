@@ -3,26 +3,29 @@
 extern Int_t gNbin;
 //Plots
 
+#ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TH1D* h=Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
   h->GetXaxis()->SetTitle("Time [s]");
   h->GetYaxis()->SetTitle("Counts");
   h->Draw();
   return;  
 } 
-
+#endif
+#ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
   return Plot_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);  
   h->GetXaxis()->SetTitle("Time [s]");
   h->GetYaxis()->SetTitle("Counts");
@@ -32,49 +35,55 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double
   h->Draw();
   return;  
 } 
-
+#endif
+#ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
   return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);  
   h->GetXaxis()->SetTitle("Time [s]");
   h->GetYaxis()->SetTitle("Counts");
   h->Draw();
   return;  
 } 
-
+#endif
+#ifdef BUILD_AG
 void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
   return Plot_Delta_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TH1D* h=Get_Delta_Chrono( runNumber, ChannelName, tmin, tmax);
   h->Draw();
   return;  
 } 
-
+#endif
+#ifdef BUILD_AG
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
   return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
-
-void PlotScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
+#endif
+#ifdef BUILD_AG
+void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
 
   std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_AND_D","SiPM_E",
       "SiPM_C","SiPM_F","SiPM_C_AND_F","SiPM_B"};
@@ -92,17 +101,19 @@ void PlotScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
     }
   return;
 }
-
-void PlotScintillators(Int_t runNumber, const char* description, Int_t repetition, Int_t offset)
+#endif
+#ifdef BUILD_AG
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return PlotScintillators(runNumber, tmin, tmax);
+  return PlotChronoScintillators(runNumber, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TAGPlot* p=new TAGPlot(0); //Cuts off
   p->SetTimeRange(0.,tmax-tmin);
   p->AddEvents(runNumber,tmin,tmax);
@@ -110,7 +121,8 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
   std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
   p->Canvas(cname);
 }
-   
+#endif
+#ifdef BUILD_AG
 void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
 {
   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
@@ -121,7 +133,8 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t
   std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
   return Plot_TPC(runNumber,tmin,tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repetition, Int_t offset)
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
@@ -141,7 +154,8 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repe
   p->Canvas(cname);
   return;
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 {
   TAGPlot* p=new TAGPlot(0); //Cuts off  
@@ -165,7 +179,8 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 
   return;
 } 
-
+#endif
+#ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
 			      Int_t repetition, Int_t offset)
 { 
@@ -174,7 +189,8 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description,
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
 				   repetition, offset);
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
 			      Int_t repetition, Int_t offset)
 { 
@@ -192,7 +208,7 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
       if( dump.BeginsWith("all", TString::kIgnoreCase))
 	{
 	  tmin=0.;
-	  tmax=GetTotalRunTime(runNumber[i]);
+	  tmax=GetAGTotalRunTime(runNumber[i]);
 	  whole=true;
 	  duration = duration>tmax?duration:tmax;
 	}
@@ -236,10 +252,11 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 
   return;
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TCanvas* c=new TCanvas("ClockDrift","ClockDrift",1200,800);
   c->Divide(1,3);
   c->cd(1);
@@ -250,9 +267,11 @@ void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin, Double_t tmax)
   Get_TPC_EventTime_vs_OfficialTime_Matching(runNumber,tmin,tmax)->Draw();
   c->Draw();
 }
+#endif
+#ifdef BUILD_AG
 void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TCanvas* c=new TCanvas("ChronoClockDrift","ChronoClockDrift",1200,800);
   c->Divide(CHRONO_N_BOARDS,3);
   for (int i=0; i<CHRONO_N_BOARDS; i++)
@@ -266,10 +285,11 @@ void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
     }
   c->Draw();
 }
-
+#endif
+#ifdef BUILD_AG
 void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TCanvas* c=new TCanvas("ChronoClockSync","ChronoClockSync",1200,800);
   c->Divide(CHRONO_N_BOARDS,2);
   for (int i=0; i<CHRONO_N_BOARDS; i++)
@@ -281,17 +301,18 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
     }
   c->Draw();
 }
-
+#endif
 //*************************************************************
 // Energy Analysis
 //*************************************************************
 TCanvas* gc;
 TH1D* gh;
-TCanvas* Plot_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
+#ifdef BUILD_AG
+TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
   Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
   Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
-  if (stop_time<0.) stop_time=GetTotalRunTime(runNumber);
+  if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
 
   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
   Double_t stopOffset = 0.; // dump finishes at trigger
@@ -394,12 +415,13 @@ TCanvas* Plot_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile,
   gh=hEnergy;
   return cEnergy;
 }
-
+#endif
+#ifdef BUILD_AG
 TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
   Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
   Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
-  if (stop_time<0.) stop_time=GetTotalRunTime(runNumber);
+  if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
 
   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
   Double_t stopOffset = 0.; // dump finishes at trigger
@@ -502,9 +524,10 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpF
   gh=hEnergy;
   return cEnergy;
 }
-
+#endif
 
 Double_t Boltzmann_constant = 8.61733e-5; //eV/K
+
 Double_t FitEnergyDump( Double_t Emin, Double_t Emax,TH1D* h)
 {
 
@@ -575,7 +598,7 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 }
 
 
-
+#ifdef BUILD_A2
 void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
@@ -596,7 +619,8 @@ void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::st
    for (size_t i=0; i<hh.size(); i++)
       hh[i]->Draw();
 }
-
+#endif
+#ifdef BUILD_A2
 void Plot_SVD(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
 {
    TA2Plot* Plot=new TA2Plot();
@@ -631,7 +655,7 @@ void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector
    std::vector<TA2Spill*> s=Get_A2_Spills(runNumber,description,repetition);
    return Plot_SVD(runNumber,s);
 }
-
+#endif
 
 /* emacs
  * Local Variables:

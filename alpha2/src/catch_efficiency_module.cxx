@@ -11,7 +11,6 @@
 #include "RecoFlow.h"
 #include "A2Flow.h"
 
-#include "AnalysisTimer.h"
 #include <iostream>
 class CatchEfficiencyModuleFlags
 {
