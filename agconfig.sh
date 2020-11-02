@@ -328,7 +328,7 @@ lxplus* )
   if [ -n "${ROOTSYS}" ]; then
     echo "$ROOTSYS seems to be set ok"
   else
-    if [ -n `which root-config` ];
+    if [ -n `which root-config` ]; then
       echo "ROOTSYS not set but root-config found... ok"
     else
       echo "ROOTSYS not set... Guessing settings for new computer..."
