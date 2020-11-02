@@ -140,7 +140,7 @@ build-cc7-cmake-ag:
     - cd rootana
     - make
     - cd ..
-    - mkdir build
+    - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
     - make | tee ../BuildLog.txt
@@ -157,7 +157,7 @@ build-cc7-cmake-a2:
     - cd rootana
     - make
     - cd ..
-    - mkdir build
+    - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
     - make | tee ../BuildLog.txt
