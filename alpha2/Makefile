@@ -68,18 +68,18 @@ ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/alphaOnline.exe
 BIN += $(BINS)
 
-all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 all: $(ALL)
 all: $(MODULES)
 all: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native $(BUILD_FLAGS)
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 O2: $(ALL) $(MODULES) $(BIN)
 
 .PRECIOUS: $(ALL_DEPS)

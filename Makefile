@@ -20,13 +20,17 @@ A2= $(DEPS) $(A2LIBS) $(A2BIN)
 
 ALL= $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
-all:: $(ALL) FIN
+all: $(ALL) FIN
+all: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
+
 #Fast build for just AG libs and binaries
 ag: $(AG) rootUtils.so
-	@echo -e "\033[32mAG ONLY Success!\033[m"
+ag: export BUILD_FLAGS:=-DBUILD_AG
+ag: @echo -e "\033[32mAG ONLY Success!\033[m"
 #Fast build for just A2 libs and binaries
 a2: $(A2) rootUtils.so
-	@echo -e "\033[32mA2 ONLY Success!\033[m"
+a2: export BUILD_FLAGS:=-DBUILD_A2
+a2: @echo -e "\033[32mA2 ONLY Success!\033[m"
 
 debug: MFLAGS += debug
 debug: $(ALL) FIN
