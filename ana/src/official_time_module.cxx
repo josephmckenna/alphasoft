@@ -18,7 +18,6 @@
 #include <iostream>
 #include "chrono_module.h"
 #include "TChronoChannelName.h"
-#include "AnalysisTimer.h"
 
 class OfficialTimeFlags
 {

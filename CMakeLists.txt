@@ -18,6 +18,13 @@ option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
+#Send these settings as precompiler flags (mostly used in rootUtils)
+if (BUILD_AG)
+   add_compile_definitions(BUILD_AG)
+endif (BUILD_AG)
+if (BUILD_A2)
+   add_compile_definitions(BUILD_A2)
+endif (BUILD_A2)
 
 set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
 message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
@@ -39,12 +46,15 @@ endif ()
 
 # Directories
 
-#Universal libraries
+#Universal libraries (Include some flow and TSpill stuff)
 add_subdirectory(analib)
-add_subdirectory(recolib)
+
+#rootUtils is customised based on above arguments
 add_subdirectory(rootUtils)
+
 #AG libraries
 if (BUILD_AG)
+   add_subdirectory(recolib)
    add_subdirectory(agana)
    add_subdirectory(aged)
    add_subdirectory(ana)
@@ -55,12 +65,12 @@ if (BUILD_AG_SIM)
    add_subdirectory(simulation/geant4)
    add_subdirectory(simulation/agg4)
 endif (BUILD_AG_SIM)
+
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
-
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake

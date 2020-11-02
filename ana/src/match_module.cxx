@@ -13,7 +13,6 @@
 #include <set>
 #include <iostream>
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 #include "Match.hh"
 

@@ -15,7 +15,6 @@
 #include "TH2D.h"
 #include "TH3D.h"
 #include "TTree.h"
-#include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
 

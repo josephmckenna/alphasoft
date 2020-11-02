@@ -50,9 +50,13 @@ ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWav
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
-#link_libraries(agtpc analib ${ROOT_LIBRARIES})
-# JOE: This is a temporary hack to build with rootUtils... rootUtils somehow needs splitting for AG and A2
-link_libraries(agtpc analib rootUtils alpha2 Geom ${ROOT_LIBRARIES})
+if (BUILD_AG)
+   link_libraries(agtpc analib )
+endif (BUILD_AG)
+if (BUILD_A2)
+   link_libraries(agtpc alpha2 )
+endif (BUILD_A2)
+link_libraries(agtpc rootUtils Geom ${ROOT_LIBRARIES})
  
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )

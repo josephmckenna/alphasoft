@@ -1,3 +1,4 @@
+#ifdef BUILD_A2
 #ifndef _TA2Plot_Filler_
 #define _TA2Plot_Filler_
 
@@ -40,4 +41,5 @@ public:
    void LoadData();
 
 };
+#endif
 #endif

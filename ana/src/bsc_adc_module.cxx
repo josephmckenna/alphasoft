@@ -14,7 +14,6 @@
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
 

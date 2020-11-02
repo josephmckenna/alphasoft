@@ -8,7 +8,6 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-
 #include "RecoFlow.h"
 
 #include "TTree.h"
@@ -18,9 +17,6 @@
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
-
-#include "AnalysisTimer.h"
-
 
 #define HANDLE_SEQ_IN_SIDE_THREAD 0
 
@@ -112,10 +108,7 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
       START_TIMER
-      #endif      
-
       //
 
       // if( fSeqAsm )
@@ -133,9 +126,7 @@ public:
         sq->AddData(bkptr,bklen);
         flow=sq;
       }
-      #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
-      #endif
       return flow;
    }
 
@@ -184,13 +175,13 @@ public:
          return flow;
          }  
       free(buf);
-      flow=new AgDumpFlow(flow);
-      //((AgDumpFlow*)flow)->MidasTime=me->time_stamp;
+      flow=new DumpFlow(flow);
+      //((DumpFlow*)flow)->MidasTime=me->time_stamp;
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
       driver->Parse(node);
-      ((AgDumpFlow*)flow)->driver=driver;
+      ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
       int iSeqType=-1;
@@ -217,7 +208,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
+      ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -245,7 +236,7 @@ public:
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
              SequencerTree->Fill();
-            ((AgDumpFlow*)flow)->AddDumpEvent(
+            ((DumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
                 cSeq[iSeqType],
                 me->time_stamp,
@@ -287,7 +278,7 @@ public:
 
             //Trigger unset for now
             SeqState->SetComment(*state->getComment() );
-            ((AgDumpFlow*)flow)->AddStateEvent(SeqState);
+            ((DumpFlow*)flow)->AddStateEvent(SeqState);
             //SeqState->Print();
             /*fSeqState=SeqState;*/
             /*gSeqStateTree->Fill();*/

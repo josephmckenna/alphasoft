@@ -18,8 +18,6 @@
 #include <iostream>
 #include "TSVD_QOD.h"
 
-#include "AnalysisTimer.h"
-
 class OfficialA2TimeFlags
 {
 public:

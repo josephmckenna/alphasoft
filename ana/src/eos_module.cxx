@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <cassert>
-#include "AnalysisTimer.h"
 #include "TSystem.h"
 #include <sys/stat.h>
 #include "TObjArray.h"

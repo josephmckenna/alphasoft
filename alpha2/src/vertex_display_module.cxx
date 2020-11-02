@@ -19,8 +19,6 @@
 #include "TH3D.h"
 #include <THttpServer.h>
 
-#include "AnalysisTimer.h"
-
 class VertexDisplayFlags
 {
 public:

@@ -8,7 +8,6 @@
 #include "TStoreHelix.hh"
 #include "TSpacePoint.hh"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 
 #include <cctype>
