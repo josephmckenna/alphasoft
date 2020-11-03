@@ -328,7 +328,7 @@ lxplus* )
   if [ -n "${ROOTSYS}" ]; then
     echo "$ROOTSYS seems to be set ok"
   else
-    if [ -n `which root-config` ]; then
+    if [ `which root-config | wc -c` -gt 5 ]; then
       echo "ROOTSYS not set but root-config found... ok"
     else
       echo "ROOTSYS not set... Guessing settings for new computer..."
@@ -336,7 +336,7 @@ lxplus* )
         echo "cvmfs found..."
         lxplus
       else
-        echo "I don't know what to do yet"
+        echo "\tFAILED TO FIND ROOT! I don't know what to do"
       fi
     fi
   fi
