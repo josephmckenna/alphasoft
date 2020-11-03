@@ -29,8 +29,8 @@ endif
 # get the rootana Makefile settings
 
 
-LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum -lGeom -lMinuit2
+LIBS     += -L$(ROOTANASYS)/lib -lrootana
+LIBS     += -lSpectrum -lGeom -lz -lMinuit2 -lMinuit -lMathMore -lGui -lGpad -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)
@@ -61,7 +61,7 @@ $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc -lMinuit
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc
 #USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo
