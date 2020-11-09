@@ -37,7 +37,7 @@ static const TVector3 zaxis(0.,0.,1.);
 class ReadEventTree
 {
 public:
-   ReadEventTree(TString fname);
+   ReadEventTree(TString fname, bool s);
    ~ReadEventTree();
 
    void MakeHistos();
@@ -87,6 +87,10 @@ private:
    // aw*pad
    TH1D* hmatch;
    TH2D* hawpadsector;
+   TH1D* hawamppc_px;
+
+   // sigpoints
+   TH1D* hsptawamp_px;
 };
 
 #endif
