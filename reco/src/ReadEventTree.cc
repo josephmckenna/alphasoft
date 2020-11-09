@@ -39,6 +39,10 @@ void ReadEventTree::MakeHistos()
                 100,0.,TMath::TwoPi(),61,109.,174.);
    fHisto->GetHisto("hsprp")->SetStats(kFALSE);
 
+   fHisto->Book("hspth","Pulse Height Vs Time for Spacepoints in Tracks;Time [ns];Amplitude [a.u.]",
+                300,0.,4800.,500,0.,2000.);
+   fHisto->GetHisto("hspth")->SetStats(kFALSE);
+
    fHisto->Book("hsplen","Distance between First and Last Spacepoint;[mm]",blen,0.,maxlen);
    fHisto->Book("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
                 100,108.,175.,blen,0.,maxlen);
@@ -92,6 +96,10 @@ void ReadEventTree::MakeHistos()
                 100,0.,TMath::TwoPi(),61,109.,174.);
    fHisto->GetHisto("hhsprp")->SetStats(kFALSE);
 
+   fHisto->Book("hhspth","Pulse Height Vs Time for Spacepoints in Helices;Time [ns];Amplitude [a.u.]",
+                300,0.,4800.,500,0.,2000.);
+   fHisto->GetHisto("hhspth")->SetStats(kFALSE);
+
 
    // used helices
    fHisto->Book("hNusedhel","Used Helices",10,0.,10.);
@@ -121,6 +129,10 @@ void ReadEventTree::MakeHistos()
    fHisto->Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
                 100,0.,TMath::TwoPi(),90,109.,174.);
    fHisto->GetHisto("huhsprp")->SetStats(kFALSE);
+
+   fHisto->Book("huhspth","Pulse Height Vs Time for Spacepoints in Used Helices;Time [ns];Amplitude [a.u.]",
+                300,0.,4800.,500,0.,2000.);
+   fHisto->GetHisto("huhspth")->SetStats(kFALSE);
 
 
    // cosmic time distribution
@@ -286,6 +298,28 @@ void ReadEventTree::DisplayHisto()
          cdec->SaveAs(savFolder+cname+TString(".pdf"));
       }
    }
+
+   if( fHisto->GetHisto("hspth")->GetEntries() > 0 )
+      {
+         cname="campz";
+         cname+=tag;
+         TCanvas* campz = new TCanvas(cname.Data(),cname.Data(),1600,1400);
+         campz->Divide(2,2);
+         campz->cd(1);
+         fHisto->GetHisto("hspth")->Draw("colz");
+         campz->cd(2);
+         fHisto->GetH2("hspth")->ProjectionX()->Draw("HIST");
+         campz->cd(3);
+         hawamppc_px->Draw("HIST");
+         campz->cd(4);
+         hsptawamp_px->Draw("HIST");
+         
+         if(_save_plots) {
+         campz->SaveAs(savFolder+cname+TString(".pdf"));
+         campz->SaveAs(savFolder+cname+TString(".pdf"));
+      }
+      }
+
    // spacepoints
    if( fHisto->GetHisto("hpxy")->GetEntries() > 0 )
       {
@@ -673,6 +707,7 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
          fHisto->FillHisto("hspzphi", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("hspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("hsprp", ap->GetPhi(), ap->GetR() );
+         fHisto->FillHisto("hspth",ap->GetTime(),ap->GetHeight());
       }
    double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
    fHisto->FillHisto("hsplen", maxd );
@@ -731,6 +766,7 @@ void ReadEventTree::ProcessHelix(TStoreHelix* hel)
          fHisto->FillHisto("hhspzp", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("hhspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("hhsprp", ap->GetPhi(), ap->GetR() );
+         fHisto->FillHisto("hhspth", ap->GetTime(),ap->GetHeight());
       }
 }
 
@@ -756,6 +792,7 @@ void ReadEventTree::ProcessUsed(TFitHelix* hel)
          fHisto->FillHisto("huhspzp", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("huhspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("huhsprp", ap->GetPhi(), ap->GetR() );
+         fHisto->FillHisto("huhspth", ap->GetTime(),ap->GetHeight());
       }
 }
 
@@ -776,7 +813,7 @@ void ReadEventTree::ProcessTree( )
    double Nvtx=0.;
    for(int e=0; e<tin->GetEntries(); ++e)
       {
-         if( e%1000 == 0 ) printf("*** %d\r",e);//std::cout<<"*** "<<e<<std::endl;
+         if( e%100 == 0 ) printf("*** %d\r",e);//std::cout<<"*** "<<e<<std::endl;
          event->Reset();
          tin->GetEntry(e);
          //      std::cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<std::endl;
@@ -900,6 +937,7 @@ void ReadEventTree::GetSignalHistos()
             htt->SetLineColor(kOrange);
             htt->SetLineWidth(2);
             htt->SetTitle("Drift Time Spectrum after Deconvolution");
+            htt->Rebin(2);
          }
       }
    else
@@ -946,6 +984,7 @@ void ReadEventTree::GetSignalHistos()
             htpad->SetStats(kFALSE);
             htpad->SetLineColor(kBlack);
             htpad->SetLineWidth(2);
+            htpad->Rebin(2);
 
             hopad = (TH2D*)gROOT->FindObject("hOccPad");
             hopad->SetTitle("Pad channels Occupancy");
@@ -960,7 +999,17 @@ void ReadEventTree::GetSignalHistos()
          hmatch->SetLineWidth(2);
 
          hawpadsector = (TH2D*)gROOT->FindObject("hawcol_sector_time");
+
+         TH2D* hawamppc = (TH2D*) gROOT->FindObject("hawamp_match_amp_pc");
+         hawamppc_px=hawamppc->ProjectionX();
       }
+
+   if( gDirectory->cd("/sigpoints") )
+      {
+         TH2D* hsptawamp = (TH2D*) gROOT->FindObject("hAWspTimeAmp");
+         if( hsptawamp )
+            hsptawamp_px=hsptawamp->ProjectionX();
+      }   
 }
 
 
@@ -1035,9 +1084,9 @@ void ReadEventTree::copy_file( const char* srce_file, const char* dest_file )
    dest << srce.rdbuf() ;
 }
 
-ReadEventTree::ReadEventTree(TString fname):tag("_R"),RunNumber(0),
-                                            _save_plots(true),
-                                            blen(200),maxlen(400.)
+ReadEventTree::ReadEventTree(TString fname, bool s):tag("_R"),RunNumber(0),
+                                                    savFolder("./"),_save_plots(s),
+                                                    blen(200),maxlen(400.)
 {
    std::cout<<"DATA"<<std::endl;
 
@@ -1054,17 +1103,20 @@ ReadEventTree::ReadEventTree(TString fname):tag("_R"),RunNumber(0),
    std::cout<<"Run # "<<RunNumber<<std::endl;
    tag+=RunNumber;
 
-   TString rootdir(getenv("AGRELEASE"));
-   rootdir+="/";
-   savFolder=MakeAutoPlotsFolder("time",rootdir);
-   std::cout<<"Saving plots to: "<<savFolder<<std::endl;
+   if( _save_plots ) 
+      {
+         TString rootdir(getenv("AGRELEASE"));
+         rootdir+="/";
+         savFolder=MakeAutoPlotsFolder("time",rootdir);
+         std::cout<<"Saving plots to: "<<savFolder<<std::endl;
+      }
 
    TString foutname(savFolder+"statR"+RunNumber+".txt");
    std::cout<<"Stat file: "<<foutname<<std::endl;
    fout.open(foutname.Data());
    fout<<"Filename: "<<fname<<std::endl;
 
-   std::string histoname(savFolder+"/plots_R"+RunNumber+".root");
+   std::string histoname(savFolder+"plots_R"+RunNumber+".root");
    std::cout<<"Saving histos to:"<<histoname<<std::endl;
    fHisto=new Histo(histoname);
    fin->cd();
