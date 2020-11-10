@@ -30,7 +30,7 @@ else
 fi
 
 
-if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
   eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
