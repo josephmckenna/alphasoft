@@ -32,7 +32,9 @@ public:
    A2DisplayRun(TARunInfo* runinfo, bool mode)
       : TARunObject(runinfo), a2ed(NULL), fBatch(mode)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
+#endif
       printf("A2DisplayRun::ctor!\n");
    }
 
@@ -93,7 +95,9 @@ public:
    {
       if( fBatch )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -101,7 +105,9 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TAlphaEvent* alphaevent=fe->alphaevent;

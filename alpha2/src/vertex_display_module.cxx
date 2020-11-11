@@ -68,7 +68,9 @@ public:
    VertexDisplay(TARunInfo* runinfo, VertexDisplayFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Vertex Display";
+#endif
       if (fTrace)
          printf("VertexDisplay::ctor!\n");
        if (!fFlags->fDraw) return;
@@ -153,13 +155,17 @@ public:
   {
       if (!fFlags->fDraw)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* SiliconEvent=fe->silevent;

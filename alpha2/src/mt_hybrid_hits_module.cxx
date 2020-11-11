@@ -44,10 +44,6 @@
 
 #define VF48_COINCTIME 0.000010
 
-
-
-
-
 class HitFlags
 {
 public:
@@ -146,7 +142,9 @@ public:
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="hybrid_hits_module";
+#endif
       if (fTrace)
          printf("HitModule::ctor!\n");
    }
@@ -207,29 +205,28 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if (!fe->vf48event)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventFlow(flow,s);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"hybrid_hits_module",timer_start);
-      #endif
       return flow;
    }
 };
@@ -265,8 +262,9 @@ public:
    HitModule_vf48(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
-
+#endif
       // load the sqlite3 db
       char dbName[255]; 
       sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
@@ -450,36 +448,37 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* SiliconEvent=sf->silevent;
       if (!SiliconEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       SiliconEvent=AddVF48Module(fe->vf48event,fFlags->ProcessVF48, SiliconEvent);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 };

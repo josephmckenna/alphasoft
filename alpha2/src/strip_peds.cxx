@@ -72,58 +72,6 @@ int 	PedFlags::nPedBins = 512;
 double 	PedFlags::pedBinWidth = 0.1;
 
 
-/*class PedModule: public TARunObject
-{
-public:
-   PedFlags* fFlags = NULL;
-   bool fTrace = false;
-
-   PedModule(TARunInfo* runinfo, PedFlags* flags)
-     : TARunObject(runinfo), fFlags(flags)
-   {
-      if (fTrace)
-         printf("PedModule::ctor!\n");
-   }
-
-   ~PedModule()
-   {
-      if (fTrace)
-         printf("PedModule::dtor!\n");
-   }
-
-   void BeginRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("PedModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-   }
-
-   void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
-   {
-      if (fTrace)
-         printf("PedModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
-   }
-
-
-
-   void PauseRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("PedModule::PauseRun, run %d\n", runinfo->fRunNo);
-   }
-
-   void ResumeRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("ResumeModule, run %d\n", runinfo->fRunNo);
-   }
-
-};*/
-
 class PedModule_vf48: public TARunObject
 {
 public:
@@ -154,8 +102,9 @@ public:
    PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
-
+#endif
 	  
 	  //New declaration in initiator. 
 	  //std::vector<TStripPed> vec;
@@ -288,31 +237,33 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
-      #ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif
+#endif
 
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if (!fe->vf48event)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       CountVF48Module(fe->vf48event,fFlags->ProcessVF48);
 
-      //flow=new SilEventsFlow(flow,s);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 

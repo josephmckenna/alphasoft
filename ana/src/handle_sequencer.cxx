@@ -48,7 +48,9 @@ public:
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Handle Sequencer";
+#endif
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
    }
@@ -105,10 +107,14 @@ public:
 
       if( me->event_id != 8 ) // sequencer event id
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
+#ifdef MANALYZER_PROFILER
       START_TIMER
+#endif
       //
 
       // if( fSeqAsm )
@@ -171,7 +177,9 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
+#ifdef MANALYZER_PROFILER
          flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
+#endif
          return flow;
          }  
       free(buf);

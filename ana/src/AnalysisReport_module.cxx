@@ -350,7 +350,9 @@ public:
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="AnalysisReport";
+#endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
    }

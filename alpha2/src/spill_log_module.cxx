@@ -87,7 +87,9 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="SpillLog";
+#endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
       
@@ -381,7 +383,9 @@ public:
       }
       else
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
       }
       return flow;
    }

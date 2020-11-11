@@ -49,7 +49,9 @@ public:
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Handle Dumps";
+#endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
@@ -118,19 +120,25 @@ public:
    {
       if( me->event_id != 8 ) // sequencer event id
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
       if (!DumpsFlow)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       int iSeq=DumpsFlow->SequencerNum;

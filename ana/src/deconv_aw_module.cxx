@@ -51,7 +51,9 @@ public:
                                                          fFlags( f ),
                                                          d( f->ana_settings )
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="DeconvAWModule";
+#endif
       if (fTrace)
          printf("DeconvAWModule::ctor!\n");
    }
@@ -98,7 +100,9 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
@@ -109,7 +113,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -118,12 +124,16 @@ public:
       {
          if (e->time<fFlags->start_time)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
          if (e->time>fFlags->stop_time)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }
@@ -132,24 +142,30 @@ public:
       {
          if (e->counter<fFlags->start_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
          if (e->counter>fFlags->stop_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }
-
+#ifdef MANALYZER_PROFILER
       START_TIMER
-
+#endif
       const Alpha16Event* aw = e->a16;
       if( !aw )
          {
             std::cout<<"DeconvAWModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
+#ifdef MANALYZER_PROFILER
             flow = new UserProfilerFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
+#endif
             return flow;
          }
       else
