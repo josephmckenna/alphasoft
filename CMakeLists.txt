@@ -14,6 +14,11 @@ else()
    message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
 endif()
 
+find_package(Git REQUIRED)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+   option(GIT_SUBMODULE "Check submodules during build" ON)
+endif()
+
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
@@ -44,6 +49,19 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
+
+function(get_submodule MODULE_NAME)
+   if(GIT_SUBMODULE)
+        message(STATUS "Submodule ${MODULE_NAME} update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update ${MODULE_NAME}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
+endfunction()
+
 # Directories
 
 
@@ -57,13 +75,17 @@ add_subdirectory(rootUtils)
 #AG libraries
 if (BUILD_AG)
    add_subdirectory(recolib)
+   get_submodule(agana)
    add_subdirectory(agana)
    add_subdirectory(aged)
    add_subdirectory(ana)
    add_subdirectory(reco)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
+   #get_submodule(simulation/garfieldpp)
    add_subdirectory(simulation/garfieldpp)
+   #get_submodule(simulation/submodules/CADMesh)
+   #add_subdirectory(simulation/submodules/CADMesh)
    add_subdirectory(simulation/geant4)
    add_subdirectory(simulation/agg4)
 endif (BUILD_AG_SIM)
