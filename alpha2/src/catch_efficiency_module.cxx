@@ -34,7 +34,9 @@ public:
    CatchEfficiencyModule(TARunInfo* runinfo, CatchEfficiencyModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Catch Efficiency";
+#endif
       if (fTrace)
          printf("CatchEfficiencyModule::ctor!\n");
    }
@@ -114,7 +116,9 @@ public:
       }
       else
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
       }
       return flow; 
   }

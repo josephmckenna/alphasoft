@@ -52,7 +52,9 @@ public:
                                                    fFlags(f)
       
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="LEpadModule";
+#endif
       if (fTrace) printf("LEpadModule::ctor!\n");
    }
 
@@ -93,7 +95,9 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if(fTrace)
@@ -103,7 +107,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       const AgEvent* e = ef->fEvent;
@@ -111,12 +117,16 @@ public:
       {
          if (e->time<fFlags->start_time)
          {
+#ifdef MANALYZER_PROFILER
            *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
          if (e->time>fFlags->stop_time)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }
@@ -125,12 +135,16 @@ public:
       {
          if (e->counter<fFlags->start_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
          if (e->counter>fFlags->stop_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }
@@ -139,7 +153,9 @@ public:
       if( !flow_sig ) 
          {
             printf("LEpadModule::Analyze NO SignalsFlow?\n");
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
 

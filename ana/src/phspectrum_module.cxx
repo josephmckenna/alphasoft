@@ -50,7 +50,9 @@ public:
                                                       fFlags(f),pmap(0),
                                                       fNtracks(1),fCoincTime(20.)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="PHspectrum Module";
+#endif
    }
    ~PHspectrum() {}
 
@@ -83,27 +85,35 @@ public:
    {
       if(!fFlags->fEnabled)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       AgAnalysisFlow* AnaFlow = flow->Find<AgAnalysisFlow>();
       if( !AnaFlow )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TStoreEvent* e = AnaFlow->fEvent;
       if( !e )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
