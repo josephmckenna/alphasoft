@@ -41,6 +41,9 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+find_package(ROOTANA)
+include_directories(${ROOTANA_INCLUDE_DIRS})
+
 # Include directories
 include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
