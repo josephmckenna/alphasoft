@@ -47,7 +47,7 @@ else
 CMAKE := cmake3
 endif
 
-cmake: buildrootana
+cmake:
 	@echo $(CMAKE)
 	@mkdir -p ${AGRELEASE}/build
 	@cd ${AGRELEASE}/build && $(CMAKE) ../ && make $(MFLAGS) install

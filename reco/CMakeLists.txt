@@ -30,7 +30,6 @@ include_directories(${ROOT_INCLUDE_DIRS})
 find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
 link_libraries(${ROOT_LIBRARIES} XMLParser XMLIO XMLParser XMLIO Minuit2)
 
-
 # Include directories
 include_directories($ENV{AGRELEASE}/agana)
 include_directories($ENV{AGRELEASE}/rootUtils/include)
@@ -41,8 +40,13 @@ include_directories($ENV{AGRELEASE}/recolib/include)
 include_directories($ENV{AGRELEASE}/analib)
 include_directories($ENV{AGRELEASE}/analib/include)
 include_directories($ENV{AGRELEASE}/ana/include)
-include_directories($ENV{ROOTANASYS}/include) # manalyzer required in Match?
 include_directories($ENV{AGRELEASE}/simulation/geant4/include)
+
+
+find_package(ROOTANA)
+message(${ROOTANA_INCLUDE_DIRS})
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 
 include(${ROOT_USE_FILE})
 ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWaveform.hh $ENV{AGRELEASE}/simulation/geant4/include/TMChit.hh LINKDEF $ENV{AGRELEASE}/simulation/geant4/include/G4outLinkDef.hh)
@@ -50,13 +54,14 @@ ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWav
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
+link_libraries(agana)
 if (BUILD_AG)
    link_libraries(agtpc analib )
 endif (BUILD_AG)
 if (BUILD_A2)
    link_libraries(agtpc alpha2 )
 endif (BUILD_A2)
-link_libraries(agtpc rootUtils Geom ${ROOT_LIBRARIES})
+link_libraries(rootUtils Geom ${ROOT_LIBRARIES})
  
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )

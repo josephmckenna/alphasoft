@@ -46,7 +46,9 @@ endif ()
 
 # Directories
 
+
 #Universal libraries (Include some flow and TSpill stuff)
+add_subdirectory(rootana)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments
