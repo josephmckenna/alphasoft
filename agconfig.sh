@@ -21,6 +21,12 @@ export AG_CFM=${AGRELEASE}/ana
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
 
+#Use EOS PUBLIC if not already set
+if [ -e ${EOS_MGM_URL} ]
+  export EOS_MGM_URL=root://eospublic.cern.ch
+fi
+
+
 # This MUST be set in order to create the simulation output
 if [[ -z "${MCDATA}" ]]; then
     export MCDATA=${AGRELEASE}/simulation
@@ -120,7 +126,6 @@ sim_submodules()
 
 alphaBeast()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/root_build/bin/thisroot.sh
   #. ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
@@ -136,7 +141,6 @@ alphaBeast()
 }
 alphaCrunch()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
@@ -151,7 +155,6 @@ alphaCrunch()
 
 agana()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
@@ -161,7 +164,6 @@ agana()
 acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
-    export EOS_MGM_URL=root://eospublic.cern.ch
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
     export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
@@ -172,7 +174,6 @@ acapra()
 
 lxplus()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   export AGMIDASDATA=${AGRELEASE}
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
