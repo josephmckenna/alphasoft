@@ -22,7 +22,7 @@ export AG_CFM=${AGRELEASE}/ana
 export AGOUTPUT=${AGRELEASE} # this is the default location
 
 #Use EOS PUBLIC if not already set
-if [ -e ${EOS_MGM_URL} ]
+if [ -e ${EOS_MGM_URL} ]; then
   export EOS_MGM_URL=root://eospublic.cern.ch
 fi
 
