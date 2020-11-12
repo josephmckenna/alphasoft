@@ -134,7 +134,9 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="unpack_module_stream";
+#endif
       if (fTrace)
          printf("UnpackModule::ctor!\n");
       vfu = new UnpackVF48();
@@ -273,18 +275,22 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
       if (event->event_id != 11)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif
+#endif
 
       event->FindAllBanks();
       
@@ -312,10 +318,12 @@ public:
       }
       if (!data_added)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
       }
       SendQueueToFlow(runinfo);
-#ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       if (TimeModules && data_added)
          flow=new AgAnalysisReportFlow(flow,"cache_vf48_data(main thread)",timer_start);
 #endif
@@ -399,13 +407,17 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       int VF48EventsQueued=QueueEventFromData();
       if (!VF48EventsQueued)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;   
       }
       return flow;

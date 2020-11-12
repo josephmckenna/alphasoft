@@ -36,7 +36,9 @@ public:
    Dumper(TARunInfo* runinfo, DumperFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Dumper Module";
+#endif
       if (fTrace)
          printf("Dumper::ctor!\n");
    }
@@ -79,7 +81,9 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TAlphaEvent* alphaEvent=fe->alphaevent;

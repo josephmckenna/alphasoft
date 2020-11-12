@@ -9,7 +9,6 @@
 #include "SignalsType.hh"
 #include "AnaSettings.hh"
 #include "TFile.h"
-#include "manalyzer.h"
 
 #include <mutex>          // std::mutex
 
