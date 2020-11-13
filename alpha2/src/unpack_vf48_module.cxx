@@ -323,11 +323,6 @@ public:
 #endif
       }
       SendQueueToFlow(runinfo);
-#ifdef MANALYZER_PROFILER
-      if (TimeModules && data_added)
-         flow=new AgAnalysisReportFlow(flow,"cache_vf48_data(main thread)",timer_start);
-#endif
-
       return flow;
    }
 
