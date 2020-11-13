@@ -16,6 +16,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TProfile.h>
+#include <TFile.h>
 
 #include "Alpha16.h"
 #include "Feam.h"
@@ -78,9 +79,9 @@ private:
    std::vector<ALPHAg::signal>* sanode;
    std::vector<ALPHAg::signal>* spad;
 
-   // check
-   std::vector<double> resRMS_a;
-   std::vector<double> resRMS_p;
+   // // check
+   // std::vector<double> resRMS_a;
+   // std::vector<double> resRMS_p;
 
 
    int ReadResponseFile(const double awbin, const double padbin);
@@ -212,16 +213,16 @@ private:
 
    ALPHAg::padmap* pmap;
 
-   TH2D* hADCped;
-   TProfile* hADCped_prox;
-   TH2D* hPWBped;
-   TProfile* hPWBped_prox;
+   static TH2D* hADCped;
+   static TProfile* hADCped_prox;
+   static TH2D* hPWBped;
+   static TProfile* hPWBped_prox;
 
    // pads
-   TH1D* hAvgRMSPad;
+   static TH1D* hAvgRMSPad;
    // anodes
-   TH1D* hAvgRMSBot;
-   TH1D* hAvgRMSTop;
+   //   static TH1D* hAvgRMSBot;
+   static TH1D* hAvgRMSTop;
 
    // to use in aged display
    std::vector<ALPHAg::wf_ref>* wirewaveforms;
@@ -240,8 +241,8 @@ public:
    ~Deconv();
 
    void Setup();
-   void SetupADCs(int run, bool norm=false, bool diag=false);
-   void SetupPWBs(int run, bool norm=false, bool diag=false);
+   void SetupADCs(TFile* fout, int run, bool norm=false, bool diag=false);
+   void SetupPWBs(TFile* fout, int run, bool norm=false, bool diag=false);
 
    int FindAnodeTimes(TClonesArray*);
    int FindPadTimes(TClonesArray*);
@@ -262,8 +263,8 @@ public:
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }
    inline void SetDisplay(bool a)    { fAged=a; }
 
-   inline std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
-   inline std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
+   // inline std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
+   // inline std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
 
    inline double GetADCdelay() const { return fADCdelay; }
    inline double GetPWBdelay() const { return fPWBdelay; }
