@@ -15,11 +15,11 @@
 
 //Null static pointers to histograms (histograms static so can be shared 
 //between Match instances in multithreaded mode)
-TH1D* Match::hsigCoarse=NULL;
-TH1D* Match::hsig=NULL;
+//TH1D* Match::hsigCoarse=NULL;
+//TH1D* Match::hsig=NULL;
 TH1D* Match::hcognpeaks=NULL;
-TH2D* Match::hcognpeaksrms=NULL;
-TH2D* Match::hcognpeakswidth=NULL;
+// TH2D* Match::hcognpeaksrms=NULL;
+// TH2D* Match::hcognpeakswidth=NULL;
 TH1D* Match::hcogsigma=NULL;
 TH1D* Match::hcogerr=NULL;
 TH2D* Match::hcogpadssigma=NULL;
@@ -92,12 +92,12 @@ void Match::Setup(TFile* OutputFile)
       if (!hcognpeaks)
          hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
-      if (!hcognpeaksrms)
-        hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
-			       0.,maxPadGroups+1.);
-      if (!hcognpeakswidth)
-        hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
-				 0.,maxPadGroups+1.);
+      // if (!hcognpeaksrms)
+      //   hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
+      // 			       0.,maxPadGroups+1.);
+      // if (!hcognpeakswidth)
+      //   hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
+      // 				 0.,maxPadGroups+1.);
       if (!hcogsigma)
         hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
       if (!hcogerr)
@@ -497,7 +497,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
 
   double blobwidth = 5.;
   double minRMS = 2.;
-
   int padmask = 4;
 
   double mean,rms;
@@ -580,8 +579,6 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
     {
       htimeblobs->Fill(duration.count());
       hcognpeaks->Fill(nfound);
-      // hcognpeaksrms->Fill(rms, nfound);
-      // hcognpeakswidth->Fill(width, nfound);
     }
 
   fitSignals ffs( vsig_sorted, nfound );
