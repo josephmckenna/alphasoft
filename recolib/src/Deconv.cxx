@@ -135,13 +135,13 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
          isalpha16=true;
       }
    else if( run >= 2282 && run < 2724 )
-         fADCdelay = -120.;
+      fADCdelay = -120.;
    else if( run >= 2724 && run < 3032 ) // new FMC-32
-         fADCdelay = 0.;
-   else if( run >= 3032 )
-         fADCdelay = -250.;
-   // else if( run >= 3870 )
-   //       fADCdelay = -350.;
+      fADCdelay = 0.;
+   else if( run >= 3032 && run < 3870 )
+      fADCdelay = -250.;
+   else if( run >= 3870 )
+      fADCdelay = -330.;
 
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
@@ -210,15 +210,15 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   // else if( run >= 3870 )
-   //    fPWBdelay = -150.;
+   else if( run >= 3870 )
+      fPWBdelay = -80.;//fPWBdelay = -50.;
+      
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
        run == 3253 || run == 3254 || run == 3255 ||
        run == 3260 || run == 3263 || run == 3265 ||
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
-      
       fPWBdelay = -100.;
 
    if( run > 903900)// fPWBdelay = -96.;
