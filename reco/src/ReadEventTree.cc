@@ -306,6 +306,7 @@ void ReadEventTree::DisplayHisto()
          TCanvas* campz = new TCanvas(cname.Data(),cname.Data(),1600,1400);
          campz->Divide(2,2);
          campz->cd(1);
+         fHisto->GetHisto("hspth")->Rebin(2);
          fHisto->GetHisto("hspth")->Draw("colz");
          campz->cd(2);
          fHisto->GetH2("hspth")->ProjectionX()->Draw("HIST");
