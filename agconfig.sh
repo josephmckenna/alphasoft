@@ -246,8 +246,13 @@ fi
 
 
 if [ -z "$(ls -A agana)" ]; then
-    git submodule update agana
-    git submodule update agcfmdb
+    git submodule update --init agana
+    git submodule update --init agcfmdb
+    echo "agana submodule loaded"
+else
+    git submodule update --remote agana
+    git submodule update --remote agcfmdb
+    echo "agana submodule updated"
 fi
 
 
