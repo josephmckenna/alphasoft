@@ -288,8 +288,8 @@ public:
       alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
       alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
       alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
-      alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
-      alphaStripTree->Branch("stripMeanSubRMS",&stripMeanSubRMS, "stripMeanSubRMS/F");
+      //alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
+      alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
 
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {
@@ -297,8 +297,9 @@ public:
          Strip_ADCs[i]->CalculatePed();
          stripMean      =(float)Strip_ADCs[i]->stripMean;
          stripRMS       =(float)Strip_ADCs[i]->stripRMS;
-         stripRMSAfterFilter=(float)Strip_ADCs[i]->StripRMSsAfterFilter;
          stripMeanSubRMS=(float)Strip_ADCs[i]->stripMeanSubRMS;
+         stripRMSAfterFilter=(float)Strip_ADCs[i]->StripRMSsAfterFilter;
+         
          
          alphaStripTree->Fill();
          stripNumber++;
