@@ -57,9 +57,10 @@ public:
    static bool OldStripFileVariables;
    static double nVASigma;
    static double pVASigma;
-   
+
+   static double fStripMeans[NUM_SI_MODULES*4*128];   
    static double fStripRMSs[NUM_SI_MODULES*4*128];
-   static double fStripMeans[NUM_SI_MODULES*4*128];
+
    void LoadAllStrips(const int RunNo)
    {
       char striprms_filename[256];
@@ -97,10 +98,7 @@ public:
       Int_t stripNumber;
       Float_t stripRMS, stripMean;
       striprms_tree->SetBranchAddress("stripNumber", &stripNumber );
-      if (this->OldStripFileVariables)
-         striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
-      else
-         striprms_tree->SetBranchAddress("stripRMS", &stripRMS );
+      striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
 
       striprms_tree->SetBranchAddress("stripMean", &stripMean );
       Int_t BadRMSValues=0;
@@ -115,6 +113,7 @@ public:
          if (stripRMS<0) BadRMSValues++;
          fStripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
          fStripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
+         std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<std::endl;
       }
       
       delete striprms_tree;
