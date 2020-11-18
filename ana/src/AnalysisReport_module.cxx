@@ -62,13 +62,12 @@ public:
    }
    void Print()
    {
-      printf("DUMP SUMMARY:%s\t DumpCount:%d\t VF48Events:%d \tVerticies:%d\t PassedCuts:%d\t TotalTime:%f\t\n",
-                   DumpName.c_str(),
-                   TotalCount,
-                   VF48Events,
-                   Verticies,
-                   PassedCuts,
-                   time);
+      std::cout<<"DUMP SUMMARY: "<< DumpName.c_str() << "\t";
+      std::cout<<"DumpCount: "   << TotalCount << "\t";
+      std::cout<<"VF48Events: "  << VF48Events << "\t";
+      std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
+      std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
+      std::cout<<"TotalTime: "    << time << std::endl;
    }
 };
 #endif
@@ -355,6 +354,12 @@ public:
 #endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
+         
+      if (!getenv("AGRELEASE"))
+      {
+         std::cerr<<"AGRELEASE not set! Did you mean to 'source agconfig.sh'?"<<std::endl;
+         exit(1);
+      }
    }
 
    ~AnalysisReportModule()
