@@ -209,6 +209,14 @@ public:
    }
    ~PedModule_vf48()
    {
+      for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
+		  {
+           if(Strip_ADCs[i]) 
+           {
+			   delete Strip_ADCs[i];
+            Strip_ADCs[i] = NULL;
+           }
+		  }
       delete SettingsDB;
       delete gVF48SiMap;
    }
