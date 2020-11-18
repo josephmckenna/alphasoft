@@ -116,6 +116,7 @@ double TStripPed::GetRAWStdev(const double& mean, int min, int max)
    double stdev=0.;
    
    if (min<0) min=0;
+   if (max>1024) max=1024;
 
    for (int i=min; i<max; i++)
    {
