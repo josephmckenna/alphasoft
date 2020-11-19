@@ -66,6 +66,7 @@ endfunction()
 
 
 #Universal libraries (Include some flow and TSpill stuff)
+get_submodule(rootana)
 add_subdirectory(rootana)
 add_subdirectory(analib)
 
