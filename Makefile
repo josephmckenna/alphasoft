@@ -58,7 +58,7 @@ BINARIES := $(patsubst ana/%.modules,bin/%.exe,$(BINARIES))
 
 cclean:
 	make clean -C build
-	rm -f $(BINARIES)
+	rm -f $(BINARIES) CMakeCache.txt CMakeFiles
 
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
