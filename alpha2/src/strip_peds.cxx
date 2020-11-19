@@ -158,6 +158,14 @@ public:
    }
    ~PedModule_vf48()
    {
+      for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
+		  {
+           if(Strip_ADCs[i]) 
+           {
+			   delete Strip_ADCs[i];
+            Strip_ADCs[i] = NULL;
+           }
+		  }
       delete SettingsDB;
       delete gVF48SiMap;
    }
@@ -363,10 +371,11 @@ public:
             i++;
             continue;
          }
-         if (args[i] == "--stripSigma")
+         if (args[i] == "--stripSigma" || args[i] == "--stripsSigma")
          {
 			 fFlags.NSIGMATHRES = stod(args[i+1]);
 			 i++;
+			 printf("Sigma has been set at %f \n", fFlags.NSIGMATHRES);
 			 continue;
 		 }
       }
@@ -377,61 +386,6 @@ public:
       return new PedModule_vf48(runinfo, &fFlags);
    }
 };
-
-/*class PedModuleFactory: public TAFactory
-{
-public:
-   PedFlags fFlags;
-
-public:
-   void Help()
-   {
-      printf("PedModuleFactory::Help!\n");
-      printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
-      printf("\t--nPedBins xxx Set the range of the bins in ped calculation (default value %d)\n", fFlags.nPedBins);
-      printf("\t--pedBinWidth xxx Set the bin width in ped calculation (default value %f)\n", fFlags.pedBinWidth);
-   }
-   void Usage()
-   {
-     Help();
-   }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory::Init!\n");
-
-      for (unsigned i=0; i<args.size(); i++)
-      {
-         if (args[i] == "--print")
-            fFlags.fPrint = true;
-         if (args[i] == "--nounpack")
-            fFlags.fUnpackOff = true;
-         if (args[i] == "--nPedBins")
-         {
-            fFlags.nPedBins = stoi(args[i+1]);
-            i++;
-            continue;
-         }
-         if (args[i] == "--pedBinWidth")
-         {
-            fFlags.pedBinWidth = stod(args[i+1]);
-            i++;
-            continue;
-         }
-      }
-   }
-
-   void Finish()
-   {
-      if (fFlags.fPrint)
-         printf("PedModuleFactory::Finish!\n");
-   }
-
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      printf("PedModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule(runinfo, &fFlags);
-   }
-};*/
 
 static TARegister tar0(new PedModuleFactory_vf48(0));
 static TARegister tar1(new PedModuleFactory_vf48(1));

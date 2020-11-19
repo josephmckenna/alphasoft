@@ -391,6 +391,7 @@ public:
                }
             }
          }
+        delete d;
       }
       return EventsQueued;
    }
