@@ -158,23 +158,16 @@ public:
 
 	  
 	  //New declaration in initiator. 
-	  //std::vector<TStripPed> vec;
-	  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
 	  printf("nPedBins = %d, and pedBinWidth = %f \n", fFlags->nPedBins, fFlags->pedBinWidth);
 	  
 	  if(Strip_ADCs.size() == 0)
 	  {
 		  Strip_ADCs.reserve(NUM_SI_MODULES * 4 * 128);
-		  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
 		  for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
 		  {
-			  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
 			  Strip_ADCs.push_back(new TStripPed(fFlags->nPedBins, fFlags->pedBinWidth));
-			  
 		  }
 	  }
-	  //Strip_ADCs = &vec;
-	  //Strip_ADCs(NUM_SI_MODULES*4*128,TStripPed(1024,0.1));
 	  
 
       // load the sqlite3 db

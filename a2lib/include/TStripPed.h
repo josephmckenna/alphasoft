@@ -4,10 +4,12 @@
 #include <math.h>
 #include <vector>
 #include "TObject.h"
+#include <TH1.h>
 class TStripPed: public TObject
 {
 public:
    std::vector<int>* histo;
+   TH1F* histo1;
    std::vector<int>* rawhisto;
    double sigma=99999.;
    double rawADCMean=0.;
@@ -44,8 +46,6 @@ public:
    
    void InsertValue(const double &ped_sub, const double &raw_adc);
    double GetMean(const double &_min=-9999999., const double &_max=9999999.);
-   //double GetRAWMean(const double &_min=-9999999., const double &_max=9999999.);
-   //double GetRAWStdev(const double &mean,const double &_min=-9999999., const double &_max=9999999.);
    double GetStdev(const double &mean,const double &_min=-9999999., const double &_max=9999999.);
    double GetRMS(const double& mean,const double &_min=-9999999., const double &_max=9999999.);
 
