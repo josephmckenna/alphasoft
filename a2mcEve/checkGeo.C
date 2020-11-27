@@ -37,7 +37,7 @@ void checkGeo(Int_t runNumber=0)
     }
     ///< Reading "gentle" geometry file generated with makeGeo
     ostringstream gEveGeoInput;
-    gEveGeoInput << "../output/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoInput << "./root/a2mcEveApparatus-" << runNumber << ".root";
 	TFile* geom = TFile::Open(gEveGeoInput.str().c_str());
 
 	TIter next(gDirectory->GetListOfKeys());
@@ -95,7 +95,7 @@ Bool_t makeGeo(Int_t runNumber=0) {
     gGeoManager = TGeoManager::Import(file_name);
 
     ostringstream gEveGeoOutput;
-    gEveGeoOutput << "../output/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoOutput << "./root/a2mcEveApparatus-" << runNumber << ".root";
 
     gGeoManager->CheckOverlaps(0.01); 
     gGeoManager->PrintOverlaps(); 

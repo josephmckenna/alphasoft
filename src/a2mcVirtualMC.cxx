@@ -291,7 +291,7 @@ void a2mcVirtualMC::WriteLog() {
 
     ///< SAVING INFO INTO THE LOG FILE
     ostringstream sf;
-    sf << "output/a2mc_" << runNumber << ".log";
+    sf << "output/a2mc-" << runNumber << ".log";
     ostringstream ss; 
 
     ss.clear(); ss.str("");
