@@ -436,16 +436,16 @@ int main(int argc, char * argv[])
   TFile* froot = TFile::Open(fname,"RECREATE");
   cout<<"Plot Signal"<<endl;
 
-  // pads have different readout
-  Sensor ROsens(sensor);
+  //  // pads have different readout
+  //  Sensor ROsens(sensor);
  
   bool doconv=false;
   if( doconv )
     {
-      // AFTER Response Function
-      ROsens.SetTransferFunction(Hpads);
-      if( ROsens.ConvoluteSignals() ) cout<<"Pad readout succcess!!"<<endl;
-      else cout<<"Pad signal convolution unsuccesfull"<<endl;
+      // // AFTER Response Function
+      // ROsens.SetTransferFunction(Hpads);
+      // if( ROsens.ConvoluteSignals() ) cout<<"Pad readout succcess!!"<<endl;
+      // else cout<<"Pad signal convolution unsuccesfull"<<endl;
       
       // AWB Response Function
       sensor.SetTransferFunction(Hands);
