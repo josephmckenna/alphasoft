@@ -15,13 +15,21 @@ void compare_pwb_amp()
 {
   //int col[]={kBlack,kRed,kGreen,kBlue};
   //int run[]={38739,904026,904133,904139};
-  //  TString lab[]={"CERN data","AW3.2kV,low-CO2","AW3.1kV","AW3.2kV"};
-  //int col[]={kBlack,kRed,kBlue};  
-  int col[]={kRed,kBlue};  
-  //int run[]={38739,904353,904275};
-  int run[]={38739,904353};
-  //TString lab[]={"CERN data","AW3.2kV","AW3.1kV"};
-  TString lab[]={"2018 data (CERN)","2020 data (TRIUMF)"};
+  //TString lab[]={"CERN data","AW3.2kV,low-CO2","AW3.1kV","AW3.2kV"};
+
+  //int col[]={kRed,kBlue};
+  //int run[]={38739,904353};
+  //TString lab[]={"2018 data (CERN)","2020 data (TRIUMF)"};
+
+  // int col[]={kBlack,kRed,kBlue};
+  // int run[]={38739,904353,904275};
+  // TString lab[]={"CERN data","AW3.2kV","AW3.1kV"};
+
+  int col[]={kRed,kBlue,kBlack};
+  int run[]={903916,904014,904353};
+  TString lab[]={"horiz. rotation", "horiz. all PWBs", "vert."};
+
+
   int Nfiles=sizeof(run)/sizeof(int);
   cout<<"Number of files: "<<Nfiles<<endl;
 

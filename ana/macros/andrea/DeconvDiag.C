@@ -26,7 +26,9 @@ void DeconvDiag()
   TProfile* haw_prof=haw->ProfileX();
   TProfile* hpad_prof=hpad->ProfileX();
 
-  TCanvas* c1=new TCanvas("cdeconvd","cdeconvd",1900,1700);
+  TString cname="cdeconvdR";
+  cname+=run;
+  TCanvas* c1=new TCanvas(cname,cname,1900,1700);
   c1->Divide(2,2);
   c1->cd(1);
   haw->Draw("colz");
@@ -45,10 +47,10 @@ void DeconvDiag()
   haw_prof->Fit("pol1","CF","",1500.,11500.);
   gPad->Update();
   TPaveStats *staw = (TPaveStats*)haw_prof->FindObject("stats");
-  staw->SetX1NDC(0.2);
-  staw->SetX2NDC(0.45);
-  staw->SetY1NDC(0.59);
-  staw->SetY2NDC(0.88);
+  staw->SetX1NDC(0.72);
+  staw->SetY1NDC(0.15);
+  staw->SetX2NDC(0.97);
+  staw->SetY2NDC(0.44);
  
   c1->cd(4);
   hpad_prof->Draw();
@@ -59,4 +61,6 @@ void DeconvDiag()
   stpa->SetX2NDC(0.45);
   stpa->SetY1NDC(0.59);
   stpa->SetY2NDC(0.88);
+
+  c1->SaveAs(".pdf");  c1->SaveAs(".pdf");
 }
