@@ -1076,6 +1076,8 @@ void ReadEventTree::ProcessData( )
                                      RunNumber);
    copy_file(logfile.Data(),bkpfile.Data());
    std::cout<<"Process Complete"<<std::endl;
+
+   fHisto->Save();
 }
 
 void ReadEventTree::copy_file( const char* srce_file, const char* dest_file )
