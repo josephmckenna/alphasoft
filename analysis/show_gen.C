@@ -3,13 +3,16 @@ using namespace ROOT::Experimental;
 
 void    open_root(int);
 void    get_parameters();
-void    primary_pos();
+void    primary_muon_pos();
+void    primary_pbar_pos();
 void    primary_mom();
 
 TTree *tree = 0;
 ROOT::RDataFrame *d;
 Double_t x_min, y_min, z_min;
 Double_t x_max, y_max, z_max;
+Bool_t muons = false;
+Bool_t pbars = false;
 
 ///< main 
 void show_gen(int runNumber) {
@@ -17,7 +20,8 @@ void show_gen(int runNumber) {
     gStyle->SetOptStat(stat_opt.c_str());
     open_root(runNumber);
     get_parameters();
-    primary_pos();
+    if(muons) primary_muon_pos();
+    if(pbars) primary_pbar_pos();
     primary_mom();
     return;
 }
@@ -26,7 +30,7 @@ void show_gen(int runNumber) {
 ///< in TH2D, when "Drawing", the first variable is the Y and the second is the X 
 ///< e.g. tree->Draw("Y:X") and NOT viceversa
 ///< functions
-void primary_pos() {
+void primary_muon_pos() {
     //##########################################################
     // Preparing the histos
     TCanvas *cpos = new TCanvas("cpos","cpos",1200,1200);
@@ -40,10 +44,28 @@ void primary_pos() {
         tree->Draw("PrimaryVertex.fVy>>h_genY");
         h_genY->Draw("");
     cpos->cd(3);
-        cout << "x_max " << x_max << endl;
-        TH2D *h_genRvsY = new TH2D("h_genRvsY","Primary R vs Y", 100, 0., x_max, 100, y_min, x_max);
+        TH2D *h_genRvsY = new TH2D("h_genRvsY","Primary Y vs (X^2+Y^2)", 100, 0., x_max, 100, y_min, x_max);
         tree->Draw("PrimaryVertex.fVy:sqrt(PrimaryVertex.fVx*PrimaryVertex.fVx+PrimaryVertex.fVz*PrimaryVertex.fVz)>>h_genRvsY");
         h_genRvsY->Draw("COLZ");
+}
+
+void primary_pbar_pos() {
+    //##########################################################
+    // Preparing the histos
+    TCanvas *cpos = new TCanvas("cpos","cpos",1200,1200);
+    cpos->Divide(2,2);
+    cpos->cd(1);
+        TH2D *h_genXY = new TH2D("h_genXY","Primary X vs Y", 100, x_min, x_max, 100, y_min, y_max);
+        tree->Draw("PrimaryVertex.fVy:PrimaryVertex.fVx>>h_genXY");
+        h_genXY->Draw("COLZ");
+    cpos->cd(2);
+        TH1D *h_genZ = new TH1D("h_genZ", "Primary Z", 100, z_min, z_max);
+        tree->Draw("PrimaryVertex.fVz>>h_genZ");
+        h_genZ->Draw("");
+    cpos->cd(3);
+        TH2D *h_genRvsZ = new TH2D("h_genRvsZ","Primary R vs Z", 100, z_min, z_max, 100, 0., x_max);
+        tree->Draw("sqrt(PrimaryVertex.fVx*PrimaryVertex.fVx+PrimaryVertex.fVy*PrimaryVertex.fVy):PrimaryVertex.fVz>>h_genRvsZ");
+        h_genRvsZ->Draw("COLZ");
 }
 
 void primary_mom() {
@@ -68,6 +90,11 @@ void primary_mom() {
 }
 
 void get_parameters() {
+    ///< Checking which primary particle (pbar, muon, etc. ?)
+    auto pdg = d->Max("PrimaryVertex.fPdgCode");
+    if((int)*pdg==-2212) pbars = true;
+    if((int)*pdg==-13||(int)*pdg==+13) muons = true;
+    ///< Calculating the limits on Vx, Vy, Vz
     auto max = d->Max("PrimaryVertex.fVx");
     auto min = d->Min("PrimaryVertex.fVx");
     x_max = (fabs(*max)>fabs(*min)) ? *max : fabs(*min);

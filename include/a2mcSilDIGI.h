@@ -20,8 +20,6 @@ class a2mcSilDIGI : public TObject
 
         // Set energy 
         void SetEnergy(Double_t e)  { fEnergy = e; };
-        void SetEnePMT1(Double_t e)  { fEnePMT1 = e; };
-        void SetEnePMT2(Double_t e)  { fEnePMT2 = e; };
 
         // -------> GET METHODS
 
@@ -30,8 +28,6 @@ class a2mcSilDIGI : public TObject
 
         // Get energy
         Double_t GetEnergy()   	{ return fEnergy; };
-        Double_t GetEnePMT1()   { return fEnePMT1; };
-        Double_t GetEnePMT2()   { return fEnePMT2; };
 
 
         // -------> PRIVATE VARIABLES
@@ -39,8 +35,6 @@ class a2mcSilDIGI : public TObject
         // For the Silillators: Element ID = Silillator number
         Int_t      fElemID;     // Element ID 
         Double_t   fEnergy;     // Energy released in the element
-        Double_t   fEnePMT1;    // Energy released and collected at one side (PMT1)
-        Double_t   fEnePMT2;    // Energy released and collected on the other side (PMT2)
 
         ClassDef(a2mcSilDIGI,1) //a2mcSilDIGI  
 };

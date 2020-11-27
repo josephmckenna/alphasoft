@@ -12,9 +12,7 @@ using namespace std;
 //_____________________________________________________________________________
 a2mcSilDIGI::a2mcSilDIGI() 
   : fElemID(-1),
-    fEnergy(0.),
-    fEnePMT1(0.),
-    fEnePMT2(0.)
+    fEnergy(0.)
 {
 /// Default constructor
 }

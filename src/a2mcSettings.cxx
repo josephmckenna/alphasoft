@@ -61,6 +61,12 @@ void a2mcSettings::init(std::string conf_filename)
                 std::istringstream iss(line);
                 iss >> dummy >> out_enviro;
             }
+            ///< Looking for the magnetic field 
+            found = line.find("mag_field");
+            if(found!=std::string::npos) {
+                std::istringstream iss(line);
+                iss >> dummy >> mag_field;
+            }
             ///< Looking for store_tracks
             found = line.find("store_tracks");
             if(found!=std::string::npos) {

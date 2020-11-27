@@ -56,14 +56,7 @@ private:
     ///< Private methods
     Bool_t      GenPbars();             ///< 
     Bool_t      GenMuons();             ///< 
-//    void SetTypePart    (Int_t pdg=0)           {fPDG = pdg;    };
-//    void SetKinEnergy   (Double_t e=0.)         {fKinE = e;     };
-//    void SetXOrigin     (Double_t x=0.)         {fGenPos[0] = x;}; 
-//    void SetYOrigin     (Double_t y=0.)         {fGenPos[1] = y;}; 
-//    void SetZOrigin     (Double_t z=0.)         {fGenPos[2] = z;}; 
-//    void SetPx          (Double_t px=0.)        {fGenMom[0] = px;};  
-//    void SetPy          (Double_t py=0.)        {fGenMom[1] = py;};  
-//    void SetPz          (Double_t pz=0.)        {fGenMom[2] = pz;};  
+    Double_t    Maxwell(Double_t, Double_t);
 
 ClassDef(a2mcGenerator,1) // a2mc MC generator
  

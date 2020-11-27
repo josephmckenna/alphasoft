@@ -23,6 +23,7 @@ public:
     UInt_t  GetInnEnviro()      const {return inn_enviro;   };
     UInt_t  GetSilDet()         const {return sil_det;      };
     UInt_t  GetOutEnviro()      const {return out_enviro;   };
+    UInt_t  GetMagField()       const {return mag_field;    };
     Bool_t  GetStoreTracks()    const {return store_tracks; };
     Int_t   GetTracksLim()      const {return tracks_lim;   };
     UInt_t  GetVerbose()        const {return verbose;      };
@@ -35,6 +36,7 @@ private:
     UInt_t inn_enviro;
     UInt_t sil_det;
     UInt_t out_enviro;
+    UInt_t mag_field;
     Bool_t store_tracks;
     Int_t  tracks_lim;
     UInt_t verbose;

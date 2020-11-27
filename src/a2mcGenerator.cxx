@@ -40,7 +40,7 @@ void a2mcGenerator::Generate()
     if( 0<=a2mcConf.GetGenType()&&a2mcConf.GetGenType()<= 9)   genOK = GenPbars();
     if(10<=a2mcConf.GetGenType()&&a2mcConf.GetGenType()<=19)   genOK = GenMuons();
     if(!genOK) {
-        cout << "a2mcGenerator::Generate ==> Could not generate primary, please check a2MC.ini or a2mcGenerator class" << endl;
+        cout << "a2mcGenerator::Generate ==> Could not generate primary with gen_type = " << a2mcConf.GetGenType() << endl;
         return;
     }
 ///< Add the primary particle to the stack
@@ -74,9 +74,111 @@ void a2mcGenerator::Generate()
 
 Bool_t a2mcGenerator::GenPbars() 
 {
-    Bool_t genOK = false;
-    return genOK;
+//#   gen_type   [from a2MC.ini]
+//#   0 => antiprotons 
+//#       gen_mode 
+//#       0 -> center of the silicon detector [pointlike source] 
+//#       1 -> center of the silicon detector [Gaussian in Z, cylinder in radius]
+//#       2 -> center of the silicon detector [Uniform  in Z, cylinder in radius]
+    UInt_t gen_mode = a2mcConf.GetGenMode();
+    if(gen_mode>2) {
+        cout << "a2mcGenerator::GenPbars ==> Could not generate pbars with gen_mode = " << gen_mode << endl;
+        return false;
+    }
+    fPDG = kProtonBar;
+    TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fPDG);
+    Double_t mass = particlePDG->Mass(); // Mass
+    ///<---------------------
+    //|< 1) Setting variables 
+    //\<---------------------
+    Double_t zmin, zmax, zgen; 
+    Double_t xySig, zSig;
+    ///< Setting the paramenters [TEMPORARY - THEY NEED TO BE CHECKED]
+    xySig   = 0.1;  // gaussian generation
+    zSig    = 0.6;   // gaussian generation 
+    zmin    = -1.;   // uniform generation
+    zmax    = +1.;   // uniform generation
+    zgen    = fDetConstruction->GetSilDet_Z(); ///< Centering on the silicon detector
+    ///<---------------------
+    //|< 2) Vertex generation 
+    //\<---------------------
+    if(gen_mode==0) xySig = 0.;
+    fGenPos[0] = gRandom->Gaus(0.,xySig);
+    fGenPos[1] = gRandom->Gaus(0.,xySig);
+    fGenPos[2] = zgen;
+    if(gen_mode==1) {
+        fGenPos[2] += gRandom->Uniform(zmin,zmax);
+    }
+    if(gen_mode==2) {
+        fGenPos[2] += gRandom->Gaus(0.,zSig);
+    }
+    ///<-----------------------
+    //|< 3) Momentum generation 
+    //\<-----------------------
+    Double_t vmin, vmax, ptot;
+    Double_t a;
+    Double_t b;
+    Double_t T      = 15.; // in Kelvin
+    Double_t maxv   = 900.; // m/s
+    Double_t m      = 1.672e-27; // Masso of the antiproton in kg
+    Double_t k      = 1.380e-23; // Boltzmann constant
+    Double_t theta  = -999.;
+    Double_t phi    = -999.;
+    Double_t v=0., v1=0., v2=0., v3=0.;  
+    vmin = 200.;
+    vmax = 600.;
+    ///< Gaussian distribution
+    v1      =   gRandom->Gaus(0.,sqrt(k*T/m));
+    v2      =   gRandom->Gaus(0.,sqrt(k*T/m));
+    v3      =   gRandom->Gaus(0.,sqrt(k*T/m));
+    v       =   sqrt(v1*v1+v2*v2+v3*v3);
+    theta   =   acos(v3/v);
+    phi     =   atan2(v2,v1);
+//    ///< Alternative way to generate velocity (Maxwellian) [TO BE TESTED]
+//    while(1) {
+//        a = gRandom->Uniform(0.,maxv); // m/s
+//        b = gRandom->Uniform(0.,0.01);
+//        if(b<Maxwell(a,T)) break;
+//    }
+//    v     = a;
+//    phi   = gRandom->Uniform(0.,360.) * 3.141592/180.;
+//    theta = acos(1.-2.*gRandom->Uniform(0.,1.)) ;
+// ################### Momentum #########################
+    UInt_t mag_field = a2mcConf.GetMagField();
+    Double_t plim = 5.0e-3; // in GeV
+    Double_t c, beta, gamma;
+    c       = 299792458.; // Speed of light in m/s
+    beta    = v/c;
+    gamma   = 1/sqrt(1-beta*beta);
+    ptot    = gamma*mass*beta; // relativistic formula, ptot is expressed in GeV
+    ///< WARNING: overwriting the momentum if it is too low (only for mag_field != 0)
+    ///< This means that for mag_field !=0 annihilations are in flight, for mag_field == 0 annihilations are at rest
+    if(mag_field!=0&&ptot<plim) ptot=plim; // Otherwise the antiproton doesn't leave the traps due to magnetic field (5 MeV/c)
+    ///< To force the "ptot" also for mag_field==0 uncomment the following line
+//    ptot = plim; ///< To force the "ptot" also for mag_field==0
+    fTotE = sqrt(ptot*ptot + mass*mass);  
+    Double_t px, py, pz;
+    px = ptot*sin(theta)*cos(phi);
+    py = ptot*sin(theta)*sin(phi);
+    pz = ptot*cos(theta);
+
+    fGenMom[0] = px;
+    fGenMom[1] = py;
+    fGenMom[2] = pz;
+
+// REMOVE ME ... FORCING pz = 0;
+//    fGenMom[0] = (px/fabs(px))*sqrt(pow(px,2.)+pow(pz/sqrt(2.),2.)); 
+//    fGenMom[1] = (py/fabs(py))*sqrt(pow(py,2.)+pow(pz/sqrt(2.),2.)); 
+//    fGenMom[2] = 0.;
+// REMOVE ME --> END
+// REMOVE ME ... FORCING pz = 0, py=ptot/sqrt(2.), px = ptot/sqrt(2.);
+//            p[0] = ptot/sqrt(2.); // REMOVE ME
+//            p[1] = ptot/sqrt(2.); // REMOVE ME
+//            p[2] = 0.; // REMOVE ME 
+// REMOVE ME --> END
+    return true;
 }
+
 //-----------------------------------------------------------------------------
 
 Bool_t a2mcGenerator::GenMuons() 
@@ -282,6 +384,18 @@ TVector3 a2mcGenerator::LineExtrapolation(TVector3 P0, TVector3 Dir, Double_t YP
 //    cout << "a2mcGenerator::LineExtrapolator ===> DX = " << P.X()- P0.X() << ", DZ = " << P.Z() - P0.Z() << " DR = ";
 //    cout << sqrt((P.X()- P0.X())*(P.X()- P0.X())+ (P.Z()- P0.Z())*(P.Z()- P0.Z())) << endl;
     return P;
+}
+
+//-----------------------------------------------------------------------------
+Double_t a2mcGenerator::Maxwell(Double_t v, Double_t T)
+{
+
+  Double_t m = 1.672e-27;
+  Double_t k = 1.380e-23;
+  Double_t maxww;
+  
+  maxww = (4/sqrt(3.141592))*pow(m/(2*k*T),1.5)*v*v*exp(-m*v*v/(2*k*T));
+  return maxww;
 }
 
 //_____________________________________________________________________________
