@@ -201,44 +201,59 @@ void a2mcToVSD::InitTree(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
-   fChain->SetBranchAddress("SilHits", &SilHits_, &b_SilHits_);
-   fChain->SetBranchAddress("SilHits.fUniqueID", SilHits_fUniqueID, &b_SilHits_fUniqueID);
-   fChain->SetBranchAddress("SilHits.fTrackID", SilHits_fTrackID, &b_SilHits_fTrackID);
-   fChain->SetBranchAddress("SilHits.fPdgCode", SilHits_fPdgCode, &b_SilHits_fPdgCode);
-   fChain->SetBranchAddress("SilHits.fMotherID", SilHits_fMotherID, &b_SilHits_fMotherID);
-   fChain->SetBranchAddress("SilHits.fEvent", SilHits_fEvent, &b_SilHits_fEvent);
-   fChain->SetBranchAddress("SilHits.fHalfID", SilHits_fHalfID, &b_SilHits_fHalfID);
-   fChain->SetBranchAddress("SilHits.fLayerID", SilHits_fLayerID, &b_SilHits_fLayerID);
-   fChain->SetBranchAddress("SilHits.fModuleID", SilHits_fModuleID, &b_SilHits_fModuleID);
-   fChain->SetBranchAddress("SilHits.fEdep", SilHits_fEdep, &b_SilHits_fEdep);
-   fChain->SetBranchAddress("SilHits.fTime", SilHits_fTime, &b_SilHits_fTime);
-   fChain->SetBranchAddress("SilHits.fStep", SilHits_fStep, &b_SilHits_fStep);
-   fChain->SetBranchAddress("SilHits.fPos", SilHits_fPos, &b_SilHits_fPos);
-   fChain->SetBranchAddress("SilHits.fMom", SilHits_fMom, &b_SilHits_fMom);
-   fChain->SetBranchAddress("SilHits.fPosX", SilHits_fPosX, &b_SilHits_fPosX);
-   fChain->SetBranchAddress("SilHits.fPosY", SilHits_fPosY, &b_SilHits_fPosY);
-   fChain->SetBranchAddress("SilHits.fPosZ", SilHits_fPosZ, &b_SilHits_fPosZ);
-   fChain->SetBranchAddress("SilHits.fMomX", SilHits_fMomX, &b_SilHits_fMomX);
-   fChain->SetBranchAddress("SilHits.fMomY", SilHits_fMomY, &b_SilHits_fMomY);
-   fChain->SetBranchAddress("SilHits.fMomZ", SilHits_fMomZ, &b_SilHits_fMomZ);
-   fChain->SetBranchAddress("SilDigi", &SilDigi_, &b_SilDigi_);
-   fChain->SetBranchAddress("SilDigi.fUniqueID", SilDigi_fUniqueID, &b_SilDigi_fUniqueID);
-   fChain->SetBranchAddress("SilDigi.fElemID", SilDigi_fElemID, &b_SilDigi_fElemID);
-   fChain->SetBranchAddress("SilDigi.fEnergy", SilDigi_fEnergy, &b_SilDigi_fEnergy);
-   fChain->SetBranchAddress("a2mcMCTrack", &a2mcMCTrack_, &b_a2mcMCTrack_);
-   fChain->SetBranchAddress("a2mcMCTrack.fUniqueID", a2mcMCTrack_fUniqueID, &b_a2mcMCTrack_fUniqueID);
-   fChain->SetBranchAddress("a2mcMCTrack.fPdgCode", a2mcMCTrack_fPdgCode, &b_a2mcMCTrack_fPdgCode);
-   fChain->SetBranchAddress("a2mcMCTrack.fMother[2]", a2mcMCTrack_fMother, &b_a2mcMCTrack_fMother);
-   fChain->SetBranchAddress("a2mcMCTrack.fDaughter[2]", a2mcMCTrack_fDaughter, &b_a2mcMCTrack_fDaughter);
-   fChain->SetBranchAddress("a2mcMCTrack.fPx", a2mcMCTrack_fPx, &b_a2mcMCTrack_fPx);
-   fChain->SetBranchAddress("a2mcMCTrack.fPy", a2mcMCTrack_fPy, &b_a2mcMCTrack_fPy);
-   fChain->SetBranchAddress("a2mcMCTrack.fPz", a2mcMCTrack_fPz, &b_a2mcMCTrack_fPz);
-   fChain->SetBranchAddress("a2mcMCTrack.fE", a2mcMCTrack_fE, &b_a2mcMCTrack_fE);
-   fChain->SetBranchAddress("a2mcMCTrack.fVx", a2mcMCTrack_fVx, &b_a2mcMCTrack_fVx);
-   fChain->SetBranchAddress("a2mcMCTrack.fVy", a2mcMCTrack_fVy, &b_a2mcMCTrack_fVy);
-   fChain->SetBranchAddress("a2mcMCTrack.fVz", a2mcMCTrack_fVz, &b_a2mcMCTrack_fVz);
-   fChain->SetBranchAddress("a2mcMCTrack.fVt", a2mcMCTrack_fVt, &b_a2mcMCTrack_fVt);
-   Notify();
+    TLeaf *hits = fChain->FindLeaf("SilHits.fUniqueID");
+    if(hits) {
+        fChain->SetBranchAddress("SilHits", &SilHits_, &b_SilHits_);
+        fChain->SetBranchAddress("SilHits.fUniqueID", SilHits_fUniqueID, &b_SilHits_fUniqueID);
+        fChain->SetBranchAddress("SilHits.fTrackID", SilHits_fTrackID, &b_SilHits_fTrackID);
+        fChain->SetBranchAddress("SilHits.fPdgCode", SilHits_fPdgCode, &b_SilHits_fPdgCode);
+        fChain->SetBranchAddress("SilHits.fMotherID", SilHits_fMotherID, &b_SilHits_fMotherID);
+        fChain->SetBranchAddress("SilHits.fEvent", SilHits_fEvent, &b_SilHits_fEvent);
+        fChain->SetBranchAddress("SilHits.fHalfID", SilHits_fHalfID, &b_SilHits_fHalfID);
+        fChain->SetBranchAddress("SilHits.fLayerID", SilHits_fLayerID, &b_SilHits_fLayerID);
+        fChain->SetBranchAddress("SilHits.fModuleID", SilHits_fModuleID, &b_SilHits_fModuleID);
+        fChain->SetBranchAddress("SilHits.fEdep", SilHits_fEdep, &b_SilHits_fEdep);
+        fChain->SetBranchAddress("SilHits.fTime", SilHits_fTime, &b_SilHits_fTime);
+        fChain->SetBranchAddress("SilHits.fStep", SilHits_fStep, &b_SilHits_fStep);
+        fChain->SetBranchAddress("SilHits.fPos", SilHits_fPos, &b_SilHits_fPos);
+        fChain->SetBranchAddress("SilHits.fMom", SilHits_fMom, &b_SilHits_fMom);
+        fChain->SetBranchAddress("SilHits.fPosX", SilHits_fPosX, &b_SilHits_fPosX);
+        fChain->SetBranchAddress("SilHits.fPosY", SilHits_fPosY, &b_SilHits_fPosY);
+        fChain->SetBranchAddress("SilHits.fPosZ", SilHits_fPosZ, &b_SilHits_fPosZ);
+        fChain->SetBranchAddress("SilHits.fMomX", SilHits_fMomX, &b_SilHits_fMomX);
+        fChain->SetBranchAddress("SilHits.fMomY", SilHits_fMomY, &b_SilHits_fMomY);
+        fChain->SetBranchAddress("SilHits.fMomZ", SilHits_fMomZ, &b_SilHits_fMomZ);
+    } else {
+        SilHits_ = 0;
+    }
+    TLeaf *digi = fChain->FindLeaf("SilDigi.fUniqueID");
+    if(digi) {
+        fChain->SetBranchAddress("SilDigi", &SilDigi_, &b_SilDigi_);
+        fChain->SetBranchAddress("SilDigi.fUniqueID", SilDigi_fUniqueID, &b_SilDigi_fUniqueID);
+        fChain->SetBranchAddress("SilDigi.fElemID", SilDigi_fElemID, &b_SilDigi_fElemID);
+        fChain->SetBranchAddress("SilDigi.fEnergy", SilDigi_fEnergy, &b_SilDigi_fEnergy);
+    } else {
+        SilDigi_ = 0;
+    }
+    TLeaf *trks = fChain->FindLeaf("a2mcMCTrack.fUniqueID");
+    if(trks) {
+        fChain->SetBranchAddress("a2mcMCTrack", &a2mcMCTrack_, &b_a2mcMCTrack_);
+        fChain->SetBranchAddress("a2mcMCTrack.fUniqueID", a2mcMCTrack_fUniqueID, &b_a2mcMCTrack_fUniqueID);
+        fChain->SetBranchAddress("a2mcMCTrack.fPdgCode", a2mcMCTrack_fPdgCode, &b_a2mcMCTrack_fPdgCode);
+        fChain->SetBranchAddress("a2mcMCTrack.fMother[2]", a2mcMCTrack_fMother, &b_a2mcMCTrack_fMother);
+        fChain->SetBranchAddress("a2mcMCTrack.fDaughter[2]", a2mcMCTrack_fDaughter, &b_a2mcMCTrack_fDaughter);
+        fChain->SetBranchAddress("a2mcMCTrack.fPx", a2mcMCTrack_fPx, &b_a2mcMCTrack_fPx);
+        fChain->SetBranchAddress("a2mcMCTrack.fPy", a2mcMCTrack_fPy, &b_a2mcMCTrack_fPy);
+        fChain->SetBranchAddress("a2mcMCTrack.fPz", a2mcMCTrack_fPz, &b_a2mcMCTrack_fPz);
+        fChain->SetBranchAddress("a2mcMCTrack.fE", a2mcMCTrack_fE, &b_a2mcMCTrack_fE);
+        fChain->SetBranchAddress("a2mcMCTrack.fVx", a2mcMCTrack_fVx, &b_a2mcMCTrack_fVx);
+        fChain->SetBranchAddress("a2mcMCTrack.fVy", a2mcMCTrack_fVy, &b_a2mcMCTrack_fVy);
+        fChain->SetBranchAddress("a2mcMCTrack.fVz", a2mcMCTrack_fVz, &b_a2mcMCTrack_fVz);
+        fChain->SetBranchAddress("a2mcMCTrack.fVt", a2mcMCTrack_fVt, &b_a2mcMCTrack_fVt);
+    } else {
+        a2mcMCTrack_ = 0;
+    }
+    Notify();
 }
 
 Bool_t a2mcToVSD::Notify()

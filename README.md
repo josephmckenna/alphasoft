@@ -74,7 +74,7 @@ the generation. For example, the show_gen.C macro. It can be used as follows:
 "root show_gen.C\(RUN\)". It will show some distributions about the primary 
 particle (vertex, momentum, etc.). 
 In the subdir "a2mcEve", it is possibile to check/inspect the geometry, with
-the macro checkGeo.C [usage: "root checkGeo.C\(RUN\)"]. 
+the macro checkGeo.C ["root checkGeo.C\(RUN\)"]. 
 ------------------------------------ oOo --------------------------------------
 
 
