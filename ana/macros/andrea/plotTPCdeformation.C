@@ -585,6 +585,7 @@ void deformation(TFile* fin)
   cname += RunNumber;
   TCanvas* c6 = new TCanvas(cname.Data(),cname.Data(),1800,1200);
   p->Draw();
+  gPad->SetGridy();
   if(saveas) c6->SaveAs(".pdf");
 }
 
