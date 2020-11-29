@@ -140,7 +140,7 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
       fADCdelay = 0.;
    else if( run >= 3032 && run < 3870 )
       fADCdelay = -250.;
-   else if( run >= 3870 )
+   else if( run >= 3870 && run < 900000 )
       fADCdelay = -330.;
 
 
@@ -151,8 +151,9 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
          fADCdelay = -400.;
 
-   if( run > 903837 && run < 903900) fADCdelay = -100.;
-   else if( run > 903900 ) fADCdelay = -80.;
+   if( run > 903837 && run < 904100 ) fADCdelay = -120.;
+   else if( run > 904100 && run <= 904400 ) fADCdelay = -80.;
+   else if( run > 904400 ) fADCdelay = -32.;
 }
 
 void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
@@ -210,7 +211,7 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 3870 )
+   else if( run >= 3870 && run < 900000 )
       fPWBdelay = -80.;//fPWBdelay = -50.;
       
 
@@ -221,9 +222,9 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
       fPWBdelay = -100.;
 
-   if( run > 903900)// fPWBdelay = -96.;
+   if( run > 904100 && run <= 904400 )// fPWBdelay = -96.;
       fPWBdelay = -112.;
-
+   else if( run > 904400 ) fPWBdelay = -64.;
    
    // electrodes masking
    if( run == 0 )
