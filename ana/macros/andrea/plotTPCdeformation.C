@@ -515,6 +515,8 @@ void deformation(TFile* fin)
       hpadamp->Fill(r,s,amp);
     }
   hscamp->Scale(1./72.);
+  hscamp->SetMinimum(1000.);
+
   GainCorrection( hscamp );
 
   hpadamp->SetMinimum(min_amp);
