@@ -27,6 +27,7 @@ private:
    double fMagneticField;
 
    AnaSettings* ana_settings;
+   std::string fLocation;
 
    double f_rfudge;
    double f_pfudge;
@@ -98,7 +99,7 @@ private:
 
 public:
    Reco(std::string, double);
-   Reco(AnaSettings*, double);
+   Reco(AnaSettings*, double, std::string );
    ~Reco();
 
    void Setup(TFile*);

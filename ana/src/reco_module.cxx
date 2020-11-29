@@ -57,6 +57,8 @@ public:
 
    AnaSettings* ana_settings=0;
 
+   std::string fLocation="CERN";
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -94,7 +96,8 @@ public:
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField)
+                                                 r( f->ana_settings, f->fMagneticField,
+                                                    f->fLocation )
    {
       ModuleName="RecoModule";
       printf("RecoRun::ctor!\n");
@@ -423,7 +426,7 @@ public:
          
          if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          
-         if( args[i] == "--anasettings" ) json=args[++i];
+         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
