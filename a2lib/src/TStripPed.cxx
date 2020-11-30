@@ -20,7 +20,7 @@ TStripPed::TStripPed(const int nBins, const double binWidth):
    
    FirstPassFinished=false;
    DataPoints=0.;
-   histo=new std::vector<int>((int)strip_bins,0);
+   //histo=new std::vector<int>((int)strip_bins,0);
    //histo=new std::vector<int>((int)1,0);
    //LMG
    histo1=new TH1F("histo1", "Histogram", strip_bins, hmin, hmax);
@@ -30,12 +30,17 @@ TStripPed::TStripPed(const int nBins, const double binWidth):
 
 TStripPed::~TStripPed()
 {
-   histo->clear();
-   delete histo;
+   //histo->clear();
+   //delete histo;
 
    //LMG
-   histo1->Clear();
-   delete histo1;
+   //histo1->Clear();
+   
+   if(histo1) 
+   {
+      delete histo1;
+      histo1 = NULL;
+   }
 }
 
 void TStripPed::InsertValue(const double &x, const double &rawADC)
@@ -59,23 +64,23 @@ double TStripPed::GetMean(const double &_min, const double &_max)
 {
    histo1->GetXaxis()->SetRangeUser(_min, _max);
    double meanFromHist = histo1->GetMean();
-   histo1->GetXaxis()->SetRangeUser(0, 0);
+   //histo1->GetXaxis()->SetRangeUser(0, 0);
    return meanFromHist;
 }
 
 double TStripPed::GetStdev(const double& mean,const double& _min, const double& _max)
 {
-   histo1->GetXaxis()->SetRangeUser(_min, _max);
+   //histo1->GetXaxis()->SetRangeUser(_min, _max);
    double stdDevFromHist = histo1->GetStdDev();
-   histo1->GetXaxis()->SetRangeUser(0, 0);
+   //histo1->GetXaxis()->SetRangeUser(0, 0);
    return stdDevFromHist;
 }
 
 double TStripPed::GetRMS(const double& mean,const double& _min, const double& _max)
 {
-   histo1->GetXaxis()->SetRangeUser(_min, _max);
+   //histo1->GetXaxis()->SetRangeUser(_min, _max);
    double RMSFromHist = histo1->GetRMS();
-   histo1->GetXaxis()->SetRangeUser(0, 0);
+   //histo1->GetXaxis()->SetRangeUser(0, 0);
    return RMSFromHist;
 }
 
