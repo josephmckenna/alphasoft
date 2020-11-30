@@ -53,7 +53,7 @@ endif ()
 function(get_submodule MODULE_NAME)
    if(GIT_SUBMODULE)
         message(STATUS "Submodule ${MODULE_NAME} update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update ${MODULE_NAME}
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${MODULE_NAME}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE GIT_SUBMOD_RESULT)
         if(NOT GIT_SUBMOD_RESULT EQUAL "0")
