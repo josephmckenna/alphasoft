@@ -18,8 +18,6 @@
 #include <iostream>
 #include "TSVD_QOD.h"
 
-#include "AnalysisTimer.h"
-
 class OfficialA2TimeFlags
 {
 public:
@@ -55,7 +53,9 @@ public:
    OfficialA2Time(TARunInfo* runinfo, OfficialA2TimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="OfficialA2Time";
+#endif
       if (fTrace)
          printf("OfficialA2Time::ctor!\n");
    }
@@ -240,7 +240,9 @@ public:
    {
       if (fFlags->fNoSync)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
@@ -261,7 +263,9 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TAlphaEvent* AlphaEvent=fe->alphaevent;

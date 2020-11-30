@@ -9,7 +9,6 @@
 #include <set>
 #include <iostream>
 
-#include "AnalysisTimer.h"
 class HistoFlags
 {
 public:
@@ -167,7 +166,9 @@ public:
                                                   fCoincTime(20.),fpc_timecut(300.) // ns
 
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Histo Module";
+#endif
       diagnostics=f->fDiag;
    }
 
@@ -442,7 +443,9 @@ public:
    {      
       if(!diagnostics)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -450,14 +453,18 @@ public:
      
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
            
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       

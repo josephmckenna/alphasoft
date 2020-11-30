@@ -7,8 +7,6 @@
 #include "TChronoChannelName.h"
 #include "chrono_module.h"
 
-#include "TSISEvent.h"
-
 #include "Rtypes.h"
 #include "TTree.h"
 #include "TTreeReader.h"

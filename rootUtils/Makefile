@@ -27,19 +27,19 @@ SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
 #-CFLAGS=-c -O3 -g -Wall -Wuninitialized -fPIC  -I../recolib/include -I$(ROOTANASYS)/include -I../ana/include -I../aged -I$(INCDIR) -I.
 
 
-all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 all: CFLAGS=-O3 -g -Wall -Wuninitialized -fPIC 
 all: linkdirs librootUtils.so
 
-debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 debug: CFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC 
 debug: linkdirs librootUtils.so
 
-native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
+native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native $(BUILD_FLAGS)
 native: CFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC   -march=native
 native: linkdirs librootUtils.so
 
-O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 O2: CFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC
 O2: linkdirs librootUtils.so
 

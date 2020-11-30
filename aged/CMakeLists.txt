@@ -43,6 +43,9 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DANTI_ALIAS ")
 link_libraries(${ROOT_LIBRARIES})
 include_directories(include ${ROOT_INCLUDE_DIRS})
 
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})

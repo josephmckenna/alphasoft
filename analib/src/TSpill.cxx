@@ -132,7 +132,7 @@ bool TSpillScalerData::Ready(bool have_vertex_detector)
       return false;
    }
 }
-
+#ifdef BUILD_A2
 ClassImp(TA2SpillScalerData);
 /*TA2SpillScalerData::TA2SpillScalerData()
 {
@@ -179,7 +179,8 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODUL
    PassMVA           =d->IntegratedSVDCounts.PassMVA;
    VertexFilled      =true;
 }
-
+#endif
+#ifdef BUILD_AG
 ClassImp(TAGSpillScalerData)
 
 /*TAGSpillScalerData::TAGSpillScalerData()
@@ -230,7 +231,7 @@ void TAGSpillScalerData::Print()
 {
    std::cout<<"LOLOLOL IMPLEMENT THIS YOU FOOL"<<std::endl;
 }
-
+#endif
 
 ClassImp(TSpillSequencerData);
 
@@ -266,7 +267,7 @@ void TSpillSequencerData::Print()
             <<"\tstopState:"   <<fStopState
             <<std::endl;
 }
-
+#ifdef BUILD_A2
 ClassImp(TA2SpillSequencerData);
 TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
 {
@@ -310,6 +311,8 @@ TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
    fStartState   =a->fStartState;
    fStopState    =a->fStopState;
 }
+#endif
+#ifdef BUILD_AG
 ClassImp(TAGSpillSequencerData);
 TAGSpillSequencerData::TAGSpillSequencerData(): TSpillSequencerData()
 {
@@ -335,7 +338,7 @@ TAGSpillSequencerData::TAGSpillSequencerData(TAGSpillSequencerData* a)
    fStartState   =a->fStartState;
    fStopState    =a->fStopState;
 }
-
+#endif
 
 ClassImp(TSpill);
 TSpill::TSpill(): RunNumber(-1)
@@ -419,7 +422,7 @@ TSpill::~TSpill()
 
 }
 
-
+#ifdef BUILD_A2
 ClassImp(TA2Spill);
 TA2Spill::TA2Spill()
 {
@@ -666,7 +669,8 @@ int TA2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
    sqlite3_finalize(stmt);
    return 0;
 }
-
+#endif
+#ifdef BUILD_AG
 ClassImp(TAGSpill)
 TAGSpill::TAGSpill()
 {
@@ -770,3 +774,4 @@ TString TAGSpill::Content(std::vector<std::pair<int,int>>* chrono_channels, int&
    }
    return log;
 }
+#endif

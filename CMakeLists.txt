@@ -8,10 +8,28 @@ set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_CXX_FLAGS "-O2")
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(DEFINED ENV{AGRELEASE})
+   message("AGRELEASE set to " $ENV{AGRELEASE}) 
+else()
+   message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
+endif()
+
+find_package(Git REQUIRED)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+   option(GIT_SUBMODULE "Check submodules during build" ON)
+endif()
+
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
+#Send these settings as precompiler flags (mostly used in rootUtils)
+if (BUILD_AG)
+   add_compile_definitions(BUILD_AG)
+endif (BUILD_AG)
+if (BUILD_A2)
+   add_compile_definitions(BUILD_A2)
+endif (BUILD_A2)
 
 set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
 message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
@@ -31,30 +49,53 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
+
+function(get_submodule MODULE_NAME)
+   if(GIT_SUBMODULE)
+        message(STATUS "Submodule ${MODULE_NAME} update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update ${MODULE_NAME}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
+endfunction()
+
 # Directories
 
-#Universal libraries
+
+#Universal libraries (Include some flow and TSpill stuff)
+get_submodule(rootana)
+add_subdirectory(rootana)
 add_subdirectory(analib)
-add_subdirectory(recolib)
+
+#rootUtils is customised based on above arguments
 add_subdirectory(rootUtils)
+
 #AG libraries
 if (BUILD_AG)
+   add_subdirectory(recolib)
+   get_submodule(agana)
    add_subdirectory(agana)
    add_subdirectory(aged)
    add_subdirectory(ana)
    add_subdirectory(reco)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
+   #get_submodule(simulation/garfieldpp)
    add_subdirectory(simulation/garfieldpp)
+   #get_submodule(simulation/submodules/CADMesh)
+   #add_subdirectory(simulation/submodules/CADMesh)
    add_subdirectory(simulation/geant4)
    add_subdirectory(simulation/agg4)
 endif (BUILD_AG_SIM)
+
 #A2 libraries
 if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
-
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake

@@ -2,7 +2,7 @@
 // for ALPHA-g TPC AGTPCanalysis
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
-
+#ifdef BUILD_AG
 #include "TStoreHelix.hh"
 #include "TSpacePoint.hh"
 #include <iostream>
@@ -155,7 +155,7 @@ void TStoreHelix::Print(Option_t*) const
 }
 
 ClassImp(TStoreHelix)
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8
