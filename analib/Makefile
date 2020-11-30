@@ -29,16 +29,16 @@ SRC:= $(patsubst RootUtils/%.cxx,$(OBJDIR)/RootUtils/%.o,$(SRC))
 CSRC    := $(wildcard src/*.c)
 CSRC    := $(patsubst src/%.c,$(OBJDIR)/%.o,$(CSRC))
 
-all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 all: linkdirs libanalib.so
 
-debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 debug: linkdirs libanalib.so
 
-native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
+native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native  $(BUILD_FLAGS)
 native: linkdirs libanalib.so
 
-O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 O2: linkdirs libanalib.so
 
 linkdirs:

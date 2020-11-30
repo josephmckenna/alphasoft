@@ -1,3 +1,5 @@
+
+#ifdef BUILD_AG
 #ifndef __TAGPlot__
 #define __TAGPlot__
 
@@ -224,7 +226,7 @@ public:
 };
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

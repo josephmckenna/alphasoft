@@ -26,16 +26,16 @@ PLATFORM      = $(OSTYPE)_$(MACHTYPE)$(AGED_MAKE_VER)
 
 PROGS         = libaged.so
 
-all: AGED_OPTIONS+=-O3
+all: AGED_OPTIONS+=-O3 $(BUILD_FLAGS)
 all: $(PROGS)
 
-debug: AGED_OPTIONS+=-O0
+debug: AGED_OPTIONS+=-O0 $(BUILD_FLAGS)
 debug: $(PROGS)
 
-native: AGED_OPTIONS+=-O3 -march=native
+native: AGED_OPTIONS+=-O3 -march=native $(BUILD_FLAGS)
 native: $(PROGS)
 
-O2: AGED_OPTIONS+=-O2
+O2: AGED_OPTIONS+=-O2 $(BUILD_FLAGS)
 O2: $(PROGS)
 
 # Set all these dependencies to files that don't exist,

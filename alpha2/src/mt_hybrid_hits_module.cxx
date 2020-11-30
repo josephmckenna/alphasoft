@@ -44,10 +44,6 @@
 
 #define VF48_COINCTIME 0.000010
 
-
-
-
-
 class HitFlags
 {
 public:
@@ -61,9 +57,10 @@ public:
    static bool OldStripFileVariables;
    static double nVASigma;
    static double pVASigma;
-   
+
+   static double fStripMeans[NUM_SI_MODULES*4*128];   
    static double fStripRMSs[NUM_SI_MODULES*4*128];
-   static double fStripMeans[NUM_SI_MODULES*4*128];
+
    void LoadAllStrips(const int RunNo)
    {
       char striprms_filename[256];
@@ -101,10 +98,7 @@ public:
       Int_t stripNumber;
       Float_t stripRMS, stripMean;
       striprms_tree->SetBranchAddress("stripNumber", &stripNumber );
-      if (this->OldStripFileVariables)
-         striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
-      else
-         striprms_tree->SetBranchAddress("stripRMS", &stripRMS );
+      striprms_tree->SetBranchAddress("stripMeanSubRMS", &stripRMS );
 
       striprms_tree->SetBranchAddress("stripMean", &stripMean );
       Int_t BadRMSValues=0;
@@ -119,6 +113,7 @@ public:
          if (stripRMS<0) BadRMSValues++;
          fStripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
          fStripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
+         std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<std::endl;
       }
       
       delete striprms_tree;
@@ -146,7 +141,9 @@ public:
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="hybrid_hits_module";
+#endif
       if (fTrace)
          printf("HitModule::ctor!\n");
    }
@@ -207,29 +204,28 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if (!fe->vf48event)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
       flow=new SilEventFlow(flow,s);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"hybrid_hits_module",timer_start);
-      #endif
       return flow;
    }
 };
@@ -265,8 +261,9 @@ public:
    HitModule_vf48(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
-
+#endif
       // load the sqlite3 db
       char dbName[255]; 
       sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
@@ -450,36 +447,37 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* SiliconEvent=sf->silevent;
       if (!SiliconEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       SiliconEvent=AddVF48Module(fe->vf48event,fFlags->ProcessVF48, SiliconEvent);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 };

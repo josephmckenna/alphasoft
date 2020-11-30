@@ -79,10 +79,10 @@ build-fedora:
   stage: build
   before_script:
     #Set up root and dependancies
-    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind
+    - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-tree-dataframe root-vecops
   script:
     - echo "Building"
     - make clean
@@ -101,10 +101,10 @@ build-fedora-clang:
   stage: build
   before_script:
     #Set up root and dependancies
-    - . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang
+    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-tree-dataframe root-vecops
   script:
     - echo "Building"
     - make clean
@@ -127,6 +127,40 @@ build-cc7-cmake:
     - cd ..
     - scripts/ccomp.sh clean all
     - scripts/ccomp.sh ci | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-ag:
+  stage: build
+  script:
+    - echo "Building"
+    - cd rootana
+    - make
+    - cd ..
+    - mkdir -p build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
+    - make | tee ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-a2:
+  stage: build
+  script:
+    - echo "Building"
+    - cd rootana
+    - make
+    - cd ..
+    - mkdir -p build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
+    - make | tee ../BuildLog.txt
   artifacts:
     when: on_failure
     paths:

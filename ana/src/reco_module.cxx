@@ -28,7 +28,6 @@
 
 #include "TStoreEvent.hh"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 #include "json.hpp"
 
@@ -96,7 +95,9 @@ public:
                                                  fFlags(f),
                                                  r( f->ana_settings, f->fMagneticField)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="RecoModule";
+#endif
       printf("RecoRun::ctor!\n");
       MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
@@ -183,10 +184,14 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
+#ifdef MANALYZER_PROFILER
       START_TIMER
+#endif
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
@@ -245,7 +250,9 @@ public:
       if( !SigFlow ) 
       {
          delete analyzed_event;
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -265,13 +272,17 @@ public:
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
+#ifdef MANALYZER_PROFILER
           flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
+#endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
+#ifdef MANALYZER_PROFILER
             flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
+#endif
          }
 
       if (!skip_reco)

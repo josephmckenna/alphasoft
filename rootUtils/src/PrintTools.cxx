@@ -28,7 +28,7 @@ void PrintSequences(int runNumber, int SeqNum)
    delete seqEvent;
    delete sequencerTree;
 }
-
+#ifdef BUILD_AG
 void PrintChronoNames(int runNumber)
 {
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -50,11 +50,11 @@ void PrintChronoNames(int runNumber)
       }
    }
 }
-
-
+#endif
+#ifdef BUILD_AG
 void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    Int_t Counts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    for (int boards=0; boards<CHRONO_N_BOARDS; boards++)
@@ -80,11 +80,11 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
    }
 
 }
-
-
+#endif
+#ifdef BUILD_AG
 Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    double official_time;
    
    TStoreEvent *store_event = new TStoreEvent();
@@ -120,16 +120,17 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
    }
    return 0;
 }
-
-
+#endif
+#ifdef BUILD_AG
 Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return PrintTPCEvents(runNumber,tmin,tmax);
 }
-
-Int_t PrintSequenceQOD(Int_t runNumber)
+#endif
+#ifdef BUILD_AG
+Int_t PrintAGSequenceQOD(Int_t runNumber)
 {
 //I AM MISSING SEQUENCE HEADER INFORMATION!
 
@@ -275,7 +276,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
          Descriptions[DumpCount]=TString(CHRONO_FLAG_NAME);
          Sequencer[DumpCount]="CHRONO_";
          Sequencer[DumpCount]+=99;
-         runTimes[DumpCount]= GetRunTimeOfCount(runNumber,CHRONO_FLAG_NAME, i+1);
+         runTimes[DumpCount]= GetRunTimeOfChronoCount(runNumber,CHRONO_FLAG_NAME, i+1);
          DumpCount++;
       }
    }
@@ -423,11 +424,11 @@ Int_t PrintSequenceQOD(Int_t runNumber)
     
    std::cout<<"\nStart Triggers: "<<StartTriggers<<"\tStop Triggers: "<<StopTriggers<<"\n"<<std::endl;
 
-   std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceQODDetectorLine(-1,-1,-1,boards,channels,nChannels) <<"\n";
+   std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels) <<"\n";
    LogFile << "===================="<<"\n";
    LogFile << "Dump and CB trigger table: " <<"\n";
    LogFile << "===================="<<"\n";
-   LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
+   LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
    for (Int_t i=0; i< DumpCount; i++)
    {
       //Pair start and Stop dump makers in table
@@ -449,7 +450,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
             if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {repetition--; }
             //if (Names[j]=="stopDump" && Descriptions[i]==Descriptions[j])
             {
-               TString DetectorData=SequenceQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
+               TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
                std::cout << " \t " << std::setw(10)<<runTimes[j] << " \t " <<std::setw(10)<< runTimes[j]-runTimes[i]<<DetectorData <<std::endl;
                LogFile << " \t " << std::setw(10)<<runTimes[j] << " \t "<<std::setw(10) << runTimes[j]-runTimes[i]<<DetectorData <<"\n";
                PrintedStops++;
@@ -525,6 +526,7 @@ Int_t PrintSequenceQOD(Int_t runNumber)
 
    return 99;
 }
+#endif
 
 /* emacs
  * Local Variables:

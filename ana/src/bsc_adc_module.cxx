@@ -14,7 +14,6 @@
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
 
@@ -48,7 +47,9 @@ public:
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="bsc adc module";
+#endif
    }
 
    ~BscModule()
@@ -114,7 +115,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
    

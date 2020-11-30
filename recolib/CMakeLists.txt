@@ -48,14 +48,13 @@ include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/simulation/geant4/include)
-include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(G__agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc.cxx)
-target_link_libraries(agtpc ${ROOT_LIBRARIES})
+target_link_libraries(agtpc agana ${ROOT_LIBRARIES})
 
 install(TARGETS agtpc DESTINATION lib)
 

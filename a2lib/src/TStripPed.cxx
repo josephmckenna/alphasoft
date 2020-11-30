@@ -14,10 +14,12 @@ TStripPed::TStripPed(const int nBins, const double binWidth):
    stripRMS=0.;
 
    //Second pass variables
-   filteredMean=0.;
+   stripMeanSubRMS=0.;
    StripRMSsAfterFilter=0.;
    stripMeanSubRMS=-9999.;
    
+rawADCMean=0;
+rawADCRMS=0;
    FirstPassFinished=false;
    DataPoints=0.;
    //histo=new std::vector<int>((int)strip_bins,0);
