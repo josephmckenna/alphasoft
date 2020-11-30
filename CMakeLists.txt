@@ -36,7 +36,9 @@ message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
+   # execute_process(COMMAND rm -vf $ENV{AGRELEASE}/CMakeCache.txt) This doesn't work... CMakeCache.txt gets updated after delete
+   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory! And please delete: $ENV{AGRELEASE}/CMakeCache.txt")
+   
 endif(_insource) 
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
