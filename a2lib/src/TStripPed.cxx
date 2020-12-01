@@ -88,25 +88,24 @@ double TStripPed::GetRMS(const double& mean,const double& _min, const double& _m
 
 void TStripPed::CalculatePed()
 {
-   if (!FirstPassFinished)
-   {
-      FirstPassFinished=true;
 
-      rawADCMean=rawADCMean/(double)DataPoints;
-      rawADCRMS=rawADCRMS/(double)DataPoints - rawADCMean*rawADCMean;
+   FirstPassFinished=true;
 
-      //stripRMS = histo1->GetRMS();
-      //stripMean = histo1->GetMean();
-      //printf("New means: \tstripMean:%f \tstripRMS:%f \t",stripMean,stripRMS);
+   rawADCMean=rawADCMean/(double)DataPoints;
+   rawADCRMS=rawADCRMS/(double)DataPoints - rawADCMean*rawADCMean;
 
-      stripMean=stripMean/(double)DataPoints;
-      stripRMS=stripRMS/(double)DataPoints - stripMean * stripMean;
-      printf("rawMean:%f \tstripMean:%f \tstripRMS:%f \t",rawADCMean,stripMean,stripRMS);
+   //stripRMS = histo1->GetRMS();
+   //stripMean = histo1->GetMean();
+   //printf("New means: \tstripMean:%f \tstripRMS:%f \t",stripMean,stripRMS);
 
-      if (stripRMS>0.)
-         stripRMS=sqrt(stripRMS);
-      //printf("rawMean:%f \tstripMean:%f \tstripRMS:%f \t",rawADCMean,stripMean,stripRMS);
-   }
+   stripMean=stripMean/(double)DataPoints;
+   stripRMS=stripRMS/(double)DataPoints - stripMean * stripMean;
+
+   if (stripRMS>0.)
+      stripRMS=sqrt(stripRMS);
+
+   printf("rawMean:%f \tstripMean:%f \tstripRMS:%f \t",rawADCMean,stripMean,stripRMS);
+   
 
    //Find range around mean (filter)
    double min=stripMean-sigma*stripRMS;
@@ -114,7 +113,7 @@ void TStripPed::CalculatePed()
 
    stripMean=GetMean(min,max);
 
-   stripRMS=GetStdev(stripMean,min,max);
+   StripRMSsAfterFilter=GetRMS(stripMean,min,max);
 
    printf("StripRMSsAfterFilter:%f \tstripMeanSubRMS:%f\n",StripRMSsAfterFilter,stripMeanSubRMS);
 
