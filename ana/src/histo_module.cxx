@@ -4,6 +4,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
+#include "TGraph.h"
 
 #include "SignalsType.hh"
 #include <set>
@@ -54,6 +55,8 @@ private:
 
    TH2D* hTimeAmpBot;
    TH2D* hTimeAmpTop;
+
+   TGraph* gtamp;
 
    TH2D* hTimeBotChan;
    TH2D* hTimeTopChan;
@@ -216,6 +219,10 @@ public:
       hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,300,0.,4800.);
       // hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
+
+      gtamp = new TGraph;
+      gtamp->SetName("gtamp");
+      gtamp->SetTitle("Deconv Drift Time Vs Amplitude;Time [ns];Amplitude [a.u.]");
 
       hAwOccSec = new TH1D("hAwOccSec","Number of TOP AW hits per Pad Sector;N",32,0.,32.);
       hAwOccSec->SetMinimum(0.);
@@ -447,6 +454,9 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       if(!diagnostics) return;
+      runinfo->fRoot->fOutputFile->cd();
+      gDirectory->cd("awdeconv");
+      gtamp->Write();
       delete pmap;
       printf("HistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       // pwbmap.close();
@@ -597,6 +607,7 @@ public:
                   hTimeAmpTop->Fill(iSig->t,iSig->height);
                   hTimeTopChan->Fill(iSig->idx,iSig->t);
                   hAmpTopChan->Fill(iSig->idx,iSig->height);
+                  gtamp->SetPoint(gtamp->GetN(),iSig->t,iSig->height);
 
                   hAwOccSec->Fill(iSig->idx/8);
                   hAwOccIsec->Fill(iSig->idx%8);
