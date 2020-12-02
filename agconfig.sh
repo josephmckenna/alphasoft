@@ -336,6 +336,10 @@ lxplus* )
   else
     if [ `which root-config | wc -c` -gt 5 ]; then
       echo "ROOTSYS not set but root-config found... ok"
+      ROOTLIBPATH=`root-config --libdir`
+      echo "Adding ${ROOTLIBPATH} to LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${ROOTLIBPATH}:${LD_LIBRARY_PATH}"
+      
     else
       echo "ROOTSYS not set... Guessing settings for new computer..."
       if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
