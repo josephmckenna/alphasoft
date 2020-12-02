@@ -54,13 +54,17 @@ endif ()
 
 function(get_submodule MODULE_NAME)
    if(GIT_SUBMODULE)
-        message(STATUS "Submodule ${MODULE_NAME} update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${MODULE_NAME}
+      if(EXISTS "$ENV{AGRELEASE}/${MODULE_NAME}/.git")
+         message("${MODULE_NAME} submodule ok")
+      else()
+         message(STATUS "Submodule ${MODULE_NAME} update --init")
+         execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${MODULE_NAME}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+         if(NOT GIT_SUBMOD_RESULT EQUAL "0")
             message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-        endif()
+         endif()
+      endif()
     endif()
 endfunction()
 
