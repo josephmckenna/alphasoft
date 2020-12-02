@@ -76,6 +76,9 @@ get_submodule(rootana)
 add_subdirectory(rootana)
 add_subdirectory(analib)
 
+#adc maps and bank text files
+get_submodule(agcfmdb)
+
 #rootUtils is customised based on above arguments
 add_subdirectory(rootUtils)
 
