@@ -66,3 +66,4 @@ build
 bin
 output
 *.save
+*_C.d

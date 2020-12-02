@@ -17,6 +17,7 @@
 
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
+                                       fLocation("CERN"),
                                        f_rfudge(1.),f_pfudge(1.),
                                        pattrec(0)
 {
@@ -58,7 +59,7 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    if( fMagneticField < 0. )
       fSTR = new LookUpTable(ALPHAg::_co2frac); // field map version (simulation)
    else
-      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField); // uniform field version (simulation)
+      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
    track_not_advancing = 0;
@@ -66,10 +67,11 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    rad_cut = 0;
 }
 
-Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
-                                           ana_settings(ana_set),
-                                           f_rfudge(1.),f_pfudge(1.),
-                                           pattrec(0)
+Reco::Reco(AnaSettings* ana_set, double B, std::string loc):fTrace(false),fMagneticField(B),
+                                                            ana_settings(ana_set),
+                                                            fLocation(loc),
+                                                            f_rfudge(1.),f_pfudge(1.),
+                                                            pattrec(0)
 {
    std::cout<<"Reco ctor! (2)"<<std::endl;
    ana_settings->Print();
@@ -112,7 +114,7 @@ Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
          fMagneticField = 1.;
       }
    else
-      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField); // uniform field version (simulation)
+      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
    track_not_advancing = 0;

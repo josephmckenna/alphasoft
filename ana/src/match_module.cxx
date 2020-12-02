@@ -30,6 +30,7 @@ public:
    AnaSettings* ana_settings=NULL;
    bool fDiag = false;
    bool fTrace = false;
+   bool fForceReco = false;
 
    int ThreadID=-1;
    int TotalThreads=0;
@@ -251,7 +252,7 @@ public:
                   match->MatchElectrodes( SigFlow->awSig,SigFlow->combinedPads );
                spacepoints = match->CombPoints(spacepoints);
             }
-         else // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
+         else if( fFlags->fForceReco ) // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
             {
                printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
    //delete match->GetCombinedPads();?
@@ -259,13 +260,15 @@ public:
             }
 
          if( spacepoints )
-            printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
+            {
+               if(fFlags->fTrace)
+                  printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
+               if( spacepoints->size() > 0 )
+                  SigFlow->AddMatchSignals( spacepoints );
+            }
          else
             printf("MatchModule::Analyze Spacepoints should exists at this point\n");
-         if( spacepoints->size() > 0 )
-            SigFlow->AddMatchSignals( spacepoints );
 
-         //++fCounter;
          return flow;
       }
       return flow;
@@ -317,6 +320,10 @@ public:
                   i++;
                   json=args[i];
                   i++;
+               }
+            if(args[i] == "--forcereco")
+               {
+                  fFlags.fForceReco=true;
                }
          }
       fFlags.ana_settings=new AnaSettings(json);

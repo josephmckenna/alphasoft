@@ -46,6 +46,7 @@ int main(int argc, char** argv)
   parser.addArgument("-f","--rootfile",1,false);
   parser.addArgument("-a","--anasettings",1,true);
   parser.addArgument("-b","--Bfield",1,true);
+  parser.addArgument("-l","--location",1,true);
   parser.addArgument("-e","--Nevents",1,true);
   parser.addArgument("-v","--verbose",1,true);
   parser.addArgument("--finder",1,true);
@@ -86,6 +87,16 @@ int main(int argc, char** argv)
       MagneticField = stod(Bfield);
     }
   std::cout<<"Magnetic Field: "<<MagneticField<<" T"<<std::endl;
+
+  std::string location="CERN";
+  if( parser.count("location") )
+     {
+        std::string loc = parser.retrieve<std::string>("location");
+        struct stat buffer;   
+        if( stat(loc.c_str(), &buffer) == 0 )
+           location = loc;
+      }
+  std::cout<<"Data taken at "<<location<<std::endl;
 
   int Verb = 0;
   if( parser.count("verbose"))
@@ -129,13 +140,14 @@ int main(int argc, char** argv)
   std::cout<<"Output filename: "<<foutname<<std::endl;
 
   Utils u(foutname,MagneticField);
+  u.BookRecoHistos();
   TObjString sett = ana_settings->GetSettingsString();
   u.WriteSettings(&sett);
 
   // =============================================
   // Reconstruction All-In-One
   //Reco r( settings, MagneticField );
-  Reco r( ana_settings, MagneticField );
+  Reco r( ana_settings, MagneticField, location );
   // =============================================
   if( Verb > 0 ) r.SetTrace(true);
 
