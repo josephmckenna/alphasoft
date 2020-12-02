@@ -70,7 +70,8 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       
-      d.SetupADCs( runinfo->fRunNo, 
+      d.SetupADCs( runinfo->fRoot->fOutputFile,
+                   runinfo->fRunNo, 
                    fFlags->fADCnorm,   // dis/en-able normalization of WF
                    fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
@@ -177,7 +178,7 @@ public:
              
             if( fFlags->fDiag )
                {
-                  d.AWdiagnostic();
+                  //d.AWdiagnostic();
                   flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
                   //               flow_sig->adc32range = d.GetAdcRange();
                }

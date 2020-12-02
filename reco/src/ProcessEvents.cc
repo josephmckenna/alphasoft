@@ -12,8 +12,8 @@
 #include "TFitVertex.hh"
 
 ProcessEvents::ProcessEvents( AnaSettings* a, double B, 
-                              std::string f, bool issim ):d(a),leaw(),lepad(),
-                                                          m(a),r(a,B),rMC(a,B),
+                              std::string f, bool issim ):d(a),leaw(),lepad(),m(a),
+                                                          r(a,B,"CERN"),rMC(a,B,"CERN"),
                                                           u(f,B),kFinder(adaptive),
                                                           EventNo(-1),kDraw(false),
                                                           kVerb(0)

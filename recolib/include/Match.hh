@@ -81,11 +81,11 @@ private:
 
 
    //Use static to share these histograms between all instances of Match
-   static TH1D *hsigCoarse;
-   static TH1D *hsig;
+   // static TH1D *hsigCoarse;
+   // static TH1D *hsig;
    static TH1D* hcognpeaks;
-   static TH2D* hcognpeaksrms;
-   static TH2D* hcognpeakswidth;
+   // static TH2D* hcognpeaksrms;
+   // static TH2D* hcognpeakswidth;
    static TH1D* hcogsigma;
    static TH1D* hcogerr;
    static TH2D* hcogpadssigma;

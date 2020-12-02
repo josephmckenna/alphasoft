@@ -28,7 +28,6 @@ private:
 
 public:
    Utils(double);
-   //Utils(std::string, double, bool);
    Utils(std::string,double);
 
    TCanvas* csig=0;
@@ -38,10 +37,12 @@ public:
    void BookG4Histos();
    void BookRecoHistos();
    void BookAGG4Histos();
+
    void FillRecoPointsHistos(const TObjArray* points);
    void FillRecoTracksHisto(std::vector<TTrack*>* found_tracks);
    void FillFitTracksHisto(std::vector<TTrack*>* tracks_array);
    void FillRecoVertex(const TFitVertex* Vertex);
+
    void FillFinalHistos(const Reco* r, int ntracks);
 
    void DebugNeuralNet(NeuralFinder*);

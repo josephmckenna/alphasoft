@@ -13,23 +13,23 @@ if [[ "$1" == "clean" ]]; then
 elif [[ "$1" == "update" ]]; then
     echo "Recompiling agdaq"
     cd $AGRELEASE/build
-    time cmake3 --build . -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "install" ]]; then
     echo "Install agdaq"
     cd $AGRELEASE/build
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
-elif [[ "$1" == "wA2" ]]; then
+elif [[ "$1" == "noA2" ]]; then
     echo "Building agdaq and alphaAnalysis"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "nosim" ]]; then
@@ -37,9 +37,9 @@ elif [[ "$1" == "nosim" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF 
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    cmake3 .. -DBUILD_AG_SIM=OFF 
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "ci" ]]; then
@@ -61,8 +61,8 @@ elif [[ "$1" == "debug" ]]; then
     cd $AGRELEASE/build
 #
     cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "build" ]]; then
@@ -70,9 +70,26 @@ elif [[ "$1" == "build" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Release
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    if [[ "$2" == "nosim" ]]; then
+	echo "without Simulation components"
+	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+    else
+	echo "with Simulation components"
+	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+    fi
+
+    time cmake3 --build . -- -j`nproc --ignore=2`
+
+    cd $AGRELEASE
+
+elif [[ "$1" == "verbose" ]]; then
+    echo "Building agdaq verbosily"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
+    cmake3 --build  . --verbose
+    cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "help" ]]; then
@@ -83,7 +100,8 @@ elif [[ "$1" == "help" ]]; then
     echo "- wA2"
     echo "- nosim (build and install)"
     echo "- debug (build with debug symbols and install)"
-    echo "- build (build optimized code and install)"
+    echo "- build [nosim] (build optimized code)"
+    echo "- verbose (build optimized code with verbose output)"
     echo " "
     echo "Default: build and install"
 
@@ -92,9 +110,9 @@ else
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF 
-    time cmake3 --build . -- -j
-    time cmake3 --build . --target install -- -j
+    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON
+    time cmake3 --build . -- -j`nproc --ignore=2`
+    time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 fi
 
