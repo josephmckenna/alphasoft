@@ -124,11 +124,11 @@ build-cc7-cmake:
   stage: build
   script:
     - echo "Building"
-    - cd rootana
+    - mkdir build
+    - cd build
+    - cmake3 ../
     - make
-    - cd ..
-    - scripts/ccomp.sh clean all
-    - scripts/ccomp.sh ci | tee ../BuildLog.txt
+    - make build
   artifacts:
     when: on_failure
     paths:
