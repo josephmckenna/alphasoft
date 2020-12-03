@@ -57,6 +57,8 @@ public:
 
    AnaSettings* ana_settings=0;
 
+   std::string fLocation="CERN";
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -92,7 +94,8 @@ public:
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField)
+                                                 r( f->ana_settings, f->fMagneticField,  
+                                                    f->fLocation)
    {
       printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
@@ -261,17 +264,13 @@ public:
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
-#endif
+          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
             std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
             skip_reco=true;
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
-#endif
+            flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
          }
 
       if (!skip_reco)
@@ -290,12 +289,7 @@ public:
 
             r.FindTracks(fFlags->finder);
             printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new Ag2DAnalysisReportFlow(flow,
-                                                           {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                           {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
-            timer_start=CLOCK_NOW
-#endif
+
             if( fFlags->fMagneticField == 0. )
                {
                   int nlin = r.FitLines();
