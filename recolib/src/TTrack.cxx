@@ -15,8 +15,8 @@ TTrack::TTrack():fPoints(0),fNpoints(0),
 		 fB(0.),
 		 fStatus(-1),fParticle(0),
 		 fPointsCut(28),
-		 fResidual(kUnknown,kUnknown,kUnknown),
-		 fResiduals2(kUnknown),
+		 fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+		 fResiduals2(ALPHAg::kUnknown),
 		 fPoint(0)
 {}
 
@@ -24,7 +24,7 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 					   fB(B),
 					   fStatus(-1),fParticle(0),
 					   fPointsCut(28),
-					   fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(kUnknown),
+					   fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),fResiduals2(ALPHAg::kUnknown),
 					   fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
@@ -36,8 +36,8 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 TTrack::TTrack(const TObjArray* array):fB(0.),
 				       fStatus(-1),fParticle(0),
 				       fPointsCut(28),
-				       fResidual(kUnknown,kUnknown,kUnknown),
-				       fResiduals2(kUnknown),
+				       fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+				       fResiduals2(ALPHAg::kUnknown),
 				       fPoint(0)
 { 
   fNpoints=array->GetEntriesFast();
@@ -50,7 +50,7 @@ TTrack::TTrack(double B):fPoints(0),fNpoints(0),
 			 fB(B),
 			 fStatus(-1),fParticle(0),
 			 fPointsCut(28),
-			 fResidual(kUnknown,kUnknown,kUnknown),fResiduals2(0.),
+			 fResidual(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),fResiduals2(0.),
 			 fPoint(0)
 { }
 
@@ -66,7 +66,7 @@ void TTrack::Clear(Option_t*)
   fStatus=-1;
   fParticle=0;
   fPointsCut=28;
-  fResidual={kUnknown,kUnknown,kUnknown};
+  fResidual={ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown};
   fResiduals2=0.;
 }
 
@@ -114,7 +114,7 @@ TTrack& TTrack::operator=( const TTrack& right )
 
 int TTrack::AddPoint(TSpacePoint* aPoint)
 {
-  if( aPoint->IsGood(_cathradius, _fwradius) )
+  if( aPoint->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) )
     {
       fPoints.push_back(aPoint);
       ++fNpoints;
@@ -142,8 +142,8 @@ void TTrack::Reason()
 
 double TTrack::GetApproxPathLength()
 {
-  TVector3 r1( Evaluate(_cathradius*_cathradius) );
-  TVector3 r2( Evaluate(_trapradius*_trapradius) );
+  TVector3 r1( Evaluate(ALPHAg::_cathradius*ALPHAg::_cathradius) );
+  TVector3 r2( Evaluate(ALPHAg::_trapradius*ALPHAg::_trapradius) );
   return TMath::Abs(r1.Mag()-r2.Mag());
 }
 

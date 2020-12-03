@@ -1,0 +1,10 @@
+# run in batch mode
+#
+/control/verbose 2
+/tracking/verbose 0
+#
+/AGTPC/setRunType 4
+#
+/AGTPC/setRunName OnAxis
+#
+/run/beamOn 10000

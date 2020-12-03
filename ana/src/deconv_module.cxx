@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <cassert>
 #include <iostream>
@@ -18,11 +19,11 @@
 #include "TMath.h"
 
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "tinyspline.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 class DeconvFlags
 {

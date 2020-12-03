@@ -460,14 +460,15 @@ TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)
       SeqData=new TA2SpillSequencerData(a->SeqData);
    else
       SeqData=NULL;
-
 }
 TA2Spill::~TA2Spill()
 {
    if (ScalerData)
       delete ScalerData;
+   ScalerData=NULL;
    if (SeqData)
       delete SeqData;
+   SeqData=NULL;
 }
 
 #include "assert.h"

@@ -36,15 +36,16 @@ LookUpTable::LookUpTable(int run):finterpol_tdrad(0),finterpol_tdphi(0),
 }
 
 // garfield++ sim with uniform field
-LookUpTable::LookUpTable(double quencherFrac, double B):finterpol_tdrad(0),finterpol_tdphi(0),
-							fMapBegin(99999.),
-							fMinTime(-1.),fMaxTime(0.)
+LookUpTable::LookUpTable(double quencherFrac, double B, std::string location):finterpol_tdrad(0),
+                                                                              finterpol_tdphi(0),
+                                                                              fMapBegin(99999.),
+                                                                              fMinTime(-1.),fMaxTime(0.)
 {
   frad.clear();
   fdrift.clear();
   flor.clear();
 
-  if( SetGas(quencherFrac, B) )
+  if( SetGas(quencherFrac, B, location) )
     {
       fMinTime = fdrift.front();
       fMaxTime = fdrift.back();
@@ -157,9 +158,9 @@ bool LookUpTable::SetRun( int run )
 
   std::cout<<"LookUpTable:: Min Rad: "<<minrad
 	   <<" mm  Max Time: "<<fdrift.back()
-	   <<" ns  (cathode r = "<<_cathradius<<" mm)"<<std::endl;
+	   <<" ns  (cathode r = "<<ALPHAg::_cathradius<<" mm)"<<std::endl;
 
-  if(  minrad > _cathradius || minrad == 0. )
+  if(  minrad > ALPHAg::_cathradius || minrad == 0. )
     {
       return SetDefault();
     }
@@ -196,12 +197,14 @@ bool LookUpTable::SetDefault()
   return true;
 }
 
-bool LookUpTable::SetGas(double quencherFrac, double B )
+bool LookUpTable::SetGas(double quencherFrac, double B, std::string location)
 {
   std::cout << "LookUpTable::SetGas(" << quencherFrac << ", " << B << ')' << std::endl;
-  TString fgarfname = TString::Format("%s/ana/strs/garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f_CERN.dat",
+  TString fgarfname = TString::Format("%s/ana/strs/garfppSTR_B%1.2fT_Ar%1.0fCO2%1.0f_%s.dat",
 				      getenv("AGRELEASE"),
-				      B,(1.-quencherFrac)*1.e2,quencherFrac*1.e2);
+				      B,(1.-quencherFrac)*1.e2,quencherFrac*1.e2,
+                                      location.c_str());
+  std::cout << "LookUpTable::SetGas "<< fgarfname << std::endl;
   std::ifstream fgarf(fgarfname.Data());  
   std::string head;
   std::getline(fgarf,head);

@@ -11,14 +11,9 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <TTree.h>
-#include "TSeqCollection.h"
-// #include <TH1D.h>
-// #include <TH2D.h>
-#include <TMath.h>
-#include <TCanvas.h>
-#include <TGraph.h>
 
 #include "TPCconstants.hh"
 #include "LookUpTable.hh"
@@ -34,7 +29,7 @@
 #include "TStoreEvent.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "json.hpp"
 
 #include "Reco.hh"
@@ -313,7 +308,7 @@ public:
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status = r.RecVertex( &theVertex );
-            std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
+            if( fTrace ) std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
             analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
             analyzed_event->SetVertexStatus( status );
@@ -321,29 +316,21 @@ public:
                {
                   analyzed_event->SetVertex(*(theVertex.GetVertex()));
                   analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-                  theVertex.Print("rphi");
+                  if( fTrace ) theVertex.Print("rphi");
                }
             else
-               std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+               std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
-      
-      //AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      ////If have barrel scintilator, add to TStoreEvent
-      //if (bf)
-      //   {
-      //      //bf->BarEvent->Print();
-      //      analyzed_event->AddBarrelHits(bf->BarEvent);
-      //   }
-
-      EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-      EventTree->Fill();
+ 
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
+         EventTree->Fill();
+      }
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
-      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
-#endif
+      //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       if (!skip_reco) r.Reset();
       return flow;
    }

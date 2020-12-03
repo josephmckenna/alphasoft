@@ -2,14 +2,6 @@
 #include <fstream>
 #include <cstdlib>
 
-#include <TMath.h>
-#include <TVector3.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TCanvas.h>
-#include <TNtupleD.h>
-#include <TFile.h>
-
 #include "MediumMagboltz.hh"
 #include "TPC.hh"
 #include "Sensor.hh"
@@ -29,52 +21,19 @@ using namespace Garfield;
 
 #define DEBUG 1
 
-TH2D hEv;
-TH2D hrE;
-TH2D hrv;
-double ElectricFieldHisto(double x, double y, double z, Sensor* s)
-{
-  // Electric and Magnetic Fields
-  double Ex,Ey,Ez,VV,Bx,By,Bz;
-  int dummy;
-  // Drift Velocity
-  Medium* m;
-  double Vx,Vy,Vz;
-  s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,dummy);
-  s->MagneticField(x,y,z,Bx,By,Bz,dummy);
-  m->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
-  // Lorentz Angle
-  TVector3 V(Vx,Vy,Vz);
-  TVector3 E(Ex,Ey,Ez);
-
-  double Emag=E.Mag(),Vmag=V.Mag(),r=TMath::Sqrt(x*x+y*y);
-  hEv.Fill(Emag,Vmag);
-  hrE.Fill(r,Emag);
-  hrv.Fill(r,Vmag);
-  return TMath::Pi()-V.Angle(E);
-}
-
 int main(int argc, char * argv[])
 {
   double InitialPhi = 0., // rad
     InitialZed = 0., // cm
     CathodeVoltage = -4000.,// V
     AnodeVoltage = 3200.,
-    FieldVoltage = -403.52;
+    FieldVoltage = -99.;
 
-  // double CathodeVoltage = -5325.,// V
-  // AnodeVoltage = 1765.,
-  // FieldVoltage = -186.;
-  //    AnodeVoltage = 2050.,
-  //    FieldVoltage = -227.;
-
-  // double MagneticField=0.65; // T
-  //  double MagneticField=0.;
-  double MagneticField=1.;
+  double MagneticField=1.; // T
 
   double QuenchFraction=0.1;
 
-  double pressure=725.;
+  double pressure=725.; // Torr
 
   if( argc == 3 )
     {
@@ -123,30 +82,15 @@ int main(int argc, char * argv[])
   unsigned int the_seed = 1985810831;
   randomEngine.Seed(the_seed);
 
-  // TString fname = TString::Format("./chamber_drift/ChamberDriftHisto_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.root",
-  // 				  InitialPhi,InitialZed,
-  // 				  (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,
-  // 				  CathodeVoltage,AnodeVoltage,FieldVoltage,
-  // 				  MagneticField);
-  // TFile* fout = TFile::Open(fname.Data(),"RECREATE");
-
-  // TH1D hgain("hgain_drift","Gain DriftRKF",1.e4,1.,5.e6);
-
-  // TNtupleD ntdrift("ntdrift","drift","r:wire_angle:drift_time:Lorentz");
- 
   // Create the medium
   MediumMagboltz *gas = new MediumMagboltz;
   
   // Gas file created with other software
-  // TString gasfile = TString::Format("%s/gasfiles/ar_90_co2_10_NTP_20E200000_6B1.25.gas",
-  // 				    getenv("AGTPC_TABLES"));
-  TString gasfile = TString::Format("%s/gasfiles/ar_%2.0f_co2_%2.0f_NTP_20E200000_6B1.25.gas",
-   				    getenv("AGTPC_TABLES"),
-				    (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2);
+  TString gasfile = TString::Format("ar_%2.0f_co2_%2.0f_NTP_20E200000_6B1.25.gas",
+                                    (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2);
   if( pressure )
-    gasfile = TString::Format("%s/gasfiles/ar_%2.0f_co2_%2.0f_%1.0fTorr_20E200000_4B1.10.gas",
-			      getenv("AGTPC_TABLES"),
-			      (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,pressure);
+    gasfile = TString::Format("ar_%2.0f_co2_%2.0f_%1.0fTorr_20E200000_4B1.10.gas",
+                              (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,pressure);
   cerr<<gasfile<<endl;
   if( LoadGas(gas,gasfile.Data()) )
     cerr<<"gasfile OK"<<endl;
@@ -172,7 +116,9 @@ int main(int argc, char * argv[])
       // // Oxford field Map - 13 Feb 2016
       // TString BfieldMap("./fieldmaps/TPC_Field_Map.csv");
       // Babcock field Map - 20 Sep 2017 
-      TString BfieldMap("./fieldmaps/Babcock_Field_Map.csv");
+      TString BfieldMap= TString::Format("%s/simulation/common/fieldmaps/Babcock_Field_Map.csv",
+                                         getenv("AGRELEASE"));
+      cerr<<"B map: "<<BfieldMap<<endl;
       if( !drift_cell.SetSymmetries("rz") ) 
 	{
 	  cerr<<"set symm failed"<<endl;
@@ -189,18 +135,9 @@ int main(int argc, char * argv[])
   drift_cell.SetGas(gas);
   drift_cell.init();
 
-  hEv = TH2D("hEv","Electron Velocity;E [V/cm];v [cm/ns]",10000,0.,50.e3,10000,0.,1.e-2);
-  hrE = TH2D("hrE","Electric Field;r [cm];E [V/cm]",10000,
-	     drift_cell.GetCathodeRadius(), drift_cell.GetROradius(),
-	     10000,0.,50.e3);;
-  hrv = TH2D("hrv","Electron Velocity;r [cm];v [cm/ns]",10000,
-	     drift_cell.GetCathodeRadius(), drift_cell.GetROradius(),
-	     10000,0.,1.e-2);
-
-
+ 
   // Finally assembling a Sensor object
   Sensor sensor;
-  //  sensor.DisableDebugging();
   // Calculate the electric field
   sensor.AddComponent(&drift_cell);
 
@@ -212,7 +149,7 @@ int main(int argc, char * argv[])
 
   sensor.AddElectrode(&drift_cell, "ro");
 
-  // area
+  // // area
   // double areaX1 = drift_cell.GetCathodeRadius(), areaX2 = drift_cell.GetROradius(),
   //   areaY1 = -0.1, areaY2 = areaX2 - areaX1 + areaY1,
   //   areaZ1 = InitialZed-0.2, areaZ2 = InitialZed+0.2;
@@ -273,34 +210,30 @@ int main(int argc, char * argv[])
   edrift.SetSensor(&sensor);
   const double maxStepSize=0.03;// cm
   edrift.SetMaximumStepSize(maxStepSize);
-  //  edrift.EnableStepSizeLimit();
   //  edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
 
-  //  fname = TString::Format("./chamber_drift/MasterTableDrift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.dat",
-  TString fname = TString::Format("./chamber_drift/drifttables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.dat",
+  TString fname = TString::Format("%s/chamber_drift/drift_tables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.dat",
+                                  getenv("GARFIELDPP"),
 				  InitialPhi,InitialZed,
 				  (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,
 				  CathodeVoltage,AnodeVoltage,FieldVoltage,
 				  MagneticField);
-  cerr<<"\nBEGIN"<<endl;
+  cerr<<"Saving data to "<<fname<<endl;
   ofstream ftd(fname.Data());
+  if( !ftd.good() ) return -50;
 
+  cerr<<"\nBEGIN"<<endl;
+ 
   // Electron initial point
   double xi,yi,zi=InitialZed,
     ti=0.0;
   double phii = InitialPhi;
-  //  double ri = drift_cell.GetCathodeRadius();
-  //  double ri = 10.93;
-
-  //  double Rstep = 0.02; // cm
-  //  double Rstep = 0.003; // cm
-  double Rstep = 0.05;
-  //double Rstep = 0.01;
+  double Rstep = 0.05; // cm
+ 
   // Electron counter
   int ie = 0;
   for(double ri=drift_cell.GetCathodeRadius(); ri<drift_cell.GetROradius(); ri+=Rstep)
-      //  for(double phii = InitialPhi - drift_cell.GetAnodePitch()*0.5; phii<InitialPhi + drift_cell.GetAnodePitch()*0.5; phii+=drift_cell.GetAnodePitch()/1001.)
     {
       ++ie;
       xi=ri*TMath::Cos(phii);
@@ -313,47 +246,27 @@ int main(int argc, char * argv[])
       double t_d=edrift.GetDriftTime();
       // gain
       double gain=edrift.GetGain();
-      //hgain.Fill(gain);
-      // Lorentz Angle
-      //      double alpha=LorentzAngle(xi,yi,zi,&sensor);
-      double alpha=ElectricFieldHisto(xi,yi,zi,&sensor);
+     
       double Xion,Yion,Zion,Tion;
       unsigned int NP = edrift.GetNumberOfDriftLinePoints();
       edrift.GetDriftLinePoint(NP-1,Xion,Yion,Zion,Tion);
       assert(TMath::Abs(TMath::Sqrt(Xion*Xion+Yion*Yion)-18.2)<=Rstep);
+
       // wire hit
       double phiIon = TMath::ATan2(Yion,Xion);
       if( phiIon < 0. ) phiIon+=TMath::TwoPi();
 
-      //      ftd<<ri<<"\t"<<phiIon<<"\t"<<t_d<<"\t"<<alpha<<endl;
-      ftd<<xi<<"\t"<<yi<<"\t"<<phiIon<<"\t"<<t_d<<"\t"<<alpha<<"\t"<<gain<<endl;
-      // ntdrift.Fill(ri,phiIon,t_d,alpha);
-
+      ftd<<xi<<"\t"<<yi<<"\t"<<phiIon<<"\t"<<t_d<<"\t"<<gain<<endl;
+    
 #if DEBUG>0
       cerr<<"\t"<<ie<<"\t"<<ri
-	  <<"\t"<<t_d<<"\t"<<phiIon*TMath::RadToDeg()<<"\t"
-	  <<alpha*TMath::RadToDeg()<<"\t"<<gain<<endl;
+	  <<"\t"<<t_d<<"\t"<<phiIon*TMath::RadToDeg()<<"\t"<<gain<<endl;
 #endif
-	  //      ri+=Rstep;
     }
-  ftd.close();
   cerr<<"END"<<endl;
-  cerr<<"Number of Clusters: "<<ie<<endl;
+  ftd.close();
 
-  // fout->cd();
-  // hgain.Write();
-  // ntdrift.Write();
-  // hEv.Write();
-  // hrE.Write();
-  // hrv.Write();
-  // // cerr<<"Plot Driftlines"<<endl;
-  // // viewdrift.Plot(true,true);
-  // // viewCell.Plot2d();
-  // // cc.SaveAs(".png");
-  // // cc.Write();
-  // // cf.Write();
-  // // ce.Write();
-  // fout->Close();
+  cerr<<"Number of Clusters: "<<ie<<endl;
 
   return 0;
 }
