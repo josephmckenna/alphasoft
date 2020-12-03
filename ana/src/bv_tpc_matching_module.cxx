@@ -94,7 +94,7 @@ public:
    {
       ModuleName="BC/TPC Matching Module";
       printf("matchingmodule::ctor!\n");
-      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
+      //      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
    }
 
    ~matchingmodule()
@@ -226,7 +226,7 @@ public:
       #endif
 
       // Main functions
-      if( MagneticField > 0. )
+      if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
          {
             std::vector<TVector3> helix_points = GetHelices(flow);
             MatchPoints(flow, helix_points);

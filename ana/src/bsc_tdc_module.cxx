@@ -68,6 +68,12 @@ private:
    TH1D* hTimeBetweenHits = NULL;
    TH1D* hTimeBetweenHitsZoom = NULL;
 
+   // Counter initialization
+   int c_adc = 0;
+   int c_tdc = 0;
+   int c_adctdc = 0;
+   int c_topbot = 0;
+   double previous_time = 0;
 
 public:
 
@@ -211,13 +217,14 @@ public:
                   CombineEnds(barEvt);
                   CalculateZ(barEvt);
                   CalculateTOF(barEvt);
-		  if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent tdc hits %d\n",int(TDCHits.size()));
                }
             else
-               std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
+               if( fFlags->fPrint )
+                  std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
          }
       else
-         std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
+         if( fFlags->fPrint )         
+            std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
 
       return flow;
    }
@@ -424,7 +431,6 @@ public:
                   hTOFTDC->Fill(TOF_TDC);
                }
          }
-      return trig_time;
    }
 
 
