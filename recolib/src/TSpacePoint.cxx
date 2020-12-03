@@ -12,11 +12,11 @@
 #include "TPCconstants.hh"
 
 TSpacePoint::TSpacePoint():TObject(),
-			   fw(-1),fp(-1),ft(kUnknown),fH(kUnknown),
-			   fx(kUnknown),fy(kUnknown),fz(kUnknown),
-			   fr(kUnknown),fphi(kUnknown),
-			   ferrx(kUnknown),ferry(kUnknown),ferrz(kUnknown),
-			   ferrr(kUnknown),ferrphi(kUnknown)
+			   fw(-1),fp(-1),ft(ALPHAg::kUnknown),fH(ALPHAg::kUnknown),
+			   fx(ALPHAg::kUnknown),fy(ALPHAg::kUnknown),fz(ALPHAg::kUnknown),
+			   fr(ALPHAg::kUnknown),fphi(ALPHAg::kUnknown),
+			   ferrx(ALPHAg::kUnknown),ferry(ALPHAg::kUnknown),ferrz(ALPHAg::kUnknown),
+			   ferrr(ALPHAg::kUnknown),ferrphi(ALPHAg::kUnknown)
 {}
 
 TSpacePoint::TSpacePoint(const TSpacePoint &p):TObject(p)
@@ -47,12 +47,12 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 				   fz(z),fr(r)
 {
   fp = s+i*32; // pad uniq index
-  // if( ez == kUnknown )
+  // if( ez == ALPHAg::kUnknown )
   //   ferrz = _sq12*_padpitch;
   // else
   ferrz = ez;
 
-  double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
+  double pos = ALPHAg::_anodepitch * ( double(fw) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
   if( fphi < 0. ) fphi += TMath::TwoPi();
   if( fphi >= TMath::TwoPi() )
@@ -67,9 +67,9 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
     fy = fr*TMath::Sin( fphi );
     fx = fr*TMath::Cos( fphi );
   #endif
-  double errt = _sq12*_timebin;
+  double errt = ALPHAg::_sq12*ALPHAg::_timebin;
   ferrr = TMath::Abs(er)*errt;
-  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);  
+  ferrphi = TMath::Sqrt(ALPHAg::_anodepitch*ALPHAg::_anodepitch/12. + ep*ep*errt*errt);  
 
   // sigma_x and simg_y in quadrature
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,
@@ -90,12 +90,12 @@ void TSpacePoint::Setup(int w, int s, int i,
   fz=z;
   fr=r;
   fp = s+i*32; // pad uniq index
-  // if( ez == kUnknown )
+  // if( ez == ALPHAg::kUnknown )
   //   ferrz = _sq12*_padpitch;
   // else
   ferrz = ez;
 
-  double pos = _anodepitch * ( double(fw) + 0.5 ); // point position = anode position
+  double pos = ALPHAg::_anodepitch * ( double(fw) + 0.5 ); // point position = anode position
   fphi = pos - phi; // lorentz correction
   if( fphi < 0. ) fphi += TMath::TwoPi();
   if( fphi >= TMath::TwoPi() )
@@ -110,9 +110,9 @@ void TSpacePoint::Setup(int w, int s, int i,
     fy = fr*TMath::Sin( fphi );
     fx = fr*TMath::Cos( fphi );
   #endif
-  double errt = _sq12*_timebin;
+  double errt = ALPHAg::_sq12*ALPHAg::_timebin;
   ferrr = TMath::Abs(er)*errt;
-  ferrphi = TMath::Sqrt(_anodepitch*_anodepitch/12. + ep*ep*errt*errt);  
+  ferrphi = TMath::Sqrt(ALPHAg::_anodepitch*ALPHAg::_anodepitch/12. + ep*ep*errt*errt);  
 
   // sigma_x and simg_y in quadrature
   double x2=fx*fx, y2=fy*fy, r2=fr*fr,
@@ -151,7 +151,7 @@ void TSpacePoint::Setup(int w, int s, int i,
     fy = fr*TMath::Sin( fphi );
     fx = fr*TMath::Cos( fphi );
   #endif
-  double errt = _sq12*_timebin;
+  double errt = ALPHAg::_sq12*ALPHAg::_timebin;
   ferrr = TMath::Abs(er)*errt;
   ferrphi = TMath::Sqrt( epos*epos + ep*ep*errt*errt);  
 
@@ -164,7 +164,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 
 TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double ex, double ey, double ez):fw(-1), fp(-1), 
-							  ft(kUnknown),fH(999999.),
+							  ft(ALPHAg::kUnknown),fH(999999.),
 							  fx(x), fy(y), fz(z),
 							  ferrx(ex), ferry(ey), ferrz(ez)
 {
@@ -180,7 +180,7 @@ double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
 
 double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
 {
-  double dist=kUnknown,
+  double dist=ALPHAg::kUnknown,
     phi1=fphi,phi2=aPoint->fphi;
   if( phi1 < 0. )
     phi1+=TMath::TwoPi();
@@ -224,12 +224,12 @@ bool TSpacePoint::IsGood(const double& rmin, const double& rmax) const
   else if( ft < 0. ) return false;
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return false;
-  else if( fz == kUnknown ) return false;
+  else if( fz == ALPHAg::kUnknown ) return false;
   else if( fr < rmin || fr > rmax ) return false; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return false;
-  else if( ferrz == kUnknown ) return false;
+  else if( ferrz == ALPHAg::kUnknown ) return false;
   // ferrphi;
   else return true;
 
@@ -243,12 +243,12 @@ int TSpacePoint::Check(const double& rmin, const double& rmax) const
   else if( ft < 0. ) return -2;
   // fH;
   else if( TMath::IsNaN(fx) || TMath::IsNaN(fy)) return -3;
-  else if( fz == kUnknown ) return -4; // no z value
+  else if( fz == ALPHAg::kUnknown ) return -4; // no z value
   else if( fr < rmin || fr > rmax ) return -5; // r outside fiducial volume
   // fphi;
   else if( TMath::IsNaN(ferrx) || TMath::IsNaN(ferry) || TMath::IsNaN(ferrr) )
     return -6;
-  else if( ferrz == kUnknown ) return -7;
+  else if( ferrz == ALPHAg::kUnknown ) return -7;
   // ferrphi;
   else return 1;
 

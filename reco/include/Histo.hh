@@ -33,6 +33,7 @@ public:
    int FillHisto(std::string hname, double x, double y=0., double w=0.);
 
    int WriteObject(TObject* , std::string);
+   void Save();
 };
 
 #endif

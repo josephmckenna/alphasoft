@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <iostream>
 #include <vector>
@@ -17,9 +18,18 @@
 
 #include "TBarEvent.hh"
 
+class TdcFlags
+{
+public:
+   bool fPrint = false;
+};
+
 
 class tdcmodule: public TARunObject
 {
+public:
+   TdcFlags* fFlags;
+
 private:
 
    // Constant value declaration
@@ -58,17 +68,13 @@ private:
    TH1D* hTimeBetweenHits = NULL;
    TH1D* hTimeBetweenHitsZoom = NULL;
 
-   // Counter initialization
-   int c_adc = 0;
-   int c_tdc = 0;
-   int c_adctdc = 0;
-   int c_topbot = 0;
-   double previous_time = 0;
 
 public:
 
-   tdcmodule(TARunInfo* runinfo): TARunObject(runinfo)
+   tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
+      TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="bsc tdc module";
       printf("tdcmodule::ctor!\n");
    }
 
@@ -169,19 +175,24 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      std::cout<<"tdc module analysing event"<<std::endl;
-   
+      if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent run %d\n",runinfo->fRunNo);
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
-      #endif
-      AgEvent* age = ef->fEvent;
+      }
 
+      AgEvent* age = ef->fEvent;
+      if(!age)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
       TrigEvent* trig = age->trig;
@@ -200,18 +211,15 @@ public:
                   CombineEnds(barEvt);
                   CalculateZ(barEvt);
                   CalculateTOF(barEvt);
+		  if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent tdc hits %d\n",int(TDCHits.size()));
                }
             else
                std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
          }
       else
          std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-//      #ifdef _TIME_ANALYSIS_
-//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
-//      #endif
 
       return flow;
-      
    }
 
    //________________________________
@@ -321,7 +329,6 @@ public:
             endhit->SetTDCHit(tdc_time);
             c_adctdc+=1;
          }
-
    }
 
    void CombineEnds(TBarEvent* barEvt)
@@ -417,6 +424,7 @@ public:
                   hTOFTDC->Fill(TOF_TDC);
                }
          }
+      return trig_time;
    }
 
 
@@ -438,6 +446,8 @@ public:
 class tdcModuleFactory: public TAFactory
 {
 public:
+   TdcFlags fFlags;
+public:
    void Help()
    {   }
    void Usage()
@@ -448,7 +458,10 @@ public:
    {
       printf("tdcModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) { }
+      for (unsigned i=0; i<args.size(); i++) { 
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true; 
+      }
    }
 
    void Finish()
@@ -459,7 +472,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("tdcModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new tdcmodule(runinfo);
+      return new tdcmodule(runinfo,&fFlags);
    }
 };
 

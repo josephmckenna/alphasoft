@@ -396,9 +396,9 @@ int main(int argc, char * argv[])
   // cc.Write();
 
   cerr<<"READOUT!"<<endl;
-  Sensor ROsens(sensor);
+  //  Sensor ROsens(sensor);
   // AFTER Response Function
-  ROsens.SetTransferFunction(Hpads);
+  //  ROsens.SetTransferFunction(Hpads);
 
   // Pre-Amp Response Function
   sensor.SetTransferFunction(Hands);
@@ -408,8 +408,8 @@ int main(int argc, char * argv[])
     {
       cerr<<"Apply the transfer function"<<endl;
       // Apply the transfer function
-      sensor.ConvoluteSignal();
-      ROsens.ConvoluteSignal();
+      sensor.ConvoluteSignals();
+      //      ROsens.ConvoluteSignals();
     }
 
   // WIRES SIGNALS
@@ -422,7 +422,8 @@ int main(int argc, char * argv[])
     }
 
   TString roname("ro");
-  TH1D hro = GetROSignal(&ROsens, &roname, convolute);
+  //  TH1D hro = GetROSignal(&ROsens, &roname, convolute);
+  TH1D hro = GetROSignal(&sensor, &roname, convolute);
   hro.Write();
   cerr<<"READOUT complete"<<endl;
 

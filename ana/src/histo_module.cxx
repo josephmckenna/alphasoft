@@ -1,9 +1,12 @@
 #include "AgFlow.h"
+#include "RecoFlow.h"
+
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TProfile.h"
+#include "TGraph.h"
 
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include <set>
 #include <iostream>
 
@@ -53,6 +56,8 @@ private:
    TH2D* hTimeAmpBot;
    TH2D* hTimeAmpTop;
 
+   TGraph* gtamp;
+
    TH2D* hTimeBotChan;
    TH2D* hTimeTopChan;
    TH2D* hAmpBotChan;
@@ -97,6 +102,8 @@ private:
    TH2D* hPwbRange;
    TProfile* hPwbRange_prox;
    //   std::map<int,TH2D*> hPwbTimeRange;
+   
+   TH2D* hPadOverflow;
 
    TH1D* hPwbWfAmp;
    TH1D* hPwbWfRange;
@@ -105,6 +112,10 @@ private:
    std::map<int,TH2D*> hPwbTimeColRowAmp;
    std::map<int,TProfile*> hPwbTimeRange_prox;
    std::map<int,TH2D*> hPwbTimeColRowRange;
+
+   // deconv study
+   TH2D* hAmpAwDeconv;
+   TH2D* hAmpPadDeconv;
 
    // match AW*PAD
    TH2D* hawcol;
@@ -155,7 +166,7 @@ private:
    TH2D* hAmpSpPadCol;
    TH2D* hAmpSpPadRow;
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
 public:
    HistoModule(TARunInfo* runinfo, HistoFlags* f):TARunObject(runinfo),
@@ -163,6 +174,7 @@ public:
                                                   fCoincTime(20.),fpc_timecut(300.) // ns
 
    {
+      ModuleName="Histo Module";
       diagnostics=f->fDiag;
    }
 
@@ -182,25 +194,35 @@ public:
          gDirectory->mkdir("awdeconv")->cd();
       //gDirectory->pwd();
       
-      hNhitBot = new TH1D("hNhitBot","Number of Hits Bottom;N",500,0.,5000.);
+      // hNhitBot = new TH1D("hNhitBot","Number of Hits Bottom;N",500,0.,5000.);
       hNhitTop = new TH1D("hNhitTop","Number of Hits Top;N",500,0.,5000.);
-      hOccBot = new TH1D("hOccBot","Occupancy per AW Bottom",256,0.,256.);
-      hOccBot->SetMinimum(0.);
+      // hOccBot = new TH1D("hOccBot","Occupancy per AW Bottom",256,0.,256.);
+      //hOccBot->SetMinimum(0.);
       hOccTop = new TH1D("hOccTop","Occupancy per AW Top",256,0.,256.);
       hOccTop->SetMinimum(0.);
 
-      hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
+      // hAmpBot = new TH1D("hAmpBot","Reconstructed Avalanche Size Bottom",200,0.,2000.);
       hAmpTop = new TH1D("hAmpTop","Reconstructed Avalanche Size Top",200,0.,2000.);
       hErrTop = new TH1D("hErrTop","Reconstructed Avalanche Error Size Top",200,0.,100.);
-      hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
-      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
-      hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
-      hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
+      //hTimeBot = new TH1D("hTimeBot","Reconstructed Avalanche Time Bottom",375,0.,6000.);
+      //  hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",375,0.,6000.);
+      // hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",225,0.,3600.);
+      //hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",138,0.,4384.);
+      //hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",278,0.,4384.);
+      hTimeTop = new TH1D("hTimeTop","Reconstructed Avalanche Time Top",300,0.,4800.);
+      //hTimeAmpBot = new TH2D("hTimeAmpBot","Reconstructed Avalanche Time Vs Size - Bottom",60,0.,6000.,50,0.,2000.);
+      //hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",60,0.,6000.,50,0.,2000.);
+      //hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",139,0.,4384.,100,0.,2000.);
+      hTimeAmpTop = new TH2D("hTimeAmpTop","Reconstructed Avalanche Time Vs Size - Top",150,0.,4800.,200,0.,2000.);
 
-      hTimeBotChan = new TH2D("hTimeBotChan","Reconstructed Avalanche Time Vs Bottom Channel",256,0.,256.,37,0.,6000.);
-      hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,37,0.,6000.);
-      hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
+      // hTimeBotChan = new TH2D("hTimeBotChan","Reconstructed Avalanche Time Vs Bottom Channel",256,0.,256.,37,0.,6000.);
+      hTimeTopChan = new TH2D("hTimeTopChan","Reconstructed Avalanche Time Vs Top Channel",256,0.,256.,300,0.,4800.);
+      // hAmpBotChan = new TH2D("hAmpBotChan","Reconstructed Avalanche Size Vs Bottom Channel",256,0.,256.,500,0.,2000.);
       hAmpTopChan = new TH2D("hAmpTopChan","Reconstructed Avalanche Size Vs Top Channel",256,0.,256.,500,0.,2000.);
+
+      gtamp = new TGraph;
+      gtamp->SetName("gtamp");
+      gtamp->SetTitle("Deconv Drift Time Vs Amplitude;Time [ns];Amplitude [a.u.]");
 
       hAwOccSec = new TH1D("hAwOccSec","Number of TOP AW hits per Pad Sector;N",32,0.,32.);
       hAwOccSec->SetMinimum(0.);
@@ -225,14 +247,16 @@ public:
          {
             TString hname = TString::Format("hadcampch%03d",i);
             TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
-            hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,17000.);
+            //hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,17000.);
+            //hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),279,0.,4384.,1000,0.,17000.);
+            hAdcTimeAmp[i] = new TH2D(hname.Data(),htitle.Data(),300,0.,4800.,1000,0.,17000.);
          }
-      for( int i=0; i<256; ++i)
-         {
-            TString hname = TString::Format("hadcrangech%03d",i);
-            TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
-            hAdcTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,18000.);
-         }
+      // for( int i=0; i<256; ++i)
+      //    {
+      //       TString hname = TString::Format("hadcrangech%03d",i);
+      //       TString htitle = TString::Format("Maximum WF Amplitude Vs Time AW: %d;Time [ns];Amplitude [a.u.]",i);
+      //       hAdcTimeRange[i] = new TH2D(hname.Data(),htitle.Data(),600,0.,6000.,1000,0.,18000.);
+      //    }
   
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -247,26 +271,35 @@ public:
       hOccCol->SetMinimum(0.);
       hOccPad = new TH2D("hOccPad","Number of Hits Pads;row;sec;N",576,0.,576.,32,0.,32.);
 
-      hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",200,0.,10000.);
+      hAmpPad = new TH1D("hAmpPad","Reconstructed Avalanche Size Pad",500,0.,5000.);
       hErrPad = new TH1D("hErrPad","Reconstructed Avalanche Error Size Pad",200,0.,100.);
-      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
+      //hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",375,0.,6000.);
+      //   hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",225,0.,3600.);
+      //     hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",138,0.,4384.);
+      //hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",277,0.,4384.);
+      hTimePad = new TH1D("hTimePad","Reconstructed Avalanche Time Pad",300,0.,4800.);
 
-      hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
+      //hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,6000.,100,0.,5100.);
+      // hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",277,0.,4384.,100,0.,5100.);
+      hTimeAmpPad = new TH2D("hTimeAmpPad","Reconstructed Avalanche Time Vs Size - Pad",300,0.,4800.,250,0.,5000.);
       
-      hTimePadCol = new TH2D("hTimePadCol","Reconstructed Avalanche Time Vs Pad Cols;sec;time [ns]",32,0.,32.,40,0.,6000.);
-      hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows;row;time [ns]",576,0.,576,40,0.,6000.);
+      hTimePadCol = new TH2D("hTimePadCol","Reconstructed Avalanche Time Vs Pad Cols;sec;time [ns]",32,0.,32.,300,0.,4800.);
+      hTimePadRow = new TH2D("hTimePadRow","Reconstructed Avalanche Time Vs Pad Rows;row;time [ns]",576,0.,576,300,0.,4800.);
       hAmpPadCol = new TH2D("hAmpPadCol","Reconstructed Avalanche Size Vs Pad Cols;sec;amp",32,0.,32.,500,0.,5000.);
       hAmpPadRow = new TH2D("hAmpPadRow","Reconstructed Avalanche Size Vs Pad Rows;row;amp",576,0.,576,500,0.,5000.);
 
       gDirectory->mkdir("pwbwf")->cd();
-      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,4200.);
+      hPwbAmp = new TH2D("hPwbAmp","Maximum WF Amplitude Vs Channel",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,4200.);
       hPwbAmp_prox = new TProfile("hPwbAmp_prox","Average Maximum WF Amplitude Vs Channel;Pad;PWB",
-                                  32*576,0.,_padcol*_padrow,0.,4200.);
+                                  32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,4200.);
       hPwbAmp_prox->SetMinimum(0.);
-      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,_padcol*_padrow,1000,0.,5100.);
+      hPwbRange = new TH2D("hPwbRange","WF Range Vs Channel",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,5100.);
       hPwbRange_prox = new TProfile("hPwbRange_prox","Average WF Range Vs Channel;Pad;PWB",
-                                    32*576,0.,_padcol*_padrow,0.,5100.);
+                                    32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5100.);
       hPwbRange_prox->SetMinimum(0.);
+
+      hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+                              576,0.,ALPHAg::_padrow,32,0.,ALPHAg::_padcol);
 
       hPwbWfAmp = new TH1D("hPwbWfAmp","PWB WF amp",500,-100.,4200.);
       hPwbWfRange = new TH1D("hPwbWfRange","PWB WF amp",500,-100.,5100.);
@@ -290,7 +323,7 @@ public:
          {
             TString hname = TString::Format("hPwbTimeAmp_prox%d",t);
             TString htitle = TString::Format("Average Maximum WF Amplitude Vs Channel for t~%d us;Pad;PWB",t);
-            hPwbTimeAmp_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeAmp_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5000.);
             hPwbTimeAmp_prox[t]->SetMinimum(0.);
 
             hname = TString::Format("hPwbTimeColRowAmp%d",t);
@@ -299,7 +332,7 @@ public:
             
             hname = TString::Format("hPwbTimeRange_prox%d",t);
             htitle = TString::Format("Average WF Range  Vs Channel for t~%d us;Pad;PWB",t);
-            hPwbTimeRange_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,_padcol*_padrow,0.,5000.);
+            hPwbTimeRange_prox[t] = new TProfile(hname.Data(),htitle.Data(),32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,0.,5000.);
             hPwbTimeRange_prox[t]->SetMinimum(0.);
 
             hname = TString::Format("hPwbTimeColRowRange%d",t);
@@ -313,12 +346,20 @@ public:
          gDirectory->mkdir("match_el")->cd();
       gDirectory->pwd();
 
+      hAmpAwDeconv = new TH2D("hAmpAwDeconv","Compare Deconv. to LE AW;ADC;AW Deconv",300,0.,17000.,200,0.,2000.);
+      hAmpPadDeconv = new TH2D("hAmpPadDeconv","Compare Deconv. to LE PWB;PWB;Pad Deconv",300,0.,4200.,200,0.,10000.);
+
       hawcol = new TH2D("hawcol",
                         "Match Electrodes;AW;PAD COL",
                         256,0.,256.,32,0.,32.);
 
-      hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
-      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
+      //hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
+      hawcol_time = new TH2D("hawcol_time","AW vs PAD Time;AW [ns];PAD [ns]",300,0.,4800.,100,0.,5000.);
+      //      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",375,0.,6000.,375,0.,6000.);
+      hawcol_sector_time = new TH2D("hawcol_sector_time","AW vs PAD Time with Matching Sector;AW [ns];PAD [ns]",
+                                    //225,0.,3600.,225,0.,3600.);
+                                    // 201,0.,3200.,201,0.,3200.);
+                                    150,0.,4800.,150,0.,4800.);
       hawcol_deltat_sec = new TH2D("hawcol_deltat_sec","AW vs PAD col with Matching Time;AW;PAD COL",256,0.,256.,32,0.,32.);
       
       hawcol_match = new TH2D("hawcol_match",
@@ -326,14 +367,15 @@ public:
                               256,0.,256.,32,0.,32.);
       hawcol_match_amp = new TH2D("hawcol_match_amp",
                                   "Amplitude of Matching Electrodes Time && Sector Cut;AW;PAD COL",
-                                  200,0.,2000.,200,0.,10000.);   
+                                  200,0.,2000.,150,0.,4800.);   
       hawcol_match_time = new TH2D("hawcol_match_time",
                                    "Time of Matching Electrodes Time && Sector Cut;AW [ns];PAD [ns]",
-                                   375,0.,6000.,375,0.,6000.);  
+                                   //375,0.,6000.,375,0.,6000.);  
+                                   100,0.,5000.,150,0.,4800.);
 
       hamprow_timecolcut = new TH2D("hamprow_timecolcut",
                                     "Pad Amplitude By Row - Matched Electrodes by Time && Sector Cut;PAD ROW",
-                                    576,0.,576.,300,0.,6000.);
+                                    576,0.,576.,150,0.,4800.);
 
       hawamp_match_aw_amp = new TH2D("hawamp_match_aw_amp",
                                      "AW amplitude vs Pad Row and AW number;PAD ROW;AW;AW AMP",
@@ -369,7 +411,8 @@ public:
 
       hAWspAmp = new TH1D("hAwspAmp","Reconstructed Avalanche Size Top AW W/ Spacepoint",200,0.,2000.);
       hAWspAmp->SetMinimum(0.);
-      hAWspTime = new TH1D("hAwspTime","Reconstructed Avalanche Time Top AW W/ Spacepoint",375,0.,6000.);
+      //hAWspTime = new TH1D("hAwspTime","Reconstructed Avalanche Time Top AW W/ Spacepoint",375,0.,6000.);
+      hAWspTime = new TH1D("hAwspTime","Reconstructed Avalanche Time Top AW W/ Spacepoint",300,0.,4800.);
       hAwspOcc = new TH1D("hAwspOcc","Occupancy per AW Top W/ Spacepoint",256,0.,256.);
       hAwspOcc->SetMinimum(0.);
       hAwspOccSec = new TH1D("hAwspOccSec","Number of TOP AW hits per Pad Sector W/ Spacepoint;N",32,0.,32.);
@@ -377,7 +420,8 @@ public:
       hAwspOccIsec = new TH1D("hAwspOccIsec","Number of TOP AW hits Inside Pad Sector W/ Spacepoint;N",8,0.,8.);
       hAwspOccIsec->SetMinimum(0.);
       hAWspTimeAmp = new TH2D("hAWspTimeAmp","Reconstructed Avalanche Time Vs Size - Top W/ Spacepoint",
-                              60,0.,6000.,50,0.,2000.);
+                              //60,0.,6000.,50,0.,2000.);
+                              150,0.,4800.,50,0.,2000.);
 
       hOccSpPad = new TH2D("hOccSpPad","Number of Hits Pads W/ Spacepoint;row;sec;N",576,0.,576.,32,0.,32.);
       hOccSpRow = new TH1D("hOccSpPadRow","Number of Hits Pad Rows W/ Spacepoint;N",576,0.,576.);
@@ -387,25 +431,32 @@ public:
 
       hAmpSpPad = new TH1D("hAmpSpPad","Reconstructed Avalanche Size Pad W/ Spacepoint",200,0.,10000.);
       hAmpSpPad->SetMinimum(0.);
-      hTimeSpPad = new TH1D("hTimeSpPad","Reconstructed Avalanche Time Pad W/ Spacepoint",375,0.,6000.);
+      //hTimeSpPad = new TH1D("hTimeSpPad","Reconstructed Avalanche Time Pad W/ Spacepoint",375,0.,6000.);
+      hTimeSpPad = new TH1D("hTimeSpPad","Reconstructed Avalanche Time Pad W/ Spacepoint",300,0.,4800.);
       hTimeAmpSpPad = new TH2D("hTimeAmpSpPad","Reconstructed Avalanche Time Vs Size - Pad W/ Spacepoint",
-                               300,0.,6000.,100,0.,5100.);
+                               //300,0.,6000.,100,0.,5100.);
+                               150,0.,4800.,100,0.,5100.);
 
       hTimeSpPadCol = new TH2D("hTimeSpPadSec","Reconstructed Avalanche Time Vs Pad Secs W/ Spacepoint;sec;time [ns]",
-                               32,0.,32.,40,0.,6000.);
-      hTimeSpPadRow = new TH2D("hTimeSpPadRow","Reconstructed Avalanche Time Vs Pad Rows; W/ Spacepointrow;time [ns]",
-                               576,0.,576,40,0.,6000.);
+                               //32,0.,32.,40,0.,6000.);
+                               32,0.,32.,150,0.,4800.);
+      hTimeSpPadRow = new TH2D("hTimeSpPadRow","Reconstructed Avalanche Time Vs Pad Rows; W/ Spacepoint;row;time [ns]",
+                               //576,0.,576,40,0.,6000.);
+                               576,0.,576,150.,0.,4800.);
       hAmpSpPadCol = new TH2D("hAmpSpPadSec","Reconstructed Avalanche Size Vs Pad Secs W/ Spacepoint;sec;amp",
                               32,0.,32.,500,0.,5000.);
       hAmpSpPadRow = new TH2D("hAmpSpPadRow","Reconstructed Avalanche Size Vs Pad Rows W/ Spacepoint;row;amp",
                               576,0.,576,500,0.,5000.);
       
-      pmap = new padmap;
+      pmap = new ALPHAg::padmap;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       if(!diagnostics) return;
+      runinfo->fRoot->fOutputFile->cd();
+      gDirectory->cd("awdeconv");
+      gtamp->Write();
       delete pmap;
       printf("HistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       // pwbmap.close();
@@ -425,18 +476,41 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
-      if(!diagnostics) return flow;
-
+      if(!diagnostics)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
      
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-     
+      }
+           
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       if( fTrace )
          {
+            if( SigFlow->adc32max )
+               printf("HistoModule::Analyze, ADC # signals %d\n", 
+                      int(SigFlow->adc32max->size()));
+            else
+               printf("HistoModule::Analyze, NO ADC signals\n");
+
+            if( SigFlow->pwbMax )
+               printf("HistoModule::Analyze, PWB # signals %d\n", 
+                      int(SigFlow->pwbMax->size()));
+            else
+               printf("HistoModule::Analyze, NO PWB signals\n");
+
             if( SigFlow->awSig )
                printf("HistoModule::Analyze, AW # signals %d\n", 
                       int(SigFlow->awSig->size()));
@@ -458,22 +532,40 @@ public:
 
       // if( !SigFlow->awSig ) return flow;
       // if( SigFlow->awSig->size() == 0 ) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
 
-      //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
-      ADCdiagnostic(SigFlow->adc32max);
 
-      //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
-      PWBdiagnostic(SigFlow->pwbMax);
+      if( SigFlow->adc32max )
+         {
+
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, ADC Diagnostic start\n");
+            //      ADCdiagnostic(&SigFlow->adc32max,&SigFlow->adc32range);
+            ADCdiagnostic(SigFlow->adc32max);
+         }
+
+      if( SigFlow->pwbMax )
+         {
+            if( fTrace )
+               printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
+            //      PWBdiagnostic(&SigFlow->pwbMax,&SigFlow->pwbRange);
+            PWBdiagnostic(SigFlow->pwbMax);
+         }
+
+      if( fTrace )
+         printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
 
       if( SigFlow->awSig )
          AWdiagnostic(SigFlow->awSig);
 
       if( SigFlow->pdSig )
          PADdiagnostic(SigFlow->pdSig);
+
+      if( SigFlow->adc32max && SigFlow->awSig )
+         AWDeconvDiag(SigFlow->adc32max,SigFlow->awSig);
       
+      if(  SigFlow->pwbMax && SigFlow->pdSig )
+         PWBDeconvDiag( SigFlow->pwbMax, SigFlow->pdSig );
+
       if( SigFlow->pdSig && SigFlow->awSig )
          MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
          
@@ -481,9 +573,6 @@ public:
          SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"histo_module",timer_start);
-      #endif
       return flow;
    }
 
@@ -494,20 +583,20 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   void AWdiagnostic(std::vector<signal> *sanode)
+   void AWdiagnostic(std::vector<ALPHAg::signal> *sanode)
    {
       int nbot=0,ntop=0;
       for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
          { 
             if( iSig->sec )
                {
-                  hOccBot->Fill(iSig->idx);
-                  hAmpBot->Fill(iSig->height);
-                  hTimeBot->Fill(iSig->t);
-                  hTimeAmpBot->Fill(iSig->t,iSig->height);
-                  hTimeBotChan->Fill(iSig->idx,iSig->t);
-                  hAmpBotChan->Fill(iSig->idx,iSig->height);
-                  ++nbot;
+                  // hOccBot->Fill(iSig->idx);
+                  // hAmpBot->Fill(iSig->height);
+                  // hTimeBot->Fill(iSig->t);
+                  // hTimeAmpBot->Fill(iSig->t,iSig->height);
+                  // hTimeBotChan->Fill(iSig->idx,iSig->t);
+                  // hAmpBotChan->Fill(iSig->idx,iSig->height);
+                  // ++nbot;
                }
             else
                {
@@ -518,6 +607,7 @@ public:
                   hTimeAmpTop->Fill(iSig->t,iSig->height);
                   hTimeTopChan->Fill(iSig->idx,iSig->t);
                   hAmpTopChan->Fill(iSig->idx,iSig->height);
+                  gtamp->SetPoint(gtamp->GetN(),iSig->t,iSig->height);
 
                   hAwOccSec->Fill(iSig->idx/8);
                   hAwOccIsec->Fill(iSig->idx%8);
@@ -525,13 +615,13 @@ public:
                   ++ntop;
                }
          }
-      hNhitBot->Fill(nbot);
+      //  hNhitBot->Fill(nbot);
       hNhitTop->Fill(ntop);
       if( fTrace )
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
    }
 
-   void ADCdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void ADCdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -555,7 +645,7 @@ public:
       //    }
    }
 
-   void PWBdiagnostic(std::vector<signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void PWBdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
    {
       if( wfamp->size() > 0 )
          {
@@ -565,7 +655,9 @@ public:
                   hPwbAmp->Fill(pad_index,sig->height);
                   hPwbAmp_prox->Fill(pad_index,sig->height);
                   //                  hPwbTimeAmp[pad_index]->Fill(sig->t,sig->height);
-                  
+                  if( sig->height > 4091. )
+                     hPadOverflow->Fill(double(sig->idx),double(sig->sec));
+
                   hPwbWfAmp->Fill(sig->height);
    
                   int time = int(1.e-3*sig->t-1.6);
@@ -604,7 +696,7 @@ public:
       //    }
    }
 
-   void PADdiagnostic(std::vector<signal> *spad)
+   void PADdiagnostic(std::vector<ALPHAg::signal> *spad)
    {
       int nhit=0;
       //std::cout<<"HistoModule::PADdiagnostic()"<<std::endl;
@@ -630,12 +722,46 @@ public:
       std::cout<<"HistoModule::PADdiagnostic # hit: "<<nhit<<std::endl;
    }
 
-   void MatchDiagnostic(std::vector<signal>* awsignals, 
-                        std::vector<signal>* padsignals)
+   void AWDeconvDiag(std::vector<ALPHAg::signal> *wfamp, std::vector<ALPHAg::signal> *sanode)
    {
-      std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(), 
+    for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
+         {  
+            if( iSig->sec ) continue;
+            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+               {
+                  if( sig->idx == iSig->idx && fabs(sig->t-iSig->t) < 20. )
+                     {
+                        hAmpAwDeconv->Fill(sig->height,iSig->height);
+                     }
+               }
+         }
+   }
+
+
+   void PWBDeconvDiag(std::vector<ALPHAg::signal> *wfamp,std::vector<ALPHAg::signal> *spad)
+   {
+      if( wfamp->size() > 0 )
+         {
+            for( auto iSig=spad->begin(); iSig!=spad->end(); ++iSig )
+               {
+                  for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+                     {
+                        if( sig->idx == iSig->idx && sig->sec == iSig->sec && fabs(sig->t-iSig->t) < 20. )
+                           {
+                              hAmpPadDeconv->Fill(sig->height,iSig->height);
+                           }
+                     }
+               }
+         }
+   }
+                      
+
+   void MatchDiagnostic(std::vector<ALPHAg::signal>* awsignals, 
+                        std::vector<ALPHAg::signal>* padsignals)
+   {
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(), 
                                                          awsignals->end());
-      std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(), 
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(), 
                                                           padsignals->end());
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
@@ -696,7 +822,7 @@ public:
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
 
-   void SigSpacePointsDiagnostic( std::vector< std::pair<signal,signal> >* sp )
+   void SigSpacePointsDiagnostic( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* sp )
    {
       hNsp->Fill(sp->size());
 

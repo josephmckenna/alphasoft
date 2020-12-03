@@ -9,6 +9,7 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TApplication.h"
@@ -69,6 +70,7 @@ public:
    VertexDisplay(TARunInfo* runinfo, VertexDisplayFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="Vertex Display";
       if (fTrace)
          printf("VertexDisplay::ctor!\n");
        if (!fFlags->fDraw) return;
@@ -103,8 +105,7 @@ public:
        LastEventTime=0.;
        IntegrationWindow=5.;
        LastDrawTime=0.;
-       
-       
+
        NQueues=0;
    }
 
@@ -152,13 +153,17 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
-      if (!fFlags->fDraw) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
+      if (!fFlags->fDraw)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       SilEventsFlow* fe=flow->Find<SilEventsFlow>();
       if (!fe)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       TSiliconEvent* SiliconEvent=fe->silevent;
       
       A2OnlineMVAFlow* of=flow->Find<A2OnlineMVAFlow>();
@@ -314,15 +319,6 @@ public:
       }
     
       LastEventTime=data.t;
-      
-      
-      
-      
-      
-      
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"vertex_display",timer_start);
-      #endif
       return flow; 
   }
 };

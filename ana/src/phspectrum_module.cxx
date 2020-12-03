@@ -1,13 +1,17 @@
 #include "AgFlow.h"
+#include "RecoFlow.h"
+
 #include "TH2D.h"
-#include "SignalsType.h"
+#include "SignalsType.hh"
 
 #include "TStoreLine.hh"
 #include "TStoreHelix.hh"
 #include "TSpacePoint.hh"
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
+
+#include <cctype>
 
 class PHspectrumFlags
 {
@@ -37,7 +41,7 @@ private:
    TH2D* hpwbphspect;
    TH2D* hadcphspect;
    
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
    int fNtracks;
    double fCoincTime; // ns
@@ -46,7 +50,9 @@ public:
    PHspectrum(TARunInfo* runinfo, PHspectrumFlags* f):TARunObject(runinfo),
                                                       fFlags(f),pmap(0),
                                                       fNtracks(1),fCoincTime(20.)
-   {}
+   {
+      ModuleName="PHspectrum Module";
+   }
    ~PHspectrum() {}
 
    void BeginRun(TARunInfo* runinfo)
@@ -56,12 +62,12 @@ public:
       gDirectory->mkdir("phspectrum")->cd();
 
       hawphspect = new TH2D("hawphspect","Avalanche Size Anodes for Tracks;AW;Ne",256,0.,256.,200,0.,2000.);
-      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,_padcol*_padrow,
+      hpadphspect = new TH2D("hpadphspect","Avalanche Size Pads for Tracks;pad;Ne",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,
                              200,0.,10000.);
-      hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,_padcol*_padrow,1000,0.,4200.);
+      hpwbphspect = new TH2D("hpwbphspect","Max PWB P.H.;pad;PH",32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,1000,0.,4200.);
       hadcphspect = new TH2D("hadcphspect","Max ADC P.H.;AW;PH",256,0.,256.,1000,0.,17000.);
 
-      pmap = new padmap;
+      pmap = new ALPHAg::padmap;
 
       fNtracks = fFlags->fNtracks;
       if (fFlags->ana_settings)
@@ -76,40 +82,49 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if(!fFlags->fEnabled) return flow;
-
-      AgAnalysisFlow* AnaFlow = flow->Find<AgAnalysisFlow>();
-      if( !AnaFlow ) return flow;
-      TStoreEvent* e = AnaFlow->fEvent;
-      if( !e ) return flow;
-
-      AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
-      if( !SigFlow ) return flow;
-
-      std::vector<signal>* adc32 = SigFlow->adc32max;
-      std::vector<signal>* pwb = SigFlow->pwbMax;
+      if(!fFlags->fEnabled)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
       
-      std::vector<signal>* aws = SigFlow->awSig;
-      std::vector<signal>* pads = SigFlow->pdSig;
-
-#ifdef _TIME_ANALYSIS_
-      START_TIMER
-#endif
+      AgAnalysisFlow* AnaFlow = flow->Find<AgAnalysisFlow>();
+      if( !AnaFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      TStoreEvent* e = AnaFlow->fEvent;
+      if( !e )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
+      AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+      if( !SigFlow )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
+      std::vector<ALPHAg::signal>* adc32 = SigFlow->adc32max;
+      std::vector<ALPHAg::signal>* pwb = SigFlow->pwbMax;
+      
+      std::vector<ALPHAg::signal>* aws = SigFlow->awSig;
+      std::vector<ALPHAg::signal>* pads = SigFlow->pdSig;
 
       if( fFlags->fMagneticField > 0. )
          HelPHspect(e,*adc32,*pwb,*aws,*pads);
       else
          LinePHspect(e,*adc32,*pwb,*aws,*pads);
       
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"PHspectrum_module",timer_start);
-#endif
       return flow;
    }
 
    void FillHistos(const TObjArray* points,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       int nPoints = points->GetEntriesFast();
       std::cout<<"PHspectrum::FillHistos() # of points: "<<nPoints<<std::endl;
@@ -153,8 +168,8 @@ public:
    }
 
    void HelPHspect(TStoreEvent* anEvent,
-                   std::vector<signal> &adc32, std::vector<signal> &pwb,
-                   std::vector<signal> &aws, std::vector<signal> &pads)
+                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       const TObjArray* helices = anEvent->GetHelixArray();
       int nTracks = helices->GetEntriesFast();
@@ -169,8 +184,8 @@ public:
    }// function: HelPHspect
 
    void LinePHspect(TStoreEvent* anEvent,
-                    std::vector<signal> &adc32, std::vector<signal> &pwb,
-                    std::vector<signal> &aws, std::vector<signal> &pads)
+                    std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
+                    std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
    {
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();
@@ -209,7 +224,7 @@ public:
             if( args[i] == "--phspect" ) 
                {
                   fFlags.fEnabled = true;
-                  if( args[i+1].front() != '-' )
+                  if( std::isdigit(args[i+1][0]) )
                      fFlags.fNtracks = std::stoi(args[i+1]);
                }
             if( args[i] == "--anasettings" ) json=args[i+1];

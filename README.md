@@ -7,7 +7,10 @@
 * [rootana][rootanalink]
 
   [rootanalink]: https://midas.triumf.ca/MidasWiki/index.php/ROOTANA
+  
+* [CMake][cmakelink] **version >=3.0**
 
+  [cmakelink]: https://cmake.org/ "CMake website"
 
 OS (strongly recommended):
 
@@ -41,11 +44,17 @@ cd agdaq
 mkdir build
 cd build
 cmake3 ../
-#Optional: Turn on or off A2 or AG features
+#Optional: Turn on or off A2 or AG features and simulations
 ccmake3 .
 make -j
 make install 
+```
 
+
+## Alternative way to build+install
+
+```
+cmake3 --build . --target install -- -j`nproc --ignore=2`
 
 ```
 

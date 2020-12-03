@@ -16,7 +16,7 @@ CosmicFinder::CosmicFinder(double b):fMagneticField(b),nTracks(-1),
                                      fIdx(-1),fRes2(9.e99),fStatus(-1)
 {
    std::cout<<"CosmicFinder::CosmicFinder( B = "<<fMagneticField<<" T )"<<std::endl;
-   pmap = new padmap;
+   pmap = new ALPHAg::padmap;
    MakeOccupancyHisto();
 }
 
@@ -27,7 +27,7 @@ CosmicFinder::CosmicFinder(double b,int pointscut,double chi2cut,double chi2min)
    fIdx(-1),fRes2(9.e99),fStatus(-1)
 {
    std::cout<<"CosmicFinder::CosmicFinder( B = "<<fMagneticField<<" T )"<<std::endl;
-   pmap = new padmap;
+   pmap = new ALPHAg::padmap;
    MakeOccupancyHisto();
 }
 

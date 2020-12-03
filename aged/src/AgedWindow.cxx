@@ -5,6 +5,7 @@
 //==============================================================================
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
@@ -174,8 +175,14 @@ AgedWindow::AgedWindow(int load_settings)
 
     SetShell(data->toplevel);
 
+    /* create widget */
+    printf("CreateManagedWidget imageForm\n");
+    Widget xw=XtCreateManagedWidget("imageForm",xmFormWidgetClass,data->toplevel,NULL,0);
+
     /* create main pane */
-    SetMainPane(XtCreateManagedWidget("imageForm",xmFormWidgetClass,data->toplevel,NULL,0));
+    printf("create main pane\n");
+    SetMainPane(xw);
+
 /*
 ** Create Menubar
 */

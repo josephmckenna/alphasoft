@@ -31,6 +31,13 @@ else
   DOBUILD="BUILD"
 fi
 
+if [ ! -f run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
+
+
 if [ `echo "$MODULEFLAGS" | wc -c` -gt 3 ]; then
   MODULEFLAGS="-- ${MODULEFLAGS}"
   echo "Module flags: ${MODULEFLAGS}"
@@ -83,7 +90,7 @@ cd $AGRELEASE
 git diff > ${GITDIFF}
 
 echo $LEAKTEST
-cd $AGRELEASE
+cd $AGRELEASE/bin
 ls -l -h *.exe
 echo "Running..."
 if [ -f ${ROOTSYS}/etc/valgrind-root.supp ]; then
@@ -91,7 +98,8 @@ SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
 set -x
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaAnalysis.exe ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULEFLAGS} &> ${ALPHATEST}
+valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ./alphaAnalysis.exe ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULEFLAGS} &> ${ALPHATEST}
+cd $AGRELEASE
 set +x
 
  

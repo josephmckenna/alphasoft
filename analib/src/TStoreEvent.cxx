@@ -21,7 +21,7 @@ TStoreEvent::TStoreEvent():TObject(),fID(-1),
 			   fStoreHelixArray(20), fStoreLineArray(20),
 			   fSpacePoints(5000),
 			   fUsedHelices(20),
-			   fVertex(kUnknown,kUnknown,kUnknown),
+			   fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
 			   fVertexStatus(-3),
 			   fPattRecEff(-1.)
 {}
@@ -150,7 +150,7 @@ void TStoreEvent::Reset()
   fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
 
-  fVertex.SetXYZ(kUnknown,kUnknown,kUnknown);
+  fVertex.SetXYZ(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
 
   fPattRecEff = -1.;
   

@@ -1,4 +1,6 @@
 #include "AgFlow.h"
+#include "RecoFlow.h"
+
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TF1.h"
@@ -12,7 +14,7 @@
 #include <iostream>
 
 #include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "Match.hh"
 
 class MatchFlags

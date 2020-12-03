@@ -18,6 +18,7 @@
 #include "PSpeaker.h"
 #include "CUtils.h"
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 const int   kDirtyEvent     = 0x02;
 const int   kDirtyAll       = 0x04;

@@ -30,6 +30,7 @@ history/
 firmware/
 analib/analib.cc
 reco/agtpc.cc
+rootUtils/rootUtilslib.cc
 *_rdict.pcm
 *.log
 *.log.nopid
@@ -38,6 +39,7 @@ ana/include/GitInfo.h
 *.list
 scripts/__pycache__/
 AutoPlots/
+RunLogs/
 *.csv
 *.ods
 scripts/UnitTest/*.out
@@ -61,3 +63,7 @@ alpha2/obj/
 .Aged
 *.time
 build
+bin
+output
+*.save
+*_C.d
