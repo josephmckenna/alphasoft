@@ -124,6 +124,7 @@ build-cc7-cmake:
   stage: build
   script:
     - echo "Building"
+    - rm -rf build bin
     - mkdir build
     - cd build
     - cmake3 ../
