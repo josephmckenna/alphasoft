@@ -17,6 +17,8 @@ cache:
     - run*.mid.gz
     - alphaStrips*offline.root
     - rootana
+    - agcfmdb
+    - agana
     - simulation/submodules
     - BuildLog.txt
     - BuildSimLog.txt
