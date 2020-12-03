@@ -129,7 +129,7 @@ build-cc7-cmake:
     - cd build
     - cmake3 ../
     - make
-    - make build
+    - make install
   artifacts:
     when: on_failure
     paths:
