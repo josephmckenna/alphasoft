@@ -10,6 +10,7 @@ class TStripPed: public TObject
 public:
    //std::vector<int>* histo;
    TH1F* histo1;
+   std::string objID;
    //std::vector<int>* rawhisto;
    double sigma=99999.;
    double rawADCMean=0.;
@@ -33,7 +34,7 @@ private:
    const double strip_bins;
 
 public:
-   TStripPed(const int nBins, const double binWidth);
+   TStripPed(const int ID, const int nBins, const double binWidth);
    virtual ~TStripPed();
    inline int GetBin(const double &x)
    {
