@@ -114,7 +114,7 @@ public:
 		  Strip_ADCs.reserve(NUM_SI_MODULES * 4 * 128);
 		  for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
 		  {
-			  Strip_ADCs.push_back(new TStripPed(fFlags->nPedBins, fFlags->pedBinWidth));
+			  Strip_ADCs.push_back(new TStripPed(i, fFlags->nPedBins, fFlags->pedBinWidth));
 		  }
 	  }
 	  

@@ -3,7 +3,7 @@
 //#include <iostream>
 ClassImp(TStripPed);
 
-TStripPed::TStripPed(const int nBins, const double binWidth):
+TStripPed::TStripPed(const int ID, const int nBins, const double binWidth):
    hmax(nBins),
    hmin(-hmax),
    strip_bin_width(binWidth),
@@ -18,14 +18,16 @@ TStripPed::TStripPed(const int nBins, const double binWidth):
    StripRMSsAfterFilter=0.;
    stripMeanSubRMS=-9999.;
    
-rawADCMean=0;
-rawADCRMS=0;
+   rawADCMean=0;
+   rawADCRMS=0;
    FirstPassFinished=false;
    DataPoints=0.;
    //histo=new std::vector<int>((int)strip_bins,0);
    //histo=new std::vector<int>((int)1,0);
    //LMG
-   histo1=new TH1F("histo1", "Histogram", strip_bins, hmin, hmax);
+   objID = std::to_string(ID);
+   const char * charName = objID.c_str();
+   histo1=new TH1F(charName, "Histogram", strip_bins, hmin, hmax);
 
    
 }
