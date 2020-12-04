@@ -131,10 +131,6 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
     find_library(LIBSQLITE3 sqlite3)
-<<<<<<< HEAD
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
-=======
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
->>>>>>> development
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )
