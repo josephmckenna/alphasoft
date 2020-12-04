@@ -245,7 +245,6 @@ public:
          {
             double trig_time = 0;
             TdcHit* matched_tdc_hit = NULL;
-            double hit_time = 0;
             double tdc_time = 0;
             double n_hits = 0;
             double n_good = 0;
@@ -266,9 +265,6 @@ public:
                   // Use only fpga 1
                   if (int(tdchit->fpga)!=1) continue;
 
-                  // Finds trigger time (on channel 0)
-                  if (int(tdchit->chan)==0 and trig_time==0) trig_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-
                   // Skip channel 0
                   if (int(tdchit->chan)==0) continue;
 
@@ -278,12 +274,10 @@ public:
 
                   // Calculates hit time
                   double a_hit_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
-                  double a_final_time = a_hit_time-trig_time;
 
                   // Yoinks the very first tdc hit on the right channel and calls it a day
                   if (tdc_time == 0 and int(tdchit->chan)==tdc_chan) {
-                     hit_time = a_hit_time;
-                     tdc_time = a_final_time;
+                     tdc_time = a_hit_time;
                      matched_tdc_hit = tdchit;
                   }
 
