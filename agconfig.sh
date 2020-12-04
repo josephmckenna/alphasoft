@@ -87,7 +87,9 @@ sim_submodules_firsttimesetup()
 
   #Finally... build the simulation
   cd $AGRELEASE/simulation
-  cmake3 -DCMAKE_BUILD_TYPE=Release geant4
+  #LMG - Attempting to get debug mode working
+  #cmake3 -DCMAKE_BUILD_TYPE=Release geant4
+  cmake3 -DCMAKE_BUILD_TYPE=DEBUG
   make
   
 }
