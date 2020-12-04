@@ -33,6 +33,17 @@ endif ()
 
 # Directories
 
+set(ROOTANA_DEFAULT "${CMAKE_SOURCE_DIR}/rootana")
+if($ENV{ROOTANASYS} STREQUAL "${ROOTANA_DEFAULT}")
+  add_subdirectory(rootana)
+  message(STATUS "Building rootana submodule")
+  add_custom_target(rootana_install 
+    ALL
+    "${CMAKE_COMMAND}" 
+    -P "${CMAKE_BINARY_DIR}/rootana/cmake_install.cmake"
+    DEPENDS rootana )
+endif()
+
 #Universal libraries
 add_subdirectory(analib)
 add_subdirectory(recolib)

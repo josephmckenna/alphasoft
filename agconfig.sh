@@ -280,7 +280,7 @@ if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
     	echo "ROOTANA submodule enabled"
     else
 	echo "Enabling ROOTANA submodule..."
-	git submodule update --init rootana
+	git submodule update --init --recursive rootana
     fi
 fi
 
