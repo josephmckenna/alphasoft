@@ -8,6 +8,7 @@ if [[ "$1" == "clean" ]]; then
     if [[ "$2" == "all" ]]; then
 	echo "removing build and bin folders"
 	rm -rf $AGRELEASE/build $AGRELEASE/bin
+	rm -rf $AGRELEASE/rootana/include $AGRELEASE/rootana/lib
     fi
 
 elif [[ "$1" == "update" ]]; then

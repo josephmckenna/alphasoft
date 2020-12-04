@@ -72,6 +72,8 @@ find_library(LIBXFT Xft)
 find_library(LIBXM Xm)
 find_library(LIBXRENDER Xrender)
 find_library(LIBXT Xt)
+
+add_dependencies(aged rootana)
 target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
 
 install(TARGETS aged DESTINATION lib)
