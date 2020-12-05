@@ -44,6 +44,8 @@ if($ENV{ROOTANASYS} STREQUAL "${ROOTANA_DEFAULT}")
     DEPENDS rootana )
 endif()
 
+set( _AGANA_STATIC TRUE)
+
 #Universal libraries
 add_subdirectory(analib)
 add_subdirectory(recolib)
