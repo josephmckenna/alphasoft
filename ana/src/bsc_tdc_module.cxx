@@ -22,6 +22,7 @@ class TdcFlags
 {
 public:
    bool fPrint = false;
+   int fRunType = 0; // 0 = normal run, 1 = pulser run
 };
 
 
@@ -49,9 +50,6 @@ private:
 
    //Histogramm declaration
    TH1D* hTdcChan = NULL;
-   TH2D* hTdcAdcTime = NULL;
-   TH2D* hGoodTime = NULL;
-   TH2D* hMatchedTime = NULL;
    TH1D* hNTdcHits = NULL;
    TH1D* hNMatchedHits = NULL;
    TH2D* hBarDiffAdc = NULL;
@@ -63,6 +61,7 @@ private:
    TH1D* hTOFADC = NULL;
    TH1D* hTOFTDC = NULL;
    TH2D* hNMatchedByChan = NULL;
+   TH2D* hTdcDiffByChan = NULL;
 
    // Counter initialization
    int c_adc = 0;
@@ -92,20 +91,25 @@ public:
 
       // Histogramm declaration
       hTdcChan = new TH1D("hTdcChan","Number of hits on tdc channel;tdc channel",16,0.5,16.5);
-      hTdcAdcTime = new TH2D("hTdcAdcTime","adc vs tdc time;adc time;tdc time",250,1000,1500,200,-2.0e-6,0);
-      hGoodTime = new TH2D("hGoodTime","adc vs tdc time for possible matches;adc time;tdc time",250,1000,1500,200,-2.0e-6,-0.8e-6);
-      hMatchedTime = new TH2D("hMatchedTime","adc vs tdc time for matched hit on correct channel;adc time;tdc time",250,1000,1500,200,-2.0e-6,-1.2e-6);
-      hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",11,-0.5,10.5);
-      hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in correct channel;Number of tdc hits",11,-0.5,10.5);
-      hBarDiffAdc = new TH2D("hBarDiffAdc","ADC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-15e-9,15e-9,200,-15e-9,15e-9);
-      hBarDiffAdcM = new TH2D("hBarDiffAdcM","ADC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1.5,1.5,200,-1.5,1.5);
-      hBarDiffTdc = new TH2D("hBarDiffTdc","TDC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
-      hBarDiffTdcM = new TH2D("hBarDiffTdcM","TDC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1,1,200,-1,1);
-      hBarDiffDiffAdc = new TH1D("hBarDiffDiffAdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for ADC;ADC Time difference [s]",200,-10e-9,10e-9);
-      hBarDiffDiffTdc = new TH1D("hBarDiffDiffTdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC;TDC Time difference [s]",200,-4e-9,4e-9);
-      hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-100e-9,100e-9);
-      hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-5e-9,5e-9);
-      hNMatchedByChan = new TH2D("hNMatchedByChan","Number of TDC hits in correct channel;adc channel;Number of tdc hits",16,-0.5,15.5,30,-0.5,29.5);
+      if( fFlags->fRunType==0 )  // Normal run
+         {
+            hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",11,-0.5,10.5);
+            hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in correct channel;Number of tdc hits",11,-0.5,10.5);
+            hBarDiffAdc = new TH2D("hBarDiffAdc","ADC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-15e-9,15e-9,200,-15e-9,15e-9);
+            hBarDiffAdcM = new TH2D("hBarDiffAdcM","ADC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1.5,1.5,200,-1.5,1.5);
+            hBarDiffTdc = new TH2D("hBarDiffTdc","TDC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
+            hBarDiffTdcM = new TH2D("hBarDiffTdcM","TDC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1,1,200,-1,1);
+            hBarDiffDiffAdc = new TH1D("hBarDiffDiffAdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for ADC;ADC Time difference [s]",200,-10e-9,10e-9);
+            hBarDiffDiffTdc = new TH1D("hBarDiffDiffTdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC;TDC Time difference [s]",200,-4e-9,4e-9);
+            hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-100e-9,100e-9);
+            hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-5e-9,5e-9);
+            hNMatchedByChan = new TH2D("hNMatchedByChan","Number of TDC hits in correct channel;adc channel;Number of tdc hits",16,-0.5,15.5,30,-0.5,29.5);
+         }
+      if( fFlags->fRunType==1 )  // Pulser run
+         {
+            hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",65,-0.5,64.5);
+            hTdcDiffByChan = new TH2D("hTdcDiffByChan","Pulser TDC time with reference to channel 1 hit;tdc channel;TDC time [s]",16,0.5,16.5,2000,-3e-9,5e-9);
+         }
 
 
       // Load Bscint tdc map
@@ -136,7 +140,7 @@ public:
       runinfo->fRoot->fOutputFile->Write();
 
       // Print stats
-//      if( fFlags->fPrint )
+      if( fFlags->fPrint )
          {
             printf("tdc module stats:\n");
             printf("Total number of adc hits = %d\n",c_adc);
@@ -148,9 +152,6 @@ public:
 
       // Delete histograms
       delete hTdcChan;
-      delete hTdcAdcTime;
-      delete hMatchedTime;
-      delete hGoodTime;
       delete hNTdcHits;
       delete hNMatchedHits;
       delete hBarDiffAdc;
@@ -162,6 +163,7 @@ public:
       delete hTOFADC;
       delete hTOFTDC;
       delete hNMatchedByChan;
+      delete hTdcDiffByChan;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -197,7 +199,6 @@ public:
       
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
-      TrigEvent* trig = age->trig;
 
       if( tdc )
          {
@@ -207,12 +208,20 @@ public:
                   if (!bef) return flow;
                   TBarEvent *barEvt = bef->BarEvent;
                   if (!barEvt) return flow;
+                  if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent analysing event\n");
 
-                  // MAIN FUNCTIONS
-                  AddTDCdata(barEvt,tdc,trig);
-                  CombineEnds(barEvt);
-                  CalculateZ(barEvt);
-                  CalculateTOF(barEvt);
+                  if( fFlags->fRunType==0 )  // Normal run
+                     {
+                        AddTDCdata(barEvt,tdc);
+                        CombineEnds(barEvt);
+                        CalculateZ(barEvt);
+                        CalculateTOF(barEvt);
+                     }
+                  if( fFlags->fRunType==1 ) // Pulser run
+                     {
+                        if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent start pulser analysis\n");
+                        PulserAnalysis(barEvt,tdc);
+                     }
                }
             else
                if( fFlags->fPrint )
@@ -229,7 +238,50 @@ public:
    // MAIN FUNCTIONS
 
    // Adds data from the tdc to the end hits
-   void AddTDCdata(TBarEvent* barEvt, TdcEvent* tdc, TrigEvent* trig)
+   void PulserAnalysis(TBarEvent* barEvt, TdcEvent* tdc)
+   {
+      // Get endhits from adc module
+      std::vector<EndHit*> endhits = barEvt->GetEndHits();
+      c_adc+=endhits.size();
+
+      // Get tdc data
+      std::vector<TdcHit*> tdchits = tdc->hits;
+      c_tdc+=tdchits.size();
+
+      double n_hits = 0;
+      std::vector<double> tdc_time(16,0);
+
+      for (TdcHit* tdchit: tdchits)
+         {
+            // Use only rising edge
+            if (tdchit->rising_edge==0) continue;
+      
+            // Use only fpga 1
+            if (int(tdchit->fpga)!=1) continue;
+      
+            // Only channels 1-16
+            if (int(tdchit->chan)<1 or int(tdchit->chan)>16) continue;
+
+            // Counts hits
+            n_hits++;
+
+            // Checks if channel was already hit (uses first hit only)
+            if (tdc_time[int(tdchit->chan)-1]!=0) continue;
+            tdc_time[int(tdchit->chan)-1] = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+
+            // Fills histograms
+            hTdcChan->Fill(int(tdchit->chan));
+
+         }
+      
+      // Fills histograms
+      hNTdcHits->Fill(n_hits);
+      for (int i=0;i<16;i++) hTdcDiffByChan->Fill(i+1,tdc_time[i]-tdc_time[0]);
+
+   }
+
+   // Adds data from the tdc to the end hits
+   void AddTDCdata(TBarEvent* barEvt, TdcEvent* tdc)
    {
       // Get endhits from adc module
       std::vector<EndHit*> endhits = barEvt->GetEndHits();
@@ -243,7 +295,6 @@ public:
       // Its basically tinder for SiPM data.
       for (EndHit* endhit: endhits)
          {
-            double trig_time = 0;
             TdcHit* matched_tdc_hit = NULL;
             double tdc_time = 0;
             double n_hits = 0;
@@ -283,16 +334,10 @@ public:
 
                   // Fills histograms
                   hTdcChan->Fill(int(tdchit->chan));
-                  hTdcAdcTime->Fill(endhit->GetADCTime(),a_final_time);
-                  if (int(tdchit->chan)==tdc_chan)
-                     {
-                        hGoodTime->Fill(endhit->GetADCTime(),a_final_time);
-                     }  
 
                }
 
             // Fills histograms
-            hMatchedTime->Fill(endhit->GetADCTime(),tdc_time);
             hNTdcHits->Fill(n_hits);
             hNMatchedHits->Fill(n_good);
             hNMatchedByChan->Fill(int(endhit->GetBar()),n_good);
@@ -448,6 +493,8 @@ public:
       for (unsigned i=0; i<args.size(); i++) { 
          if (args[i] == "--bscprint")
             fFlags.fPrint = true; 
+         if( args[i] == "--bscRunType" )
+            fFlags.fRunType = atoi(args[++i].c_str());
       }
    }
 
