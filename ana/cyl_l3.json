@@ -1,9 +1,9 @@
 {
     "DeconvModule": {
-	"ADCthr" : 1550,
-	"PWBthr" :  101,
-	"AWthr"  :   40,
-	"PADthr" :   30
+	"ADCthr" : 1500,
+	"PWBthr" :  150,
+	"AWthr"  :  100,
+	"PADthr" :   10
     },
 
    "LEModule": {
