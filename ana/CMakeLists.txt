@@ -166,7 +166,12 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main $ENV{AGRELEASE}/agana/unpack_module ${MODULES} )
     
-    add_dependencies(${bin} rootana gitinfo)
+    if(ROOTANA_SUBMOD)
+      add_dependencies(${bin} rootana gitinfo)
+    else()
+      add_dependencies(${bin} gitinfo)
+    endif()
+
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC agana)

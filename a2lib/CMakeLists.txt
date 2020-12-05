@@ -74,4 +74,6 @@ add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
 find_library(LIBSQLITE3 sqlite3)
 target_link_libraries(alpha2 ${ROOT_LIBRARIES} ${LIBSQLITE3} )
 
-add_dependencies(alpha2 rootana)
+if(ROOTANA_SUBMOD)
+  add_dependencies(alpha2 rootana)
+endif()

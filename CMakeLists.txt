@@ -42,6 +42,7 @@ if($ENV{ROOTANASYS} STREQUAL "${ROOTANA_DEFAULT}")
     "${CMAKE_COMMAND}" 
     -P "${CMAKE_BINARY_DIR}/rootana/cmake_install.cmake"
     DEPENDS rootana )
+  set(ROOTANA_SUBMOD TRUE)
 endif()
 
 set( _AGANA_STATIC TRUE)
