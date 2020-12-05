@@ -260,7 +260,7 @@ public:
       
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,fit_amp,fit_start_time*10,maximum_time*10);
+                  BarEvent->AddADCHit(chan,fit_amp,fit_start_time*10);
 
                }
 
@@ -273,7 +273,7 @@ public:
 
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,amp,start_time*10,0);
+                  BarEvent->AddADCHit(chan,amp,start_time*10);
 
                }
 
