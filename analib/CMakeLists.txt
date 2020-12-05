@@ -55,7 +55,9 @@ ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
-add_dependencies(analib rootana)
+if(ROOTANA_SUBMOD)
+  add_dependencies(analib rootana)
+endif()
 target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
 
 install(TARGETS analib DESTINATION lib)
