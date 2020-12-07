@@ -79,6 +79,25 @@ class SVDCounts
       PassCuts+=e->NPassedCuts;
       PassMVA+=e->MVA;
    }
+   friend std::ostream& operator<<(std::ostream& os, const SVDCounts& SVDC)
+   {
+      if(SVDC.FirstVF48Event < 0)
+      {
+         os << "DEBUG: SVDCounts object at" << &SVDC << "is not initialised/is empty" << std::endl;
+         return os;
+      }
+      else
+      {
+         os << "DEBUG: First VF48Event = " << SVDC.FirstVF48Event << std::endl
+            << "DEBUG: Last VF48Event = " << SVDC.LastVF48Event << std::endl
+            << "DEBUG: PassCuts = " << SVDC.PassCuts << std::endl
+            << "DEBUG: PassMVA = " << SVDC.PassMVA << std::endl
+            << "DEBUG: Vertices = " << SVDC.Verticies << std::endl
+            << "DEBUG: VF48Events = " << SVDC.VF48Events << std::endl;
+
+         return os;
+      }
+   }
 };
 
 
@@ -323,7 +342,10 @@ public:
                SVD_Filled=FILLED;
                return 1;
             }
+      //Lukas debug info.
+      std::cout << "DEBUG: Time of the following update event is:" << t << std::endl;
       IntegratedSVDCounts.AddEvent(s);
+      std::cout << IntegratedSVDCounts;
       return 0;
    }
 };
@@ -728,6 +750,7 @@ public:
       for (size_t i=0;i<dumps.size();i++)
       {
         DumpPair<VertexType,ScalerType,NumScalers>* pair=dumps.at(i);
+
         if (!pair) continue;
         if (!pair->Ready()) continue;
         if (pair->IsFinished) continue;
