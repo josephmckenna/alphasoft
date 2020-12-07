@@ -9,9 +9,9 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/alphaAnalysis.exe",
-            "args": ["run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "stopAtEntry": false,
+            "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
+            "args": ["run39993sub00000.mid.gz", "--", "--summarize", "Mixing"],
+            "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
@@ -23,7 +23,13 @@
                     "ignoreFailures": true
                 }
             ],
-            "logging": { "trace": true, "traceResponse": true }
+            "logging": { "trace": true, "traceResponse": true },
+
+            /*"sourceFileMap": {
+                "${workspaceFolder}/build/alpha2/": "${workspaceFolder}/alpha2/",
+                "${workspaceFolder}/build/analib/": "${workspaceFolder}/analib/"
+            }*/
+            
         }
     ]
 }

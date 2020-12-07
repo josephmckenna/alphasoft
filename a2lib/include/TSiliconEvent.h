@@ -71,8 +71,6 @@ public:
 
   void SetVF48NEvent( const  Int_t nvf48event ){ VF48NEvent = nvf48event; }
   void SetVF48NTrigger(  const Int_t nVF48trigger ){ VF48NTrigger = nVF48trigger; }
-
-  //LMG
   void SetVF48Timestamp( const  Double_t timestamp ){ VF48Timestamp = timestamp; }
 
   void SetRunNumber( const  Int_t number ){ RunNumber = number; }
