@@ -10,7 +10,6 @@ class TStripPed: public TObject
 public:
    //std::vector<int>* histo;
    TH1F* histo1;
-   std::string objID;
    //std::vector<int>* rawhisto;
    double sigma=99999.;
    double rawADCMean=0.;

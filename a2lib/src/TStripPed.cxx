@@ -25,9 +25,7 @@ TStripPed::TStripPed(const int ID, const int nBins, const double binWidth):
    //histo=new std::vector<int>((int)strip_bins,0);
    //histo=new std::vector<int>((int)1,0);
    //LMG
-   objID = std::to_string(ID);
-   const char * charName = objID.c_str();
-   histo1=new TH1F(charName, "Histogram", strip_bins, hmin, hmax);
+   histo1=new TH1F(std::to_string(ID).c_str(), "Histogram", strip_bins, hmin, hmax);
 
    
 }
