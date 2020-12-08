@@ -252,7 +252,7 @@ public:
   void AddMSerror();
 
   int TubeIntersection(TVector3&, TVector3&, 
-		       double radius = _trapradius);
+		       double radius = ALPHAg::_trapradius);
 
   virtual double MinDistPoint(TVector3&);
 

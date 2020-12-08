@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <iostream>
 #include <vector>
@@ -17,9 +18,18 @@
 
 #include "TBarEvent.hh"
 
+class TdcFlags
+{
+public:
+   bool fPrint = false;
+};
+
 
 class tdcmodule: public TARunObject
 {
+public:
+   TdcFlags* fFlags;
+
 private:
 
    // Constant value declaration
@@ -31,7 +41,7 @@ private:
       // linear calibration:
       // $ROOTANASYS/libAnalyzer/TRB3Decoder.hxx
    const double trb3LinearLowEnd = 17.0;
-   const double trb3LinearHighEnd = 473.0;
+   const double trb3LinearHighEnd = 450.0;
 
    // Container declaration
    int bscTdcMap[64][5];
@@ -57,8 +67,10 @@ private:
 
 public:
 
-   tdcmodule(TARunInfo* runinfo): TARunObject(runinfo)
+   tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
+      TARunObject(runinfo), fFlags(flags)
    {
+      ModuleName="bsc tdc module";
       printf("tdcmodule::ctor!\n");
    }
 
@@ -100,7 +112,7 @@ public:
                }
             fbscMap.close();
          }
-      
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -141,17 +153,17 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      std::cout<<"tdc module analysing event"<<std::endl;
    
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
-      #endif
+      }
+
       AgEvent* age = ef->fEvent;
 
       // Unpack tdc data from event
@@ -174,16 +186,14 @@ public:
                   CalculateTOF(barEvt);
                }
             else
-               std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
+               if( fFlags->fPrint )
+                  std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event incomplete"<<std::endl;
          }
       else
-         std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
-//      #ifdef _TIME_ANALYSIS_
-//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bsc_tdc_module",timer_start);
-//      #endif
+         if( fFlags->fPrint )         
+            std::cout<<"tdcmodule::AnalyzeFlowEvent  No TDC event"<<std::endl;
 
       return flow;
-      
    }
 
    //________________________________
@@ -264,7 +274,6 @@ public:
             endhit->SetTDCHit(tdc_time);
             c_adctdc+=1;
          }
-
    }
 
    void CombineEnds(TBarEvent* barEvt)
@@ -362,6 +371,7 @@ public:
       return trig_time;
    }
 
+
    int fpga2barID(int fpga, int chan) // Looks up fpga number and channel number in map and returns bar number (0-127)
    {
       int bar = -1;
@@ -388,6 +398,8 @@ public:
 class tdcModuleFactory: public TAFactory
 {
 public:
+   TdcFlags fFlags;
+public:
    void Help()
    {   }
    void Usage()
@@ -398,7 +410,10 @@ public:
    {
       printf("tdcModuleFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) { }
+      for (unsigned i=0; i<args.size(); i++) { 
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true; 
+      }
    }
 
    void Finish()
@@ -409,7 +424,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("tdcModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new tdcmodule(runinfo);
+      return new tdcmodule(runinfo,&fFlags);
    }
 };
 

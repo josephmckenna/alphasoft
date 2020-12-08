@@ -1,3 +1,5 @@
+#include "ReadEventTree.h"
+
 TString tag("_R");
 int RunNumber=0;
 TString savFolder;
@@ -127,19 +129,6 @@ TH2D* hhzr;
 TH2D* hhrp;
 TH2D* hhxy;
 
-// cosmics
-TH1D* hcosaw;
-TH2D* hcospad;
-TH1D* hRes2min;
-TH1D* hdeltaT;
-TH1D* hDCAeq2;
-TH1D* hDCAgr2;
-TH1D* hAngeq2;
-TH1D* hAnggr2;
-TH2D* hAngDCAeq2;
-TH2D* hAngDCAgr2;
-TH1D* hcosphi;
-TH1D* hcostheta;
 
 void MakeHistos()
 {
@@ -148,7 +137,8 @@ void MakeHistos()
   hpxy->SetStats(kFALSE);
   hpzr = new TH2D("hpzr","Spacepoints;z [mm];r [mm]",600,-1200.,1200.,61,109.,174.);
   hpzr->SetStats(kFALSE);
-  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
+  //  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,100,0.,360.);
+  hpzp = new TH2D("hpzp","Spacepoints;z [mm];#phi [deg]",600,-1200.,1200.,256,0.,360.);
   hpzp->SetStats(kFALSE);
   // hprp = new TH2D("hprp","Spacepoints;r [mm];#phi [deg]",100,108.,175.,180,0.,360.);
   hprp = new TH2D("hprp","Spacepoints;#phi [deg];r [mm]",100,0.,TMath::TwoPi(),61,109.,174.);
@@ -163,7 +153,7 @@ void MakeHistos()
   hpzed->SetStats(kFALSE);
 
   // spacepoints from tracks
-  hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",300,-1.,600.);
+  hpattreceff = new TH1D("hpattreceff","Track Finding Efficiency",201,-1.,200.);
   hpattreceff->SetLineWidth(2);
   hspxy = new TH2D("hspxy","Spacepoints in Tracks;x [mm];y [mm]",
 		   100,-190.,190.,100,-190.,190.);
@@ -171,8 +161,10 @@ void MakeHistos()
   hspzr = new TH2D("hspzr","Spacepoints in Tracks;z [mm];r [mm]",
 		   600,-1200.,1200.,61,109.,174.);
   hspzr->SetStats(kFALSE);
+  // hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
+  // 		   600,-1200.,1200.,100,0.,360.);
   hspzp = new TH2D("hspzp","Spacepoints in Tracks;z [mm];#phi [deg]",
-		   600,-1200.,1200.,100,0.,360.);
+		   600,-1200.,1200.,256,0.,360.);
   hspzp->SetStats(kFALSE);
 
   hsprp = new TH2D("hsprp","Spacepoints in Tracks;#phi [deg];r [mm]",
@@ -236,7 +228,7 @@ void MakeHistos()
 		  100,0.,2000.,200,-1000.,1000.);
 
   // reco helices spacepoints
-  hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",300,-1.,600.);
+  hhpattreceff = new TH1D("hhpattreceff","Track Finding Efficiency",201,-1.,200.);
   hhpattreceff->SetLineWidth(2);;
   hhspxy = new TH2D("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
 		    100,-190.,190.,100,-190.,190.);
@@ -323,10 +315,6 @@ void MakeHistos()
 		  100,0.,190.,90,-180.,180.);
   hhxy = new TH2D("hhxy","Helix X-Y intersection with min rad;x [mm];y [mm]",
 		  100,-190.,190.,100,-190.,190.);
-
-  // cosmics
-  hRes2min = new TH1D("hRes2","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",
-		      1000,0.,1000.);
 }
 
 void DisplayHisto()
@@ -337,7 +325,7 @@ void DisplayHisto()
     // deconv signals histos
     cname = "deconv";
     cname+=tag;
-    TCanvas* cdec = new TCanvas(cname.Data(),cname.Data(),1600,1000);
+    TCanvas* cdec = new TCanvas(cname.Data(),cname.Data(),1900,1000);
     cdec->Divide(3,2);
 
     cdec->cd(1);
@@ -347,7 +335,8 @@ void DisplayHisto()
     if( hhpad->GetEntries() > 0. )
       {
 	hhpad->Draw("same");
-	hht->GetXaxis()->SetRangeUser(0.,2100.);
+	//hht->GetXaxis()->SetRangeUser(0.,2100.);
+	hht->GetXaxis()->SetRangeUser(0.,1500.);
 	hht->GetYaxis()->SetRangeUser(0.,
 				      hht->GetBinContent(hht->GetMaximumBin()) > hhpad->GetBinContent(hhpad->GetMaximumBin()) ?
 				      hht->GetBinContent(hht->GetMaximumBin())*1.1 : hhpad->GetBinContent(hhpad->GetMaximumBin())*1.1
@@ -365,7 +354,8 @@ void DisplayHisto()
       {
 	cdec->cd(4);
 	hmatch->Draw();
-	hmatch->GetXaxis()->SetRangeUser(0.,2100.);
+	//	hmatch->GetXaxis()->SetRangeUser(0.,2100.);
+	hmatch->GetXaxis()->SetRangeUser(0.,1500.);
       }
 
     cdec->cd(2);
@@ -399,8 +389,10 @@ void DisplayHisto()
 	cdec->cd(5);
 	hawpadsector->SetStats(kFALSE);
 	//  hawpadsector->RebinX();
-	hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
-	hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
+	// hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
+	// hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
+	hawpadsector->GetXaxis()->SetRangeUser(10.,3200.);
+	hawpadsector->GetYaxis()->SetRangeUser(10.,3200.);
 	hawpadsector->Draw("colz");
 
 	cdec->cd(6);
@@ -592,7 +584,7 @@ void DisplayHisto()
     {
       cname = "chel";
       cname+=tag;
-      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1000,800);
+      TCanvas* chel = new TCanvas(cname.Data(),cname.Data(),1700,800);
       chel->Divide(2,1);
       chel->cd(1);
       hNhel->Draw();
@@ -724,71 +716,6 @@ void DisplayHisto()
       chsp->SaveAs(savFolder+cname+TString(".pdf"));
     }
 
-  // if(hcosaw->GetEntries())
-  //   {
-  //     cname = "ccos";
-  //     cname+=tag;
-  //     TCanvas* ccos = new TCanvas(cname.Data(),cname.Data(),1400,1200);
-  //     ccos->Divide(2,2);
-  //     ccos->cd(1);
-  //     hcosaw->Draw();
-  //     ccos->cd(2);
-  //     hcospad->Draw("colz");
-  //     ccos->cd(3);
-  //     hRes2min->Draw();
-  //     ccos->cd(4);
-  //     hdeltaT->Draw("P");
-  //     //TF1* fdeltaT = new TF1("fdeltaT","[0]*exp([1]*x+[2])",0.,300.);
-  //     //fdeltaT->SetParameters(hdeltaT->GetBinContent(4),20.,-3.);
-  //     //hdeltaT->Fit(fdeltaT,"0EMW");
-  //     hdeltaT->Fit("expo","Q0EMW");
-  //     TF1* fdeltaT = hdeltaT->GetFunction("expo");
-  //     if( fdeltaT )
-  // 	{
-  // 	  double rate = fabs( fdeltaT->GetParameter(1) )*1.e3,
-  // 	    rate_err = fabs( fdeltaT->GetParError(1) )*1.e3;
-  // 	  TString srate = TString::Format("Cosmic Rate R%d: (%1.1f#pm%1.1f) Hz",
-  // 					  RunNumber,rate,rate_err);
-  // 	  cout<<srate<<endl;
-  // 	  fdeltaT->Draw("same");
-  // 	  TPaveText* trate = new TPaveText(0.5,0.53,0.87,0.6,"NDC");
-  // 	  trate->AddText(srate.Data());
-  // 	  trate->SetFillColor(0);
-  // 	  trate->Draw();
-  // 	}
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccos->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosdir";
-  //     cname+=tag;
-  //     TCanvas* ccosdir = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-  //     ccosdir->Divide(1,2);
-  //     ccosdir->cd(1);
-  //     hcosphi->Draw();
-  //     ccosdir->cd(2);
-  //     hcostheta->Draw();
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosdir->SaveAs(savFolder+cname+TString(".pdf"));
-
-  //     cname="ccosres";
-  //     cname+=tag;
-  //     TCanvas* ccosres = new TCanvas(cname.Data(),cname.Data(),1600,1200);
-  //     ccosres->Divide(3,2);
-  //     ccosres->cd(1);
-  //     hDCAeq2->Draw();
-  //     ccosres->cd(2);
-  //     hAngeq2->Draw();
-  //     ccosres->cd(3);
-  //     hAngDCAeq2->Draw("colz");
-  //     ccosres->cd(4);
-  //     hDCAgr2->Draw();
-  //     ccosres->cd(5);
-  //     hAnggr2->Draw();
-  //     ccosres->cd(6);
-  //     hAngDCAgr2->Draw("colz");
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //     ccosres->SaveAs(savFolder+cname+TString(".pdf"));
-  //   }
 
 }
 
@@ -801,8 +728,6 @@ void ProcessLine(TStoreLine* aLine)
   hltheta->Fill(u.Theta()*TMath::RadToDeg());
 
   // z axis intersection
-  // TVector3 c = -1.*p;
-  // double num = c.Cross(zaxis) * u.Cross(zaxis);
   double num = zaxis.Cross(p) * u.Cross(zaxis);
   double den = u.Cross(zaxis).Mag2();
 
@@ -912,9 +837,9 @@ void ProcessUsed(TFitHelix* hel)
   huhptz->Fill(hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
 
   const vector<TSpacePoint*> *sp = hel->GetPointsArray();
-  for( int ip = 0; ip<sp->size(); ++ip )
+  for( unsigned int ip = 0; ip<sp->size(); ++ip )
     {
-        TSpacePoint* ap = sp->at(ip);
+      TSpacePoint* ap = sp->at(ip);
       huhspxy->Fill( ap->GetX(), ap->GetY() );
       huhspzp->Fill( ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
       huhspzr->Fill( ap->GetZ(), ap->GetR() );
@@ -947,7 +872,7 @@ void ProcessTree( TTree* tin, int idx=0 )
       for(int i=0; i<points->GetEntries(); ++i)
 	{
 	  TSpacePoint* ap = (TSpacePoint*) points->At(i);
-	  if( ap->IsGood(_cathradius, _fwradius) )
+	  if( ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) )
 	    {
 	      hpxy->Fill( ap->GetX(), ap->GetY() );
 	      hpzr->Fill( ap->GetZ(), ap->GetR() );
@@ -1123,52 +1048,18 @@ void GetSignalHistos(TFile* fin)
     }
 }
 
-void GetCosmicHistos(TFile* fin)
-{
-  if( fin->cd("cosmics") )
-    {
-      hcosaw = (TH1D*) gROOT->FindObject("hcosaw");
-      hcospad = (TH2D*) gROOT->FindObject("hcospad");
-      hcospad->SetStats(kFALSE);
-      hRes2min = (TH1D*) gROOT->FindObject("hRes2min");
-      hdeltaT = (TH1D*) gROOT->FindObject("hpois");
-      hdeltaT->SetMarkerColor(kBlack);
-      hdeltaT->SetMarkerStyle(8);
-      hdeltaT->SetLineColor(kBlack);
-
-      hDCAeq2 = (TH1D*) gROOT->FindObject("hDCAeq2");
-      hDCAgr2 = (TH1D*) gROOT->FindObject("hDCAgr2");
-      hAngeq2 = (TH1D*) gROOT->FindObject("hAngeq2");
-      hAnggr2 = (TH1D*) gROOT->FindObject("hAnggr2");
-      hAngDCAeq2 = (TH2D*) gROOT->FindObject("hAngDCAeq2");
-      hAngDCAeq2->SetStats(kFALSE);
-      hAngDCAgr2 = (TH2D*) gROOT->FindObject("hAngDCAgr2");
-      hAngDCAgr2->SetStats(kFALSE);
-
-      hcosphi = (TH1D*) gROOT->FindObject("hcosphi");
-      hcosphi->SetMinimum(0);
-      hcostheta = (TH1D*) gROOT->FindObject("hcostheta");
-
-    }
-}
-
-void GetRecoHistos(TFile* fin)
-{
-  if( fin->cd("reco") )
-    {
-      hsptrp =  (TH2D*) gROOT->FindObject("hsprp");
-      if(hsptrp) hsptrp->SetStats(kFALSE);
-    }
-}
 
 void WriteRunStats()
 {
   fout<<"===== Run Stats ====="<<endl;
   fout<<"Title\t\tEntries\tMean\tRMS\n";
   fout<<"----------------------------------------------------------------------------------------\n";
-  fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
-  fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
-  fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
+  if (hht)
+     fout<<hht->GetTitle()<<"\t"<<setw(8)<<hht->GetEntries()<<"\t"<<setw(5)<<hht->GetMean()<<"\t"<<setw(5)<<hht->GetRMS()<<endl;
+  if (hhpad)
+     fout<<hhpad->GetTitle()<<"\t"<<setw(8)<<hhpad->GetEntries()<<"\t"<<setw(5)<<hhpad->GetMean()<<"\t"<<setw(5)<<hhpad->GetRMS()<<endl;  
+  if (hmatch)
+     fout<<hmatch->GetTitle()<<"\t"<<setw(8)<<hmatch->GetEntries()<<"\t"<<setw(5)<<hmatch->GetMean()<<"\t"<<setw(5)<<hmatch->GetRMS()<<endl;
   fout<<hpzed->GetTitle()<<"\t"<<setw(8)<<hpzed->GetEntries()<<"\t"<<setw(5)<<hpzed->GetMean()<<"\t"<<setw(5)<<hpzed->GetRMS()<<endl;
   fout<<"\n";
   fout<<hpattreceff->GetTitle()<<"\t"<<setw(8)<<hpattreceff->GetEntries()<<"\t"<<setw(5)<<hpattreceff->GetMean()<<"\t"<<setw(5)<<hpattreceff->GetRMS()<<endl;
@@ -1210,8 +1101,6 @@ void ProcessData( TFile* fin )
   ProcessTree( tin );
 
   GetSignalHistos(fin);
-  //  GetRecoHistos(fin);
-  //  GetCosmicHistos(fin);
 
   cout<<"DisplayHisto"<<endl;
   DisplayHisto();
@@ -1220,13 +1109,15 @@ void ProcessData( TFile* fin )
   WriteRunStats();
 }
 
-// int GetRunNumber( TString fname )
-// {
-//   TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-//   int pos = fname.Index(re);
-//   int run = TString(fname(pos,5)).Atoi();
-//   return run;
-// }
+void ReadSettings( TObjString* sett )
+{
+  TString str = sett->GetString();
+  fout<<"\n-----------------------------------\n"<<
+    str<<"\n-----------------------------------"<<endl;
+  // cout<<"\n-----------------------------------\n"<<
+  //   str<<"\n-----------------------------------"<<endl;  
+}
+
 
 void copy_file( const char* srce_file, const char* dest_file )
 {
@@ -1234,12 +1125,16 @@ void copy_file( const char* srce_file, const char* dest_file )
   ofstream dest( dest_file, std::ios::binary ) ;
   dest << srce.rdbuf() ;
 }
+
 void ReadEventTree()
 {
   cout<<"DATA"<<endl;
   TFile* fin = (TFile*) gROOT->GetListOfFiles()->First();
   TString fname(fin->GetName());
   cout<<fname<<" FOUND"<<endl;
+
+  TObjString* sett = (TObjString*) gROOT->FindObject("ana_settings");
+  cout<<sett->GetString()<<endl;
 
   RunNumber = GetRunNumber( fname );
   cout<<"Run # "<<RunNumber<<endl;
@@ -1253,6 +1148,8 @@ void ReadEventTree()
   fout<<"Filename: "<<fname<<endl;
 
   ProcessData( fin );
+
+  ReadSettings( sett );
 
   fout.close();
 

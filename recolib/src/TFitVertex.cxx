@@ -469,14 +469,14 @@ void TFitVertex::AssignHelixStatus()
 
 bool TFitVertex::InRadiusRange(double r)
 {
-  return r<(2.*_trapradius)?true:false;
+  return r<(2.*ALPHAg::_trapradius)?true:false;
 }
 
 int TFitVertex::FindDCA()
 {
   if(fNhelices<2) return 0;
 
-  FindSeed(_trapradius*_trapradius); 
+  FindSeed(ALPHAg::_trapradius*ALPHAg::_trapradius); 
   // ------------- debug -----------------
   //std::cout<<"TFitVertex::FindDCA() "<<fchi2<<std::endl;
 

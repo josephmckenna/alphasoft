@@ -15,7 +15,9 @@
 
 #include <TDirectory.h>
 
+
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
+                                       fLocation("CERN"),
                                        f_rfudge(1.),f_pfudge(1.),
                                        pattrec(0)
 {
@@ -55,28 +57,21 @@ Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
    fItThres = ana_settings->GetDouble("RecoModule","ItThres_NN");
 
    if( fMagneticField < 0. )
-      fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+      fSTR = new LookUpTable(ALPHAg::_co2frac); // field map version (simulation)
    else
-      fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
+      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
-   // std::cout<<"Reco::Reco() Saving AnaSettings to rootfile... ";
-   // TObjString sett = ana_settings->GetSettingsString();
-   // int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-   // if( bytes_written > 0 )
-   //    std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-   // else
-   //    std::cout<<" FAILED"<<std::endl;
-
    track_not_advancing = 0;
    points_cut = 0;
    rad_cut = 0;
 }
 
-Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
-                                           ana_settings(ana_set),
-                                           f_rfudge(1.),f_pfudge(1.),
-                                           pattrec(0)
+Reco::Reco(AnaSettings* ana_set, double B, std::string loc):fTrace(false),fMagneticField(B),
+                                                            ana_settings(ana_set),
+                                                            fLocation(loc),
+                                                            f_rfudge(1.),f_pfudge(1.),
+                                                            pattrec(0)
 {
    std::cout<<"Reco ctor! (2)"<<std::endl;
    ana_settings->Print();
@@ -115,11 +110,11 @@ Reco::Reco(AnaSettings* ana_set, double B):fTrace(false),fMagneticField(B),
 
    if( fMagneticField < 0. ) // garfield++ sim with field map
       {
-         fSTR = new LookUpTable(_co2frac); // field map version (simulation)
+         fSTR = new LookUpTable(ALPHAg::_co2frac); // field map version (simulation)
          fMagneticField = 1.;
       }
    else
-      fSTR = new LookUpTable(_co2frac, fMagneticField); // uniform field version (simulation)
+      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
    
    track_not_advancing = 0;
@@ -151,12 +146,12 @@ void Reco::UseSTRfromData(int runNumber)
 
 Reco::~Reco()
 {
-   delete ana_settings;
+   //   delete ana_settings;
    //if(pattrec) delete pattrec;
    delete fSTR;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
+void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints )
 {
    int n = 0;
    for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
@@ -165,7 +160,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
          const double time = sp->first.t, zed = sp->second.z;
          if( fTrace )
             {
-               double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+               double z = ( double(sp->second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
                std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
                         <<" t: "<<time
                         <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" (z: "<<z
@@ -199,7 +194,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, double z_fid )
+void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double z_fid )
 {
    int n = 0;
    for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
@@ -219,7 +214,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, 
 
          if( fTrace )
             {
-               double z = ( double(sp->second.idx) + 0.5 ) * _padpitch - _halflength;
+               double z = ( double(sp->second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
                std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
                         <<" t: "<<time<<" r: "<<r
                         <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
@@ -253,10 +248,10 @@ void Reco::AddSpacePoint( const TObjArray* p )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector<signal> *spacepoints )
+void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
 {
    int n = 0;
-   double zed = 0.,zerr=_padpitch*_sq12;
+   double zed = 0.,zerr=ALPHAg::_padpitch*ALPHAg::_sq12;
    int padidx=288,padsec=0;
    for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
       {
@@ -314,9 +309,9 @@ void Reco::AddMChits( const TClonesArray* points )
          if( phi < 0. ) phi += TMath::TwoPi();
          if( phi >= TMath::TwoPi() )
             phi = fmod(phi,TMath::TwoPi());
-         int aw = phi/_anodepitch - 0.5;
-         int sec = int( phi/(2.*M_PI)*_padcol ),
-            row = int( zed/_halflength*0.5*_padrow );
+         int aw = phi/ALPHAg::_anodepitch - 0.5;
+         int sec = int( phi/(2.*M_PI)*ALPHAg::_padcol ),
+            row = int( zed/ALPHAg::_halflength*0.5*ALPHAg::_padrow );
 
          //      double y = rad*TMath::Sin( phi ), x = rad*TMath::Cos( phi );
 
@@ -534,17 +529,9 @@ int Reco::RecVertex(TFitVertex* Vertex)
 
 void Reco::Reset()
 {
-   // if( pattrec ) 
-   //    { 
-         //       //std::cout<<"Reco::Reset() deleting pattrec"<<std::endl;
-   delete pattrec;
-         //      }
-   //   fTrace=false;
-   // fPointsArray.clear();
-   // fTracksArray.clear();
-   // fLinesArray.clear();
-   // fHelixArray.clear();
+   if(pattrec) delete pattrec;
    
+   //   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
    for (size_t i=0; i<fHelixArray.size(); i++)
       delete fHelixArray.at(i);
    fHelixArray.clear();
@@ -555,6 +542,7 @@ void Reco::Reset()
    for (size_t i=0; i<fTracksArray.size(); i++)
       delete fTracksArray.at(i);
    fTracksArray.clear(); 
+   //   std::cout<<" Reco::Reset() Delete Points"<<std::endl;
    for (size_t i=0; i<fPointsArray.size(); i++)
       delete fPointsArray.at(i);
    fPointsArray.clear(); 

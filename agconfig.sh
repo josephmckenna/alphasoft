@@ -11,10 +11,12 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-export AGMIDASDATA="/alpha/agdaq/data"
+#Over write data paths in 'localised profiles' based on host /domain names below
+export AGMIDASDATA=${AGRELEASE}
+export A2DATAPATH=${AGRELEASE}/alpha2
+
 export AG_CFM=${AGRELEASE}/ana
 
-export A2DATAPATH=${AGRELEASE}/alpha2
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
@@ -138,7 +140,7 @@ alphaCrunch()
   . ~/packages/rootana/thisrootana.sh
   #. ~/joseph/agdaq/rootana/thisrootana.sh
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.06/x86_64-centos7-gcc48-opt/bin/root/thisroot.sh
 
   #If geant4 is installed, set up simulation vars
   if [ `command -v geant4-config | wc -c` -gt 5 ]; then
@@ -162,19 +164,22 @@ acapra()
     export EOS_MGM_URL=root://eospublic.cern.ch
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
+    export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
     #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 lxplus()
 {
   export EOS_MGM_URL=root://eospublic.cern.ch
+  export AGMIDASDATA=${AGRELEASE}
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
       #FUTURE:Use our own build of root (include xrootd,R, Python2.7 and minuit2)
       #. /cvmfs/alpha.cern.ch/CC7/packages/root/root_build/bin/thisroot.sh
-        . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+      . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.22.02/x86_64-centos7-gcc48-opt/bin/thisroot.sh
   else
     echo "cvmfs not found! Please install and mount cvmfs"
   fi
@@ -198,7 +203,7 @@ echo "Username: " `whoami`
 echo "#########################################"
 
 #Setup LD_LIBRARY_PATH
-for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib; do
+for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -208,7 +213,7 @@ for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,buil
 done
 
 #Set up Root include path
-for AG_ROOT_LIB_PATH in ana/include analib/include analib/RootUtils aged recolib/include a2lib/include a2lib/legacy; do
+for AG_ROOT_LIB_PATH in ana/include analib/include rootUtils/include aged recolib/include a2lib/include a2lib/legacy; do
   if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -234,10 +239,21 @@ if [ "${1}" = "install_sim" ]; then
   sleep 1
   echo "No really... go get a coffee... this will take some time.."
   sleep 1
-  git submodule update --init 
+  git submodule update --init --recursive
   sim_submodules_firsttimesetup
 fi
 
+
+
+if [ -z "$(ls -A agana)" ]; then
+    git submodule update --init agana
+    git submodule update --init agcfmdb
+    echo "agana submodule loaded"
+else
+    git submodule update --remote agana
+    git submodule update --remote agcfmdb
+    echo "agana submodule updated"
+fi
 
 
 #Quit if ROOT and ROOTANA are setup...
@@ -308,6 +324,10 @@ alphabeast* )
 alphacrunch* )
   echo -e " \e[33malphacrunch detected...\033[0m"
   alphaCrunch
+  ;;
+lxplus* )
+  echo -e " \e[33mlxplus detected...\033[0m"
+  lxplus
   ;;
 * )
   if [ -n "${ROOTSYS}" ]; then

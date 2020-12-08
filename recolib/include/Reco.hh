@@ -8,8 +8,8 @@
 #include <TH2D.h>
 #include <TClonesArray.h>
 
-#include "SignalsType.h"
-#include "AnaSettings.h"
+#include "SignalsType.hh"
+#include "AnaSettings.hh"
 
 #include "LookUpTable.hh"
 #include "TracksFinder.hh"
@@ -27,6 +27,7 @@ private:
    double fMagneticField;
 
    AnaSettings* ana_settings;
+   std::string fLocation;
 
    double f_rfudge;
    double f_pfudge;
@@ -98,17 +99,17 @@ private:
 
 public:
    Reco(std::string, double);
-   Reco(AnaSettings*, double);
+   Reco(AnaSettings*, double, std::string );
    ~Reco();
 
    void Setup(TFile*);
 
    void AddMChits( const TClonesArray* mchits );
 
-   void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints );
-   void AddSpacePoint( std::vector< std::pair<signal,signal> > *spacepoints, double zcut );
+   void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints );
+   void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double zcut );
    void AddSpacePoint( const TObjArray* points );
-   void AddSpacePoint( std::vector<signal> *spacepoints );
+   void AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints );
    int FindTracks(finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
    int FitLines();

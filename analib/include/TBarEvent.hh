@@ -19,6 +19,7 @@ private:
   double fTDCTime=-1;
   //ADC data'
   double fADCTime=-1;
+  double fPeakTime=-1;
   double fAmp=-1;
   bool fTDCMatched=false;
 
@@ -28,11 +29,19 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
+<<<<<<< HEAD
   void SetADCHit(int _fBarID, double _fAmp, double _fADCTime) 
+=======
+  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime, double _fPeakTime) 
+>>>>>>> agsoft
   {
      fBarID=_fBarID;
      fAmp=_fAmp;
      fADCTime=_fADCTime;
+<<<<<<< HEAD
+=======
+     fPeakTime=_fPeakTime;
+>>>>>>> agsoft
   }
   void SetTDCHit(double _fTDCTime)
   {
@@ -44,6 +53,10 @@ public:
   int GetBar() const {return fBarID;}
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
+<<<<<<< HEAD
+=======
+  double GetPeakTime() const {return fPeakTime;}
+>>>>>>> agsoft
   double GetTDCTime() const {return fTDCTime; }
   void GetXY(double &x, double &y)
   {
@@ -172,10 +185,17 @@ public:
     fBarHit.push_back(b);
   }
 
+<<<<<<< HEAD
   void AddADCHit(int fBarID, double fAmp, double fADCTime)
   {
      EndHit* hit = new EndHit;
      hit->SetADCHit( fBarID, fAmp, fADCTime);
+=======
+  void AddADCHit(int fBarID, double fAmp, double fADCTime, double fPeakTime)
+  {
+     EndHit* hit = new EndHit;
+     hit->SetADCHit( fBarID, fAmp, fADCTime, fPeakTime);
+>>>>>>> agsoft
      AddEndHit(hit);
   }
 

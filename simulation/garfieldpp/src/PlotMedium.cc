@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
 {
   string path2gasfile(getenv("AGRELEASE"));
   path2gasfile+="/simulation/common/gas_files/";
-  int len = path2gasfile.size();
+  //int len = path2gasfile.size();
   string gasfile("ar_70_co2_30_725Torr_20E200000_4B1.10.gas");
   path2gasfile+=gasfile;
   std::cout<<"GAS file: "<<path2gasfile<<std::endl;
@@ -47,10 +47,10 @@ int main(int argc, char * argv[])
   TCanvas* c = new TCanvas(cname.Data(),cname.Data(),1400,1200);
   c->Divide(2,2);
 
-  double EF = 1.e3; // V/cm
+  // double EF = 1.e3; // V/cm
   double Emax = 300.e3; // V/cm
-  double BF = 1.; // T
-  double theta = TMath::PiOver2(); // rad
+  // double BF = 1.; // T
+  // double theta = TMath::PiOver2(); // rad
 
   ViewMedium* mviewV = new ViewMedium();
   mviewV->SetMedium(gas);
