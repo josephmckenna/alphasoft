@@ -58,6 +58,8 @@ public:
    static TString CustomStripsFile;
    static double NSIGMATHRES;
    int ProcessVF48=-1;
+   static int nPedBins;
+   static double pedBinWidth;
 };
 bool    PedFlags::fPrint = false;
 bool    PedFlags::fUnpackOff = false;
@@ -66,60 +68,9 @@ int     PedFlags::VF48commonThreshold = false;
 bool    PedFlags::ForceStripsFile = false;
 TString PedFlags::CustomStripsFile="";
 double  PedFlags::NSIGMATHRES=3.;
+int 	PedFlags::nPedBins = 512;
+double 	PedFlags::pedBinWidth = 0.1;
 
-
-
-class PedModule: public TARunObject
-{
-public:
-   PedFlags* fFlags = NULL;
-   bool fTrace = false;
-
-   PedModule(TARunInfo* runinfo, PedFlags* flags)
-     : TARunObject(runinfo), fFlags(flags)
-   {
-      if (fTrace)
-         printf("PedModule::ctor!\n");
-   }
-
-   ~PedModule()
-   {
-      if (fTrace)
-         printf("PedModule::dtor!\n");
-   }
-
-   void BeginRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("PedModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-   }
-
-   void PreEndRun(TARunInfo* runinfo, std::deque<TAFlowEvent*>* flow_queue)
-   {
-      if (fTrace)
-         printf("PedModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
-   }
-
-
-
-   void PauseRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("PedModule::PauseRun, run %d\n", runinfo->fRunNo);
-   }
-
-   void ResumeRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("ResumeModule, run %d\n", runinfo->fRunNo);
-   }
-
-};
 
 class PedModule_vf48: public TARunObject
 {
@@ -130,7 +81,10 @@ public:
    TVF48SiMap *gVF48SiMap = NULL;
    
    //Static so its shared between all VF48 threads
-   static TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
+   //Old array
+   //static TStripPed Strip_ADCs[NUM_SI_MODULES*4*128];
+   //New vector below
+   static std::vector<TStripPed*> Strip_ADCs;
 
    
    //Once instance per VF48 module
@@ -148,7 +102,29 @@ public:
    PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+#endif
+	  
+	  //New declaration in initiator. 
+	  //std::vector<TStripPed> vec;
+	  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
+	  printf("nPedBins = %d, and pedBinWidth = %f \n", fFlags->nPedBins, fFlags->pedBinWidth);
+	  
+	  if(Strip_ADCs.size() == 0)
+	  {
+		  Strip_ADCs.reserve(NUM_SI_MODULES * 4 * 128);
+		  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
+		  for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
+		  {
+			  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
+			  Strip_ADCs.push_back(new TStripPed(fFlags->nPedBins, fFlags->pedBinWidth));
+			  
+		  }
+	  }
+	  //Strip_ADCs = &vec;
+	  //Strip_ADCs(NUM_SI_MODULES*4*128,TStripPed(1024,0.1));
+	  
 
       // load the sqlite3 db
       char dbName[255]; 
@@ -178,10 +154,18 @@ public:
       gVF48SiMap = new TVF48SiMap(name);
       for( int n=0; n<48; n++ )
          gVF48SiMap->GetSil( m, n, strip_ped_SiModNumber[n], strip_ped_ASIC[n], strip_ped_FRCNumber[n], strip_ped_FRCPort[n], strip_ped_TTCChannel[n] );
-
+		//LMG Print statement here pls
    }
    ~PedModule_vf48()
    {
+      for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
+		  {
+           if(Strip_ADCs[i]) 
+           {
+			   delete Strip_ADCs[i];
+            Strip_ADCs[i] = NULL;
+           }
+		  }
       delete SettingsDB;
       delete gVF48SiMap;
    }
@@ -248,7 +232,7 @@ public:
             const int firstStrip = 128*(strip_ped_ASIC[vf48chan]-1) + 512*(strip_ped_SiModNumber[vf48chan]);
             for (int k=0; k<128; k++)
             {
-               Strip_ADCs[firstStrip + k].InsertValue(SiliconVA.PedSubADC[k],SiliconVA.RawADC[k]);
+               Strip_ADCs[firstStrip + k]->InsertValue(SiliconVA.PedSubADC[k],SiliconVA.RawADC[k]);
             }
          }//loop over VF48 channels
       } // loop over VF48 modules
@@ -261,31 +245,33 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
-      #ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif
+#endif
 
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if (!fe->vf48event)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       CountVF48Module(fe->vf48event,fFlags->ProcessVF48);
 
-      //flow=new SilEventsFlow(flow,s);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 
@@ -310,17 +296,18 @@ public:
       alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
       alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
       alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
-      alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
-      alphaStripTree->Branch("stripMeanSubRMS",&stripMeanSubRMS, "stripMeanSubRMS/F");
+      //alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
+      alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
 
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {
-         Strip_ADCs[i].sigma=fFlags->NSIGMATHRES;
-         Strip_ADCs[i].CalculatePed();
-         stripMean      =(float)Strip_ADCs[i].stripMean;
-         stripRMS       =(float)Strip_ADCs[i].stripRMS;
-         stripRMSAfterFilter=(float)Strip_ADCs[i].StripRMSsAfterFilter;
-         stripMeanSubRMS=(float)Strip_ADCs[i].stripMeanSubRMS;
+         Strip_ADCs[i]->sigma=fFlags->NSIGMATHRES;
+         Strip_ADCs[i]->CalculatePed();
+         stripMean      =(float)Strip_ADCs[i]->stripMean;
+         stripRMS       =(float)Strip_ADCs[i]->stripRMS;
+         stripMeanSubRMS=(float)Strip_ADCs[i]->stripMeanSubRMS;
+         stripRMSAfterFilter=(float)Strip_ADCs[i]->StripRMSsAfterFilter;
+         
          
          alphaStripTree->Fill();
          stripNumber++;
@@ -330,7 +317,17 @@ public:
       delete file;
    }
 };
-TStripPed PedModule_vf48::Strip_ADCs[NUM_SI_MODULES*4*128];
+
+
+std::vector<TStripPed*> PedModule_vf48::Strip_ADCs = std::vector<TStripPed*> ();
+
+/*for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
+{
+	PedModule_vf48::Strip_ADCs.push_back(TStripPed(1024, 0.1));
+}*/
+//TStripPed PedModule_vf48::Strip_ADCs[NUM_SI_MODULES*4*128]; //Remove this and declare in constructor(?) LMG
+
+//PedModule_vf48::Strip_ADCs(NUM_SI_MODULES*4*128,TStripPed(1024,0.1));
 
 class PedModuleFactory_vf48: public TAFactory
 {
@@ -340,27 +337,13 @@ public:
    {
       fFlags.ProcessVF48=vf48;
    }
-   void Init(const std::vector<std::string> &args)
-   {
-      printf("PedModuleFactory_vf48(%d)::Init!\n",fFlags.ProcessVF48);
-   }
-   TARunObject* NewRunObject(TARunInfo* runinfo)
-   {
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule_vf48(runinfo, &fFlags);
-   }
-};
-
-class PedModuleFactory: public TAFactory
-{
-public:
-   PedFlags fFlags;
-
-public:
    void Help()
    {
       printf("PedModuleFactory::Help!\n");
       printf("\t--nounpack   Turn unpacking of TPC data (turn off reconstruction completely)\n");
+      printf("\t--nPedBins xxx Set the range of the bins in ped calculation (default value %d)\n", fFlags.nPedBins);
+      printf("\t--pedBinWidth xxx Set the bin width in ped calculation (default value %f)\n", fFlags.pedBinWidth);
+      printf("\t--stripsSigma xxx Set the number of standard deviations from centre to filter out signal (default value %f)\n", fFlags.NSIGMATHRES);
    }
    void Usage()
    {
@@ -368,7 +351,7 @@ public:
    }
    void Init(const std::vector<std::string> &args)
    {
-      printf("PedModuleFactory::Init!\n");
+      printf("PedModuleFactory_vf48(%d)::Init!\n",fFlags.ProcessVF48);
 
       for (unsigned i=0; i<args.size(); i++)
       {
@@ -376,19 +359,31 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--nounpack")
             fFlags.fUnpackOff = true;
+         if (args[i] == "--nPedBins")
+         {
+            fFlags.nPedBins = stoi(args[i+1]);
+            i++;
+            continue;
+         }
+         if (args[i] == "--pedBinWidth")
+         {
+            fFlags.pedBinWidth = stod(args[i+1]);
+            i++;
+            continue;
+         }
+         if (args[i] == "--stripSigma" || args[i] == "--stripsSigma")
+         {
+			 fFlags.NSIGMATHRES = stod(args[i+1]);
+			 i++;
+			 printf("Sigma has been set at %f \n", fFlags.NSIGMATHRES);
+			 continue;
+		 }
       }
    }
-
-   void Finish()
-   {
-      if (fFlags.fPrint)
-         printf("PedModuleFactory::Finish!\n");
-   }
-
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("PedModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new PedModule(runinfo, &fFlags);
+      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new PedModule_vf48(runinfo, &fFlags);
    }
 };
 

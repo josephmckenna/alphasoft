@@ -3075,3 +3075,46 @@ Int_t TAlphaEvent::IsGhostTrack()
 
   return NGhost;
 }
+
+
+
+void TAlphaEvent::Print()
+{
+  
+  std::cout<<"Hit Silicon:"<<std::endl;
+  //  std::vector<TAlphaEventSil*> fSil; // hit silicon (TAlphaEventSil)
+  for (auto& sil: fSil)
+  {
+    if (sil)
+       sil->Print();
+  }
+  
+  //bool                fVertexStopImproving;
+  std::cout<<"Vertex Stopped Improving?"<< fVertexStopImproving<<std::endl;
+  //std::cout<<"MCVertex:"<<fMCVertex<<std::endl; // Monte Carlo vertex
+  std::cout<<"Vertex: "<<fVertex<<std::endl;
+  
+  //std::vector<TAlphaEventHit*>    fHits; // container of hits
+  std::cout<<"Hits:"<<std::endl;
+  for (auto& hit: fHits)
+  {
+    if (hit)
+       hit->Print();
+  }
+  //std::vector<TAlphaEventTrack*>  fTrack; // container of tracks
+  std::cout<<"Tracks:"<<std::endl;
+  for (auto& track: fTrack)
+  {
+    if (track)
+       track->Print();
+  }
+  
+  std::vector<TAlphaEventHelix*>  fHelices; // container of helices (Tracks with exactly 3 hits)
+  std::cout<<"Helicies:"<<std::endl;
+  for (auto& hel: fHelices)
+  {
+    if (hel)
+       hel->Print();
+  }
+
+}

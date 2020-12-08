@@ -81,7 +81,9 @@ public:
    AlphaEventModule(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Module";
+#endif
       if (fTrace)
          printf("AlphaEventModule::ctor!\n");
       
@@ -171,13 +173,12 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
-      SilEventsFlow* fe=flow->Find<SilEventsFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TSiliconEvent* SiliconEvent=fe->silevent;
@@ -245,11 +246,8 @@ public:
          }
 
          //AlphaEvent is prepared... put it into the flow
-         flow = new AlphaEventFlow(flow,AlphaEvent);
+         fe->alphaevent=AlphaEvent;
       }
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_module",timer_start);
-      #endif
       return flow;
    }
 
@@ -267,25 +265,23 @@ public:
    AlphaEventModule_cluster(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Cluster";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->RecClusters();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_cluster",timer_start);
-      #endif
       return flow;
    }
 };
@@ -296,25 +292,23 @@ public:
    AlphaEventModule_hits(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent hits";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->RecHits();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_hits",timer_start);
-      #endif
       return flow;
    }
 };
@@ -331,24 +325,22 @@ public:
       stride=s;
       offset=o;
       fFlags=flags;
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent GetTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
+#endif
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->GatherTrackCandidates(stride, offset);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 };
@@ -361,26 +353,24 @@ public:
    AlphaEventModule_tracks(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Make Helicies";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       AlphaEvent->RecTrackCandidates();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_makehelicies",timer_start);
-      #endif
       return flow;
    }
 };
@@ -397,25 +387,23 @@ public:
       stride=s;
       offset=o;
       fFlags=flags;
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent FitTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
+#endif
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       AlphaEvent->FitTrackCandidates(stride,offset);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 };
@@ -428,25 +416,23 @@ public:
    AlphaEventModule_prunetracks(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent PruneTracks";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->PruneTracks();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_prunetracks",timer_start);
-      #endif
       return flow;
    }
 };
@@ -457,26 +443,24 @@ public:
    AlphaEventModule_vertex(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Vertex";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       AlphaEvent->RecVertex();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_vertex",timer_start);
-      #endif
       return flow;
    }
 };
@@ -490,6 +474,7 @@ public:
      : TARunObject(runinfo), fFlags(flags), stride(s), offset(o)
    {
       fFlags=flags;
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Improve Vert"+std::to_string(fFlags->ImproveVertexInteration);
       if (stride)
       {
@@ -499,29 +484,33 @@ public:
          ModuleName+=std::to_string(stride);
          ModuleName+=")";
       }
+#endif
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (AlphaEvent->HasVertexStoppedImproving())
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       if (AlphaEvent->GetVertex()->GetNHelices()<3) 
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -530,10 +519,6 @@ public:
       //Final loop
       if (offset==stride)
          AlphaEvent->ChooseImprovedVertex();
-      
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,ModuleName.c_str(),timer_start);
-      #endif
       return flow;
    }
 };
@@ -544,36 +529,38 @@ public:
    AlphaEventModule_improvevertex(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent ImproveVertex More";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (AlphaEvent->HasVertexStoppedImproving())
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if (AlphaEvent->GetVertex()->GetNHelices()<3)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       AlphaEvent->ImproveVertex();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_improvevertex_more",timer_start);
-      #endif
       return flow;
    }
 };
@@ -584,25 +571,23 @@ public:
    AlphaEventModule_Rphi(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent RPhi";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->RecRPhi();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_RPhi",timer_start);
-      #endif
       return flow;
    }
 };
@@ -613,25 +598,23 @@ public:
    AlphaEventModule_GoodHel(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent GoodHel";
+#endif
       fFlags=flags;
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       AlphaEvent->CalcGoodHelices();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_GoodHel",timer_start);
-      #endif
       return flow;
    }
 };
@@ -646,7 +629,9 @@ public:
    AlphaEventModule_save(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="TAlphaEvent Save";
+#endif
       if (fFlags->SaveTAlphaEvent)
       {
          //AlphaEventTree = new TTree("gAlphaEventTree","Alpha Event Tree");
@@ -656,16 +641,15 @@ public:
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
-      if (!fe)
+      SilEventFlow* sf=flow->Find<SilEventFlow>();
+      if (!sf)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
-      AlphaEvent=fe->alphaevent;
+      AlphaEvent=sf->alphaevent;
       if (fFlags->SaveTAlphaEvent)
       {
          #ifdef HAVE_CXX11_THREADS
@@ -681,9 +665,7 @@ public:
             AlphaEventTree->SetBranchAddress("AlphaEvent",&AlphaEvent);
          AlphaEventTree->Fill();
       }
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-         return flow;
+
       TSiliconEvent* SiliconEvent=sf->silevent;
       
       //Record hits
@@ -725,9 +707,6 @@ public:
          SiliconTree->Fill();
       }
       //SiliconEvent->Print();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"talphaevent_save",timer_start);
-      #endif
       return flow;
    }
 };

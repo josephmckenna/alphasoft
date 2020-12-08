@@ -18,10 +18,6 @@
 
 #include <TBufferJSON.h>
 #include <fstream>
-#include "AnalysisTimer.h"
-
-
-
 
 class ChronoFlags
 {
@@ -66,7 +62,9 @@ public:
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="ChronoModule";
+#endif
       if (fTrace)
          printf("Chrono::ctor!\n");
    }
@@ -360,7 +358,9 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       ChronoEventsFlow=new std::vector<ChronoEvent*>;

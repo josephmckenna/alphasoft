@@ -1,3 +1,4 @@
+#ifdef BUILD_AG
 #include "TBarEvent.hh"
 
 
@@ -86,7 +87,7 @@ BarHit::~BarHit()
 
 
 }
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8
