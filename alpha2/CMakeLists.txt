@@ -77,6 +77,26 @@ link_directories($ENV{ROOTANASYS}/lib)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+# MIDAS -- live analyzer
+set(MIDASSYS "" CACHE PATH "")
+if(MIDASSYS STREQUAL "")
+    set(MIDASSYS "$ENV{MIDASSYS}")
+endif()
+if(MIDASSYS STREQUAL "")
+    find_package(Midas QUIET)
+else()
+    set(MIDAS_FOUND TRUE)
+    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
+endif()
+if(MIDAS_FOUND)
+  message(STATUS "MIDAS found")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+  link_libraries(${MIDAS_LIBRARIES})
+  link_directories($ENV{MIDASSYS}/lib)
+endif()
+
 # Include directories
 include_directories(include)
 
@@ -96,6 +116,11 @@ include_directories(include $ENV{ROOTANASYS}/include)
 
 
 message(${ROOT_INCLUDE_DIRS})
+
+SET(_LIBS2_  alpha2 analib rootana)
+if(MIDAS_FOUND)
+  list(APPEND _LIBS2_ midas)
+endif()
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -131,6 +156,6 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
     find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBSQLITE3} ${_LIBS2_} ${ROOTANALIBS} )
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

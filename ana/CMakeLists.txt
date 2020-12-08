@@ -86,6 +86,26 @@ link_directories($ENV{ROOTANASYS}/lib)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+# MIDAS -- live analyzer
+set(MIDASSYS "" CACHE PATH "")
+if(MIDASSYS STREQUAL "")
+    set(MIDASSYS "$ENV{MIDASSYS}")
+endif()
+if(MIDASSYS STREQUAL "")
+    find_package(Midas QUIET)
+else()
+    set(MIDAS_FOUND TRUE)
+    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
+endif()
+if(MIDAS_FOUND)
+  message(STATUS "MIDAS found")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+  link_libraries(${MIDAS_LIBRARIES})
+  link_directories($ENV{MIDASSYS}/lib)
+endif()
+
 # Include directories
 include_directories($ENV{AGRELEASE}/agana)
 include_directories(include)
@@ -107,6 +127,11 @@ include_directories(include $ENV{ROOTANASYS}/include)
 
 
 message(${ROOT_INCLUDE_DIRS})
+
+SET(_LIBS_ agana analib agtpc aged rootana )
+if(MIDAS_FOUND)
+  list(APPEND _LIBS_ midas)
+endif()
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -141,7 +166,12 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main $ENV{AGRELEASE}/agana/unpack_module ${MODULES} )
     
-    add_dependencies(${bin} gitinfo)
+    if(ROOTANA_SUBMOD)
+      add_dependencies(${bin} rootana gitinfo)
+    else()
+      add_dependencies(${bin} gitinfo)
+    endif()
+
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC agana)
@@ -150,7 +180,7 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib $ENV{ROOTANASYS}/lib)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 ${_LIBS_} ${ROOTANALIBS} ) 
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

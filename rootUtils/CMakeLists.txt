@@ -56,6 +56,9 @@ ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
+if(ROOTANA_SUBMOD)
+  add_dependencies(rootUtils rootana)
+endif()
 target_link_libraries(rootUtils ${ROOT_LIBRARIES})
 
 install(TARGETS rootUtils DESTINATION lib)
