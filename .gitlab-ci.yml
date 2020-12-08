@@ -73,7 +73,7 @@ before_script:
 #      - ana/include/GitInfo.h
 
 build-fedora:
-  image: rootproject/root-fedora
+  image: rootproject/root:6.20.06-fedora32
   stage: build
   before_script:
     #Set up root and dependancies
@@ -98,7 +98,7 @@ build-fedora:
       - ana/include/GitInfo.h
 
 build-fedora-clang:
-  image: rootproject/root-fedora
+  image: rootproject/root:6.20.06-fedora32
   stage: build
   before_script:
     #Set up root and dependancies
