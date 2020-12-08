@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <iostream>
 #include <vector>
@@ -14,7 +15,6 @@
 #include "TH2D.h"
 #include "TH3D.h"
 #include "TTree.h"
-#include "TCanvas.h"
 #include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
@@ -36,6 +36,7 @@ public:
    MatchingModuleFlags* fFlags;
 
 private:
+   bool fTrace=false;
 
    // BV geometry
    double inner_diameter = 446.0; // mm
@@ -91,7 +92,9 @@ public:
 
    matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
    {
+      ModuleName="BC/TPC Matching Module";
       printf("matchingmodule::ctor!\n");
+      //      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
    }
 
    ~matchingmodule()
@@ -111,7 +114,6 @@ public:
       analyzed_event=NULL;
       
       gDirectory->mkdir("bv_tpc_matching_module")->cd();
-      
 
       // Histogramm setup
       hdPhiMatch = new TH2D("hdPhiMatch","Delta phi between BV hit and TPC track;Bar;Delta Phi [rad]",64,-0.5,63.5,360,-180,180);
@@ -198,11 +200,18 @@ public:
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-
+      }
+      
       AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      if(!bf) return flow;
-
+      if(!bf)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+      
       AgEvent* age = ef->fEvent;
       // prepare event to store in TTree
       analyzed_event=new TBarEvent();
@@ -210,14 +219,14 @@ public:
       analyzed_event->SetID( age->counter );
       analyzed_event->SetRunTime( age->time );
 
-
-
-      #ifdef _TIME_ANALYSIS_
-      clock_t timer_start=clock();
+      
+      //Root's fitting routines are often not thread safe
+      #ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       #endif
 
       // Main functions
-      if( fFlags->fMagneticField > 0. )
+      if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
          {
             std::vector<TVector3> helix_points = GetHelices(flow);
             MatchPoints(flow, helix_points);
@@ -239,7 +248,7 @@ public:
 
             for(int i=0; i<evt->GetNEnds(); ++i)
                analyzed_event->AddEndHit(evt->GetEndHits().at(i));
-            
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);            
             BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
             BscTree->Fill();
          }
@@ -248,14 +257,7 @@ public:
       
       //AgBarEventFlow 
 
-
-
-//      #ifdef _TIME_ANALYSIS_
-//         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bv_tpc_matching_module",timer_start);
-//      #endif
-
       return flow;
-      
    }
 
    //________________________________
@@ -265,7 +267,7 @@ public:
    {
       std::vector<TVector3> line_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
+      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* LineArray = e->GetLineArray();
       for (auto line: *LineArray)
@@ -281,7 +283,7 @@ public:
    {
       std::vector<TVector3> helix_points;
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
+      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
       TStoreEvent* e = anaflow->fEvent;
       const TObjArray* HelixArray = e->GetHelixArray();
       for (auto helix: *HelixArray)
@@ -296,7 +298,7 @@ public:
    void MatchPoints(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
    {
       AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) {std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
+      if (!bef) {if(fTrace)std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
       TBarEvent *barEvt=bef->BarEvent;
       hNHits->Fill(barEvt->GetBars().size(),tpc_points.size());
       if (tpc_points.size()==0) return;
@@ -487,7 +489,6 @@ public:
                }
          }
    }
-
 
    //________________________________
    // HELPER FUNCTIONS

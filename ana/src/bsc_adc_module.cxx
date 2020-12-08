@@ -2,6 +2,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <iostream>
 #include <vector>
@@ -26,8 +27,10 @@ public:
 class BscModule: public TARunObject
 {
 private:
+
+   // Set parameters
    int pedestal_length = 100;
-   int threshold = 1400; // Minimum ADC value to define start and end of pulse
+   int threshold = 1400; // Minimum ADC value to define start and end of pulse // Old = 800
    double amplitude_cut = 5000; // Minimum ADC value for peak height
    const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
    int hit_num=0;
@@ -36,12 +39,13 @@ public:
    BscFlags* fFlags;
 
 private:
+
+   // Initialize histograms
    TH1D* hBars = NULL;
    TH1D *hBsc_Time=NULL;
    TH2D *hBsc_TimeVsBar = NULL;
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
-   TH2D *hBsc_SaturatedVsBar = NULL;
    TH1D* hWave = NULL;
    TH2D* hFitAmp = NULL;
    TH2D* hFitStartTime = NULL;
@@ -53,7 +57,7 @@ public:
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-
+      ModuleName="bsc adc module";
    }
 
    ~BscModule()
@@ -70,7 +74,6 @@ public:
       hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
       hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,50000.);
       hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,50000.);
-      hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
       hWave = new TH1D("hWave","ADC Waveform",700,0,700);
       hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
       hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1000,1400,200,1000,1400);
@@ -92,7 +95,6 @@ public:
       delete hBsc_TimeVsBar;
       delete hBsc_Amplitude;
       delete hBsc_AmplitudeVsBar;
-      delete hBsc_SaturatedVsBar;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
@@ -114,11 +116,15 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-
+      if( fFlags->fPrint ) printf("BscModule::Analyze, run %d\n", runinfo->fRunNo);
+         
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
+      }
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif      
@@ -140,7 +146,8 @@ public:
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
-      std::cout<<"BscModule::AnalyzeFlowEvent(...) has "<<BarEvent->GetNBars()<<" hits"<<std::endl;
+      if( fFlags->fPrint )
+         printf("BscModule::AnalyzeFlowEvent(...) has %d hits\n",BarEvent->GetNBars());
 
       flow = new AgBarEventFlow(flow, BarEvent);
 

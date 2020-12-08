@@ -47,7 +47,7 @@ private:
   double fNewSeed1Par;
 
   // stage 1
-  double FindSeed(  double trapradius2 = _trapradius*_trapradius );
+  double FindSeed(  double trapradius2 = ALPHAg::_trapradius*ALPHAg::_trapradius );
   double FindMinDistance(double& s0, double& s1);
   TVector3 EvaluateMeanPoint();
   TVector3 EvaluateMeanPoint(TVector3 p0, TVector3 e0, 

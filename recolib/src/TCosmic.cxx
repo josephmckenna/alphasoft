@@ -41,10 +41,10 @@ void CosFit(int&, double*, double& chi2, double* p, int)
 }
 
 TCosmic::TCosmic():TFitLine(),fMagneticField(0.),
-                   fDCA(kUnknown),fCosAngle(kUnknown),fAngle(kUnknown)
+                   fDCA(ALPHAg::kUnknown),fCosAngle(ALPHAg::kUnknown),fAngle(ALPHAg::kUnknown)
 {
    fvstart = new double[9];
-   for(int n=0; n<9; ++n) fvstart[n]=kUnknown;
+   for(int n=0; n<9; ++n) fvstart[n]=ALPHAg::kUnknown;
 }
 
 TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
@@ -165,6 +165,8 @@ void TCosmic::Fit()
    cfitter->GetParameter(4,fy0, erry0);
    cfitter->GetParameter(5,fz0, errz0);
 
+   delete cfitter;
+
    double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
    if( mod == 0.)
       std::cerr<<"TCosmic::Fit() NULL SLOPE: error!"<<std::endl;
@@ -178,6 +180,7 @@ void TCosmic::Fit()
       }
 
    fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+   //   std::cout<<"TCosmic::Fit() |v|="<<mod<<" ur="<<fr0<<std::endl;
 
    ferr2ux = errux*errux;  
    ferr2uy = erruy*erruy;
@@ -266,7 +269,7 @@ int TCosmic::CalculateHelDCA(TFitHelix* hel1, TFitHelix* hel2)
       }
    else
       {
-         fDCA = fCosAngle = fAngle = kUnknown;
+         fDCA = fCosAngle = fAngle = ALPHAg::kUnknown;
       }
 
    delete c;

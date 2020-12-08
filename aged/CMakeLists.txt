@@ -56,6 +56,7 @@ include_directories (${FREETYPE_INCLUDE_DIRS})
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
@@ -65,10 +66,12 @@ include_directories(include $ENV{ROOTANASYS}/include)
 
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.cxx RootUtils/*.cxx)
+file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(aged SHARED ${LIBRARY_SOURCES})
-target_link_libraries(aged Xft Xm)
+find_library(LIBXFT Xft)
+find_library(LIBXM Xm)
+find_library(LIBXRENDER Xrender)
+find_library(LIBXT Xt)
+target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
 
-# Create  a main program using the library
-#add_executable(basicApp app/basicApp.cxx)
-#target_link_libraries(basicApp basicLib)
+install(TARGETS aged DESTINATION lib)

@@ -8,14 +8,12 @@ Histo::Histo( std::string fname )
 
 Histo::~Histo()
 {
-  fROOT->cd();
-  fROOT->Write();
-
+   Save();
+   fROOT->Close();
+   delete fROOT;
+  
   fH1.clear();
   fH2.clear();
- 
-  fROOT->Close();
-  delete fROOT;
 }
 
 void Histo::Book(std::string hname, std::string htitle, 
@@ -80,6 +78,16 @@ int Histo::WriteObject(TObject* obj, std::string oname)
    else
       std::cout<<" FAILED"<<std::endl;
    return bytes_written;
+}
+
+void Histo::Save()
+{
+   fROOT->cd();
+  for( auto h : fH1 )
+     h.second->Write();  
+  for( auto h : fH2 )
+     h.second->Write();  
+  fROOT->Write();
 }
 
 /* emacs

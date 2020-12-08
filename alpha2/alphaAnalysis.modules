@@ -5,7 +5,7 @@
 eos_module.o handle_sequencer.o 
 
 #Legacy reconstruction modules
-fake_realtime_module.o
+# fake_realtime_module.o
 unpack_vf48_module.o 
 sis_module.o
 mt_hybrid_hits_module.o

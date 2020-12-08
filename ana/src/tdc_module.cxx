@@ -10,6 +10,7 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 struct barid
 {

@@ -30,22 +30,22 @@ CSRC    := $(wildcard src/*.c)
 CSRC    := $(patsubst src/%.c,$(OBJDIR)/%.o,$(CSRC))
 
 all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-all: linkdirs libagana.so
+all: linkdirs libanalib.so
 
 debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-debug: linkdirs libagana.so
+debug: linkdirs libanalib.so
 
 native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
-native: linkdirs libagana.so
+native: linkdirs libanalib.so
 
 O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-O2: linkdirs libagana.so
+O2: linkdirs libanalib.so
 
 linkdirs:
 	mkdir -p $(OBJDIR)
 	mkdir -p $(OBJDIR)/RootUtils
 
-libagana.so: $(SRC) $(CSRC)
+libanalib.so: $(SRC) $(CSRC)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $(INCS) $^
 
 $(DICT): $(INC)
@@ -60,4 +60,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) -o $@ $(CFLAGS) $(INCS) -fPIC -c $<
 clean:
-	rm -f $(OBJDIR)/RootUtils/*.o $(OBJDIR)/*.o libagana.so analib.cc analib_rdict.pcm
+	rm -f $(OBJDIR)/RootUtils/*.o $(OBJDIR)/*.o libanalib.so analib.cc analib_rdict.pcm

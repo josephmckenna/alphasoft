@@ -10,7 +10,7 @@
 #include <TClonesArray.h>
 #include <TH1D.h>
 #include <TH2D.h>
-#include "SignalsType.h"
+#include "SignalsType.hh"
 #include "TStoreEvent.hh"
 
 class TCosmic;
@@ -57,7 +57,7 @@ private:
    TH2D* hlrp;
    TH2D* hlxy;
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
    int fIdx;
    double fRes2;
