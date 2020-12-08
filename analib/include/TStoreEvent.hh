@@ -3,7 +3,7 @@
 // Stores essential information from TEvent
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
-
+#ifdef BUILD_AG
 #ifndef __TSTOREEVENT__
 #define __TSTOREEVENT__ 1
 
@@ -131,7 +131,7 @@ public:
 };
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

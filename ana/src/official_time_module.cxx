@@ -18,7 +18,6 @@
 #include <iostream>
 #include "chrono_module.h"
 #include "TChronoChannelName.h"
-#include "AnalysisTimer.h"
 
 class OfficialTimeFlags
 {
@@ -60,7 +59,9 @@ public:
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Official Time";
+#endif
       if (fTrace)
          printf("OfficialTime::ctor!\n");
    }
@@ -275,7 +276,9 @@ public:
    {
       if (fFlags->fNoSync)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);

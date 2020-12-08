@@ -12,7 +12,7 @@
 #include "manalyzer.h"
 #include <iostream>
 
-
+#ifdef BUILD_AG
 
 #include "TBarEvent.hh"
 
@@ -80,7 +80,7 @@ class AgChronoFlow: public TAFlowEvent
    }
 
 };
-
+#endif
 
 #include "Sequencer_Channels.h"
 // To avoid parsing the sequencer XML in the main thread, we copy the 
@@ -114,7 +114,7 @@ class SEQTextFlow: public TAFlowEvent
 #include "DumpHandling.h"
 #include "TSequencerState.h"
 #include "TSequencerDriver.h"
-class AgDumpFlow: public TAFlowEvent
+class DumpFlow: public TAFlowEvent
 {
   public:
     int SequencerNum=-1;
@@ -122,11 +122,11 @@ class AgDumpFlow: public TAFlowEvent
     std::vector<TSequencerState*> states;
     TSequencerDriver* driver;
   public:
-  AgDumpFlow(TAFlowEvent* flow) // ctor
+  DumpFlow(TAFlowEvent* flow) // ctor
     : TAFlowEvent(flow)
    {
    }
-   ~AgDumpFlow()
+   ~DumpFlow()
    {
       if (driver)
          delete driver;
@@ -169,6 +169,7 @@ class AgDumpFlow: public TAFlowEvent
       states.push_back(s);
    }
 };
+#ifdef BUILD_AG
 #include "TSpill.h"
 
 class AGSpillFlow: public TAFlowEvent
@@ -362,7 +363,7 @@ public:
    }
 };
 
-
+#endif
 #endif
 
 /* emacs

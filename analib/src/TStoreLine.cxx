@@ -2,7 +2,7 @@
 // for ALPHA-g TPC AGTPCanalysis
 // Authors: A. Capra
 // Date: June 2017
-
+#ifdef BUILD_AG
 #include "TStoreLine.hh"
 #include "TSpacePoint.hh"
 #include <iostream>
@@ -79,7 +79,7 @@ void TStoreLine::Print(Option_t*) const
   std::cout<<"--------------------------------------------------------------------------"<<std::endl;
 }
 ClassImp(TStoreLine)
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8
