@@ -214,7 +214,6 @@ test:
     - cd scripts/gitChecker
     - rm -rf $AGRELEASE/ana/AutoPlots/*
     - ls -l $AGRELEASE/bin/*.exe
-    - ls agcfmdb
     - ./RunChecker.sh
     - cd -
     - mkdir -p public
