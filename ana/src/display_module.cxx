@@ -16,7 +16,6 @@
 #include "TStoreEvent.hh"
 #include "Aged.h"
 #include "X11/Intrinsic.h"
-#include "AnalysisTimer.h"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -37,7 +36,9 @@ public:
    DisplayRun(TARunInfo* runinfo, bool mode)
       : TARunObject(runinfo), aged(NULL), fBatch(mode)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
+#endif
       printf("DisplayRun::ctor!\n");
    }
 
@@ -98,7 +99,9 @@ public:
    {
       if( fBatch )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -108,7 +111,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -116,7 +121,9 @@ public:
       
       if( !age->feam || !age->a16 )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -124,7 +131,9 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -132,7 +141,9 @@ public:
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -140,7 +151,9 @@ public:
       AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
       if( !bar_flow || !bar_flow->BarEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 

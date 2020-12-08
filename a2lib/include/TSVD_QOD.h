@@ -4,7 +4,6 @@
 #include "TH1I.h"
 #include "TAlphaEvent.h"
 #include "TSiliconEvent.h"
-#include "manalyzer.h"
 
 class TSVD_QOD: public TObject
 {

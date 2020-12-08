@@ -2,7 +2,7 @@
 // for ALPHA-g TPC AGTPCanalysis
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
-
+#ifdef BUILD_AG
 #include "TStoreEvent.hh"
 #include "TStoreHelix.hh"
 #include "TStoreLine.hh"
@@ -159,7 +159,7 @@ void TStoreEvent::Reset()
 }
 
 ClassImp(TStoreEvent)
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

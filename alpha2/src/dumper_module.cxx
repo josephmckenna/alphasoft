@@ -13,7 +13,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AnalysisTimer.h"
 #include "generalizedspher.h"
 class DumperFlags
 {
@@ -37,7 +36,9 @@ public:
    Dumper(TARunInfo* runinfo, DumperFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Dumper Module";
+#endif
       if (fTrace)
          printf("Dumper::ctor!\n");
    }
@@ -77,20 +78,16 @@ public:
   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       TAlphaEvent* alphaEvent=fe->alphaevent;
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-      {
-         *flags|=TAFlag_SKIP_PROFILE;
-         return flow;
-      }
-      TSiliconEvent* siliconEvent=sf->silevent;
+      TSiliconEvent* siliconEvent=fe->silevent;
       OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();
