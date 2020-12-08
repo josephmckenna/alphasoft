@@ -172,7 +172,7 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
-    - rm -rf rootana
+    - rm -rf rootana agana
     - git submodule update --init rootana
     - git submodule update --init --recursive agana 
     - make clean
