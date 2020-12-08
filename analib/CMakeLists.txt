@@ -49,7 +49,7 @@ include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 #include_directories(include .) #Used for RootUtils
 if (BUILD_AG)
-include_directories(include $ENV{AGRELEASE}/recolib/include)
+   include_directories(include $ENV{AGRELEASE}/recolib/include)
 endif(BUILD_AG)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/a2lib/include)
