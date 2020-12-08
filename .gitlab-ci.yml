@@ -83,9 +83,12 @@ build-fedora:
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-tree-dataframe root-vecops
   script:
     - echo "Building"
-    - make clean
-    - make 2>&1 | tee BuildLog.txt
-    - cd ..
+    - rm -rf build bin
+    - mkdir build
+    - cd build
+    - cmake ../
+    - make
+    - make install
   cache:
     untracked: true
   artifacts:
@@ -105,9 +108,14 @@ build-fedora-clang:
     - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-tree-dataframe root-vecops
   script:
     - echo "Building"
-    - make clean
-    - make CXX=clang++ 2>&1 | tee BuildLog.txt
-    - cd ..
+    - export CC=/usr/bin/clang
+    - export CXX=/usr/bin/clang++
+    - rm -rf build bin
+    - mkdir build
+    - cd build
+    - cmake ../
+    - make
+    - make install
   cache:
     untracked: true
   artifacts:
