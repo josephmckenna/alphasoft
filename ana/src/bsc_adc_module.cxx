@@ -151,10 +151,6 @@ public:
 
       flow = new AgBarEventFlow(flow, BarEvent);
 
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
-#endif
-
       return flow;
    }
 
@@ -252,7 +248,6 @@ public:
             hFitEndTime->Fill(end_time*10,fit_end_time*10);
             hBsc_Amplitude->Fill(fit_amp);
             hBsc_AmplitudeVsBar->Fill(bar,fit_amp);
-            hBsc_SaturatedVsBar->Fill(bar,(max>32000));
           
             // Fills bar event
             BarEvent->AddADCHit(bar,fit_amp,fit_start_time*10);
