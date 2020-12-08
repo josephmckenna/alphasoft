@@ -78,13 +78,13 @@ endif (BUILD_A2)
 get_submodule(rootana)
 add_subdirectory(rootana)
 add_subdirectory(analib)
-add_subdirectory(recolib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
 
 #AG libraries
 if (BUILD_AG)
+   add_subdirectory(recolib)
    get_submodule(agana)
    add_subdirectory(agana)
    add_subdirectory(aged)
