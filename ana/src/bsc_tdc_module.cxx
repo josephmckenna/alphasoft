@@ -14,7 +14,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
-#include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
 
@@ -70,7 +69,9 @@ public:
    tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
       TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="bsc tdc module";
+#endif
       printf("tdcmodule::ctor!\n");
    }
 
@@ -153,19 +154,28 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-   
+      if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent run %d\n",runinfo->fRunNo);
 
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
       AgEvent* age = ef->fEvent;
-
+      if(!age)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
       TrigEvent* trig = age->trig;
@@ -174,6 +184,7 @@ public:
          {
             if( tdc->complete )
                {
+      //std::cout<<"tdcmodule::AnalyzeFlowEvent  TDC event COMPLETE"<<std::endl;
                   AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
                   if (!bef) return flow;
                   TBarEvent *barEvt = bef->BarEvent;

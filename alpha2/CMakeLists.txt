@@ -69,11 +69,8 @@ find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
 
-#link_libraries(agana AGTPC aged)
 link_directories($ENV{ROOTANASYS}/lib)
 
-# analib/ AGTPC aged)
-#link_directories(analib/ recolib/ aged/)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
@@ -85,6 +82,7 @@ endif()
 if(MIDASSYS STREQUAL "")
     find_package(Midas QUIET)
 else()
+    #MIDAS pre cmake compatability
     set(MIDAS_FOUND TRUE)
     set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
     set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
@@ -106,9 +104,8 @@ include_directories($ENV{AGRELEASE}/alpha2/include)
 include_directories($ENV{AGRELEASE}/a2lib/include)
 
 #AG compatability includes
-include_directories($ENV{AGRELEASE}/recolib/include)
+#include_directories($ENV{AGRELEASE}/recolib/include)
 include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/aged/include)
 include_directories($ENV{AGRELEASE}/ana/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
@@ -116,11 +113,6 @@ include_directories(include $ENV{ROOTANASYS}/include)
 
 
 message(${ROOT_INCLUDE_DIRS})
-
-SET(_LIBS2_  alpha2 analib rootana)
-if(MIDAS_FOUND)
-  list(APPEND _LIBS2_ midas)
-endif()
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -150,12 +142,16 @@ foreach( LIST_FILE ${BINS} )
     add_dependencies(${bin} a2gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
+    if (BUILD_AG)
+       target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
+    endif(BUILD_AG)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
+    #link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
+    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib )
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBSQLITE3} ${_LIBS2_} ${ROOTANALIBS} )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

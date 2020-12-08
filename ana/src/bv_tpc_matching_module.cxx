@@ -15,7 +15,6 @@
 #include "TH2D.h"
 #include "TH3D.h"
 #include "TTree.h"
-#include "AnalysisTimer.h"
 
 #include "TBarEvent.hh"
 
@@ -92,7 +91,9 @@ public:
 
    matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="BC/TPC Matching Module";
+#endif
       printf("matchingmodule::ctor!\n");
       //      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
    }
@@ -201,14 +202,18 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
       AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
       if(!bf)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       

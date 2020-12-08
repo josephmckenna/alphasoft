@@ -14,7 +14,7 @@
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "AnalysisTimer.h"
+#include "TF1.h"
 
 #include "TBarEvent.hh"
 
@@ -46,6 +46,7 @@ private:
    TH2D *hBsc_TimeVsBar = NULL;
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
+   TH2D *hBsc_SaturatedVsBar = NULL;
    TH1D* hWave = NULL;
    TH2D* hFitAmp = NULL;
    TH2D* hFitStartTime = NULL;
@@ -57,7 +58,9 @@ public:
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="bsc adc module";
+#endif
    }
 
    ~BscModule()
@@ -68,12 +71,13 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
-
+       
       hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
       hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
       hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
       hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,50000.);
       hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,50000.);
+      hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
       hWave = new TH1D("hWave","ADC Waveform",700,0,700);
       hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
       hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1000,1400,200,1000,1400);
@@ -95,6 +99,7 @@ public:
       delete hBsc_TimeVsBar;
       delete hBsc_Amplitude;
       delete hBsc_AmplitudeVsBar;
+      delete hBsc_SaturatedVsBar;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
@@ -122,7 +127,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       #ifdef _TIME_ANALYSIS_
