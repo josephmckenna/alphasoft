@@ -8,13 +8,13 @@ void LinearFitZZ()
    cout<<fname<<" FOUND"<<endl;
 
    // Makes histos
-   TH2D* hZVZ;
+   TH2D* hDTVZ;
 
    // Loads zed histogram
-   fin->GetObject("/bv_tpc_matching_module/hZBVvZTPC",hZVZ);
+   fin->GetObject("/bv_tpc_matching_module/hDTvZTPC",hDTVZ);
 
-   TF1* fit = new TF1("fit","pol1",-1500,1500);
-   hZVZ->Fit(fit,"R");
+   TF1* fit = new TF1("fit","pol1",-40,40);
+   hDTVZ->Fit(fit,"R");
 
 
 }

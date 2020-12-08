@@ -23,13 +23,7 @@ option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
-#Send these settings as precompiler flags (mostly used in rootUtils)
-if (BUILD_AG)
-   add_compile_definitions(BUILD_AG)
-endif (BUILD_AG)
-if (BUILD_A2)
-   add_compile_definitions(BUILD_A2)
-endif (BUILD_A2)
+
 
 set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
 message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
@@ -69,22 +63,28 @@ function(get_submodule MODULE_NAME)
 endfunction()
 
 # Directories
+set( _AGANA_STATIC TRUE)
+
+#Send these settings as precompiler flags (mostly used in rootUtils)
+if (BUILD_AG)
+   add_compile_definitions(BUILD_AG)
+endif (BUILD_AG)
+if (BUILD_A2)
+   add_compile_definitions(BUILD_A2)
+endif (BUILD_A2)
 
 
 #Universal libraries (Include some flow and TSpill stuff)
 get_submodule(rootana)
 add_subdirectory(rootana)
 add_subdirectory(analib)
+add_subdirectory(recolib)
 
-#adc maps and bank text files
-get_submodule(agcfmdb)
-
-#rootUtils is customised based on above arguments
+#rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
 
 #AG libraries
 if (BUILD_AG)
-   add_subdirectory(recolib)
    get_submodule(agana)
    add_subdirectory(agana)
    add_subdirectory(aged)

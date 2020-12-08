@@ -76,6 +76,26 @@ include_directories(${X11_INCLUDE_DIR})
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+# MIDAS -- live analyzer
+set(MIDASSYS "" CACHE PATH "")
+if(MIDASSYS STREQUAL "")
+    set(MIDASSYS "$ENV{MIDASSYS}")
+endif()
+if(MIDASSYS STREQUAL "")
+    find_package(Midas QUIET)
+else()
+    set(MIDAS_FOUND TRUE)
+    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
+endif()
+if(MIDAS_FOUND)
+  message(STATUS "MIDAS found")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+  link_libraries(${MIDAS_LIBRARIES})
+  link_directories($ENV{MIDASSYS}/lib)
+endif()
+
 # Include directories
 include_directories($ENV{AGRELEASE}/agana)
 include_directories(include)
@@ -115,6 +135,7 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
     string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+
     #Turn string into list
     separate_arguments(MODULES)
     #Prepend path to source files
@@ -133,6 +154,7 @@ foreach( LIST_FILE ${BINS} )
     add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
+    target_include_directories(${bin} PUBLIC agana)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)

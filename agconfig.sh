@@ -266,12 +266,7 @@ else
 fi
 
 if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
-    if [ -n "$(ls -A $ROOTANASYS)" ]; then
-    	echo "ROOTANA submodule enabled"
-    else
-	echo "Enabling ROOTANA submodule..."
-	git submodule update --init rootana
-    fi
+    echo "ROOTANA submodule enabled"
 fi
 
 #Setup ROOT and ROOTANA if we havn't quit yet...
