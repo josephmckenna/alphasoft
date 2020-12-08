@@ -14,7 +14,6 @@ cache:
     - run*.mid.gz
     - alphaStrips*offline.root
     - rootana
-    - agcfmdb
     - agana
     - simulation/submodules
     - BuildLog.txt
@@ -137,9 +136,6 @@ build-cc7-cmake-ag:
   stage: build
   script:
     - echo "Building"
-    - cd rootana
-    - make
-    - cd ..
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
@@ -154,9 +150,6 @@ build-cc7-cmake-a2:
   stage: build
   script:
     - echo "Building"
-    - cd rootana
-    - make
-    - cd ..
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
@@ -171,6 +164,8 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
+    - git submodule update --init rootana
+    - git submodule update --init --recursive agana 
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
