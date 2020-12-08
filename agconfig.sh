@@ -250,8 +250,8 @@ if [ -z "$(ls -A agana)" ]; then
     git submodule update --init agcfmdb
     echo "agana submodule loaded"
 else
-    git submodule update --remote agana
-    git submodule update --remote agcfmdb
+    git submodule update agana
+    git submodule update agcfmdb
     echo "agana submodule updated"
 fi
 
@@ -280,7 +280,7 @@ if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
     	echo "ROOTANA submodule enabled"
     else
 	echo "Enabling ROOTANA submodule..."
-	git submodule update --init rootana
+	git submodule update --init --recursive rootana
     fi
 fi
 
