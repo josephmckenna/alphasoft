@@ -80,7 +80,7 @@ build-fedora:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-tree-dataframe root-vecops
+    - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-spectrum
   script:
     - echo "Building"
     - rm -rf build bin
@@ -105,7 +105,7 @@ build-fedora-clang:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-tree-dataframe root-vecops
+    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-spectrum
   script:
     - echo "Building"
     - export CC=/usr/bin/clang
@@ -172,6 +172,7 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
+    - rm -rf rootana
     - git submodule update --init rootana
     - git submodule update --init --recursive agana 
     - make clean
