@@ -72,57 +72,57 @@ before_script:
 #      - BuildLog.txt
 #      - ana/include/GitInfo.h
 
-build-fedora:
-  image: rootproject/root:6.20.06-fedora32
-  stage: build
-  before_script:
-    #Set up root and dependancies
-    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
-    #Set up agana environment variables
-    - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-spectrum root-graf3d
-  script:
-    - echo "Building"
-    - rm -rf build bin
-    - mkdir build
-    - cd build
-    - cmake ../
-    - make
-    - make install
-  cache:
-    untracked: true
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
+#build-fedora:
+#  image: rootproject/root:6.20.06-fedora32
+#  stage: build
+#  before_script:
+#    #Set up root and dependancies
+#    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+#    #Set up agana environment variables
+#    - . agconfig.sh
+#    - yum install -y openmotif-devel libXmu libXmu-devel valgrind root-spectrum root-graf3d
+#  script:
+#    - echo "Building"
+#    - rm -rf build bin
+#    - mkdir build
+#    - cd build
+#    - cmake ../
+#    - make
+#    - make install
+#  cache:
+#    untracked: true
+#  artifacts:
+#    when: on_failure
+#    paths:
+#      - BuildLog.txt
+#      - ana/include/GitInfo.h
 
-build-fedora-clang:
-  image: rootproject/root:6.20.06-fedora32
-  stage: build
-  before_script:
-    #Set up root and dependancies
-    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
-    #Set up agana environment variables
-    - . agconfig.sh
-    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-spectrum root-graf3d
-  script:
-    - echo "Building"
-    - export CC=/usr/bin/clang
-    - export CXX=/usr/bin/clang++
-    - rm -rf build bin
-    - mkdir build
-    - cd build
-    - cmake ../
-    - make
-    - make install
-  cache:
-    untracked: true
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
+#build-fedora-clang:
+#  image: rootproject/root:6.20.06-fedora32
+#  stage: build
+#  before_script:
+#    #Set up root and dependancies
+#    #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-fedora28-gcc81-opt/root/bin/thisroot.sh
+#    #Set up agana environment variables
+#    - . agconfig.sh
+#    - yum install -y openmotif-devel libXmu libXmu-devel valgrind clang root-spectrum root-graf3d
+#  script:
+#    - echo "Building"
+#    - export CC=/usr/bin/clang
+#    - export CXX=/usr/bin/clang++
+#    - rm -rf build bin
+#    - mkdir build
+#    - cd build
+#    - cmake ../
+#    - make
+#    - make install
+#  cache:
+#    untracked: true
+#  artifacts:
+#    when: on_failure
+#    paths:
+#      - BuildLog.txt
+#      - ana/include/GitInfo.h
 
 build-cc7-cmake:
   stage: build
