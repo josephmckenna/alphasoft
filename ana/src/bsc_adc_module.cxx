@@ -22,7 +22,7 @@ class BscFlags
 {
 public:
    bool fPrint = false;
-   int fRunType = 0; // 0 for normal run, 1 for pulser
+   bool fPulser = false; // Calibration pulser run
 };
 
 class BscModule: public TARunObject
@@ -75,7 +75,7 @@ public:
       // Set up histograms
       hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
       hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-      if( fFlags->fRunType==0 )  // Normal run
+      if( !(fFlags->fPulser) )  // Normal run
          {
             hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,60000.);
             hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude", 15, -0.5, 15.5, 2000,0.,60000.);
@@ -88,7 +88,7 @@ public:
             hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,0,2000);
             hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",7,-0.5,6.5);
          }
-      if( fFlags->fRunType==1 )  // Pulser run
+      if( fFlags->fPulser )  // Pulser run
          {
             hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
             hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
@@ -230,7 +230,7 @@ public:
                   else hWave->SetBinError(bin_num,100);
                }
 
-            if( fFlags->fRunType==0 )  // Normal run
+            if( !(fFlags->fPulser) )  // Normal run
                {
 
                   // Fits pulse
@@ -264,7 +264,7 @@ public:
 
                }
 
-            if( fFlags->fRunType==1 ) // Pulser run
+            if( fFlags->fPulser ) // Pulser run
                {
 
                   // Fills histograms
@@ -290,7 +290,7 @@ public:
                   hWave->Clone(Form("Sample Waveform %d",(hit_num)));
                   hit_num++;
                }
-            if( fFlags->fRunType==0 )  // Normal run
+            if( !(fFlags->fPulser) )  // Normal run
                delete sgfit;
 
          }
@@ -321,8 +321,8 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if (args[i] == "--bscprint")
             fFlags.fPrint = true;
-         if( args[i] == "--bscRunType" )
-            fFlags.fRunType = atoi(args[++i].c_str());
+         if( args[i] == "--bscpulser")
+            fFlags.fPulser = true;
       }
    }
 

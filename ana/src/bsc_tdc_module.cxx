@@ -22,7 +22,9 @@ class TdcFlags
 {
 public:
    bool fPrint = false;
-   int fRunType = 0; // 0 = normal run, 1 = pulser run
+   bool fPulser = false;
+   bool fWriteOffsets = false;
+   std::string fOffsetFile = ""; 
 };
 
 
@@ -53,15 +55,14 @@ private:
    TH1D* hNTdcHits = NULL;
    TH1D* hNMatchedHits = NULL;
    TH2D* hBarDiffAdc = NULL;
-   TH2D* hBarDiffAdcM = NULL;
    TH1D* hBarDiffDiffAdc = NULL;
    TH2D* hBarDiffTdc = NULL;
-   TH2D* hBarDiffTdcM = NULL;
    TH1D* hBarDiffDiffTdc = NULL;
    TH1D* hTOFADC = NULL;
    TH1D* hTOFTDC = NULL;
    TH2D* hNMatchedByChan = NULL;
    TH2D* hTdcDiffByChan = NULL;
+   TH1D* hTdcDiffByChanMedian = NULL;
 
    // Counter initialization
    int c_adc = 0;
@@ -91,21 +92,19 @@ public:
 
       // Histogramm declaration
       hTdcChan = new TH1D("hTdcChan","Number of hits on tdc channel;tdc channel",16,0.5,16.5);
-      if( fFlags->fRunType==0 )  // Normal run
+      if( !(fFlags->fPulser) )  // Normal run
          {
             hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",11,-0.5,10.5);
             hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in correct channel;Number of tdc hits",11,-0.5,10.5);
             hBarDiffAdc = new TH2D("hBarDiffAdc","ADC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-15e-9,15e-9,200,-15e-9,15e-9);
-            hBarDiffAdcM = new TH2D("hBarDiffAdcM","ADC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1.5,1.5,200,-1.5,1.5);
             hBarDiffTdc = new TH2D("hBarDiffTdc","TDC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
-            hBarDiffTdcM = new TH2D("hBarDiffTdcM","TDC time difference between ends of bars converted to meters;Time difference bar A [m];Time difference bar B [m]",200,-1,1,200,-1,1);
             hBarDiffDiffAdc = new TH1D("hBarDiffDiffAdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for ADC;ADC Time difference [s]",200,-10e-9,10e-9);
             hBarDiffDiffTdc = new TH1D("hBarDiffDiffTdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC;TDC Time difference [s]",200,-4e-9,4e-9);
             hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-100e-9,100e-9);
             hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-5e-9,5e-9);
             hNMatchedByChan = new TH2D("hNMatchedByChan","Number of TDC hits in correct channel;adc channel;Number of tdc hits",16,-0.5,15.5,30,-0.5,29.5);
          }
-      if( fFlags->fRunType==1 )  // Pulser run
+      if( fFlags->fPulser )  // Pulser run
          {
             hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",65,-0.5,64.5);
             hTdcDiffByChan = new TH2D("hTdcDiffByChan","Pulser TDC time with reference to channel 1 hit;tdc channel;TDC time [s]",16,0.5,16.5,2000,-3e-9,5e-9);
@@ -132,9 +131,31 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      // Fits time diff diff histogram
       TF1 *sgfit = new TF1("sgfit","gaus",-3e-9,3e-9);
-      hBarDiffDiffTdc->Fit("sgfit","RQ");
+      if( !(fFlags->fPulser) )  // Normal run
+         {
+            // Fits time diff diff histogram
+            hBarDiffDiffTdc->Fit("sgfit","RQ");
+         }
+
+      if( fFlags->fPulser )  // Pulser run
+         {
+            // Calculates median time for each pulser bin
+            runinfo->fRoot->fOutputFile->cd();
+            gDirectory->cd("bsc_tdc_module");
+            hTdcDiffByChanMedian = hTdcDiffByChan->QuantilesX(0.5,"hTdcDiffByChanMedian");
+            hTdcDiffByChanMedian->SetTitle("Median time offset by TDC channel;TDC channel;TDC time [s]");
+
+            // Writes offsets to file
+            if ( fFlags->fWriteOffsets )
+               {
+                  std::ofstream Ofile;
+                  Ofile.open(fFlags->fOffsetFile);
+                  Ofile<<"TDC channel | Offset(s)\n";
+                  for (int i=1;i<=16;i++) Ofile<<i<<"\t"<<hTdcDiffByChanMedian->GetBinContent(i)<<"\n";
+                  Ofile.close();
+               }
+         }
 
       // Write output
       runinfo->fRoot->fOutputFile->Write();
@@ -145,9 +166,12 @@ public:
             printf("tdc module stats:\n");
             printf("Total number of adc hits = %d\n",c_adc);
             printf("Total number of tdc hits = %d\n",c_tdc);
-            printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
-            printf("Total number of top+bot hits = %d\n",c_topbot);
-            printf("TDC time diff diff sigma = %.3e\n",sgfit->GetParameter(2));
+            if (!fFlags->fPulser)
+               {
+                  printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
+                  printf("Total number of top+bot hits = %d\n",c_topbot);
+                  printf("TDC time diff diff sigma = %.3e\n",sgfit->GetParameter(2));
+               }
          }
 
       // Delete histograms
@@ -156,14 +180,13 @@ public:
       delete hNMatchedHits;
       delete hBarDiffAdc;
       delete hBarDiffTdc;
-      delete hBarDiffAdcM;
-      delete hBarDiffTdcM;
       delete hBarDiffDiffAdc;
       delete hBarDiffDiffTdc;
       delete hTOFADC;
       delete hTOFTDC;
       delete hNMatchedByChan;
       delete hTdcDiffByChan;
+      delete hTdcDiffByChanMedian;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -210,14 +233,14 @@ public:
                   if (!barEvt) return flow;
                   if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent analysing event\n");
 
-                  if( fFlags->fRunType==0 )  // Normal run
+                  if( !(fFlags->fPulser) )  // Normal run
                      {
                         AddTDCdata(barEvt,tdc);
                         CombineEnds(barEvt);
                         CalculateZ(barEvt);
                         CalculateTOF(barEvt);
                      }
-                  if( fFlags->fRunType==1 ) // Pulser run
+                  if( fFlags->fPulser ) // Pulser run
                      {
                         if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent start pulser analysis\n");
                         PulserAnalysis(barEvt,tdc);
@@ -427,8 +450,6 @@ public:
             double factor = c/refrac * 0.5;
             hBarDiffTdc->Fill(diff_tdc_0,diff_tdc_1);
             hBarDiffAdc->Fill(diff_adc_0,diff_adc_1);
-            hBarDiffTdcM->Fill(diff_tdc_0*factor,diff_tdc_1*factor);
-            hBarDiffAdcM->Fill(diff_adc_0*factor,diff_adc_1*factor);
             hBarDiffDiffTdc->Fill(diff_tdc_1-diff_tdc_0);
             hBarDiffDiffAdc->Fill(diff_adc_1-diff_adc_0);
          }
@@ -493,8 +514,13 @@ public:
       for (unsigned i=0; i<args.size(); i++) { 
          if (args[i] == "--bscprint")
             fFlags.fPrint = true; 
-         if( args[i] == "--bscRunType" )
-            fFlags.fRunType = atoi(args[++i].c_str());
+         if( args[i] == "--bscpulser" )
+            fFlags.fPulser = true;
+         if( args[i] == "--bscoffsetfile" )
+            {
+               fFlags.fWriteOffsets = true;
+               fFlags.fOffsetFile = args[i+1].c_str();
+            }
       }
    }
 
