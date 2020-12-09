@@ -48,6 +48,7 @@ private:
 
    // Container declaration
    int bscTdcMap[4][4];
+   double TdcOffsets[16] = {0};
    
 
    //Histogramm declaration
@@ -63,6 +64,7 @@ private:
    TH2D* hNMatchedByChan = NULL;
    TH2D* hTdcDiffByChan = NULL;
    TH1D* hTdcDiffByChanMedian = NULL;
+   TH1D* hTdcCalibrationOffsets = NULL;
 
    // Counter initialization
    int c_adc = 0;
@@ -92,6 +94,7 @@ public:
 
       // Histogramm declaration
       hTdcChan = new TH1D("hTdcChan","Number of hits on tdc channel;tdc channel",16,0.5,16.5);
+      hTdcCalibrationOffsets = new TH1D("hTdcCalibrationOffsets","Calibration offset from file;TDC channel;Time offset (s)",16,0.5,16.5);
       if( !(fFlags->fPulser) )  // Normal run
          {
             hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",11,-0.5,10.5);
@@ -125,6 +128,25 @@ public:
                   fbscMap >> bscTdcMap[i][0] >> bscTdcMap[i][1] >> bscTdcMap[i][2] >> bscTdcMap[i][3];
                }
             fbscMap.close();
+         }
+
+      // Load TDC offsets from calibration file
+      TString offsetfile=getenv("AGRELEASE");
+      offsetfile+="/ana/bscint/";
+      offsetfile+="bscoffsets.calib";
+      std::ifstream ftdcoff(offsetfile.Data());
+      if(ftdcoff)
+         {
+            std::string comment;
+            int num;
+            getline(ftdcoff, comment);
+            for(int i=0; i<16; i++)
+               {
+                  ftdcoff >> num >> TdcOffsets[i];
+                  hTdcCalibrationOffsets->Fill(i+1,TdcOffsets[i]);
+                  hTdcCalibrationOffsets->SetBinError(i+1,0);
+               }
+            ftdcoff.close();
          }
 
    }
@@ -187,6 +209,7 @@ public:
       delete hNMatchedByChan;
       delete hTdcDiffByChan;
       delete hTdcDiffByChanMedian;
+      delete hTdcCalibrationOffsets;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -283,14 +306,22 @@ public:
             if (int(tdchit->fpga)!=1) continue;
       
             // Only channels 1-16
-            if (int(tdchit->chan)<1 or int(tdchit->chan)>16) continue;
+            int tdc_chan = int(tdchit->chan);
+            if  (tdc_chan<1 or tdc_chan>16) continue;
 
             // Counts hits
             n_hits++;
 
+            // Calculates hit time
+            double time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+
+            // Calibrates for time offset
+            double calib_time = time;
+            //if (tdc_chan>0 and tdc_chan<=16) calib_time = time - TdcOffsets[tdc_chan-1];
+
             // Checks if channel was already hit (uses first hit only)
             if (tdc_time[int(tdchit->chan)-1]!=0) continue;
-            tdc_time[int(tdchit->chan)-1] = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+            tdc_time[int(tdchit->chan)-1] = calib_time;
 
             // Fills histograms
             hTdcChan->Fill(int(tdchit->chan));
@@ -365,8 +396,13 @@ public:
             hNMatchedHits->Fill(n_good);
             hNMatchedByChan->Fill(int(endhit->GetBar()),n_good);
 
+            // Calibrates for time offset
+            double calib_time = tdc_time;
+            if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc_chan-1];
+            printf("Channel = %d, time = %.12f, calib time = %.12f\n",tdc_chan,tdc_time,calib_time);
+
             // Writes tdc data to hit
-            endhit->SetTDCHit(tdc_time);
+            endhit->SetTDCHit(calib_time);
             c_adctdc+=1;
          }
    }
