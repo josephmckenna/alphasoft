@@ -1,6 +1,6 @@
 #include "DoubleGetters.h"
 
-
+#ifdef BUILD_AG
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
    Double_t OfficialTime;
@@ -15,6 +15,8 @@ Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
       return RunTime;
    return OfficialTime;
 }
+#endif
+#ifdef BUILD_AG
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
 {
    Double_t OfficialTime;
@@ -30,8 +32,9 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
       return RunTime;
    return OfficialTime;
 }
-
-Double_t GetTotalRunTime(Int_t runNumber)
+#endif
+#ifdef BUILD_AG
+Double_t GetAGTotalRunTime(Int_t runNumber)
 {
    double tmax=-999.;
    double tmp;
@@ -44,10 +47,9 @@ Double_t GetTotalRunTime(Int_t runNumber)
    if (tmp>tmax) tmax=tmp;
    return tmax;
 }
-
-
-
-Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
+#endif
+#ifdef BUILD_AG
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
 {
    double official_time;
    TTree* t=Get_Chrono_Tree(runNumber,Board,Channel,official_time);
@@ -59,8 +61,9 @@ Double_t GetRunTimeOfCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t re
    delete e;
    return official_time;
 }
-
-Double_t GetRunTimeOfCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset)
+#endif
+#ifdef BUILD_AG
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset)
 {
    Int_t chan=-1;
    Int_t board=-1;
@@ -69,9 +72,10 @@ Double_t GetRunTimeOfCount(Int_t runNumber, const char* ChannelName, Int_t repet
        chan=Get_Chrono_Channel(runNumber, board, ChannelName);
        if (chan>-1) break;
    }
-   return GetRunTimeOfCount(runNumber, board, chan,  repetition,  offset);
+   return GetRunTimeOfChronoCount(runNumber, board, chan,  repetition,  offset);
 }
-
+#endif
+#ifdef BUILD_AG
 Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 {
    TString ChronoChannelName=Get_Chrono_Name(e);
@@ -84,10 +88,10 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
       if (chan>-1) break;
    }
    //   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
-   Double_t RunTime=GetRunTimeOfCount(runNumber, board, chan,e->GetID()+1, offset);
+   Double_t RunTime=GetRunTimeOfChronoCount(runNumber, board, chan,e->GetID()+1, offset);
    return RunTime;
 }
-
+#endif
 
 Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
 {
@@ -107,7 +111,7 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
    return RunTime;
 
 }
-
+#ifdef BUILD_AG
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
 {   
   double official_time;
@@ -137,7 +141,8 @@ Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
   delete store_event;
   return runtime;
 }
-
+#endif
+#ifdef BUILD_AG
 Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
 {   
   double official_time;
@@ -167,6 +172,7 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
   delete store_event;
   return runtime;
 }
+#endif
 
 /* emacs
  * Local Variables:

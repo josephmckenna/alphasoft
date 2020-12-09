@@ -29,8 +29,8 @@ endif
 # get the rootana Makefile settings
 
 
-LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum -lGeom -lMinuit2
+LIBS     += -L$(ROOTANASYS)/lib -lrootana
+LIBS     += -lSpectrum -lGeom -lz -lMinuit2 -lMinuit -lMathMore -lGui -lGpad -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)
@@ -61,25 +61,25 @@ $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc -lMinuit
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc
 #USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/alphaStrips.exe $(BINDIR)/alphaAnalysis.exe $(BINDIR)/a2ana.exe  $(BINDIR)/alphaOnline.exe
 BIN += $(BINS)
 
-all: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 all: $(ALL)
 all: $(MODULES)
 all: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native $(BUILD_FLAGS)
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 O2: $(ALL) $(MODULES) $(BIN)
 
 .PRECIOUS: $(ALL_DEPS)

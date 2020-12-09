@@ -13,7 +13,6 @@
 #include <set>
 #include <iostream>
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 #include "Match.hh"
 
@@ -59,13 +58,16 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Match Module";
+#endif
       if (fTrace)
          printf("MatchModule::ctor!\n");
 
       fFlags = f;
 
       //First thread
+#ifdef MANALYZER_PROFILER
       if (fFlags->ThreadID < 0)
         ModuleName="Match Module (CombPads)";
       //Multithreaded fitting
@@ -77,7 +79,7 @@ public:
           ")";
       else if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
         ModuleName="Match Module (spacepoints)";
-
+#endif
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
       fTrace=fFlags->fTrace; // enable verbosity
    }
@@ -94,6 +96,8 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
+      //Global lock from manalzer (needed if your using roots basic fitting methods)
+      match->SetGlobalLockVariable(&TAMultithreadHelper::gfLock);
       match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
 #ifdef MODULE_MULTITHREAD
@@ -130,7 +134,9 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -139,7 +145,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -147,12 +155,16 @@ public:
          {
             if (ef->fEvent->time<fFlags->start_time)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                 return flow;
             }
             if (ef->fEvent->time>fFlags->stop_time)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
          }
@@ -161,12 +173,16 @@ public:
          {
             if (ef->fEvent->counter<fFlags->start_event)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
             if (ef->fEvent->counter>fFlags->stop_event)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
          }
@@ -174,13 +190,17 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
       if( ! SigFlow->awSig )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if( fTrace )

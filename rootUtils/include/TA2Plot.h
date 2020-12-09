@@ -1,6 +1,9 @@
+#ifdef BUILD_A2
+
 #ifndef _TALPHA2PLOT_
 #define _TALPHA2PLOT_
-
+#include "TCanvas.h"
+#include "TLatex.h"
 #include "TAPlot.h"
 #include "TSISEvent.h"
 #include "TSVD_QOD.h"
@@ -61,4 +64,5 @@ public:
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
 };
+#endif
 #endif

@@ -13,7 +13,6 @@
 #include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
-#include "AnalysisTimer.h"
 #include "DumpHandling.h"
 #include <iostream>
 class DumpMakerModuleFlags
@@ -50,7 +49,9 @@ public:
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="Handle Dumps";
+#endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
@@ -119,36 +120,42 @@ public:
    {
       if( me->event_id != 8 ) // sequencer event id
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
-      if (!DumpFlow)
+      DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
+      if (!DumpsFlow)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      uint ndumps=DumpFlow->DumpMarkers.size();
+      uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      int iSeq=DumpFlow->SequencerNum;
+      int iSeq=DumpsFlow->SequencerNum;
       {
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
       dumplist[iSeq].setup();
       
-      for(auto dump: DumpFlow->DumpMarkers)
+      for(auto dump: DumpsFlow->DumpMarkers)
       {
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpFlow->states);
+      dumplist[iSeq].AddStates(&DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver);
+      dumplist[iSeq].check(DumpsFlow->driver);
       
       }
       //dumplist[iSeq].Print();

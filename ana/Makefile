@@ -35,8 +35,8 @@ endif
 # get the rootana Makefile settings
 
 
-LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum
+LIBS     += -L$(ROOTANASYS)/lib -lrootana
+LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)
@@ -72,18 +72,18 @@ ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
 BIN += $(BINS)
 
-all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native $(BUILD_FLAGS)
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 O2: $(ALL) $(MODULES) $(BIN)
 
 .PRECIOUS: $(ALL_DEPS)
@@ -97,7 +97,7 @@ gitinfo:
 
 $(BINDIR)/%.exe: $(MAIN) $(USER_LIBS) $(ALL_DEPS) $(MODS)
 	$(eval $(call get_modules,$@MODS,$@))
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics -lMinuit
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<

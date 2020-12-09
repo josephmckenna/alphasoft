@@ -1,5 +1,7 @@
 #include "TA2Plot.h"
 
+
+#ifdef BUILD_A2
 ClassImp(TA2Plot);
 
 TA2Plot::TA2Plot(): TAPlot()
@@ -644,3 +646,5 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   std::cout<<run_txt<<std::endl;
   return cVTX;
 }
+
+#endif
