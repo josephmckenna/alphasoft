@@ -33,6 +33,8 @@ private:
    int pedestal_length = 100;
    int threshold = 1400; // Minimum ADC value to define start and end of pulse // Old = 800
    double amplitude_cut = 5000; // Minimum ADC value for peak height
+   double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
+   double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
    const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
    int hit_num=0;
 
@@ -77,8 +79,8 @@ public:
       hWave = new TH1D("hWave","ADC Waveform",700,0,700);
       if( !(fFlags->fPulser) )  // Normal run
          {
-            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,60000.);
-            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude", 15, -0.5, 15.5, 2000,0.,60000.);
+            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
+            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
             hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
             hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
             hFitEndTime = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]",400,1200,2000,400,1200,2000);
@@ -248,32 +250,38 @@ public:
                   double fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
                   double fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
                   double time_before_peak = fit_start_time - maximum_time;
+
+                  // Converts amplitude to volts
+                  double amp_volts = fit_amp*adc_conversion;
       
                   // Fills histograms
                   hFitAmp->Fill(amp,fit_amp);
                   hFitStartTime->Fill(start_time*10,fit_start_time*10);
                   hFitEndTime->Fill(end_time*10,fit_end_time*10);
-                  hBsc_Amplitude->Fill(fit_amp);
-                  hBsc_AmplitudeVsChannel->Fill(chan,fit_amp);
+                  hBsc_Amplitude->Fill(amp_volts);
+                  hBsc_AmplitudeVsChannel->Fill(chan,amp_volts);
                   hRise->Fill(time_before_peak*10);
                   hRiseByAmp->Fill(fit_amp,time_before_peak*10);
       
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,fit_amp,fit_start_time*10);
+                  BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
 
                }
 
             if( fFlags->fPulser ) // Pulser run
                {
 
+                  // Converts amplitude to volts
+                  double amp_volts = amp*adc_conversion;
+      
                   // Fills histograms
-                  hBsc_Amplitude->Fill(amp);
-                  hBsc_AmplitudeVsChannel->Fill(chan,amp);
+                  hBsc_Amplitude->Fill(amp_volts);
+                  hBsc_AmplitudeVsChannel->Fill(chan,amp_volts);
 
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,amp,start_time*10);
+                  BarEvent->AddADCHit(chan,amp_volts,start_time*10);
 
                }
 
