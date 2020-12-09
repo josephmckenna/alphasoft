@@ -13,7 +13,7 @@
 #pragma link C++ class  a2mcMCTrack+;
 #pragma link C++ class  a2mcSettings+;
 #pragma link C++ class  a2mcApparatus+;
-#pragma link C++ class  a2mcPrimaryVertex+;
+#pragma link C++ class  a2mcPrimary+;
 #pragma link C++ class  a2mcGenerator+;
 #pragma link C++ class  a2mcHit+;
 #pragma link C++ class  a2mcSilHit+;

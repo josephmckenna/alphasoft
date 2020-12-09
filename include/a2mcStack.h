@@ -3,6 +3,7 @@
 
 #include <stack>
 
+
 #include <TVirtualMCStack.h>
 #include <TClonesArray.h>
 
@@ -63,7 +64,7 @@ class a2mcStack : public TVirtualMCStack
     Int_t                   fTracksLim;   ///< Limit the tracks to be stored in the stack
     Int_t                   fCurrentTrack;///< The current track number
     Int_t                   fNPrimary;    ///< The number of primaries
-    
+
     ClassDef(a2mcStack,1) // a2mcStack
 };
 

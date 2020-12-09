@@ -34,6 +34,12 @@ class a2mcSilSD : public TNamed
 
     private:
         // -------> PRIVATE FUNCTIONS
+        void        IDToLayMod(Int_t, Int_t&, Int_t&);
+        Double_t    GetnPos(Int_t);
+        Double_t    GetpPos(Int_t);
+        Int_t       ReturnPStrip(Int_t, Double_t);
+        Int_t       ReturnNStrip(Int_t, Double_t);
+
         a2mcSilHit* AddHit();             // Add the hit to the collection
         a2mcSilHit* GetHit(Int_t);        // Get the hit from collection
 
@@ -46,13 +52,16 @@ class a2mcSilSD : public TNamed
 
         // -------> PRIVATE VARIABLES
         // REMEMBER TO CHANGE SIZE IF MORE SilS
-        TClonesArray*  fHitCollection;   //  Hits collection    
-        TClonesArray*  fDIGICollection;  //  Digits collection
-        std::vector<Int_t>  fSensitiveID;
-        Int_t          fVerboseLevel;    // Verbosity level
-
-        ClassDef(a2mcSilSD,1) //a2mcSilSD 
-
+        const Double_t              fPCBmountZ = -30.225;
+        const Double_t              fnPitch = 0.0875;
+        const Double_t              fpPitch = 0.0227;
+        TClonesArray*               fHitCollection;   //  Hits collection    
+        TClonesArray*               fDIGICollection;  //  Digits collection
+        std::vector<Int_t>          fSensitiveID;
+        Int_t                       fVerboseLevel;    // Verbosity level
+        std::map<int, std::string>  silNameIDMap;
+        std::vector<bool>           hasModuleHits;
+        ClassDef(a2mcSilSD,1)
 };
 
 /// Set verbose level

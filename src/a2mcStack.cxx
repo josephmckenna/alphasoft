@@ -164,7 +164,7 @@ TParticle* a2mcStack::PopPrimaryForTracking(Int_t i)
 
 // -----   Public method Register   ----------------------------------------
 void a2mcStack::RegisterMCTrack() {
-  a2mcRootManager::Instance()->Register("a2mcMCTrack", "TClonesArray", &fTracks);
+  a2mcRootManager::Instance()->Register("MCTracks", "TClonesArray", &fTracks);
 }
 
 //_____________________________________________________________________________
@@ -257,6 +257,7 @@ TParticle*  a2mcStack::GetParticle(Int_t id) const
    
   return (TParticle*)fParticles->At(id);
 }
+
 //__Get the a2mcMCTrack for the corresponding array ___________________________
 a2mcMCTrack*  a2mcStack::GetTrack(Int_t id) const
 {

@@ -19,6 +19,9 @@ source setup.sh
 ///< --------------------------------------------------------------------------
 ///< 2. COMPILATION
 ///< --------------------------------------------------------------------------
+Edit/change make_Makefile.sh to reflect your local  (ROOT/GEANT4/VMC) 
+installation paths.
+source make_Makefile.sh
 make -j4
 ------------------------------------ oOo --------------------------------------
 

@@ -182,21 +182,24 @@ void a2mcApparatus::InsertSilDet()
     silMod_size[1] = 0.04125;
     silMod_size[2] = 11.5;
     ///< Geometrical volume
-    TGeoVolume *silMod = gGeoManager->Volume("silMod","BOX",fmedSi,silMod_size,3);
-    silMod->SetLineColor(kGreen); silMod->SetTransparency(50);
     ///< Physical volume (positioning the geometrical volume)
     Int_t id = -1;
     Double_t silMod_pos[3]={0.,0.,0.};
     Double_t phi1 = 0., phi2 = 0.;
-    for(UInt_t half=0; half<nHalves; half++) {
-        for(UInt_t lay=0; lay<nLayers; lay++) {
-            for(UInt_t mod=0; mod<nModules[lay]; mod++) {
-                id = SilModPos(half, lay, mod, phi1, phi2, silMod_pos[0], silMod_pos[1], silMod_pos[2]);
-                if(id<0) continue; ///< The correlation layer, module didn't work out
-                TGeoRotation* silRot = new TGeoRotation("silRot", phi2, 0., 0.);
-                TGeoCombiTrans *combiSilMod = new TGeoCombiTrans("combiSilMod", silMod_pos[0], silMod_pos[1], silMod_pos[2], silRot);
-                detBox->AddNode(silMod, id, combiSilMod);
-            }
+    for(UInt_t lay=0; lay<nLayers; lay++) {
+        for(UInt_t mod=0; mod<nModules[lay]; mod++) {
+            ostringstream s; ///< Writing the name of the module (see a2mcAppartus.h for a legend)
+            s << lay << "si" << std::uppercase << std::hex << mod;
+            TGeoVolume *silMod = gGeoManager->Volume(s.str().c_str(),"BOX",fmedSi,silMod_size,3);
+            silMod->SetLineColor(kGreen); silMod->SetTransparency(50);
+            id = SilModPos(lay, mod, phi1, phi2, silMod_pos[0], silMod_pos[1], silMod_pos[2]);
+            if(id<0) continue; ///< The correlation layer, module didn't work out
+            TGeoRotation* silRot = new TGeoRotation("silRot", phi2, 0., 0.);
+            TGeoCombiTrans *combiSilMod = new TGeoCombiTrans("combiSilMod", silMod_pos[0], silMod_pos[1], silMod_pos[2], silRot);
+            detBox->AddNode(silMod, id, combiSilMod);
+            ///< Updating the map ["name" -> ID] of the silicon modules
+            silNameIDMap.insert(std::pair<int, std::string>(id,s.str()));
+//                cout << s.str() << ";" << id << ";" << lay << ";" << mod << ";" << silMod_pos[0] << ";" << silMod_pos[1] << ";" << silMod_pos[2] << endl;
         }
     }
 }
@@ -1191,13 +1194,13 @@ void a2mcApparatus::SetCuts()
 }
 
 //_____________________________________________________________________________
-Int_t a2mcApparatus::SilModPos(UInt_t half, UInt_t lay, UInt_t mod, Double_t& phi1, Double_t& phi2, Double_t& x, Double_t& y, Double_t& z)
+Int_t a2mcApparatus::SilModPos(UInt_t lay, UInt_t mod, Double_t& phi1, Double_t& phi2, Double_t& x, Double_t& y, Double_t& z)
 {
 ///< It calculate the position variables (phi1, phi2, x, y, and z) for each silicon module
     ///< These formulas were calculated using the values found in detector2_geo.xml (AlphaSoftware2020/aux/geo)
-    if(half>=nHalves||lay>=nLayers||mod>=nModules[lay]) {
+    if(lay>=nLayers||mod>=nModules[lay]) {
         return -1;
-        cout << "a2mcApparatus::SilModPos --> Please check combination of (half, layer, module) [" << half << "," << lay << "," << mod << "]" << endl;
+        cout << "a2mcApparatus::SilModPos --> Please check combination of (layer, module) [" << lay << "," << mod << "]" << endl;
     }
     ///< #####################################
     ///< Setting angular and radial parameters
@@ -1205,18 +1208,18 @@ Int_t a2mcApparatus::SilModPos(UInt_t half, UInt_t lay, UInt_t mod, Double_t& ph
     Double_t phi1_start =0., phi2_start =0.;
     Double_t abs_z = 11.5;
     Double_t r_even = 0., r_odd = 0., r = 0.;
-    if(lay==0) {
+    if(lay==0||lay==3) {
         phi1_start = 90.; phi2_start =  180.;
         r_even = 8.9; r_odd = 9.45;
-    } else if(lay==1) {
+    } else if(lay==1||lay==4) {
         phi1_start = 99.; phi2_start = -171.;
         r_even = 10.8; r_odd = 11.35;
-    } else if(lay==2) {
+    } else if(lay==2||lay==5) {
         phi1_start = 95.; phi2_start = -175.;
         r_even = 12.7; r_odd = 13.25;
     } else {
         return -1;
-        cout << "a2mcApparatus::SilModPos --> Please check combination of (half, layer, module) [" << half << "," << lay << "," << mod << "]" << endl;
+        cout << "a2mcApparatus::SilModPos --> Please check combination of (layer, module) [" << lay << "," << mod << "]" << endl;
     }
     ///< ####################################
     ///< Calculating the angles phi1 and phi2
@@ -1228,14 +1231,16 @@ Int_t a2mcApparatus::SilModPos(UInt_t half, UInt_t lay, UInt_t mod, Double_t& ph
     if(mod%2==0) {r = r_even;} else {r = r_odd;};
     x = r*TMath::Cos(phi1*TMath::DegToRad());
     y = r*TMath::Sin(phi1*TMath::DegToRad());
-    z = abs_z; if(half==0) z = - abs_z;
+    z = lay<=2? -abs_z : +abs_z; ////< First 3 layers have negative z, the other positive z
 
-    ///< Copy number of the physical volume [to be used/decoded in a2mcSilDetSD]
-    ///< First layer,   first half:  modules -> [0-9]
-    ///< Second layer,  first half:  modules -> [100-111]
-    ///< Third layer,   first half:  modules -> [200-213]
-    ///< First layer,   second half: modules -> [1000-1009]
-    ///< Second layer,  second half: modules -> [1100-1111]
-    ///< Third layer,   second half: modules -> [1200-1213]
-    return 1000*half + 100*lay + mod;
+    Double_t lower_limit = 1.e-9;
+    if(fabs(x)<lower_limit) x = 0.;
+    if(fabs(y)<lower_limit) y = 0.;
+    if(fabs(z)<lower_limit) z = 0.;
+    ///< id --> see legend/map at the end of a2mcApparatus.h
+    UInt_t start = 0;
+    for(UInt_t i=0; i<lay; i++) {
+        start += nModules[i];
+    }
+    return start + mod;
 }

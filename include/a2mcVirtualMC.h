@@ -9,7 +9,7 @@
 
 #include "a2mcApparatus.h"
 #include "a2mcStack.h"
-#include "a2mcPrimaryVertex.h"
+#include "a2mcPrimary.h"
 #include "a2mcGenerator.h"
 #include "a2mcRootManager.h"
 #include "a2mcMessenger.h"
@@ -73,8 +73,8 @@ class a2mcVirtualMC : public TVirtualMCApplication
         Int_t                   nEvents;///< Event counter
 		a2mcStack*            fStack;             ///< VMC stack
 		a2mcApparatus*        fDetConstruction;   ///< a2mc Detector construction    
-        a2mcPrimaryVertex*    fPrimaryVertex;     ///< Primary Vertex Object
-		a2mcSilSD          fSilSD;          ///< Frame SD
+        a2mcPrimary*          fPrimary;           ///< Primary  Object
+		a2mcSilSD             fSilSD;             ///< Frame SD
 		TMCVerbose            fVerbose;           ///< VMC verbose helper
 		a2mcGenerator*        fPrimaryGenerator;  ///< Primary generator 
 		a2mcRootManager*      fRootManager;       ///< Root manager 

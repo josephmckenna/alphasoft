@@ -33,12 +33,11 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     FileMode fileMode = kWrite;
     fRootManager = new a2mcRootManager(runNumber, runTime, "a2MC", fileMode);
 
-    fPrimaryVertex = new a2mcPrimaryVertex();
-    fRootManager->Register("PrimaryVertex", "a2mcPrimaryVertex", &fPrimaryVertex);   
+    fPrimary = new a2mcPrimary();
+    fRootManager->Register("Primary", "a2mcPrimary", &fPrimary);   
 
     // Create a primary generator
     fPrimaryGenerator = new a2mcGenerator(fStack,fDetConstruction); 
-
 }
 
 //_____________________________________________________________________________
@@ -173,23 +172,14 @@ void a2mcVirtualMC::GeneratePrimaries()
     /// Fill the user stack (derived from TVirtualMCStack) with primary particles.
 
     fPrimaryGenerator->Generate();
-    fPrimaryVertex->SetPdgCode(fPrimaryGenerator->GetPdgCode());
-    fPrimaryVertex->SetVx(fPrimaryGenerator->GetVx());
-    fPrimaryVertex->SetVy(fPrimaryGenerator->GetVy());
-    fPrimaryVertex->SetVz(fPrimaryGenerator->GetVz());
-    fPrimaryVertex->SetPx(fPrimaryGenerator->GetPx());
-    fPrimaryVertex->SetPy(fPrimaryGenerator->GetPy());
-    fPrimaryVertex->SetPz(fPrimaryGenerator->GetPz());
-    /*
-       fPrimaryGenerator->SetXOrigin(0.);
-       fPrimaryGenerator->SetYOrigin(0.);
-       fPrimaryGenerator->SetZOrigin(0.);
-
-       fPrimaryGenerator->SetPx(0.);
-       fPrimaryGenerator->SetPy(0.);
-       fPrimaryGenerator->SetPz(0.);
-     */
-
+    fPrimary->SetPdgCode(fPrimaryGenerator->GetPdgCode());
+    fPrimary->SetVox(fPrimaryGenerator->GetVx());
+    fPrimary->SetVoy(fPrimaryGenerator->GetVy());
+    fPrimary->SetVoz(fPrimaryGenerator->GetVz());
+    fPrimary->SetPox(fPrimaryGenerator->GetPx());
+    fPrimary->SetPoy(fPrimaryGenerator->GetPy());
+    fPrimary->SetPoz(fPrimaryGenerator->GetPz());
+    fPrimary->SetEo(fPrimaryGenerator->GetTotE());
 }
 
 //_____________________________________________________________________________
@@ -254,6 +244,15 @@ void a2mcVirtualMC::FinishEvent()
     Int_t iev = gMC->CurrentEvent();
     if(iev%1000==0) {printf("Processing event %d \n",iev);}
 
+    ///< Fill the information about the Primary Decay Vertex
+    ///< Registering the "origin vertex" of a primary daughter as the "decay/annihilaiton" vertex of the primary
+    for(UInt_t i=0; i<fStack->GetNtrack(); i++) {
+        if(fStack->GetParticle(i)->GetMother(0)!=0) continue; ///< Not a daughter from the primary
+        fPrimary->SetVdx(fStack->GetParticle(i)->Vx());
+        fPrimary->SetVdy(fStack->GetParticle(i)->Vy());
+        fPrimary->SetVdz(fStack->GetParticle(i)->Vz());
+        break;
+    }
     ///< Storing the hits and the DIGI 
     if(a2mcConf.GetSilDet()) fSilSD.Digitalize();
     fRootManager->Fill();
@@ -266,10 +265,10 @@ void a2mcVirtualMC::FinishEvent()
         fPrimaryGenerator->DumpGenInfo();
     }
     ///< Resent and prepare for the next event
-    fPrimaryVertex->Reset();
+    fPrimary->Reset();
     fStack->Reset();
+}
 
-} 
 //_____________________________________________________________________________
 void a2mcVirtualMC::AddParticles()
 {    

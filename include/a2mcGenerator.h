@@ -28,6 +28,7 @@ public:
     Double_t    GetPx()         {return fGenMom[0];};
     Double_t    GetPy()         {return fGenMom[1];};
     Double_t    GetPz()         {return fGenMom[2];};
+    Double_t    GetTotE()       {return fTotE;};
 
     Double_t EquivalentTimeMin();
     TVector3 LineExtrapolation(TVector3, TVector3, Double_t);

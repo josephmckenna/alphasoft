@@ -64,8 +64,10 @@ Bool_t a2mcVSDReader::GotoEvent(Int_t ev) {
 
     // Load event data into visualization structures
     LoadSilHits(fSilHits, "Hits");
+    LoadPrimaryOriginHit(fPrimOriginHit, "PrimaryOrigin");
+    LoadPrimaryDecayHit(fPrimDecayHit, "PrimaryDecay");
     LoadMCTracks();
-//    LoadRecTracks();
+//    LoadRecTracks(); ///< [NOT AVAILABLE AT THE MOMENT]
 
     // Fill projected views.
     auto top = gEve->GetCurrentEvent();
@@ -87,21 +89,59 @@ Bool_t a2mcVSDReader::GotoEvent(Int_t ev) {
 // Hit loading
 //---------------------------------------------------------------------------
 ///< SilHits
-void a2mcVSDReader::LoadSilHits(TEvePointSet*& ps, const TString& det_name) {
-    if (ps == nullptr) {
-        ps = new TEvePointSet(det_name);
-        ps->SetMainColor((Color_t)(kRed));
-        ps->SetMarkerSize(1.5);
-        ps->SetMarkerStyle(20);
-        ps->IncDenyDestroy();
+void a2mcVSDReader::LoadSilHits(TEvePointSet*& hits, const TString& det_name) {
+    if (hits == nullptr) {
+        hits = new TEvePointSet(det_name);
+        hits->SetMainColor((Color_t)(kRed));
+        hits->SetMarkerSize(1.5);
+        hits->SetMarkerStyle(20);
+        hits->IncDenyDestroy();
     } else {
-        ps->Reset();
+        hits->Reset();
     }
-    TEvePointSelector ss(fVSD->fTreeH, ps, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0||fDetId==1"));
+    ///< The DetId is > 0 [see a2mcToVSD for encoding]
+    TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId>0"));
     ss.Select();
-    ps->SetTitle(TString::Format("N=%d", ps->Size()));
-    gEve->AddElement(ps);
+    hits->SetTitle(TString::Format("N=%d", hits->Size()));
+    gEve->AddElement(hits);
 }
+
+///< PrimaryOriginHit
+void a2mcVSDReader::LoadPrimaryOriginHit(TEvePointSet*& hits, const TString& det_name) {
+    if (hits == nullptr) {
+        hits = new TEvePointSet(det_name);
+        hits->SetMainColor((Color_t)(kOrange));
+        hits->SetMarkerSize(3.0);
+        hits->SetMarkerStyle(47);
+        hits->IncDenyDestroy();
+    } else {
+        hits->Reset();
+    }
+    ///< The DetId is 999, SubdetId = 0
+    TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0&&fSubdetId==0"));
+    ss.Select();
+    hits->SetTitle(TString::Format("N=%d", hits->Size()));
+    gEve->AddElement(hits);
+}
+
+///< PrimaryOriginHit
+void a2mcVSDReader::LoadPrimaryDecayHit(TEvePointSet*& hits, const TString& det_name) {
+    if (hits == nullptr) {
+        hits = new TEvePointSet(det_name);
+        hits->SetMainColor((Color_t)(kRed));
+        hits->SetMarkerSize(3.0);
+        hits->SetMarkerStyle(kFullStar);
+        hits->IncDenyDestroy();
+    } else {
+        hits->Reset();
+    }
+    ///< The DetId is 999, SubdetId = 1
+    TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0&&fSubdetId==1"));
+    ss.Select();
+    hits->SetTitle(TString::Format("N=%d", hits->Size()));
+    gEve->AddElement(hits);
+}
+
 //---------------------------------------------------------------------------
 // Track loading
 //---------------------------------------------------------------------------
@@ -126,17 +166,14 @@ void a2mcVSDReader::LoadMCTracks() {
 //    trkProp->SetMagField(0.5);
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
+    trkProp->SetMaxR(50.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxZ(50.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetFitDecay(true); ///< Is it working?
 
     Double_t naan = std::numeric_limits<double>::quiet_NaN();
-    Double_t Vx = naan, Vy = naan, Vz = naan;
     Int_t nTracks = fVSD->fTreeK->GetEntries();
     for (Int_t n = 0; n < nTracks; n++) {
         fVSD->fTreeK->GetEntry(n);
-        if(fVSD->fK.fLabel==0) { ///< Primary particle -> origin
-            Vx = fVSD->fK.Vx();
-            Vy = fVSD->fK.Vy();
-            Vz = fVSD->fK.Vz();
-        }
         TEveTrack* track = new TEveTrack(&fVSD->fK, trkProp);
         track->SetName(Form("MC Track %d", fVSD->fK.fLabel));
         track->SetStdTitle();
@@ -144,12 +181,9 @@ void a2mcVSDReader::LoadMCTracks() {
         fTrackListMC->AddElement(track);
     }
 
-    trkProp->SetMaxR(36.35); ///< Based on the Oxford magnet dimension and generation sphere
-    trkProp->SetMaxZ(32.);   ///< Based on the Oxford magnet dimension and generation sphere
     fTrackListMC->MakeTracks();
 
     gEve->AddElement(fTrackListMC);
-    if(!std::isnan(Vx)) AddOrigin(Vx, Vy, Vz); ///< Adding a point for the origin
 }
 
 ///< Rec Tracks
@@ -189,26 +223,6 @@ void a2mcVSDReader::LoadRecTracks() {
     gEve->AddElement(fTrackListRec);
 }
 
-void a2mcVSDReader::AddOrigin(double& Vx, double& Vy, double& Vz) {
-    ///< ############################################
-    ///< Adding a point for the origin of the muon
-    ///< ############################################
-    ///< Add the Vertex of the Primary particle
-    if (fVertices == nullptr) {
-        fVertices = new TEvePointSet("Origin");
-        fVertices->SetMainColor((Color_t)(kBlue));
-        fVertices->SetMarkerSize(2.5);
-        fVertices->SetMarkerStyle(29);
-        fVertices->IncDenyDestroy();
-//        fVertices->SetPointId(new TNamed(Form("Origin"), "");
-        fVertices->SetTitle(TString::Format("Origin"));
-        fVertices->SetNextPoint(Vx, Vy, Vz);
-    } else {
-        fVertices->Reset();
-        fVertices->SetNextPoint(Vx, Vy, Vz);
-    }
-    gEve->AddElement(fVertices);
-}
 ////---------------------------------------------------------------------------
 //// Cluster loading
 ////---------------------------------------------------------------------------
@@ -237,43 +251,47 @@ void a2mcVSDReader::DumpEvent() {
     cout << "                  MC Event " << setw(4) << setfill(' ') << fEventMC << endl;
     cout << "############################################# " << endl;
     DumpMCTracks();
-    DumpHits();
+    DumpSilHits();
 }
 
-void a2mcVSDReader::DumpHits() {
+void a2mcVSDReader::DumpSilHits() {
     if(fVSD->fTreeH->GetEntriesFast()==0) return;
-    cout << "Number of detector   hits " << fSilHits->Size() << endl;
-    cout << "\t (lay/mod/half)" << " | " << "track (id, name)" << endl;
+    cout << "Number of detector hits " << fSilHits->Size() << endl;
+    if(fVSD->fTreeH->GetEntriesFast()>0) cout << "\t (sil/nstrip/pstrip)" << " | " << "track (id, name)" << endl;
     for(UInt_t i=0; i<fVSD->fTreeH->GetEntriesFast(); i++) {
         fVSD->fTreeH->GetEntry(i); ///< load a TEveHit into fVSD->fH
-        DumpHit();
+        if(fVSD->fH.fDetId>0) DumpSilHit(); ///< Only silicon hits
     }
 }
 
-void a2mcVSDReader::DumpHit() {
-    Int_t det, subdet, half, lay, mod;
+void a2mcVSDReader::DumpSilHit() {
+    Int_t lay, mod;
+    Int_t nStrip, pStrip;
     string track_particle_name("other");
     TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fVSD->fH.fEvaLabel);
     if(particlePDG) track_particle_name = (string)particlePDG->GetName();
-    det = fVSD->fH.fDetId;
-    if(det == 0) {
-        subdet = fVSD->fH.fSubdetId;
-        half = (int)((double)(subdet)/1000.);
-        subdet -= half*1000;
-        lay = (int)((double)(subdet)/100.);
-        subdet -= lay*100;
-        mod = subdet;
-        cout << "\t o) " << lay << " | " << mod << " | " << setw(2) << setfill(' ') << half << " | ";
-        cout << "[" << left << setw(3) << fVSD->fH.fLabel << ", " << track_particle_name.c_str() << "]";
-        cout << endl;    
+    ///< Decoding layer and module from DetId and SubdetId
+    lay = (int)((double)fVSD->fH.fDetId/1000.);
+    mod = (int)((double)fVSD->fH.fSubdetId/1000.);
+    if(0<=lay&&lay<=5) { ///< fDetId = layer number [0-5]
+        ///< Decoding n-strip and p-strip from SubdetId
+        nStrip = fVSD->fH.fDetId - 1000*lay;
+        pStrip = fVSD->fH.fSubdetId - 1000*mod;
+        ostringstream s;
+        s << lay << "si" << std::uppercase << std::hex << mod;
+        cout << "\t o) " << s.str() << " [";
+        cout << right << setw(3) << setfill('0') << nStrip << ",";
+        cout << right << setw(3) << setfill('0') << pStrip << "] | ";
+        cout << "(" << left << setw(3) << setfill(' ') << fVSD->fH.fLabel << ", " << track_particle_name.c_str() << ")";
+        cout << endl;
     }
 }
 
 void a2mcVSDReader::DumpMCTracks() {
     Int_t nMCTracks = fVSD->fTreeK->GetEntriesFast();
     if(nMCTracks==0) return;
-    cout << "Number of Tracks " << nMCTracks << endl;
-    cout << "\t track (id, name)" << " | " << "origin (x,y,z)" << endl;
+    cout << "Number of charged tracks (may be only the ones with a hit in the silicon detector)" << nMCTracks << endl;
+    cout << "\t track (id, name)" << " | " << "origin [x,y,z]-[decay if recorded]" << endl;
     for(UInt_t i=0; i<nMCTracks; i++) {
         fVSD->fTreeK->GetEntry(i); ///< load a TEveHit into fVSD->fH
         DumpMCTrack();
@@ -287,10 +305,12 @@ void a2mcVSDReader::DumpMCTrack() {
     Double_t ptot = sqrt(fVSD->fK.Px()*fVSD->fK.Px() + fVSD->fK.Py()*fVSD->fK.Py() + fVSD->fK.Pz()*fVSD->fK.Pz());
 
     cout << "\t -) " << left << setw(3) << fVSD->fK.fLabel << "| " << track_particle_name.str().c_str() << " | ";
-    cout << "[" << fixed << setprecision(2) << fVSD->fK.Vx() << ", " << fVSD->fK.Vy() << ", " << fVSD->fK.Vz() << "] " << " | ";
-    if(ptot<=0.001) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e6 << " KeV/c" << endl;
-    if(0.001<ptot&&ptot<=0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e3 << " MeV/c" << endl;
-    if(ptot>0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot << " GeV/c" << endl;
+    cout << "[" << fixed << setprecision(2) << fVSD->fK.Vx() << ", " << fVSD->fK.Vy() << ", " << fVSD->fK.Vz() << "] | ";
+    if(ptot<=0.001) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e6 << " KeV/c";
+    if(0.001<ptot&&ptot<=0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e3 << " MeV/c";
+    if(ptot>0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot << " GeV/c";
+    if(fVSD->fK.fDecayed) {
+        cout << " | [decay R=" << fixed << setprecision(2) << sqrt(fVSD->fK.fVDecay.fX*fVSD->fK.fVDecay.fX+fVSD->fK.fVDecay.fY*fVSD->fK.fVDecay.fY) << ",Z=" << fVSD->fK.fVDecay.fZ << "]";
+    }
     cout << endl;
-
 }

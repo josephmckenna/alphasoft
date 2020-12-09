@@ -1,25 +1,15 @@
-//////////////////////////////////////////////////////////
-// This class has been automatically generated on
-// Tue Nov 24 15:15:20 2020 by ROOT version 6.22/02
-// from TTree a2MC/a2MC tree
-// found on file: ../root/a2MC-2020-11-24-11-50-19_29.root
-//////////////////////////////////////////////////////////
-///< It has then modified to read the a2mc output 
-///< (geo and data) and create a proper VSD output file.
-#ifndef a2mcToVSD_h
-#define a2mcToVSD_h
+#ifndef a2mcToRAW_h
+#define a2mcToRAW_h
 
-#include <limits>
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
 #include "TObject.h"
 #include "TClonesArray.h"
-#include "TEveVSDStructs.h"
 
-class a2mcToVSD {
+class a2mcToRAW {
 public :
-    TFile          *fVSDFile;
+    TFile          *fRAWFile;
     TTree          *fChain;   //!pointer to the analyzed TTree or TChain
     Int_t          fCurrent; //!current Tree number in a TChain
     Int_t          fRunNumber;
@@ -135,38 +125,32 @@ public :
     TBranch        *b_MCTracks_fVz;   //!
     TBranch        *b_MCTracks_fVt;   //!
 
-    a2mcToVSD();
-    a2mcToVSD(Int_t runNumber=0);
-    virtual ~a2mcToVSD();
+    a2mcToRAW();
+    a2mcToRAW(Int_t runNumber=0);
+    virtual ~a2mcToRAW();
     virtual void            Init(Int_t runNumber=0);
+    virtual Bool_t          GoodEvent();
     virtual Int_t           GetEntry(Long64_t entry);
     virtual Long64_t        LoadTree(Long64_t entry);
     virtual void            InitTree(TTree *tree);
+    virtual void            WriteRAW();
     virtual void            CreateOutputFile();
-    virtual void            WriteVSD();
-    virtual void            WriteEventVSD(vector<TEveHit>&, vector<TEveMCTrack>&, vector<TEveRecTrackF>&, Int_t);
-    virtual TEveHit         HitToEveHit(UInt_t);
-    virtual TEveHit         PrimaryOriginToEveHit();
-    virtual TEveHit         PrimaryDecayToEveHit();
-    virtual TEveRecTrackF   ToEveRecTrack(UInt_t);
-    virtual TEveMCTrack     ToEveMCTrack(UInt_t);
-    virtual Bool_t          GoodTrack(UInt_t);
 };
 
 #endif
 
-#ifdef a2mcToVSD_cxx
+#ifdef a2mcToRAW_cxx
 ///< Default constructor
-a2mcToVSD::a2mcToVSD() : fChain(0) {
-///<
+a2mcToRAW::a2mcToRAW() : fChain(0) {
+// default constructor
 }
 ///< Constructor with the run number
-a2mcToVSD::a2mcToVSD(Int_t runNumber) : fChain(0)  {
+a2mcToRAW::a2mcToRAW(Int_t runNumber) : fChain(0)  {
     Init(runNumber);
 }
 
 ///< Initializer
-void a2mcToVSD::Init(Int_t runNumber) {
+void a2mcToRAW::Init(Int_t runNumber) {
     fRunNumber = runNumber;
     TTree *tree = 0;
     std::ostringstream sdata;
@@ -186,31 +170,32 @@ void a2mcToVSD::Init(Int_t runNumber) {
     InitTree(tree);
 }
 
-a2mcToVSD::~a2mcToVSD()
+a2mcToRAW::~a2mcToRAW()
 {
-   if (!fChain) return;
-   delete fChain->GetCurrentFile();
+    if (!fChain) return;
+    delete fChain->GetCurrentFile();
 }
 
-Int_t a2mcToVSD::GetEntry(Long64_t entry)
+Int_t a2mcToRAW::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
-   if (!fChain) return 0;
-   return fChain->GetEntry(entry);
-}
-Long64_t a2mcToVSD::LoadTree(Long64_t entry)
-{
-// Set the environment to read one entry
-   if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
-   if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
-   }
-   return centry;
+    if (!fChain) return 0;
+    return fChain->GetEntry(entry);
 }
 
-void a2mcToVSD::InitTree(TTree *tree)
+Long64_t a2mcToRAW::LoadTree(Long64_t entry)
+{
+// Set the environment to read one entry
+    if (!fChain) return -5;
+    Long64_t centry = fChain->LoadTree(entry);
+    if (centry < 0) return centry;
+    if (fChain->GetTreeNumber() != fCurrent) {
+        fCurrent = fChain->GetTreeNumber();
+    }
+    return centry;
+}
+
+void a2mcToRAW::InitTree(TTree *tree)
 {
     // The Init() function is called when the selector needs to initialize
     // a new tree or chain. Typically here the branch addresses and branch
@@ -218,7 +203,8 @@ void a2mcToVSD::InitTree(TTree *tree)
     // It is normally not necessary to make changes to the generated
     // code, but the routine can be extended by the user if needed.
     // Init() will be called many times when running on PROOF
-    // (once per file to be processed   
+    // (once per file to be processed).
+
     // Set branch addresses and branch pointers
     if (!tree) return;
     fChain = tree;
@@ -239,8 +225,8 @@ void a2mcToVSD::InitTree(TTree *tree)
         fChain->SetBranchAddress("fVdy", &fVdy, &b_Primary_fVdy);
         fChain->SetBranchAddress("fVdz", &fVdz, &b_Primary_fVdz);
     }
-    TLeaf *sil = fChain->FindLeaf("SilHits.fUniqueID");
-    if(sil) {
+    TLeaf *hits = fChain->FindLeaf("SilHits.fUniqueID");
+    if(hits) {
         fChain->SetBranchAddress("SilHits", &SilHits_, &b_SilHits_);
         fChain->SetBranchAddress("SilHits.fTrackID", SilHits_fTrackID, &b_SilHits_fTrackID);
         fChain->SetBranchAddress("SilHits.fPdgCode", SilHits_fPdgCode, &b_SilHits_fPdgCode);
@@ -288,4 +274,4 @@ void a2mcToVSD::InitTree(TTree *tree)
     }
 }
 
-#endif // #ifdef a2mcToVSD_cxx
+#endif // #ifdef a2mcToRAW_cxx

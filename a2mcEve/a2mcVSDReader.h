@@ -16,10 +16,11 @@ public:
     // ----------------------------------------------------------
     // Event visualization structures
     // ----------------------------------------------------------
-    TEveTrackList *fTrackListMC;
-    TEveTrackList *fTrackListRec;
-    TEvePointSet  *fSilHits        = nullptr;
-    TEvePointSet  *fVertices         = nullptr;
+    TEveTrackList   *fTrackListMC;
+    TEveTrackList   *fTrackListRec;
+    TEvePointSet    *fSilHits       = nullptr;
+    TEvePointSet    *fPrimOriginHit = nullptr;
+    TEvePointSet    *fPrimDecayHit  = nullptr;
 
 public:
 a2mcVSDReader(const char* file_name) :
@@ -72,9 +73,10 @@ virtual ~a2mcVSDReader() {
 
 ///< Hits/tracks loaders
 void LoadSilHits(TEvePointSet*&, const TString&);
+void LoadPrimaryOriginHit(TEvePointSet*&, const TString&);
+void LoadPrimaryDecayHit(TEvePointSet*&, const TString&);
 void LoadMCTracks();
 void LoadRecTracks();
-void AddOrigin(double&, double&, double&);
 //void LoadClusters(TEvePointSet*&, const TString&, Int_t);
 void AttachEvent();
 void DropEvent();
@@ -112,8 +114,8 @@ Int_t DirNameToEventN(string& s) {
 
 ///< Dump (on screen) utilities
 void DumpEvent();
-void DumpHits();
-void DumpHit();
+void DumpSilHits();
+void DumpSilHit();
     
 void DumpMCTracks();
 void DumpMCTrack();
