@@ -28,7 +28,6 @@
 
 #include "TStoreEvent.hh"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 #include "json.hpp"
 
@@ -97,6 +96,9 @@ public:
                                                  r( f->ana_settings, f->fMagneticField,  
                                                     f->fLocation)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="RecoModule";
+#endif
       printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
@@ -177,13 +179,20 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if( fTrace )
-         printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
+         printf("RecoRun::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-
+      }
+#ifdef MANALYZER_PROFILER
+      START_TIMER
+#endif
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
@@ -235,16 +244,15 @@ public:
                   return flow;
                }
          }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
-
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
          delete analyzed_event;
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -254,23 +262,27 @@ public:
             int AW,PAD,SP=-1;
             AW=PAD=SP;
             if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
-            printf("RecoModule::Analyze, AW # signals %d\n", AW);
+            printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
             if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
-            printf("RecoModule::Analyze, PAD # signals %d\n", PAD);
+            printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
             if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
-            printf("RecoModule::Analyze, SP # %d\n", SP);
+            printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
       if (!SigFlow->matchSig)
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
+#ifdef MANALYZER_PROFILER
           flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
+#endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
-            std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+            std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
+#ifdef MANALYZER_PROFILER
             flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
+#endif
          }
 
       if (!skip_reco)
@@ -421,7 +433,7 @@ public:
          
          if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          
-         if( args[i] == "--anasettings" ) json=args[++i];
+         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());

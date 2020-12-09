@@ -301,7 +301,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   if(!vsig.size()) return;
 
   //Root's fitting routines are often not thread safe, lock globally
-  mtx.lock();
+  manalzer_global_mtx->lock();
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -464,7 +464,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
-  mtx.unlock();
+  manalzer_global_mtx->unlock();
 }
 
 
@@ -634,10 +634,10 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	    {
 	      if( fabs(pos) < ALPHAg::_halflength )
 		{
-		  mtx.lock();
+		  manalzer_global_mtx->lock();
 		  // create new signal with combined pads
 		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
-		  mtx.unlock();
+		  manalzer_global_mtx->unlock();
 		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
 		  ++nPositions;

@@ -3,7 +3,7 @@
 // Stores essential information from TFitLine
 // Authors: A. Capra
 // Date: June 2017
-
+#ifdef BUILD_AG
 #ifndef __TSTORELINE__
 #define __TSTORELINE__ 1
 
@@ -65,7 +65,7 @@ public:
 };
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8
