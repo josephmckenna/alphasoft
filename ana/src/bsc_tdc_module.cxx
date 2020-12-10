@@ -25,6 +25,7 @@ public:
    bool fPulser = false;
    bool fWriteOffsets = false;
    std::string fOffsetFile = ""; 
+   double ftwA = 0;
 };
 
 
@@ -47,7 +48,6 @@ private:
    const double trb3LinearHighEnd = 450.0;
    // Time walk correction, dt = A/sqrt(amp) + B
    const double twA = 2.48753687e-09;
-   const double twB = -1.14727562e-09;
 
    // Container declaration
    int bscTdcMap[4][4];
@@ -195,7 +195,8 @@ public:
                {
                   printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
                   printf("Total number of top+bot hits = %d\n",c_topbot);
-                  printf("TDC time diff diff sigma = %.3e\n",sgfit->GetParameter(2));
+                  printf("twA = %.6e\n",fFlags->ftwA);
+                  printf("TDC time diff diff sigma = %.6e\n",sgfit->GetParameter(2));
                }
          }
 
@@ -401,14 +402,13 @@ public:
 
             // Corrects for tdc time offset
             double calib_time = tdc_time;
-            if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc_chan-1];
+            //if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc_chan-1];
 
             // Corrects for time walk
             double amp = endhit->GetAmp();
-            double tw_correction = twA/TMath::Sqrt(amp) + twB;
+            double tw_correction = twA/TMath::Sqrt(amp);
+            if (fFlags->ftwA!=0) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
             double correct_time = calib_time - tw_correction;
-
-            printf("Channel = %d, time = %.12f, calib time = %.12f, amp = %.6f, tw cor = %.6e, cor time = %.12f\n",tdc_chan,tdc_time,calib_time,amp,tw_correction,correct_time);
 
             // Writes tdc data to hit
             endhit->SetTDCHit(correct_time);
@@ -566,6 +566,8 @@ public:
                fFlags.fWriteOffsets = true;
                fFlags.fOffsetFile = args[i+1].c_str();
             }
+         if( args[i] == "--twA" )
+            fFlags.ftwA = atof(args[i+1].c_str());
       }
    }
 
