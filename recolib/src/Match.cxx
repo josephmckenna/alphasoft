@@ -50,18 +50,18 @@ Match::Match(const AnaSettings* ana_set):
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
-  std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
+  //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=1;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
   if ( CentreOfGravityFunction <= 0 )
     {
-      std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
+      std::cout<<"Match::Match(json) No valid CentreOfGravityMethod function in json"<<std::endl;
       exit(1);
     }
   else
-    std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
+    std::cout<<"Match::Match(json) Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 }
 
 Match::~Match()
@@ -81,10 +81,13 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
+	  int error_level_save = gErrorIgnoreLevel;
+	  gErrorIgnoreLevel = kFatal;
           if( !gDirectory->cd("padmatch") )
             gDirectory->mkdir("padmatch")->cd();
 	  else 
 	    gDirectory->cd("padmatch");
+	  gErrorIgnoreLevel = error_level_save;
         }
       else
         gFile->cd();
