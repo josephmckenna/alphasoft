@@ -243,8 +243,11 @@ public:
             // Extrapolates amplitude and interpolates start and end times
             fit_amp = sgfit->GetParameter(0) - baseline;
             maximum_time = sgfit->GetMaximumX();
+            int error_level_save = gErrorIgnoreLevel;
+            gErrorIgnoreLevel = kFatal;
             fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
             fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
+            gErrorIgnoreLevel = error_level_save;
 
             // Copies histogram to sample histogram
             if (hit_num < sample_waveforms_to_plot)
