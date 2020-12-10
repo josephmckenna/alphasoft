@@ -239,7 +239,7 @@ public:
             sgfit->SetParLimits(1,0,500);
             sgfit->SetParLimits(2,0,100);
             sgfit->SetParLimits(3,0,2);
-            hWave->Fit("sgfit","RQ");
+            hWave->Fit("sgfit","RQ0");
             // Extrapolates amplitude and interpolates start and end times
             fit_amp = sgfit->GetParameter(0) - baseline;
             maximum_time = sgfit->GetMaximumX();
