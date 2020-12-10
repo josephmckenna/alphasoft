@@ -212,7 +212,7 @@ public:
 
    void PreEndRun(TARunInfo* runinfo)
    {
-      QueueEventFromData();
+      while(QueueEventFromData());
       SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
@@ -265,7 +265,7 @@ public:
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      QueueEventFromData();
+      while(QueueEventFromData());
       SendQueueToFlow(runinfo);
    }
 
