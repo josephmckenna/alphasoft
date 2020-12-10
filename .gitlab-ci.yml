@@ -44,6 +44,8 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
+    #Make sure we have the specified version of agana
+    - git submodule update agana
 
 #build-ubuntu:
 #  #Overwrite global image
