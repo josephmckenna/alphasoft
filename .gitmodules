@@ -11,4 +11,4 @@
 	branch = master
 [submodule "agana"]
 	path = agana
-	url = https://bitbucket.org/teamalphag/agana.git
+	url = https://bitbucket.org/expalpha/agana.git
