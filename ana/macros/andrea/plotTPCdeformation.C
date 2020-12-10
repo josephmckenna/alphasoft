@@ -10,6 +10,7 @@
 #include <TFile.h>
 #include <TCanvas.h>
 #include <TPaletteAxis.h>
+#include <TMath.h>
 
 #include "SignalsType.hh"
 #include "IntGetters.h"
@@ -330,6 +331,11 @@ void GainCorrection(TH2D* hsca)
   double min = hsca->GetBinContent(minbin);
   double max = hsca->GetBinContent(maxbin);
   cout<<"min: "<<min<<"\tmax: "<<max<<endl;
+  if(min==0.) min=-1;
+    // { 
+    //   int nwbin = hsca->FindFirstBinAbove(0.);
+    //   min = hsca->GetBinContent(nwbin);
+    // }
 
   TH2D* hsca_ratio = (TH2D*) hsca->Clone();
   hsca_ratio->SetTitle("Possible SCA Gain Assignment");
@@ -515,7 +521,7 @@ void deformation(TFile* fin)
       hpadamp->Fill(r,s,amp);
     }
   hscamp->Scale(1./72.);
-  hscamp->SetMinimum(1000.);
+  hscamp->SetMinimum(700.);
 
   GainCorrection( hscamp );
 
