@@ -4,7 +4,6 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 
 #include <TString.h>
@@ -145,6 +144,7 @@ public:
                {
                   hwf[it->i]->Fill(std::distance(it->wf->begin(),jt),*jt);
                }
+         }
       return flow;
    }
 
