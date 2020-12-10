@@ -1,10 +1,10 @@
 #include "TH1DGetters.h"
 
 extern Int_t gNbin;
-
+#ifdef BUILD_AG
 TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
 {
-  if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   double official_time;
   TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
   TChrono_Event* e=new TChrono_Event();
@@ -31,13 +31,16 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
    }
    return hh;
 }
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
 {
    Int_t chan=-1;
@@ -49,16 +52,19 @@ TH1D* Get_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double
    }
    return Get_Chrono(runNumber,board, chan, tmin, tmax);
 }
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return Get_Chrono(runNumber, ChannelName, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax, Double_t PlotMin, Double_t PlotMax)
 {
-   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    double official_time;
    TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
    TChrono_Event* e=new TChrono_Event();
@@ -86,13 +92,16 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
    }
    return hh;
 }
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
-
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
 {
    Int_t chan=-1;
@@ -104,15 +113,18 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, 
    }
    return Get_Delta_Chrono(runNumber,board, chan, tmin, tmax);
 }
+#endif
+#ifdef BUILD_AG
 TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return Get_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
+#endif
 
 
-
+#ifdef BUILD_A2
 std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
    assert(tmin.size()==tmax.size());
@@ -192,7 +204,8 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
    }
    return hh;
 }
-
+#endif
+#ifdef BUILD_A2
 std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills)
 {
    std::vector<double> tmin;
@@ -211,13 +224,14 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
    }
    return Get_SIS(runNumber,  SIS_Channel, tmin, tmax );
 }
-
+#endif
+#ifdef BUILD_A2
 std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
    std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber, description, repetition);
    return Get_SIS( runNumber, SIS_Channel, spills);
 }
-
+#endif
 
 /* emacs
  * Local Variables:

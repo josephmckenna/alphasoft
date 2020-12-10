@@ -39,6 +39,7 @@ class TSpillScalerData: public TObject
 
    ClassDef(TSpillScalerData,1);
 };
+#ifdef BUILD_A2
 #include "TSVD_QOD.h"
 #include "TSISEvent.h"
 
@@ -57,6 +58,8 @@ class TA2SpillScalerData: public TSpillScalerData
 
    ClassDef(TA2SpillScalerData,1);
 };
+#endif
+#ifdef BUILD_AG
 #include "TStoreEvent.hh"
 #include "TChrono_Event.h"
 #include "chrono_module.h"
@@ -74,7 +77,7 @@ class TAGSpillScalerData: public TSpillScalerData
    virtual void Print();
    ClassDef(TAGSpillScalerData,1);
 };
-
+#endif
 class TSpillSequencerData: public TObject
 {
    public:
@@ -93,7 +96,7 @@ class TSpillSequencerData: public TObject
 
    ClassDef(TSpillSequencerData,1);
 };
-
+#ifdef BUILD_A2
 class TA2SpillSequencerData: public TSpillSequencerData
 {
    public:
@@ -105,7 +108,8 @@ class TA2SpillSequencerData: public TSpillSequencerData
 
    ClassDef(TA2SpillSequencerData,1);
 };
-
+#endif
+#ifdef BUILD_AG
 class TAGSpillSequencerData: public TSpillSequencerData
 {
    public:
@@ -117,7 +121,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
 
    ClassDef(TAGSpillSequencerData,1);
 };
-
+#endif
 class TSpill: public TObject
 {
 public:
@@ -146,7 +150,7 @@ public:
    ClassDef(TSpill,1);
 
 };
-
+#ifdef BUILD_A2
 class TA2Spill: public TSpill
 {
 public:
@@ -170,7 +174,8 @@ public:
    ~TA2Spill();
    ClassDef(TA2Spill,1);
 };
-
+#endif
+#ifdef BUILD_AG
 class TAGSpill: public TSpill
 {
 public:
@@ -184,6 +189,6 @@ public:
    TString Content(std::vector<std::pair<int,int>>*, int& );
    ClassDef(TAGSpill,1);
 };
-
+#endif
 
 #endif

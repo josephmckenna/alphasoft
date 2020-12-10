@@ -1,4 +1,4 @@
-
+#ifdef BUILD_A2
 #ifndef _A2RootUtils_
 #define _A2RootUtils_
 #include "TSeq_Event.h"
@@ -30,6 +30,7 @@
 #include "TSplineGetters.h"
 #include "BinaryRunners.h"
 
+#endif
 #endif
 
 /* emacs

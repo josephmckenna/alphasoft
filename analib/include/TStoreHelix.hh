@@ -3,7 +3,7 @@
 // Stores essential information from TFitHelix
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
-
+#ifdef BUILD_AG
 #ifndef __TSTOREHELIX__
 #define __TSTOREHELIX__ 1
 
@@ -121,7 +121,7 @@ public:
 };
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

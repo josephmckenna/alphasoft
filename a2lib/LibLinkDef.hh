@@ -23,7 +23,7 @@
 #pragma link C++ class  TAlphaEventHit;
 #pragma link C++ class  TAlphaEventSil;
 #pragma link C++ class  TAlphaEventVerbose+;
-//#pragma link C++ class  TAlphaDisplay+;
+#pragma link C++ class  TAlphaDisplay+;
 #pragma link C++ class  TAlphaEventNCluster;
 #pragma link C++ class  TAlphaEventPCluster;
 #pragma link C++ class  TAlphaEventTrack;

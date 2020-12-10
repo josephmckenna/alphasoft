@@ -1,3 +1,5 @@
+
+#ifdef BUILD_A2
 #include "TA2SpillGetters.h"
 
 std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
@@ -50,3 +52,5 @@ std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> des
 
    return spills;
 }
+
+#endif
