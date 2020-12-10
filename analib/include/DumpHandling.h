@@ -81,7 +81,7 @@ class SVDCounts
    }
    friend std::ostream& operator<<(std::ostream& os, const SVDCounts& SVDC)
    {
-      if(SVDC.FirstVF48Event < 0)
+      if(SVDC.VF48Events < 500)
       {
          os << "DEBUG: SVDCounts object at" << &SVDC << "is not initialised/is empty" << std::endl;
          return os;

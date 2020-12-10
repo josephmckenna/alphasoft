@@ -69,7 +69,7 @@ bool    PedFlags::ForceStripsFile = false;
 TString PedFlags::CustomStripsFile="";
 double  PedFlags::NSIGMATHRES=3.;
 int 	PedFlags::nPedBins = 512;
-double 	PedFlags::pedBinWidth = 0.1;
+double 	PedFlags::pedBinWidth = 1;
 
 
 class PedModule_vf48: public TARunObject
