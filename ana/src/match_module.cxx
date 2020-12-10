@@ -329,7 +329,7 @@ public:
                }
          }
       fFlags.ana_settings=new AnaSettings(json);
-      fFlags.ana_settings->Print();
+      //fFlags.ana_settings->Print();
    }
     MatchModuleFactory()
     {
