@@ -41,11 +41,16 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+find_package(ROOTANA)
+include_directories(${ROOTANA_INCLUDE_DIRS})
+
 # Include directories
 include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 #include_directories(include .) #Used for RootUtils
-include_directories(include $ENV{AGRELEASE}/recolib/include)
+if (BUILD_AG)
+   include_directories(include $ENV{AGRELEASE}/recolib/include)
+endif(BUILD_AG)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
@@ -55,11 +60,10 @@ ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
-if(ROOTANA_SUBMOD)
-  add_dependencies(analib rootana)
-endif()
-target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
-
+target_link_libraries(analib ${ROOT_LIBRARIES} )
+if (BUILD_AG)
+   target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
+endif(BUILD_AG)
 install(TARGETS analib DESTINATION lib)
 
 add_custom_command( TARGET analib POST_BUILD

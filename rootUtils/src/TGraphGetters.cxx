@@ -1,9 +1,9 @@
 #include "TGraphGetters.h"
 
-
+#ifdef BUILD_AG
 TGraph* Get_TPC_EventTime_vs_OfficialTime(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -24,10 +24,11 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime(Int_t runNumber, Double_t tmin, Double
    g->SetTitle("TPC Time vs Official time; Official Time (s); TPC Time (s)");
    return g;
 }
-
+#endif
+#ifdef BUILD_AG
 TGraph* Get_TPC_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -50,7 +51,7 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Double_t tmin, 
 }
 TGraph* Get_TPC_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -88,10 +89,11 @@ TGraph* Get_TPC_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Double_t tmi
 //
 // 3 comparisons of Chronobox run time with its own official time
 //
-
+#endif
+#ifdef BUILD_AG
 TGraph* Get_Chrono_EventTime_vs_OfficialTime(Int_t runNumber, Int_t b, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -114,9 +116,11 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime(Int_t runNumber, Int_t b, Double_t 
    g->SetTitle(title.Data());
    return g;
 }
+#endif
+#ifdef BUILD_AG
 TGraph* Get_Chrono_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Int_t b, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -141,9 +145,11 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Int_t b, Dou
    g->SetTitle(title.Data());
    return g;
 }
+#endif
+#ifdef BUILD_AG
 TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, Double_t tmin, Double_t tmax)
 {
-   if (tmax<0) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0) tmax=GetAGTotalRunTime(runNumber);
    std::vector<double> x,y;
    int points=0;
    double official_time;
@@ -178,6 +184,7 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, 
    g->SetTitle(title.Data());
    return g;
 }
+#endif
 
 //
 //  3 comparisons of Official chronobox time vs official chronobox time

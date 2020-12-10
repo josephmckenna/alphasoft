@@ -21,6 +21,7 @@ void TimeAmpAW()
   cout<<fin->GetName()<<"\t"<<run<<endl;
   gDirectory->cd("/awdeconv/adcwf/adc32");
   TString hname("hadcampch000");
+  TString htitle="";
   TH2D* h0 = (TH2D*) gROOT->FindObject(hname);
   int NbinsX=h0->GetNbinsX(), NbinsY=h0->GetNbinsY();
   double xmin=h0->GetXaxis()->GetXmin(), ymin=h0->GetYaxis()->GetXmin(),
@@ -35,7 +36,7 @@ void TimeAmpAW()
   for(int i=0; i<Nawb; ++i)
     {
       hname=TString::Format("htampawb%02d",i);
-      TString htitle=TString::Format("Pulse Height Vs. Time AWB T%02d;Time [ns];P.H. [a.u.]",i);
+      htitle=TString::Format("Pulse Height Vs. Time AWB T%02d;Time [ns];P.H. [a.u.]",i);
       hta[i]=new TH2D(hname,htitle,NbinsX,xmin,xmax,NbinsY,ymin,ymax);
       for(int j=0; j<Ncha; ++j)
 	{
@@ -120,6 +121,9 @@ void TimeAmpAW()
   cname="csptawampR";
   cname+=run;
   TCanvas* c3 = new TCanvas(cname,cname,1700,1200);
+  htitle=hsptawamp_px->GetTitle();
+  htitle+=";Drift Time [ns];~Avanlanche Size [a.u.]";
+  hsptawamp_px->SetTitle(htitle);
   hsptawamp_px->Draw();
   //hsptawamp->Draw();
   c3->SaveAs(".pdf");   c3->SaveAs(".pdf");

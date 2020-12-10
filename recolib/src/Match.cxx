@@ -50,18 +50,18 @@ Match::Match(const AnaSettings* ana_set):
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
-  std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
+  //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=1;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
   if ( CentreOfGravityFunction <= 0 )
     {
-      std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
+      std::cout<<"Match::Match(json) No valid CentreOfGravityMethod function in json"<<std::endl;
       exit(1);
     }
   else
-    std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
+    std::cout<<"Match::Match(json) Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 }
 
 Match::~Match()
@@ -81,10 +81,13 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
+	  int error_level_save = gErrorIgnoreLevel;
+	  gErrorIgnoreLevel = kFatal;
           if( !gDirectory->cd("padmatch") )
             gDirectory->mkdir("padmatch")->cd();
 	  else 
 	    gDirectory->cd("padmatch");
+	  gErrorIgnoreLevel = error_level_save;
         }
       else
         gFile->cd();
@@ -301,7 +304,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   if(!vsig.size()) return;
 
   //Root's fitting routines are often not thread safe, lock globally
-  mtx.lock();
+  manalzer_global_mtx->lock();
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -464,7 +467,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
-  mtx.unlock();
+  manalzer_global_mtx->unlock();
 }
 
 
@@ -634,10 +637,10 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	    {
 	      if( fabs(pos) < ALPHAg::_halflength )
 		{
-		  mtx.lock();
+		  manalzer_global_mtx->lock();
 		  // create new signal with combined pads
 		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
-		  mtx.unlock();
+		  manalzer_global_mtx->unlock();
 		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
 		  ++nPositions;

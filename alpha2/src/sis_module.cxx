@@ -15,9 +15,7 @@
 
 #include <TBufferJSON.h>
 #include <fstream>
-#include "AnalysisTimer.h"
 
-#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "TSISEvent.h"
@@ -62,7 +60,9 @@ public:
    SIS(TARunInfo* runinfo, SISFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="sis_module";
+#endif
       if (fTrace)
          printf("SIS::ctor!\n");
    }
@@ -147,7 +147,9 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    {
       if (event->event_id != 11)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       event->FindAllBanks();
@@ -201,7 +203,9 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       SISModuleFlow* mf=flow->Find<SISModuleFlow>();
       if (!mf)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 

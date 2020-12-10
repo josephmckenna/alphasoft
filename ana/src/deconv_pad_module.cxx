@@ -4,7 +4,6 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 
 #include "Deconv.hh"
@@ -54,7 +53,9 @@ public:
                                                            d( f->ana_settings )
       
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="DeconvPADModule";
+#endif
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");
    }
@@ -105,7 +106,9 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if(fTrace)
@@ -115,7 +118,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
@@ -124,12 +129,16 @@ public:
       {
          if (e->time<fFlags->start_time)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
          if (e->time>fFlags->stop_time)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }
@@ -138,13 +147,17 @@ public:
       {
          if (e->counter<fFlags->start_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       
          if (e->counter>fFlags->stop_event)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       }

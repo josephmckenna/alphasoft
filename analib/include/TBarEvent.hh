@@ -1,3 +1,4 @@
+#ifdef BUILD_AG
 #ifndef __TBAREVENT__
 #define __TBAREVENT__ 1
 
@@ -19,7 +20,6 @@ private:
   double fTDCTime=-1;
   //ADC data'
   double fADCTime=-1;
-  double fPeakTime=-1;
   double fAmp=-1;
   bool fTDCMatched=false;
 
@@ -29,12 +29,11 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
-  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime, double _fPeakTime) 
+  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime) 
   {
      fBarID=_fBarID;
      fAmp=_fAmp;
      fADCTime=_fADCTime;
-     fPeakTime=_fPeakTime;
   }
   void SetTDCHit(double _fTDCTime)
   {
@@ -46,7 +45,6 @@ public:
   int GetBar() const {return fBarID;}
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
-  double GetPeakTime() const {return fPeakTime;}
   double GetTDCTime() const {return fTDCTime; }
   void GetXY(double &x, double &y)
   {
@@ -175,10 +173,10 @@ public:
     fBarHit.push_back(b);
   }
 
-  void AddADCHit(int fBarID, double fAmp, double fADCTime, double fPeakTime)
+  void AddADCHit(int fBarID, double fAmp, double fADCTime)
   {
      EndHit* hit = new EndHit;
-     hit->SetADCHit( fBarID, fAmp, fADCTime, fPeakTime);
+     hit->SetADCHit( fBarID, fAmp, fADCTime);
      AddEndHit(hit);
   }
 
@@ -192,7 +190,7 @@ public:
 
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

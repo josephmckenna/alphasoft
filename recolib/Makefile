@@ -14,23 +14,23 @@ INCS += -I../simulation/geant4/include
 INCS += -I$(ROOTANASYS)/include
 
 LDFLAGS=$(shell root-config --ldflags)
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
 
 INC=$(wildcard include/*.hh) RecoLinkDef.hh
 DICT=agtpc.cc
 SRC=$(wildcard src/*.cxx) $(DICT)
 SRC:= $(patsubst src/%.cxx,obj/%.o,$(SRC))
 
-all: CXXFLAGS=-g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags)
+all: CXXFLAGS=-g -O3 -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 all: linkdirs libagtpc.so
 
-debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 debug: linkdirs libagtpc.so
 
-native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
+native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native $(BUILD_FLAGS)
 native: linkdirs libagtpc.so
 
-O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
+O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
 O2: linkdirs libagtpc.so
 
 linkdirs:

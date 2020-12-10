@@ -13,7 +13,6 @@
 #include <set>
 #include <iostream>
 
-#include "AnalysisTimer.h"
 #include "AnaSettings.hh"
 #include "Match.hh"
 
@@ -54,7 +53,9 @@ public:
    SpacepointModule(TARunInfo* runinfo, SpacepointFlags* f)
       : TARunObject(runinfo)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="SpacePoint Module";
+#endif
       if (fTrace)
          printf("SpacepointModule::ctor!\n");
 
@@ -104,7 +105,9 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if(fTrace)
@@ -114,7 +117,9 @@ public:
 
       if (!ef || !ef->fEvent)
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -122,12 +127,16 @@ public:
          {
             if (ef->fEvent->time<fFlags->start_time)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
             if (ef->fEvent->time>fFlags->stop_time)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
          }
@@ -136,12 +145,16 @@ public:
          {
             if (ef->fEvent->counter<fFlags->start_event)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
             if (ef->fEvent->counter>fFlags->stop_event)
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
          }
@@ -149,12 +162,16 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if( ! SigFlow->awSig )
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       if( fTrace )

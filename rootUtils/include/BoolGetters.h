@@ -4,7 +4,9 @@
 
 #ifndef _BoolGetters_
 #define _BoolGetters_
+#ifdef BUILD_AG
 Bool_t ChronoboxesHaveChannel(Int_t runNumber, const char* Name);
+#endif
 Bool_t IsPathExist(const TString &s);
 #endif
 

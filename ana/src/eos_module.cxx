@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <cassert>
-#include "AnalysisTimer.h"
 #include "TSystem.h"
 #include <sys/stat.h>
 #include "TObjArray.h"
@@ -308,7 +307,9 @@ public:
    EOS(TARunInfo* runinfo, EOSFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="EOS Module";
+#endif
       if (!fFlags->fEOS) return;
       if (fTrace)
          printf("EOS::ctor!\n");
