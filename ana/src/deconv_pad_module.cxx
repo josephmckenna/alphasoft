@@ -72,7 +72,8 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
 
-      d.SetupPWBs( runinfo->fRunNo, 
+      d.SetupPWBs( runinfo->fRoot->fOutputFile,
+                   runinfo->fRunNo, 
                    fFlags->fPWBnorm,   // dis/en-able normalization of WF
                    fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
@@ -183,7 +184,7 @@ public:
 
              if( fFlags->fDiag )
                {
-                  d.PADdiagnostic();
+                  //d.PADdiagnostic();
                   flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
                   //                  flow_sig->pwbRange = d.GetPwbRange();
                }

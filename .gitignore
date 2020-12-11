@@ -66,6 +66,7 @@ build
 bin
 output
 *.save
+<<<<<<< HEAD
 results/resultsFullOrig/result37994.txt
 results/resultsFullOrig/result37997.txt
 results/resultsFullOrig/result38881.txt
@@ -107,3 +108,6 @@ results/resultsFullOrig/result56974.txt
 results/resultsFullOrig/result57117.txt
 results/resultsFullOrig/result57179.txt
 results/resultsFullOrig/result57207.txt
+=======
+*_C.d
+>>>>>>> agsoft

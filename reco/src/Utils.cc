@@ -33,23 +33,11 @@ Utils::Utils(double B):fHisto(),pmap(),
    MakeCanvases();
 }
 
-// Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
-//                                                      fMagneticField(B),tmax(4500.)
-// {
-//    // BookG4Histos();
-//    // BookAGG4Histos();
-
-//    if( draw )
-//       {
-         
-//       }
-// }
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
-{
-   //   BookRecoHistos();
-}
+{}
+
 
 void Utils::MakeCanvases()
 {
@@ -93,34 +81,34 @@ void Utils::BookG4Histos()
 
 void Utils::BookAGG4Histos()
 {
-    fHisto.Book("hpTgood","Transverse Momentum of Good Helices;p_{T} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpZgood","Longitudinal Momentum of Good Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
-    fHisto.Book("hpTused","Transverse Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpZused","Longitudinal Momentum of Used Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+   fHisto.Book("hpTgood","Transverse Momentum of Good Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpZgood","Longitudinal Momentum of Good Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+   fHisto.Book("hpTused","Transverse Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpZused","Longitudinal Momentum of Used Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
 
-    fHisto.Book("hpToTgood","Total Momentum of Good Helices;p_{Z} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpToTused","ToT Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpToTgood","Total Momentum of Good Helices;p_{Z} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpToTused","ToT Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
 
-    fHisto.Book("hpTZgood","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
-                2000,0.,2000.,2000,0.,2000.);
-    fHisto.Book("hpTZused","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
-                2000,0.,2000.,2000,0.,2000.);
+   fHisto.Book("hpTZgood","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+               2000,0.,2000.,2000,0.,2000.);
+   fHisto.Book("hpTZused","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+               2000,0.,2000.,2000,0.,2000.);
 
-    fHisto.Book("hVchi2","Vertex Fit #chi^{2};#chi^{2};events",5000,0.,15.);
+   fHisto.Book("hVchi2","Vertex Fit #chi^{2};#chi^{2};events",5000,0.,15.);
 
-    fHisto.Book("hResX", "Vertex Resolution X,x_{MC} - x_{REC} [mm];events",3000,-150.,150.);
-    fHisto.Book("hResY", "Vertex Resolution Y,y [mm];events",3000,-150.,150.);
-    fHisto.Book("hResRad","Vertex Resolution R;r [mm];events",3000,-150.,150.);
-    fHisto.Book("hResPhi","Vertex Resolution #phi;#phi [rad];events",6000,
-                -TMath::TwoPi(),TMath::TwoPi());
-    fHisto.Book("hResZed","Vertex Resolution Z;z [mm];events",5000,-1152.,1152.);
+   fHisto.Book("hResX", "Vertex Resolution X,x_{MC} - x_{REC} [mm];events",3000,-150.,150.);
+   fHisto.Book("hResY", "Vertex Resolution Y,y [mm];events",3000,-150.,150.);
+   fHisto.Book("hResRad","Vertex Resolution R;r [mm];events",3000,-150.,150.);
+   fHisto.Book("hResPhi","Vertex Resolution #phi;#phi [rad];events",6000,
+               -TMath::TwoPi(),TMath::TwoPi());
+   fHisto.Book("hResZed","Vertex Resolution Z;z [mm];events",5000,-1152.,1152.);
 
-    fHisto.Book("hRadProf","Vertex Radial Profile;r [mm];events",500,0.,100.);
-    fHisto.Book("hAxiProf","Vertex Axial Profile;z [mm];events",3000,-1152.,1152);
+   fHisto.Book("hRadProf","Vertex Radial Profile;r [mm];events",500,0.,100.);
+   fHisto.Book("hAxiProf","Vertex Axial Profile;z [mm];events",3000,-1152.,1152);
 
-    fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
-    fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
-    fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+   fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+   fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
+   fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
 }
 
 void Utils::BookRecoHistos()
@@ -144,6 +132,7 @@ void Utils::BookRecoHistos()
    fHisto.Book("hpattreceff","Reconstructed Spacepoints/Tracks",200,0.,200.);
    fHisto.Book("hgoodpattreceff","Reconstructed Good Spacepoints/Tracks",200,0.,200.);
 
+   // intermediate step: spacepoints from reco tracks
    fHisto.Book("hOccPadtracks","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
    fHisto.Book("hOccAwtracks","Aw Occupancy for Tracks;aw",256,-0.5,255.5);
 
@@ -163,6 +152,7 @@ void Utils::BookRecoHistos()
    fHisto.Book("hhD","Hel D;[mm]",500,-190.,190.);
    fHisto.GetHisto("hhD")->SetMinimum(0);
 
+   // spacepoints from fit tracks
    fHisto.Book("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
    fHisto.Book("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
    fHisto.GetHisto("hOccAw")->SetMinimum(0);
@@ -175,18 +165,22 @@ void Utils::BookRecoHistos()
    fHisto.Book("hspzed","Spacepoint Axial for Good Tracks;z [mm]",125,-1152.,1152.);
 
    fHisto.Book("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
-               500,-1152.,1152.,100,0.,360.);
+               600,-1200.,1200.,256,0.,360.);
    fHisto.Book("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
 
    fHisto.Book("hTrackXaw","Number of Good Tracks per AW;aw",256,-0.5,255.5);
    fHisto.Book("hTrackXpad","Number of Good Tracks per Pad;row;sec",576,-0.5,575.5,32,-0.5,31.5);
+ 
 
+   // reco vertex
    fHisto.Book("hvtxrad","Vertex R;r [mm]",200,0.,190.);
    fHisto.Book("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
    fHisto.GetHisto("hvtxphi")->SetMinimum(0);
    fHisto.Book("hvtxzed","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto.Book("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",100,-1152.,1152.,180,0.,360.);
+
 }
+
 
 void Utils::FillRecoPointsHistos(const TObjArray* points)
 {  
@@ -194,6 +188,7 @@ void Utils::FillRecoPointsHistos(const TObjArray* points)
    for(int p=0; p<points->GetEntriesFast(); ++p)
       {
          TSpacePoint* ap = (TSpacePoint*) points->At(p);
+         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
          fHisto.FillHisto("hOccAwpoints",ap->GetWire());
          fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
          pmap.get(ap->GetPad(),sec,row);
@@ -301,6 +296,8 @@ void Utils::FillRecoVertex(const TFitVertex* Vertex)
    fHisto.FillHisto("hvtxzed",Vertex->GetElevation());
    fHisto.FillHisto("hvtxzedphi",Vertex->GetElevation(),phi);
 }
+
+// ===============================================================================================
 
 void Utils::FillFinalHistos(const Reco* r, int ntracks)
 {
@@ -986,9 +983,9 @@ TH2D* Utils::PlotSignals(std::vector<ALPHAg::signal>* awsignals,
                          std::vector<ALPHAg::signal>* padsignals, std::string type)
 {
    std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
-                                                      awsignals->end());
+                                                                      awsignals->end());
    std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(),
-                                                       padsignals->end());
+                                                                       padsignals->end());
    int Nmatch=0;
    std::ostringstream hname;
    hname<<"hmatch"<<type;
