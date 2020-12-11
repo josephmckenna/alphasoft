@@ -14,7 +14,7 @@
 #include "TMath.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "AnalysisTimer.h"
+#include "TF1.h"
 
 #include "TBarEvent.hh"
 
@@ -231,6 +231,8 @@ public:
                   if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
                   else hWave->SetBinError(bin_num,100);
                }
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+            {
 
             if( !(fFlags->fPulser) )  // Normal run
                {
@@ -300,6 +302,7 @@ public:
                }
             if( !(fFlags->fPulser) )  // Normal run
                delete sgfit;
+            }
 
          }
 

@@ -47,6 +47,9 @@ add_custom_command(
     COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
     )
 
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 # Directories
 add_subdirectory(src)
 
@@ -64,27 +67,34 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 link_libraries(${ROOT_LIBRARIES})
 
-##Horrible horrible hack to get the libs for rootana (from rootana/include/rootana_cflags.txt )
-list(APPEND ROOTANALIBS z Gui Core Imt RIO Net Hist Graf Graf3d Gpad ROOTVecOps Tree TreePlayer Rint Postscript Matrix Physics MathCore Thread MultiProc ROOTDataFrame m dl Thread XMLParser XMLIO RHTTP XMLParser XMLIO RHTTP)
-link_libraries(${ROOTANALIBS})
-#This below is broken and needs a REGEX wizard:
-#Get the libs for rootana (from rootana/include/rootana_libs.txt )
-#file( READ $ENV{ROOTANASYS}/include/rootana_libs.txt rootana_libs) 
-#string(REPLACE "\n" "" rootana_libs "${rootana_libs}" )
-#list(APPEND ROOTANALIBS ${rootana_libs})
-#link_libraries(rootana ${ROOTANALIBS})
+
 
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
 
-#link_libraries(agana AGTPC aged)
-link_directories($ENV{ROOTANASYS}/lib)
-
-# analib/ AGTPC aged)
-#link_directories(analib/ recolib/ aged/)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
+
+# MIDAS -- live analyzer
+set(MIDASSYS "" CACHE PATH "")
+if(MIDASSYS STREQUAL "")
+    set(MIDASSYS "$ENV{MIDASSYS}")
+endif()
+if(MIDASSYS STREQUAL "")
+    find_package(Midas QUIET)
+else()
+    set(MIDAS_FOUND TRUE)
+    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
+endif()
+if(MIDAS_FOUND)
+  message(STATUS "MIDAS found")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+  link_libraries(${MIDAS_LIBRARIES})
+  link_directories($ENV{MIDASSYS}/lib)
+endif()
 
 # Include directories
 include_directories($ENV{AGRELEASE}/agana)
@@ -139,7 +149,7 @@ foreach( LIST_FILE ${BINS} )
 
     #message(Modules: ${MODULES})
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main $ENV{AGRELEASE}/agana/unpack_module ${MODULES} )
+    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
     add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
@@ -149,7 +159,10 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(${bin} analib $ENV{ROOTANASYS}/lib)
+    link_directories(${bin} analib)
+
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")

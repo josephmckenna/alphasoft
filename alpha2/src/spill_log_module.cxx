@@ -28,9 +28,6 @@
 
 #define HOT_DUMP_LOW_THR 500
 
-
-#include "AnalysisTimer.h"
-
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
 
@@ -90,7 +87,9 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="SpillLog";
+#endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
       
@@ -384,7 +383,9 @@ public:
       }
       else
       {
+#ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+#endif
       }
       return flow;
    }

@@ -19,6 +19,8 @@ private:
    bool fDebug;
    bool diagnostic;
 
+   std::mutex* manalzer_global_mtx;
+
    const AnaSettings* ana_settings;
    const double fCoincTime; // ns
 
@@ -43,6 +45,8 @@ private:
    int CentreOfGravityFunction = -1; //One day we can maybe make this const :)
 
    double relCharge[8] = {1., 1.33687717, 1.50890722, 1.56355571, 1.56355571, 1.50890722, 1.33687717, 1.};
+
+
 
    //bool diagnostic;
 
@@ -98,13 +102,14 @@ private:
 
    ALPHAg::padmap pmap;
 
-   std::mutex mtx;
-
 public:
    Match(const AnaSettings* ana_settings);
    Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
    ~Match();
-
+   void SetGlobalLockVariable(std::mutex* _manalyzerLock)
+   {
+      manalzer_global_mtx=_manalyzerLock;
+   }
    void Init();
    void Setup(TFile* OutputFile);
 

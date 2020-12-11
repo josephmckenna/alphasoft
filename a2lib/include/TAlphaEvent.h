@@ -224,6 +224,9 @@ private:
     fVertDCACut=_fVertDCACut;
   }
   
+  using TObject::Print;
+  virtual void Print();
+
   void FlipZofHits();
   ClassDef(TAlphaEvent,6);
   

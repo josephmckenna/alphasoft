@@ -7,6 +7,9 @@ set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(BUILD_AG "Build AG" ON)
+option(BUILD_A2 "Build A2" ON)
+
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -41,9 +44,11 @@ find_package(ROOT REQUIRED COMPONENTS)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+find_package(ROOTANA)
+include_directories(${ROOTANA_INCLUDE_DIRS})
+
 # Include directories
 include_directories(include include)
-include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
@@ -54,9 +59,16 @@ include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
+
+
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
-target_link_libraries(rootUtils ${ROOT_LIBRARIES})
+if (BUILD_AG)
+   target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
+endif (BUILD_AG)
+if (BUILD_A2)
+   target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2)
+endif (BUILD_A2)
 
 install(TARGETS rootUtils DESTINATION lib)
 

@@ -47,7 +47,7 @@ pipelines:
             #- ./RunChecker.sh
 
      - step:
-        name: Update rootana and build
+        name: Test update rootana then agana and commit
         script: 
             - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
@@ -66,6 +66,20 @@ pipelines:
             - git add rootana
             - SUMMARY=`git submodule summary`
             - git commit -m "[skip ci] Update rootana (agana compiles ok with this new version)" -m "${SUMMARY}"
+            - git push origin
+            - UPDATE_AGANA=`git submodule update --remote agana | wc -l`
+            - echo ${UPDATE_AGANA}
+            #If the version is the same, quit... nothing to do here
+            - if [ ${UPDATE_AGANA} -eq 0 ]; then exit; fi
+            - make clean
+            - make
+            #If compiling was successful... push the new version of rootana to agdaq repo
+            - git remote set-url origin git@bitbucket.org:/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}.git
+            - git config user.name "bitbucket CI"
+            - git remote -v 
+            - git add agana
+            - SUMMARY=`git submodule summary`
+            - git commit -m "[skip ci] Update agana (agsoft compiles ok with this new version)" -m "${SUMMARY}"
             - git push origin
 
 definitions:

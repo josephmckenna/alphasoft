@@ -1,7 +1,7 @@
 #include "IntGetters.h"
 
 
-
+#ifdef BUILD_AG
 Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
@@ -12,8 +12,8 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
    delete n;
    return Channel;
 }
-
-
+#endif
+#ifdef BUILD_AG
 ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch)
 {
    ChronoChannel c;
@@ -31,13 +31,13 @@ ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_
    }
    return {-1, -1};
 }
-
-
+#endif
+#ifdef BUILD_AG
 Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Double_t tmin, Double_t tmax)
 {
    Int_t Counts=0;
    double official_time;
-   if (tmax<0.) tmax=GetTotalRunTime(runNumber);
+   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,Channel,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
@@ -50,8 +50,8 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Dou
    }
    return Counts;
 }
-
-
+#endif
+#ifdef BUILD_AG
 Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin, Double_t tmax)
 {
    Int_t chan=-1;
@@ -63,8 +63,8 @@ Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmi
    }
    return GetCountsInChannel( runNumber,  board, chan, tmin, tmax);
 }
-
-
+#endif
+#ifdef BUILD_AG
 Int_t ApplyCuts(TStoreEvent* e)
 {
    //Dummy example of ApplyCuts for a TStoreEvent... 
@@ -77,8 +77,11 @@ Int_t ApplyCuts(TStoreEvent* e)
       if (R<4.5) return 1;
    return 0;
 }
+#endif
+#ifdef BUILD_AG
 
-
+#endif
+#ifdef BUILD_AG
 Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
 {
    double ot; //official time;
@@ -109,6 +112,7 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
    return  GetTPCEventNoBeforeOfficialTime(runNumber, tmax)+1;
 }
+#endif
 
 
 

@@ -368,6 +368,7 @@ void TAlphaEventSil::Print(Option_t*) const
 {
   //  std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" name: "<<ReturnSilName(GetSilNum())<<" layer: "<<GetLayer()<<std::endl;
   std::cout<<"TAlphaEventSil::Silicon #:"<<GetSilNum()<<" layer: "<<map->GetLayer(GetSilNum())<<std::endl;
+  std::cout<<"\t NClusters:"<<fNClusters.size()<<"\t\t PClusters:"<<fPClusters.size()<<"\t\t Hits:"<<fHits.size()<<std::endl;
   for( int s=0; s<128; ++s)
     {
       std::cout<<s<<"\t"<<fASIC[0][s]<<"\t"<<fASIC[1][s]<<"\t"<<fASIC[2][s]<<"\t"<<fASIC[3][s]<<std::endl;

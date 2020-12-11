@@ -1,3 +1,4 @@
+#ifdef BUILD_AG
 #ifndef __TBAREVENT__
 #define __TBAREVENT__ 1
 
@@ -189,7 +190,7 @@ public:
 
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

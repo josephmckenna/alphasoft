@@ -37,6 +37,9 @@ add_custom_command(
     )
 
 
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 # Directories
 add_subdirectory(src)
 
@@ -62,13 +65,17 @@ include_directories(include .) #Used for RootUtils
 #include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
+
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
 find_library(LIBSQLITE3 sqlite3)
-target_link_libraries(alpha2 ${ROOT_LIBRARIES} ${LIBSQLITE3})
+target_link_libraries(alpha2 ${ROOT_LIBRARIES} ${LIBSQLITE3} )
+
+if(ROOTANA_SUBMOD)
+  add_dependencies(alpha2 rootana)
+endif()
