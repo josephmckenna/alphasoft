@@ -56,6 +56,8 @@ public:
 
    AnaSettings* ana_settings=0;
 
+   std::string fLocation="CERN";
+
 public:
    RecoRunFlags() // ctor
    { }
@@ -84,8 +86,6 @@ private:
 
    bool fiducialization; // exclude points in the inhomogeneous field regions
    double z_fid; // region of inhomogeneous field
-
-   double MagneticField;
  
 public:
    TStoreEvent *analyzed_event;
@@ -93,13 +93,14 @@ public:
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField)
+                                                 r( f->ana_settings, f->fMagneticField,  
+                                                    f->fLocation)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="RecoModule";
 #endif
       printf("RecoRun::ctor!\n");
-      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;
+      //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
       fiducialization=fFlags->ffiduc;
       z_fid=650.; // mm
@@ -135,16 +136,16 @@ public:
       std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
       r.SetFudgeFactors(f_rfudge,f_pfudge);
 
-      {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-         analyzed_event = new TStoreEvent;
-         EventTree = new TTree("StoreEventTree", "StoreEventTree");
-         EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
-         delete analyzed_event;
-         analyzed_event=NULL;
-      }
-      //if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
+
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+
+      analyzed_event = new TStoreEvent;
+      EventTree = new TTree("StoreEventTree", "StoreEventTree");
+      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
+      delete analyzed_event;
+      analyzed_event=NULL;
+
+      if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
   
       std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
       runinfo->fRoot->fOutputFile->cd();
@@ -243,8 +244,7 @@ public:
                   return flow;
                }
          }
-      if( fTrace )
-         printf("RecoRun::AnalyzeFlowEvent Event # %d\n",age->counter);
+      std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
@@ -297,20 +297,19 @@ public:
             else
                r.AddSpacePoint( SigFlow->matchSig, z_fid );
       
-            //printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
+            printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
             r.FindTracks(fFlags->finder);
-            //printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
-            //if( fTrace ) 
-            printf("RecoRun::AnalyzeFlowEvent  Points: %d  Tracks: %d\n",
-                                r.GetNumberOfPoints(),
-                                r.GetNumberOfTracks());
+            printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 
-            int nlin=0;
-            if( MagneticField < 0.5 ) nlin = r.FitLines();
+            if( fFlags->fMagneticField == 0. )
+               {
+                  int nlin = r.FitLines();
+                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+               }
 
             int nhel = r.FitHelix();
-            if( fTrace ) printf("RecoRun::AnalyzeFlowEvent lines %d, helices %d\n",nlin,nhel);           
+            std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
 
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
@@ -434,11 +433,11 @@ public:
          
          if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          
-         if( args[i] == "--anasettings" ) json=args[++i];
+         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
-      fFlags.ana_settings->Print();
+      //  fFlags.ana_settings->Print();
    }
 
    void Finish()

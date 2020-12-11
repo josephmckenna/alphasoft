@@ -38,12 +38,12 @@ private:
 
 public:
   LookUpTable(int run);
-  LookUpTable(double quencherFrac, double B);
+  LookUpTable(double quencherFrac, double B, std::string location="CERN");
   LookUpTable(double quencherFrac);
   ~LookUpTable();
 
   bool SetRun(int run);
-  bool SetGas(double quencherFrac, double B);
+  bool SetGas(double quencherFrac, double B, std::string location);
   bool SetGas(double quencherFrac);
   bool SetDefault();
 

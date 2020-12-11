@@ -23,20 +23,16 @@ option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
-#Send these settings as precompiler flags (mostly used in rootUtils)
-if (BUILD_AG)
-   add_compile_definitions(BUILD_AG)
-endif (BUILD_AG)
-if (BUILD_A2)
-   add_compile_definitions(BUILD_A2)
-endif (BUILD_A2)
+
 
 set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
 message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
+   # execute_process(COMMAND rm -vf $ENV{AGRELEASE}/CMakeCache.txt) This doesn't work... CMakeCache.txt gets updated after delete
+   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory! And please delete: $ENV{AGRELEASE}/CMakeCache.txt")
+   
 endif(_insource) 
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
@@ -52,17 +48,30 @@ endif ()
 
 function(get_submodule MODULE_NAME)
    if(GIT_SUBMODULE)
-        message(STATUS "Submodule ${MODULE_NAME} update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${MODULE_NAME}
+      if(EXISTS "$ENV{AGRELEASE}/${MODULE_NAME}/.git")
+         message("${MODULE_NAME} submodule ok")
+      else()
+         message(STATUS "Submodule ${MODULE_NAME} update --init")
+         execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${MODULE_NAME}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+         if(NOT GIT_SUBMOD_RESULT EQUAL "0")
             message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-        endif()
+         endif()
+      endif()
     endif()
 endfunction()
 
 # Directories
+set( _AGANA_STATIC TRUE)
+
+#Send these settings as precompiler flags (mostly used in rootUtils)
+if (BUILD_AG)
+   add_compile_definitions(BUILD_AG)
+endif (BUILD_AG)
+if (BUILD_A2)
+   add_compile_definitions(BUILD_A2)
+endif (BUILD_A2)
 
 
 #Universal libraries (Include some flow and TSpill stuff)
@@ -70,7 +79,7 @@ get_submodule(rootana)
 add_subdirectory(rootana)
 add_subdirectory(analib)
 
-#rootUtils is customised based on above arguments
+#rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
 
 #AG libraries

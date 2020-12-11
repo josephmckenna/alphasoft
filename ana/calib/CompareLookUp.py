@@ -60,7 +60,7 @@ if __name__=='__main__':
                         help='Magnetic Field in Tesla')
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-r','--run', type=int,
+    group.add_argument('-r','--run', #type=int,
                        nargs='*',
                        help='Run number to plot')
     group.add_argument('-l','--runlist',

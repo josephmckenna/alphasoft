@@ -15,11 +15,11 @@
 
 //Null static pointers to histograms (histograms static so can be shared 
 //between Match instances in multithreaded mode)
-TH1D* Match::hsigCoarse=NULL;
-TH1D* Match::hsig=NULL;
+//TH1D* Match::hsigCoarse=NULL;
+//TH1D* Match::hsig=NULL;
 TH1D* Match::hcognpeaks=NULL;
-TH2D* Match::hcognpeaksrms=NULL;
-TH2D* Match::hcognpeakswidth=NULL;
+// TH2D* Match::hcognpeaksrms=NULL;
+// TH2D* Match::hcognpeakswidth=NULL;
 TH1D* Match::hcogsigma=NULL;
 TH1D* Match::hcogerr=NULL;
 TH2D* Match::hcogpadssigma=NULL;
@@ -50,18 +50,18 @@ Match::Match(const AnaSettings* ana_set):
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
-  std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
+  //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=1;
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
   if ( CentreOfGravityFunction <= 0 )
     {
-      std::cout<<"Match:No valid CentreOfGravityMethod function in json"<<std::endl;
+      std::cout<<"Match::Match(json) No valid CentreOfGravityMethod function in json"<<std::endl;
       exit(1);
     }
   else
-    std::cout<<"Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
+    std::cout<<"Match::Match(json) Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 }
 
 Match::~Match()
@@ -81,10 +81,13 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
+	  int error_level_save = gErrorIgnoreLevel;
+	  gErrorIgnoreLevel = kFatal;
           if( !gDirectory->cd("padmatch") )
             gDirectory->mkdir("padmatch")->cd();
 	  else 
 	    gDirectory->cd("padmatch");
+	  gErrorIgnoreLevel = error_level_save;
         }
       else
         gFile->cd();
@@ -92,12 +95,12 @@ void Match::Setup(TFile* OutputFile)
       if (!hcognpeaks)
          hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
-      if (!hcognpeaksrms)
-        hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
-			       0.,maxPadGroups+1.);
-      if (!hcognpeakswidth)
-        hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
-				 0.,maxPadGroups+1.);
+      // if (!hcognpeaksrms)
+      //   hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
+      // 			       0.,maxPadGroups+1.);
+      // if (!hcognpeakswidth)
+      //   hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
+      // 				 0.,maxPadGroups+1.);
       if (!hcogsigma)
         hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
       if (!hcogerr)
@@ -301,9 +304,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   if(!vsig.size()) return;
 
   //Root's fitting routines are often not thread safe, lock globally
-#ifdef MODULE_MULTITHREAD
-  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif
+  manalzer_global_mtx->lock();
   double time = vsig.begin()->t;
   short col = vsig.begin()->sec;
   TString hname = TString::Format("hhhhh_%d_%1.0f",col,time);
@@ -466,6 +467,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
+  manalzer_global_mtx->unlock();
 }
 
 
@@ -498,7 +500,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
 
   double blobwidth = 5.;
   double minRMS = 2.;
-
   int padmask = 4;
 
   double mean,rms;
@@ -581,8 +582,6 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
     {
       htimeblobs->Fill(duration.count());
       hcognpeaks->Fill(nfound);
-      // hcognpeaksrms->Fill(rms, nfound);
-      // hcognpeakswidth->Fill(width, nfound);
     }
 
   fitSignals ffs( vsig_sorted, nfound );
@@ -622,7 +621,6 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 
 	  if( diagnostic )
 	    {
-	      // mtx.lock();
 	      hcogsigma->Fill(sigma);
 	      hcogerr->Fill(err);
 	      int index = pmap.index(col,row);
@@ -632,7 +630,6 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	      double totq = sqrt(2.*M_PI)*sigma*amp;
 	      hcogpadsint->Fill(double(index),totq);
 	      hcogpadsampamp->Fill(peaky[i],amp);
-	      // mtx.unlock();
 	    }
 
 	  if( err < padFitErrThres &&
@@ -640,10 +637,10 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	    {
 	      if( fabs(pos) < ALPHAg::_halflength )
 		{
-		  mtx.lock();
+		  manalzer_global_mtx->lock();
 		  // create new signal with combined pads
 		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
-		  mtx.unlock();
+		  manalzer_global_mtx->unlock();
 		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
 		  ++nPositions;
