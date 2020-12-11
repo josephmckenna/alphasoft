@@ -9,6 +9,16 @@ double min_ofl=-1111.;
 
 void SetHistoLimits( int run ) {
   if(0)  {  /*donothing*/  }
+  else if( run == 904503 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      max_occ=13000.;
+      min_occ=3000.;
+      max_amp=1600.;
+      min_amp=900.;
+      //max_ofl=500.;
+      min_ofl=1.;
+    }
   else if( run == 904473 )
     {
       cout<<"Setting histo limits for combined run "<<run<<endl;

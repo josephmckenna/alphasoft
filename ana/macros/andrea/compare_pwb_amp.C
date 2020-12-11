@@ -25,9 +25,13 @@ void compare_pwb_amp()
   // int run[]={38739,904353,904275};
   // TString lab[]={"CERN data","AW3.2kV","AW3.1kV"};
 
-  int col[]={kRed,kBlue,kBlack};
-  int run[]={903916,904014,904353};
-  TString lab[]={"horiz. rotation", "horiz. all PWBs", "vert."};
+  // int col[]={kRed,kBlue,kBlack};
+  // int run[]={903916,904014,904353};
+  // TString lab[]={"horiz. rotation", "horiz. all PWBs", "vert."};
+
+  int col[]={kRed,kBlack};
+  int run[]={38739,904503};
+  TString lab[]={"CERN AW @3.1kV","TRIUMF AW @3.2kV"};
 
 
   int Nfiles=sizeof(run)/sizeof(int);

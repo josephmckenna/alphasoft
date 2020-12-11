@@ -96,6 +96,8 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
+      //Global lock from manalzer (needed if your using roots basic fitting methods)
+      match->SetGlobalLockVariable(&TAMultithreadHelper::gfLock);
       match->SetTrace(fTrace);
       match->SetDiagnostic(diagnostic);
 #ifdef MODULE_MULTITHREAD
@@ -327,7 +329,7 @@ public:
                }
          }
       fFlags.ana_settings=new AnaSettings(json);
-      fFlags.ana_settings->Print();
+      //fFlags.ana_settings->Print();
    }
     MatchModuleFactory()
     {

@@ -222,19 +222,28 @@ public:
                }
 
             // Fits pulse
+            double fit_amp;
+            double maximum_time;
+            double fit_start_time;
+            double fit_end_time;
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+            {
+            
             TF1 *sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
             sgfit->SetParameters(max,imax,5,0.2);
             sgfit->SetParLimits(0,0.9*max,100*max);
             sgfit->SetParLimits(1,0,500);
             sgfit->SetParLimits(2,0,100);
             sgfit->SetParLimits(3,0,2);
-            hWave->Fit("sgfit","RQ");
-
+            hWave->Fit("sgfit","RQ0");
             // Extrapolates amplitude and interpolates start and end times
-            double fit_amp = sgfit->GetParameter(0) - baseline;
-            double maximum_time = sgfit->GetMaximumX();
-            double fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
-            double fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
+            fit_amp = sgfit->GetParameter(0) - baseline;
+            maximum_time = sgfit->GetMaximumX();
+            int error_level_save = gErrorIgnoreLevel;
+            gErrorIgnoreLevel = kFatal;
+            fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
+            fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
+            gErrorIgnoreLevel = error_level_save;
 
             // Copies histogram to sample histogram
             if (hit_num < sample_waveforms_to_plot)
@@ -245,7 +254,8 @@ public:
                   hit_num++;
                }
             delete sgfit;
-
+            }
+            
             // Fills histograms
             hBars->Fill(bar);
             hBsc_Time->Fill(start_time*10);
