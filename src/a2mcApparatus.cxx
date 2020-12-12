@@ -126,10 +126,18 @@ void a2mcApparatus::Init()
     //------------------------------ 
     // Silicon detector
     //------------------------------ 
-    silDet_rMin  = rInnMax + 0.01;
-    silDet_rMax  = 13.65; ///< This is just enough to contain all the silicon modules
-    silDet_halfZ = vacuumChamber_halfZ;
-    silDet_posZ  = 0.;
+    silBox_posZ  = 0.; ///< The detector is centered to the Oxford Magnet (also the center of the alpha reference system)
+    silBox_rMin  = rInnMax + 0.01;
+    silBox_rMax  = 13.70; ///< This is just enough to contain all the silicon modules
+    silBox_halfZ = vacuumChamber_halfZ;
+
+    silMod_halfX = 3.;
+    silMod_halfY = 0.0150; ///< the silicon wafer was 300 um thick
+    silMod_halfZ = 11.5;
+    ///< Making the PCB thicker (same amount of silicon wafer), so to put the silicon module inside the PCB volume (extruding it)
+    silPCB_halfX = silMod_halfX;
+    silPCB_halfY = 0.0800+silMod_halfY; ///< the PCB support/mount was 1.6 mm
+    silPCB_halfZ = silMod_halfZ;
 }
 
 
@@ -161,9 +169,9 @@ void a2mcApparatus::InsertSilDet()
     ///< ---------------------------------------------------- >
     ///< This "virtual" box is simply a container for all the modules
     double detBox_size[3];
-    detBox_size[0] = silDet_rMin;
-    detBox_size[1] = silDet_rMax;
-    detBox_size[2] = silDet_halfZ;
+    detBox_size[0] = silBox_rMin;
+    detBox_size[1] = silBox_rMax;
+    detBox_size[2] = silBox_halfZ;
     ///< Geometrical volume
     TGeoVolume *detBox = gGeoManager->Volume("detBox","TUBE",fmedVacuum, detBox_size,3);
     detBox->SetLineColor(kBlack); detBox->SetTransparency(90);
@@ -171,37 +179,77 @@ void a2mcApparatus::InsertSilDet()
     ///< Physical volume (positioning the geometrical volume)
     detBox_pos[0] = 0.;
     detBox_pos[1] = 0.;
-    detBox_pos[2] = silDet_posZ;
+    detBox_pos[2] = silBox_posZ;
     TGeoCombiTrans *combiDetBox = new TGeoCombiTrans("combiDetBox", detBox_pos[0], detBox_pos[1], detBox_pos[2], nullRot);
     top->AddNode(detBox, 0, combiDetBox);
     ///< ---------------------------------------------------- >
-    ///< ------------------ silDet modules ------------------ >
+    ///< ------- PCB mount/support & silicon module --------- >
     ///< ---------------------------------------------------- >
+    ///< Geometrical volume of the PCB mount
+    Double_t silPCB_size[3];
+    silPCB_size[0] = silPCB_halfX;
+    silPCB_size[1] = silPCB_halfY;
+    silPCB_size[2] = silPCB_halfZ;
+    TGeoVolume *silPCB = gGeoManager->Volume("silPCB","BOX",fmedFR4,silPCB_size,3);
+    silPCB->SetLineColor(kGray); silPCB->SetTransparency(50);
+    ///< Geometrical volume of the silicon module (wager)
     Double_t silMod_size[3];
-    silMod_size[0] = 3. ;
-    silMod_size[1] = 0.04125;
-    silMod_size[2] = 11.5;
-    ///< Geometrical volume
-    ///< Physical volume (positioning the geometrical volume)
-    Int_t id = -1;
+    silMod_size[0] = silMod_halfX;
+    silMod_size[1] = silMod_halfY;
+    silMod_size[2] = silMod_halfZ;
+    TGeoVolume *silMod = gGeoManager->Volume("silMod","BOX",fmedSi,silMod_size,3);
+    silMod->SetLineColor(kYellow+2); silMod->SetTransparency(50);
+    ///< Physical volume (positioning the silicon module/wafer geometrical volume inside the PCB)
     Double_t silMod_pos[3]={0.,0.,0.};
+    silMod_pos[1] = silPCB_halfY-silMod_halfY;
+    TGeoRotation* silRot = new TGeoRotation("silRot", 0., 0., 0.);
+    TGeoCombiTrans *combiMod = new TGeoCombiTrans("combiMod", silMod_pos[0], silMod_pos[1], silMod_pos[2], silRot);
+    silPCB->AddNode(silMod, 1, combiMod);
+    ///< Physical volume (positioning the PCB volumes inside the detector box)
+    Int_t id = -1;
+    Double_t silPCB_pos[3]={0.,0.,0.};
     Double_t phi1 = 0., phi2 = 0.;
     for(UInt_t lay=0; lay<nLayers; lay++) {
         for(UInt_t mod=0; mod<nModules[lay]; mod++) {
+            id = SilModPos(lay, mod, phi1, phi2, silPCB_pos[0], silPCB_pos[1], silPCB_pos[2]);
+            if(id<0) continue; ///< The correlation layer, module didn't work out
+            TGeoRotation* silPCBRot = new TGeoRotation("silPCBRot", phi2, 0., 0.);
+            TGeoCombiTrans *combiPCB = new TGeoCombiTrans("combiPCB", silPCB_pos[0], silPCB_pos[1], silPCB_pos[2], silPCBRot);
+            detBox->AddNode(silPCB, id, combiPCB);
+            ///< Updating the map ["name" -> ID] of the silicon modules
             ostringstream s; ///< Writing the name of the module (see a2mcAppartus.h for a legend)
             s << lay << "si" << std::uppercase << std::hex << mod;
-            TGeoVolume *silMod = gGeoManager->Volume(s.str().c_str(),"BOX",fmedSi,silMod_size,3);
-            silMod->SetLineColor(kGreen); silMod->SetTransparency(50);
-            id = SilModPos(lay, mod, phi1, phi2, silMod_pos[0], silMod_pos[1], silMod_pos[2]);
-            if(id<0) continue; ///< The correlation layer, module didn't work out
-            TGeoRotation* silRot = new TGeoRotation("silRot", phi2, 0., 0.);
-            TGeoCombiTrans *combiSilMod = new TGeoCombiTrans("combiSilMod", silMod_pos[0], silMod_pos[1], silMod_pos[2], silRot);
-            detBox->AddNode(silMod, id, combiSilMod);
-            ///< Updating the map ["name" -> ID] of the silicon modules
+//            cout << id << ": lay " << lay << " mod " << mod << " -> " << s.str() << endl;
             silNameIDMap.insert(std::pair<int, std::string>(id,s.str()));
-//                cout << s.str() << ";" << id << ";" << lay << ";" << mod << ";" << silMod_pos[0] << ";" << silMod_pos[1] << ";" << silMod_pos[2] << endl;
         }
     }
+//    ///< ---------------------------------------------------- >
+//    ///< ------------------ silDet modules ------------------ >
+//    ///< ---------------------------------------------------- >
+//    Double_t silMod_size[3];
+//    silMod_size[0] = silMod_halfX;
+//    silMod_size[1] = silMod_halfY;
+//    silMod_size[2] = silMod_halfZ;
+//    ///< Geometrical volume
+//    ///< Physical volume (positioning the geometrical volume)
+//    Int_t id = -1;
+//    Double_t silMod_pos[3]={0.,0.,0.};
+//    Double_t phi1 = 0., phi2 = 0.;
+//    for(UInt_t lay=0; lay<nLayers; lay++) {
+//        for(UInt_t mod=0; mod<nModules[lay]; mod++) {
+//            ostringstream s; ///< Writing the name of the module (see a2mcAppartus.h for a legend)
+//            s << lay << "si" << std::uppercase << std::hex << mod;
+//            TGeoVolume *silMod = gGeoManager->Volume(s.str().c_str(),"BOX",fmedSi,silMod_size,3);
+//            silMod->SetLineColor(kGreen); silMod->SetTransparency(50);
+//            id = SilModPos(lay, mod, phi1, phi2, silMod_pos[0], silMod_pos[1], silMod_pos[2]);
+//            if(id<0) continue; ///< The correlation layer, module didn't work out
+//            TGeoRotation* silRot = new TGeoRotation("silRot", phi2, 0., 0.);
+//            TGeoCombiTrans *combiSilMod = new TGeoCombiTrans("combiSilMod", silMod_pos[0], silMod_pos[1], silMod_pos[2], silRot);
+//            detBox->AddNode(silMod, id, combiSilMod);
+//            ///< Updating the map ["name" -> ID] of the silicon modules
+//            silNameIDMap.insert(std::pair<int, std::string>(id,s.str()));
+//        }
+//    }
 }
 
 // _________________________________________________________________________
@@ -1057,6 +1105,13 @@ void a2mcApparatus::ConstructMaterials()
     matEpoxy->AddElement(elO,   0.20); // [03]
     matEpoxy->AddElement(elCl,  0.09); // [04]
     
+    TGeoMixture *matFR4 = new TGeoMixture("FR4", 4, 1.85);
+    ///< The following composition is indeed the one used for G10 ... could not find a more precise one
+    matFR4->AddElement(elC,  0.259);  // [01]
+    matFR4->AddElement(elH,  0.288);  // [02]
+    matFR4->AddElement(elO,  0.248);  // [03]
+    matFR4->AddElement(elSi, 0.205);  // [04]
+
     ///< ---------------------------------------------------- >
     ///< ------------------------ Media --------------------- >
     ///< ---------------------------------------------------- >
@@ -1169,7 +1224,9 @@ void a2mcApparatus::ConstructMaterials()
     ///< Epoxy
     fmedEpoxy = mediumId;
     new TGeoMedium(matEpoxy->GetName(), mediumId++, matEpoxy, parMedium);
-    
+    ///< FR4
+    fmedFR4 = mediumId;
+    new TGeoMedium(matFR4->GetName(), mediumId++, matFR4, parMedium);    
 }
 //_____________________________________________________________________________
 void a2mcApparatus::SetCuts()

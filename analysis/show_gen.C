@@ -42,17 +42,17 @@ void primary_muon_origin() {
     TCanvas *corigin = new TCanvas("corigin","corigin",1200,1200);
     corigin->Divide(2,2);
     corigin->cd(1);
-        TH2D *h_genXZ = new TH2D("h_genXZ","Primary origin X vs Z", 100, x_origin_min, x_origin_max, 100, z_origin_min, z_origin_max);
-        tree->Draw("Primary.fVoz:Primary.fVox>>h_genXZ");
-        h_genXZ->Draw("COLZ");
+        TH2D *h_origin_XZ = new TH2D("h_origin_XZ","Primary origin X vs Z", 100, x_origin_min, x_origin_max, 100, z_origin_min, z_origin_max);
+        tree->Draw("Primary.fVoz:Primary.fVox>>h_origin_XZ");
+        h_origin_XZ->Draw("COLZ");
     corigin->cd(2);
-        TH1D *h_genY = new TH1D("h_genY", "Primary origin Y", 100, y_origin_min, y_origin_max);
-        tree->Draw("Primary.fVoy>>h_genY");
-        h_genY->Draw("");
+        TH1D *h_origin_Y = new TH1D("h_origin_Y", "Primary origin Y", 100, y_origin_min, y_origin_max);
+        tree->Draw("Primary.fVoy>>h_origin_Y");
+        h_origin_Y->Draw("");
     corigin->cd(3);
-        TH2D *h_genRvsY = new TH2D("h_genRvsY","Primary origin Y vs (X^2+Y^2)", 100, 0., x_origin_max, 100, y_origin_min, x_origin_max);
-        tree->Draw("Primary.fVoy:sqrt(Primary.fVox*Primary.fVox+Primary.fVoz*Primary.fVoz)>>h_genRvsY");
-        h_genRvsY->Draw("COLZ");
+        TH2D *h_origin_RvsY = new TH2D("h_origin_RvsY","Primary origin Y vs (X^2+Y^2)", 100, 0., x_origin_max, 100, y_origin_min, x_origin_max);
+        tree->Draw("Primary.fVoy:sqrt(Primary.fVox*Primary.fVox+Primary.fVoz*Primary.fVoz)>>h_origin_RvsY");
+        h_origin_RvsY->Draw("COLZ");
 }
 
 void primary_pbar_origin() {
@@ -61,17 +61,17 @@ void primary_pbar_origin() {
     TCanvas *corigin = new TCanvas("corigin","corigin",1200,1200);
     corigin->Divide(2,2);
     corigin->cd(1);
-        TH2D *h_genXY = new TH2D("h_genXY","Primary origin X vs Y", 100, x_origin_min, x_origin_max, 100, y_origin_min, y_origin_max);
-        tree->Draw("Primary.fVoy:Primary.fVox>>h_genXY");
-        h_genXY->Draw("COLZ");
+        TH2D *h_origin_XY = new TH2D("h_origin_XY","Primary origin X vs Y", 100, x_origin_min, x_origin_max, 100, y_origin_min, y_origin_max);
+        tree->Draw("Primary.fVoy:Primary.fVox>>h_origin_XY");
+        h_origin_XY->Draw("COLZ");
     corigin->cd(2);
-        TH1D *h_genZ = new TH1D("h_genZ", "Primary origin Z", 100, z_origin_min, z_origin_max);
-        tree->Draw("Primary.fVoz>>h_genZ");
-        h_genZ->Draw("");
+        TH1D *h_origin_Z = new TH1D("h_origin_Z", "Primary origin Z", 100, z_origin_min, z_origin_max);
+        tree->Draw("Primary.fVoz>>h_origin_Z");
+        h_origin_Z->Draw("");
     corigin->cd(3);
-        TH2D *h_genRvsZ = new TH2D("h_genRvsZ","Primary origin R vs Z", 100, z_origin_min, z_origin_max, 100, 0., x_origin_max*1.1);
-        tree->Draw("sqrt(Primary.fVox*Primary.fVox+Primary.fVoy*Primary.fVoy):Primary.fVoz>>h_genRvsZ");
-        h_genRvsZ->Draw("COLZ");
+        TH2D *h_origin_RvsZ = new TH2D("h_origin_RvsZ","Primary origin R vs Z", 100, z_origin_min, z_origin_max, 100, 0., x_origin_max*1.1);
+        tree->Draw("sqrt(Primary.fVox*Primary.fVox+Primary.fVoy*Primary.fVoy):Primary.fVoz>>h_origin_RvsZ");
+        h_origin_RvsZ->Draw("COLZ");
 }
 
 void primary_pbar_decay() {
@@ -80,17 +80,17 @@ void primary_pbar_decay() {
     TCanvas *cdecay = new TCanvas("cdecay","cdecay",1200,1200);
     cdecay->Divide(2,2);
     cdecay->cd(1);
-        TH2D *h_genXY = new TH2D("h_genXY","Primary decay   X vs Y", 100, x_decay_min, x_decay_max, 100, y_decay_min, y_decay_max);
-        tree->Draw("Primary.fVdy:Primary.fVdx>>h_genXY");
-        h_genXY->Draw("COLZ");
+        TH2D *h_decay_XY = new TH2D("h_decay_XY","Primary decay   X vs Y", 100, x_decay_min, x_decay_max, 100, y_decay_min, y_decay_max);
+        tree->Draw("Primary.fVdy:Primary.fVdx>>h_decay_XY");
+        h_decay_XY->Draw("COLZ");
     cdecay->cd(2);
-        TH1D *h_genZ = new TH1D("h_genZ", "Primary decay   Z", 100, z_decay_min, z_decay_max);
-        tree->Draw("Primary.fVdz>>h_genZ");
-        h_genZ->Draw("");
+        TH1D *h_decay_Z = new TH1D("h_decay_Z", "Primary decay   Z", 100, z_decay_min, z_decay_max);
+        tree->Draw("Primary.fVdz>>h_decay_Z");
+        h_decay_Z->Draw("");
     cdecay->cd(3);
-        TH2D *h_genRvsZ = new TH2D("h_genRvsZ","Primary decay   R vs Z", 100, z_decay_min, z_decay_max, 100, 0., x_decay_max*1.1);
-        tree->Draw("sqrt(Primary.fVdx*Primary.fVdx+Primary.fVdy*Primary.fVdy):Primary.fVdz>>h_genRvsZ");
-        h_genRvsZ->Draw("COLZ");
+        TH2D *h_decay_RvsZ = new TH2D("h_decay_RvsZ","Primary decay   R vs Z", 100, z_decay_min, z_decay_max, 100, 0., x_decay_max*1.1);
+        tree->Draw("sqrt(Primary.fVdx*Primary.fVdx+Primary.fVdy*Primary.fVdy):Primary.fVdz>>h_decay_RvsZ");
+        h_decay_RvsZ->Draw("COLZ");
 }
 
 void primary_mom() {

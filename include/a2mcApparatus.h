@@ -30,7 +30,7 @@ class a2mcApparatus : public TObject
         // Medium Id for various materials
         Int_t   fmedAir, fmedVacuum;
         Int_t   fmedAl, fmedCu, fmedFe, fmedSi, fmedNb, fmedCsI, fmedLiqHe;
-        Int_t   fmedLiqN, fmedSteel316LN, fmedCuNbTi, fmedAlT6082, fmedEpoxy;
+        Int_t   fmedLiqN, fmedSteel316LN, fmedCuNbTi, fmedAlT6082, fmedEpoxy, fmedFR4;
         Int_t   kcolAl, kcolCu, kcolFe, kcolSi, kcolNb, kcolCsI, kcolLiqHe;
         Int_t   kcolLiqN, kcolSteel316LN, kcolCuNbTi, kcolAlT6082, kcolEpoxy;
         // Geometry objects size
@@ -60,7 +60,9 @@ class a2mcApparatus : public TObject
         // ===================================================================
         static const UInt_t nLayers  = 6; ///< In reality there are 3 layers (each divided in two half)
         UInt_t nModules[nLayers] = {10,12,14,10,12,14};
-        Double_t silDet_rMin, silDet_rMax, silDet_halfZ, silDet_posZ;
+        Double_t silBox_rMin, silBox_rMax, silBox_halfZ, silBox_posZ;
+        Double_t silPCB_halfX, silPCB_halfY, silPCB_halfZ;
+        Double_t silMod_halfX, silMod_halfY, silMod_halfZ;
         Int_t SilModPos(UInt_t, UInt_t, Double_t&, Double_t&, Double_t&, Double_t&, Double_t&);
         std::map<int, std::string> silNameIDMap;
 
@@ -87,9 +89,9 @@ class a2mcApparatus : public TObject
         Double_t GetOxfMag_R()   {return oxfordMag_rMax;};
         Double_t GetOxfMag_L()   {return oxfordMag_halfZ*2.;};
 
-        Double_t GetSilDet_Z()   {return silDet_posZ;};
-        Double_t GetSilDet_R()   {return silDet_rMax;};
-        Double_t GetSilDet_L()   {return silDet_halfZ*2.;};
+        Double_t GetSilDet_Z()   {return silBox_posZ;};
+        Double_t GetSilDet_R()   {return silBox_rMax;};
+        Double_t GetSilDet_L()   {return silBox_halfZ*2.;};
         
         std::map<int, std::string> GetSilNameIDMap() {return silNameIDMap;};
         ClassDef(a2mcApparatus,1) //a2mcApparatus

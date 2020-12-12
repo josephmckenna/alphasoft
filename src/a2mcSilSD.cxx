@@ -54,11 +54,11 @@ void a2mcSilSD::Initialize()
     ///< of the volume is the required input. The names have been stored 
     ///< in a2mcApparatus in the silNameIDMap variable.
     ///< fSensitiveID is used in a2mcSilSD::ProcessHits()
+    fSensitiveID.push_back(gMC->VolId("silMod"));
     silNameIDMap = a2mcApparatus::Instance()->GetSilNameIDMap();
     map<int, std::string>::iterator it = silNameIDMap.begin();
     while(it != silNameIDMap.end()) {
         std::string vol_name = it->second;
-        fSensitiveID.push_back(gMC->VolId(vol_name.c_str()));
         hasModuleHits.push_back("false"); ///< Creating an entry for each module
         ++it;
     }
@@ -81,8 +81,9 @@ void a2mcSilSD::BeginOfEvent()
 Bool_t a2mcSilSD::ProcessHits()
 {
     /// Create hits (in stepping).
-    Int_t silID;   ///< copy number of the volume [filled by gMC->CurrentVolID] ==> silicon module ID [0-71]
-    Int_t volID = gMC->CurrentVolID(silID); ///< volID [MC internal numbering]
+    Int_t copyNo;
+    Int_t volID = gMC->CurrentVolID(copyNo); ///< volID [MC internal numbering]
+
     Bool_t isSil=false;
     for(UInt_t i=0; i<fSensitiveID.size(); i++) {
         if(volID==fSensitiveID[i]) {
@@ -90,16 +91,19 @@ Bool_t a2mcSilSD::ProcessHits()
             break;
         }
     }
-    Double_t edep_lim = 0.;
+    Double_t edep_thrs = 0.;
     if(!isSil)                      return false; ///< We are not in one of the silicon module volumes
     if(gMC->TrackCharge() == 0.)    return false; ///< Not considering "hits" from neutral tracks
-    if(gMC->Edep()<=edep_lim)       return false; ///< Cutting on energy deposited (single hit)
+    if(gMC->Edep()<=edep_thrs)      return false; ///< Cutting on energy deposited (single hit)
     ///< OTHER POSSIBLE SELECTIONS
 //    if((int)part->GetMother(0)!=-1) return false;      ///< ONLY "HITS" RELEASED BY THE PRIMARY MUON 
 //    if(gMC->TrackStep()==0.)        return false; ///< No step length (probably unused)
 //    if(!gMC->IsTrackEntering()&&!gMC->IsTrackExiting()) return false; ///< Only "IN" and "OUT" hits
 
-    Int_t lay, mod;
+    ///< Getting the silicon module ID [0-71]. As they have been introduced in a2mcApparatus, the ID
+    ///< is indeed the copy number of the silPCB mount volume (the silicon module is hosted inside such volume)
+    Int_t silID, lay, mod;
+    gMC->CurrentVolOffID(1,silID); ///< Copy number of the mother volume
     IDToLayMod(silID, lay, mod);
     // Track ID
     Int_t trackID = gMC->GetStack()->GetCurrentTrackNumber();
@@ -109,12 +113,11 @@ Bool_t a2mcSilSD::ProcessHits()
     gMC->TrackPosition(pos);
     
 //  Transforming global (world/master) position into local (fiber reference system)
-//    Double_t top_pos[3], loc_pos[3];
-//    top_pos[0] = pos.X(); top_pos[1] = pos.Y(); top_pos[2] = pos.Z(); 
-//    gMC->Gmtod(top_pos, loc_pos, 1);
-    
-    Int_t n_strip = ReturnNStrip(lay, pos.Z());
-    Int_t p_strip = ReturnPStrip(lay, pos.X());
+    Double_t top_pos[3], loc_pos[3];
+    top_pos[0] = pos.X(); top_pos[1] = pos.Y(); top_pos[2] = pos.Z(); 
+    gMC->Gmtod(top_pos, loc_pos, 1);
+    Int_t n_strip = ReturnNStrip(lay, loc_pos[2]);
+    Int_t p_strip = ReturnPStrip(lay, loc_pos[0]);
     ///< Checking that the hit is in the "active part" of the silicon
     if(n_strip==-1||p_strip==-1) return false; ///< return only if one of the two is -1 or need BOTH????
     
@@ -136,9 +139,9 @@ Bool_t a2mcSilSD::ProcessHits()
     if(hasModuleHits[silID]) { ///< "THIS MODULE" (silID [0-71])
        for(int j=0; j<GetHitCollectionSize();j++) {
             a2mcSilHit* theHit = GetHit(j);
-//            if(theHit->GetSilID() != silID) continue; ///< Not the same module (should be redundant indeed)
-            if(theHit->GetNStrip() != n_strip) continue; ///< Not the same n-strip
-            if(theHit->GetPStrip() != p_strip) continue; ///< Not the same p-strip
+            if(theHit->GetSilID() != silID)     continue; ///< Not the same module
+            if(theHit->GetNStrip() != n_strip)  continue; ///< Not the same n-strip
+            if(theHit->GetPStrip() != p_strip)  continue; ///< Not the same p-strip
             Int_t hitTrack = theHit->GetTrackID();
             if(trackID==hitTrack) { ///< Same module, same strips, same track -> merge the hits
                 createHit = false;
@@ -166,6 +169,10 @@ Bool_t a2mcSilSD::ProcessHits()
         ///< double check
         if(theHit->GetSilID()!=silID||theHit->GetTrackID()!=trackID||theHit->GetNStrip()!=n_strip||theHit->GetPStrip()!=p_strip) {
             std::cout << "a2mcSilSD::ProcessHits -> check hit update procedure " << std::endl;
+            std::cout << "theHit->GetSilID() " << theHit->GetSilID() << " silID " << silID << std::endl;
+            std::cout << "theHit->GetTrackID() " << theHit->GetTrackID() << " trackID " << trackID << std::endl;
+            std::cout << "theHit->GetNStrip() " << theHit->GetNStrip() << " n_strip " << n_strip << std::endl;
+            std::cout << "theHit->GetPStrip() " << theHit->GetPStrip() << " p_strip " << p_strip << std::endl;
         }
         ///< Update energy (leave the other values unchanged)
         theHit->SetEdep(theHit->GetEdep()+gMC->Edep());
@@ -290,7 +297,7 @@ Int_t a2mcSilSD::ReturnNStrip(Int_t lay, Double_t pos) {
     Double_t ASIC2_end      = -18.4063 - fPCBmountZ; ///< 11.8187
     Double_t ASIC2_start    = -7.29380 - fPCBmountZ; ///< 22.9312
 
-//    pos += a2mcApparatus::Instance()->GetSilDet_L()/2.; ///< To have Z in the range [0.;23.0]
+    pos += a2mcApparatus::Instance()->GetSilDet_L()/2.; ///< To have Z in the range [0.;23.0]
     Int_t strip = -1;
     Double_t s  = 0.;
     

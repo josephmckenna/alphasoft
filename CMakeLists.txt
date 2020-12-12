@@ -73,10 +73,12 @@ ROOT_GENERATE_DICTIONARY(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcSilHit.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcSilDIGI.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcSilSD.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcApparatus.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcFieldConstant.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcFieldFromMap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcPrimary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcGenerator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcSettings.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcApparatus.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcMuonGen.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/a2mcUtility.h
   MODULE ${library_name}
