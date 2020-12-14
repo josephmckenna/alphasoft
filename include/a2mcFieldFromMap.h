@@ -5,6 +5,7 @@
 #include <TLorentzVector.h>
 #include "TArrayF.h"
 #include <iostream>
+#include <sstream>
 #include <fstream>
 
 class a2mcFieldFromMap : public TVirtualMagField
@@ -16,7 +17,7 @@ public:
    ** @param name       Name of field map
    ** @param fileType   R = ROOT file, A = ASCII
    **/
-   a2mcFieldFromMap(std::string&);
+   a2mcFieldFromMap(std::string);
 
    virtual ~a2mcFieldFromMap();
    
@@ -69,10 +70,10 @@ private:
 
 
    /** Global scaling factor (w.r.t. map on file) **/
-   Double_t fScale;             
+   Float_t fScale;             
 
    /** Units used in map file**/
-   Double_t funit;             
+   Float_t fUnit;             
 
 
    /** Field centre position in global coordinates  **/
@@ -90,10 +91,15 @@ private:
 
 
    /** Arrays with the field values  **/
-   TArrayF* fBx;
-   TArrayF* fBy;
-   TArrayF* fBz;
-
+//   TArrayF* fBx;
+//   TArrayF* fBy;
+//   TArrayF* fBz;
+   std::vector<Float_t> fRx;
+   std::vector<Float_t> fRy;
+   std::vector<Float_t> fRz;
+   std::vector<Float_t> fBx;
+   std::vector<Float_t> fBy;
+   std::vector<Float_t> fBz;
 
    /** Variables for temporary storage 
      ** Used in the very frequently called method GetFieldValue  **/
@@ -103,7 +109,6 @@ private:
 
    
    Double_t  fB[3]; ///< Magnetic field vector
-   Double_t  fArray[20];
    ClassDef(a2mcFieldFromMap, 1)  // Mapped magnetic field        
 };
 

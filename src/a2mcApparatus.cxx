@@ -1290,7 +1290,7 @@ Int_t a2mcApparatus::SilModPos(UInt_t lay, UInt_t mod, Double_t& phi1, Double_t&
     y = r*TMath::Sin(phi1*TMath::DegToRad());
     z = lay<=2? -abs_z : +abs_z; ////< First 3 layers have negative z, the other positive z
 
-    Double_t lower_limit = 1.e-9;
+    Double_t lower_limit = 1.e-12;
     if(fabs(x)<lower_limit) x = 0.;
     if(fabs(y)<lower_limit) y = 0.;
     if(fabs(z)<lower_limit) z = 0.;

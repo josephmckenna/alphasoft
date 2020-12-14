@@ -8,6 +8,8 @@
 #include "a2mcSilSD.h"
 
 #include "a2mcApparatus.h"
+#include "a2mcFieldConstant.h"
+#include "a2mcFieldFromMap.h"
 #include "a2mcStack.h"
 #include "a2mcPrimary.h"
 #include "a2mcGenerator.h"
@@ -70,14 +72,15 @@ class a2mcVirtualMC : public TVirtualMCApplication
         string runTime;
         a2mcSettings a2mcConf{}; ///< Reading configuration file a2MC.ini
         a2mcMessenger mess;
-        Int_t                   nEvents;///< Event counter
+        Int_t                 nEvents;            ///< Event counter
 		a2mcStack*            fStack;             ///< VMC stack
 		a2mcApparatus*        fDetConstruction;   ///< a2mc Detector construction    
         a2mcPrimary*          fPrimary;           ///< Primary  Object
 		a2mcSilSD             fSilSD;             ///< Frame SD
 		TMCVerbose            fVerbose;           ///< VMC verbose helper
-		a2mcGenerator*        fPrimaryGenerator;  ///< Primary generator 
-		a2mcRootManager*      fRootManager;       ///< Root manager 
+		a2mcGenerator*        fPrimaryGenerator;  ///< Primary generator
+		TVirtualMagField*     fMagField;          ///< Magnetic field
+		a2mcRootManager*      fRootManager;       ///< Root manager
 		ClassDef(a2mcVirtualMC,1)  //Interface to MonteCarlo application
 };
 

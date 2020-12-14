@@ -18,6 +18,7 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     fSilSD("SilSD"),
     fVerbose(0),    
     fPrimaryGenerator(0),
+    fMagField(0),
     fRootManager(0)
 {
 
@@ -30,6 +31,16 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     // Create detector construction
     fDetConstruction = new a2mcApparatus(runNumber);
     
+    if(a2mcConf.GetMagField()==1) {
+        Double_t rMax = 50.;
+        Double_t zMin = -444.;
+        Double_t zMax = +444.;
+        Double_t BzMax = 10.; // B field along Z (in kG)
+        fMagField = new a2mcFieldConstant(0., 0., BzMax, rMax, zMin, zMax);
+    }
+    if(a2mcConf.GetMagField()==2) fMagField = new a2mcFieldFromMap("input/berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag");
+
+        
     FileMode fileMode = kWrite;
     fRootManager = new a2mcRootManager(runNumber, runTime, "a2MC", fileMode);
 
@@ -49,6 +60,7 @@ a2mcVirtualMC::a2mcVirtualMC()
     fSilSD(),
     fVerbose(0),
     fPrimaryGenerator(0),
+    fMagField(0),
     fRootManager()
 {    
     /// Default constructor
@@ -99,6 +111,7 @@ void a2mcVirtualMC::InitMC(const char* setup)
 //    }
 
     gMC->SetStack(fStack);
+    if(a2mcConf.GetMagField()!=0) gMC->SetMagField(fMagField);
     gMC->Init();
     gMC->BuildPhysics(); 
     Int_t store_tracks = fDetConstruction->GetStoreTracks();
