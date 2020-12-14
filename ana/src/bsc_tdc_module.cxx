@@ -194,7 +194,7 @@ public:
                {
                   printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
                   printf("Total number of top+bot hits = %d\n",c_topbot);
-                  printf("twA = %.6e\n",fFlags->ftwA);
+                  if (fFlags->ftwA!=0) printf("twA = %.6e\n",fFlags->ftwA);
                   printf("TDC time diff diff sigma = %.6e\n",sgfit->GetParameter(2));
                }
          }
@@ -401,7 +401,7 @@ public:
 
             // Corrects for tdc time offset
             double calib_time = tdc_time;
-            //if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc_chan-1];
+            if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc_chan-1];
 
             // Corrects for time walk
             double amp = endhit->GetAmp();
