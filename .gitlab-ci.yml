@@ -134,7 +134,7 @@ build-cc7-cmake:
     - mkdir build
     - cd build
     - cmake3 ../
-    - make
+    - make | tee ../BuildLog.txt
     - make install
   artifacts:
     when: on_failure
