@@ -12,6 +12,12 @@
 #include <TPaletteAxis.h>
 #include <TPaveStats.h>
 
+#define BUILD_AG
+#include "TSpacePoint.hh"
+#include "TStoreEvent.hh"
+#include "TStoreLine.hh"
+
+
 #include "SignalsType.hh"
 #include "IntGetters.h"
 #include "TPCconstants.hh"
