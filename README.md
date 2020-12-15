@@ -22,54 +22,37 @@ Others OS (only building tested):
 * Ubuntu 16
 * Fedora 28
 
+
 # INSTALLATION:
 
 ```
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
+git clone https://bitbucket.org/expalpha/alphasoft.git
+cd alphasoft
 . agconfig.sh
-make -j
-
-#OR with cmake (simple):
-
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
-. agconfig.sh
-make cmake -j
-
-#OR with cmake (full):
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
-. agconfig.sh
-mkdir build
-cd build
+mkdir build && cd build
 cmake3 ../
-#Optional: Turn on or off A2 or AG features and simulations
-ccmake3 .
-make -j
-make install 
-```
-
-
-## Alternative way to build+install
-
-```
 cmake3 --build . --target install -- -j`nproc --ignore=2`
-
 ```
+
 
 # RUNNING:
 
 ```
-./agana.exe run01234sub*.lz4
+agana.exe run01234sub*.mid.lz4
+
+--mt                    : Enable multithreaded mode.
+-O/path/to/newfile.root : Specify output root file filename
+
+--: All following arguments are passed to the analyzer modules Init() method
+
+	--recoff                                Turn off reconstruction
+	--aged                                  Turn on event display
+	--diag		                            Enable histogramming
+    --anasettings /path/to/settings.json    Load analysis settings
 ```
 
 
-## EVENT DISPLAY
 
-```
-./agana.exe run01234sub*.lz4 -- --aged
-```
 
  
 
