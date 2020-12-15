@@ -21,9 +21,6 @@ Instructions on how to install such packages are available in install_VMC.txt.
 ///< --------------------------------------------------------------------------
 cd a2mc
 source setup.sh
-A copy of the "berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag"
-must be present in the input subdirectory. It is available in the aux/magnets/
-subdirectory of the Alpha Sotware installation. 
 ------------------------------------ oOo --------------------------------------
 
 
