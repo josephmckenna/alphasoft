@@ -35,7 +35,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
@@ -82,3 +82,8 @@ endif()
 target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
 
 install(TARGETS aged DESTINATION lib)
+
+add_custom_command( TARGET aged POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
+		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/include/*.h ${CMAKE_INSTALL_PREFIX}/include
+                  )
