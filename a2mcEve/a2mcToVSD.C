@@ -208,7 +208,7 @@ Bool_t a2mcToVSD::GoodTrack(UInt_t it) {
 ///< This function select the tracks to write into the VSD output file
 
     ///< Only charged tracks that released a hit
-    TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(MCTracks_fPdgCode[it]);
+    TParticlePDG* particlePDG = pdgDB->GetParticle(MCTracks_fPdgCode[it]);
     if(particlePDG) {
         if(particlePDG->Charge()==0) return false; ///< Do not add "neutral" track
     }

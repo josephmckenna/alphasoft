@@ -1,5 +1,5 @@
 ///< ##############################################
-///< Developed for the Alpha experiment [Nov. 2020]
+///< Developed for the Alpha experiment [Dec. 2020]
 ///< germano.bonomi@cern.ch
 ///< ##############################################
 
@@ -11,10 +11,10 @@ ClassImp(a2mcFieldConstant)
 a2mcFieldConstant::a2mcFieldConstant(Double_t Bx, Double_t By, Double_t Bz, Double_t Brmax, Double_t Bzmin, Double_t Bzmax)
   : TVirtualMagField("a2mc magnetic field")
 {
-/// Standard constructor
-/// \param Bx   The x component of the field value (in kiloGauss)
-/// \param By   The y component of the field value (in kiloGauss)
-/// \param Bz   The z component of the field value (in kiloGauss)
+///< Standard constructor
+///<   Bx   The x component of the field value (in kiloGauss)
+///<   By   The y component of the field value (in kiloGauss)
+///<   Bz   The z component of the field value (in kiloGauss)
 
     fB[0] = Bx;
     fB[1] = By;
@@ -28,7 +28,7 @@ a2mcFieldConstant::a2mcFieldConstant(Double_t Bx, Double_t By, Double_t Bz, Doub
 a2mcFieldConstant::a2mcFieldConstant()
   : TVirtualMagField()
 {
-/// Default constructor
+///< Default constructor
       fB[0] = 0.;
       fB[1] = 0.;
       fB[2] = 0.;
@@ -37,7 +37,7 @@ a2mcFieldConstant::a2mcFieldConstant()
 //______________________________________________________________________________
 a2mcFieldConstant::~a2mcFieldConstant()
 {
-/// Destructor
+///< Destructor
 }
 
 

@@ -1,5 +1,5 @@
 ///< ##############################################
-///< Developed for the Alpha experiment [Nov. 2020]
+///< Developed for the Alpha experiment [Dec. 2020]
 ///< germano.bonomi@cern.ch
 ///< ##############################################
 
@@ -43,11 +43,10 @@ a2mcFieldFromMap::a2mcFieldFromMap(std::string fName)
 a2mcFieldFromMap::a2mcFieldFromMap()
   : TVirtualMagField()
 {
-/// Default constructor
+///< Default constructor
    fB[0] = 0.;
    fB[1] = 0.;
    fB[2] = 0.;
-/// Default constructor
     if (fgInstance) {
         Fatal("a2mcFieldFromMap", "Singleton instance already exists.");
         return;
@@ -57,9 +56,6 @@ a2mcFieldFromMap::a2mcFieldFromMap()
 
 // ------------   Destructor   --------------------------------------------
 a2mcFieldFromMap::~a2mcFieldFromMap() {
-//    if ( fBx ) delete fBx;
-//    if ( fBy ) delete fBy;
-//    if ( fBz ) delete fBz;
     fBx.clear();
     fBy.clear();
     fBz.clear();
@@ -75,7 +71,6 @@ void a2mcFieldFromMap::Init() {
     fNx    = fNy    = fNz    = 0;
     fScale = 1.;        ///< In case of need for a scaled-down magnetic field
     fUnit = 10.0;       ///< VirtualMagField expect values in kG, while the map file is in Tesla -> * 10.
-//    fBx    = fBy    = fBz    = NULL;
     fBx.clear();
     fBy.clear();
     fBz.clear();
@@ -86,7 +81,7 @@ void a2mcFieldFromMap::Init() {
 // -----   Read field map from ASCII file (private)   ---------------------
 void a2mcFieldFromMap::ReadAsciiFile(std::string& fileName) {
 
-    // Open file
+    ///< Open file
     std::cerr << "-I- a2mcFieldFromMap: Reading field map from ASCII file " << fileName.c_str() << std::endl;
     std::ifstream mapFile(fileName.c_str());
     if (!mapFile.is_open()) {
@@ -297,7 +292,7 @@ void a2mcFieldFromMap::Field(const Double_t* x, Double_t* B)
 ///< the position x ) 
 ///< x   The position
 ///< B   the field value (in kiloGauss)
-    Double_t lower_limit = 1.e-12; ///< To avoind double precision fluctuations around 0
+    Double_t lower_limit = 1.e-12; ///< To avoid double precision fluctuations around 0
     Double_t xx,yy,zz;
     xx = x[0]; yy = x[1]; zz = x[2];
     if(fabs(xx)<lower_limit) xx = 0.;

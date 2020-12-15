@@ -25,6 +25,7 @@ public :
     Int_t          fRunNumber;
     Int_t          fTotEvents;
     Long64_t       fEvent;
+    TDatabasePDG   *pdgDB = new TDatabasePDG();
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
     static constexpr Int_t kMaxSilHits   = 5000;
@@ -151,6 +152,7 @@ public :
     virtual TEveRecTrackF   ToEveRecTrack(UInt_t);
     virtual TEveMCTrack     ToEveMCTrack(UInt_t);
     virtual Bool_t          GoodTrack(UInt_t);
+    virtual void            set_pdg_codes();
 };
 
 #endif
@@ -184,6 +186,7 @@ void a2mcToVSD::Init(Int_t runNumber) {
     }
     f->GetObject("a2MC",tree);
     InitTree(tree);
+    set_pdg_codes();
 }
 
 a2mcToVSD::~a2mcToVSD()
@@ -286,6 +289,31 @@ void a2mcToVSD::InitTree(TTree *tree)
     } else {
         MCTracks_ = 0;
     }
+}
+
+void a2mcToVSD::set_pdg_codes() {
+    double mp = 0.938272; // mass of the proton in GeV/c2
+//TParticlePDG * TDatabasePDG::AddParticle 	(name,title,mass,stable,width,charge,class,PDGcode)
+    pdgDB->AddParticle("D","Nuclei",    mp*2.,1.,0.,1.,"",      1000010020);
+    pdgDB->AddParticle("T","Nuclei",    mp*3.,1.,0.,1.,"",      1000010030);
+    pdgDB->AddParticle("He3","Nuclei",  mp*3.,1.,0.,2.,"",      1000020030);
+    pdgDB->AddParticle("He4","Nuclei",  mp*4.,1.,0.,2.,"",      1000020040);
+    pdgDB->AddParticle("Li","Nuclei",   mp*6.,1.,0.,3.,"",      1000030060);
+    pdgDB->AddParticle("C","Nuclei",    mp*20.,1.,0.,6.,"",     1000060120);
+    pdgDB->AddParticle("N","Nuclei",    mp*15.,1.,0.,7.,"",     1000070150);
+    pdgDB->AddParticle("O","Nuclei",    mp*16.,1.,0.,8.,"",     1000080160);
+    pdgDB->AddParticle("O15","Nuclei",  mp*15.,1.,0.,8.,"",     1000080150);
+    pdgDB->AddParticle("F","Nuclei",    mp*18.,1.,0.,9.,"",     1000090180);
+    pdgDB->AddParticle("Ne","Nuclei",   mp*20.,1.,0.,10.,"",    1000100200);
+    pdgDB->AddParticle("Na","Nuclei",   mp*22.,1.,0.,11.,"",    1000110220);
+    pdgDB->AddParticle("Na23","Nuclei", mp*23.,1.,0.,11.,"",    1000110230);
+    pdgDB->AddParticle("Mg","Nuclei",   mp*24.,1.,0.,12.,"",    1000120240);
+    pdgDB->AddParticle("Mg25","Nuclei", mp*25.,1.,0.,12.,"",    1000120250);
+    pdgDB->AddParticle("Mg26","Nuclei", mp*26.,1.,0.,12.,"",    1000120260);
+    pdgDB->AddParticle("Al","Nuclei",   mp*25.,1.,0.,13.,"",    1000130250);
+    pdgDB->AddParticle("Al25","Nuclei", mp*27.,1.,0.,13.,"",    1000130270);
+    pdgDB->AddParticle("Si","Nuclei",   mp*28.,1.,0.,14.,"",    1000140280);
+    pdgDB->AddParticle("Si30","Nuclei", mp*30.,1.,0.,14.,"",    1000140300);
 }
 
 #endif // #ifdef a2mcToVSD_cxx

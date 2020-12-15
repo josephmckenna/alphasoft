@@ -6,7 +6,6 @@ public:
     // ----------------------------------------------------------
     // File / Event Data
     // ----------------------------------------------------------
-
     TFile      *fFile;
     TDirectory *fDirectory;
     TObjArray  *fEvDirKeys;
@@ -40,7 +39,6 @@ a2mcVSDReader(const char* file_name) :
         Error("VSD_Reader", "Can not open file '%s' ... terminating.", file_name);
         gSystem->Exit(1);
     }
-
     fEvDirKeys = new TObjArray;
     TPMERegexp name_re("Event\\d+");
     TObjLink* lnk = fFile->GetListOfKeys()->FirstLink();

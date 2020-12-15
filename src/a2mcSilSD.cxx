@@ -116,11 +116,10 @@ Bool_t a2mcSilSD::ProcessHits()
     Double_t top_pos[3], loc_pos[3];
     top_pos[0] = pos.X(); top_pos[1] = pos.Y(); top_pos[2] = pos.Z(); 
     gMC->Gmtod(top_pos, loc_pos, 1);
-    Int_t n_strip = ReturnNStrip(lay, loc_pos[2]);
-    Int_t p_strip = ReturnPStrip(lay, loc_pos[0]);
+    Int_t n_strip = ReturnNStrip(lay, pos[2]);      ///< The Z in the global reference system (the way ReturnNStrip it is)
+    Int_t p_strip = ReturnPStrip(lay, loc_pos[0]);  ///< The X in the local reference system (the way ReturPStrip it is)
     ///< Checking that the hit is in the "active part" of the silicon
     if(n_strip==-1||p_strip==-1) return false; ///< return only if one of the two is -1 or need BOTH????
-    
     TLorentzVector mom;
     gMC->TrackMomentum(mom);
     Double_t edep = gMC->Edep();
@@ -297,7 +296,7 @@ Int_t a2mcSilSD::ReturnNStrip(Int_t lay, Double_t pos) {
     Double_t ASIC2_end      = -18.4063 - fPCBmountZ; ///< 11.8187
     Double_t ASIC2_start    = -7.29380 - fPCBmountZ; ///< 22.9312
 
-    pos += a2mcApparatus::Instance()->GetSilDet_L()/2.; ///< To have Z in the range [0.;23.0]
+//    pos += a2mcApparatus::Instance()->GetSilDet_L()/2.; ///< To have Z in the range [0.;23.0]
     Int_t strip = -1;
     Double_t s  = 0.;
     

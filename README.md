@@ -1,10 +1,18 @@
 ALPHA2 Virtual Monte Carlo (a2MC)
 
 ///< --------------------------------------------------------------------------
-///< 0. HOW TO GET IT
+///< -1. HOW TO GET IT
 ///< --------------------------------------------------------------------------
 git clone https://gitlab.cern.ch/unibs/a2mc.git
 It stores the Alpha2 Monte Carlo in the "a2mc" subdirectory
+------------------------------------ oOo --------------------------------------
+
+
+///< --------------------------------------------------------------------------
+///< 0. PREREQUISITES
+///< --------------------------------------------------------------------------
+Root, Geant4, VMC, VGM and Geant4_vmc need to be installed in your system.
+Instructions on how to install such packages are available in install_VMC.txt.
 ------------------------------------ oOo --------------------------------------
 
 
@@ -13,6 +21,9 @@ It stores the Alpha2 Monte Carlo in the "a2mc" subdirectory
 ///< --------------------------------------------------------------------------
 cd a2mc
 source setup.sh
+A copy of the "berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag"
+must be present in the input subdirectory. It is available in the aux/magnets/
+subdirectory of the Alpha Sotware installation. 
 ------------------------------------ oOo --------------------------------------
 
 

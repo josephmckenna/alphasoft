@@ -145,18 +145,23 @@ Bool_t a2mcGenerator::GenPbars()
 //    theta = acos(1.-2.*gRandom->Uniform(0.,1.)) ;
 // ################### Momentum #########################
     UInt_t mag_field = a2mcConf.GetMagField();
-    Double_t plim = 5.0e-3; // in GeV
     Double_t c, beta, gamma;
     c       = 299792458.; // Speed of light in m/s
     beta    = v/c;
     gamma   = 1/sqrt(1-beta*beta);
     ptot    = gamma*mass*beta; // relativistic formula, ptot is expressed in GeV
+    ///< -----------------------------------------------------------------------
+    ///< ----------------------------- WARNING ---------------------------------
+    ///< -----------------------------------------------------------------------
+    ///< It may be needed (according the the Geant4 version and settings) to put
+    ///< a lower limit to ptot, to avoid that the antiproton is stuck in the 
+    ///< magnetic field. This means that for mag_field !=0 annihilations may be 
+    ///< in flight while for mag_field == 0 annihilations are at rest.
     ///< WARNING: overwriting the momentum if it is too low (only for mag_field != 0)
-    ///< This means that for mag_field !=0 annihilations are in flight, for mag_field == 0 annihilations are at rest
+    Double_t plim = 5.0e-3; // in GeV
     if(mag_field!=0&&ptot<plim) ptot=plim; // Otherwise the antiproton doesn't leave the traps due to magnetic field (5 MeV/c)
-    ///< To force the "ptot" also for mag_field==0 uncomment the following line
-//    ptot = plim; ///< To force the "ptot" also for mag_field==0
-    fTotE = sqrt(ptot*ptot + mass*mass);  
+    fTotE = sqrt(ptot*ptot + mass*mass);
+    fKinE = fTotE - mass;
     Double_t px, py, pz;
     px = ptot*sin(theta)*cos(phi);
     py = ptot*sin(theta)*sin(phi);
