@@ -257,11 +257,12 @@ public:
             BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
             BscTree->Fill();
          }
-      else delete analyzed_event;
+      // Warning? This function doesn't return anything new to the flow. 
+      // Does this module have nothing useful to any other modules?
+      delete analyzed_event;
 
       
       //AgBarEventFlow 
-
       return flow;
    }
 
