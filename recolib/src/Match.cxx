@@ -368,100 +368,100 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
       bool stat=true;
 #endif
       if( r==0 ) // it's good
-	{
-	  // make sure that the fit is not crazy...
-	  double sigma = ff->GetParameter(2);
-	  double err = ff->GetParError(1);
-	  double pos = ff->GetParameter(1);
-	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
-	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-	  double amp = ff->GetParameter(0);
-	  double eamp = ff->GetParError(0);
-
-	  if( diagnostic )
-	    {
-	      hcogsigma->Fill(sigma);
-	      hcogerr->Fill(err);
-	      int index = pmap.index(col,row);
-	      hcogpadssigma->Fill(double(index),sigma);
-	      hcogpadsamp->Fill(double(index),amp);
-	      double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
-	      hcogpadsint->Fill(double(index),totq);
-	      hcogpadsampamp->Fill(peaky[i],amp);
-	    }
-	  if( err < padFitErrThres &&
-	      fabs(sigma-padSigma)/padSigma < padSigmaD )
-	    //if( err < padFitErrThres && sigma > 0. )
-	    {
-	      // create new signal with combined pads
-	      CombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
-	      if( fDebug )
-		std::cout<<"Combination Found! s: "<<col
-			 <<" i: "<<row
-			 <<" t: "<<time
-			 <<" a: "<<amp
-			 <<" z: "<<pos
-			 <<" err: "<<err<<std::endl;
-	    }
-	  else // fit is crazy
-	    {
-	      if( fTrace )
-		std::cout<<"Combination NOT found... position error: "<<err
-			 <<" or sigma: "<<sigma<<std::endl;
+        {
+          // make sure that the fit is not crazy...
+          double sigma = ff->GetParameter(2);
+          double err = ff->GetParError(1);
+          double pos = ff->GetParameter(1);
+          double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
+          int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+          double amp = ff->GetParameter(0);
+          double eamp = ff->GetParError(0);
+        
+          if( diagnostic )
+            {
+              hcogsigma->Fill(sigma);
+              hcogerr->Fill(err);
+              int index = pmap.index(col,row);
+              hcogpadssigma->Fill(double(index),sigma);
+              hcogpadsamp->Fill(double(index),amp);
+              double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+              hcogpadsint->Fill(double(index),totq);
+              hcogpadsampamp->Fill(peaky[i],amp);
+            }
+          if( err < padFitErrThres &&
+              fabs(sigma-padSigma)/padSigma < padSigmaD )
+            //if( err < padFitErrThres && sigma > 0. )
+            {
+              // create new signal with combined pads
+              CombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
+              if( fDebug )
+        	std::cout<<"Combination Found! s: "<<col
+        		 <<" i: "<<row
+        		 <<" t: "<<time
+        		 <<" a: "<<amp
+        		 <<" z: "<<pos
+        		 <<" err: "<<err<<std::endl;
+            }
+          else // fit is crazy
+            {
+              if( fTrace )
+        	std::cout<<"Combination NOT found... position error: "<<err
+        		 <<" or sigma: "<<sigma<<std::endl;
 #ifdef RESCUE_FIT
-	      stat=false;
+   	      stat=false;
 #endif
-	    }
-	}// fit is valid
+            }
+        }// fit is valid
       else
-	{
-	  if( fTrace )
-	    std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+        {
+          if( fTrace )
+            std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
 #ifdef RESCUE_FIT
-	  stat=false;
+            stat=false;
 #endif
-	}
+	      }
       delete ff;
 
 #ifdef RESCUE_FIT
       if( !stat )
-	{
-	  int b0 = hh->FindBin(peakx[i]);
-	  int bmin = b0-5, bmax=b0+5;
-	  if( bmin < 1 ) bmin=1;
-	  if( bmax > int(_padrow) ) bmax=int(_padrow);
-	  double zcoord=0.,tot=0.;
-	  for( int ib=bmin; ib<=bmax; ++ib )
-	    {
-	      double bc = hh->GetBinContent(ib);
-	      zcoord += bc*hh->GetBinCenter(ib);
-	      tot += bc;
-	    }
-	  if( tot > 0. )
-	    {
-	      //double amp = tot/11.;
-	      double amp = tot;
-	      double pos = zcoord/tot;
-	      double zix = ( pos + _halflength ) / _padpitch - 0.5;
-	      int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
-
-	      // create new signal with combined pads
-	      CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
-
-	      if( fDebug )
-		std::cout<<"at last Found! s: "<<col
-			 <<" i: "<<index
-			 <<" t: "<<time
-			 <<" a: "<<amp
-			 <<" z: "<<pos<<std::endl;
-	      stat=true;
-	    }
-	  else
-	    {
-	      if( fTrace )
-		std::cout<<"Failed last combination resort"<<std::endl;
-	    }
-	}
+        {
+          int b0 = hh->FindBin(peakx[i]);
+          int bmin = b0-5, bmax=b0+5;
+          if( bmin < 1 ) bmin=1;
+          if( bmax > int(_padrow) ) bmax=int(_padrow);
+          double zcoord=0.,tot=0.;
+          for( int ib=bmin; ib<=bmax; ++ib )
+            {
+              double bc = hh->GetBinContent(ib);
+              zcoord += bc*hh->GetBinCenter(ib);
+              tot += bc;
+            }
+          if( tot > 0. )
+            {
+              //double amp = tot/11.;
+              double amp = tot;
+              double pos = zcoord/tot;
+              double zix = ( pos + _halflength ) / _padpitch - 0.5;
+              int index = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+        
+              // create new signal with combined pads
+              CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
+        
+              if( fDebug )
+        	std::cout<<"at last Found! s: "<<col
+        		 <<" i: "<<index
+        		 <<" t: "<<time
+        		 <<" a: "<<amp
+        		 <<" z: "<<pos<<std::endl;
+              stat=true;
+            }
+          else
+            {
+              if( fTrace )
+        	std::cout<<"Failed last combination resort"<<std::endl;
+            }
+        }
 #endif
     } // wizard peak finding failed
   delete hh;
