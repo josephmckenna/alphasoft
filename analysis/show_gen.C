@@ -69,14 +69,17 @@ void primary_pbar_origin() {
     corigin->cd(1);
         TH2D *h_origin_XY = new TH2D("h_origin_XY","Primary origin X vs Y", 100, x_origin_min, x_origin_max, 100, y_origin_min, y_origin_max);
         tree->Draw("fVoy:fVox>>h_origin_XY");
+        h_origin_XY->SetXTitle("cm"); h_origin_XY->SetYTitle("cm"); 
         h_origin_XY->Draw("COLZ");
     corigin->cd(2);
         TH1D *h_origin_Z = new TH1D("h_origin_Z", "Primary origin Z", 100, z_origin_min, z_origin_max);
         tree->Draw("fVoz>>h_origin_Z");
+        h_origin_Z->SetXTitle("cm");
         h_origin_Z->Draw("");
     corigin->cd(3);
         TH2D *h_origin_RvsZ = new TH2D("h_origin_RvsZ","Primary origin R vs Z", 100, z_origin_min, z_origin_max, 100, 0., x_origin_max*1.1);
         tree->Draw("sqrt(fVox*fVox+fVoy*fVoy):fVoz>>h_origin_RvsZ");
+        h_origin_RvsZ->SetXTitle("cm"); h_origin_RvsZ->SetYTitle("cm"); 
         h_origin_RvsZ->Draw("COLZ");
 }
 
@@ -88,14 +91,17 @@ void primary_pbar_decay() {
     cdecay->cd(1);
         TH2D *h_decay_XY = new TH2D("h_decay_XY","Primary decay   X vs Y", 100, x_decay_min*1.1, x_decay_max*1.1, 100, y_decay_min*1.1, y_decay_max*1.1);
         tree->Draw("fVdy:fVdx>>h_decay_XY");
+        h_decay_XY->SetXTitle("cm"); h_decay_XY->SetYTitle("cm"); 
         h_decay_XY->Draw("COLZ");
     cdecay->cd(2);
         TH1D *h_decay_Z = new TH1D("h_decay_Z", "Primary decay   Z", 100, z_decay_min, z_decay_max);
         tree->Draw("fVdz>>h_decay_Z");
+        h_decay_Z->SetXTitle("cm");
         h_decay_Z->Draw("");
     cdecay->cd(3);
         TH2D *h_decay_RvsZ = new TH2D("h_decay_RvsZ","Primary decay   R vs Z", 100, z_decay_min, z_decay_max, 100, 0., x_decay_max*1.1);
         tree->Draw("sqrt(fVdx*fVdx+fVdy*fVdy):fVdz>>h_decay_RvsZ");
+        h_decay_RvsZ->SetXTitle("cm"); h_decay_RvsZ->SetYTitle("cm"); 
         h_decay_RvsZ->Draw("COLZ");
     cdecay->cd(4);
         TH1D *h_decay_ann = hDecayAnn();
@@ -106,8 +112,9 @@ void primary_mom() {
     TCanvas *cmom = new TCanvas("cmom","cmom",1200,1600);
     cmom->Divide(2,2);
     cmom->cd(1);
-        TH1D *hp = new TH1D("hp","Momentum",100, 0., p_tot_origin_max*1.2);
-        tree->Draw("sqrt(fPox*fPox+fPoy*fPoy+fPoz*fPoz)>>hp");
+        TH1D *hp = new TH1D("hp","Momentum",100, 0., p_tot_origin_max*1000*1.2); ///< *1000 -> MeV
+        tree->Draw("sqrt(fPox*fPox+fPoy*fPoy+fPoz*fPoz)*1000.>>hp"); ///< *1000 -> MeV
+        hp->SetXTitle("MeV");
     cmom->cd(2);
         TH1D *hthe = new TH1D("hthe","#theta",91, -0.5, 90.5); hthe->SetXTitle("deg");
         tree->Draw("acos(fabs(fPoz)/sqrt(fPox*fPox+fPoy*fPoy+fPoz*fPoz))*TMath::RadToDeg()>>hthe", 

@@ -42,18 +42,22 @@ void sil_geo() {
     c_sil_geo->cd(3);
         TH2D *h_hit_XY = new TH2D("h_hit_XY","HIT Y vs X", 500, -15.0, 15.0, 500, -15., 15.);
         tree->Draw("SilHits.fPosY:SilHits.fPosX>>h_hit_XY");
+        h_hit_XY->SetXTitle("cm"); h_hit_XY->SetYTitle("cm");
         h_hit_XY->Draw("COLZ");
     c_sil_geo->cd(6);
         TH1D *h_hit_Z = new TH1D("h_hit_Z","HIT Z", 500, -25.0, 25.0);
         tree->Draw("SilHits.fPosZ>>h_hit_Z");
+        h_hit_Z->SetXTitle("cm");
         h_hit_Z->Draw("");
     c_sil_geo->cd(4);
         TH1D *h_n_strip = new TH1D("h_n_strip","n-strip", 256, -0.5, 255.5);
         tree->Draw("SilHits.fnStrp>>h_n_strip");
+        h_n_strip->SetXTitle("#");
         h_n_strip->Draw("");
     c_sil_geo->cd(5);
         TH1D *h_p_strip = new TH1D("h_p_strip","p-strip", 256, -0.5, 255.5);
         tree->Draw("SilHits.fpStrp>>h_p_strip");
+        h_p_strip->SetXTitle("#");
         h_p_strip->Draw("");
 }
 
@@ -63,7 +67,7 @@ void sil_ene() {
     TCanvas *c_sil_ene = new TCanvas("c_sil_ene","c_sil_ene",900,600);
     c_sil_ene->Divide(1,1);
     c_sil_ene->cd(1);
-        TH1D *h_hit_edep = new TH1D("h_hit_edep","Energy deposition", 501, -0.005, 1.005);
+        TH1D *h_hit_edep = new TH1D("h_hit_edep","Energy deposition in a single module", 501, -0.005, 1.005);
         tree->Draw("SilHits.fEdep*1000.>>h_hit_edep");
         h_hit_edep->SetXTitle("MeV");
         h_hit_edep->Draw("");
