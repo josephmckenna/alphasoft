@@ -107,10 +107,10 @@ Bool_t a2mcGenerator::GenPbars()
     fGenPos[1] = gRandom->Gaus(0.,xySig);
     fGenPos[2] = zgen;
     if(gen_mode==1) {
-        fGenPos[2] += gRandom->Uniform(zmin,zmax);
+        fGenPos[2] += gRandom->Gaus(0.,zSig);
     }
     if(gen_mode==2) {
-        fGenPos[2] += gRandom->Gaus(0.,zSig);
+        fGenPos[2] += gRandom->Uniform(zmin,zmax);
     }
     ///<-----------------------
     //|< 3) Momentum generation 

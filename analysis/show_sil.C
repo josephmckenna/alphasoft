@@ -9,6 +9,8 @@ TH1D*   hDecayAnn();
 
 TTree *tree = 0;
 ROOT::RDataFrame *d;
+Bool_t muons = false;
+Bool_t pbars = false;
 
 
 ///< main 
@@ -16,6 +18,7 @@ void show_sil(int runNumber) {
     std::string  stat_opt = "im";      // i = integral, m = mean, r = rms, etc. 
     gStyle->SetOptStat(stat_opt.c_str());
     open_root(runNumber);
+    get_parameters();
     sil_geo();
     sil_ene();
     return;
@@ -31,7 +34,10 @@ void sil_geo() {
     TCanvas *c_sil_geo = new TCanvas("c_sil_geo","c_sil_geo",1500,1200);
     c_sil_geo->Divide(3,2);
     c_sil_geo->cd(1);
-        TH1D *h_lay = new TH1D("h_lay","Layer multiplicity", 6, -0.5, 5.5);
+        ostringstream s;
+        if(muons) s << "Muons RUN - Layer multiplicity";
+        if(pbars) s << "Pbars RUN - Layer multiplicity";
+        TH1D *h_lay = new TH1D("h_lay",s.str().c_str(), 6, -0.5, 5.5);
         tree->Draw("SilHits.fLayN>>h_lay");
         h_lay->SetMinimum(0);
         h_lay->Draw("");
@@ -67,15 +73,19 @@ void sil_ene() {
     TCanvas *c_sil_ene = new TCanvas("c_sil_ene","c_sil_ene",900,600);
     c_sil_ene->Divide(1,1);
     c_sil_ene->cd(1);
-        TH1D *h_hit_edep = new TH1D("h_hit_edep","Energy deposition in a single module", 501, -0.005, 1.005);
+        ostringstream s;
+        if(muons) s << "Muons RUN - Energy deposition in a single module";
+        if(pbars) s << "Pbars RUN - Energy deposition in a single module";
+        TH1D *h_hit_edep = new TH1D("h_hit_edep",s.str().c_str(), 501, -0.005, 1.005);
         tree->Draw("SilHits.fEdep*1000.>>h_hit_edep");
         h_hit_edep->SetXTitle("MeV");
         h_hit_edep->Draw("");
 }
 
-
-
 void get_parameters() {
+    auto pdg = d->Max("fPdgCode");
+    if((int)*pdg==-2212) pbars = true;
+    if((int)*pdg==-13||(int)*pdg==+13) muons = true;
 }
 
 void open_root(int runNumber) {
