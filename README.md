@@ -13,6 +13,8 @@ It stores the Alpha2 Monte Carlo in the "a2mc" subdirectory
 ///< --------------------------------------------------------------------------
 Root, Geant4, VMC, VGM and Geant4_vmc need to be installed in your system.
 Instructions on how to install such packages are available in install_VMC.txt.
+A "pre_setup.sh" and a "env_setup.sh" utility are available in the input 
+subdirectory. 
 ------------------------------------ oOo --------------------------------------
 
 
@@ -27,8 +29,8 @@ source setup.sh
 ///< --------------------------------------------------------------------------
 ///< 2. COMPILATION
 ///< --------------------------------------------------------------------------
-Edit/change make_Makefile.sh to reflect your local  (ROOT/GEANT4/VMC) 
-installation paths.
+===> Edit/change make_Makefile.sh to reflect your local  (ROOT/GEANT4/VMC) 
+installation paths. <===
 source make_Makefile.sh
 make -j4
 ------------------------------------ oOo --------------------------------------
