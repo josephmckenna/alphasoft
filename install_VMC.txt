@@ -16,8 +16,8 @@ Index:
 ################################################################
 Get the latest stable ROOT version (http://root.cern.ch)
 - cd $TOPDIR
-- tar xvzf root.....tgz (it will create a subdirectory such as root-6.22.02)
-- cd root-6.22.02
+- tar xvzf root.....tgz (it will create a subdirectory such as root-6.22.06)
+- cd root-6.22.06
 - mkdir root_build
 - cd root_build
 - cmake ../
@@ -31,23 +31,23 @@ Get the latest stable ROOT version (http://root.cern.ch)
         [on a Mac "brew install gsl", on Ubuntu "sudo apt-get install libgsl-dev"]
 
 - cmake --build .
-- cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/root-6.22.02/root_install -P cmake_install.cmake
+- cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/root-6.22.06/root_install -P cmake_install.cmake
 
 ################################################################
 2) INSTALLING GEANT4
 ################################################################
 Get the latest stable GEANT4 version (http://geant4.cern.ch)
 - cd $TOPDIR
-- tar xvzf geant4.10.06.p02.tgz
-- cd geant4.10.06.p02
-- mkdir geant4.10.06.p02_build (example with geant4 version 10.06.p02)
-- cd geant4.10.06.p02_build 
-- cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_G3TOG4=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_BUILD_TLS_MODEL=global-dynamic $TOPDIR/geant4.10.06.p02
+- tar xvzf geant4.10.07.tgz
+- cd geant4.10.07
+- mkdir geant4.10.07_build (example with geant4 version 10.06.p02)
+- cd geant4.10.07_build 
+- cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/geant4.10.07/geant4.10.07_install -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_G3TOG4=ON -DGEANT4_USE_OPENGL_X11=ON -DGEANT4_BUILD_TLS_MODEL=global-dynamic $TOPDIR/geant4.10.07
 - make -j4
 - make install
 
 N.B. Add the following line to your .bashrc or .bash_profile 
-source $TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install/bin/geant4.sh 
+source $TOPDIR/geant4.10.07/geant4.10.07_install/bin/geant4.sh 
 
 (*) Note for Ubuntu: you may need to install additional packages such as:
     sudo apt install libglu1-mesa-dev
@@ -75,8 +75,8 @@ Instructions are available on https://github.com/vmc-project/vgm
 - mkdir vgm_build
 - mkdir vgm_install
 - cd vgm_build/
-- source $TOPDIR/root-6.22.02/root_install/bin/thisroot.sh
-- source $TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install/bin/geant4.sh 
+- source $TOPDIR/root-6.22.06/root_install/bin/thisroot.sh
+- source $TOPDIR/geant4.10.07/geant4.10.07_install/bin/geant4.sh 
 - cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/vgm.4.8/vgm_install $TOPDIR/vgm.4.8
 - make -j4
 - make install
@@ -96,8 +96,8 @@ choose if to link against the root version of VMC or against the "new" version (
 - mkdir vmc_build
 - mkdir vmc_install
 - cd vmc_build/
-- source $TOPDIR/root-6.22.02/root_install/bin/thisroot.sh
-- source $TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install/bin/geant4.sh
+- source $TOPDIR/root-6.22.06/root_install/bin/thisroot.sh
+- source $TOPDIR/geant4.10.07/geant4.10.07_install/bin/geant4.sh
 - cmake -DCMAKE_INSTALL_PREFIX=$TOPDIR/vmc.1.0.p3/vmc_install $TOPDIR/vmc.1.0.p3
 - make -j4
 - make install
@@ -106,16 +106,16 @@ choose if to link against the root version of VMC or against the "new" version (
 5) INSTALLING GEANT4_vmc
 ################################################################
 - cd $TOPDIR
-- git clone http://github.com/vmc-project/geant4_vmc.git geant4_vmc.5.2 (e.g. if you are installing version 5.2)
-- cd geant4_vmc.5.2
+- git clone http://github.com/vmc-project/geant4_vmc.git geant4_vmc.5.3 (e.g. if you are installing version 5.2)
+- cd geant4_vmc.5.3
 - git tag (to check which tags are available)
 - git checkout v5-2 (e.g. if you are installing version 5.2)
 - mkdir geant4_vmc_build
 - mkdir geant4_vmc_install
 - cd geant4_vmc_build/
-- source $TOPDIR/root-6.22.02/root_install/bin/thisroot.sh
-- source $TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install/bin/geant4.sh
-- cmake -Wno-dev -DCMAKE_INSTALL_PREFIX=$TOPDIR/geant4_vmc.5.2/geant4_vmc_install -DGeant4VMC_USE_VGM=ON -DVGM_DIR=$TOPDIR/vgm.4.8/vgm_install/lib/VGM-4.8.0/ -DVMC_DIR=$TOPDIR/vmc.1.0.p3/vmc_install/lib/VMC-1.0.3/ -DGeant4VMC_BUILD_MTRoot=ON $TOPDIR/geant4_vmc.5.2
+- source $TOPDIR/root-6.22.06/root_install/bin/thisroot.sh
+- source $TOPDIR/geant4.10.07/geant4.10.07_install/bin/geant4.sh
+- cmake -Wno-dev -DCMAKE_INSTALL_PREFIX=$TOPDIR/geant4_vmc.5.3/geant4_vmc_install -DGeant4VMC_USE_VGM=ON -DVGM_DIR=$TOPDIR/vgm.4.8/vgm_install/lib/VGM-4.8.0/ -DVMC_DIR=$TOPDIR/vmc.1.0.p3/vmc_install/lib/VMC-1.0.3/ -DGeant4VMC_BUILD_MTRoot=ON $TOPDIR/geant4_vmc.5.3
 ** Note: in different systems (Fedora, Ubuntu, MacOSX, etc) you may need to replace "lib" with "lib64" in the previous line
 - make -j4
 - make install
@@ -127,12 +127,12 @@ choose if to link against the root version of VMC or against the "new" version (
 ################################################################
 export TOPDIR="/usr/local" ==> [or wherever you installed the packages]
 ########## root ############
-source $TOPDIR/root-6.22.02/root_install/bin/thisroot.sh
+source $TOPDIR/root-6.22.06/root_install/bin/thisroot.sh
 alias root='root -l' 
 ######### geant4 ###########
-source $TOPDIR/geant4.10.06.p02/geant4.10.06.p02_install/bin/geant4.sh
+source $TOPDIR/geant4.10.07/geant4.10.07_install/bin/geant4.sh
 ######### libraries ###########
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$TOPDIR/geant4_vmc.5.2/geant4_vmc_install/lib" 
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$TOPDIR/geant4_vmc.5.3/geant4_vmc_install/lib" 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$TOPDIR/vgm.4.8/vgm_install/lib/"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$TOPDIR/vmc.1.0.p3/vmc_install/lib/"
 # [here LD_LIBRARY_PATH should be replaced with DYLD_LIBRARY_PATH in MacOSX]
