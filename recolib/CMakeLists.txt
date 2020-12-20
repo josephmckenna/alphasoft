@@ -57,11 +57,7 @@ add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc.cxx)
 target_link_libraries(agtpc agana ${ROOT_LIBRARIES})
 
 install(TARGETS agtpc DESTINATION lib)
-
-add_custom_command( TARGET agtpc POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-		    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/include/*.hh ${CMAKE_INSTALL_PREFIX}/include
-		    )
+install(FILES ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libagtpc.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh)
+install(FILES ${HEADER_FILES} DESTINATION include)

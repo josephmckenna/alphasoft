@@ -82,8 +82,5 @@ endif()
 target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
 
 install(TARGETS aged DESTINATION lib)
-
-add_custom_command( TARGET aged POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/include/*.h ${CMAKE_INSTALL_PREFIX}/include
-                  )
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

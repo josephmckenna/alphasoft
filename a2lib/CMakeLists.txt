@@ -81,12 +81,7 @@ if(ROOTANA_SUBMOD)
 endif()
 
 install(TARGETS alpha2 DESTINATION lib)
-
-add_custom_command( TARGET alpha2 POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/liba2lib_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/liba2lib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-		    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/include/*.h ${CMAKE_INSTALL_PREFIX}/include
-                  )
-
+install(FILES ${PROJECT_BINARY_DIR}/liba2lib_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/liba2lib.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)
