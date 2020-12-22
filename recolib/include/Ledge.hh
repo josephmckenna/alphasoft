@@ -24,6 +24,8 @@
 
 #include "SignalsType.hh"
 
+class Alpha16Channel;
+class FeamChannel;
 class Ledge
 {
 public:
