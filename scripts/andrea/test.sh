@@ -33,6 +33,7 @@ set -x
 
 ### horizontal - AW3.2kV - Trig. MLU1
 #agana.exe -O$DATADIR/test/cosmics904468.root --mt $MIDASDATA/run904468sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904468.log&
+agana.exe -O$DATADIR/test/cosmics904468sub000.root --mt $MIDASDATA/run904468sub000.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904468sub000.log&
 
 
 ##################################################################################################################################################################################################
