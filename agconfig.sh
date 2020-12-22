@@ -15,7 +15,7 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
 
-export AG_CFM=${AGRELEASE}/ana
+#export AG_CFM=${AGRELEASE}/ana #obsolete
 
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
@@ -167,6 +167,7 @@ acapra()
     export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
     export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
+    export PATH="$AGRELEASE/scripts/andrea":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
@@ -185,11 +186,11 @@ lxplus()
     echo "cvmfs not found! Please install and mount cvmfs"
   fi
   
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
-  fi
+#  #If geant4 is installed, set up simulation vars
+#  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
+#      echo "Geant4 installation found..."
+#      sim_submodules
+#  fi
 }
 
 
@@ -206,26 +207,26 @@ echo "#########################################"
 #Setup LD_LIBRARY_PATH
 echo "Adding $AGRELEASE/bin/lib to LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="$AGRELEASE/bin/lib:"$LD_LIBRARY_PATH
-#for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
-#  if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
-#    NOTHING_TO_DO=1
-#  else
-#    echo "Adding ${AG_LIB_PATH} to LD_LIBRARY_PATH"
-#    export  LD_LIBRARY_PATH=${AGRELEASE}/${AG_LIB_PATH}/:${LD_LIBRARY_PATH}
-#  fi
-#done
+for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
+  if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
+    NOTHING_TO_DO=1
+  else
+    #echo "Adding ${AG_LIB_PATH} to LD_LIBRARY_PATH"
+    export  LD_LIBRARY_PATH=${AGRELEASE}/${AG_LIB_PATH}/:${LD_LIBRARY_PATH}
+  fi
+done
 
 #Set up Root include path
 echo "Adding $AGRELEASE/bin/include to ROOT_INCLUDE_PATH"
 export ROOT_INCLUDE_PATH=${AGRELEASE}/bin/include:${ROOT_INCLUDE_PATH}
-#for AG_ROOT_LIB_PATH in ana/include analib/include rootUtils/include aged recolib/include a2lib/include a2lib/legacy; do
-#  if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
-#    NOTHING_TO_DO=1
-#  else
+for AG_ROOT_LIB_PATH in ana/include analib/include rootUtils/include aged recolib/include a2lib/include a2lib/legacy; do
+  if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
+    NOTHING_TO_DO=1
+  else
 #    echo "Adding ${AG_ROOT_LIB_PATH} to ROOT_INCLUDE_PATH"
-#    export  ROOT_INCLUDE_PATH=${AGRELEASE}/${AG_ROOT_LIB_PATH}/:${ROOT_INCLUDE_PATH}
-#  fi
-#done
+    export  ROOT_INCLUDE_PATH=${AGRELEASE}/${AG_ROOT_LIB_PATH}/:${ROOT_INCLUDE_PATH}
+  fi
+done
 
 #Add scripts to BIN path
 for AG_BIN_PATH in scripts bin; do
