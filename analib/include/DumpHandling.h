@@ -81,7 +81,7 @@ class SVDCounts
    }
    friend std::ostream& operator<<(std::ostream& os, const SVDCounts& SVDC)
    {
-      if(SVDC.VF48Events < 500)
+      if(SVDC.FirstVF48Event == -1)
       {
          os << "DEBUG: SVDCounts object at" << &SVDC << "is not initialised/is empty" << std::endl;
          return os;
@@ -97,6 +97,7 @@ class SVDCounts
 
          return os;
       }
+
    }
 };
 
@@ -342,10 +343,12 @@ public:
                SVD_Filled=FILLED;
                return 1;
             }
+
       //Lukas debug info.
       std::cout << "DEBUG: Time of the following update event is:" << t << std::endl;
-      IntegratedSVDCounts.AddEvent(s);
       std::cout << IntegratedSVDCounts;
+
+      IntegratedSVDCounts.AddEvent(s);
       return 0;
    }
 };
