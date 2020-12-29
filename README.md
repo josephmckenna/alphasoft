@@ -15,6 +15,9 @@ Root, Geant4, VMC, VGM and Geant4_vmc need to be installed in your system.
 Instructions on how to install such packages are available in install_VMC.txt.
 A "pre_setup.sh" and a "env_setup.sh" utility are available in the input 
 subdirectory. 
+The a2mc has been tested with: 
+-> root 6.22/06, geant4 10.07,     VGM 4.8, VMC 1.0.p3, geant4_vmc 5.3
+-> root 6.22/02, geant4 10.06.p02, VGM 4.8, VMC 1.0.p3, geant4_vmc 5.2
 ------------------------------------ oOo --------------------------------------
 
 

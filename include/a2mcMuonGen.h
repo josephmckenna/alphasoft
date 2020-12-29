@@ -10,7 +10,6 @@ class a2mcMuonGen : public TObject
 {
 private:
     void Init();
-    double mYOffset;
     double mZOffset;
     double mCylRadius;
     double mCylHeight;
@@ -39,8 +38,7 @@ public:
     void SetCylinderRadius(double);
     void SetCylinderHeight(double);
     void SetCylinderRadiusAndHeight(double, double);
-    void SetZOffset(double);
-    void SetYOffset(double);
+    void SetVertOffset(double);
     void SetSkyXYZ(double, double, double, int);
     void SetSphRadius(double);
     void SetHorizontalGeneration(bool);
@@ -54,7 +52,7 @@ public:
         radius = mCylRadius;
         height = mCylHeight;
     };
-    double GetZOffset() {return mZOffset;};
+    double GetVertOffset() {return mZOffset;};
 
     void GetGenPoint(std::array<double, 3>& genPoint) {
         genPoint = mGenPoint;

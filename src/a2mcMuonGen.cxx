@@ -1,12 +1,17 @@
 ///< ###############################################
 ///< Developed for the Alpha experiment  [Nov. 2020]
-///< germano.bonomi@cern.ch [developed by D. Pagano]
+///< germano.bonomi@cern.ch 
+///< [generation code by D. Pagano]
 ///< ###############################################
-
+///< In the a2mcMuonGen the Z axis is the vertical one
+//  (z)|         MuonGen
+//     |  / (y)
+//     | /
+//     |/_________ (x)
+///< WARNING: in a2mcApparatus the vertical axis is the y axis
 #include "a2mcMuonGen.h"
 
 a2mcMuonGen::a2mcMuonGen() : 
-    mYOffset(0.),
     mZOffset(0.),
     mCylRadius(0.),
     mCylHeight(0.),
@@ -61,13 +66,9 @@ void a2mcMuonGen::SetCylinderRadiusAndHeight(double radius, double height) {
     mCylHeight = height;
 }
 
-////////////////////////////////////////////////////////  
-void a2mcMuonGen::SetYOffset(double offset) {
-  mYOffset = offset;
-}
 
 ////////////////////////////////////////////////////////  
-void a2mcMuonGen::SetZOffset(double offset) {
+void a2mcMuonGen::SetVertOffset(double offset) {
     mZOffset = offset;
 }
 
@@ -117,8 +118,8 @@ void a2mcMuonGen::Generate() {
     
     if  (mDoHorGen) {   //// Generation point on the sky (flat) ////
         mGenPoint[0] = gRandom->Uniform()*mxSky - mxSky/2.;                 // x coordinate
-        mGenPoint[1] = gRandom->Uniform()*mySky - mySky/2. + mYOffset;      // y coordinate (vertical axis)
-        mGenPoint[2] = gRandom->Uniform()*mzSky - mzSky/2. + mZOffset;      // z coordinate (along the beam axis)
+        mGenPoint[1] = gRandom->Uniform()*mySky - mySky/2.;                 // y coordinate
+        mGenPoint[2] = gRandom->Uniform()*mzSky - mzSky/2. + mZOffset;      // z coordinate (vertical)
         double gen_fixed[3] = {mxSky,mySky,mzSky};
         mGenPoint[iSky] = gen_fixed[iSky];
     }
@@ -164,7 +165,7 @@ void a2mcMuonGen::Generate() {
 /////////////////////////////////////////////////////////////////////
     
   
-//// Phi angle //// -> new version from Antonietta 6/4/2016
+//// Phi angle
     accepted = false;
     double min_phi = 0;
     double max_phi = 2*M_PI;
@@ -206,8 +207,8 @@ void a2mcMuonGen::Generate() {
         while (!accepted) {
 
             // as a first approximation, the flux on the sphere is supposed to be constant ( -> uniformly distrubuted points)
-            Double_t auxiliary_var = gRandom->Uniform();
-            theta0       = TMath::ACos(auxiliary_var);
+            Double_t auxiliary_var  = gRandom->Uniform();
+            theta0                  = TMath::ACos(auxiliary_var);
             //but: the following instrutions will modify the previous distribution according to the cosmic flux which is function of theta0
 
             double r1t = gRandom->Uniform();
@@ -227,16 +228,14 @@ void a2mcMuonGen::Generate() {
             double ftheta = 1600*TMath::Power(mGenMomentum+2.68, -3.175)*TMath::Power(mGenMomentum, 3.175-2.896)*TMath::Power(TMath::Cos(mTheta), n)*
             TMath::Abs(
                  TMath::Sin(mTheta)*TMath::Sin(theta0)*TMath::Cos(mPhi)+
-//                  TMath::Sin(mTheta)*TMath::Sin(theta0)*TMath::Sin(mPhi)+
                     TMath::Cos(mTheta)*TMath::Cos(theta0)
             )*TMath::Sin(mTheta);
            if (11*r2 < ftheta) accepted = true;
         }
         
-        mGenPoint[2] = sphere_radius * TMath::Sin(theta0) * TMath::Cos(phi0) + mZOffset;
-        mGenPoint[0] = sphere_radius * TMath::Sin(theta0) * TMath::Sin(phi0);
-        mGenPoint[1] = sphere_radius * TMath::Cos(theta0) + mYOffset;
-//        mGenPoint[1] -= sphere_radius/2.;  // traslation downward by half of the radius
+        mGenPoint[0] = sphere_radius * TMath::Sin(theta0) * TMath::Cos(phi0);
+        mGenPoint[1] = sphere_radius * TMath::Sin(theta0) * TMath::Sin(phi0);
+        mGenPoint[2] = sphere_radius * TMath::Cos(theta0) + mZOffset;
 
         mTheta = M_PI - mTheta;
 

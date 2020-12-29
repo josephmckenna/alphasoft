@@ -37,7 +37,7 @@ void checkGeo(Int_t runNumber=0)
     }
     ///< Reading "gentle" geometry file generated with makeGeo
     ostringstream gEveGeoInput;
-    gEveGeoInput << "./root/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoInput << "./root/a2mcEveApparatus_" << runNumber << ".root";
 	TFile* geom = TFile::Open(gEveGeoInput.str().c_str());
 
 	TIter next(gDirectory->GetListOfKeys());
@@ -85,7 +85,7 @@ Bool_t makeGeo(Int_t runNumber=0) {
 
 // to run after 03/03/2016 (run with time-Nrun information)
     std::ostringstream sgeo;
-    sgeo << "ls ../output/a2mcApparatus-" << runNumber << ".root";
+    sgeo << "ls ../output/a2mcApparatus_" << runNumber << ".root";
     TString file_name(gSystem->GetFromPipe(sgeo.str().c_str()));
     string sfile = file_name.Data();
     if(strcmp(sfile.c_str(),"")==0) {
@@ -95,7 +95,7 @@ Bool_t makeGeo(Int_t runNumber=0) {
     gGeoManager = TGeoManager::Import(file_name);
 
     ostringstream gEveGeoOutput;
-    gEveGeoOutput << "./root/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoOutput << "./root/a2mcEveApparatus_" << runNumber << ".root";
 
     gGeoManager->CheckOverlaps(0.01); 
     gGeoManager->PrintOverlaps(); 

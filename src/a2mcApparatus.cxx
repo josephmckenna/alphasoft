@@ -71,7 +71,7 @@ void a2mcApparatus::ConstructGeometry()
 
     //-------- Saving the geometry in a root file
     ostringstream sgeo;
-    sgeo << "output/a2mcApparatus-" << runNumber << ".root";
+    sgeo << "output/a2mcApparatus_" << runNumber << ".root";
     gGeoManager->Export(sgeo.str().c_str());
 
     // notify VMC about Root geometry

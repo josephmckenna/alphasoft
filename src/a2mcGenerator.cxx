@@ -188,6 +188,14 @@ Bool_t a2mcGenerator::GenPbars()
 
 Bool_t a2mcGenerator::GenMuons() 
 {
+///< In the a2mcMuonGen the Z axis is the vertical one, 
+///<    here in the VMC the vertical one is the Y axis
+///< => fixing it here
+//  (y)|          VMC              //  (z)|         MuonGen
+//     |  / (x)                    //     |  / (y)
+//     | /                         //     | /
+//     |/_________ (z)             //     |/_________ (x)
+///< WARNING: TAKING CARE OF THIS => x -> y, y -> z, z -> x (both in position and direction of the primary)
     Bool_t genOK = false;
 // ####################### Cosimic ray muons a2mc generator  ###################### --->     INIT
     if(a2mcConf.GetGenMode()==0) {
@@ -213,20 +221,19 @@ Bool_t a2mcGenerator::GenMuons()
             TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fPDG);
             
             ///< All these values should be checked and set automatically getting parameters from a2mcApparatus
-            Double_t yOffset = -fDetConstruction->GetSilDet_R();
-            Double_t zOffset = 0.;
-            Double_t fSkyR   = 50.; ///< This has been set accordingly to the Oxford magnet size 
+            Double_t fSkyOffset = -fDetConstruction->GetSilDet_R(); ///< Vertical offset
+            Double_t fSkyRadius = 50.; ///< This has been set accordingly to the Oxford magnet size 
 
-            gen.SetYOffset(yOffset);
-            gen.SetZOffset(zOffset);
-            gen.SetSphRadius(fSkyR);
+            gen.SetVertOffset(fSkyOffset);
+            gen.SetSphRadius(fSkyRadius);
             gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
             ///< Getting the origin (generation position)
             std::array<double, 3> origin;
-            gen.GetGenPoint(origin);            
-            fGenPos[0] = origin[0];
-            fGenPos[1] = origin[1];
-            fGenPos[2] = origin[2];
+            gen.GetGenPoint(origin);
+            ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
+            fGenPos[0] = origin[1];
+            fGenPos[1] = origin[2];
+            fGenPos[2] = origin[0];
             ///< Getting the momentum at generation
             ptot   = gen.GetGenMomentum();
             theta  = gen.GetTheta();
@@ -234,12 +241,7 @@ Bool_t a2mcGenerator::GenMuons()
             cx = sin(theta)*cos(phi);	
             cy = sin(theta)*sin(phi);
             cz = cos(theta);
-            ///< In the aegisMuonGen the Z axis is the vertical one, here in the VMC the vertical is the Y
-            ///< => fixing it here
-            //  (y)|          VMC              //  (z)|         MuonGen
-            //     |  / (x)                    //     |  / (y)
-            //     | /                         //     | /
-            //     |/_________ (z)             //     |/_________ (x)
+            ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
             TVector3 Dir(cy, cz, cx);
             fGenMom[0] = ptot*Dir.X();
             fGenMom[1] = ptot*Dir.Y();

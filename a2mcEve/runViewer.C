@@ -89,7 +89,7 @@ void runViewer(Int_t runNumber=0) {
     ///< Reading "gentle" geometry file generated with make_geo
     //=====================
     ostringstream gEveGeoInput;
-    gEveGeoInput << "./root/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoInput << "./root/a2mcEveApparatus_" << runNumber << ".root";
     auto geom = TFile::Open(gEveGeoInput.str().c_str());
     if (!geom) return;
     auto gse = (TEveGeoShapeExtract*) geom->Get("Gentle");
@@ -239,7 +239,7 @@ Bool_t make_geo(Int_t runNumber=0) {
     // Reading the MC geometry output file
     //=============
     std::ostringstream sgeo;
-    sgeo << "ls ../output/a2mcApparatus-" << runNumber << ".root";
+    sgeo << "ls ../output/a2mcApparatus_" << runNumber << ".root";
     TString file_name(gSystem->GetFromPipe(sgeo.str().c_str()));
     string sfile = file_name.Data();
     if(strcmp(sfile.c_str(),"")==0) {
@@ -251,7 +251,7 @@ Bool_t make_geo(Int_t runNumber=0) {
     // Writing the MC EVE geometry (gentle) file
     //=============
     ostringstream gEveGeoOutput;
-    gEveGeoOutput << "./root/a2mcEveApparatus-" << runNumber << ".root";
+    gEveGeoOutput << "./root/a2mcEveApparatus_" << runNumber << ".root";
 
     TGeoNode* topNode = gGeoManager->GetTopNode();
     TEveGeoTopNode* eveTopNode = new TEveGeoTopNode(gGeoManager, topNode);
