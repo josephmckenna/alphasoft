@@ -36,6 +36,7 @@ void a2mcPrimary::Reset()
     fVdx         = std::numeric_limits<double>::quiet_NaN();
     fVdy         = std::numeric_limits<double>::quiet_NaN();
     fVdz         = std::numeric_limits<double>::quiet_NaN();
+    fGenMode     = -1;
 }
 
 //_____________________________________________________________________________

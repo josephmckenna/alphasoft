@@ -30,7 +30,9 @@ class a2mcPrimary : public TObject
         void SetVdy(Double_t v) { fVdy = v; };  
         void SetVdz(Double_t v) { fVdz = v; };  
 
-        void Reset();
+		void SetGenMode(Int_t mode) { fGenMode = mode; };
+
+void Reset();
 
     private:
         // -------> PRIVATE VARIABLES
@@ -47,6 +49,7 @@ class a2mcPrimary : public TObject
   		Double_t       fVdx;                   // x of decay vertex
   		Double_t       fVdy;                   // y of decay vertex
   		Double_t       fVdz;                   // z of decay vertex
+        Int_t          fGenMode;               // Type of generation (e.g. for muons, over a flat sky or a sphere)
 
         ClassDef(a2mcPrimary,1) //a2mcPrimary  
 };

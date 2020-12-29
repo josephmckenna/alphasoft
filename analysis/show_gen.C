@@ -21,7 +21,7 @@ Double_t x_decay_max, y_decay_max, z_decay_max;
 Double_t p_tot_origin_max;
 Bool_t muons = false;
 Bool_t pbars = false;
-
+Int_t  gen_mode = -1;
 ///< main 
 void show_gen(int runNumber) {
     std::string  stat_opt = "im";      // i = integral, m = mean, r = rms, etc. 
@@ -45,8 +45,16 @@ void show_gen(int runNumber) {
 void primary_muon_origin() {
     //##########################################################
     // Preparing the histos
-    TCanvas *corigin = new TCanvas("corigin","corigin",1200,1200);
+ ///< gen_mode == 1 -> gen over a flat sky, gen_mode == 0 -> gen over a sphere
+    TCanvas *corigin;
     corigin->Divide(2,2);
+    if(gen_mode==1) { ///< Specific for flat sky
+        corigin = new TCanvas("corigin","corigin",1200,600);
+        corigin->Divide(2,1);
+    } else {
+        corigin = new TCanvas("corigin","corigin",1200,1200);
+        corigin->Divide(2,2);
+    }
     corigin->cd(1);
         TH2D *h_origin_XZ = new TH2D("h_origin_XZ","Primary muon origin X vs Z", 100, x_origin_min, x_origin_max, 100, z_origin_min, z_origin_max);
         tree->Draw("fVoz:fVox>>h_origin_XZ");
@@ -55,10 +63,12 @@ void primary_muon_origin() {
         TH1D *h_origin_Y = new TH1D("h_origin_Y", "Primary muon origin Y", 100, y_origin_min, y_origin_max);
         tree->Draw("fVoy>>h_origin_Y");
         h_origin_Y->Draw("");
+    if(gen_mode==1) return; 
     corigin->cd(3);
         TH2D *h_origin_RvsY = new TH2D("h_origin_RvsY","Primary muon origin Y vs (X^2+Y^2)", 100, 0., x_origin_max, 100, y_origin_min, x_origin_max);
         tree->Draw("fVoy:sqrt(fVox*fVox+fVoz*fVoz)>>h_origin_RvsY");
         h_origin_RvsY->Draw("COLZ");
+    corigin->Modified(); corigin->Update();
 }
 
 void primary_pbar_origin() {
@@ -135,6 +145,9 @@ void get_parameters() {
     auto pdg = d->Max("fPdgCode");
     if((int)*pdg==-2212) pbars = true;
     if((int)*pdg==-13||(int)*pdg==+13) muons = true;
+    ///< Checking gen_mode
+    auto mode = d->Max("fGenMode");
+    gen_mode = (int)*mode;
     ///< Calculating the limits on Vox, Voy, Voz - ORIGIN
     auto max = d->Filter("!isnan(fVox)").Max("fVox");
     auto min = d->Filter("!isnan(fVox)").Min("fVox");

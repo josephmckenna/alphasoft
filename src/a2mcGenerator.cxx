@@ -188,6 +188,17 @@ Bool_t a2mcGenerator::GenPbars()
 
 Bool_t a2mcGenerator::GenMuons() 
 {
+    if(a2mcConf.GetGenMode()==0) return GenMuSphere();
+    if(a2mcConf.GetGenMode()==1) return GenMuFlat();
+    cout << "a2mcGenerator::GenMuons ==> Could not generate primary with gen_type = " << a2mcConf.GetGenType() 
+         << " and gen_mode " << a2mcConf.GetGenMode() << endl;
+    return false;
+
+}
+//-----------------------------------------------------------------------------
+
+Bool_t a2mcGenerator::GenMuSphere() 
+{
 ///< In the a2mcMuonGen the Z axis is the vertical one, 
 ///<    here in the VMC the vertical one is the Y axis
 ///< => fixing it here
@@ -195,64 +206,61 @@ Bool_t a2mcGenerator::GenMuons()
 //     |  / (x)                    //     |  / (y)
 //     | /                         //     | /
 //     |/_________ (z)             //     |/_________ (x)
-///< WARNING: TAKING CARE OF THIS => x -> y, y -> z, z -> x (both in position and direction of the primary)
+///< WARNING: x -> y, y -> z, z -> x (both in position and direction of the primary)
     Bool_t genOK = false;
 // ####################### Cosimic ray muons a2mc generator  ###################### --->     INIT
-    if(a2mcConf.GetGenMode()==0) {
-        ///< Using the a2mcMuonGen class to extract the generation parameters
-        a2mcMuonGen gen;
-        ///< muGenFlag = 0 [flat], 1 [spherical]
-        Int_t muGenFlag = 1; ///< THIS PART NEED TO BE IMPLEMENTED [ALSO FLAT GENERATION, FOR THE MOMENT ONLY SPHERICAL]
-        gen.SetSphericalGeneration(true);
+    ///< Using the a2mcMuonGen class to extract the generation parameters
+    a2mcMuonGen gen;
+    gen.SetSphericalGeneration(true);
 //        gen.SetHorizontalGeneration(false);
         
-        ///< Variable used in the while
-        Double_t mu_sign, mass, e;
-        Double_t ptot, phi, theta, cx, cy, cz;
-        Bool_t evtOK = false;
-        while(!evtOK) {  ///< Filtering to get a "realistic" cosmic ray muons flux
-            ///< Select mu+ or mu-
-            mu_sign=gRandom->Uniform();
-            if (mu_sign<0.444445) { ///< Experimental mu-/mu+ ratio [actually to be checked on the latest PDG review]
-                fPDG = kMuonMinus;
-            } else { 
-                fPDG = kMuonPlus;
-            }
-            TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fPDG);
+    ///< Variable used in the while
+    Double_t mu_sign, mass, e;
+    Double_t ptot, phi, theta, cx, cy, cz;
+    Bool_t evtOK = false;
+    while(!evtOK) {  ///< Filtering to get a "realistic" cosmic ray muons flux
+        ///< Select mu+ or mu-
+        mu_sign=gRandom->Uniform();
+        if (mu_sign<0.444445) { ///< Experimental mu-/mu+ ratio [actually to be checked on the latest PDG review]
+            fPDG = kMuonMinus;
+        } else { 
+            fPDG = kMuonPlus;
+        }
+        TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fPDG);
             
-            ///< All these values should be checked and set automatically getting parameters from a2mcApparatus
-            Double_t fSkyOffset = -fDetConstruction->GetSilDet_R(); ///< Vertical offset
-            Double_t fSkyRadius = 50.; ///< This has been set accordingly to the Oxford magnet size 
+        ///< All these values should be checked and set automatically getting parameters from a2mcApparatus
+        Double_t fSkyOffset = -fDetConstruction->GetSilDet_R(); ///< Vertical offset
+        Double_t fSkyRadius = 50.; ///< This has been set accordingly to the Oxford magnet size 
 
-            gen.SetVertOffset(fSkyOffset);
-            gen.SetSphRadius(fSkyRadius);
-            gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
-            ///< Getting the origin (generation position)
-            std::array<double, 3> origin;
-            gen.GetGenPoint(origin);
-            ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
-            fGenPos[0] = origin[1];
-            fGenPos[1] = origin[2];
-            fGenPos[2] = origin[0];
-            ///< Getting the momentum at generation
-            ptot   = gen.GetGenMomentum();
-            theta  = gen.GetTheta();
-            phi    = gen.GetPhi();
-            cx = sin(theta)*cos(phi);	
-            cy = sin(theta)*sin(phi);
-            cz = cos(theta);
-            ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
-            TVector3 Dir(cy, cz, cx);
-            fGenMom[0] = ptot*Dir.X();
-            fGenMom[1] = ptot*Dir.Y();
-            fGenMom[2] = ptot*Dir.Z();
-//            Double_t zenith = M_PI - theta; ///< zenithal angle (0- PI/2)            
-            mass = particlePDG->Mass();
-            fTotE = sqrt(mass*mass + ptot*ptot); ///< Total energy
-            fKinE = fTotE - mass;
-            // Filtering
-            nGens++;
-            evtOK = true;
+        gen.SetVertOffset(fSkyOffset);
+        gen.SetSphRadius(fSkyRadius);
+        gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
+        ///< Getting the origin (generation position)
+        std::array<double, 3> origin;
+        gen.GetGenPoint(origin);
+        ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
+        fGenPos[0] = origin[1];
+        fGenPos[1] = origin[2];
+        fGenPos[2] = origin[0];
+        ///< Getting the momentum at generation
+        ptot   = gen.GetGenMomentum();
+        theta  = gen.GetTheta();
+        phi    = gen.GetPhi();
+        cx = sin(theta)*cos(phi);	
+        cy = sin(theta)*sin(phi);
+        cz = cos(theta);
+        ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
+        TVector3 Dir(cy, cz, cx);
+        fGenMom[0] = ptot*Dir.X();
+        fGenMom[1] = ptot*Dir.Y();
+        fGenMom[2] = ptot*Dir.Z();
+//        Double_t zenith = M_PI - theta; ///< zenithal angle (0- PI/2)            
+        mass = particlePDG->Mass();
+        fTotE = sqrt(mass*mass + ptot*ptot); ///< Total energy
+        fKinE = fTotE - mass;
+        // Filtering
+        nGens++;
+        evtOK = true;
             ///< Checking if the line "crosses" the SilDet cylinder (indeed a "double" SilDet  cylinder)
 //            if(pbar_dump==10||pbar_dump==11) evtOK = CheckSilDetCrossing(TVector3(fXOrigin, fYOrigin, fZOrigin), Dir);
             ///< To measure the equivalent muon flux in minutes, check the interception of the generated muon with the 
@@ -264,11 +272,80 @@ Bool_t a2mcGenerator::GenMuons()
 //            //   if(s>0 && zeta2> lGround) evtOK = true; // x,y,z filtering on generated muons;  n.b. sostituire con un get da Apparatus
 ////            if(s>0 && zeta2> lGround && zenith>PI/3.) evtOK = true; // x,y,z and zenith (>60 degrees) filtering on generated muons
 //            //   if(s>0 && zeta1< -500. && zeta1> -1400. && zeta2> lGround && zenith>PI/2.4) evtOK = true; // x,y,z and zgen aroung crog and above refr and zenith (>75 degrees) filtering on generated muons
-        } ///< while(!evtOK) --- END
-        genOK = true;
-        nTrks++;
-    } ///< if(a2mcConf.GetGenMode()==0) --- END
-// ####################### Cosimic ray muons a2mc generator  ###################### --->      END
+    } ///< while(!evtOK) --- END
+    genOK = true;
+    nTrks++;
+    return genOK;
+}
+//-----------------------------------------------------------------------------
+
+Bool_t a2mcGenerator::GenMuFlat() 
+{
+///< In the a2mcMuonGen the Z axis is the vertical one, 
+///<    here in the VMC the vertical one is the Y axis
+///< => fixing it here
+//  (y)|          VMC              //  (z)|         MuonGen
+//     |  / (x)                    //     |  / (y)
+//     | /                         //     | /
+//     |/_________ (z)             //     |/_________ (x)
+///< WARNING: => x -> y, y -> z, z -> x (both in position and direction of the primary)
+    Bool_t genOK = false;
+// ####################### Cosimic ray muons a2mc generator  ###################### --->     INIT
+    ///< Using the a2mcMuonGen class to extract the generation parameters
+    a2mcMuonGen gen;
+    gen.SetHorizontalGeneration(true);
+        
+    ///< Variable used in the while
+    Double_t mu_sign, mass, e;
+    Double_t ptot, phi, theta, cx, cy, cz;
+    Bool_t evtOK = false;
+    while(!evtOK) {  ///< Filtering to get a "realistic" cosmic ray muons flux
+        ///< Select mu+ or mu-
+        mu_sign=gRandom->Uniform();
+        if (mu_sign<0.444445) { ///< Experimental mu-/mu+ ratio [actually to be checked on the latest PDG review]
+            fPDG = kMuonMinus;
+        } else { 
+            fPDG = kMuonPlus;
+        }
+        TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fPDG);
+
+        ///< All these values should be checked and set automatically getting parameters from a2mcApparatus
+        Double_t fSkySideX  = +fDetConstruction->GetWorldDx();
+        Double_t fSkySideZ  = +fDetConstruction->GetWorldDz();
+        Double_t fSkyOffset = +fDetConstruction->GetWorldDy()/2.-0.1; ///< Vertical offset
+
+        gen.SetSkySurface(fSkySideX,fSkySideZ);
+        gen.SetVertOffset(fSkyOffset);
+        gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
+        ///< Getting the origin (generation position)
+        std::array<double, 3> origin;
+        gen.GetGenPoint(origin);
+        ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
+        fGenPos[0] = origin[1];
+        fGenPos[1] = origin[2];
+        fGenPos[2] = origin[0];
+        ///< Getting the momentum at generation
+        ptot   = gen.GetGenMomentum();
+        theta  = gen.GetTheta();
+        phi    = gen.GetPhi();
+        cx = sin(theta)*cos(phi);	
+        cy = sin(theta)*sin(phi);
+        cz = cos(theta);
+        ///< WARNING: TAKING CARE OF DIFFERENT REFERENCE SYSTEMS (see above) 
+        TVector3 Dir(cy, cz, cx);
+        fGenMom[0] = ptot*Dir.X();
+        fGenMom[1] = ptot*Dir.Y();
+        fGenMom[2] = ptot*Dir.Z();
+//        Double_t zenith = M_PI - theta; ///< zenithal angle (0- PI/2)            
+        mass = particlePDG->Mass();
+        fTotE = sqrt(mass*mass + ptot*ptot); ///< Total energy
+        fKinE = fTotE - mass;
+        // Filtering
+        nGens++;
+        evtOK = true;
+    } ///< while(!evtOK) --- END
+    genOK = true;
+    nTrks++;
     return genOK;
 }
 //-----------------------------------------------------------------------------

@@ -193,6 +193,7 @@ void a2mcVirtualMC::GeneratePrimaries()
     fPrimary->SetPoy(fPrimaryGenerator->GetPy());
     fPrimary->SetPoz(fPrimaryGenerator->GetPz());
     fPrimary->SetEo(fPrimaryGenerator->GetTotE());
+    fPrimary->SetGenMode(a2mcConf.GetGenMode());
 }
 
 //_____________________________________________________________________________

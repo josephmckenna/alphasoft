@@ -57,6 +57,8 @@ private:
     ///< Private methods
     Bool_t      GenPbars();             ///< 
     Bool_t      GenMuons();             ///< 
+    Bool_t      GenMuFlat();            ///< 
+    Bool_t      GenMuSphere();          ///< 
     Double_t    Maxwell(Double_t, Double_t);
 
 ClassDef(a2mcGenerator,1) // a2mc MC generator

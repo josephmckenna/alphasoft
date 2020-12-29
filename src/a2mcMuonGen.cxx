@@ -76,17 +76,11 @@ void a2mcMuonGen::SetVertOffset(double offset) {
 // ---------------------------> Horizontal generation
 
 ////////////////////////////////////////////////////////
-void a2mcMuonGen::SetSkyXYZ(double xs, double ys, double zs, int icoord=1) {
-//pay attention that it has been modified with respect to Antonietta's method
-//now you can generate muons on each of the three upper borders
-//of the world (depending on icoord: icoord = 1 means the "usual" world roof)
-//mzWorld = zw;
-    mxSky = xs;
-    mySky = ys;
-    mzSky = zs;
-    iSky= icoord;
+void a2mcMuonGen::SetSkySurface(double length, double width) {
+    mxSky = length;
+    mySky = width;
+    mzSky = 0.;
 }
-
 
 // ---------------------------> Spherical generation
 
@@ -119,9 +113,7 @@ void a2mcMuonGen::Generate() {
     if  (mDoHorGen) {   //// Generation point on the sky (flat) ////
         mGenPoint[0] = gRandom->Uniform()*mxSky - mxSky/2.;                 // x coordinate
         mGenPoint[1] = gRandom->Uniform()*mySky - mySky/2.;                 // y coordinate
-        mGenPoint[2] = gRandom->Uniform()*mzSky - mzSky/2. + mZOffset;      // z coordinate (vertical)
-        double gen_fixed[3] = {mxSky,mySky,mzSky};
-        mGenPoint[iSky] = gen_fixed[iSky];
+        mGenPoint[2] = mZOffset;      // z coordinate (vertical)
     }
     
     if  (mDoCylGen) {   //// Generation point on the cylinder ////

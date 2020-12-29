@@ -23,7 +23,6 @@ private:
     double mySky;
     double mzSky;
     double sphere_radius;
-    int iSky;
     bool   mDoHorGen;
     bool   mDoSphGen;
     bool   mDoCylGen;
@@ -39,7 +38,7 @@ public:
     void SetCylinderHeight(double);
     void SetCylinderRadiusAndHeight(double, double);
     void SetVertOffset(double);
-    void SetSkyXYZ(double, double, double, int);
+    void SetSkySurface(double, double);
     void SetSphRadius(double);
     void SetHorizontalGeneration(bool);
     void SetSphericalGeneration(bool);

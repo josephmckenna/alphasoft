@@ -98,17 +98,17 @@ void a2mcApparatus::Init()
     //     | /
     //     |/_________ (z)
     // 
-    // VALUES ARE IN cm
+    ///< =========== < VALUES ARE IN cm > =============
 
     // Defining rotation matrices
     nullRot = new TGeoRotation("nullRot", 0., 0., 0.);
 
     //------------------------------ 
-    // World
+    // World (x and z are bigger for muon generation over a flat sky)
     //------------------------------ 
-    fWorld_Dx = 100.;    // value in cm 
+    fWorld_Dx = 200.;
     fWorld_Dy = 100.;
-    fWorld_Dz = 100.;
+    fWorld_Dz = 200.;
     //------------------------------ 
     // Enviro
     //------------------------------ 
