@@ -34,6 +34,7 @@ a2: @echo -e "\033[32mA2 ONLY Success!\033[m"
 
 debug: MFLAGS += debug
 debug: $(ALL) FIN
+debug: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 O2: MFLAGS += O2
 O2: $(ALL) FIN
