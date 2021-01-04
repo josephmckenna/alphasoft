@@ -66,16 +66,25 @@ include_directories(include .) #Used for RootUtils
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__alpha2 include/*.h LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
 
-add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
+add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
+
+
 find_library(LIBSQLITE3 sqlite3)
 target_link_libraries(alpha2 ${ROOT_LIBRARIES} ${LIBSQLITE3} )
 
 if(ROOTANA_SUBMOD)
   add_dependencies(alpha2 rootana)
 endif()
+
+install(TARGETS alpha2 DESTINATION lib)
+install(
+  FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/libalpha2_rdict.pcm
+      ${CMAKE_CURRENT_BINARY_DIR}/libalpha2.rootmap
+      DESTINATION lib/)
