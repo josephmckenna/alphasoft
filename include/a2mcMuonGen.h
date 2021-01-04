@@ -5,27 +5,41 @@
 #include <iostream>
 #include <TRandom.h>
 #include <TMath.h>
+///< ###############################################
+///< In the a2mcMuonGen the Z axis is the vertical one
+//  (z)|   
+//     |  / (y)
+//     | /
+//     |/_________ (x)
 
 class a2mcMuonGen : public TObject
 {
 private:
-    void Init();
-    double mZOffset;
-    double mCylRadius;
-    double mCylHeight;
-    double mGenMomentum;
-    double mTheta;
-    double mPhi;
-    std::array<double, 3> mGenPoint;
-    std::vector<double> p_min;
-    //double mzWorld;
-    double mxSky;
-    double mySky;
-    double mzSky;
-    double sphere_radius;
+    ///< Which generation?
     bool   mDoHorGen;
     bool   mDoSphGen;
     bool   mDoCylGen;
+    ///< Offsets 
+    double mXOffset;
+    double mYOffset;
+    double mZOffset;
+    ///< Flat sky parameters
+    double mFlatSkyDx;
+    double mFlatSkyDy;
+    double mFlatSkyDz;
+    ///< Hemisphere parameters
+    double mHemiSphereR;
+    ///< Cylinder parameters
+    double mCylRadius;
+    double mCylHeight;
+    ///< Generated particle momentum (direction and value)
+    double mGenMomentum;
+    double mTheta;
+    double mPhi;
+    ///< Generated particle position
+    std::array<double, 3> mGenPoint;
+    std::vector<double> p_min;
+    void Init();
 
 public:
     a2mcMuonGen();
@@ -34,12 +48,14 @@ public:
 
 
 // Setters //////////////////////////////////////////////
+    void SetVertOffset(double);
+    void SetAxialOffset(double);
+    void SetSideOffset(double);
+    void SetFlatSkySurface(double, double);
+    void SetHemiSphereRadius(double);
     void SetCylinderRadius(double);
     void SetCylinderHeight(double);
     void SetCylinderRadiusAndHeight(double, double);
-    void SetVertOffset(double);
-    void SetSkySurface(double, double);
-    void SetSphRadius(double);
     void SetHorizontalGeneration(bool);
     void SetSphericalGeneration(bool);
     void SetCylindricalGeneration(bool);
@@ -51,7 +67,10 @@ public:
         radius = mCylRadius;
         height = mCylHeight;
     };
-    double GetVertOffset() {return mZOffset;};
+
+    double GetAxialOffset() {return mXOffset;};
+    double GetSideOffset()  {return mYOffset;};
+    double GetVertOffset()  {return mZOffset;};
 
     void GetGenPoint(std::array<double, 3>& genPoint) {
         genPoint = mGenPoint;
@@ -68,8 +87,6 @@ public:
         if (pow(b,2)-4*a*c < 0) return;
     
         x0 = (-b + sqrt(pow(b,2)-4*a*c))/(2*a);
-//    std::cout << "x = " << x0 << std::endl;
-	
         y0 = tan(mPhi)*x0 + q;
         x1 = (-b - sqrt(pow(b,2)-4*a*c))/(2*a);
         y1 = tan(mPhi)*x1 + q;

@@ -47,7 +47,6 @@ void primary_muon_origin() {
     // Preparing the histos
  ///< gen_mode == 1 -> gen over a flat sky, gen_mode == 0 -> gen over a sphere
     TCanvas *corigin;
-    corigin->Divide(2,2);
     if(gen_mode==1) { ///< Specific for flat sky
         corigin = new TCanvas("corigin","corigin",1200,600);
         corigin->Divide(2,1);

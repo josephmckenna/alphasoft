@@ -12,18 +12,21 @@
 #include "a2mcMuonGen.h"
 
 a2mcMuonGen::a2mcMuonGen() : 
+    mDoHorGen(false),
+    mDoSphGen(false),
+    mDoCylGen(false),
+    mXOffset(0.),
+    mYOffset(0.),
     mZOffset(0.),
+    mFlatSkyDx(0.),
+    mFlatSkyDy(0.),
+    mFlatSkyDz(0.),
+    mHemiSphereR(0.),
     mCylRadius(0.),
     mCylHeight(0.),
     mGenMomentum(0.),
     mTheta(0.),
-    mPhi(0.),
-    mxSky(0.),
-    mySky(0.),
-    mzSky(0.),
-    mDoHorGen(false),
-    mDoSphGen(false),
-    mDoCylGen(false)
+    mPhi(0.)
 {
     Init();
 }
@@ -48,7 +51,38 @@ void a2mcMuonGen::SetCylindricalGeneration(bool cylindr) {
     mDoCylGen = cylindr;
 }
 
-// ---------------------------> Vertical generation
+////////////////////////////////////////////////////////  
+void a2mcMuonGen::SetAxialOffset(double offset) {
+    mXOffset = offset;
+}
+
+////////////////////////////////////////////////////////  
+void a2mcMuonGen::SetSideOffset(double offset) {
+    mYOffset = offset;
+}
+
+////////////////////////////////////////////////////////  
+void a2mcMuonGen::SetVertOffset(double offset) {
+    mZOffset = offset;
+}
+
+// ---------------------------> Horizontal generation
+
+////////////////////////////////////////////////////////
+void a2mcMuonGen::SetFlatSkySurface(double length, double width) {
+    mFlatSkyDx = length;
+    mFlatSkyDy = width;
+    mFlatSkyDz = 0.;
+}
+
+// ---------------------------> Spherical generation
+
+////////////////////////////////////////////////////////
+void a2mcMuonGen::SetHemiSphereRadius(double ys) {
+    mHemiSphereR=ys;
+}
+
+// ---------------------------> Cylindrical generation
 
 ////////////////////////////////////////////////////////
 void a2mcMuonGen::SetCylinderRadius(double radius) {
@@ -64,29 +98,6 @@ void a2mcMuonGen::SetCylinderHeight(double height) {
 void a2mcMuonGen::SetCylinderRadiusAndHeight(double radius, double height) {
     mCylRadius = radius;
     mCylHeight = height;
-}
-
-
-////////////////////////////////////////////////////////  
-void a2mcMuonGen::SetVertOffset(double offset) {
-    mZOffset = offset;
-}
-
-
-// ---------------------------> Horizontal generation
-
-////////////////////////////////////////////////////////
-void a2mcMuonGen::SetSkySurface(double length, double width) {
-    mxSky = length;
-    mySky = width;
-    mzSky = 0.;
-}
-
-// ---------------------------> Spherical generation
-
-////////////////////////////////////////////////////////
-void a2mcMuonGen::SetSphRadius(double ys) {
-    sphere_radius=ys;
 }
 
 ////////////////////////////////////////////////////////
@@ -111,8 +122,8 @@ void a2mcMuonGen::Generate() {
     Double_t  theta0   = 0.;
     
     if  (mDoHorGen) {   //// Generation point on the sky (flat) ////
-        mGenPoint[0] = gRandom->Uniform()*mxSky - mxSky/2.;                 // x coordinate
-        mGenPoint[1] = gRandom->Uniform()*mySky - mySky/2.;                 // y coordinate
+        mGenPoint[0] = gRandom->Uniform()*mFlatSkyDx - mFlatSkyDx/2.;                 // x coordinate
+        mGenPoint[1] = gRandom->Uniform()*mFlatSkyDy - mFlatSkyDy/2.;                 // y coordinate
         mGenPoint[2] = mZOffset;      // z coordinate (vertical)
     }
     
@@ -180,7 +191,7 @@ void a2mcMuonGen::Generate() {
     
     //Spherical case (warning: in this case, all the variables but phi0 are coupled!!!)
     if (mDoSphGen) {
-        //// Generation point on the (half-)sphere
+        //// Generation point on the hemisphere
         phi0         = gRandom->Uniform() * 2*M_PI;
         // theta is added to the subsequent 4D generator
         
@@ -198,7 +209,7 @@ void a2mcMuonGen::Generate() {
 
         while (!accepted) {
 
-            // as a first approximation, the flux on the sphere is supposed to be constant ( -> uniformly distrubuted points)
+            // as a first approximation, the flux on the sphere is supposed to be constant ( -> uniformly distributed points)
             Double_t auxiliary_var  = gRandom->Uniform();
             theta0                  = TMath::ACos(auxiliary_var);
             //but: the following instrutions will modify the previous distribution according to the cosmic flux which is function of theta0
@@ -225,9 +236,9 @@ void a2mcMuonGen::Generate() {
            if (11*r2 < ftheta) accepted = true;
         }
         
-        mGenPoint[0] = sphere_radius * TMath::Sin(theta0) * TMath::Cos(phi0);
-        mGenPoint[1] = sphere_radius * TMath::Sin(theta0) * TMath::Sin(phi0);
-        mGenPoint[2] = sphere_radius * TMath::Cos(theta0) + mZOffset;
+        mGenPoint[0] = mHemiSphereR * TMath::Sin(theta0) * TMath::Cos(phi0);
+        mGenPoint[1] = mHemiSphereR * TMath::Sin(theta0) * TMath::Sin(phi0);
+        mGenPoint[2] = mHemiSphereR * TMath::Cos(theta0) + mZOffset;
 
         mTheta = M_PI - mTheta;
 

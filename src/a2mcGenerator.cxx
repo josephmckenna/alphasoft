@@ -233,7 +233,7 @@ Bool_t a2mcGenerator::GenMuSphere()
         Double_t fSkyRadius = 50.; ///< This has been set accordingly to the Oxford magnet size 
 
         gen.SetVertOffset(fSkyOffset);
-        gen.SetSphRadius(fSkyRadius);
+        gen.SetHemiSphereRadius(fSkyRadius);
         gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
         ///< Getting the origin (generation position)
         std::array<double, 3> origin;
@@ -314,7 +314,7 @@ Bool_t a2mcGenerator::GenMuFlat()
         Double_t fSkySideZ  = +fDetConstruction->GetWorldDz();
         Double_t fSkyOffset = +fDetConstruction->GetWorldDy()/2.-0.1; ///< Vertical offset
 
-        gen.SetSkySurface(fSkySideX,fSkySideZ);
+        gen.SetFlatSkySurface(fSkySideX,fSkySideZ);
         gen.SetVertOffset(fSkyOffset);
         gen.Generate();         ///< ####### THIS IS THE ACTUAL GENERATION OF THE PARAMETERS ####### 
         ///< Getting the origin (generation position)
