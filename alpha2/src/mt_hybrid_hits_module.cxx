@@ -113,7 +113,7 @@ public:
          if (stripRMS<0) BadRMSValues++;
          fStripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
          fStripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
-         std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<std::endl;
+         //std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<"\n";
       }
       
       delete striprms_tree;
