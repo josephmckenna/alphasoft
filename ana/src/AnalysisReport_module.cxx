@@ -66,8 +66,8 @@ public:
       std::cout<<"DUMP SUMMARY: "<< DumpName.c_str() << "\t";
       std::cout<<"DumpCount: "   << TotalCount << "\t";
       std::cout<<"VF48Events: "  << VF48Events << "\t";
-      std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
-      std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
+      std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
+      std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
       std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
    }
 };
