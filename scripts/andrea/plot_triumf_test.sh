@@ -7,7 +7,7 @@ fi
 
 #FILE_LIST=($(ls -rt $DATADIR/test/*.root))
 #FILE_LIST=("$DATADIR/test/cosmics904502.root" "$DATADIR/test/cosmics904512.root")
-#FILE_LIST=("$DATADIR/test/cosmics904565.root" "$DATADIR/test/cosmics904554.root" "$DATADIR/test/cosmics904562.root" "$DATADIR/test/cosmics904555.root" "$DATADIR/test/cosmics904547.root" "$DATADIR/test/cosmics904549.root")
+FILE_LIST=("$DATADIR/test/cosmics904565.root" "$DATADIR/test/cosmics904569.root")
 
 
 echo "list of file:" ${FILE_LIST[*]}

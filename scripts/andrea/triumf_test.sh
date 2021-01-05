@@ -33,7 +33,26 @@ set -x
 
 ### horizontal - AW3.2kV - Trig. MLU1
 #agana.exe -O$DATADIR/test/cosmics904468.root --mt $MIDASDATA/run904468sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904468.log&
-agana.exe -O$DATADIR/test/cosmics904468sub000.root --mt $MIDASDATA/run904468sub000.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904468sub000.log&
+#agana.exe -O$DATADIR/test/cosmics904468sub000.root --mt $MIDASDATA/run904468sub000.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904468sub000.log&
 
 
-##################################################################################################################################################################################################
+###########################################################################################################################################    #######################################################
+
+
+
+### horizontal no sleeve - AW3.2kV - Trig. MLU1 - T14/15 up 
+#agana.exe -O$DATADIR/test/cosmics904562.root --mt $MIDASDATA/run904562sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904562.log&
+
+
+### horizontal no sleeve - AW3.2kV - Trig. MLU1 - T13/14 up 
+#agana.exe -O$DATADIR/test/cosmics904565.root --mt $MIDASDATA/run904565sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904565.log&
+
+
+### horizontal - AW3.2kV - Trig. MLU1 - T01 up 
+#agana.exe -O$DATADIR/test/cosmics904569.root --mt $MIDASDATA/run904569sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904569.log&
+#agana.exe -O$DATADIR/test/cosmics904569_10subs.root --mt $MIDASDATA/run904569sub00*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF | tee RunLogs/R904569.log
+
+
+### horizontal - AW3.2kV - Trig. MLU1 - T00 up 
+agana.exe -O$DATADIR/test/cosmics904577.root --mt $MIDASDATA/run904577sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904577.log&
+
