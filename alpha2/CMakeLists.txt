@@ -111,6 +111,8 @@ include_directories(${ROOT_INCLUDE_DIRS})
 
 include_directories(include $ENV{ROOTANASYS}/include)
 
+#feGEM (labVIEW logging)
+include_directories($ENV{AGRELEASE}/feGEM)
 
 message(${ROOT_INCLUDE_DIRS})
 
