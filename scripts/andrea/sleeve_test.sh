@@ -54,11 +54,3 @@ agana.exe -O$DATADIR/test/cosmics904554.root --mt $MIDASDATA/run904554sub*.mid.l
 
 ### horizontal w/ sleeve - AW3.2kV - Trig. MLU1 - T10 up - long
 agana.exe -O$DATADIR/test/cosmics904555.root --mt $MIDASDATA/run904555sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904555.log&
-
-### horizontal no sleeve - AW3.2kV - Trig. MLU1 - T14/15 up 
-agana.exe -O$DATADIR/test/cosmics904562.root --mt $MIDASDATA/run904562sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904562.log&
-
-
-### horizontal no sleeve - AW3.2kV - Trig. MLU1 - T11/12?? up 
-agana.exe -O$DATADIR/test/cosmics904565.root --mt $MIDASDATA/run904565sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904565.log&
-
