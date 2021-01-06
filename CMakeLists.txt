@@ -1,12 +1,19 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+
 project(agdaq)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_CXX_FLAGS "-O2")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+            "Default build type: RelWithDebInfo" FORCE)
+endif()
+
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
 
 if(DEFINED ENV{AGRELEASE})
    message("AGRELEASE set to " $ENV{AGRELEASE}) 

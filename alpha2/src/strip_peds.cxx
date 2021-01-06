@@ -69,7 +69,7 @@ bool    PedFlags::ForceStripsFile = false;
 TString PedFlags::CustomStripsFile="";
 double  PedFlags::NSIGMATHRES=3.;
 int 	PedFlags::nPedBins = 512;
-double 	PedFlags::pedBinWidth = 0.1;
+double 	PedFlags::pedBinWidth = 1.0;
 
 
 class PedModule_vf48: public TARunObject
@@ -274,7 +274,11 @@ public:
 
       return flow;
    }
-
+   void PreEndRun(TARunInfo* runinfo) 
+   {
+      if (fFlags->fPrint)
+         printf("PedModule::PreEndRun, run %d\n", runinfo->fRunNo);
+   }
    void EndRun(TARunInfo* runinfo)
    {
       if (fFlags->fPrint)
@@ -293,11 +297,14 @@ public:
       Float_t stripMeanSubRMS;
 
       TTree* alphaStripTree = new TTree("alphaStrip Tree","alphaStrip Tree");
-      alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
-      alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
-      alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
-      //alphaStripTree->Branch("stripRMSAfterFilter",&stripRMSAfterFilter, "stripRMSAfterFilter/F");
-      alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
+      TBranch* stripNumberBranch     = alphaStripTree->Branch("stripNumber",&stripNumber, "stripNumber/I");
+      TBranch* stripMeanBranch       = alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
+      TBranch* stripRMSBranch        = alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
+      TBranch* stripMeanSubRMSBranch = alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
+      stripNumberBranch->SetFile(filename);
+      stripMeanBranch->SetFile(filename);
+      stripRMSBranch->SetFile(filename);
+      stripMeanSubRMSBranch->SetFile(filename);
 
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {
@@ -312,9 +319,19 @@ public:
          alphaStripTree->Fill();
          stripNumber++;
       }
+      std::cout<<"Writing strip root file"<<std::endl;
       file->Write();
+      //std::cout<<"Close"<<std::endl;
+      /*file->Close should delete all of these for us:
+       * delete stripNumberBranch;
+       * delete stripMeanBranch;
+       * delete stripRMSBranch;
+       * delete stripMeanSubRMSBranch;*/
       file->Close();
+      //std::cout<<"delete"<<std::endl;
+      
       delete file;
+      std::cout<<"done"<<std::endl;
    }
 };
 
