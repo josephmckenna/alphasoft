@@ -21,11 +21,16 @@ void AmpProf()
   // int col[]={kBlue,kRed};
   int col[]={kBlue,kRed,kGreen,kBlack};
 
-  int run[][4]={{904547,904555,904562,904565}};
+  // int run[][4]={{904547,904555,904562,904565}};
 
-  TString lab[][4]={{"VT-sleeve-AW3.2kV","HZ-sleeve-AW3.2kV",
-		     "HZ-AW3.2kV","HZ-AW3.2kV"}};
-  TString tag[]={"AW3.2kV"};
+  // TString lab[][4]={{"VT-sleeve-AW3.2kV","HZ-sleeve-AW3.2kV",
+  // 		     "HZ-AW3.2kV","HZ-AW3.2kV"}};
+  // int run[][2]={{904565,904569}};
+  // TString lab[][2]={{"HZ-AW3.2kV-T13up","HZ-AW3.2kV-T01up"}};
+  // TString tag[]={"AW3.2kV"};
+  int run[][2]={{904578,904577}};
+  TString lab[][2]={{"HZ-AW3.1kV","HZ-AW3.2kV"}};
+  TString tag[]={"T00up"};
 
   // TString tag[]={"HZ","VT","AW3.2kV","AW3.1kV"};
   // int run[][2]={{904555,904554},{904547,904549},{904547,904555},{904549,904554}};
