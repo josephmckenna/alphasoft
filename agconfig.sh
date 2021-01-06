@@ -32,125 +32,21 @@ if [[ -z "${MCDATA}" ]]; then
     export MCDATA=${AGRELEASE}/simulation
 fi
 
-sim_submodules_firsttimesetup()
-{
-  sim_submodules
-
-  NCPU=`root-config --ncpu`
-
-  #GEANT4
-  #cd $AGRELEASE/simulation/submodules/geant4
-  #mkdir build
-  #mkdir install
-  #cd build
-  #cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install -DGEANT4_USE_XM=ON
-  #make -j${NCPU}
-  #make install 
-  #cd ../install
-  #. bin/geant4.sh
-  
-  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
-  #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
-
-  #CRY
-  cd $AGRELEASE/simulation/submodules/
-  wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
-  tar xvzf cry_v1.7.tar.gz 
-  rm cry_v1.7.tar.gz 
-  cd cry_v1.7
-  #Skip test... the diff causes CI to quit?
-  make setup lib
-
-  #CADMESH
-  cd ${CADMESH_HOME}
-  mkdir build
-  cd build
-  cmake3 -DCMAKE_INSTALL_PREFIX=${CADMESH_HOME}/install ../
-  make -j${NCPU}
-  make install
-
-  #GARFIELD
-  #Git doesn't compile on Centos7... use svn for now...
-  #svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
-  cd $AGRELEASE/simulation/submodules/
-  git clone https://gitlab.cern.ch/garfield/garfieldpp.git 
-  #$GARFIELD_HOME
-  cd ${GARFIELD_HOME}
-  make -j${NCPU}
-  #git commands:
-  #mkdir build
-  #mkdir install
-  #cd build
-  #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
-  #make -j${NCPU}
-  #make install
-
-  #Finally... build the simulation
-  cd $AGRELEASE/simulation
-  cmake3 -DCMAKE_BUILD_TYPE=Release geant4
-  make
-  
-}
-
-sim_submodules()
-{
-
-  #ROOT
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
-
-  #GEANT4
-  . geant4.sh
-
-  #CRY
-  export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
-  export CRYDATAPATH=$CRYHOME/data
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRYHOME/lib
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
-
-  #CADMESH
-  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/install/lib
-  
-  
-  #Garfield:
-  export GARFIELD_HOME=${AGRELEASE}/simulation/submodules/garfieldpp
-  export HEED_DATABASE=${GARFIELD_HOME}/Heed/heed++/database
-  
-  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
-
-}
 
 #Computer profiles
 
 alphaBeast()
 {
   . ~/packages/root_build/bin/thisroot.sh
-  #. ~/packages/rootana/thisrootana.sh
-  #. ~/joseph/agdaq/rootana/thisrootana.sh
-  #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
-  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-  #. ~/joseph/packages/root_build/bin/thisroot.sh
-
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
-  fi
 }
+
 alphaCrunch()
 {
   . ~/packages/rootana/thisrootana.sh
-  #. ~/joseph/agdaq/rootana/thisrootana.sh
+
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.06/x86_64-centos7-gcc48-opt/bin/root/thisroot.sh
 
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
-  fi
 }
 
 agana()
@@ -164,7 +60,7 @@ agana()
 acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
-    #export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
     export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
     export PATH="$AGRELEASE/scripts/andrea":$PATH
@@ -193,10 +89,10 @@ lxplus()
 
 
 
-echo "############## agconfig.sh ##############"
+echo "############## ALPHA Software Setup ##############"
 echo "Hostname: " `hostname`
 echo "Username: " `whoami`
-echo "#########################################"
+echo "##################################################"
 
 
 #Setup LD_LIBRARY_PATH
@@ -236,17 +132,6 @@ done
 
 
 
-if [ "${1}" = "install_sim" ]; then
-  echo "Installing all simulation submodules... go get a coffee..."
-  sleep 1
-  echo "No really... go get a coffee... this will take some time.."
-  sleep 1
-  git submodule update --init --recursive
-  sim_submodules_firsttimesetup
-fi
-
-
-
 #Quit if ROOT and ROOTANA are setup...
 if [ "${1}" = "clean" ]; then
   echo "Clean setup of environment variables"
@@ -266,9 +151,11 @@ else
   fi
 fi
 
+
 if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
     echo "ROOTANA submodule enabled"
 fi
+
 
 #Setup ROOT and ROOTANA if we havn't quit yet...
 case `hostname` in
@@ -288,12 +175,6 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
       agana
-  else
-      #If geant4 is installed, set up simulation vars
-      if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-	  echo "Geant4 installation found..."
-	  sim_submodules
-      fi
   fi
   ;;
 *.triumf.ca )
