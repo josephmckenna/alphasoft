@@ -5,6 +5,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TProfile.h>
+#include <TF1.h>
 #include <TStyle.h>
 #include <TDirectory.h>
 #include <TFile.h>

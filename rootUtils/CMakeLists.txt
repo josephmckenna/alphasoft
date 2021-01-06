@@ -37,7 +37,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
@@ -71,9 +71,7 @@ if (BUILD_A2)
 endif (BUILD_A2)
 
 install(TARGETS rootUtils DESTINATION lib)
-
-add_custom_command( TARGET rootUtils POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-                  )
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)
