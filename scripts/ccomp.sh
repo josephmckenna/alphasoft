@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 if [[ "$1" == "clean" ]]; then
-    echo "Erasing agdaq build"
+    echo "Erasing agsoft build"
     cd $AGRELEASE/build
     cmake3 --build . --target clean
     cd $AGRELEASE
@@ -12,19 +12,19 @@ if [[ "$1" == "clean" ]]; then
     fi
 
 elif [[ "$1" == "update" ]]; then
-    echo "Recompiling agdaq"
+    echo "Recompiling agsoft"
     cd $AGRELEASE/build
     time cmake3 --build . -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "install" ]]; then
-    echo "Install agdaq"
+    echo "Install agsoft"
     cd $AGRELEASE/build
     time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "noA2" ]]; then
-    echo "Building agdaq and alphaAnalysis"
+    echo "Building agsoft and alphaAnalysis"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
@@ -34,7 +34,7 @@ elif [[ "$1" == "noA2" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "nosim" ]]; then
-    echo "Building agdaq without Simulation components"
+    echo "Building agsoft without Simulation components"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
@@ -44,7 +44,7 @@ elif [[ "$1" == "nosim" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "ci" ]]; then
-    echo "Building agdaq for CI"
+    echo "Building agsoft for CI"
     #Quit on error (so CI reports failure properly)
     set -e
     mkdir -p $AGRELEASE/build
@@ -57,7 +57,7 @@ elif [[ "$1" == "ci" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "debug" ]]; then
-    echo "Building agdaq with Debug symbols"
+    echo "Building agsoft with Debug symbols"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
@@ -67,7 +67,7 @@ elif [[ "$1" == "debug" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "build" ]]; then
-    echo "Building agdaq optimized"
+    echo "Building agsoft optimized"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
@@ -84,7 +84,7 @@ elif [[ "$1" == "build" ]]; then
     cd $AGRELEASE
 
 elif [[ "$1" == "verbose" ]]; then
-    echo "Building agdaq verbosily"
+    echo "Building agsoft verbosily"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
@@ -107,7 +107,7 @@ elif [[ "$1" == "help" ]]; then
     echo "Default: build and install"
 
 else
-    echo "Building agdaq"
+    echo "Building agsoft"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #

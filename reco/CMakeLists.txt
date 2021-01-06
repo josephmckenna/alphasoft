@@ -67,4 +67,5 @@ add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 add_executable( g4ana.exe g4ana.cc G4inDict.cxx ${sources} ${headers} )
 add_executable( MainEventTree.exe MainEventTree.cc ${sources} ${headers} )
     
-#install(TARGETS agreco.exe g4ana.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")
+#install(TARGETS agreco.exe g4ana.exe MainEventTree.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")
+install(TARGETS MainEventTree.exe DESTINATION "${CMAKE_INSTALL_PREFIX}")

@@ -34,7 +34,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
@@ -55,7 +55,7 @@ include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__analib include/*.h include/*.hh LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
@@ -64,10 +64,10 @@ target_link_libraries(analib ${ROOT_LIBRARIES} )
 if (BUILD_AG)
    target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
 endif(BUILD_AG)
+
 install(TARGETS analib DESTINATION lib)
 
-add_custom_command( TARGET analib POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-                  )
+install(FILES ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libanalib.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh)
+install(FILES ${HEADER_FILES} DESTINATION include)

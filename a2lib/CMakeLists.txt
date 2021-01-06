@@ -83,8 +83,7 @@ if(ROOTANA_SUBMOD)
 endif()
 
 install(TARGETS alpha2 DESTINATION lib)
-install(
-  FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/libalpha2_rdict.pcm
-      ${CMAKE_CURRENT_BINARY_DIR}/libalpha2.rootmap
-      DESTINATION lib/)
+install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libalpha2.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)
