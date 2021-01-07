@@ -42,6 +42,8 @@ private:
    std::deque<ULong64_t> VF48Clock;
    std::deque<TSVD_QOD*> SVDEvents;
 
+   int VF48Events = 0;
+
 public:
    OfficialA2TimeFlags* fFlags;
 
@@ -92,6 +94,7 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
+      std::cout<<"Total VF48 events given an official time:"<<VF48Events<<std::endl;
       if (SVDOfficial)
          SVDOfficial->Write();
    }
@@ -113,6 +116,7 @@ public:
        int n=SISEventRunTime.size();
        for ( int i=0; i<n ; i++)
        {
+           
            if (t>SISEventRunTime.front())
            {
              //std::cout<<"Clean if "<< t <<" > " << SISEventRunTime.front() <<std::endl;
@@ -214,6 +218,7 @@ public:
                 CleanSISEventsBefore(t-0.1);
                 finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
+                VF48Events++;
                 break;
              }
              else
@@ -261,27 +266,22 @@ public:
       }
 
       SilEventFlow* fe=flow->Find<SilEventFlow>();
-      if (!fe)
+      if (fe)
       {
-#ifdef MANALYZER_PROFILER
-         *flags|=TAFlag_SKIP_PROFILE;
-#endif
-         return flow;
-      }
-      TAlphaEvent* AlphaEvent=fe->alphaevent;
-      TSiliconEvent* SiliconEvent=fe->silevent;
+         TAlphaEvent* AlphaEvent=fe->alphaevent;
+         TSiliconEvent* SiliconEvent=fe->silevent;
 
-      TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
-      A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
-      if (mva)
-         SVD->MVA=(int)mva->pass_online_mva;
-      else
-         SVD->MVA=-1;
-      {
+         TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
+         A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
+         if (mva)
+            SVD->MVA=(int)mva->pass_online_mva;
+         else
+            SVD->MVA=-1;
+
          std::lock_guard<std::mutex> lock(SVDEventsLock);
          SVDEvents.push_back(SVD);
       }
-      if (SiliconEvent->GetVF48NEvent()%10==0)
+      //if (SiliconEvent->GetVF48NEvent()%10==0)
       flow=SVDMatchTime(runinfo,flow);
       return flow;
    }
