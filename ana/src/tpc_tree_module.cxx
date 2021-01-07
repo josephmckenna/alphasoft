@@ -26,7 +26,7 @@ public:
    TTree *fPSignalTree = NULL;
    AgAwHit awbuf;
    AgPadHit padbuf;
-   signal sigbuf;
+   ALPHAg::signal sigbuf;
 
    TpcTreeModule(TARunInfo* runinfo): TARunObject(runinfo)
    {
@@ -73,10 +73,8 @@ public:
       fPadTree->Branch("time",&padbuf.time_ns,"time/D");
       fPadTree->Branch("amp",&padbuf.amp,"amp/D");
 
-#ifdef LASER
       fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
       fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
-#endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -115,9 +113,7 @@ public:
             fAnodeTree->GetBranch("chan")->SetAddress(&eawh->fAwHits[j].adc_chan);
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
             fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
-#ifdef LASER
             fAnodeTree->GetBranch("dtime")->SetAddress(&eawh->fAwHits[j].dtime);
-#endif
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
             fAnodeTree->Fill();
          }
@@ -132,26 +128,24 @@ public:
             fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
-#ifdef LASER
             fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
-#endif
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
          }
       }
 
       if(esig){
-         for (unsigned i=0; i<esig->awSig.size(); i++) {
-            fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig[i].idx);
-            fASignalTree->GetBranch("time")->SetAddress(&esig->awSig[i].t);
-            fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig[i].height);
+         for (unsigned i=0; i<esig->awSig->size(); i++) {
+            fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig->at(i).idx);
+            fASignalTree->GetBranch("time")->SetAddress(&esig->awSig->at(i).t);
+            fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig->at(i).height);
             fASignalTree->Fill();
          }
-         for (unsigned i=0; i<esig->pdSig.size(); i++) {
-            fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig[i].sec);
-            fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig[i].idx);
-            fPSignalTree->GetBranch("time")->SetAddress(&esig->pdSig[i].t);
-            fPSignalTree->GetBranch("amp")->SetAddress(&esig->pdSig[i].height);
+         for (unsigned i=0; i<esig->pdSig->size(); i++) {
+            fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig->at(i).sec);
+            fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig->at(i).idx);
+            fPSignalTree->GetBranch("time")->SetAddress(&esig->pdSig->at(i).t);
+            fPSignalTree->GetBranch("amp")->SetAddress(&esig->pdSig->at(i).height);
             fPSignalTree->Fill();
          }
       }
