@@ -36,8 +36,7 @@ private:
    // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
-   
-   std::mutex SVDEventsLock;
+
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
    std::deque<TSVD_QOD*> SVDEvents;
@@ -186,9 +185,8 @@ public:
       }*/
       return;
    }
-   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   std::vector<TSVD_QOD*> GetFinishedEvents(TARunInfo* runinfo)
    {
-       std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
        std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
@@ -204,12 +202,7 @@ public:
              
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
-             //if (t > SISEventRunTime.back() ) 
-             //{
-             //    std::cout<<"Time saved"<<std::endl;
-             //    return;
-            // }
-            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+
              if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
@@ -229,7 +222,11 @@ public:
        }
        //Free memory when timestamps are not aligning nicely (VF48 corruption?)
        CleanOldTimestamps(10.);
-       
+       return finished_QOD_events;
+   }
+   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   {
+       std::vector<TSVD_QOD*>finished_QOD_events = GetFinishedEvents(runinfo);
        int nFinished=finished_QOD_events.size();
        if (nFinished)
        {
@@ -278,7 +275,6 @@ public:
          else
             SVD->MVA=-1;
 
-         std::lock_guard<std::mutex> lock(SVDEventsLock);
          SVDEvents.push_back(SVD);
       }
       //if (SiliconEvent->GetVF48NEvent()%10==0)
