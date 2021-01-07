@@ -3,7 +3,7 @@
 
 #Full reconstruction (development branch style):
 eos_module.o handle_sequencer.o 
-
+felabviewmodule.o
 #Legacy reconstruction modules
 # fake_realtime_module.o
 unpack_vf48_module.o 
