@@ -196,7 +196,7 @@ public:
       // PBAR, MIX, POS definiti in un enum, precedentemente
       for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
       {
-         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[iSeq].Data()) == 0 ) 
+         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames.at(iSeq).c_str()) == 0 ) 
             {
                iSeqType=iSeq;
                break;
@@ -207,7 +207,7 @@ public:
       {
          std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names ";
          for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
-            std::cerr<<SeqNames[iSeq].Data()<<"  ";
+            std::cerr<<SeqNames.at(iSeq)<<"  ";
          std::cerr<<std::endl;
          //   assert(0);
 
