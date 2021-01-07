@@ -1,0 +1,21 @@
+# uncomment and define analyzer modules here
+# Any line with a '#' in it will be ignored!
+
+#agana submodule:
+unpack_module.o
+
+# sequencer modules
+eos_module.o handle_sequencer.o chrono_module.o
+
+# rTPC tracking chain
+deconv_aw_module.o deconv_pad_module.o match_module.o
+# AC
+histo_module.o
+# LM
+calib_module.o
+tpc_tree_module.o
+# PH
+display_module.o
+# JTKM
+official_time_module.o
+AnalysisReport_module.o
