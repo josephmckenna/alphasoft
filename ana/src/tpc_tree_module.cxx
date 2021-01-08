@@ -23,10 +23,12 @@ struct _sum_aw_time
 {
    double sum=0.0;
    int n=0;
-   double operator()(AgAwHit& h1)
+   void operator()(AgAwHit& h1)
    {
+      double t=h1.time;
+      if( t<2000. && h1.amp>20000 ){ 
       ++n;
-      return sum+h1.time;
+      sum+=t; }
    }
    double GetTime() { return n>0?sum/double(n):0.0; }
 } aw_dtime;
@@ -35,10 +37,13 @@ struct _sum_pads_time
 {
    double sum=0.0;
    int n=0;
-   double operator()(AgPadHit& h1)
+   void operator()(AgPadHit& h1)
    {
+      double t=h1.time_ns;
+      if( t< 2000.){
       ++n;
-      return sum+h1.time_ns;
+      sum+=t;
+      }
    }
    double GetTime() { return n>0?sum/double(n):0.0; }
 } pads_dtime;
