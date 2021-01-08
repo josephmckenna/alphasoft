@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 #include <cassert>
+#include <numeric>
+#include <algorithm> 
 #include "manalyzer.h"
 #include "midasio.h"
 
@@ -15,6 +17,31 @@
 #include "RecoFlow.h"
 
 #include "TTree.h"
+
+
+struct _sum_aw_time
+{
+   double sum=0.0;
+   int n=0;
+   double operator()(AgAwHit& h1)
+   {
+      ++n;
+      return sum+h1.time;
+   }
+   double GetTime() { return n>0?sum/double(n):0.0; }
+} aw_dtime;
+
+struct _sum_pads_time
+{
+   double sum=0.0;
+   int n=0;
+   double operator()(AgPadHit& h1)
+   {
+      ++n;
+      return sum+h1.time_ns;
+   }
+   double GetTime() { return n>0?sum/double(n):0.0; }
+} pads_dtime;
 
 class TpcTreeModule: public TARunObject
 {
@@ -27,6 +54,7 @@ public:
    AgAwHit awbuf;
    AgPadHit padbuf;
    ALPHAg::signal sigbuf;
+
 
    TpcTreeModule(TARunInfo* runinfo): TARunObject(runinfo)
    {
@@ -74,7 +102,7 @@ public:
       fPadTree->Branch("amp",&padbuf.amp,"amp/D");
 
       fAnodeTree->Branch("dtime",&awbuf.time,"dtime/D");
-      fPadTree->Branch("dtime",&padbuf.dtime_ns,"dtime/D");
+      fPadTree->Branch("dtime",&padbuf.time_ns,"dtime/D");
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -108,18 +136,34 @@ public:
 
 
       if(eawh){
+         aw_dtime.sum=0.0;
+         std::for_each(eawh->fAwHits.begin(),eawh->fAwHits.end(),
+                      aw_dtime);
+         double t0=aw_dtime.GetTime();
+
          for (unsigned j=0; j<eawh->fAwHits.size(); j++) {
             fAnodeTree->GetBranch("mod")->SetAddress(&eawh->fAwHits[j].adc_module);
             fAnodeTree->GetBranch("chan")->SetAddress(&eawh->fAwHits[j].adc_chan);
             fAnodeTree->GetBranch("wire")->SetAddress(&eawh->fAwHits[j].wire);
-            fAnodeTree->GetBranch("time")->SetAddress(&eawh->fAwHits[j].time);
-            fAnodeTree->GetBranch("dtime")->SetAddress(&eawh->fAwHits[j].dtime);
+            double tt = eawh->fAwHits[j].time;
+            double dt = tt-t0;
+            fAnodeTree->GetBranch("time")->SetAddress(&tt);
+            fAnodeTree->GetBranch("dtime")->SetAddress(&dt);
             fAnodeTree->GetBranch("amp")->SetAddress(&eawh->fAwHits[j].amp);
             fAnodeTree->Fill();
          }
       }
 
       if(eph){
+         
+         pads_dtime.sum=0.0;
+         // auto result = std::for_each(eph->fPadHits.begin(),eph->fPadHits.end(),
+         //                              pads_dtime);
+         // double t0=eph->fPadHits.size()>0?result.sum/double(eph->fPadHits.size()):0.;
+         std::for_each(eph->fPadHits.begin(),eph->fPadHits.end(),
+                       pads_dtime);
+         double t0=pads_dtime.GetTime();
+
          for (unsigned i=0; i<eph->fPadHits.size(); i++) {
             fPadTree->GetBranch("mod")->SetAddress(&eph->fPadHits[i].imodule);
             fPadTree->GetBranch("seqsca")->SetAddress(&eph->fPadHits[i].seqsca);
@@ -127,8 +171,10 @@ public:
             int col = (eph->fPadHits[i].tpc_col+1)%32; // KO's tpc_col is NOT the same as the agreed-upon "pad col 0 covers anode wire 0
             fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
-            fPadTree->GetBranch("time")->SetAddress(&eph->fPadHits[i].time_ns);
-            fPadTree->GetBranch("dtime")->SetAddress(&eph->fPadHits[i].dtime_ns);
+            double tt = eph->fPadHits[i].time_ns;
+            double dt = tt-t0;
+            fPadTree->GetBranch("time")->SetAddress(&tt);
+            fPadTree->GetBranch("dtime")->SetAddress(&dt);
             fPadTree->GetBranch("amp")->SetAddress(&eph->fPadHits[i].amp);
             fPadTree->Fill();
          }
@@ -151,6 +197,7 @@ public:
       }
       return flow;
    }
+
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
