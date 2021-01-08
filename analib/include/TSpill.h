@@ -6,6 +6,7 @@
 #include "TString.h"
 #include "sqlite3.h"
 #include "DumpHandling.h"
+#include "Sequencer_Channels.h"
 
 //Base class for SIS and Chronobox integrals
 class TSpillScalerData: public TObject
@@ -78,6 +79,7 @@ class TAGSpillScalerData: public TSpillScalerData
    ClassDef(TAGSpillScalerData,1);
 };
 #endif
+
 class TSpillSequencerData: public TObject
 {
    public:

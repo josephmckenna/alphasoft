@@ -279,7 +279,7 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
-   fSeqName ="JOEFIXTHISVARIABLE";
+   fSeqName    = SeqNames.at(fSequenceNum);
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
@@ -324,7 +324,7 @@ TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CH
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
-   fSeqName ="JOEFIXTHISVARIABLE";
+   fSeqName    = SeqNames.at(fSequenceNum);
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
