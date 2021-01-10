@@ -20,30 +20,32 @@ public:
    bool fPrint = false;
    bool fFakeRealtime = false;
 };
-class felabviewFlow: public TAFlowEvent
+class felabviewModule: public TARunObject
 {
 private:
-   std::string BankName;
-   std::vector<double> data;
-   uint32_t MIDAS_TIME;
-   uint32_t run_time;
    TTree* felabEventTree = NULL;
    TBranch* dataBranch = NULL;
    TBranch* IDBranch = NULL;
    TBranch* BNBranch = NULL;
 public:
    felabModuleFlags* fFlags;
-   bool fTrace = false;
+   bool fTrace = true;
+   
+   felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
+      : TARunObject(runinfo), fFlags(flags)
+   {
+      //ModuleName="Felab View Module";
+      if (fTrace)
+         printf("felabviewFlow::ctor!\n");
+   }
 
-   //Setters and Getters
-   void                 SetBankName(std::string m_BankName)     { BankName = m_BankName; }
-   std::string          GetBankName()                           { return BankName; }
-   void                 SetData(std::vector<double> m_data)     { data = m_data; }
-   std::vector<double>  GetData()                               { return data; }
-   void                 SetMIDAS_TIME(uint32_t m_MIDAS_TIME)    { MIDAS_TIME = m_MIDAS_TIME; }
-   uint32_t             GetMIDAS_TIME()                         { return MIDAS_TIME; }
-   void                 SetRunTime(uint32_t m_run_time)         { run_time = m_run_time; }
-   uint32_t             GetRunTime()                            { return run_time; }
+   ~felabviewModule()
+   {
+      if (fTrace)
+         printf("felabviewFlow::dtor!\n");
+   }
+
+  //Setters and Getters             
    void                 SetfelabEventTree(TTree* m_felabtree)   { felabEventTree = m_felabtree; }
    TTree*               GetfelabEventTree()                     { return felabEventTree; }
    void                 SetdataBranch(TBranch* m_dataBranch)    { dataBranch = m_dataBranch; }
@@ -52,23 +54,10 @@ public:
    TBranch*             GetIDBranch()                           { return IDBranch; }
    void                 SetBNBranch(TBranch* m_BNBranch)        { BNBranch = m_BNBranch; }
    TBranch*             GetBNBranch()                           { return BNBranch; }
-   
-   felabviewFlow(TAFlowEvent* flowevent, felabModuleFlags* flags)
-      : TAFlowEvent(flowevent), fFlags(flags)
-   {
-      //ModuleName="Felab View Module";
-      if (fTrace)
-         printf("felabviewFlow::ctor!\n");
-   }
-
-   ~felabviewFlow()
-   {
-      if (fTrace)
-         printf("felabviewFlow::dtor!\n");
-   }
 
    void BeginRun(TAFlowEvent* flowevent)
    {
+      printf("\n \n \n DEBUG: felabviewModule::BeginRun. \n \n \n");
     //   if (fTrace)
     //      printf("RealTimeModule::BeginRun, run %d, file %s\n", flowevent->fRunNo, flowevent->fFileName.c_str());
     //   start_time=clock();
@@ -76,39 +65,51 @@ public:
 
    void EndRun(TAFlowEvent* flowevent)
    {
+      printf("\n \n \n DEBUG: felabviewModule::EndRun. \n \n \n");
     //   if (fTrace)
     //      printf("RealTimeModule::EndRun, run %d\n", flowevent->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TAFlowEvent* flowevent, TAFlags* flags, TAFlowEvent* flow)
   {
-            //Print to tree here.
+      printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent. \n \n \n");
+      //This should now take an felabview flow event and then print and save to tree and return the same flow I guess.
       return flow; 
   }
 
    TAFlowEvent* Analyze(TAFlowEvent* flowevent, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-    //   if (fFlags->fFakeRealtime )
-    //   {
-    //     FirstEvent=me->time_stamp;
-    //     clock_t time_now=(clock()-start_time)/CLOCKS_PER_SEC;
-    //      while (me->time_stamp-FirstEvent>time_now)
-    //      {
-    //         time_now=(clock()-start_time)/CLOCKS_PER_SEC;
-    //         usleep(1000);
-    //      }
-    //   }
+     printf("\n \n \n DEBUG: felabviewModule::Analyze. ID = %d \n \n \n", me->event_id);
+     //Here we need convert a midas event with an ID of 6 and return a felabviewFlow event.
+     if(me->event_id == 6)
+     {
+       //We have the midas event we are looking for.
+       //Convert to a new felabview flow event then return. 
+       //So initialise a felabviewFE with the values found in me and return the flow.
+       u32 time_stamp = me->time_stamp;
+       std::cout << "time_stamp = " << time_stamp << std::endl;
+       int bank_length = me->banks.size();
+
+       for(int i=0; i<bank_length; i++)
+       {
+
+
+       }
+
+
+     }
       return flow;
    }
 
    void AnalyzeSpecialEvent(TAFlowEvent* flowevent, TMEvent* event)
    {
+      printf("\n \n \n DEBUG: felabviewModule::AnalyzeSpecialEvent. ID = %d \n \n \n", event->event_id);
       if(felabEventTree == NULL)
       {
         felabEventTree = new TTree("felabEventTree","felabEventTree");
         SetfelabEventTree(felabEventTree);
       }
-
+/*
     if(event->event_id == 6)
     {
       TBranch* b_data = felabEventTree->GetBranch("dataBranch");
@@ -133,17 +134,47 @@ public:
       felabEventTree->Fill();
 
     }
-
+*/
     //   if (fTrace)
     //      printf("RealTimeModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
     //             flowevent->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
+class FelabViewFactory: public TAFactory
+{
+public:
+   felabModuleFlags fFlags;
+
+public:
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("FelabViewFactory::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++) {
+         if (args[i] == "--print")
+            fFlags.fPrint = true;
+         if (args[i] == "--fakerealtime")
+            fFlags.fFakeRealtime = true;
+      }
+   }
+
+   void Finish()
+   {
+      if (fFlags.fPrint)
+         printf("FelabViewFactory::Finish!\n");
+   }
+   
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("FelabViewFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new felabviewModule(runinfo, &fFlags);
+   }
+};
+
+static TARegister tar(new FelabViewFactory);
+
 struct felabviewEventTree
 {
     std::vector<TTree*> felabEventTree;
-
-
-
 };

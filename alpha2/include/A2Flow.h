@@ -10,6 +10,7 @@
 #ifndef A2Flow_H
 #define A2Flow_H
 #include "UnpackVF48.h"
+#include "TTree.h"
 
 class VF48EventFlow: public TAFlowEvent
 {
@@ -170,6 +171,41 @@ class SVDQODFlow: public TAFlowEvent
   }
 };
 
+class felabviewFlowEvent: public TAFlowEvent
+{
+private:
+   std::string BankName;
+   std::vector<double> data;
+   uint32_t MIDAS_TIME;
+   uint32_t run_time;
+   double labview_time;
+public:
+   //Setters and Getters
+   void                 SetBankName(std::string m_BankName)     { BankName = m_BankName; }
+   std::string          GetBankName()                           { return BankName; }
+   void                 SetData(std::vector<double> m_data)     { data = m_data; }
+   std::vector<double>  GetData()                               { return data; }
+   void                 SetMIDAS_TIME(uint32_t m_MIDAS_TIME)    { MIDAS_TIME = m_MIDAS_TIME; }
+   uint32_t             GetMIDAS_TIME()                         { return MIDAS_TIME; }
+   void                 SetRunTime(uint32_t m_run_time)         { run_time = m_run_time; }
+   uint32_t             GetRunTime()                            { return run_time; }
+   void                 SetLabviewTime(double labview)          { labview_time = labview; }
+   double               GetLabviewTime()                        { return labview_time; }
+   
+   felabviewFlowEvent(TAFlowEvent* flowevent)
+      : TAFlowEvent(flowevent)
+   {
+      //ModuleName="Felab View Module";
+      if (true)
+         printf("felabviewFlow::ctor!\n");
+   }
+
+   ~felabviewFlowEvent()
+   {
+      if (true)
+         printf("felabviewFlow::dtor!\n");
+   }
+};
 
 
 #endif
