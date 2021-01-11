@@ -18,36 +18,6 @@
 
 #include "TTree.h"
 
-
-struct _sum_aw_time
-{
-   double sum=0.0;
-   int n=0;
-   void operator()(AgAwHit& h1)
-   {
-      double t=h1.time;
-      if( t<2000. && h1.amp>20000 ){ 
-      ++n;
-      sum+=t; }
-   }
-   double GetTime() { return n>0?sum/double(n):0.0; }
-} aw_dtime;
-
-struct _sum_pads_time
-{
-   double sum=0.0;
-   int n=0;
-   void operator()(AgPadHit& h1)
-   {
-      double t=h1.time_ns;
-      if( t< 2000.){
-      ++n;
-      sum+=t;
-      }
-   }
-   double GetTime() { return n>0?sum/double(n):0.0; }
-} pads_dtime;
-
 class TpcTreeModule: public TARunObject
 {
 public:
@@ -59,6 +29,35 @@ public:
    AgAwHit awbuf;
    AgPadHit padbuf;
    ALPHAg::signal sigbuf;
+
+   struct _sum_aw_time
+   {
+      double sum=0.0;
+      int n=0;
+      void operator()(AgAwHit& h1)
+      {
+         double t=h1.time;
+         if( t<2000. && h1.amp>20000 ){ 
+            ++n;
+            sum+=t; }
+      }
+      double GetTime() { return n>0?sum/double(n):0.0; }
+   } aw_dtime;
+
+   struct _sum_pads_time
+   {
+      double sum=0.0;
+      int n=0;
+      void operator()(AgPadHit& h1)
+      {
+         double t=h1.time_ns;
+         if( t< 2000.){
+            ++n;
+            sum+=t;
+         }
+      }
+      double GetTime() { return n>0?sum/double(n):0.0; }
+   } pads_dtime;
 
 
    TpcTreeModule(TARunInfo* runinfo): TARunObject(runinfo)
@@ -143,7 +142,7 @@ public:
       if(eawh){
          aw_dtime.sum=0.0;
          std::for_each(eawh->fAwHits.begin(),eawh->fAwHits.end(),
-                      aw_dtime);
+                       aw_dtime);
          double t0=aw_dtime.GetTime();
 
          for (unsigned j=0; j<eawh->fAwHits.size(); j++) {
@@ -160,11 +159,7 @@ public:
       }
 
       if(eph){
-         
          pads_dtime.sum=0.0;
-         // auto result = std::for_each(eph->fPadHits.begin(),eph->fPadHits.end(),
-         //                              pads_dtime);
-         // double t0=eph->fPadHits.size()>0?result.sum/double(eph->fPadHits.size()):0.;
          std::for_each(eph->fPadHits.begin(),eph->fPadHits.end(),
                        pads_dtime);
          double t0=pads_dtime.GetTime();
@@ -174,6 +169,7 @@ public:
             fPadTree->GetBranch("seqsca")->SetAddress(&eph->fPadHits[i].seqsca);
             // fPadTree->GetBranch("col")->SetAddress(&eph->fPadHits[i].tpc_col);
             int col = (eph->fPadHits[i].tpc_col+1)%32; // KO's tpc_col is NOT the same as the agreed-upon "pad col 0 covers anode wire 0
+            // instead follows the numbering of the power distribution
             fPadTree->GetBranch("col")->SetAddress(&col);
             fPadTree->GetBranch("row")->SetAddress(&eph->fPadHits[i].tpc_row);
             double tt = eph->fPadHits[i].time_ns;
@@ -192,6 +188,7 @@ public:
             fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig->at(i).height);
             fASignalTree->Fill();
          }
+         if( !esig->pdSig ) return flow;
          for (unsigned i=0; i<esig->pdSig->size(); i++) {
             fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig->at(i).sec);
             fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig->at(i).idx);
