@@ -69,5 +69,5 @@ install(TARGETS analib DESTINATION lib)
 
 install(FILES ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libanalib.rootmap DESTINATION lib)
-file(GLOB HEADER_FILES include/*.hh)
+file(GLOB HEADER_FILES include/*.hh include/*.h)
 install(FILES ${HEADER_FILES} DESTINATION include)
