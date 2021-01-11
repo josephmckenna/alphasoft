@@ -1,32 +1,5 @@
-#include "../../recolib/include/TPCconstants.hh"
-#include <TMath.h>
-#include <TString.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <TH3D.h>
-#include <TF1.h>
-#include <TLegend.h>
-#include <TTree.h>
-#include <TTreeReader.h>
-#include <TCanvas.h>
-#include <TFile.h>
-#include <TLine.h>
-#include <TSpectrum.h>
-#include <TROOT.h>
-#include <TStyle.h>
-#include <TChain.h>
-#include <TGraph.h>
-#include <TGraphErrors.h>
-#include <TCutG.h>
-#include <TCut.h>
-#include <TFitResult.h>
-#include <TProfile.h>
-#include <TPolyMarker.h>
-
 #include "LaserProfile.hh"
 
-using std::set;
-using namespace TMath;
 
 bool allcols = false;           // if false, difficult pad column #1 gets suppressed
 
@@ -138,7 +111,8 @@ vector<TString> files =
       // "output04399.root",
       // "output04400.root",
       // "output04401.root",
-      "output04402.root",
+      //"output04402.root",
+      "/daq/alpha_data0/acapra/alphag/test/laser4402sub000.root",
       // "output04403.root",
       // "output04404.root",
       // "output04407.root",
@@ -175,9 +149,10 @@ TDirectory *timedir(nullptr), *paddir(nullptr), *awdir(nullptr);
 //////////////// Helper functions
 
 int runNo(TString filename){
-    filename.Remove(0,6);
-    filename.Remove(filename.Length()-5);
-    int run = filename.Atoi();
+    // filename.Remove(0,6);
+    // filename.Remove(filename.Length()-5);
+    // int run = filename.Atoi();
+    int run = GetRunNumber( filename );
     if(run < 3000){
       nawbin = 701;
       awbin = 10;
@@ -185,7 +160,8 @@ int runNo(TString filename){
       nawbin = 511;
       awbin = 16;
     }
-    return filename.Atoi();
+    cout<<"Analyzing run "<<run<<endl;
+    return run;
 }
 
 TGraph *LightPointsGraph_p(pair<char, int> port){
@@ -713,9 +689,13 @@ int hitPattern_p(TTree *pt, int run){
     c->cd(2);
     hp2->DrawCopy("contz");
     for(auto l: stripBounds) l->Draw("same");
+
     hitcuts[portmap[run]]->Draw("same");
+    cout<<"here"<<endl;
     LightPointsGraph_p(portmap[run])->Draw("psame");
+    cout<<"Get histo: "<<endl;
     TH2D *hhhh = GetLightStrips(phi_offset, phi_lorentz+phi_shift, 2, portTheta[portmap[run]], portmap[run].first=='T');
+    cout<<hhhh->GetName()<<endl;
     hhhh->SetName(hn+"_light");
     hhhh->Draw("same");
     // grp->Draw("perr same");
@@ -987,11 +967,11 @@ int pad_time(TTree *pt, int run){
             d->cd();
             int bin = hr->GetXaxis()->FindBin(mm2pad(s));
             int bin1, bin2;
-            double bincont = hr->Integral(bin,bin);
+	    double bincont = hr->GetBinContent(bin);
             for(bin1 = bin-5; bin1 < bin; bin1++)
-                if(hr->Integral(bin1,bin1)/bincont > 0.05) break;
+                if(hr->GetBinContent(bin1)/bincont > 0.05) break;
             for(bin2 = bin+5; bin2 > bin; bin2--)
-                if(hr->Integral(bin2,bin2)/bincont > 0.05) break;
+                if(hr->GetBinContent(bin2)/bincont > 0.05) break;
 
             p.push_back(hr->ProjectionY(TString::Format("%s_striprow_%d",hn.Data(),int(mm2pad(s))),bin1,bin2));
             p.back()->SetTitle(p.back()->GetName());
