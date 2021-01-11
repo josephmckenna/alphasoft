@@ -3,6 +3,7 @@
 
 #agana submodule:
 unpack_module.o
+adc_module.o pwb_module.o
 
 # sequencer modules
 eos_module.o handle_sequencer.o chrono_module.o
