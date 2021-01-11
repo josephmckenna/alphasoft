@@ -348,6 +348,24 @@ TSpill::TSpill(): RunNumber(-1)
    Unixtime   =0;
 }
 
+bool TSpill::IsMatchForDumpName(std::string dumpname, bool exact)
+{
+   //Compare but ignore leading '"' mark
+   if (Name.compare(1,dumpname.size(),dumpname.c_str())==0)
+   {
+      //If we need an exact match... make sure lengths match
+      if (exact)
+      {
+         return Name.size() - 2 == dumpname.size();
+      }
+      else
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
 TSpill::TSpill(int runno): RunNumber(runno)
 {
    IsDumpType =true; //By default, expect this to be a dump

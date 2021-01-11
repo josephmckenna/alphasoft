@@ -36,7 +36,7 @@ class TSpillScalerData: public TObject
    template <class ScalerData>
    ScalerData* operator+(const ScalerData* b);
    bool Ready( bool have_vertex_detector);
-
+   double GetDumpLength() { return StopTime - StartTime; };
 
    ClassDef(TSpillScalerData,1);
 };
@@ -141,6 +141,7 @@ public:
    TSpill(int runno, const char* format, ...);
    TSpill* operator/(const TSpill* b);
    TSpill(TSpill* a);
+   bool IsMatchForDumpName(std::string dumpname, bool exact = true);
    bool DumpHasMathSymbol() const;
    using TObject::Print;
    virtual void Print();
