@@ -63,7 +63,7 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    LCG_VERSION=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"/"$7}' `
    LCG_VERSION_NAME=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"_"$7}' `
    mkdir -p ${AGRELEASE}/${LCG_VERSION}_build
-   mkdir -p ${AGRELEASE}/alphasoft/${LCG_VERSION}
+   mkdir -p ${AGRELEASE}/${LCG_VERSION}
    cd ${AGRELEASE}/${LCG_VERSION}_build
    #Check if we need cmake3 command or cmake
    if [ `which cmake3` ]; then
@@ -73,11 +73,16 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
       #cmake3 not found. Default version of cmake is probably 3
       export CMAKE=cmake
    fi
-   ${CMAKE} ${AGRELEASE} -DCMAKE_INSTALL_PREFIX=${AGRELEASE}/${LCG_VERSION} &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
-   make &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
+   ${CMAKE} ${AGRELEASE} -DCMAKE_INSTALL_PREFIX=${AGRELEASE}/${LCG_VERSION} \
+                 &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
+   make          &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make install  &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
-   echo "source ${THIS_SETUP}" > ${AGRELEASE}/${LCG_VERSION}/setup.sh
-   echo "source ${AGRELEASE}/agconfig.sh " ?> ${AGRELEASE}/${LCG_VERSION}/setup.sh
+   echo "#Primitive view setup script"                     > ${AGRELEASE}/${LCG_VERSION}/setup.sh
+   echo "source ${THIS_SETUP}"                             >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
+   echo "source ${AGRELEASE}/agconfig.sh "                 >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
+   echo "export PATH=${AGRELEASE}/${LCG_VERSION}:\${PATH}" >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
+   echo "export LD_LIBRARY_PATH=${AGRELEASE}/${LCG_VERSION}/lib:\${LD_LIBRARY_PATH}" \
+                                                           >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
    cd ..
    rm -rf ${AGRELEASE}/${LCG_VERSION}_build
    cd ${HOME}
