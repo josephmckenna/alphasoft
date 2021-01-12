@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 THIS_SETUP=$1
 
