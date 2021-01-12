@@ -38,7 +38,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       cd ${THIS_PATH}
       for i in `cat views.list | tac`; do
-         ./${THIS_PATH}/update.sh ${i}
+         .${THIS_PATH}/update.sh ${i}
       done
       echo "All done"
       return
