@@ -32,8 +32,8 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       cd ${HOME}
       cvmfs_server publish alpha.cern.ch
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
-      for i in `cat views.list`; do
-      . update.sh ${i}
+      for i in `cat scripts/cvmfs/views.list`; do
+         . update.sh ${i}
       done
       echo "All done"
       return
