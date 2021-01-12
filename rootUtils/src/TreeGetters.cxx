@@ -101,7 +101,6 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
 }
 #endif
 
-
 /* emacs
  * Local Variables:
  * tab-width: 8
