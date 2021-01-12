@@ -64,7 +64,15 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    mkdir -p ${AGRELEASE}/${LCG_VERSION}_build
    mkdir -p ${AGRELEASE}/alphasoft/${LCG_VERSION}
    cd ${AGRELEASE}/${LCG_VERSION}_build
-   cmake ${AGRELEASE} -DCMAKE_INSTALL_PREFIX=${AGRELEASE}/${LCG_VERSION} &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
+   #Check if we need cmake3 command or cmake
+   if [ `which cmake3` ]; then
+      #command cmake3 found... lets use it
+      export CMAKE=cmake3
+   else
+      #cmake3 not found. Default version of cmake is probably 3
+      export CMAKE=cmake
+   fi
+   ${CMAKE} ${AGRELEASE} -DCMAKE_INSTALL_PREFIX=${AGRELEASE}/${LCG_VERSION} &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make install  &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    echo "source ${THIS_SETUP}" > ${AGRELEASE}/${LCG_VERSION}/setup.sh
