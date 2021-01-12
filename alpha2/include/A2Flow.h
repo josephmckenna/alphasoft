@@ -7,10 +7,68 @@
 
 
 
-#include "AgFlow.h"
 #ifndef A2Flow_H
 #define A2Flow_H
 #include "UnpackVF48.h"
+#include "SiMod.h"
+
+class VF48data
+{
+  public:
+     int       size32[nVF48];
+     uint32_t *data32[nVF48];
+    //char* data[NUM_VF48_MODULES];
+    //int size[NUM_VF48_MODULES];
+  VF48data()
+  {
+    for (int i=0; i<nVF48; i++)
+    {
+      size32[i]=0;
+      data32[i]=NULL;
+    }
+  }
+  void AddVF48data(int unit, const void* _data, int _size)
+  {
+
+    //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
+    //int       size32 = size;
+  //32const uint32_t *data32 = (const uint32_t*)data;
+    if (!_size) return;
+    size32[unit]=_size;
+    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
+    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
+    return;
+  }
+  ~VF48data()
+  {
+     for (int i=0; i<nVF48; i++)
+     {
+       // if (data32[i])
+           free( data32[i] );
+     }
+  }
+};
+
+class VF48DataFlow: public TAFlowEvent
+{
+   public:
+   std::deque<VF48data*> VF48dataQueue;
+     public:
+  VF48DataFlow(TAFlowEvent* flow)
+       : TAFlowEvent(flow)
+  {
+  }
+  void AddData(VF48data* e)
+  {
+     VF48dataQueue.push_back(e);
+  }
+  //Do not delete the pointers... we don't own them
+  ~VF48DataFlow()
+  {
+     VF48dataQueue.clear();
+  }
+};
+
 
 class VF48EventFlow: public TAFlowEvent
 {
@@ -29,37 +87,27 @@ class VF48EventFlow: public TAFlowEvent
   }
 };
 #include "TSiliconEvent.h"
-class SilEventsFlow: public TAFlowEvent
+#include "TAlphaEvent.h"
+
+class SilEventFlow: public TAFlowEvent
 {
   public:
      TSiliconEvent* silevent;
+     TAlphaEvent* alphaevent;
   public:
-  SilEventsFlow(TAFlowEvent* flow, TSiliconEvent* s)
+  SilEventFlow(TAFlowEvent* flow, TSiliconEvent* s)
        : TAFlowEvent(flow)
   {
     silevent=s;
+    alphaevent=NULL;
   }
-  ~SilEventsFlow()
+  ~SilEventFlow()
   {
-     if (silevent)
-        delete silevent;
+    if (silevent)
+      delete silevent;
+    if (alphaevent)
+      delete alphaevent;
   }
-};
-#include "TAlphaEvent.h"
-class AlphaEventFlow: public TAFlowEvent
-{
-   public:
-      TAlphaEvent* alphaevent;
-      AlphaEventFlow(TAFlowEvent* flow, TAlphaEvent* a)
-       : TAFlowEvent(flow)
-     {
-        alphaevent=a;
-     }
-     ~AlphaEventFlow()
-     {
-        if (alphaevent)
-            delete alphaevent;
-     }
 };
 
 

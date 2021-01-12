@@ -7,10 +7,10 @@ ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
 DEPS = buildrootana
 endif
 
-AGLIBS = libagana.so libAGTPC.so libaged.so
+AGLIBS = libanalib.so libagtpc.so libaged.so
 AGBIN  = agana reco
 
-A2LIBS = libagana.so libAGTPC.so alpha2libs
+A2LIBS = libanalib.so libagtpc.so alpha2libs
 A2BIN  = alpha2
 
 
@@ -20,16 +20,21 @@ A2= $(DEPS) $(A2LIBS) $(A2BIN)
 
 ALL= $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
-all:: $(ALL) FIN
+all: $(ALL) FIN
+all: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
+
 #Fast build for just AG libs and binaries
 ag: $(AG) rootUtils.so
-	@echo -e "\033[32mAG ONLY Success!\033[m"
+ag: export BUILD_FLAGS:=-DBUILD_AG
+ag: @echo -e "\033[32mAG ONLY Success!\033[m"
 #Fast build for just A2 libs and binaries
 a2: $(A2) rootUtils.so
-	@echo -e "\033[32mA2 ONLY Success!\033[m"
+a2: export BUILD_FLAGS:=-DBUILD_A2
+a2: @echo -e "\033[32mA2 ONLY Success!\033[m"
 
 debug: MFLAGS += debug
 debug: $(ALL) FIN
+debug: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 O2: MFLAGS += O2
 O2: $(ALL) FIN
@@ -37,10 +42,16 @@ O2: $(ALL) FIN
 native: MFLAGS += native
 native: $(ALL) FIN
 
+ifeq (, $(shell which cmake3))
+CMAKE := cmake
+else
+CMAKE := cmake3
+endif
 
-cmake: buildrootana
+cmake:
+	@echo $(CMAKE)
 	@mkdir -p ${AGRELEASE}/build
-	@cd ${AGRELEASE}/build && cmake3 ../ && make $(MFLAGS) install
+	@cd ${AGRELEASE}/build && $(CMAKE) ../ && make $(MFLAGS) install
 
 BINARIES = $(shell ls alpha2/*.modules ana/*.modules)
 BINARIES := $(patsubst alpha2/%.modules,bin/%.exe,$(BINARIES))
@@ -49,20 +60,21 @@ BINARIES := $(patsubst ana/%.modules,bin/%.exe,$(BINARIES))
 cclean:
 	make clean -C build
 	rm -f $(BINARIES)
+	rm -rf CMakeCache.txt CMakeFiles
 
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
 
-libAGTPC.so: $(DEPS)
+libagtpc.so: $(DEPS)
 	make -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
 	make -C aged $(MFLAGS)
 
-libagana.so: $(DEPS)
+libanalib.so: $(DEPS)
 	make -C analib $(MFLAGS)
 
-agana: | $(AGLIBS)
+agana: $(AGLIBS)
 	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
@@ -78,7 +90,7 @@ rootUtils.so:
 	make -C rootUtils $(MFLAGS)
 
 buildrootana:
-	cd rootana && make gitinit
+	cd rootana && make obj/manalyzer_main.o
 	make -C rootana
 
 cleanrootana:
@@ -103,4 +115,4 @@ clean::
 	cd reco/ && $(MAKE) clean
 	cd a2lib/ && $(MAKE) clean
 	cd alpha2/ && $(MAKE) clean
-	cd rootUtils && $(MAKE) clean
+	cd rootUtils/ && $(MAKE) clean

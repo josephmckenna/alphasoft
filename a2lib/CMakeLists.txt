@@ -37,6 +37,9 @@ add_custom_command(
     )
 
 
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 # Directories
 add_subdirectory(src)
 
@@ -51,22 +54,36 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS)
+find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include agana)
 include_directories(include include)
 include_directories(include .) #Used for RootUtils
 #include_directories(include $ENV{AGRELEASE}/recolib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(a2lib include/*.h LINKDEF LibLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__alpha2 include/*.h LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
-add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} a2lib.cxx )
-target_link_libraries(alpha2 ${ROOT_LIBRARIES})
+
+add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
+
+
+find_library(LIBSQLITE3 sqlite3)
+target_link_libraries(alpha2 ${ROOT_LIBRARIES} ${LIBSQLITE3} )
+
+if(ROOTANA_SUBMOD)
+  add_dependencies(alpha2 rootana)
+endif()
+
+install(TARGETS alpha2 DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libalpha2.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

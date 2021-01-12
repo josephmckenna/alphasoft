@@ -4,10 +4,19 @@
 
   [rootlink]: https://root.cern.ch/
 
-* [rootana][rootanalink]
+* [rootana][rootanalink], it can be obtained as a git submodule
 
   [rootanalink]: https://midas.triumf.ca/MidasWiki/index.php/ROOTANA
+  
+* [CMake][cmakelink] **version >=3.0**
 
+  [cmakelink]: https://cmake.org/ "CMake website"
+  
+## Optional Requirements:
+
+* [Midas][midaslink], this is useful for "online analysis"
+
+  [midaslink]: https://midas.triumf.ca/MidasWiki/index.php/Main_Page "MIDAS Wiki"
 
 OS (strongly recommended):
 
@@ -15,51 +24,63 @@ OS (strongly recommended):
 
   [cern-centos7link]: http://linux.web.cern.ch/linux/centos7/
 
-Others OS (only building tested):
-* Ubuntu 16
-* Fedora 28
+Succefully tested on [Ubuntu 20.04LTS][ubuntu-link]
+
+[ubuntu-link]: https://ubuntu.com/blog/ubuntu-20-04-lts-arrives "Canonical Announcement"
+
+
 
 # INSTALLATION:
 
 ```
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
+git clone https://bitbucket.org/expalpha/alphasoft.git --recursive
+cd alphasoft
 . agconfig.sh
-make -j
+mkdir build && cd build
+```
 
-#OR with cmake (simple):
-
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
-. agconfig.sh
-make cmake -j
-
-#OR with cmake (full):
-git clone https://bitbucket.org/ttriumfdaq/agdaq.git
-cd agdaq
-. agconfig.sh
-mkdir build
-cd build
-cmake3 ../
-#Optional: Turn on or off A2 or AG features and simulations
-ccmake3 .
-make -j
-make install 
-
+`cmake3` if OS is CentOS7, `cmake` for Ubuntu
 
 ```
+cmake3 ../
+cmake3 --build . --target install
+```
+
+for multi-process build
+
+```
+cmake3 --build . --target install -- -j`nproc --ignore=2`
+```
+
 
 # RUNNING:
 
+Basic invocation
+
 ```
-./agana.exe run01234sub*.lz4
+agana.exe run01234sub*.mid.lz4
 ```
 
 
-## EVENT DISPLAY
+Additional options
 
 ```
-./agana.exe run01234sub*.lz4 -- --aged
+--mt                    : Enable multithreaded mode.
+-O/path/to/newfile.root : Specify output root file filename
+
+--: All following arguments are passed to the analyzer modules Init() method
+
+    --recoff                                Turn off reconstruction
+    --aged                                  Turn on event display
+    --diag                                  Enable histogramming
+    --anasettings /path/to/settings.json    Load analysis settings
+```
+
+For example:
+
+```
+agana.exe --mt -Otest01234.root run01234sub*.mid.lz4 -- --diag --anasettings ana/cosm.json
+
 ```
 
  

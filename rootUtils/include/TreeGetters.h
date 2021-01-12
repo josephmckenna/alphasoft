@@ -7,12 +7,13 @@
 
 TTree* Get_Tree_By_Name(Int_t runNumber,const char* name);
 
+#ifdef BUILD_AG
 
 TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel);
 TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, double &official_time);
 TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time);
 TTree* Get_Chrono_Name_Tree(Int_t runNumber);
-TTree* Get_Seq_Event_Tree(Int_t runNumber);
+
 TTree* Get_StoreEvent_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 
@@ -21,6 +22,16 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
 TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
+
+#endif
+TTree* Get_Seq_Event_Tree(Int_t runNumber);
+
+// ALPHA 2 Getters:
+#ifdef BUILD_A2
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
+TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
+TTreeReader* Get_A2SpillTree(Int_t runNumber);
+#endif
 
 #endif
 

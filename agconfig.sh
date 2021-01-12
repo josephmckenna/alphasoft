@@ -11,145 +11,46 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-export AGMIDASDATA="/alpha/agdaq/data"
-export AG_CFM=${AGRELEASE}/ana
-
+#Over write data paths in 'localised profiles' based on host /domain names below
+export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
+
+#export AG_CFM=${AGRELEASE}/ana #obsolete
+
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
+
+#Use EOS PUBLIC if not already set
+if [ -e ${EOS_MGM_URL} ]; then
+  export EOS_MGM_URL=root://eospublic.cern.ch
+fi
+
 
 # This MUST be set in order to create the simulation output
 if [[ -z "${MCDATA}" ]]; then
     export MCDATA=${AGRELEASE}/simulation
 fi
 
-sim_submodules_firsttimesetup()
-{
-  sim_submodules
-
-  NCPU=`root-config --ncpu`
-
-  #GEANT4
-  #cd $AGRELEASE/simulation/submodules/geant4
-  #mkdir build
-  #mkdir install
-  #cd build
-  #cmake3 ../ -DGEANT4_INSTALL_DATA=ON -DGEANT4_USE_GDML=ON -DCMAKE_INSTALL_PREFIX=$AGRELEASE/simulation/submodules/geant4/install -DGEANT4_USE_XM=ON
-  #make -j${NCPU}
-  #make install 
-  #cd ../install
-  #. bin/geant4.sh
-  
-  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64/Geant4-`geant4-config --version`
-  #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AGRELEASE/simulation/submodules/geant4/install/lib64
-
-  #CRY
-  cd $AGRELEASE/simulation/submodules/
-  wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
-  tar xvzf cry_v1.7.tar.gz 
-  rm cry_v1.7.tar.gz 
-  cd cry_v1.7
-  #Skip test... the diff causes CI to quit?
-  make setup lib
-
-  #CADMESH
-  cd ${CADMESH_HOME}
-  mkdir build
-  cd build
-  cmake3 -DCMAKE_INSTALL_PREFIX=${CADMESH_HOME}/install ../
-  make -j${NCPU}
-  make install
-
-  #GARFIELD
-  #Git doesn't compile on Centos7... use svn for now...
-  #svn co http://svn.cern.ch/guest/garfield/trunk $GARFIELD_HOME
-  cd $AGRELEASE/simulation/submodules/
-  git clone https://gitlab.cern.ch/garfield/garfieldpp.git 
-  #$GARFIELD_HOME
-  cd ${GARFIELD_HOME}
-  make -j${NCPU}
-  #git commands:
-  #mkdir build
-  #mkdir install
-  #cd build
-  #cmake3 -DCMAKE_INSTALL_PREFIX=${GARFIELD_HOME}/install -DROOT_CMAKE_DIR=`root-config --etcdir`/cmake  ../
-  #make -j${NCPU}
-  #make install
-
-  #Finally... build the simulation
-  cd $AGRELEASE/simulation
-  cmake3 -DCMAKE_BUILD_TYPE=Release geant4
-  make
-  
-}
-
-sim_submodules()
-{
-
-  #ROOT
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:`root-config --etcdir`/cmake
-
-  #GEANT4
-  . geant4.sh
-
-  #CRY
-  export CRYHOME=$AGRELEASE/simulation/submodules/cry_v1.7
-  export CRYDATAPATH=$CRYHOME/data
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CRYHOME/lib
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CRY_HOME
-
-  #CADMESH
-  export CADMESH_HOME=$AGRELEASE/simulation/submodules/CADMesh/
-  export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESH_HOME/install/lib
-  
-  
-  #Garfield:
-  export GARFIELD_HOME=${AGRELEASE}/simulation/submodules/garfieldpp
-  export HEED_DATABASE=${GARFIELD_HOME}/Heed/heed++/database
-  
-  #export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$GARFIELD_HOME/install/
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GARFIELD_HOME/Library
-
-}
 
 #Computer profiles
 
 alphaBeast()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/root_build/bin/thisroot.sh
-  #. ~/packages/rootana/thisrootana.sh
-  #. ~/joseph/agdaq/rootana/thisrootana.sh
-  #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.9.3/x86_64-centos7/setup.sh
-  #. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-  #. ~/joseph/packages/root_build/bin/thisroot.sh
-
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
-  fi
 }
+
 alphaCrunch()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/rootana/thisrootana.sh
-  #. ~/joseph/agdaq/rootana/thisrootana.sh
+
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.06/x86_64-centos7-gcc48-opt/bin/root/thisroot.sh
 
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
-  fi
 }
 
 agana()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
   . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
 #  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
 #  . ~/packages/rootana/thisrootana.sh
@@ -159,30 +60,26 @@ agana()
 acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
-    export EOS_MGM_URL=root://eospublic.cern.ch
-    export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+    
     export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
-    #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
+    export PATH="$AGRELEASE/scripts/andrea":$PATH
+
+    echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 lxplus()
 {
-  export EOS_MGM_URL=root://eospublic.cern.ch
+  export AGMIDASDATA="/eos/experiment/ALPHAg/midasdata_old"
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
-      #. /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
-      #FUTURE:Use our own build of root (include xrootd,R, Python2.7 and minuit2)
-      #. /cvmfs/alpha.cern.ch/CC7/packages/root/root_build/bin/thisroot.sh
-        . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
+      if [[ -z "${ROOTSYS}" ]]; then
+	  echo "Setting up ROOT 6.22.02 with gcc 4.8"
+	  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.22.02/x86_64-centos7-gcc48-opt/bin/thisroot.sh
+      fi
   else
     echo "cvmfs not found! Please install and mount cvmfs"
-  fi
-  
-  #If geant4 is installed, set up simulation vars
-  if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-      echo "Geant4 installation found..."
-      sim_submodules
   fi
 }
 
@@ -192,51 +89,46 @@ lxplus()
 
 
 
-echo "############## agconfig.sh ##############"
+echo "############## ALPHA Software Setup ##############"
 echo "Hostname: " `hostname`
 echo "Username: " `whoami`
-echo "#########################################"
+echo "##################################################"
+
 
 #Setup LD_LIBRARY_PATH
 for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
   if echo "${LD_LIBRARY_PATH}" | grep "${AGRELEASE}/${AG_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
-    echo "Adding ${AG_LIB_PATH} to LD_LIBRARY_PATH"
+    #echo "Adding ${AG_LIB_PATH} to LD_LIBRARY_PATH"
     export  LD_LIBRARY_PATH=${AGRELEASE}/${AG_LIB_PATH}/:${LD_LIBRARY_PATH}
   fi
 done
+echo "Adding $AGRELEASE/bin/lib to LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$AGRELEASE/bin/lib:"$LD_LIBRARY_PATH
+
 
 #Set up Root include path
-for AG_ROOT_LIB_PATH in ana/include analib/include aged recolib/include a2lib/include rootUtils/include; do
+for AG_ROOT_LIB_PATH in ana/include analib/include rootUtils/include aged recolib/include a2lib/include a2lib/legacy; do
   if echo "${ROOT_INCLUDE_PATH}" | grep "${AGRELEASE}/${AG_ROOT_LIB_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
-    echo "Adding ${AG_ROOT_LIB_PATH} to ROOT_INCLUDE_PATH"
+#    echo "Adding ${AG_ROOT_LIB_PATH} to ROOT_INCLUDE_PATH"
     export  ROOT_INCLUDE_PATH=${AGRELEASE}/${AG_ROOT_LIB_PATH}/:${ROOT_INCLUDE_PATH}
   fi
 done
+echo "Adding $AGRELEASE/bin/include to ROOT_INCLUDE_PATH"
+export ROOT_INCLUDE_PATH=${AGRELEASE}/bin/include:${ROOT_INCLUDE_PATH}
 
 #Add scripts to BIN path
 for AG_BIN_PATH in scripts bin; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
-    echo "Adding ${AG_BIN_PATH} to PATH"
+    echo "Adding ${AGRELEASE}/${AG_BIN_PATH} to PATH"
     export  PATH=${AGRELEASE}/${AG_BIN_PATH}/:${PATH}
   fi
 done
-
-
-
-if [ "${1}" = "install_sim" ]; then
-  echo "Installing all simulation submodules... go get a coffee..."
-  sleep 1
-  echo "No really... go get a coffee... this will take some time.."
-  sleep 1
-  git submodule update --init 
-  sim_submodules_firsttimesetup
-fi
 
 
 
@@ -259,14 +151,11 @@ else
   fi
 fi
 
+
 if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
-    if [ -n "$(ls -A $ROOTANASYS)" ]; then
-    	echo "ROOTANA submodule enabled"
-    else
-	echo "Enabling ROOTANA submodule..."
-	git submodule update --init rootana
-    fi
+    echo "ROOTANA submodule enabled"
 fi
+
 
 #Setup ROOT and ROOTANA if we havn't quit yet...
 case `hostname` in
@@ -286,12 +175,6 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
       agana
-  else
-      #If geant4 is installed, set up simulation vars
-      if [ `command -v geant4-config | wc -c` -gt 5 ]; then
-	  echo "Geant4 installation found..."
-	  sim_submodules
-      fi
   fi
   ;;
 *.triumf.ca )
@@ -309,17 +192,29 @@ alphacrunch* )
   echo -e " \e[33malphacrunch detected...\033[0m"
   alphaCrunch
   ;;
+lxplus* )
+  echo -e " \e[33mlxplus detected...\033[0m"
+  lxplus
+  ;;
 * )
   if [ -n "${ROOTSYS}" ]; then
-  echo "$ROOTSYS seems to be set ok"
+    echo "$ROOTSYS seems to be set ok"
   else
-  echo "ROOTSYS not set... Guessing settings for new computer..."
-  if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
-    echo "cvmfs found..."
-    lxplus
-  else
-    echo "I don't know what to do yet"
-  fi
+    if [ `which root-config | wc -c` -gt 5 ]; then
+      echo "ROOTSYS not set but root-config found... ok"
+      ROOTLIBPATH=`root-config --libdir`
+      echo "Adding ${ROOTLIBPATH} to LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${ROOTLIBPATH}:${LD_LIBRARY_PATH}"
+      
+    else
+      echo "ROOTSYS not set... Guessing settings for new computer..."
+      if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
+        echo "cvmfs found..."
+        lxplus
+      else
+        echo "\tFAILED TO FIND ROOT! I don't know what to do"
+      fi
+    fi
   fi
   echo 'gcc       :' `which gcc`
   echo 'g++       :' `which g++`

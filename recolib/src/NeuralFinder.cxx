@@ -164,7 +164,7 @@ int NeuralFinder::MakeMetaNeurons()
    map<int,vector<int> > inMetaIdx, outMetaIdx;
    for(auto sn: GetStartNeurons()){
       if(sn.second.size()){
-         metaPoints.emplace_back(0.,0.,0.,agUnknown,agUnknown,agUnknown);
+         metaPoints.emplace_back(0.,0.,0.,ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
          TSpacePoint &pavg = metaPoints.back();
          metaNeurons.emplace_back(Neuron());
          // outMeta[&pavg].push_back(metaNeurons.size()-1);
@@ -189,7 +189,7 @@ int NeuralFinder::MakeMetaNeurons()
    }
    for(auto en: GetEndNeurons()){
       if(en.second.size()){
-         metaPoints.emplace_back(0.,0.,0.,agUnknown,agUnknown,agUnknown);
+         metaPoints.emplace_back(0.,0.,0.,ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
          TSpacePoint &pavg = metaPoints.back();
          metaNeurons.emplace_back(Neuron());
          // inMeta[&pavg].push_back(metaNeurons.size()-1);

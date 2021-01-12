@@ -8,16 +8,14 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "AgFlow.h"
 
 #include <iostream>
 #include <cassert>
-#include "AnalysisTimer.h"
 #include "TSystem.h"
 #include <sys/stat.h>
+#include "TObjArray.h"
 
-
-enum EXPERIMENT    { ALPHA2, ALPHAg };
+enum EXPERIMENT    { EXP_ALPHA2, EXP_ALPHAg };
 enum FILE_LOCATION { LOCAL, REMOTE, NOT_FOUND };
 
 
@@ -78,13 +76,13 @@ class EOSFlags
    void Setup(int exp, const char* firstFile)
    {
       EXPERIMENT_NO=exp;
-      if (exp==ALPHA2)
+      if (exp==EXP_ALPHA2)
       {
          EOSDIR="/eos/experiment/alpha/midasdata/";
          FileEnding=".mid.gz";
          std::cout<<"Seting up paths for ALPHA2:"<<std::endl;
       }
-      else if (exp==ALPHAg)
+      else if (exp==EXP_ALPHAg)
       {
          EOSDIR="/eos/experiment/ALPHAg/midasdata_old/";
          FileEnding=".mid.lz4";
@@ -181,11 +179,11 @@ class EOSFlags
    TString MidasFileName(int runno, int sub)
    {
       char name[50];
-      if (EXPERIMENT_NO==ALPHA2)
+      if (EXPERIMENT_NO==EXP_ALPHA2)
       {
          sprintf(name,"run%05dsub%05d.mid.gz",runno,sub);
       }
-      else if (EXPERIMENT_NO==ALPHAg)
+      else if (EXPERIMENT_NO==EXP_ALPHAg)
       {
          sprintf(name,"run%05dsub%03d.mid.lz4",runno,sub);
       }
@@ -309,8 +307,10 @@ public:
    EOS(TARunInfo* runinfo, EOSFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="EOS Module";
+#endif
       if (!fFlags->fEOS) return;
-      
       if (fTrace)
          printf("EOS::ctor!\n");
       //TString n="/Experiment/Name";
@@ -410,9 +410,9 @@ public:
                fFlags.LocalPath=firstfile(0,firstfile.Last('/')+1); 
                TString filename=firstfile(firstfile.Last('/')+1,firstfile.Sizeof());
                if (firstfile.EndsWith(".mid.gz"))
-                  fFlags.Setup(ALPHA2,filename.Data());
+                  fFlags.Setup(EXP_ALPHA2,filename.Data());
                else if (firstfile.EndsWith(".mid.lz4"))
-                  fFlags.Setup(ALPHAg,filename.Data());
+                  fFlags.Setup(EXP_ALPHAg,filename.Data());
                
                fFlags.FileLocation.push_back(fFlags.GetFileLocation(filename.Data()));
                if (fFlags.FileLocation.at(0)==REMOTE)

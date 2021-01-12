@@ -11,11 +11,11 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "TStoreEvent.hh"
 #include "Aged.h"
 #include "X11/Intrinsic.h"
-#include "AnalysisTimer.h"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -36,6 +36,9 @@ public:
    DisplayRun(TARunInfo* runinfo, bool mode)
       : TARunObject(runinfo), aged(NULL), fBatch(mode)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Display Module";
+#endif
       printf("DisplayRun::ctor!\n");
    }
 
@@ -94,65 +97,79 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fBatch ) return flow;
-
+      if( fBatch )
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      
       //printf("DisplayModule::Analyze, run %d\n",runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-
+      }
+      
       AgEvent* age = ef->fEvent;
       
       if( !age->feam || !age->a16 )
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      // if( !age->feam->complete || !age->a16->complete || age->feam->error || age->a16->error )
-      //    return flow;
-
+      }
+      
+      // DISPLAY low-level stuff here
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
       
+      // DISPLAY high-level stuff here
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
-        return flow;
-        
-      AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
-      if( !analysis_flow || !analysis_flow->fEvent || !bar_flow)
-        return flow;
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      // DISPLAY low-level stuff here
-      // fetching them from SigFlow
-      // this object is defined in AgFlow.h
-      // and more members will and can be added
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      // DISPLAY high-level stuff here
-      // fetching them from TStoreEvent* anEvent
-      // this object is defined in $ANALYSIS_TPC/include/TStoreEvent.h
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-                                                                  
-      // I guess there could be two tabs one for low-level and one for high-level
-      // a "next" button to go the next event, i.e., terminating this fuction
-      // and waiting for the reco_module to analyze the following event.
-
-      // I think that I would like also a "previous" button, but it's not clear
-      // to me how to implement a buffer.
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
-      printf("DisplayRun::Analyze event no %d\n", age->counter);
-
-      if (!aged) {
-      	 aged = new Aged();
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
       }
-      // analysis_flow->fEvent->Print();
-      if (aged) flags=aged->ShowEvent(age,analysis_flow, SigFlow,bar_flow, flags, runinfo);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"display_module",timer_start);
-      #endif
+      
+      // DISPLAY BSC stuff here
+      AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
+      if( !bar_flow || !bar_flow->BarEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+
+      printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
+
+      if (!aged) 
+         {
+            printf("New Aged!\n");
+            aged = new Aged();
+         }
+
+      analysis_flow->fEvent->Print();
+      if (aged) {
+         flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
+         printf("Aged::ShowEvent is %d\n",*flags);
+      }
       return flow;
    }
 

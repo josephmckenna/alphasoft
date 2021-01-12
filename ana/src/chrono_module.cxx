@@ -6,7 +6,8 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "AgFlow.h"
+
+#include "RecoFlow.h"
 
 #include "TTree.h"
 #include "TMath.h"
@@ -17,10 +18,6 @@
 
 #include <TBufferJSON.h>
 #include <fstream>
-#include "AnalysisTimer.h"
-
-
-
 
 class ChronoFlags
 {
@@ -65,6 +62,9 @@ public:
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="ChronoModule";
+#endif
       if (fTrace)
          printf("Chrono::ctor!\n");
    }
@@ -357,10 +357,12 @@ struct ChronoChannelEvent {
       //std::cout<<"Chrono::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 10 ) // sequencer event id
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
+      }
       ChronoEventsFlow=new std::vector<ChronoEvent*>;
       //me->FindAllBanks();
       //std::cout<<"===================================="<<std::endl;
@@ -474,9 +476,6 @@ struct ChronoChannelEvent {
       if (ChronoEventsFlow->size()==0) return flow;
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"chrono_module",timer_start);
-      #endif
       return flow;
    }
 

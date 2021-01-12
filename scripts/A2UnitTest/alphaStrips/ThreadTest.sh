@@ -84,10 +84,13 @@ echo $SPEEDTEST
 cd $AGRELEASE
 echo "Running..."
 
+cd bin
 echo "Running ..."
 
 #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
 valgrind -v --tool=helgrind --error-limit=no  --log-file="${ThreadTEST}" ./alphaStrips.exe --mt ${Event_Limit} run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+cd $AGRELEASE
+echo "Done"
 set +x
 
  

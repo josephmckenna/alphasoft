@@ -1,3 +1,5 @@
+#ifdef BUILD_AG
+
 #include "TAGPlot.h"
 #define SCALECUT 0.6
 
@@ -1327,7 +1329,7 @@ TCanvas* TAGPlot::DrawTrackHisto(TString Name)
   
   return ct;
 }
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

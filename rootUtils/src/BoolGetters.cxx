@@ -1,7 +1,7 @@
 #include "BoolGetters.h"
 
 
-
+#ifdef BUILD_AG
 Bool_t ChronoboxesHaveChannel(Int_t runNumber, const char* Name)
 {
    for (int boards=0; boards<CHRONO_N_BOARDS; boards++)
@@ -16,6 +16,15 @@ Bool_t ChronoboxesHaveChannel(Int_t runNumber, const char* Name)
    }
    return kFALSE;
 }
+#endif
+
+Bool_t IsPathExist(const TString &s)
+{
+  struct stat buffer;
+  return stat(s.Data(), &buffer)==0;
+}
+
+
 
 /* emacs
  * Local Variables:

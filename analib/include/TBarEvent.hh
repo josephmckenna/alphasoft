@@ -1,3 +1,4 @@
+#ifdef BUILD_AG
 #ifndef __TBAREVENT__
 #define __TBAREVENT__ 1
 
@@ -20,7 +21,6 @@ private:
   //ADC data'
   double fADCTime=-1;
   double fAmp=-1;
-  double fIntegral=-1;
   bool fTDCMatched=false;
 
 public:
@@ -29,16 +29,14 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
-  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime, double _fIntegral) 
+  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime) 
   {
      fBarID=_fBarID;
      fAmp=_fAmp;
      fADCTime=_fADCTime;
-     fIntegral=_fIntegral;
   }
-  void SetTDCHit(int _fBarID, double _fTDCTime)
+  void SetTDCHit(double _fTDCTime)
   {
-     assert(fBarID==_fBarID);
      fTDCTime=_fTDCTime;
      fTDCMatched=true;
   } 
@@ -47,7 +45,6 @@ public:
   int GetBar() const {return fBarID;}
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
-  double GetIntegral() const {return fIntegral;}
   double GetTDCTime() const {return fTDCTime; }
   void GetXY(double &x, double &y)
   {
@@ -58,7 +55,7 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
-  ClassDef(EndHit, 1);
+  ClassDef(EndHit, 2);
 };
 
 class BarHit: public TObject
@@ -67,8 +64,6 @@ private:
   int fBarID=-1;
   EndHit* fTopHit;
   EndHit* fBotHit;
-  double fZedTDC=-999.; // meters
-  double fZedADC=-999.;
   bool fTPCMatched=false;
   TVector3 fTPC;
 
@@ -80,15 +75,15 @@ public:
 
   void SetBotHit(EndHit* _fBotHit)
   {
-     fBarID=_fBotHit->GetBar();
      fBotHit=_fBotHit;
   }
   void SetTopHit(EndHit* _fTopHit)
   {
-     assert(fBarID+64==_fTopHit->GetBar());
      fTopHit=_fTopHit;
-     fZedADC=CalculateZed(fTopHit->GetADCTime(),fBotHit->GetADCTime());
-     fZedTDC=CalculateZed(fTopHit->GetTDCTime(),fBotHit->GetTDCTime());
+  }
+  void SetBar(int _fBarID)
+  {
+     fBarID=_fBarID;
   }
   void SetTPCHit(TVector3 _fTPC)
   {
@@ -98,8 +93,6 @@ public:
   
   EndHit* GetTopHit() const {return fTopHit;}
   EndHit* GetBotHit() const {return fBotHit;}
-  double GetADCZed() const {return fZedADC;}
-  double GetTDCZed() const {return fZedTDC;}
   double GetAmpTop() const {return fTopHit->GetAmp();}
   double GetAmpBot() const {return fBotHit->GetAmp();}
   double GetTDCTop() const {return fTopHit->GetTDCTime();}
@@ -108,7 +101,6 @@ public:
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
 
-  double CalculateZed( double _TimeTop, double _TimeBot );
   double GetPhi()
   {
 	  double offset_angle=TMath::Pi()+0.2;
@@ -129,6 +121,9 @@ public:
       x=r*TMath::Cos(theta + offset_angle);
       y=r*TMath::Sin(theta + offset_angle);
       return;
+  }
+  double GetTDCZed() {
+      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
   }
   ClassDef(BarHit, 2);
 };
@@ -169,18 +164,19 @@ public:
   {
     fBarHit.push_back(b);
   }
-  void AddBarHit(EndHit* fBotHit, EndHit* fTopHit)
+  void AddBarHit(EndHit* fBotHit, EndHit* fTopHit, int fBarID)
   {
     BarHit* b = new BarHit;
     b->SetBotHit(fBotHit);
     b->SetTopHit(fTopHit);
+    b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
 
-  void AddADCHit(int fBarID, double fAmp, double fADCTime, double fIntegral)
+  void AddADCHit(int fBarID, double fAmp, double fADCTime)
   {
      EndHit* hit = new EndHit;
-     hit->SetADCHit( fBarID, fAmp, fADCTime, fIntegral);
+     hit->SetADCHit( fBarID, fAmp, fADCTime);
      AddEndHit(hit);
   }
 
@@ -194,7 +190,7 @@ public:
 
 
 #endif
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

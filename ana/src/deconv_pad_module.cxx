@@ -2,9 +2,9 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
-#include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "Deconv.hh"
 
@@ -25,6 +25,7 @@ public:
    AnaSettings* ana_settings=0;
 
    bool fPWBnorm = false;
+   bool fTrace = false;
    
 public:
    DeconvPadFlags() // ctor
@@ -39,15 +40,12 @@ class DeconvPADModule: public TARunObject
 {
 public:
    DeconvPadFlags* fFlags = 0;
-   //bool fTrace = true;
-   bool fTrace = false;
+   bool fTrace=false;
    int fCounter = 0;
 
 private:
    Deconv d;
-   // pwb map
-   std::ofstream pwbmap;
-
+  
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvPadFlags* f): TARunObject(runinfo),
@@ -55,6 +53,9 @@ public:
                                                            d( f->ana_settings )
       
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="DeconvPADModule";
+#endif
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");
    }
@@ -71,20 +72,21 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
 
-      d.SetupPWBs( runinfo->fRunNo, 
+      d.SetupPWBs( runinfo->fRoot->fOutputFile,
+                   runinfo->fRunNo, 
                    fFlags->fPWBnorm,   // dis/en-able normalization of WF
                    fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
 
       d.PrintPWBsettings();
+
+      d.SetTrace(fFlags->fTrace);
    }
 
    void EndRun(TARunInfo* runinfo)
    {
       
       printf("DeconvPADModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
-      if( fFlags->fPWBmap ){}// pwbmap.close();
-      //delete pmap;  
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -103,31 +105,61 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-
+      }
       if(fTrace)
          printf("DeconvPADModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
 
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
       {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
+         if (e->time<fFlags->start_time)
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+         if (e->time>fFlags->stop_time)
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
       }
 
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
-           return flow;
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+      
          if (e->counter>fFlags->stop_event)
-           return flow;
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
       }
 
       AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
@@ -136,10 +168,6 @@ public:
             printf("DeconvPADModule::Analyze NO SignalsFlow?");
             return flow;
          }
-
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
       
       const FeamEvent* pwb = e->feam;
       if( !pwb ) // allow for events without pwbs
@@ -151,12 +179,12 @@ public:
       else
          {
              int stat = d.FindPadTimes(pwb);
-             printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
+             if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
              if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
 
              if( fFlags->fDiag )
                {
-                  d.PADdiagnostic();
+                  //d.PADdiagnostic();
                   flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
                   //                  flow_sig->pwbRange = d.GetPwbRange();
                }
@@ -164,9 +192,6 @@ public:
              if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_pad_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }
@@ -230,8 +255,8 @@ public:
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
 
-         if( args[i] == "--pwbmap" )
-            fFlags.fPWBmap = true;
+         if( args[i] == "--trace" )
+            fFlags.fTrace = true;
 
          if( args[i] == "--anasettings" ) json=args[i+1];
 

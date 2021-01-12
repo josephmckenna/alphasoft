@@ -10,9 +10,9 @@
 #include "midasio.h"
 #include "TSISEvent.h"
 #include "TSpill.h"
+#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSISChannels.h"
-#include "AnalysisTimer.h"
 #include "DumpHandling.h"
 #include <iostream>
 class DumpMakerModuleFlags
@@ -20,7 +20,6 @@ class DumpMakerModuleFlags
 public:
    bool fPrint = false;
 };
-TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
 
 TString StartNames[NUMSEQ]={"SIS_PBAR_DUMP_START","SIS_RECATCH_DUMP_START","SIS_ATOM_DUMP_START","SIS_POS_DUMP_START","NA","NA","NA","NA","NA"};
 TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
@@ -49,6 +48,9 @@ public:
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Handle Dumps";
+#endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
       TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
@@ -115,46 +117,52 @@ public:
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       if( me->event_id != 8 ) // sequencer event id
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
-      if (!DumpFlow)
+      }
+      DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
+      if (!DumpsFlow)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      uint ndumps=DumpFlow->DumpMarkers.size();
+      }
+      uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      int iSeq=DumpFlow->SequencerNum;
+      }
+      int iSeq=DumpsFlow->SequencerNum;
       {
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
       dumplist[iSeq].setup();
       
-      for(auto dump: DumpFlow->DumpMarkers)
+      for(auto dump: DumpsFlow->DumpMarkers)
       {
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpFlow->states);
+      dumplist[iSeq].AddStates(&DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver);
+      dumplist[iSeq].check(DumpsFlow->driver);
       
       }
       //dumplist[iSeq].Print();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
-      #endif
       return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
       {
@@ -227,18 +235,14 @@ public:
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
-         for (size_t i=0; i<finished.size(); i++)
+         for (TA2Spill* spill: finished)
          {
-            f->spill_events.push_back(finished.at(i));
+            //spill->Print();
+            f->spill_events.push_back(spill);
          }
       }
 
       flow=f;
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
-      #endif
-
       return flow; 
    }
 

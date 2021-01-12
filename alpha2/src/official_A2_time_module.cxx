@@ -10,14 +10,13 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TTree.h"
 #include "TSISEvent.h"
 #include <iostream>
 #include "TSVD_QOD.h"
-
-#include "AnalysisTimer.h"
 
 class OfficialA2TimeFlags
 {
@@ -37,11 +36,12 @@ private:
    // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
-   
-   std::mutex SVDEventsLock;
+
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
    std::deque<TSVD_QOD*> SVDEvents;
+
+   int VF48Events = 0;
 
 public:
    OfficialA2TimeFlags* fFlags;
@@ -54,6 +54,9 @@ public:
    OfficialA2Time(TARunInfo* runinfo, OfficialA2TimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="OfficialA2Time";
+#endif
       if (fTrace)
          printf("OfficialA2Time::ctor!\n");
    }
@@ -90,6 +93,7 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
+      std::cout<<"Total VF48 events given an official time:"<<VF48Events<<std::endl;
       if (SVDOfficial)
          SVDOfficial->Write();
    }
@@ -127,7 +131,6 @@ public:
    }
    void SaveQODEvent(TARunInfo* runinfo, TSVD_QOD* e)
    {
-      
       if (!SVDOfficial)
       {
          #ifdef HAVE_CXX11_THREADS
@@ -160,7 +163,6 @@ public:
       double LatestTime=SISEventRunTime.back();
       double tcut=LatestTime-TimeBufferSize;
 
-
       int nSIS=SISEventRunTime.size();
       for (int i=0; i<nSIS; i++)
       {
@@ -183,9 +185,8 @@ public:
       }*/
       return;
    }
-   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   std::vector<TSVD_QOD*> GetFinishedEvents(TARunInfo* runinfo)
    {
-       std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
        std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
@@ -201,12 +202,7 @@ public:
              
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
-             //if (t > SISEventRunTime.back() ) 
-             //{
-             //    std::cout<<"Time saved"<<std::endl;
-             //    return;
-            // }
-            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+
              if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
@@ -215,6 +211,7 @@ public:
                 CleanSISEventsBefore(t-0.1);
                 finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
+                VF48Events++;
                 break;
              }
              else
@@ -225,7 +222,11 @@ public:
        }
        //Free memory when timestamps are not aligning nicely (VF48 corruption?)
        CleanOldTimestamps(10.);
-       
+       return finished_QOD_events;
+   }
+   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   {
+       std::vector<TSVD_QOD*>finished_QOD_events = GetFinishedEvents(runinfo);
        int nFinished=finished_QOD_events.size();
        if (nFinished)
        {
@@ -239,50 +240,45 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if (fFlags->fNoSync) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
+      if (fFlags->fNoSync)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
       if (SISFlow)
-        {
-            //VF48 clock is on SIS0
-            std::vector<TSISEvent*>* ce=&SISFlow->sis_events[0];
-            for (uint i=0; i<ce->size(); i++)
-               {
-                  TSISEvent* e=ce->at(i);
-                  SISEventRunTime.push_back(e->GetRunTime());
-                  SISClock.push_back(e->GetClock());
-                  VF48Clock.push_back(e->GetVF48Clock());
-                  //if (e->Channel==CHRONO_SYNC_CHANNEL)
-               }
-         }
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
-      if (!fe)
-         return flow;
-      TAlphaEvent* AlphaEvent=fe->alphaevent;
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-         return flow;
-      TSiliconEvent* SiliconEvent=sf->silevent;
-      
-      TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
-      A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
-      if (mva)
-         SVD->MVA=(int)mva->pass_online_mva;
-      else
-         SVD->MVA=-1;
       {
-         std::lock_guard<std::mutex> lock(SVDEventsLock);
+         //VF48 clock is on SIS0
+         std::vector<TSISEvent*>* ce=&SISFlow->sis_events[0];
+         for (uint i=0; i<ce->size(); i++)
+         {
+            TSISEvent* e=ce->at(i);
+            SISEventRunTime.push_back(e->GetRunTime());
+            SISClock.push_back(e->GetClock());
+            VF48Clock.push_back(e->GetVF48Clock());
+            //if (e->Channel==CHRONO_SYNC_CHANNEL)
+         }
+      }
+
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
+      if (fe)
+      {
+         TAlphaEvent* AlphaEvent=fe->alphaevent;
+         TSiliconEvent* SiliconEvent=fe->silevent;
+
+         TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
+         A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
+         if (mva)
+            SVD->MVA=(int)mva->pass_online_mva;
+         else
+            SVD->MVA=-1;
+
          SVDEvents.push_back(SVD);
       }
-      if (SiliconEvent->GetVF48NEvent()%10==0)
+      //if (SiliconEvent->GetVF48NEvent()%10==0)
       flow=SVDMatchTime(runinfo,flow);
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"official_A2_time_module",timer_start);
-         //         flow=new AgAnalysisReportFlow(flow,"unpack_vf48_stream",timer_start);
-      #endif
       return flow;
    }
 

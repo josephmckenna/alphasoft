@@ -11,14 +11,9 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include <TTree.h>
-#include "TSeqCollection.h"
-// #include <TH1D.h>
-// #include <TH2D.h>
-#include <TMath.h>
-#include <TCanvas.h>
-#include <TGraph.h>
 
 #include "TPCconstants.hh"
 #include "LookUpTable.hh"
@@ -33,8 +28,7 @@
 
 #include "TStoreEvent.hh"
 
-#include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 #include "json.hpp"
 
 #include "Reco.hh"
@@ -61,6 +55,8 @@ public:
    finderChoice finder = adaptive;
 
    AnaSettings* ana_settings=0;
+
+   std::string fLocation="CERN";
 
 public:
    RecoRunFlags() // ctor
@@ -97,8 +93,12 @@ public:
 
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField)
+                                                 r( f->ana_settings, f->fMagneticField,  
+                                                    f->fLocation)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="RecoModule";
+#endif
       printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
@@ -179,13 +179,20 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if( fTrace )
-         printf("RecoRun::Analyze, run %d\n", runinfo->fRunNo);
+         printf("RecoRun::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-
+      }
+#ifdef MANALYZER_PROFILER
+      START_TIMER
+#endif
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
@@ -237,16 +244,15 @@ public:
                   return flow;
                }
          }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif   
-
       std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
          delete analyzed_event;
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
       
@@ -256,26 +262,26 @@ public:
             int AW,PAD,SP=-1;
             AW=PAD=SP;
             if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
-            printf("RecoModule::Analyze, AW # signals %d\n", AW);
+            printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
             if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
-            printf("RecoModule::Analyze, PAD # signals %d\n", PAD);
+            printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
             if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
-            printf("RecoModule::Analyze, SP # %d\n", SP);
+            printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
       if (!SigFlow->matchSig)
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(no matched hits)",timer_start);
+#ifdef MANALYZER_PROFILER
+          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
 #endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
-            std::cout<<"RecoRun::Analyze Too Many Points... quitting"<<std::endl;
+            std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module(too many hits)",timer_start);
+#ifdef MANALYZER_PROFILER
+            flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
 #endif
          }
 
@@ -295,12 +301,7 @@ public:
 
             r.FindTracks(fFlags->finder);
             printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new Ag2DAnalysisReportFlow(flow,
-                                                           {"reco_module(AdaptiveFinder)","Points in track"," # Tracks"},
-                                                           {(double)r.GetNumberOfPoints(),(double)r.GetNumberOfTracks()},timer_start);
-            timer_start=CLOCK_NOW
-#endif
+
             if( fFlags->fMagneticField == 0. )
                {
                   int nlin = r.FitLines();
@@ -313,7 +314,7 @@ public:
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status = r.RecVertex( &theVertex );
-            std::cout<<"RecoRun Analyze Vertexing Status: "<<status<<std::endl;
+            if( fTrace ) std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
             analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
             analyzed_event->SetVertexStatus( status );
@@ -321,29 +322,21 @@ public:
                {
                   analyzed_event->SetVertex(*(theVertex.GetVertex()));
                   analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-                  theVertex.Print("rphi");
+                  if( fTrace ) theVertex.Print("rphi");
                }
             else
-               std::cout<<"RecoRun Analyze no vertex found"<<std::endl;
+               std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
-      
-      AgBarEventFlow *bf = flow->Find<AgBarEventFlow>();
-      //If have barrel scintilator, add to TStoreEvent
-      if (bf)
-         {
-            //bf->BarEvent->Print();
-            analyzed_event->AddBarrelHits(bf->BarEvent);
-         }
-
-      EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-      EventTree->Fill();
+ 
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
+         EventTree->Fill();
+      }
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
-      std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"reco_module",timer_start);
-#endif
+      //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
       if (!skip_reco) r.Reset();
       return flow;
    }
@@ -440,11 +433,11 @@ public:
          
          if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          
-         if( args[i] == "--anasettings" ) json=args[++i];
+         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
-      fFlags.ana_settings->Print();
+      //  fFlags.ana_settings->Print();
    }
 
    void Finish()

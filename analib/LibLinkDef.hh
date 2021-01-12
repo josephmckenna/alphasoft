@@ -4,9 +4,11 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#ifdef BUILD_AG
 #pragma link C++ class  TStoreEvent+;
 #pragma link C++ class  TStoreHelix+;
 #pragma link C++ class  TStoreLine+;
+#endif
 #pragma link C++ class  TSeq_Event+;
 #pragma link C++ class  TSequencerState+;
 #pragma link C++ class  DigitalOut+;
@@ -15,25 +17,26 @@
 #pragma link C++ class  TChrono_Event+;
 #pragma link C++ class  TChronoChannelName+;
 #pragma link C++ class  TSeq_Dump+;
+#ifdef BUILD_AG
 #pragma link C++ class  TBarEvent+;
 #pragma link C++ class  EndHit+;
 #pragma link C++ class  BarHit+;
-
+#endif
 //Spill parent classes
 #pragma link C++ class  TSpill+;
 #pragma link C++ class  TSpillScalerData+;
 #pragma link C++ class  TSpillSequencerData+;
 //Experiment specific Spill classes (child classses)
-#pragma link C++ class  TA2Spill+;
-#pragma link C++ class  TA2SpillScalerData+;
-#pragma link C++ class  TA2SpillSequencerData+;
-
-#pragma link C++ class  TAGSpill+;
-#pragma link C++ class  TAGSpillScalerData+;
-#pragma link C++ class  TAGSpillSequencerData+;
-
-#pragma link C++ class  AnaSettings+;
-
+#ifdef BUILD_A2
+  #pragma link C++ class  TA2Spill+;
+  #pragma link C++ class  TA2SpillScalerData+;
+  #pragma link C++ class  TA2SpillSequencerData+;
+#endif
+#ifdef BUILD_AG
+  #pragma link C++ class  TAGSpill+;
+  #pragma link C++ class  TAGSpillScalerData+;
+  #pragma link C++ class  TAGSpillSequencerData+;
+#endif
 #pragma link C++ class Seq+;
 #pragma link C++ class Seq_DriverConsts+;
 #pragma link C++ class TSequencerDriver;

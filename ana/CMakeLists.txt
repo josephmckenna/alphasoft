@@ -7,6 +7,15 @@ set (basicApp_VERSION_MAJOR 1)
 set (basicApp_VERSION_MAJOR 0)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
+    list(FIND ${LIST} ${OLD_VALUE} OLD_VALUE_INDEX)
+    if(OLD_VALUE_INDEX GREATER_EQUAL 0)
+        list(REMOVE_AT ${LIST} ${OLD_VALUE_INDEX})
+        list(INSERT ${LIST} ${OLD_VALUE_INDEX} ${NEW_VALUE})
+    endif()
+endmacro()
+
+
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -38,6 +47,9 @@ add_custom_command(
     COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
     )
 
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
+
 # Directories
 add_subdirectory(src)
 
@@ -49,34 +61,54 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+message(${CMAKE_MODULE_PATH})
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Spectrum)
+find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 link_libraries(${ROOT_LIBRARIES})
 
-##Horrible horrible hack to get the libs for rootana (from rootana/include/rootana_cflags.txt )
-list(APPEND ROOTANALIBS z Gui Core Imt RIO Net Hist Graf Graf3d Gpad ROOTVecOps Tree TreePlayer Rint Postscript Matrix Physics MathCore Thread MultiProc ROOTDataFrame m dl Thread XMLParser XMLIO RHTTP XMLParser XMLIO RHTTP)
-link_libraries(${ROOTANALIBS})
+
 
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
 
-#link_libraries(agana AGTPC aged)
-link_directories($ENV{ROOTANASYS}/lib)
-
-# analib/ AGTPC aged)
-#link_directories(analib/ recolib/ aged/)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
+# MIDAS -- live analyzer
+set(MIDASSYS "" CACHE PATH "")
+if(MIDASSYS STREQUAL "")
+    set(MIDASSYS "$ENV{MIDASSYS}")
+endif()
+if(MIDASSYS STREQUAL "")
+    find_package(Midas QUIET)
+else()
+    set(MIDAS_FOUND TRUE)
+    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
+endif()
+if(MIDAS_FOUND)
+  message(STATUS "MIDAS found")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
+  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+  link_libraries(${MIDAS_LIBRARIES})
+  link_directories($ENV{MIDASSYS}/lib)
+endif()
+
 # Include directories
+include_directories($ENV{AGRELEASE}/agana)
 include_directories(include)
 include_directories($ENV{AGRELEASE}/recolib/include)
 include_directories($ENV{AGRELEASE}/analib/include)
 include_directories($ENV{AGRELEASE}/aged/include)
 include_directories(${ROOT_INCLUDE_DIRS})
+
+link_directories(${bin} $ENV{AGRELEASE}/analib)
+find_library(LIBXM Xm)
+find_library(LIBXT Xt)
+
 
 #Analysis Report needs A2Flow in alpha2...
 include_directories($ENV{AGRELEASE}/alpha2/include)
@@ -104,10 +136,18 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
     string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+
     #Turn string into list
     separate_arguments(MODULES)
     #Prepend path to source files
     list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
+        "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+    )
+
     #message(Modules: ${MODULES})
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
@@ -115,12 +155,16 @@ foreach( LIST_FILE ${BINS} )
     add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
+    target_include_directories(${bin} PUBLIC agana)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
     target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} Xt Xm Minuit2 rootana analib agtpc aged )
+
+    find_library(LIBXM Xm)
+    find_library(LIBXT Xt)
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
     
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )
