@@ -27,6 +27,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    cd ${THIS_PATH}
    cvmfs_server transaction alpha.cern.ch
    if [ `git pull | wc -l` -gt 1 ]; then
+      cd ../../
       git submodule update --remote
       cd ${HOME}
       cvmfs_server publish alpha.cern.ch
