@@ -29,10 +29,12 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    if [ `git pull | wc -l` -gt 1 ]; then
       cd ../../
       git submodule update --remote
+      #I must leave cvmfs to publish the changes after git pull etc
       cd ${HOME}
       cvmfs_server publish alpha.cern.ch
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
-      for i in `cat scripts/cvmfs/views.list`; do
+      cd ${THIS_PATH}
+      for i in `cat views.list`; do
          . update.sh ${i}
       done
       echo "All done"
