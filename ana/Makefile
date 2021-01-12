@@ -27,10 +27,13 @@ endif
 
 ifneq ($(ROOTSYS),)
 HAVE_ROOT:=1
-LIBS += -L$(ROOTSYS)/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -pthread -lSpectrum -lXMLIO -lXMLParser -lMinuit2 -lRHTTP -lm -ldl -rdynamic
+LIBS   += -lSpectrum
 endif
-LIBS += -L$(ROOTANASYS)/lib -lrootana -lz
 
+# get the rootana Makefile settings
+LIBS     += -L$(ROOTANASYS)/lib -lrootana
+LIBS     += -L$(shell root-config --libdir)
+LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
