@@ -32,6 +32,9 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       #I must leave cvmfs to publish the changes after git pull etc
       cd ${HOME}
       cvmfs_server publish alpha.cern.ch
+      sleep 5
+      sync
+      sleep 10
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       cd ${THIS_PATH}
       for i in `cat views.list`; do
