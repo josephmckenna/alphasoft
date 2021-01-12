@@ -37,7 +37,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       sleep 10
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       cd ${THIS_PATH}
-      for i in `cat views.list`; do
+      for i in `cat views.list | tac`; do
          ./${THIS_PATH}/update.sh ${i}
       done
       echo "All done"
@@ -66,7 +66,7 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    mkdir -p ${AGRELEASE}/${LCG_VERSION}
    cd ${AGRELEASE}/${LCG_VERSION}_build
    #Check if we need cmake3 command or cmake
-   if [ `which cmake3` ]; then
+   if [ `command -v cmake3` ]; then
       #command cmake3 found... lets use it
       export CMAKE=cmake3
    else
