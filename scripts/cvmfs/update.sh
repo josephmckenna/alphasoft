@@ -53,6 +53,7 @@ fi
 
 if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    #do stuff
+   sleep 5
    cvmfs_server transaction alpha.cern.ch
    echo ${THIS_SETUP}
    source ${THIS_SETUP}
@@ -81,6 +82,7 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    rm -rf ${AGRELEASE}/${LCG_VERSION}_build
    cd ${HOME}
    cvmfs_server publish alpha.cern.ch
+   sleep 10
 else
    echo "Probably bad view: ${THIS_SETUP}"
 fi
