@@ -25,12 +25,11 @@ noagrelease:
 	@echo Error: AGRELEASE is not defined, please source agconfig.sh
 endif
 
-LIBS     += -L$(ROOTANASYS)/lib -lrootana -lz
 ifneq ($(ROOTSYS),)
 HAVE_ROOT:=1
-LIBS += $(shell root-config --glibs)
-LIBS += -lSpectrum -lXMLIO -lXMLParser -lMinuit2 -lRHTTP
+LIBS += -L$(ROOTSYS)/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -lROOTDataFrame -pthread -lSpectrum -lXMLIO -lXMLParser -lMinuit2 -lRHTTP -lm -ldl -rdynamic
 endif
+LIBS += -L$(ROOTANASYS)/lib -lrootana -lz
 
 
 INCS += -I$(INCDIR)
