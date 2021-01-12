@@ -44,7 +44,7 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
-#    - git submodule init
+    - git submodule init
 #    - git submodule update
     - git submodule update --init --recursive
 
