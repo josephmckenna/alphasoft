@@ -8,8 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-
-#include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "TTree.h"
 #include "TSeq_Event.h"
@@ -18,9 +17,6 @@
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
-
-#include "AnalysisTimer.h"
-
 
 #define HANDLE_SEQ_IN_SIDE_THREAD 0
 
@@ -52,6 +48,9 @@ public:
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Handle Sequencer";
+#endif
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
    }
@@ -107,11 +106,15 @@ public:
       //std::cout<<"HandleSequencer::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 8 ) // sequencer event id
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      #ifdef _TIME_ANALYSIS_
+      }
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif      
-
+#endif
       //
 
       // if( fSeqAsm )
@@ -129,9 +132,7 @@ public:
         sq->AddData(bkptr,bklen);
         flow=sq;
       }
-      #ifdef _TIME_ANALYSIS_
          if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
-      #endif
       return flow;
    }
 
@@ -139,10 +140,11 @@ public:
    {
       SEQTextFlow* sq=flow->Find<SEQTextFlow>();
       if (!sq)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
-      #ifdef _TIME_ANALYSIS_
+      }
       START_TIMER
-      #endif      
 
       const char* bkptr = sq->data;
       int bklen = sq->size;
@@ -175,26 +177,26 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
-         #ifdef _TIME_ANALYSIS_
-            if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(no parse)",timer_start);
-         #endif
+#ifdef MANALYZER_PROFILER
+         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
+#endif
          return flow;
          }  
       free(buf);
-      flow=new AgDumpFlow(flow);
-      //((AgDumpFlow*)flow)->MidasTime=me->time_stamp;
+      flow=new DumpFlow(flow);
+      //((DumpFlow*)flow)->MidasTime=me->time_stamp;
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
       driver->Parse(node);
-      ((AgDumpFlow*)flow)->driver=driver;
+      ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
       int iSeqType=-1;
       // PBAR, MIX, POS definiti in un enum, precedentemente
       for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
       {
-         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames[iSeq].Data()) == 0 ) 
+         if( strcmp( ((TString)mySeq->getSequencerName()).Data(), SeqNames.at(iSeq).c_str()) == 0 ) 
             {
                iSeqType=iSeq;
                break;
@@ -205,7 +207,7 @@ public:
       {
          std::cerr << "unknown sequencer name: " << ((TString)mySeq->getSequencerName()).Data() <<" seq names ";
          for (int iSeq=0; iSeq<NUMSEQ; iSeq++)
-            std::cerr<<SeqNames[iSeq].Data()<<"  ";
+            std::cerr<<SeqNames.at(iSeq)<<"  ";
          std::cerr<<std::endl;
          //   assert(0);
 
@@ -214,7 +216,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((AgDumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
+      ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -242,7 +244,7 @@ public:
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
              SequencerTree->Fill();
-            ((AgDumpFlow*)flow)->AddDumpEvent(
+            ((DumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
                 cSeq[iSeqType],
                 me->time_stamp,
@@ -284,7 +286,7 @@ public:
 
             //Trigger unset for now
             SeqState->SetComment(*state->getComment() );
-            ((AgDumpFlow*)flow)->AddStateEvent(SeqState);
+            ((DumpFlow*)flow)->AddStateEvent(SeqState);
             //SeqState->Print();
             /*fSeqState=SeqState;*/
             /*gSeqStateTree->Fill();*/
@@ -294,13 +296,6 @@ public:
 #if HANDLE_SEQ_IN_SIDE_THREAD
       //I am done with the SEQText, lets free up some memory
       sq->Clear();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer",timer_start);
-      #endif
-#else
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_sequencer(main thread)",timer_start);
-      #endif
 #endif
       return flow;
    }

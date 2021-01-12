@@ -5,7 +5,7 @@
 eos_module.o handle_sequencer.o 
 
 #Legacy reconstruction modules
-fake_realtime_module.o
+# fake_realtime_module.o
 unpack_vf48_module.o 
 sis_module.o
 mt_hybrid_hits_module.o
@@ -17,6 +17,7 @@ dumper_module.o
 #online_mva_module.oo 
 online_mva_module.o
 vertex_display_module.o
+A2_display_module.o
 official_A2_time_module.o
 #Spill log dumps:
 handle_dumps.o

@@ -5,6 +5,7 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TApplication.h"
@@ -12,7 +13,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AnalysisTimer.h"
 #include "generalizedspher.h"
 class DumperFlags
 {
@@ -36,6 +36,9 @@ public:
    Dumper(TARunInfo* runinfo, DumperFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Dumper Module";
+#endif
       if (fTrace)
          printf("Dumper::ctor!\n");
    }
@@ -75,19 +78,16 @@ public:
   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      AlphaEventFlow* fe=flow->Find<AlphaEventFlow>();
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
       TAlphaEvent* alphaEvent=fe->alphaevent;
-      SilEventsFlow* sf=flow->Find<SilEventsFlow>();
-      if (!sf)
-         return flow;
-      TSiliconEvent* siliconEvent=sf->silevent;
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
-      
-      
+      TSiliconEvent* siliconEvent=fe->silevent;
       OnlineVars=new OnlineMVAStruct();
       
       OnlineVars->nhits=alphaEvent->GetNHits();
@@ -228,9 +228,6 @@ public:
         delete S0valuesraw;
       }
       flow=new A2OnlineMVAFlow(flow,OnlineVars);
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"dumper_module",timer_start);
-      #endif
       return flow; 
   }
 };

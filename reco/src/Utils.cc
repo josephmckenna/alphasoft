@@ -29,28 +29,23 @@ Utils::Utils(double B):fHisto(),pmap(),
    
    creco = new TCanvas("creco","creco",2400,2400);
    creco->Divide(2,2);
+
+   MakeCanvases();
 }
 
-Utils::Utils(std::string fname, double B, bool draw):fHisto(fname),pmap(),
-                                                     fMagneticField(B),tmax(4500.)
-{
-   BookG4Histos();
-   BookAGG4Histos();
-
-   if( draw )
-      {
-         csig = new TCanvas("csig","csig",2400,2400);
-         csig->Divide(2,2);
-         
-         creco = new TCanvas("creco","creco",2400,2400);
-         creco->Divide(2,2);
-      }
-}
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
+{}
+
+
+void Utils::MakeCanvases()
 {
-   BookRecoHistos();
+   csig = new TCanvas("csig","csig",2400,2400);
+   csig->Divide(2,2);
+   
+   creco = new TCanvas("creco","creco",2400,2400);
+   creco->Divide(2,2);
 }
 
 void Utils::BookG4Histos()
@@ -86,34 +81,34 @@ void Utils::BookG4Histos()
 
 void Utils::BookAGG4Histos()
 {
-    fHisto.Book("hpTgood","Transverse Momentum of Good Helices;p_{T} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpZgood","Longitudinal Momentum of Good Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
-    fHisto.Book("hpTused","Transverse Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpZused","Longitudinal Momentum of Used Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+   fHisto.Book("hpTgood","Transverse Momentum of Good Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpZgood","Longitudinal Momentum of Good Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
+   fHisto.Book("hpTused","Transverse Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpZused","Longitudinal Momentum of Used Helices;p_{Z} [MeV/c]",4000,-2000.,2000.);
 
-    fHisto.Book("hpToTgood","Total Momentum of Good Helices;p_{Z} [MeV/c]",2000,0.,2000.);
-    fHisto.Book("hpToTused","ToT Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpToTgood","Total Momentum of Good Helices;p_{Z} [MeV/c]",2000,0.,2000.);
+   fHisto.Book("hpToTused","ToT Momentum of Used Helices;p_{T} [MeV/c]",2000,0.,2000.);
 
-    fHisto.Book("hpTZgood","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
-                2000,0.,2000.,2000,0.,2000.);
-    fHisto.Book("hpTZused","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
-                2000,0.,2000.,2000,0.,2000.);
+   fHisto.Book("hpTZgood","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+               2000,0.,2000.,2000,0.,2000.);
+   fHisto.Book("hpTZused","Momentum Component Correlation;p_{T} [MeV/c];p_{Z} [MeV/c]",
+               2000,0.,2000.,2000,0.,2000.);
 
-    fHisto.Book("hVchi2","Vertex Fit #chi^{2};#chi^{2};events",5000,0.,15.);
+   fHisto.Book("hVchi2","Vertex Fit #chi^{2};#chi^{2};events",5000,0.,15.);
 
-    fHisto.Book("hResX", "Vertex Resolution X,x_{MC} - x_{REC} [mm];events",3000,-150.,150.);
-    fHisto.Book("hResY", "Vertex Resolution Y,y [mm];events",3000,-150.,150.);
-    fHisto.Book("hResRad","Vertex Resolution R;r [mm];events",3000,-150.,150.);
-    fHisto.Book("hResPhi","Vertex Resolution #phi;#phi [rad];events",6000,
-                -TMath::TwoPi(),TMath::TwoPi());
-    fHisto.Book("hResZed","Vertex Resolution Z;z [mm];events",5000,-1152.,1152.);
+   fHisto.Book("hResX", "Vertex Resolution X,x_{MC} - x_{REC} [mm];events",3000,-150.,150.);
+   fHisto.Book("hResY", "Vertex Resolution Y,y [mm];events",3000,-150.,150.);
+   fHisto.Book("hResRad","Vertex Resolution R;r [mm];events",3000,-150.,150.);
+   fHisto.Book("hResPhi","Vertex Resolution #phi;#phi [rad];events",6000,
+               -TMath::TwoPi(),TMath::TwoPi());
+   fHisto.Book("hResZed","Vertex Resolution Z;z [mm];events",5000,-1152.,1152.);
 
-    fHisto.Book("hRadProf","Vertex Radial Profile;r [mm];events",500,0.,100.);
-    fHisto.Book("hAxiProf","Vertex Axial Profile;z [mm];events",3000,-1152.,1152);
+   fHisto.Book("hRadProf","Vertex Radial Profile;r [mm];events",500,0.,100.);
+   fHisto.Book("hAxiProf","Vertex Axial Profile;z [mm];events",3000,-1152.,1152);
 
-    fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
-    fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
-    fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+   fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+   fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
+   fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
 }
 
 void Utils::BookRecoHistos()
@@ -137,6 +132,7 @@ void Utils::BookRecoHistos()
    fHisto.Book("hpattreceff","Reconstructed Spacepoints/Tracks",200,0.,200.);
    fHisto.Book("hgoodpattreceff","Reconstructed Good Spacepoints/Tracks",200,0.,200.);
 
+   // intermediate step: spacepoints from reco tracks
    fHisto.Book("hOccPadtracks","Pad Occupancy for Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
    fHisto.Book("hOccAwtracks","Aw Occupancy for Tracks;aw",256,-0.5,255.5);
 
@@ -156,6 +152,7 @@ void Utils::BookRecoHistos()
    fHisto.Book("hhD","Hel D;[mm]",500,-190.,190.);
    fHisto.GetHisto("hhD")->SetMinimum(0);
 
+   // spacepoints from fit tracks
    fHisto.Book("hOccPad","Pad Occupancy for Good Tracks;row;sec",576,-0.5,575.5,32,-0.5,31.5);
    fHisto.Book("hOccAw","Aw Occupancy for Good Tracks;aw",256,-0.5,255.5);
    fHisto.GetHisto("hOccAw")->SetMinimum(0);
@@ -168,18 +165,22 @@ void Utils::BookRecoHistos()
    fHisto.Book("hspzed","Spacepoint Axial for Good Tracks;z [mm]",125,-1152.,1152.);
 
    fHisto.Book("hspzphi","Spacepoint Axial-Azimuth for Good Tracks;z [mm];#phi [deg]",
-               500,-1152.,1152.,100,0.,360.);
+               600,-1200.,1200.,256,0.,360.);
    fHisto.Book("hspxy","Spacepoint X-Y for Good Tracks;x [mm];y [mm]",100,-190.,190.,100,-190.,190.);
 
    fHisto.Book("hTrackXaw","Number of Good Tracks per AW;aw",256,-0.5,255.5);
    fHisto.Book("hTrackXpad","Number of Good Tracks per Pad;row;sec",576,-0.5,575.5,32,-0.5,31.5);
+ 
 
+   // reco vertex
    fHisto.Book("hvtxrad","Vertex R;r [mm]",200,0.,190.);
    fHisto.Book("hvtxphi","Vertex #phi;#phi [deg]",360,0.,360.);
    fHisto.GetHisto("hvtxphi")->SetMinimum(0);
    fHisto.Book("hvtxzed","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto.Book("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",100,-1152.,1152.,180,0.,360.);
+
 }
+
 
 void Utils::FillRecoPointsHistos(const TObjArray* points)
 {  
@@ -187,6 +188,7 @@ void Utils::FillRecoPointsHistos(const TObjArray* points)
    for(int p=0; p<points->GetEntriesFast(); ++p)
       {
          TSpacePoint* ap = (TSpacePoint*) points->At(p);
+         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
          fHisto.FillHisto("hOccAwpoints",ap->GetWire());
          fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
          pmap.get(ap->GetPad(),sec,row);
@@ -294,6 +296,8 @@ void Utils::FillRecoVertex(const TFitVertex* Vertex)
    fHisto.FillHisto("hvtxzed",Vertex->GetElevation());
    fHisto.FillHisto("hvtxzedphi",Vertex->GetElevation(),phi);
 }
+
+// ===============================================================================================
 
 void Utils::FillFinalHistos(const Reco* r, int ntracks)
 {
@@ -594,14 +598,16 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
                                        TMath::MaxElement(gxy->GetN(),gxy->GetY())*1.1);
          c->cd(2);
          grz->Draw("AP");
-         grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
-                                       TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+         // grz->GetXaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetX())*0.9,
+         //                               TMath::MaxElement(grz->GetN(),grz->GetX())*1.1);
+         grz->GetXaxis()->SetRangeUser(109.,190.);
          grz->GetYaxis()->SetRangeUser(TMath::MinElement(grz->GetN(),grz->GetY())*0.9,
                                        TMath::MaxElement(grz->GetN(),grz->GetY())*1.1);
          c->cd(3);
          grphi->Draw("AP");
-         grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
-                                         TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+         // grphi->GetXaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetX())*0.9,
+         //                                 TMath::MaxElement(grphi->GetN(),grphi->GetX())*1.1);
+         grphi->GetXaxis()->SetRangeUser(109.,190.);
          grphi->GetYaxis()->SetRangeUser(TMath::MinElement(grphi->GetN(),grphi->GetY())*0.9,
                                          TMath::MaxElement(grphi->GetN(),grphi->GetY())*1.1);
          c->cd(4);
@@ -713,7 +719,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          hzphi->SetLineColor(cols[t%ncols]);
          hzphi->SetLineWidth(3);
          
-         TVector3 p = aTrack->Evaluate(_padradius*_padradius);
+         TVector3 p = aTrack->Evaluate(ALPHAg::_padradius*ALPHAg::_padradius);
          //p.Print();
          hxy->SetNextPoint(p.X(),p.Y());
          //         std::cout<<"Utils::PlotFitHelices\n x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
@@ -722,7 +728,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
          for(int n=1; n<=Npoints; ++n)
             {
-               double rad = _padradius*(1.-double(n)/double(Npoints));
+               double rad = ALPHAg::_padradius*(1.-double(n)/double(Npoints));
                //std::cout<<"n: "<<n<<" rad: "<<rad<<std::endl;
                p = aTrack->Evaluate(rad*rad);
                //p.Print();
@@ -787,7 +793,7 @@ void Utils::DrawTPCxy(TCanvas* c)
          FWxy->SetPoint(p,174.*cos(FWphi),174.*sin(FWphi));
          FWrphi->SetPoint(p,174.,FWphi*TMath::RadToDeg());
 
-         AWzphi[p] = new TLine(-_halflength,AWphi*TMath::RadToDeg(),_halflength,AWphi*TMath::RadToDeg());
+         AWzphi[p] = new TLine(-ALPHAg::_halflength,AWphi*TMath::RadToDeg(),ALPHAg::_halflength,AWphi*TMath::RadToDeg());
          AWzphi[p]->SetLineColor(kGray+1);
          AWzphi[p]->SetLineStyle(2);
          AWzphi[p]->SetLineWidth(1);
@@ -803,13 +809,13 @@ void Utils::DrawTPCxy(TCanvas* c)
    AWrphi->Draw("same");
    FWrphi->Draw("same");
 
-   TLine* AWrz = new TLine(182.,-_halflength,182.,_halflength);
+   TLine* AWrz = new TLine(182.,-ALPHAg::_halflength,182.,ALPHAg::_halflength);
    AWrz->SetLineColor(kGray+1);
    AWrz->SetLineStyle(2);
    AWrz->SetLineWidth(2);
    c->cd(2);
    AWrz->Draw("same");
-   TLine* FWrz = new TLine(174.,-_halflength,174.,_halflength);
+   TLine* FWrz = new TLine(174.,-ALPHAg::_halflength,174.,ALPHAg::_halflength);
    FWrz->SetLineColor(kGray+1);
    FWrz->SetLineStyle(3);
    FWrz->SetLineWidth(2);
@@ -817,13 +823,13 @@ void Utils::DrawTPCxy(TCanvas* c)
    FWrz->Draw("same");
 }
 
-void Utils::PrintSignals(std::vector<signal>* sig)
+void Utils::PrintSignals(std::vector<ALPHAg::signal>* sig)
 {
    for(auto s: *sig)
       s.print();
 }
 
-TH1D* Utils::PlotSignals(std::vector<signal>* sig, std::string name)
+TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hsig"<<name;
@@ -838,8 +844,8 @@ TH1D* Utils::PlotSignals(std::vector<signal>* sig, std::string name)
    return h;
 }
 
-void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig, 
-                 std::vector<signal>* combpads, bool norm)
+void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, 
+                 std::vector<ALPHAg::signal>* combpads, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
    if(norm) haw->Scale(1./haw->Integral());
@@ -893,8 +899,62 @@ void Utils::Draw(std::vector<signal>* awsig, std::vector<signal>* padsig,
    hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
+void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, bool norm)
+{
+   TH1D* haw=PlotSignals( awsig, "anodes" );
+   if(norm) haw->Scale(1./haw->Integral());
+   else haw->Scale(10.);
+   haw->SetLineColor(kRed);
+   //cout<<"[main]# "<<i<<"\tPlotAnodeTimes: "<<haw->GetEntries()<<endl;
+   csig->cd(1);
+   haw->Draw("hist");
+   haw->SetTitle("Deconv Times");
+   haw->GetXaxis()->SetRangeUser(0.,tmax);
 
-TH1D* Utils::PlotOccupancy(std::vector<signal>* sig, std::string name)
+   TH1D* hpads = PlotSignals( padsig, "pads" );
+   if(norm) hpads->Scale(1./hpads->Integral());
+   hpads->SetLineColor(kBlue);
+   csig->cd(1);
+   hpads->Draw("histsame");
+
+   TLegend* leg = new TLegend(0.7,0.8,0.95,0.95);
+   if(norm) leg->AddEntry(haw,"anodes", "l");
+   else leg->AddEntry(haw,"anodes x10", "l");
+   leg->AddEntry(hpads,"pads", "l");
+   csig->cd(1);
+   leg->Draw("same");
+
+   // TH1D* hcombpads = PlotSignals( combpads, "combinedpads" );
+   // if(norm) hcombpads->Scale(1./hcombpads->Integral());
+   // hcombpads->SetLineColor(kBlue);
+   // csig->cd(2);
+   // haw->Draw("hist");
+   // hcombpads->Draw("histsame");
+
+   TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
+   //TH2D* hmatch = PlotSignals( awsig, padsig, "sector");
+   csig->cd(3);
+   //hmatch->Draw("colz");
+   hmatch->Draw("*");
+   hmatch->GetXaxis()->SetRangeUser(0.,tmax);
+   hmatch->GetYaxis()->SetRangeUser(0.,tmax);
+   
+   TH1D* hoccaw = PlotOccupancy( awsig, "anodes" );
+   if(norm) hoccaw->Scale(1./hoccaw->Integral());
+   hoccaw->SetLineColor(kRed);
+   TH1D* hoccpadsig = PlotOccupancy( padsig, "pads" );
+   if(norm) hoccpadsig->Scale(1./hoccpadsig->Integral());
+   hoccpadsig->SetLineColor(kBlue);
+   csig->cd(4);
+   hoccaw->Draw("hist");
+   hoccpadsig->Draw("histsame");
+   gPad->SetGridx();
+   hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
+   hoccaw->GetXaxis()->SetLabelSize(0.02);
+}
+
+
+TH1D* Utils::PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hocc"<<name;
@@ -919,13 +979,13 @@ TH1D* Utils::PlotOccupancy(std::vector<signal>* sig, std::string name)
    return h;
 }
 
-TH2D* Utils::PlotSignals(std::vector<signal>* awsignals,
-                         std::vector<signal>* padsignals, std::string type)
+TH2D* Utils::PlotSignals(std::vector<ALPHAg::signal>* awsignals,
+                         std::vector<ALPHAg::signal>* padsignals, std::string type)
 {
-   std::multiset<signal, signal::timeorder> aw_bytime(awsignals->begin(),
-                                                      awsignals->end());
-   std::multiset<signal, signal::timeorder> pad_bytime(padsignals->begin(),
-                                                       padsignals->end());
+   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
+                                                                      awsignals->end());
+   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(),
+                                                                       padsignals->end());
    int Nmatch=0;
    std::ostringstream hname;
    hname<<"hmatch"<<type;
@@ -1014,7 +1074,7 @@ double Utils::PointResolution(std::vector<TFitHelix*>* helices, const TVector3* 
    for(size_t i=0; i<helices->size(); ++i)
       {
          TFitHelix* hel = (TFitHelix*) helices->at(i);
-         TVector3 eval = hel->Evaluate( _trapradius * _trapradius );
+         TVector3 eval = hel->Evaluate( ALPHAg::_trapradius * ALPHAg::_trapradius );
          eval.Print();
          res+=(eval-(*vtx)).Mag();
          std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;

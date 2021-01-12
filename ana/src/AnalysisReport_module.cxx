@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <unistd.h> // readlink()
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -15,14 +16,16 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "AgFlow.h"
-#include "A2Flow.h"
 #include "GitInfo.h"
-#include "AnalysisTimer.h"
+
+#ifdef BUILD_AG
+#include "RecoFlow.h"
+#endif
+#ifdef BUILD_A2
+#include "A2Flow.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
-
 
 class A2DumpSummary
 {
@@ -82,7 +85,8 @@ public:
                    time);
    }
 };
-
+#endif
+#ifdef BUILD_A2
 class A2DumpSummaryList
 {
 public:
@@ -121,7 +125,7 @@ public:
          list[i]->Print();
    }
 };
-
+#endif
 
 class MeanMode
 {
@@ -189,10 +193,6 @@ public:
 
    bool fSaveHistograms = false;
 
-   //Data logging (used in 'Finish')
-   clock_t tStart_cpu;
-   time_t tStart_user;
-
    double mean_aw=0;       //Results from deconv module
    double mean_pad=0;      //Results from deconv module
    double mean_match=0;    //Results from match module
@@ -219,12 +219,13 @@ public:
    MeanMode SVD_Tracks{100};
    MeanMode SVD_Verts{10};
    MeanMode SVD_Pass{2};
-
+#ifdef BUILD_A2
    A2DumpSummaryList DumpLogs;
-
+#endif
    int RunNumber=-1;
    time_t midas_start_time=0;
    time_t midas_stop_time=0;
+#ifdef BUILD_AG
    void FillTPC(TStoreEvent* e)
    {
       if (e->GetNumberOfTracks()>0)
@@ -244,6 +245,8 @@ public:
       last_event_ts = e->GetTimeOfEvent();
       nStoreEvents++;
    }
+#endif
+#ifdef BUILD_AG
    void FillTPCSigFlow(AgSignalsFlow* SigFlow)
    {
       if (SigFlow->awSig)
@@ -254,6 +257,8 @@ public:
          mean_match+=(double)SigFlow->matchSig->size();
       nSigEvents++;
    }
+#endif
+#ifdef BUILD_AG
    void CalculateTPCMeans()
    {
       if (nSigEvents>0)
@@ -274,6 +279,7 @@ public:
       }
       return;
    }
+#endif
    void PrintAG()
    {
       if (nStoreEvents>0)
@@ -288,6 +294,7 @@ public:
       }
       return;
    }
+#ifdef BUILD_A2
    void FillSVD(TSiliconEvent* se)
    {
       SVD_N_RawHits.InsertValue(se->GetNsideNRawHits());
@@ -302,6 +309,7 @@ public:
       nSVDEvents++;
       return;
    }
+#endif
    void PrintA2(int rough_time=-1)
    {
       if(nSVDEvents>0)
@@ -340,6 +348,7 @@ public:
          std::cout<<std::endl;
       }
    }
+
 };
 
    
@@ -349,35 +358,23 @@ public:
 
    bool fTrace = false;
    std::string binary_path_full;
-   
+
    AnalysisReportFlags* fFlags;
-
-   
-   clock_t last_flow_event;
-   std::map<unsigned int,int> FlowMap;
-   std::vector<TH1D*> FlowHistograms;
-   std::vector<double> MaxFlowTime;
-
-   //clock_t last_module_time;
-   std::map<unsigned int,int> ModuleMap;
-   std::vector<TH1D*> ModuleHistograms;
-   std::map<unsigned int,int> ModuleMap2D;
-   std::vector<TH2D*> ModuleHistograms2D;
-   std::vector<double> MaxModuleTime;
-   std::vector<double> TotalModuleTime;
-   
-   int NQueues=0;
-   std::vector<TH1D*> AnalysisQueue;
-   //TH2D* AnalysisQueues2D;
-   int QueueIntervalCounter=0;
-   int QueueInterval=100;
-   
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="AnalysisReport";
+#endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
+         
+      if (!getenv("AGRELEASE"))
+      {
+         std::cerr<<"AGRELEASE not set! Did you mean to 'source agconfig.sh'?"<<std::endl;
+         exit(1);
+      }
    }
 
    ~AnalysisReportModule()
@@ -405,42 +402,30 @@ public:
       runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &fFlags->midas_start_time);
       #endif
 
-      fFlags->tStart_cpu = clock();
-      fFlags->tStart_user = time(NULL);
-      
-      last_flow_event= clock();
-      //last_module_time= clock();
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
-
-
-      
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
      
       char result[ 200 ]={0};
-      readlink( "/proc/self/exe", result, 200 );
-      binary_path_full=result;
-      std::size_t found = binary_path_full.find_last_of("/\\");
-      //std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
-      //std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
-   
-      fFlags->binary_path=binary_path_full.substr(0,found);
-      fFlags->binary_name=binary_path_full.substr(found+1);
+      size_t result_len=readlink( "/proc/self/exe", result, 200 );
+      if (result_len)
+      {
+         binary_path_full=result;
+         std::size_t found = binary_path_full.find_last_of("/\\");
+         //std::cout << " path: " << binary_path_full.substr(0,found).c_str() << '\n';
+         //std::cout << " file: " << binary_path_full.substr(found+1).c_str() << '\n';
+
+         fFlags->binary_path=binary_path_full.substr(0,found);
+         fFlags->binary_name=binary_path_full.substr(found+1);
+      }
+      else
+      {
+         fFlags->binary_path="readlink of /proc/self/exe failed";
+         fFlags->binary_name="readlink of /proc/self/exe failed";
+      }
       
       //      return std::string( result, (count > 0) ? count : 0 );
       //if (fSaveHistograms)
        //  RecoTime = new TH1D("RecoTime", "Analysis time per event; time, s", 101, -50, 50);
-      #ifdef HAVE_CXX11_THREADS
-      if (runinfo->fMtInfo)
-         NQueues=runinfo->fMtInfo->fMtThreads.size();
-      for (int i=0; i<NQueues; i++)
-      {
-         TString Name="AnalysisQueueLength";
-         Name+=i;
-         AnalysisQueue.push_back(new TH1D(Name.Data(),"AnalysisQueue;Thread Number;Queue Length",runinfo->fMtInfo->fMtQueueDepth,0,runinfo->fMtInfo->fMtQueueDepth));
-      }
-      #endif
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -457,60 +442,9 @@ public:
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
       std::cout<<"Flow event average processing time (approximate)"<<std::endl;
-      if (FlowHistograms.size())
-         std::cout<<"FlowType\t\tEntries\tMean T\tRMS\tMax T"<<std::endl;
-      for (uint i=0; i<FlowHistograms.size(); i++)
-      {
-        printf("%-20s\t%d\t%.3f\t%.3f\t",FlowHistograms.at(i)->GetTitle(),
-                                         (int)FlowHistograms.at(i)->GetEntries(),
-                                         FlowHistograms.at(i)->GetMean(),
-                                         FlowHistograms.at(i)->GetRMS());
-                                         std::cout<<MaxFlowTime.at(i)<<std::endl;
-      }
-
-      if (AnalysisQueue.size())
-      {
-         for (int i=0; i<NQueues; i++)
-         {
-            double mean=AnalysisQueue.at(i)->GetMean();
-            double full=0.9;
-            //double nempty=AnalysisQueue.at(i)->GetIntegral(0,(int)runinfo->fMtInfo->fMtQueueDepth*full);
-            double all=AnalysisQueue.at(i)->Integral(0,runinfo->fMtInfo->fMtQueueDepth+1);
-            double nfull=AnalysisQueue.at(i)->Integral((int)(runinfo->fMtInfo->fMtQueueDepth*full),runinfo->fMtInfo->fMtQueueDepth+1);
-            printf("Bin: %d \tMean:%f\t%%Full:%f\n",i,mean,100.*nfull/all);
-         }
-      }
-
-
-      if (ModuleHistograms.size()>0)
-      {
-         double AllModuleTime=0;
-         for (auto& n : TotalModuleTime)
-            AllModuleTime += n;
-         double max_total_time=*std::max_element(TotalModuleTime.begin(),TotalModuleTime.end());
-         std::cout<<"Module average processing time"<<std::endl;
-         std::cout<<"Module\t\t\t\tEntries\tMean(ms)RMS(ms)\tMax(ms)\tSum(s)\tSum(%)\tNormalised Percent"<<std::endl;
-         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-         for (uint i=0; i<ModuleHistograms.size(); i++)
-         {
-           //std::cout<<ModuleHistograms.at(i)->GetTitle()<<"\t\t";
-           printf("%-25s\t%d\t%.1f\t%.1f\t%.1f\t%.3f\t",ModuleHistograms.at(i)->GetTitle(),
-                                   (int)ModuleHistograms.at(i)->GetEntries(),
-                                   ModuleHistograms.at(i)->GetMean()*1000., //ms
-                                   ModuleHistograms.at(i)->GetRMS()*1000., //ms
-                                   MaxModuleTime.at(i)*1000., //ms
-                                   TotalModuleTime.at(i)); //s
-           printf("%.1f%%\t",100.*TotalModuleTime.at(i)/AllModuleTime);
-           printf("%.0f%%\n",100.*TotalModuleTime.at(i)/max_total_time);
-           
-           
-         }
-         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-         std::cout<<"                                                         "<<AllModuleTime<<std::endl;
-         std::cout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-      }
+#ifdef BUILD_AG
       fFlags->CalculateTPCMeans();
-
+#endif
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -524,103 +458,9 @@ public:
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
-   void AddFlowMap( const char* FlowName, unsigned long hash)
-   {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      gDirectory->cd("/AnalysisReport");
-      FlowMap[hash]= FlowHistograms.size();
-      Int_t Nbins=100;
-      Double_t bins[Nbins+1];
-      Double_t TimeRange=10; //seconds
-      for (int i=0; i<Nbins+1; i++)
-      {
-         bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
-         //std::cout <<"BIN:"<<bins[i]<<std::endl;
-      }
-      TH1D* Histo=new TH1D(FlowName,FlowName,Nbins,bins);
-      FlowHistograms.push_back(Histo);
-      MaxFlowTime.push_back(0.);
-      return;
-   }
-   void AddModuleMap( const char* ModuleName, unsigned long hash)
-   {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      gDirectory->cd("/AnalysisReport");
-      ModuleMap[hash]= ModuleHistograms.size();
-      Int_t Nbins=100;
-      Double_t bins[Nbins+1];
-      Double_t TimeRange=10; //seconds
-      for (int i=0; i<Nbins+1; i++)
-      {
-         bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
-         //std::cout <<"BIN:"<<bins[i]<<std::endl;
-      }
-      TH1D* Histo=new TH1D(ModuleName,ModuleName,Nbins,bins);
-      ModuleHistograms.push_back(Histo);
-      TotalModuleTime.push_back(0.);
-      MaxModuleTime.push_back(0.);
-      return;
-   }
-   void AddModuleMap2D( const char* ModuleName, unsigned long hash )
-   {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
-      gDirectory->cd("/AnalysisReport");
-      ModuleMap2D[hash]= ModuleHistograms2D.size();
-      Int_t Nbins=10;
-      Double_t bins[Nbins+1];
-      Double_t TimeRange=10; //seconds
-      for (int i=0; i<Nbins+1; i++)
-      {
-         bins[i]=TimeRange*pow(1.1,i)/pow(1.1,Nbins);
-         //std::cout <<"BIN:"<<bins[i]<<std::endl;
-      }
-      
-      double ymin=0.;
-      double ymax=100.;
-      //Estimate Y range by key words:
-      if (strstr(ModuleName,"Points")) {
-         ymax=2000.;
-      } else if (strstr(ModuleName,"Tracks")) {
-         ymax=10.;
-      }
-      TH2D* Histo=new TH2D(ModuleName,ModuleName,Nbins,bins,Nbins,ymin,ymax);
-      ModuleHistograms2D.push_back(Histo);
-      
-   }
-
-   Double_t DeltaTime()
-   {
-      double cputime = (double)(clock() - last_flow_event)/CLOCKS_PER_SEC;
-      last_flow_event = clock();
-      return cputime;
-   }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-       //Capture multithread queue lengths:
-       #ifdef HAVE_CXX11_THREADS
-       QueueIntervalCounter++;
-       if (runinfo->fMtInfo && (QueueIntervalCounter%QueueInterval==0))
-       {
-          for (int i=0; i<NQueues; i++)
-          {
-             int j=0;
-             {
-                std::lock_guard<std::mutex> lock(runinfo->fMtInfo->fMtFlowQueueMutex[i]);
-                j=runinfo->fMtInfo->fMtFlowQueue[i].size();
-             }
-             //std::cout<<"Queue: "<<i<<" has "<<j<<std::endl;
-             AnalysisQueue.at(i)->Fill(j);
-         }
-      }
-      #endif
-
       //Clocks unfold backwards... 
       std::vector<TAFlowEvent*> flowArray;
       int FlowEvents=0;
@@ -634,50 +474,7 @@ public:
       for (int ii=FlowEvents-1; ii>=0; ii--)
       {
          f=flowArray[ii];
-         AgAnalysisReportFlow* timer=dynamic_cast<AgAnalysisReportFlow*>(f);
-         if (timer)
-         {
-            const char* name=timer->ModuleName.c_str();
-            unsigned int hash=std::hash<std::string>{}(timer->ModuleName);
-            if (!ModuleMap.count(hash))
-               AddModuleMap(name,hash);
-            double dt=999.;
-            dt=timer->GetTimer();
-            int i=ModuleMap[hash];
-            TotalModuleTime[i]+=dt;
-            if (dt>MaxModuleTime[i])
-               MaxModuleTime.at(i)=dt;
-            ModuleHistograms.at(i)->Fill(dt);
-#if 0 //Removed 2D version of flow for speed
-            if (timer->SecondAxis.size()>0)
-            {
-               for (uint sec=0; sec<timer->SecondAxis.size(); sec++)
-               {
-                  TString FullTitle(name);
-                  FullTitle+=timer->ModuleName[sec+1];
-                  if (!ModuleMap2D.count(FullTitle))
-                     AddModuleMap2D(FullTitle);
-                  int i=ModuleMap2D[FullTitle];
-                  //std::cout <<"Filling at "<<i<<"\t"<<ModuleHistograms2D.at(i)->GetTitle()<<"with:"<<dt<<"\t"<<timer->SecondAxis.at(sec)<<std::endl;
-                  ModuleHistograms2D.at(i)->Fill(dt,timer->SecondAxis.at(sec));
-               }
-            }
-#endif
-         }
-//Turn off logging flow map... we have enough diagnostics above
-#if 0
-         else
-         {
-            TString name=typeid(*f).name(); 
-            unsigned int hash=name.Hash();
-            if (!FlowMap.count(hash))
-               AddFlowMap(&name);
-            double dt=DeltaTime();
-            int i=FlowMap[hash];
-            if (dt>MaxFlowTime[i]) MaxFlowTime.at(i)=dt;
-            FlowHistograms.at(i)->Fill(dt);
-         }
-#endif
+#ifdef BUILD_AG
          AgAnalysisFlow* analyzed_event=dynamic_cast<AgAnalysisFlow*>(f);
          if (analyzed_event)
          {
@@ -694,7 +491,9 @@ public:
             fFlags->FillTPCSigFlow(SigFlow);
             continue;
          }
-         SilEventsFlow* SilFlow = dynamic_cast<SilEventsFlow*>(f);
+#endif
+#ifdef BUILD_A2
+         SilEventFlow* SilFlow = dynamic_cast<SilEventFlow*>(f);
          if(SilFlow)
          {
             TSiliconEvent* se=SilFlow->silevent;
@@ -712,6 +511,7 @@ public:
             }
             continue;
          }
+#endif
       }
       return flow;
    }
@@ -743,6 +543,7 @@ public:
          //Ok, lets support both proper and american spellings
          if (args[i] == "--summarise" || args[i] == "--summarize")
          {
+#ifdef BUILD_A2
              while (args[i+1].c_str()[0]!='-')
              {
                 char dump[80];
@@ -750,6 +551,10 @@ public:
                 fFlags.DumpLogs.TrackDump(dump);
                 if (i+1==args.size()) break;
              }
+#else
+             std::cerr<<"--summarise feature only available for ALPHA2"<<std::endl;
+#endif
+
          }
          if (args[i] == "--AnalysisReport")
             fFlags.fSaveHistograms = true;
@@ -759,7 +564,9 @@ public:
 
    void Finish()
    {
+#ifdef BUILD_A2
       fFlags.DumpLogs.Print();
+#endif
       //Git revision date:
       time_t t = GIT_DATE;
       struct tm *tm = localtime(&t);
@@ -769,9 +576,6 @@ public:
       tm = localtime(&t);
       char comp_date[20];
       strftime(comp_date, sizeof(comp_date), "%Y-%m-%d\t%X", tm);
-      //CPU and Wall clock time:
-      double cputime = (double)(clock() - fFlags.tStart_cpu)/CLOCKS_PER_SEC;
-      double usertime = difftime(time(NULL),fFlags.tStart_user);
 
       char now[20];
       strftime(now, sizeof(now), "%Y-%m-%d\t%X", tm);
@@ -794,8 +598,8 @@ public:
       fFlags.PrintA2(rough_time);
       std::cout <<"Time of Last Event: "<<fFlags.last_event_ts<<" s"<<std::endl;
       printf("Compilation date:%s\n",comp_date);
-      std::cout <<"Analysis run on host: "<<getenv("HOSTNAME")<<std::endl;
-      std::cout << getenv("_") << " exec time:\tCPU: "<< cputime <<"s\tUser: " << usertime << "s"<<std::endl;
+      std::cout <<"Analysis run on host: ";
+      if(getenv("HOSTNAME")!=nullptr) {std::cout << getenv("HOSTNAME") << std::endl;} else { std::cout << "UNKNOWN" << std::endl;}
       printf("Git branch:      %s\n",GIT_BRANCH);
       printf("Git date:         %s\n",date);
       //printf("Git date:        %d\n",GIT_DATE);

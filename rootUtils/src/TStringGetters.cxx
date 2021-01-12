@@ -3,7 +3,7 @@
 #include "Sequencer2.h"
 
 
-
+#ifdef BUILD_AG
 TString Get_Chrono_Name(Int_t runNumber, Int_t ChronoBoard, Int_t Channel)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
@@ -14,7 +14,8 @@ TString Get_Chrono_Name(Int_t runNumber, Int_t ChronoBoard, Int_t Channel)
    delete n;
    return name;
 }
-
+#endif
+#ifdef BUILD_AG
 TString Get_Chrono_Name(TSeq_Event* e)
 {
 
@@ -25,9 +26,9 @@ TString Get_Chrono_Name(TSeq_Event* e)
    return "UNKNOWN_SEQUENCER";
          
 }
-
-
-TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
+#endif
+#ifdef BUILD_AG
+TString SequenceAGQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
 {
    if (runNumber<0) return "CATCH_OR\tTPC TRIG\tSiPM_B\tSiPM_E\tSiPM_A_AND_D\tSiPM_C_AND_F";
    TString line="\t";
@@ -45,8 +46,7 @@ TString SequenceQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, In
    }
    return line;
 }
-
-
+#endif
 
 TString MakeAutoPlotsFolder(TString subFolder)
 {
@@ -90,6 +90,48 @@ TString MakeAutoPlotsFolder(TString subFolder)
   return savFolder;
 }
 
+TString MakeAutoPlotsFolder(TString subFolder,TString rootdir)
+{
+  if( !IsPathExist(rootdir) ) return MakeAutoPlotsFolder(subFolder);
+  gSystem->mkdir(rootdir+"AutoPlots");
+  // Make dated folder
+  TDatime *TS1 = new TDatime;
+  const unsigned int date = TS1->GetDate();
+  TString savFolder(rootdir+"AutoPlots/");
+  savFolder += date;
+  if ( subFolder.CompareTo("time")==0 )
+  {
+     subFolder="";
+     savFolder+="-"; // Date - time separation character
+     //Present time as characters (HHMM)
+     Int_t H=TS1->GetHour();
+     if (H<10) savFolder+=0;
+     savFolder+=H;
+     Int_t M=TS1->GetMinute();
+     if (M<10) savFolder+=0;
+     savFolder+=M;
+  }
+
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  savFolder += "/";
+  savFolder += (subFolder);
+  //savFolder += "/";
+  if (((gSystem->OpenDirectory(savFolder)) == 0)) //gSystem causesing problem when compiling marco... will fix tomorrow
+  {
+    gSystem->mkdir(savFolder);
+    std::cout << "Plot output folder: " << savFolder << " created " << std::endl;
+  }
+  else
+  {
+    std::cout << "The folder " << savFolder << " already exists, saving plots here" << std::endl;
+  }
+  delete TS1;
+  return savFolder;
+}
 
 /* emacs
  * Local Variables:

@@ -35,13 +35,16 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DANTI_ALIAS ")
 link_libraries(${ROOT_LIBRARIES})
 include_directories(include ${ROOT_INCLUDE_DIRS})
+
+find_package(ROOTANA)
+include_directories(include ${ROOTANA_INCLUDE_DIRS})
 
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
@@ -56,6 +59,7 @@ include_directories (${FREETYPE_INCLUDE_DIRS})
 include(${ROOT_USE_FILE})
 
 # Include directories
+include_directories(include $ENV{AGRELEASE}/agana)
 include_directories(include include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include $ENV{AGRELEASE}/ana/include)
@@ -67,6 +71,16 @@ include_directories(include $ENV{ROOTANASYS}/include)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(aged SHARED ${LIBRARY_SOURCES})
-target_link_libraries(aged Xft Xm)
+find_library(LIBXFT Xft)
+find_library(LIBXM Xm)
+find_library(LIBXRENDER Xrender)
+find_library(LIBXT Xt)
+
+if(ROOTANA_SUBMOD)
+  add_dependencies(aged rootana)
+endif()
+target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
 
 install(TARGETS aged DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

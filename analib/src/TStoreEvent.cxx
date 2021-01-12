@@ -2,7 +2,7 @@
 // for ALPHA-g TPC AGTPCanalysis
 // Authors: A. Capra, M. Mathers
 // Date: April 2017
-
+#ifdef BUILD_AG
 #include "TStoreEvent.hh"
 #include "TStoreHelix.hh"
 #include "TStoreLine.hh"
@@ -21,7 +21,7 @@ TStoreEvent::TStoreEvent():TObject(),fID(-1),
 			   fStoreHelixArray(20), fStoreLineArray(20),
 			   fSpacePoints(5000),
 			   fUsedHelices(20),
-			   fVertex(agUnknown,agUnknown,agUnknown),
+			   fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
 			   fVertexStatus(-3),
 			   fPattRecEff(-1.)
 {}
@@ -150,7 +150,7 @@ void TStoreEvent::Reset()
   fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
 
-  fVertex.SetXYZ(agUnknown,agUnknown,agUnknown);
+  fVertex.SetXYZ(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
 
   fPattRecEff = -1.;
   
@@ -159,7 +159,7 @@ void TStoreEvent::Reset()
 }
 
 ClassImp(TStoreEvent)
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

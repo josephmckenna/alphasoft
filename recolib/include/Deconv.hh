@@ -9,13 +9,14 @@
 #include <set>
 #include <algorithm>
 
-#include "SignalsType.h"
-#include "AnaSettings.h"
+#include "SignalsType.hh"
+#include "AnaSettings.hh"
 
 #include <TClonesArray.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TProfile.h>
+#include <TFile.h>
 
 #include "Alpha16.h"
 #include "Feam.h"
@@ -72,17 +73,16 @@ private:
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
    // output
-   std::vector<electrode> fAnodeIndex;
-   std::vector<electrode> fPadIndex;
+   std::vector<ALPHAg::electrode> fAnodeIndex;
+   std::vector<ALPHAg::electrode> fPadIndex;
 
-   std::vector<signal>* sanode;
-   std::vector<signal>* spad;
+   std::vector<ALPHAg::signal>* sanode;
+   std::vector<ALPHAg::signal>* spad;
 
-   // check
-   std::vector<double> resRMS_a;
-   std::vector<double> resRMS_p;
+   // // check
+   // std::vector<double> resRMS_a;
+   // std::vector<double> resRMS_p;
 
-   void Setup();
 
    int ReadResponseFile(const double awbin, const double padbin);
    int ReadAWResponseFile( const double awbin );
@@ -92,27 +92,27 @@ private:
    int ReadADCRescaleFile();
    int ReadPWBRescaleFile();
 
-   std::vector<signal>* Deconvolution( std::vector<wfholder*>* subtracted,
-                                       std::vector<electrode> &fElectrodeIndex,
+   std::vector<ALPHAg::signal>* Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
+                                       std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                        std::vector<double> &fResponse, int theBin, bool isanode);
 
-   void SubtractAW(wfholder* hist1,
-                   std::vector<wfholder*>* wfmap,
+   void SubtractAW(ALPHAg::wfholder* hist1,
+                   std::vector<ALPHAg::wfholder*>* wfmap,
                    const int b,
-                   const double ne,std::vector<electrode> &fElectrodeIndex,
+                   const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                    std::vector<double> &fResponse, int theBin);
    
-   void SubtractPAD(wfholder* hist1,
-                    std::vector<wfholder*>* wfmap,
+   void SubtractPAD(ALPHAg::wfholder* hist1,
+                    std::vector<ALPHAg::wfholder*>* wfmap,
                     const int b,
-                    const double ne,std::vector<electrode> &fElectrodeIndex,
+                    const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                     std::vector<double> &fResponse, int theBin);
    
-   comp_hist_t wf_comparator;
-   std::vector<wfholder*>* wforder(std::vector<wfholder*>* subtracted, const int b);
+   ALPHAg::comp_hist_t wf_comparator;
+   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const int b);
    
-   std::map<int,wfholder*>* wfordermap(std::vector<wfholder*>* histset,
-                                       std::vector<electrode> &fElectrodeIndex);
+   std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
+                                       std::vector<ALPHAg::electrode> &fElectrodeIndex);
 
    //Take advantage that there are 256 anode wires
    inline bool IsAnodeNeighbour(int w1, int w2, int dist)
@@ -211,27 +211,27 @@ private:
       return sqrt(res);
    }
 
-   padmap* pmap;
+   ALPHAg::padmap* pmap;
 
-   TH2D* hADCped;
-   TProfile* hADCped_prox;
-   TH2D* hPWBped;
-   TProfile* hPWBped_prox;
+   static TH2D* hADCped;
+   static TProfile* hADCped_prox;
+   static TH2D* hPWBped;
+   static TProfile* hPWBped_prox;
 
    // pads
-   TH1D* hAvgRMSPad;
+   static TH1D* hAvgRMSPad;
    // anodes
-   TH1D* hAvgRMSBot;
-   TH1D* hAvgRMSTop;
+   //   static TH1D* hAvgRMSBot;
+   static TH1D* hAvgRMSTop;
 
    // to use in aged display
-   std::vector<wf_ref>* wirewaveforms;
-   std::vector<wf_ref>* feamwaveforms;
+   std::vector<ALPHAg::wf_ref>* wirewaveforms;
+   std::vector<ALPHAg::wf_ref>* feamwaveforms;
 
    // waveform max
-   std::vector<signal>* fAdcPeaks;
+   std::vector<ALPHAg::signal>* fAdcPeaks;
    //std::vector<signal>* fAdcRange;
-   std::vector<signal>* fPwbPeaks;
+   std::vector<ALPHAg::signal>* fPwbPeaks;
    // std::vector<signal>* fPwbRange;
 
 public:
@@ -240,8 +240,9 @@ public:
    Deconv(AnaSettings*);
    ~Deconv();
 
-   void SetupADCs(int run, bool norm=false, bool diag=false);
-   void SetupPWBs(int run, bool norm=false, bool diag=false);
+   void Setup();
+   void SetupADCs(TFile* fout, int run, bool norm=false, bool diag=false);
+   void SetupPWBs(TFile* fout, int run, bool norm=false, bool diag=false);
 
    int FindAnodeTimes(TClonesArray*);
    int FindPadTimes(TClonesArray*);
@@ -249,21 +250,21 @@ public:
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);
 
-   inline std::vector<signal>* GetAnodeSignal() { return sanode; }
-   inline std::vector<signal>* GetPadSignal()  { return spad; }
+   inline std::vector<ALPHAg::signal>* GetAnodeSignal() { return sanode; }
+   inline std::vector<ALPHAg::signal>* GetPadSignal()  { return spad; }
 
-   inline std::vector<signal>* GetAdcPeaks() { return fAdcPeaks; }
-   inline std::vector<signal>* GetPWBPeaks() { return fPwbPeaks; }
+   inline std::vector<ALPHAg::signal>* GetAdcPeaks() { return fAdcPeaks; }
+   inline std::vector<ALPHAg::signal>* GetPWBPeaks() { return fPwbPeaks; }
 
-   inline std::vector<wf_ref>* GetAWwaveforms()  { return wirewaveforms; }
-   inline std::vector<wf_ref>* GetPADwaveforms() { return feamwaveforms; }
+   inline std::vector<ALPHAg::wf_ref>* GetAWwaveforms()  { return wirewaveforms; }
+   inline std::vector<ALPHAg::wf_ref>* GetPADwaveforms() { return feamwaveforms; }
 
    inline void SetTrace(bool t)      { fTrace=t; }
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }
    inline void SetDisplay(bool a)    { fAged=a; }
 
-   inline std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
-   inline std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
+   // inline std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
+   // inline std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
 
    inline double GetADCdelay() const { return fADCdelay; }
    inline double GetPWBdelay() const { return fPWBdelay; }

@@ -23,9 +23,9 @@ set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 #
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/include/Garfield
-		    $ENV{GARFIELD_HOME}/Heed)
-link_directories($ENV{GARFIELD_HOME}/lib $ENV{ROOTSYS}/lib)
+		    $ENV{GARFIELD_HOME}/install/include/Garfield
+		    $ENV{GARFIELD_HOME}/install/Heed)
+link_directories($ENV{GARFIELD_HOME}/install/lib $ENV{ROOTSYS}/lib)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/ComponentBmap.cc ${PROJECT_SOURCE_DIR}/src/MagneticFieldMap.cc ${PROJECT_SOURCE_DIR}/src/TPCBase.cc ${PROJECT_SOURCE_DIR}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)

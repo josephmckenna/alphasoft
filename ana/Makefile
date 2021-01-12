@@ -1,14 +1,20 @@
 #
 # Makefile for the ALPHA-g analyzer
 #
+# Authors: KO, AC and JTMK 
+#
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))
+	#Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
+	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o 
+	# wfsuppress.o wfsuppress2.o wfsuppress_pwb.o 
 endef
 
 
 OBJDIR=obj
 SRCDIR=src
+#SRCDIR +=../agana
 INCDIR=include
 BINDIR=..
 
@@ -29,13 +35,14 @@ endif
 # get the rootana Makefile settings
 
 
-LIBS     += -L$(ROOTANASYS)/lib -lrootana $(shell cat $(ROOTANASYS)/include/rootana_libs.txt)
-LIBS     += -lSpectrum
+LIBS     += -L$(ROOTANASYS)/lib -lrootana
+LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
 INCS += -I../analib/include
+INCS += -I../agana
 INCS += -I../aged/include
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
@@ -58,25 +65,25 @@ $(foreach BIN,$(BINS),$(eval $(call get_modules,ALL_DEPS,${BIN})))
 $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
-RLIBS = -L../recolib -L../aged -L../analib -lagana -lAGTPC -laged
-#USER_LIBS = libagana.so libAGTPC.so libaged.so
+RLIBS = -L../recolib -L../aged -L../analib -lanalib -lagtpc -laged
+#USER_LIBS = libanalib.so libAGTPC.so libaged.so
 
 ALL += linkdirs gitinfo
 #BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
 BIN += $(BINS)
 
-all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized
+all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 all:: $(ALL)
 all:: $(MODULES)
 all:: $(BIN)
 
-debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized
+debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 debug: $(ALL) $(MODULES) $(BIN)
 
-native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native
+native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native $(BUILD_FLAGS)
 native: $(ALL) $(MODULES) $(BIN)
 
-O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized
+O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 O2: $(ALL) $(MODULES) $(BIN)
 
 .PRECIOUS: $(ALL_DEPS)
@@ -90,9 +97,12 @@ gitinfo:
 
 $(BINDIR)/%.exe: $(MAIN) $(USER_LIBS) $(ALL_DEPS) $(MODS)
 	$(eval $(call get_modules,$@MODS,$@))
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS) -lm -lz -lpthread -lMathMore -lMinuit2 -lPhysics
+	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
+	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
+
+$(OBJDIR)/%.o: $(AGRELEASE)/agana/%.cxx
 	$(CXX) $(CXXFLAGS) -o $@  $(INCS) -c $<
 
 clean::

@@ -24,6 +24,10 @@
 #include "TTree.h"
 
 
+//usleep
+#include "unistd.h"
+
+
 #include "manalyzer.h"
 #include "midasio.h"
 
@@ -40,6 +44,10 @@
 #define NUM_SI_ALPHA2 nSiAlpha2 // defined in SiMod.h
 
 #define VF48_COINCTIME 0.000010
+
+//Copy of MIDAS bank (used to speed up multithreading, copy time is negligable compared to unpack time)
+
+
 
 class UnpackFlags
 {
@@ -78,14 +86,12 @@ public:
    int gSOffset[NUM_VF48_MODULES];
    double gSettingsFrequencies[VF48_MAX_MODULES];
 
-
-   std::deque<VF48event*> VF48eventQueue;
-   std::mutex VF48eventQueueLock;
-
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="unpack_module_stream";
+#endif
       if (fTrace)
          printf("UnpackModule::ctor!\n");
       vfu = new UnpackVF48();
@@ -118,14 +124,14 @@ public:
          printf("UnpackModule::dtor!\n");
       delete vfu;
 
-      size_t VF48eventQueueSize=VF48eventQueue.size();
+      /*size_t VF48eventQueueSize=VF48eventQueue.size();
       if (VF48eventQueueSize)
       {
          std::cout<<"UnpackModule Warning: "<<VF48eventQueueSize<<" VF48 events not analyised"<<std::endl;
          for (size_t i=0; i<VF48eventQueueSize; i++)
             delete VF48eventQueue[i];
          VF48eventQueue.clear();
-      }
+      }*/
    }
 
 
@@ -161,8 +167,8 @@ public:
 
    void PreEndRun(TARunInfo* runinfo)
    {
-      FlushMtUnpacker(runinfo, false);
-      SendQueueToFlow(runinfo);
+      //UnpackVF48Flow();
+      //SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -187,92 +193,97 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-   void SendQueueToFlow(TARunInfo* runinfo)
-   {
-      VF48event* e = NULL;
-      while (1)
-      {
-         {
-            std::lock_guard<std::mutex> lock(VF48eventQueueLock);
-            if (!VF48eventQueue.size()) return;
-            //if (VF48eventQueue.size()> 30){
-            //   std::cout<<"size in main" << VF48eventQueue.size()<<std::endl; //continue;
-            //}
-            //std::cout<<"Popping event, size now:"<<VF48eventQueue.size()<<std::endl;
-            e=VF48eventQueue.front();
-            VF48eventQueue.pop_front();
-         }
-         if (e)
-         {
-#ifdef _TIME_ANALYSIS_
-            START_TIMER
-#endif
-            TAFlowEvent* timer=NULL;
-#ifdef _TIME_ANALYSIS_
-            if (TimeModules)
-               timer=new AgAnalysisReportFlow(NULL,"queue_vf48_event",timer_start);
-#endif
-            //std::cout<<"queueing good VF48 data!"<<std::endl;
-            runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
-         }
-         //   flow=new VF48EventFlow(flow,e);
-      }
-   }
-   void FlushMtUnpacker(TARunInfo* runinfo, bool allow_timeout)
-   {
-      //Flush queue VF48 events on file transition
-      int wait_counts=0;
-      int max_wait=1000;
-      usleep(10000);
-      //Wait for unpacking to finish
-      while (1)
-      {
-         {
-            std::lock_guard<std::mutex> lock(VF48eventQueueLock);
-            if (!VF48eventQueue.size()) break;
-         }
-         usleep(100);
-         wait_counts++;
-         if (wait_counts>max_wait)
-         {
-            if (TARunInfo::fgCurrentFileIndex==(int)TARunInfo::fgFileList.size())
-               std::cerr<<"Error UnpackModule: Timeout waiting for VF48 unpacking at end of run..."<<std::endl;
-            else
-               std::cout<<"Flushing VF48 events between subruns time out"<<std::endl;
-            if (allow_timeout)
-               break;
-         }
-      }
 
-   }
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      FlushMtUnpacker(runinfo, true);
-      SendQueueToFlow(runinfo);
+      //UnpackVF48Flow();
+      //SendQueueToFlow(runinfo);
+   }
+
+
+   std::vector<VF48event*> UnpackVF48Flow(VF48DataFlow* data_flow)
+   {
+      //Unpacked VF48 events
+      std::vector<VF48event*> VF48eventQueue;
+
+      for (VF48data* d: data_flow->VF48dataQueue)
+      {
+         for (int i=0; i<NUM_VF48_MODULES; i++) 
+         {
+            //std::cout<<fe->size32[i]<<"\t";
+            if (d->size32[i])
+               vfu->UnpackStream(i, d->data32[i], d->size32[i]);
+            while (1)
+            {
+               VF48event* e = vfu->GetEvent();
+               if (!e) break;
+               // check for errors
+               //int trigs = 0;
+               for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
+               {
+                  VF48module* the_Module = e->modules[imod];
+                  // All modules should be present
+                  // there is probably a problem with the event
+                  // <<<< -----
+                  if(  !the_Module )
+                  {
+                     printf("Event %d: Error VF48 module %d not present\n", (int)e->eventNo, imod);
+                     //if(gVerbose)
+                     //   e->PrintSummary();
+                     //gBadVF48Events++;
+                     delete e;
+                     e=NULL;
+                     break;
+                  }
+   
+                  if( the_Module->error != 0 )
+                  {
+                     printf("Event %d: Found VF48 error, not using event\n", (int)e->eventNo);
+                     //if(gVerbose) e->PrintSummary();
+                     //   gBadVF48Events++;
+                     delete e;
+                     e=NULL;
+                     break;
+                  }
+               }
+               //flow=new VF48EventFlow(flow,e);
+               if (e)
+               {
+                  //e->PrintSummary();
+                  VF48eventQueue.push_back(e);
+                  //std::cout<<"size:"<<VF48eventQueue.size()<<std::endl;
+               }
+            }
+         }
+         delete d;
+      }
+      return VF48eventQueue;
    }
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-      SendQueueToFlow(runinfo);
-
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
 
       if (event->event_id != 11)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
+#endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif
+#endif
 
       event->FindAllBanks();
-      VF48data* d = new VF48data();
+      VF48DataFlow* dataflow = NULL;
       bool data_added=false;
       for (int i=0; i<NUM_VF48_MODULES; i++) 
       {
@@ -288,103 +299,59 @@ public:
          int size=vf48_bank->data_size/4;
          if (size>0)
          {
+            if (!dataflow)
+            {
+               dataflow = new VF48DataFlow(flow);
+               flow = dataflow;
+            }
+            VF48data* d = new VF48data();
             d->AddVF48data(i,event->GetBankData(vf48_bank), size);
+            dataflow->AddData(d);
             data_added=true;
          }
       }
-      if (data_added)
+      if (!data_added)
       {
-         flow=new VF48DataFlow(flow,d);
-      }
-      else
-      {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
-          delete d;
-      }
-      SendQueueToFlow(runinfo);
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules && data_added)
-         flow=new AgAnalysisReportFlow(flow,"cache_vf48_data(main thread)",timer_start);
 #endif
-
+      }
+#define ALLOW_MULTHITHREADED_UNPACK 1
+#if ALLOW_MULTHITHREADED_UNPACK
       return flow;
    }
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-
+#endif
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
+#ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
-         return flow;
-      }
-      VF48data* d=NULL;
-      VF48DataFlow* data_flow=flow->Find<VF48DataFlow>();
-      if (data_flow)
-         d=data_flow->data;
-      else
-      {
-         *flags |= TAFlag_SKIP_PROFILE;
-         return flow;
-      }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
-      //std::cout<<"Unpack time... ";
-      for (int i=0; i<NUM_VF48_MODULES; i++) 
-      {
-         //std::cout<<fe->size32[i]<<"\t";
-         if (d->size32[i])
-            vfu->UnpackStream(i, d->data32[i], d->size32[i]);
-         while (1)
-         {
-            VF48event* e = vfu->GetEvent();
-            if (!e) break;
-            // check for errors
-            //int trigs = 0;
-            for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
-            {
-               VF48module* the_Module = e->modules[imod];
-               // All modules should be present
-               // there is probably a problem with the event
-               // <<<< -----
-               if(  !the_Module )
-               {
-                  printf("Event %d: Error VF48 module %d not present\n", (int)e->eventNo, imod);
-                  //if(gVerbose)
-                  //   e->PrintSummary();
-                  //gBadVF48Events++;
-                  delete e;
-                  e=NULL;
-                  break;
-               }
-
-               if( the_Module->error != 0 )
-               {
-                  printf("Event %d: Found VF48 error, not using event\n", (int)e->eventNo);
-                  //if(gVerbose) e->PrintSummary();
-                  //   gBadVF48Events++;
-                  delete e;
-                  e=NULL;
-                  break;
-               }
-            }
-            //flow=new VF48EventFlow(flow,e);
-            if (e)
-            {
-               std::lock_guard<std::mutex> lock(VF48eventQueueLock);
-               //e->PrintSummary();
-               VF48eventQueue.push_back(e);
-               //std::cout<<"size:"<<VF48eventQueue.size()<<std::endl;
-            }
-         }
-      }
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules)
-         flow=new AgAnalysisReportFlow(flow,"unpack_vf48_stream",timer_start);
 #endif
-     //delete d;
-     return flow;
+         return flow;
+      }
+      VF48DataFlow* data_flow=flow->Find<VF48DataFlow>();
+      bool flow_queued = false;
+      if (data_flow)
+      {
+         std::vector<VF48event*> vf48events = UnpackVF48Flow(data_flow);
+         if (vf48events.size())
+            flow_queued = true;
+         for (VF48event* event: vf48events)
+            runinfo->AddToFlowQueue(new VF48EventFlow(NULL,event));
+         vf48events.clear();
+      }
+
+      if (!flow_queued)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
+         return flow;   
+      }
+      return flow;
    }
 };
 

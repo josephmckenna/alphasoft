@@ -7,6 +7,17 @@
 #include "Deconv.hh"
 #include "TWaveform.hh"
 
+
+TH2D* Deconv::hADCped=0;
+TProfile* Deconv::hADCped_prox=0;
+TH2D* Deconv::hPWBped=0;
+TProfile* Deconv::hPWBped_prox=0;
+
+// pads
+TH1D* Deconv::hAvgRMSPad=0;
+// anodes
+TH1D* Deconv::hAvgRMSTop=0;
+
 Deconv::Deconv(double adc, double pwb,
 	       double aw, double pad): fTrace(false), fDiagnostic(false), fAged(false),
                                        fbinsize(1), fAWbinsize(16), fPADbinsize(16),
@@ -57,11 +68,11 @@ Deconv::~Deconv()
 
 void Deconv::Setup()
 {
-   SetupADCs(0);
-   SetupPWBs(0);
+   SetupADCs(0,0);
+   SetupPWBs(0,0);
 }
 
-void Deconv::SetupADCs(int run, bool norm, bool diag)
+void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
 {
    fAnodeFactors = {
       0.1275,        // neighbour factor
@@ -91,16 +102,24 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
    if( diag )
       {
          fDiagnostic = true;
-
-         gDirectory->cd("/");
-         gDirectory->mkdir("awdeconv")->cd();
-
-         hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,50000.);
-         hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,50000.);
-
-         hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,1600,-16384.,16384.);
-         hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
-                                     256,0.,256.,16384.,16384.);
+         if( fout ) {
+            fout->cd();
+            if( !gDirectory->cd("awdiag") )
+               gDirectory->mkdir("awdiag")->cd();
+            else
+               gDirectory->cd("awdiag");
+            
+            if( !hAvgRMSTop )
+               hAvgRMSTop = new TH1D("hAvgRMSTop","Average Deconv Remainder Top",1000,0.,50000.);
+            //hAvgRMSBot = new TH1D("hAvgRMSBot","Average Deconv Remainder Bottom",1000,0.,50000.);
+            
+            if( !hADCped )
+               hADCped = new TH2D("hADCped","ADC pedestal per AW",256,0.,256.,
+                                  1600,-16384.,16384.);
+            if( !hADCped_prox )
+               hADCped_prox = new TProfile("hADCped_prox","Average ADC pedestal per AW;AW;ADC",
+                                           256,0.,256.,16384.,16384.);
+         }
       }
    
    // by run settings
@@ -116,11 +135,14 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
          isalpha16=true;
       }
    else if( run >= 2282 && run < 2724 )
-         fADCdelay = -120.;
+      fADCdelay = -120.;
    else if( run >= 2724 && run < 3032 ) // new FMC-32
-         fADCdelay = 0.;
-   else if( run >= 3032 )
-         fADCdelay = -250.;
+      fADCdelay = 0.;
+   else if( run >= 3032 && run < 3870 )
+      fADCdelay = -250.;
+   else if( run >= 3870 && run < 900000 )
+      fADCdelay = -330.;
+
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
@@ -128,15 +150,15 @@ void Deconv::SetupADCs(int run, bool norm, bool diag)
        run == 3260 || run == 3263 || run == 3265 ||
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
          fADCdelay = -400.;
-   if( run == 3170 || run == 3195 || run == 3190 ||
-       run == 3187 || run == 3186 || run == 3184 ||
-       run == 3181 || run == 3178 || run == 3208 ||
-       run == 3210 || run == 3245 ||
-       run == 3874 || run == 3858 ) // TrigCoinc
-         fADCdelay = 0.;
+
+   if( run > 903837 && run < 904100 ) fADCdelay = -120.;
+   else if( run > 904100 ) fADCdelay = 0.;
+   //   else if( run > 904100 && run <= 904400 ) fADCdelay = -80.;
+   // else if( run > 904400 && run <= 904500 ) fADCdelay = -32.;
+   // else if( run > 904500 ) fADCdelay = 0.;
 }
 
-void Deconv::SetupPWBs(int run, bool norm, bool diag)
+void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
 {
    fPadSecMask.reserve(32);
    fPadRowMask.reserve(576);
@@ -160,19 +182,28 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
    if( diag )
       {
          fDiagnostic = true;
+         if(fout) {
+            fout->cd();
+            if( !gDirectory->cd("paddiag") )
+               gDirectory->mkdir("paddiag")->cd();
+            else
+               gDirectory->cd("paddiag");
 
-         gDirectory->cd("/");
-         gDirectory->mkdir("paddeconv")->cd();
-
-         hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
-
-         hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",32*576,0.,_padcol*_padrow,
-                            1000,-4096.,4096.);
-         hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
-                                     32*576,0.,_padcol*_padrow,-4096.,4096.);
-
-         // hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
-         //                         576,0.,_padrow,32,0.,_padcol);
+            if( !hAvgRMSPad )
+               hAvgRMSPad = new TH1D("hAvgRMSPad","Average Deconv Remainder Pad",500,0.,5000.);
+            
+            if( !hPWBped )
+               hPWBped = new TH2D("hPWBped","PWB pedestal per Pad",
+                               32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,
+                                  1000,-4096.,4096.);
+            
+            if( !hPWBped_prox )
+               hPWBped_prox = new TProfile("hPWBped_prox","Average PWB pedestal per Pad;Pad;PWB",
+                                        32*576,0.,ALPHAg::_padcol*ALPHAg::_padrow,-4096.,4096.);
+            
+            // hPadOverflow = new TH2D("hPadOverflow","Distribution of Overflow Pads;row;sec;N",
+            //                         576,0.,_padrow,32,0.,_padcol);
+         }
       }
 
    // by run settings
@@ -182,27 +213,20 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 2282 && run < 2724 )
-      fPWBdelay = 0.;
-   else if( run >= 2724 && run < 3032 ) // new FMC-32
-      fPWBdelay = 0.;
-   else if( run >= 3032 )
-      fPWBdelay = 0.;
+   else if( run >= 3870 && run < 900000 )
+      fPWBdelay = -80.;//fPWBdelay = -50.;
+      
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
        run == 3253 || run == 3254 || run == 3255 ||
        run == 3260 || run == 3263 || run == 3265 ||
        run == 3875 || run == 3866 || run == 3859 || run == 3855) // TrigBscMult
-      
       fPWBdelay = -100.;
 
-   if( run == 3170 || run == 3195 || run == 3190 ||
-       run == 3187 || run == 3186 || run == 3184 ||
-       run == 3181 || run == 3178 || run == 3208 ||
-       run == 3210 || run == 3245 ||
-       run == 3874 || run == 3858 ) // TrigCoinc
-      fPWBdelay = 0.;
+   if( run > 904100 && run <= 904400 )// fPWBdelay = -96.;
+      fPWBdelay = -112.;
+   else if( run > 904400 ) fPWBdelay = -64.;
    
    // electrodes masking
    if( run == 0 )
@@ -241,8 +265,6 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
          fPadRowMask.push_back(504);
          fPadRowMask.push_back(505);
       }
-   // if( run >= 3003 )
-   //    fAwMask.push_back(142+256);
    else if( run == 3873 || run == 3864 )
       {
          fPadSecMask.push_back(21);
@@ -256,6 +278,20 @@ void Deconv::SetupPWBs(int run, bool norm, bool diag)
          fPadRowMask.push_back(503);
          fPadRowMask.push_back(504);
          fPadRowMask.push_back(554);
+      }
+   else if( run > 903862 )
+      {
+         fPadSecMask.push_back(11);
+         fPadRowMask.push_back(324);
+         fPadRowMask.push_back(325);
+         fPadRowMask.push_back(326);
+         fPadRowMask.push_back(337);
+      }
+   if( run == 903941 )
+      {
+         fPadSecMask.push_back(17);
+         fPadSecMask.push_back(18);
+         for(int x=432; x<468; ++x) fPadRowMask.push_back(x);
       }
 }
 
@@ -308,7 +344,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
 {
    int Nentries = AWsignals->GetEntries();
    // prepare vector with wf to manipulate
-   std::vector<wfholder*> AnodeWaves;
+   std::vector<ALPHAg::wfholder*> AnodeWaves;
    AnodeWaves.reserve( Nentries );
    // clear/initialize "output" vectors
    fAnodeIndex.clear();
@@ -323,11 +359,11 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
          std::string wname = w->GetElectrode();
          //std::cout<<"Deconv::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
          int aw_number = std::stoi( wname.substr(1) );
-         electrode el(aw_number);
+         ALPHAg::electrode el(aw_number);
          //std::cout<<"Deconv::FindAnodeTimes Electrode: "<<el.idx<<std::endl;
 
          // nothing dumb happens
-         if( data.size() < 410 + pedestal_length )
+         if( (int)data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindAnodeTimes ERROR wf samples: "
                         <<data.size()<<std::endl;
@@ -342,7 +378,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
          //std::cout<<"aw: "<<aw_number<<" PH: "<<peak_h<<" (ped:"<<ped<<")"<<std::endl;
 
          // CREATE WAVEFORM
-         wfholder* waveform=new wfholder( index, 
+         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
                                           std::next(data.begin(),pedestal_length),
                                           data.end());
          if(peak_h > fADCThres)     // Signal amplitude < thres is considered uninteresting
@@ -389,7 +425,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
    int Nentries = PADsignals->GetEntries();
 
    // prepare vector with wf to manipulate
-   std::vector<wfholder*> PadWaves;
+   std::vector<ALPHAg::wfholder*> PadWaves;
    PadWaves.reserve( Nentries );
    // clear/initialize "output" vectors
    fPadIndex.clear();
@@ -398,7 +434,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
    std::string delimiter = "_";
 
    // find intresting channels
-   unsigned int index=0; //wfholder index
+   unsigned int index=0; //ALPHAg::wfholder index
    for( int j=0; j<Nentries; ++j )
       {
          TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
@@ -426,12 +462,12 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          int pad_index = pmap->index(coli,row);
          assert(!std::isnan(pad_index));
          // CREATE electrode
-         electrode el(col,row);
+         ALPHAg::electrode el(col,row);
   
          if( data.size() == 0 ) continue;
 
          // nothing dumb happens
-         if( data.size() < 410 + pedestal_length )
+         if( (int)data.size() < 410 + pedestal_length )
             {
                std::cerr<<"Deconv::FindPadTimes ERROR wf samples: "
                         <<data.size()<<std::endl;
@@ -444,7 +480,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          double peak_h = GetPeakHeight(data,pad_index,ped,false);
 
          // CREATE WAVEFORM
-         wfholder* waveform=new wfholder( index, 
+         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
                                           std::next(data.begin(),pedestal_length),
                                           data.end());
          
@@ -491,7 +527,7 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
    std::vector<Alpha16Channel*> channels = anodeSignals->hits;
    // prepare vector with wf to manipulate
-   std::vector<wfholder*> AnodeWaves;
+   std::vector<ALPHAg::wfholder*> AnodeWaves;
    AnodeWaves.reserve( channels.size() );
    // clear/initialize "output" vectors
    fAnodeIndex.clear();
@@ -499,12 +535,12 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
    
    if( fDiagnostic ) 
       {
-         fAdcPeaks = new std::vector<signal>;
+         fAdcPeaks = new std::vector<ALPHAg::signal>;
          fAdcPeaks->reserve( channels.size() );
       }
    if( fAged ) 
       {
-         wirewaveforms = new std::vector<wf_ref>;
+         wirewaveforms = new std::vector<ALPHAg::wf_ref>;
          wirewaveforms->reserve( channels.size() );
       }
 
@@ -519,7 +555,7 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
          // std::cout<<"DeconvAWModule::FindAnodeTimes anode wire: "<<aw_number<<std::endl;
          if( aw_number < 0 || aw_number >= 512 ) continue;
          // CREATE electrode
-         electrode el(aw_number);
+         ALPHAg::electrode el(aw_number);
            
          // mask hot wires
          if( MaskWires(aw_number) ) continue;
@@ -529,12 +565,14 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
 
          if( fDiagnostic )
             {
+               hADCped->Fill(el.idx,ped);
+               hADCped_prox->Fill(el.idx,ped);
                double peak_t = GetPeakTime(ch->adc_samples,true);
                fAdcPeaks->emplace_back(el.idx,peak_t,peak_h,0.);
             }
             
          // CREATE WAVEFORM
-         wfholder* waveform=new wfholder( index, 
+         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
                                           std::next(ch->adc_samples.begin(),pedestal_length),
                                           ch->adc_samples.end());
 
@@ -572,14 +610,23 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
 
    if( fDiagnostic )
    {
-      resRMS_a.clear();
-      resRMS_a.reserve( AnodeWaves.size() );
+      // resRMS_a.clear();
+      // resRMS_a.reserve( AnodeWaves.size() );
       // calculate remainder of deconvolution
+      double mtop=0.,rtop=0.;
       for(auto s: AnodeWaves)
-         resRMS_a.push_back( sqrt(
-                                  std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
-                                  / static_cast<double>(s->h->size()) )
-                             );
+         {
+            rtop += sqrt( std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+                                  / static_cast<double>(s->h->size()) );
+            // resRMS_a.push_back( sqrt(
+            //                          std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+            //                          / static_cast<double>(s->h->size()) )
+            //                     );
+            ++mtop;
+         }
+      if( mtop!=0.) rtop /= mtop;
+      //std::cout<<"DeconvAWModule:: RMS top: "<<rtop<<" el: "<<mtop<<" avg RMS: "<<rtop<<std::endl;
+      hAvgRMSTop->Fill(rtop);
    }
    
    for (uint i=0; i<AnodeWaves.size(); i++)
@@ -595,7 +642,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
 {
    std::vector<FeamChannel*> channels = padSignals->hits;
    // prepare vector with wf to manipulate
-   std::vector<wfholder*> PadWaves;
+   std::vector<ALPHAg::wfholder*> PadWaves;
    PadWaves.reserve( channels.size() );
    // clear/initialize "output" vectors
    fPadIndex.clear();
@@ -603,12 +650,12 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
 
    if( fDiagnostic ) 
       {
-         fPwbPeaks = new std::vector<signal>;
+         fPwbPeaks = new std::vector<ALPHAg::signal>;
          fPwbPeaks->reserve( channels.size() );
       }
    if( fAged ) 
       {
-         feamwaveforms = new std::vector<wf_ref>;
+         feamwaveforms = new std::vector<ALPHAg::wf_ref>;
          feamwaveforms->reserve( channels.size() );
       }
 
@@ -631,10 +678,14 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          //std::cout<<" index: "<<pad_index<<std::endl;
          
          // CREATE electrode
-         electrode el(col,row);
+         ALPHAg::electrode el(col,row);
 
          // mask hot pads
-         if( MaskPads(col,row) ) continue;
+         if( MaskPads(col,row) ) 
+            {
+               std::cout<<"Deconv::FindPadTimes(const FeamEvent*) MaskPad sec: "<<col<<", row:"<<row<<std::endl;
+               continue;
+            }
 
          if( ch->adc_samples.size() < 510 )
             {
@@ -649,12 +700,14 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
           
          if( fDiagnostic )
             {
+               hPWBped->Fill(pad_index,ped);
+               hPWBped_prox->Fill(pad_index,ped);
                double peak_t = GetPeakTime(ch->adc_samples,false);
                fPwbPeaks->emplace_back(el,peak_t,peak_h,0.,false);
             }
             
          // CREATE WAVEFORM
-         wfholder* waveform=new wfholder( index, 
+         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
                                           std::next(ch->adc_samples.begin(),pedestal_length),
                                           ch->adc_samples.end());
          
@@ -662,7 +715,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          if(peak_h > fPWBThres)
             {
                if(fTrace)
-                  std::cout<<"\tsignal above threshold ch: "<<i<<" index: "<<index<<std::endl;
+                  std::cout<<"\tsignal above threshold ch: "<<i<<" index: "<<index<<" p.h.: "<<peak_h<<std::endl;
 
                // SUBTRACT PEDESTAL
                waveform->massage(ped,fPwbRescale.at(pad_index));
@@ -693,14 +746,22 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    if( fDiagnostic )
       {
          // prepare control variable (deconv remainder) vector
-         resRMS_p.clear();
-         resRMS_p.reserve( PadWaves.size() );
+         // resRMS_p.clear();
+         // resRMS_p.reserve( PadWaves.size() );
+         double mr=0.,r=0.;
          // calculate remainder of deconvolution
          for(auto s: PadWaves)
-            resRMS_p.push_back( sqrt(
-                                     std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
-                                     / static_cast<double>(s->h->size()) )
-                                );
+            {
+               r+=sqrt( std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+                        / static_cast<double>(s->h->size()) );
+               // resRMS_p.push_back( sqrt(
+               //                          std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+               //                          / static_cast<double>(s->h->size()) )
+               //                     );
+               ++mr;
+            }
+         if( mr != 0. ) r /= mr;
+         hAvgRMSPad->Fill(r);
       }
 
    for (uint i=0; i<PadWaves.size(); i++)
@@ -712,14 +773,14 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    return nsig;
 }
 
-std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
-                                            std::vector<electrode> &fElectrodeIndex,
+std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
+                                            std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                             std::vector<double> &fResponse, int theBin, bool isanode)
 {
 
    if(subtracted->size()==0) return 0;
    int nsamples = subtracted->back()->h->size();
-   std::vector<signal>* fSignals=new std::vector<signal>;
+   std::vector<ALPHAg::signal>* fSignals=new std::vector<ALPHAg::signal>;
    fSignals->reserve(nsamples-theBin);
    assert(nsamples < 1000);
    if( fTrace )
@@ -743,7 +804,7 @@ std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first
-         std::vector<wfholder*>* histset = wforder( subtracted, b );
+         std::vector<ALPHAg::wfholder*>* histset = wforder( subtracted, b );
          // std::cout<<"Deconv::Deconvolution bin of interest: "<<b
          //          <<" workable wf: "<<histset.size()<<std::endl;
          // this is useful to split deconv into the "Subtract" method
@@ -753,7 +814,7 @@ std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
             {
                unsigned int i = it->index;
                std::vector<double>* wf=it->h;
-               electrode anElectrode = fElectrodeIndex.at( i );
+               ALPHAg::electrode anElectrode = fElectrodeIndex.at( i );
                // number of "electrons"
                double ne = anElectrode.gain * fScale * wf->at(b) / fResponse[theBin];
                if( ne >= fAvalancheSize )
@@ -778,16 +839,16 @@ std::vector<signal>* Deconv::Deconvolution( std::vector<wfholder*>* subtracted,
    return fSignals;
 }
 
-void Deconv::SubtractAW(wfholder* hist1,
-                        std::vector<wfholder*>* wfmap,
+void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
+                        std::vector<ALPHAg::wfholder*>* wfmap,
                         const int b,
-                        const double ne,std::vector<electrode> &fElectrodeIndex,
+                        const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                         std::vector<double> &fResponse, int theBin)
 {
    std::vector<double> *wf1 = hist1->h;
    int wf1size=wf1->size();
    unsigned int i1 = hist1->index;
-   electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
+   ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
    uint AnodeSize=fAnodeFactors.size();
    uint ElectrodeSize=fElectrodeIndex.size();
@@ -795,7 +856,7 @@ void Deconv::SubtractAW(wfholder* hist1,
    int respsize=fResponse.size();
    for(unsigned int k = 0; k < ElectrodeSize; ++k)
       {
-         electrode wire2 = fElectrodeIndex.at( k );
+         ALPHAg::electrode wire2 = fElectrodeIndex.at( k );
          //check for top/bottom
          if( wire2.sec != wire1.sec ) continue;
          //Skip early if wires not close...
@@ -833,16 +894,16 @@ void Deconv::SubtractAW(wfholder* hist1,
       }// bin loop: subtraction
 }
 
-void Deconv::SubtractPAD(wfholder* hist1,
-                         std::vector<wfholder*>* wfmap,
+void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
+                         std::vector<ALPHAg::wfholder*>* wfmap,
                          const int b,
-                         const double ne,std::vector<electrode> &fElectrodeIndex,
+                         const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                          std::vector<double> &fResponse, int theBin)
 {
    std::vector<double> *wf1 = hist1->h;
    int wf1size=wf1->size();
    unsigned int i1 = hist1->index;
-   electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
+   ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
    int respsize=fResponse.size();
      
@@ -859,18 +920,18 @@ void Deconv::SubtractPAD(wfholder* hist1,
       }// bin loop: subtraction
 }
 
-std::vector<wfholder*>* Deconv::wforder(std::vector<wfholder*>* subtracted, const int b)
+std::vector<ALPHAg::wfholder*>* Deconv::wforder(std::vector<ALPHAg::wfholder*>* subtracted, const int b)
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
-   std::vector<wfholder*>* histset=new std::vector<wfholder*>;
+   std::vector<ALPHAg::wfholder*>* histset=new std::vector<ALPHAg::wfholder*>;
    unsigned int size=subtracted->size();
    //   std::cout<<"Deconv::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
    histset->reserve(size);
    for(unsigned int i=0; i<size;++i)
       {
          //         std::cout<<"wf# "<<i;
-         wfholder* mh=subtracted->at(i);
+         ALPHAg::wfholder* mh=subtracted->at(i);
          // std::cout<<"\twf index: "<<mh->index;
          // std::cout<<"\twf size: "<<mh->h->size();
          //std::cout<<"\twf bin: "<<b<<std::endl;
@@ -882,9 +943,9 @@ std::vector<wfholder*>* Deconv::wforder(std::vector<wfholder*>* subtracted, cons
    return histset;
 }
 
-std::map<int,wfholder*>* Deconv::wfordermap(std::vector<wfholder*>* histset,std::vector<electrode> &fElectrodeIndex)
+std::map<int,ALPHAg::wfholder*>* Deconv::wfordermap(std::vector<ALPHAg::wfholder*>* histset,std::vector<ALPHAg::electrode> &fElectrodeIndex)
 {
-   std::map<int,wfholder*>* wfmap=new std::map<int,wfholder*>;
+   std::map<int,ALPHAg::wfholder*>* wfmap=new std::map<int,ALPHAg::wfholder*>;
    for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
       {
          for (auto const it : *histset)
@@ -1039,43 +1100,43 @@ int Deconv::ReadPWBRescaleFile()
    return int(fPwbRescale.size());
 }
 
-void Deconv::AWdiagnostic()
-{
-   double mbot=0.,mtop=0.,rbot=0.,rtop=0.;
-   for(unsigned iEl = 0; iEl<fAnodeIndex.size(); ++iEl)
-      {
-         if( fAnodeIndex.at(iEl).sec )
-            {
-               rbot += resRMS_a.at(iEl);
-               ++mbot;
-            }
-         else
-            {
-               rtop += resRMS_a.at(iEl);
-               ++mtop;
-            }
-      }
-   //std::cout<<"DeconvAWModule::AWdiagnostic() RMS bot: "<<rbot<<" el: "<<mbot;
-   if( mbot!=0.) rbot /= mbot;
-   //std::cout<<" avg RMS: "<<rbot<<std::endl;
-   hAvgRMSBot->Fill(rbot);
-   //std::cout<<"DeconvAWModule::AWdiagnostic() RMS top: "<<rtop<<" el: "<<mtop<<std::endl;
-   if( mtop!=0.) rtop /= mtop;
-   //std::cout<<" avg RMS: "<<rtop<<std::endl;
-   hAvgRMSTop->Fill(rtop);
-}
+// void Deconv::AWdiagnostic()
+// {
+//    double mbot=0.,mtop=0.,rbot=0.,rtop=0.;
+//    for(unsigned iEl = 0; iEl<fAnodeIndex.size(); ++iEl)
+//       {
+//          if( fAnodeIndex.at(iEl).sec )
+//             {
+//                rbot += resRMS_a.at(iEl);
+//                ++mbot;
+//             }
+//          else
+//             {
+//                rtop += resRMS_a.at(iEl);
+//                ++mtop;
+//             }
+//       }
+//    //std::cout<<"DeconvAWModule::AWdiagnostic() RMS bot: "<<rbot<<" el: "<<mbot;
+//    //if( mbot!=0.) rbot /= mbot;
+//    //std::cout<<" avg RMS: "<<rbot<<std::endl;
+//    //   hAvgRMSBot->Fill(rbot);
+//    //std::cout<<"DeconvAWModule::AWdiagnostic() RMS top: "<<rtop<<" el: "<<mtop<<std::endl;
+//    if( mtop!=0.) rtop /= mtop;
+//    //std::cout<<" avg RMS: "<<rtop<<std::endl;
+//    hAvgRMSTop->Fill(rtop);
+// }
 
-void Deconv::PADdiagnostic()
-{
-   double mr=0.,r=0.;
-   for(unsigned iEl = 0; iEl<fPadIndex.size(); ++iEl)
-      {
-         r += resRMS_p.at(iEl);
-         ++mr;
-      }
-   if( mr != 0. ) r /= mr;
-   hAvgRMSPad->Fill(r);
-}
+// void Deconv::PADdiagnostic()
+// {
+//    double mr=0.,r=0.;
+//    for(unsigned iEl = 0; iEl<fPadIndex.size(); ++iEl)
+//       {
+//          r += resRMS_p.at(iEl);
+//          ++mr;
+//       }
+//    if( mr != 0. ) r /= mr;
+//    hAvgRMSPad->Fill(r);
+// }
 
 void Deconv::PrintADCsettings()
 {

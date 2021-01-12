@@ -62,13 +62,14 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${GARFIELDPP}/include
 		    ${Geant4_INCLUDE_DIR}
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/include/Garfield
-		    $ENV{GARFIELD_HOME}/Heed
+		    $ENV{GARFIELD_HOME}/install/include/Garfield
+		    $ENV{GARFIELD_HOME}/install/Heed
 		    ${CRY_INCLUDE_DIR}
 		    ${CADMESH_INCLUDE_DIRS})
-link_directories($ENV{GARFIELD_HOME}/lib)
+link_directories($ENV{GARFIELD_HOME}/install/lib)
 
-ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh)
+#ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G4outDict TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------

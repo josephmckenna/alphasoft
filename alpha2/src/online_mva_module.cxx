@@ -5,15 +5,13 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TH1D.h"
 #include "TH2D.h"
-
-#include "AnalysisTimer.h"
-
 
 #include "../OnlineMVA/weights/alphaClassification_BDTF.class.C"
 class OnlineMVAFlags
@@ -44,6 +42,9 @@ public:
    OnlineMVA(TARunInfo* runinfo, OnlineMVAFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Online MVA Module";
+#endif
       if (fTrace)
          printf("OnlineMVA::ctor!\n");
       
@@ -55,11 +56,6 @@ public:
       //grfcut=0.230254;
       //100mHz Background (78% efficiency)
       //grfcut=0.163; 
-
-
-      
-
-      
    }
 
    ~OnlineMVA()
@@ -101,7 +97,12 @@ public:
    {
       A2OnlineMVAFlow* dumper_flow=flow->Find<A2OnlineMVAFlow>();
       if (!dumper_flow)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
       OnlineMVAStruct* OnlineVars=dumper_flow->dumper_event;
 
       //    "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "", "nCT", "nGT"
@@ -119,12 +120,6 @@ public:
       double rfout=r->GetMvaValue(input_vals);
       dumper_flow->rfout=rfout;
       dumper_flow->pass_online_mva=(rfout>grfcut);
-      #ifdef _TIME_ANALYSIS_
-         START_TIMER
-      #endif
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"OnlineMVA_module",timer_start);
-      #endif
       return flow; 
   }
 

@@ -1,3 +1,4 @@
+#ifdef BUILD_A2
 #include "TA2Plot_Filler.h"
 
 TA2Plot_Filler::TA2Plot_Filler()
@@ -80,3 +81,4 @@ void TA2Plot_Filler::LoadData()
    }
 }
 
+#endif

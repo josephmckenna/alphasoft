@@ -1,3 +1,4 @@
+#ifdef BUILD_AG
 #include "TBarEvent.hh"
 
 
@@ -14,7 +15,8 @@ TBarEvent::TBarEvent()
 
 TBarEvent::~TBarEvent()
 {
-// dtor
+   // dtor
+   Reset();
 }
 
 void TBarEvent::Print()
@@ -41,7 +43,7 @@ EndHit::EndHit()
 void EndHit::Print()
 {
   std::cout<<"EndHit::Print() -- Bar ID:"<<fBarID<<std::endl;
-  std::cout<<"ADC time: "<<fADCTime<<" Amplitude: "<<fAmp<<" Integral: "<<fIntegral<<std::endl;
+  std::cout<<"ADC time: "<<fADCTime<<" Amplitude: "<<fAmp<<std::endl;
   std::cout<<"TDC Matched? "<<fTDCMatched;
   if (fTDCMatched) std::cout<<" TDC time: "<<fTDCTime;
   std::cout<<std::endl;
@@ -60,15 +62,6 @@ BarHit::BarHit()
 
 }
 
-double BarHit::CalculateZed( double _TimeTop, double _TimeBot )
-{
-   double timeDiff=_TimeBot-_TimeTop;
-   double speed=TMath::C();
-   double cFactor=1.58;
-   double zed = ((speed/cFactor) * double(timeDiff))*0.5; //in meter
-   return zed;
-}
-
 void BarHit::Print()
 {
    std::cout<<"BarHit::Print() -- Bar ID:"<<fBarID<<std::endl;
@@ -82,7 +75,7 @@ void BarHit::Print()
          std::cout<<"Top hit: vvv"<<std::endl;
          fTopHit->Print();
       }
-   std::cout<<"Time Diff:"<<fTopHit->GetTDCTime()-fBotHit->GetTDCTime()<<"\tZedTDC:"<<fZedTDC<<"\tZedADC:"<<fZedADC<<std::endl;
+   std::cout<<"Time Diff:"<<fTopHit->GetTDCTime()-fBotHit->GetTDCTime()<<std::endl;
   std::cout<<"TPC Matched? "<<fTPCMatched;
   if (fTPCMatched) {std::cout<<" TPC hit: "<<std::endl; fTPC.Print();}
   else std::cout<<std::endl;
@@ -94,7 +87,7 @@ BarHit::~BarHit()
 
 
 }
-
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

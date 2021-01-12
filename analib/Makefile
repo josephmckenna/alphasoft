@@ -18,35 +18,41 @@ LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum
 
 INC= $(wildcard $(INCDIR)/*.h)
 INC+=$(wildcard $(INCDIR)/*.hh)
+INC+=$(wildcard RootUtils/*.h)
 INC+=LibLinkDef.hh
 INC:= $(filter-out $(INCDIR)/sqlite3.h,$(INC))
 
 DICT=analib.cc
-SRC=$(wildcard $(SRCDIR)/*.cxx) $(DICT)
+SRC=$(wildcard $(SRCDIR)/*.cxx) $(wildcard RootUtils/*.cxx) $(DICT)
 SRC:= $(patsubst $(SRCDIR)/%.cxx,$(OBJDIR)/%.o,$(SRC))
+SRC:= $(patsubst RootUtils/%.cxx,$(OBJDIR)/RootUtils/%.o,$(SRC))
 CSRC    := $(wildcard src/*.c)
 CSRC    := $(patsubst src/%.c,$(OBJDIR)/%.o,$(CSRC))
 
-all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-all: linkdirs libagana.so
+all: CXXFLAGS=-O3 -g -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
+all: linkdirs libanalib.so
 
-debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-debug: linkdirs libagana.so
+debug: CXXFLAGS += -O0 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
+debug: linkdirs libanalib.so
 
-native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native
-native: linkdirs libagana.so
+native: CXXFLAGS += -O3 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags)  -march=native  $(BUILD_FLAGS)
+native: linkdirs libanalib.so
 
-O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) 
-O2: linkdirs libagana.so
+O2: CXXFLAGS += -O2 -g  -Wall -Wuninitialized -fPIC $(shell root-config --cflags) $(BUILD_FLAGS)
+O2: linkdirs libanalib.so
 
 linkdirs:
 	mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)/RootUtils
 
-libagana.so: $(SRC) $(CSRC)
+libanalib.so: $(SRC) $(CSRC)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(LDFLAGS) $(LDLIBS) $(INCS) $^
 
 $(DICT): $(INC)
 	$(ROO) -f $@ -c $(CXXFLAGS) $(INCS) -p $^
+
+$(OBJDIR)/RootUtils/%.o: RootUtils/%.cxx
+	$(CXX) -c $(CXXFLAGS) -o $@ $(INCS) -c $<
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 	$(CXX) -c $(CXXFLAGS) -o $@ $(INCS) -c $<
@@ -54,4 +60,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cxx
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) -o $@ $(CFLAGS) $(INCS) -fPIC -c $<
 clean:
-	rm -f $(OBJDIR)/*.o libagana.so analib.cc analib_rdict.pcm
+	rm -f $(OBJDIR)/RootUtils/*.o $(OBJDIR)/*.o libanalib.so analib.cc analib_rdict.pcm

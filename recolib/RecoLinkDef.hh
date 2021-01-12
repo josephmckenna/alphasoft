@@ -12,6 +12,8 @@
 
 #pragma link C++ class  TCosmic+;
 
+#pragma link C++ class  AnaSettings+;
+
 #endif
 
 /* emacs

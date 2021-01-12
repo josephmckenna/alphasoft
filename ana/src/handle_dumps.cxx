@@ -11,6 +11,7 @@
 #include "TSISEvent.h"
 #include "TSpill.h"
 #include "AgFlow.h"
+#include "RecoFlow.h"
 #include "chrono_module.h"
 #include "TChrono_Event.h"
 #include "TChronoChannelName.h"

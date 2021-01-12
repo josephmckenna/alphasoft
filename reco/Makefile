@@ -7,7 +7,7 @@ INCDIR=$(AGRELEASE)/simulation/geant4/include
 INC += -I$(INCDIR)
 INC += -I$(AGRELEASE)/simulation/garfieldpp/include
 
-LDLIBS += -L$(AGRELEASE)/build/recolib -L$(AGRELEASE)/recolib -lAGTPC
+LDLIBS += -L$(AGRELEASE)/build/recolib -L$(AGRELEASE)/recolib -lagtpc
 LDLIBS += -L$(AGRELEASE)/build/analib -L$(AGRELEASE)/analib -lagana
 LDLIBS += $(shell root-config --glibs)
 LDLIBS += -lMinuit2 -lMathMore -lGeom -lGL -lSpectrum 

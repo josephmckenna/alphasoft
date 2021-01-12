@@ -1,7 +1,7 @@
 //
-// handle_sequencer
+// vertex display module
 //
-// A. Capra
+// J McKenna
 //
 
 #include <stdio.h>
@@ -9,6 +9,7 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
+#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TApplication.h"
@@ -17,8 +18,6 @@
 #include "TH2D.h"
 #include "TH3D.h"
 #include <THttpServer.h>
-
-#include "AnalysisTimer.h"
 
 class VertexDisplayFlags
 {
@@ -69,6 +68,9 @@ public:
    VertexDisplay(TARunInfo* runinfo, VertexDisplayFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Vertex Display";
+#endif
       if (fTrace)
          printf("VertexDisplay::ctor!\n");
        if (!fFlags->fDraw) return;
@@ -103,8 +105,7 @@ public:
        LastEventTime=0.;
        IntegrationWindow=5.;
        LastDrawTime=0.;
-       
-       
+
        NQueues=0;
    }
 
@@ -152,13 +153,21 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
-      if (!fFlags->fDraw) return flow;
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
-      SilEventsFlow* fe=flow->Find<SilEventsFlow>();
-      if (!fe)
+      if (!fFlags->fDraw)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
+      if (!fe)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
       TSiliconEvent* SiliconEvent=fe->silevent;
       
       A2OnlineMVAFlow* of=flow->Find<A2OnlineMVAFlow>();
@@ -314,15 +323,6 @@ public:
       }
     
       LastEventTime=data.t;
-      
-      
-      
-      
-      
-      
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"vertex_display",timer_start);
-      #endif
       return flow; 
   }
 };

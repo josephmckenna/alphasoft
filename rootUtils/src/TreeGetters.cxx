@@ -1,6 +1,5 @@
 #include "TreeGetters.h"
 
-
 TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
 {
    TFile* f=Get_File(runNumber);
@@ -13,7 +12,7 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    }
    return tree;
 }
-
+#ifdef BUILD_AG
 TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
 {
    TString Name="chrono/ChronoEventTree_";
@@ -23,7 +22,8 @@ TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t Ch
            Name+="OfficialTime";
    return Get_Tree_By_Name(runNumber,Name.Data());
 }
-
+#endif
+#ifdef BUILD_AG
 TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, double &official_time)
 {
    TString Name="chrono/ChronoEventTree_";
@@ -37,7 +37,8 @@ TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
    t->AddFriend(tf);
    return t;
 }
-
+#endif
+#ifdef BUILD_AG
 TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
 {
    Int_t chan=-1;
@@ -49,23 +50,25 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &officia
    }
    return Get_Chrono_Tree(runNumber,board,chan,official_time);
 }
-
-
+#endif
+#ifdef BUILD_AG
 TTree* Get_Chrono_Name_Tree(Int_t runNumber)
 {
    return Get_Tree_By_Name(runNumber,"ChronoBoxChannels");
 }
+#endif
 
 TTree* Get_Seq_Event_Tree(Int_t runNumber)
 {
    return Get_Tree_By_Name(runNumber,"SequencerEventTree");
 }
-
+#ifdef BUILD_AG
 TTree* Get_StoreEvent_Tree(Int_t runNumber)
 {
    return Get_Tree_By_Name(runNumber,"StoreEventTree");
 }
-
+#endif
+#ifdef BUILD_AG
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
 {
    TTree* t=Get_StoreEvent_Tree(runNumber);
@@ -74,7 +77,8 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
    t->AddFriend(tf);
    return t;
 }
-
+#endif
+#ifdef BUILD_A2
 // ALPHA 2 Getters:
 TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber)
 {
@@ -95,10 +99,7 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
    TTreeReader* t=new TTreeReader("A2SpillTree", f);
    return t;
 }
-
-
-
-
+#endif
 
 /* emacs
  * Local Variables:

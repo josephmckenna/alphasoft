@@ -16,6 +16,7 @@
 #include <TEnv.h>
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
 #include "chrono_module.h"
 #include "TChrono_Event.h"
@@ -33,9 +34,6 @@
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
 #define HOT_DUMP_LOW_THR 500
-
-
-#include "AnalysisTimer.h"
 
 time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
@@ -108,6 +106,9 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="Spill Log Module";
+#endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
    }
@@ -421,11 +422,14 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      if (!gIsOnline) return flow;
-       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif 
+      if (!gIsOnline)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      time(&gTime);  /* get current time; same as: timer = time(NULL)  */
 
       const AGSpillFlow* SpillFlow= flow->Find<AGSpillFlow>();
       if (SpillFlow)
@@ -458,10 +462,6 @@ public:
             SaveToTree(runinfo,s);
          }
       }
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"spill_log_module",timer_start);
-      #endif
       return flow;
    }
 

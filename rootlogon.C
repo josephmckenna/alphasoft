@@ -8,47 +8,23 @@
   }
 
 
-  TString incana("-I"); incana += basedir; incana += "/ana/include";
+  TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
-
-  TString increco("-I"); increco += basedir; increco += "/recolib/include";
-  cout<<"Including: "<<increco<<endl;
-  gSystem->AddIncludePath(increco.Data());
-
-  TString inclib("-I"); inclib += basedir; inclib += "/analib/include";
-  cout<<"Including: "<<inclib<<endl;
-  gSystem->AddIncludePath(inclib.Data());
-
-  TString inca2lib("-I"); inca2lib += basedir; inca2lib += "/a2lib/include";
-  cout<<"Including: "<<inca2lib<<endl;
-  gSystem->AddIncludePath(inca2lib.Data());
-  
-  TString incalpha2("-I"); incalpha2 += basedir; incalpha2 += "/alpha2/include";
-  cout<<"Including: "<<incalpha2<<endl;
-  gSystem->AddIncludePath(incalpha2.Data());
-
-  TString incroot("-I"); incroot += basedir; incroot += "/rootUtils/include";
-  cout<<"Including: "<<incroot<<endl;
-  gSystem->AddIncludePath(incroot.Data());
   
   
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
-  // TString libreco(basedir); libreco += "/recolib/libAGTPC";
-  // gSystem->Load(libreco.Data());
 
-  // TString libana(basedir); libana += "/analib/libagana";
-  // gSystem->Load(libana.Data());
 
-  TString libname("libAGTPC.so");
+  TString libname("libagtpc.so");
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libagana.so";
+  libname="libanalib.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
@@ -66,10 +42,7 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  gROOT->ProcessLine("#include \"rootUtils/include/A2RootUtils.h\"");
 
-  gROOT->ProcessLine("#include \"rootUtils/include/RootUtils.h\"");
-  
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
   //gStyle->SetPalette(kAurora);

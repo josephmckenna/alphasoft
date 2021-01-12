@@ -2,9 +2,9 @@
 #include "midasio.h"
 
 #include "AgFlow.h"
+#include "RecoFlow.h"
 
-#include "AnalysisTimer.h"
-#include "AnaSettings.h"
+#include "AnaSettings.hh"
 
 #include "Deconv.hh"
 
@@ -51,6 +51,9 @@ public:
                                                          fFlags( f ),
                                                          d( f->ana_settings )
    {
+#ifdef MANALYZER_PROFILER
+      ModuleName="DeconvAWModule";
+#endif
       if (fTrace)
          printf("DeconvAWModule::ctor!\n");
    }
@@ -67,7 +70,8 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       
-      d.SetupADCs( runinfo->fRunNo, 
+      d.SetupADCs( runinfo->fRoot->fOutputFile,
+                   runinfo->fRunNo, 
                    fFlags->fADCnorm,   // dis/en-able normalization of WF
                    fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
@@ -96,7 +100,12 @@ public:
    {
       // turn off recostruction
       if (fFlags->fRecOff)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
+      }
 
       if(fTrace)
          printf("DeconvAWModule::Analyze, run %d, counter %d\n",
@@ -104,49 +113,72 @@ public:
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-
+      }
+      
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
       {
-        if (e->time<fFlags->start_time)
-          return flow;
-        if (e->time>fFlags->stop_time)
-          return flow;
+         if (e->time<fFlags->start_time)
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+         if (e->time>fFlags->stop_time)
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
       }
 
       if (fFlags->fEventRangeCut)
       {
          if (e->counter<fFlags->start_event)
-           return flow;
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
          if (e->counter>fFlags->stop_event)
-           return flow;
+         {
+#ifdef MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
       }
-
-      #ifdef _TIME_ANALYSIS_
+#ifdef MANALYZER_PROFILER
       START_TIMER
-      #endif   
-
+#endif
       const Alpha16Event* aw = e->a16;
       if( !aw )
          {
             std::cout<<"DeconvAWModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
-            #ifdef _TIME_ANALYSIS_
-               if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
-            #endif
-               return flow;
+#ifdef MANALYZER_PROFILER
+            flow = new UserProfilerFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
+#endif
+            return flow;
          }
       else
          {
             int stat = d.FindAnodeTimes( aw );
-            printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
+            if(fTrace) printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
 
             AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetAnodeSignal());
              
             if( fFlags->fDiag )
                {
-                  d.AWdiagnostic();
+                  //d.AWdiagnostic();
                   flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
                   //               flow_sig->adc32range = d.GetAdcRange();
                }
@@ -156,9 +188,6 @@ public:
             flow = flow_sig;
          }
       ++fCounter;
-      #ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"deconv_aw_module",timer_start);
-      #endif
       //d.Reset();
       return flow;
    }
