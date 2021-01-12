@@ -2,9 +2,12 @@
 # Master Makefile for the ALPHA-g analyzer
 #
 
+# compilation and version info
+DEPS = gitinfo
+
 #If rootana is within this folder, build it...
 ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
-DEPS = buildrootana
+DEPS += buildrootana
 endif
 
 AGLIBS = libanalib.so libagtpc.so libaged.so
@@ -14,21 +17,22 @@ A2LIBS = libanalib.so libagtpc.so alpha2libs
 A2BIN  = alpha2
 
 
-AG= $(DEPS) $(AGLIBS) $(AGBIN)
+AG = $(AGLIBS) $(AGBIN)
 #ALPHA 2 depends on some AG libs
-A2= $(DEPS) $(A2LIBS) $(A2BIN)
+A2 = $(A2LIBS) $(A2BIN)
 
-ALL= $(AG) $(A2) rootUtils.so
+ALL += $(DEPS)
+ALL += $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
-all: gitinfo $(ALL) FIN
+all: $(DEPS) $(ALL) FIN
 all: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 #Fast build for just AG libs and binaries
-ag: $(AG) rootUtils.so
+ag: $(DEPS) $(AG) rootUtils.so
 ag: export BUILD_FLAGS:=-DBUILD_AG
 ag: @echo -e "\033[32mAG ONLY Success!\033[m"
 #Fast build for just A2 libs and binaries
-a2: $(A2) rootUtils.so
+a2: $(DEPS) $(A2) rootUtils.so
 a2: export BUILD_FLAGS:=-DBUILD_A2
 a2: @echo -e "\033[32mA2 ONLY Success!\033[m"
 
@@ -77,7 +81,7 @@ libaged.so: $(DEPS)
 libanalib.so: $(DEPS)
 	$(MAKE) -C analib $(MFLAGS)
 
-agana: $(AGLIBS)
+agana: $(AGLIBS) $(DEPS)
 	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
@@ -86,15 +90,18 @@ alpha2libs: $(DEPS)
 reco: $(LIBS)
 	cd reco/ && $(MAKE) $(MFLAGS)
 
-alpha2: $(A2LIBS)
+alpha2: $(A2LIBS) $(DEPS)
 	$(MAKE) -C alpha2 $(MFLAGS)
 
-rootUtils.so:
+rootUtils.so: $(DEPS)
 	$(MAKE) -C rootUtils $(MFLAGS)
 
 buildrootana:
-	cd rootana && $(MAKE) obj/manalyzer_main.o
-	$(MAKE) -C rootana
+	@echo "Building rootana submodule"
+	cd rootana && $(MAKE) $(MFLAGS)
+#$(MAKE) -C rootana $(MFLAGS)
+#cd rootana && $(MAKE) obj/manalyzer_main.o
+#$(MAKE) -C rootana
 
 html/index.html:
 	-mkdir html
