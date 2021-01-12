@@ -175,7 +175,7 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
-    - rm -rf rootana agana
+    #- rm -rf rootana agana
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
