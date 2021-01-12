@@ -63,3 +63,7 @@ alpha2/obj/
 .Aged
 *.time
 build
+bin
+output
+*.save
+*_C.d

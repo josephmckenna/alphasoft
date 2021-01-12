@@ -16,17 +16,17 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "GitInfo.h"
-
 #ifdef BUILD_AG
 #include "RecoFlow.h"
 #endif
 #ifdef BUILD_A2
 #include "A2Flow.h"
+#endif
+#include "GitInfo.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
-
+#ifdef BUILD_A2
 class A2DumpSummary
 {
 public:
