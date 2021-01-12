@@ -35,7 +35,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       cd ${THIS_PATH}
       for i in `cat views.list`; do
-         . update.sh ${i}
+         source ${THIS_PATH}/update.sh ${i}
       done
       echo "All done"
       return
@@ -48,7 +48,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
 
 fi
 
-if [ `grep ${THIS_SETUP} '.sh' | wc -l` -gt 1 ]; then
+if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    #do stuff
    cvmfs_server transaction alpha.cern.ch
    echo ${THIS_SETUP}
