@@ -6,15 +6,13 @@
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))
-	#Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
-	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o 
-	# wfsuppress.o wfsuppress2.o wfsuppress_pwb.o 
+        #Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
+	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o $(OBJDIR)/wfsuppress_adc.o $(OBJDIR)/wfsuppress_pwb.o
 endef
 
 
 OBJDIR=obj
 SRCDIR=src
-#SRCDIR +=../agana
 INCDIR=include
 BINDIR=..
 
@@ -27,17 +25,13 @@ noagrelease:
 	@echo Error: AGRELEASE is not defined, please source agconfig.sh
 endif
 
+LIBS     += -L$(ROOTANASYS)/lib -lrootana -lz
 ifneq ($(ROOTSYS),)
 HAVE_ROOT:=1
-LIBS   += -lSpectrum
+LIBS += $(shell root-config --glibs)
+LIBS += -lSpectrum -lXMLIO -lXMLParser -lMinuit2 -lRHTTP
 endif
 
-# get the rootana Makefile settings
-
-
-LIBS     += -L$(ROOTANASYS)/lib -lrootana
-LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
-LIBS     += -L$(shell root-config --libdir)
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
@@ -49,6 +43,7 @@ INCS += -I$(shell root-config --incdir)
 INCS += -I../alpha2/include
 INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
+# get the rootana Makefile settings
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 
 # select the main program - local custom main()
