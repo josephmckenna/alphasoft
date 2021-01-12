@@ -20,7 +20,7 @@ A2= $(DEPS) $(A2LIBS) $(A2BIN)
 
 ALL= $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
-all: $(ALL) FIN
+all: gitinfo $(ALL) FIN
 all: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 #Fast build for just AG libs and binaries
@@ -65,38 +65,36 @@ cclean:
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
 
+gitinfo:
+	./ana/GitInfo.sh ./ana/include
+
 libagtpc.so: $(DEPS)
-	make -C recolib $(MFLAGS)
+	$(MAKE) -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
-	make -C aged $(MFLAGS)
+	$(MAKE) -C aged $(MFLAGS)
 
 libanalib.so: $(DEPS)
-	make -C analib $(MFLAGS)
+	$(MAKE) -C analib $(MFLAGS)
 
 agana: $(AGLIBS)
 	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
-	make -C a2lib $(MFLAGS)
+	$(MAKE) -C a2lib $(MFLAGS)
 
 reco: $(LIBS)
 	cd reco/ && $(MAKE) $(MFLAGS)
 
 alpha2: $(A2LIBS)
-	make -C alpha2 $(MFLAGS)
+	$(MAKE) -C alpha2 $(MFLAGS)
 
 rootUtils.so:
-	make -C rootUtils $(MFLAGS)
+	$(MAKE) -C rootUtils $(MFLAGS)
 
 buildrootana:
-	cd rootana && make obj/manalyzer_main.o
-	make -C rootana
-
-cleanrootana:
-	ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
-	cd rootana/ && $(MAKE) clean
-	endif
+	cd rootana && $(MAKE) obj/manalyzer_main.o
+	$(MAKE) -C rootana
 
 html/index.html:
 	-mkdir html
@@ -107,7 +105,6 @@ dox:
 	doxygen Doxyfile
 
 clean::
-	$(cleanrootana)
 	cd recolib/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
@@ -116,4 +113,10 @@ clean::
 	cd a2lib/ && $(MAKE) clean
 	cd alpha2/ && $(MAKE) clean
 	cd rootUtils/ && $(MAKE) clean
+
+ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
+clean::
+	cd rootana/ && $(MAKE) clean
+	rm -f obj/manalyzer_main.o
+endif
 
