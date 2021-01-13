@@ -1,7 +1,7 @@
 #!/bin/bash
 
 THIS_SETUP=$1
-
+echo "update.sh args: ${THIS_SETUP}"
 
 #become shared user and then run this script
 #if [ `whoami` != "cvalpha" ]; then
@@ -37,9 +37,8 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       sleep 10
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       cd ${THIS_PATH}
-      for i in `cat views.list`; do
-         ./${THIS_PATH}/update.sh ${i}
-      done
+      # This script may have updated in the pull... run again as a sub process
+      ./update.sh build
       echo "All done"
       return
    else
@@ -48,10 +47,13 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       cvmfs_server publish alpha.cern.ch
       return
    fi
-
-fi
-
-if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
+elif [ ${THIS_SETUP} == "build" ]; then
+   cd ${THIS_PATH}
+   for i in `cat views.list`; do
+      # Run each version as a subprocess to avoid polluting the ENVVARs
+      ./update.sh ${i}
+   done
+elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    #do stuff
    sleep 5
    cvmfs_server transaction alpha.cern.ch
@@ -66,7 +68,7 @@ if [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    mkdir -p ${AGRELEASE}/${LCG_VERSION}
    cd ${AGRELEASE}/${LCG_VERSION}_build
    #Check if we need cmake3 command or cmake
-   if [ `which cmake3` ]; then
+   if [ `command -v cmake3` ]; then
       #command cmake3 found... lets use it
       export CMAKE=cmake3
    else
