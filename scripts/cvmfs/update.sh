@@ -30,7 +30,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       cd ../../
       git submodule update --remote
       cd ${THIS_PATH}
-      cp Update.sh views.list ${HOME}/
+      cp update.sh views.list ${HOME}/
       #I must leave cvmfs to publish the changes after git pull etc
       cd ${HOME}
       cvmfs_server publish alpha.cern.ch
