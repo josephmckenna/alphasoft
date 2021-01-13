@@ -24,6 +24,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ROOT_INCLUDE_DIR}
 		    $ENV{GARFIELD_HOME}/install/include/Garfield
+		    $ENV{GARFIELD_HOME}/include/Garfield
 		    $ENV{GARFIELD_HOME}/install/Heed)
 link_directories($ENV{GARFIELD_HOME}/install/lib $ENV{ROOTSYS}/lib)
 
