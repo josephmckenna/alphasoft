@@ -2,8 +2,8 @@ import os
 
 
 #This file is in AGRELEASE path... so set AGRELEASE accordingly
-AGRELEASE = @AGRELEASE@
-print("Setting AGRELEASE = " + thisFilePath )
+AGRELEASE = '@AGRELEASE@'
+print("Setting AGRELEASE = " + AGRELEASE )
 os.environ['AGRELEASE'] = AGRELEASE
 
 os.environ['EOS_MGM_URL'] = 'root://eospublic.cern.ch'
