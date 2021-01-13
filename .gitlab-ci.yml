@@ -44,9 +44,7 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
-    - git submodule init
-#    - git submodule update
-    - git submodule update --init --recursive
+
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -130,6 +128,9 @@ before_script:
 build-cc7-cmake:
   stage: build
   script:
+    - git submodule init
+    - git submodule update
+    - git submodule update --init --recursive
     - echo "Building"
     - rm -rf build bin
     - mkdir build
@@ -146,6 +147,9 @@ build-cc7-cmake:
 build-cc7-cmake-ag:
   stage: build
   script:
+    - git submodule init
+    - git submodule update
+    - git submodule update --init --recursive
     - echo "Building"
     - mkdir -p build
     - cd build
@@ -160,6 +164,9 @@ build-cc7-cmake-ag:
 build-cc7-cmake-a2:
   stage: build
   script:
+    - git submodule init
+    - git submodule update
+    - git submodule update --init --recursive
     - echo "Building"
     - mkdir -p build
     - cd build
@@ -174,8 +181,10 @@ build-cc7-cmake-a2:
 build-cc7:
   stage: build
   script: 
+    - git submodule init
+    - git submodule update
+    - git submodule update --init --recursive
     - echo "Building"
-    #- rm -rf rootana agana
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
