@@ -44,11 +44,8 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
-    - git submodule update --init --recursive
-    - ls -lh agana
-    - ls -lh rootana
-
-
+    #Make sure we have the specified version of agana
+    - git submodule update agana
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -177,6 +174,8 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
+    - git submodule update --init rootana
+    - git submodule update --init --recursive agana 
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
