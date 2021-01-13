@@ -2,6 +2,7 @@
 #Extra path for gitinfo.h file
 #set(GIT_DATE COMMAND sh $( git log -n 1 --date=raw | grep Date | cut -b 8-19 ) CACHE "The date of the lastest commit")
 #add_custom_command(OUTPUT GIT_DATE COMMAND git log -1 --format=%at )
+message("Building GitInfo.h")
 execute_process(COMMAND git log -1 --format=%at OUTPUT_VARIABLE GIT_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND git log -1 --format=%h OUTPUT_VARIABLE GIT_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND git log -1 --format=%H OUTPUT_VARIABLE GIT_REVISION_FULL OUTPUT_STRIP_TRAILING_WHITESPACE)
