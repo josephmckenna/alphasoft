@@ -29,6 +29,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    if [ `git pull | wc -l` -gt 1 ]; then
       cd ../../
       git submodule update --remote
+      cd ${THIS_PATH}
       cp Update.sh views.list ${HOME}/
       #I must leave cvmfs to publish the changes after git pull etc
       cd ${HOME}
@@ -77,12 +78,6 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
                  &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make          &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make install  &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
-   echo "#Primitive view setup script"                     > ${AGRELEASE}/${LCG_VERSION}/setup.sh
-   echo "source ${THIS_SETUP}"                             >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
-   echo "source ${AGRELEASE}/agconfig.sh "                 >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
-   echo "export PATH=${AGRELEASE}/${LCG_VERSION}:\${PATH}" >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
-   echo "export LD_LIBRARY_PATH=${AGRELEASE}/${LCG_VERSION}/lib:\${LD_LIBRARY_PATH}" \
-                                                           >> ${AGRELEASE}/${LCG_VERSION}/setup.sh
    cd ..
    rm -rf ${AGRELEASE}/${LCG_VERSION}_build
    cd ${HOME}
