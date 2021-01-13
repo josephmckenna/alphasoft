@@ -173,9 +173,9 @@ build-cc7:
   stage: build
   script: 
     - echo "Building"
-    - git submodule init --recursive
-    - git submodule update rootana
-    - git submodule update agana 
+    - git submodule init
+    - git submodule update --recursive rootana
+    - git submodule update --recursive agana 
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
