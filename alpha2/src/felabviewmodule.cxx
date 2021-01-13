@@ -9,6 +9,10 @@
 #include "manalyzer.h"
 #include "midasio.h"
 #include "TTree.h"
+#include "A2Flow.h"
+#include <sstream>
+#include <vector>
+#include <iterator>
 
 //usleep
 #include "unistd.h"
@@ -72,8 +76,28 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
-      printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent. \n \n \n");
+      felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
+      printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent.");
+      printf("DEBUG: felabviewModule::AnalyzeFlowEvent. Just making sure the flow is an felabviewEvent \n \n \n");
+      std::string            BankName          = mf->GetBankName();
+      std::vector<double>    m_data            = mf->GetData();
+      uint32_t               MIDAS_TIME        = mf->GetMIDAS_TIME();
+      uint32_t               run_time          = mf->GetRunTime();
+      double                 labview_time      = mf->GetLabviewTime();
       //This should now take an felabview flow event and then print and save to tree and return the same flow I guess.
+
+       printf("For bank %s: MidasTime: %d, run_time: %d, labview_time: %f \n", BankName.c_str(),MIDAS_TIME,run_time,labview_time);
+
+       int data_length = mf->GetData().size();
+       if(data_length>0)
+       {
+         printf("\n data_length = %d \n", data_length);
+         for(int i=0; i<data_length; i++)
+         {
+            printf("For databank %d: Data: %f \n", i, mf->GetData().at(i));
+         }
+       }
+
       return flow; 
   }
 
@@ -83,34 +107,53 @@ public:
      if(me->event_id == 6)
      {
        printf("\n \n \n DEBUG: felabviewModule::Analyze. ID = %d \n \n \n", me->event_id);
+       
        //We have the midas event we are looking for.
        //Convert to a new felabview flow event then return. 
        //So initialise a felabviewFE with the values found in me and return the flow.
        u32 time_stamp = me->time_stamp;
+       u32 dataoff = me->data_offset;
        std::cout << "time_stamp = " << time_stamp << std::endl;
+       std::cout << "data_offset = " << dataoff << std::endl;
        
-       int bank_length = me->banks.size();
-       printf("Bank Length = %d", bank_length);
-       //std::vector<std::string*> banknames;
-       if(bank_length>0)
-       {
-         for(int i=0; i<bank_length; i++)
-         {
-            printf("For bank %d: BankName: %s, DataSize: %d, DataOffset: %d", i, me->banks[i].name, me->banks[i].data_size, me->banks[i].data_offset);
-            //std::string bankname = me->banks[i].name;
-            //banknames.push_back(&bankname);
-         }
-       }
+       me->FindAllBanks();
+       printf("For bank %d: BankName: %s, DataSize: %d, DataOffset: %d \n", 0, me->banks[0].name.c_str(), me->banks[0].data_size, me->banks[0].data_offset);
 
        int data_length = me->data.size();
        if(data_length>0)
        {
+         printf("\n data_length = %d \n", data_length);
          for(int i=0; i<data_length; i++)
          {
-            printf("For databank %d: Data: %s, DataSize: %d, DataOffset: %d", i, me->data[i]);
+            printf("For databank %d: Data: %d \n", i, me->data.at(i));
          }
        }
+
+       char* m_pEventData = me->GetEventData();                     ///< get pointer to MIDAS event data
+       char* m_pBankData = me->GetBankData(&me->banks[0]);
      }
+
+     std::string BN = me->banks[0].name.c_str();
+
+     double* a=(double*)me->GetEventData();
+     std::cout << "We have just created a =" << a << std::endl;
+
+     double * data1 = (double*)me->GetEventData();
+     std::cout<<data1[0]<<"\t"<<data1[1]<<std::endl;
+     std::cout<<*data1<<"\t"<< *(data1+1)<<std::endl;
+     std::cout<< *data1++<<"\t"<<*data1++<<std::endl;
+
+     std::vector<double> meData;
+     int N = me->data.size() - me->data_offset;
+     for (int i=0; i<N; i++)
+     {
+         std::cout << "We are pushing back a to create our vector of data. a[" << i << "] = " << a[i] <<std::endl;
+         meData.push_back(*(a+i));
+     }
+
+
+      felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, me->time_stamp, meData[0]);
+      flow = f;
       return flow;
    }
 

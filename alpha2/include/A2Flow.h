@@ -174,23 +174,23 @@ class SVDQODFlow: public TAFlowEvent
 class felabviewFlowEvent: public TAFlowEvent
 {
 private:
-   std::string BankName;
-   std::vector<double> data;
-   uint32_t MIDAS_TIME;
-   uint32_t run_time;
-   double labview_time;
+    std::string BankName;
+    std::vector<double> m_data;
+    uint32_t MIDAS_TIME;
+    uint32_t run_time;
+    double labview_time;
 public:
    //Setters and Getters
-   void                 SetBankName(std::string m_BankName)     { BankName = m_BankName; }
-   std::string          GetBankName()                           { return BankName; }
-   void                 SetData(std::vector<double> m_data)     { data = m_data; }
-   std::vector<double>  GetData()                               { return data; }
-   void                 SetMIDAS_TIME(uint32_t m_MIDAS_TIME)    { MIDAS_TIME = m_MIDAS_TIME; }
-   uint32_t             GetMIDAS_TIME()                         { return MIDAS_TIME; }
-   void                 SetRunTime(uint32_t m_run_time)         { run_time = m_run_time; }
-   uint32_t             GetRunTime()                            { return run_time; }
-   void                 SetLabviewTime(double labview)          { labview_time = labview; }
-   double               GetLabviewTime()                        { return labview_time; }
+   void                           SetBankName(std::string m_BankName)     { BankName = m_BankName; }
+   virtual std::string            GetBankName()                           { return BankName; }
+   void                           SetData(std::vector<double> inc_data)   { m_data = inc_data; }
+   virtual std::vector<double>    GetData()                               { return m_data; }
+   void                           SetMIDAS_TIME(uint32_t m_MIDAS_TIME)    { MIDAS_TIME = m_MIDAS_TIME; }
+   virtual uint32_t               GetMIDAS_TIME()                         { return MIDAS_TIME; }
+   void                           SetRunTime(uint32_t m_run_time)         { run_time = m_run_time; }
+   virtual uint32_t               GetRunTime()                            { return run_time; }
+   void                           SetLabviewTime(double labview)          { labview_time = labview; }
+   virtual double                 GetLabviewTime()                        { return labview_time; }
    
    felabviewFlowEvent(TAFlowEvent* flowevent)
       : TAFlowEvent(flowevent)
@@ -198,6 +198,25 @@ public:
       //ModuleName="Felab View Module";
       if (true)
          printf("felabviewFlow::ctor!\n");
+   }
+
+    felabviewFlowEvent(TAFlowEvent* flowevent, std::string m_BankName, TFormula::GradientStorage m_pdata, 
+    uint32_t m_MIDAS_TIME, uint32_t m_run_time, double m_labview_time)
+      : TAFlowEvent(flowevent), BankName(m_BankName), m_data(m_pdata), 
+      MIDAS_TIME(m_MIDAS_TIME), run_time(m_run_time), labview_time(m_labview_time)
+   {
+      //ModuleName="Felab View Module";
+      if (true)
+         printf("felabviewFlow::ctor with arguments!\n");
+   }
+
+      felabviewFlowEvent(TAFlowEvent* flowevent, felabviewFlowEvent* flow)
+      : TAFlowEvent(flowevent), BankName(flow->BankName), m_data(flow->m_data), 
+      MIDAS_TIME(flow->MIDAS_TIME), run_time(flow->run_time), labview_time(flow->labview_time)
+   {
+      //ModuleName="Felab View Module";
+      if (true)
+         printf("felabviewFlow::copy ctor!\n");
    }
 
    ~felabviewFlowEvent()
