@@ -76,6 +76,7 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
       export CMAKE=cmake
    fi
    ${CMAKE} ${AGRELEASE} -DCMAKE_INSTALL_PREFIX=${AGRELEASE}/${LCG_VERSION} \
+                         -DPRE_CONFIG=${THIS_SETUP} \
                  &> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make          &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
    make install  &>> ${AGRELEASE}/../alphasoft_${LCG_VERSION_NAME}_build.log
