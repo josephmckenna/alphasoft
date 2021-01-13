@@ -22,12 +22,12 @@ endif()
 include(${Geant4_USE_FILE})
 
 #----------------------------------------------------------------------------
-#CADMesh 
-find_package(cadmesh)
-if(cadmesh_FOUND)
-  message(STATUS "CADMesh found!")
-  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
-endif(cadmesh_FOUND)
+##CADMesh 
+#find_package(cadmesh)
+#if(cadmesh_FOUND)
+#  message(STATUS "CADMesh found!")
+#  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
+#endif(cadmesh_FOUND)
 
 #----------------------------------------------------------------------------
 # Find ROOT (required package)

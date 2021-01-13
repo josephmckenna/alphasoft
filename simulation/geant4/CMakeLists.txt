@@ -22,11 +22,11 @@ include(${Geant4_USE_FILE})
 
 #----------------------------------------------------------------------------
 #CADMesh 
-find_package(cadmesh REQUIRED)
-if(cadmesh_FOUND)
-  message(STATUS "CADMesh found!")
+#find_package(cadmesh REQUIRED)
+#if(cadmesh_FOUND)
+#  message(STATUS "CADMesh found!")
   #message(STATUS "${CADMESH_INCLUDE_DIRS}")
-endif(cadmesh_FOUND)
+#endif(cadmesh_FOUND)
 # just write it down explicitly down the 
 #set(CADMESH_INCLUDE_DIRS $ENV{CADMESH_HOME}/include)
 #set(cadmesh_LIBRARIES -L$ENV{CADMESH_HOME}/lib cadmesh assimp tet)
