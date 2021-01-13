@@ -44,6 +44,8 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
+    - git submodule init
+
 
 
 #build-ubuntu:
@@ -128,8 +130,6 @@ before_script:
 build-cc7-cmake:
   stage: build
   script:
-    - git submodule init
-    - git submodule update
     - git submodule update --init --recursive
     - echo "Building"
     - rm -rf build bin
@@ -164,8 +164,6 @@ build-cc7-cmake-ag:
 build-cc7-cmake-a2:
   stage: build
   script:
-    - git submodule init
-    - git submodule update
     - git submodule update --init --recursive
     - echo "Building"
     - mkdir -p build
@@ -181,8 +179,6 @@ build-cc7-cmake-a2:
 build-cc7:
   stage: build
   script: 
-    - git submodule init
-    - git submodule update
     - git submodule update --init --recursive
     - echo "Building"
     - make clean
