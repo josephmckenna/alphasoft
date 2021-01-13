@@ -2,7 +2,7 @@
 
 THIS_SETUP=$1
 THIS_RELEASE=$2
-echo "update.sh args: ${THIS_SETUP}"
+echo "update.sh args: ${THIS_SETUP} ${THIS_RELEASE}"
 
 #become shared user and then run this script
 #if [ `whoami` != "cvalpha" ]; then
