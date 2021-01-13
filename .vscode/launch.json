@@ -11,7 +11,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/alpha2/alphaStrips.exe",
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "args": ["run39993sub00000.mid.gz"],
+            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
