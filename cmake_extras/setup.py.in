@@ -8,9 +8,9 @@ os.environ['AGRELEASE'] = AGRELEASE
 
 os.environ['EOS_MGM_URL'] = 'root://eospublic.cern.ch'
 
-os.environ['PATH'] = @BIN_PATH@ + ":" + os.environ['PATH']
-os.environ['LD_LIBRARY_PATH'] = @LIB_PATH@ + ":" + os.environ['LD_LIBRARY_PATH'] 
-os.environ['ROOT_INCLUDE_PATH'] = @INC_PATH@ + ":" + os.environ['ROOT_INCLUDE_PATH']
+os.environ['PATH'] = "@BIN_PATH@:" + os.environ['PATH']
+os.environ['LD_LIBRARY_PATH'] = "@LIB_PATH@:" + os.environ['LD_LIBRARY_PATH'] 
+os.environ['ROOT_INCLUDE_PATH'] = "@INC_PATH@:" + os.environ['ROOT_INCLUDE_PATH']
 
 
 #Set up run time environment (after project is compiled)
@@ -27,8 +27,7 @@ for library in [ 'libaged.so', 'libagtpc.so', 'libanalib.so', 'libalpha2.so', 'l
         ROOT.gSystem.Load( '@LIB_PATH@' + library)
 
 
-ROOT.gInterpreter.ProcessLine('#define BUILD_A2 1')
-ROOT.gInterpreter.ProcessLine('#define BUILD_AG 1')
+ROOT.gInterpreter.ProcessLine('#include BuildDefinitions.h')
 
 #ROOT.gInterpreter.AddIncludePath(thisFilePath + '/bin/include/')
 headers = os.listdir(thisFilePath + '/bin/include/')
