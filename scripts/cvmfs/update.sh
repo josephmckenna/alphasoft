@@ -63,6 +63,8 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    echo ${JUPYTER_PATH}
    LCG_VERSION=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"/"$7}' `
    LCG_VERSION_NAME=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"_"$7}' `
+   #Insure a clean build dir
+   rm -rf ${AGRELEASE}/${LCG_VERSION}_build
    mkdir -p ${AGRELEASE}/${LCG_VERSION}_build
    mkdir -p ${AGRELEASE}/${LCG_VERSION}
    cd ${AGRELEASE}/${LCG_VERSION}_build
