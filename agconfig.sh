@@ -222,6 +222,6 @@ lxplus* )
   echo 'cc        :' `which cc`
   echo "ROOTSYS   : ${ROOTSYS}"
   echo "ROOTANASYS: ${ROOTANASYS}"
-
+  echo "AGRELEASE : ${AGRELEASE}"
   ;;
 esac
