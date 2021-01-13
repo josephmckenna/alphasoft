@@ -31,6 +31,21 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
+#Extra path for gitinfo.h file
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_target(
+    gitinfo ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
+    )
+
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
+        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
+    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
+    )
 
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
@@ -46,12 +61,13 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-message(${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
 link_libraries(${ROOT_LIBRARIES})
+
+
 
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
