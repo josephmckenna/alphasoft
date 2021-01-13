@@ -88,6 +88,8 @@ if (BUILD_A2)
 endif (BUILD_A2)
 
 
+add_subdirectory(cmake_extras)
+
 #Universal libraries (Include some flow and TSpill stuff)
 get_submodule(rootana)
 add_subdirectory(rootana)
