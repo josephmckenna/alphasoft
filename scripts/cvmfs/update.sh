@@ -1,6 +1,7 @@
 #!/bin/bash
 
 THIS_SETUP=$1
+THIS_RELEASE=$2
 echo "update.sh args: ${THIS_SETUP}"
 
 #become shared user and then run this script
@@ -36,8 +37,8 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       cvmfs_server publish alpha.cern.ch
       sleep 5
       #Git pull done, now go ahead and rebuild all valid views (in views.list), note how this is now a copy in ~/
-      ./update.sh build
-      echo "All done"
+      ./update.sh build 
+      echo "All done" ${THIS_PATH}
       return
    else
       echo "Nothing to pull.. skipping rebuild"
@@ -49,7 +50,7 @@ elif [ ${THIS_SETUP} == "build" ]; then
    cd ${HOME}
    for i in `cat views.list`; do
       # Run each version as a subprocess to avoid polluting the ENVVARs
-      ./update.sh ${i}
+      ./update.sh ${i} ${THIS_RELEASE}
    done
 elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    #do stuff
@@ -57,8 +58,8 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    cvmfs_server transaction alpha.cern.ch
    echo ${THIS_SETUP}
    source ${THIS_SETUP}
-   cd ${THIS_PATH}
-   source ../../agconfig.sh
+   cd ${THIS_RELEASE}
+   source agconfig.sh
    echo ${JUPYTER_PATH}
    LCG_VERSION=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"/"$7}' `
    LCG_VERSION_NAME=`echo ${JUPYTER_PATH} | awk -F: '{print $1}' | awk -F/ '{print $6"_"$7}' `
