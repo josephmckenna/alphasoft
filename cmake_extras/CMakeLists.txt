@@ -24,5 +24,5 @@ configure_file(setup.sh.in ${CMAKE_CURRENT_BINARY_DIR}/setup.sh @ONLY)
 configure_file(setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
 configure_file(setup.C.in ${CMAKE_CURRENT_BINARY_DIR}/setup.C @ONLY)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.sh ${CMAKE_CURRENT_BINARY_DIR}/setup.py ${CMAKE_CURRENT_BINARY_DIR}/setup.C DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.sh ${CMAKE_CURRENT_BINARY_DIR}/setup.py ${CMAKE_CURRENT_BINARY_DIR}/setup.C DESTINATION .)
 
