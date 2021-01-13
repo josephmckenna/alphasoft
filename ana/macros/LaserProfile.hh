@@ -1,7 +1,36 @@
-#include "../../recolib/include/TPCconstants.hh"
+#include "TPCconstants.hh"
+#include "IntGetters.h"
+
 #include <TMath.h>
+#include <TString.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TH3D.h>
+#include <TF1.h>
+#include <TLegend.h>
+#include <TTree.h>
+#include <TTreeReader.h>
+#include <TCanvas.h>
+#include <TFile.h>
+#include <TLine.h>
+#include <TSpectrum.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TChain.h>
+#include <TGraph.h>
+#include <TGraphErrors.h>
+#include <TCutG.h>
+#include <TCut.h>
+#include <TFitResult.h>
+#include <TProfile.h>
+#include <TPolyMarker.h>
+
+#include <set>
+
+using namespace std;
 
 using namespace TMath;
+using namespace ALPHAg;
 
 const double strippitch = 265.;
 const double stripwidth = 6.;
