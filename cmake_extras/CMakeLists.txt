@@ -1,0 +1,21 @@
+
+#Extra path for gitinfo.h file
+#set(GIT_DATE COMMAND sh $( git log -n 1 --date=raw | grep Date | cut -b 8-19 ) CACHE "The date of the lastest commit")
+#add_custom_command(OUTPUT GIT_DATE COMMAND git log -1 --format=%at )
+execute_process(COMMAND git log -1 --format=%at OUTPUT_VARIABLE GIT_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git log -1 --format=%h OUTPUT_VARIABLE GIT_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git log -1 --format=%H OUTPUT_VARIABLE GIT_REVISION_FULL OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git log -1 --format=%D OUTPUT_VARIABLE GIT_BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git diff --shortstat OUTPUT_VARIABLE GIT_DIFF_SHORT_STAT OUTPUT_STRIP_TRAILING_WHITESPACE)
+string(TIMESTAMP COMPILATION_DATE "%s" )
+configure_file(GitInfo.h.in GitInfo.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h DESTINATION include)
+
+set(AGRELEASE $ENV{AGRELEASE})
+set(BIN_PATH ${CMAKE_INSTALL_PREFIX})
+set(LIB_PATH ${CMAKE_INSTALL_PREFIX}/lib)
+set(INC_PATH ${CMAKE_INSTALL_PREFIX}/include)
+configure_file(setup.sh.in ${CMAKE_INSTALL_PREFIX}/setup.sh @ONLY)
+configure_file(setup.py.in ${CMAKE_INSTALL_PREFIX}/setup.py @ONLY)
+configure_file(setup.C.in ${CMAKE_INSTALL_PREFIX}/setup.C @ONLY)
