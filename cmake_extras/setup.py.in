@@ -29,8 +29,7 @@ for library in [ 'libaged.so', 'libagtpc.so', 'libanalib.so', 'libalpha2.so', 'l
 
 ROOT.gInterpreter.ProcessLine('#include BuildDefinitions.h')
 
-#ROOT.gInterpreter.AddIncludePath(thisFilePath + '/bin/include/')
-headers = os.listdir(thisFilePath + '/bin/include/')
+headers = os.listdir( '@INC_PATH@' )
 print( 'Loading headers: ')
 print( headers )
 for header in headers:
