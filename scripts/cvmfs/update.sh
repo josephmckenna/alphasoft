@@ -37,7 +37,7 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       cvmfs_server publish alpha.cern.ch
       sleep 5
       #Git pull done, now go ahead and rebuild all valid views (in views.list), note how this is now a copy in ~/
-      ./update.sh build ${THIS_PATH}
+      ./update.sh build ${THIS_PATH}../../
       echo "All done" 
       return
    else
