@@ -34,19 +34,6 @@ endif ()
 #Extra path for gitinfo.h file
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(
-    gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
-    )
-
-add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
 
