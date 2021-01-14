@@ -271,6 +271,7 @@ public:
          else
             printf("MatchModule::Analyze Spacepoints should exists at this point\n");
 
+         delete spacepoints;
          return flow;
       }
       return flow;

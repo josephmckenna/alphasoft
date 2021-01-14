@@ -335,7 +335,8 @@ public:
 
   void AddMatchSignals( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*ss )
   {
-    matchSig=ss;
+     //matchSig=ss;
+     matchSig= new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >(*ss);
   }
 
   void AddAWWaveforms(std::vector<ALPHAg::wf_ref>* af)
