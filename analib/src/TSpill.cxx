@@ -13,10 +13,12 @@ TSpillScalerData::TSpillScalerData()
    PassMVA           =0;
    VertexFilled      =false;
 }
+
 TSpillScalerData::~TSpillScalerData()
 {
 
 }
+
 TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scaler_channels,0),ScalerFilled(n_scaler_channels,0)
 {
    StartTime         =-1;
@@ -29,21 +31,42 @@ TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scale
    PassMVA           =0;
    VertexFilled      =false;
 }
-TSpillScalerData::TSpillScalerData(TSpillScalerData* a)
+
+TSpillScalerData::TSpillScalerData(const TSpillScalerData& a)
 {
-   StartTime         =a->StartTime;
-   StopTime          =a->StopTime;
-   DetectorCounts    =a->DetectorCounts;
-   ScalerFilled      =a->ScalerFilled;
+   StartTime         =a.StartTime;
+   StopTime          =a.StopTime;
+   DetectorCounts    =a.DetectorCounts;
+   ScalerFilled      =a.ScalerFilled;
    
-   FirstVertexEvent  =a->FirstVertexEvent;
-   LastVertexEvent   =a->LastVertexEvent;
-   VertexEvents      =a->VertexEvents;
-   Verticies         =a->Verticies;
-   PassCuts          =a->PassCuts;
-   PassMVA           =a->PassMVA;
-   VertexFilled      =a->VertexFilled;
+   FirstVertexEvent  =a.FirstVertexEvent;
+   LastVertexEvent   =a.LastVertexEvent;
+   VertexEvents      =a.VertexEvents;
+   Verticies         =a.Verticies;
+   PassCuts          =a.PassCuts;
+   PassMVA           =a.PassMVA;
+   VertexFilled      =a.VertexFilled;
 }
+
+TSpillScalerData& TSpillScalerData::operator=(const TSpillScalerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   StartTime         =rhs.StartTime;
+   StopTime          =rhs.StopTime;
+   DetectorCounts    =rhs.DetectorCounts;
+   ScalerFilled      =rhs.ScalerFilled;
+   
+   FirstVertexEvent  =rhs.FirstVertexEvent;
+   LastVertexEvent   =rhs.LastVertexEvent;
+   VertexEvents      =rhs.VertexEvents;
+   Verticies         =rhs.Verticies;
+   PassCuts          =rhs.PassCuts;
+   PassMVA           =rhs.PassMVA;
+   VertexFilled      =rhs.VertexFilled;
+   return *this;
+}
+
 template <class ScalerData>
 ScalerData* TSpillScalerData::operator/(const ScalerData* b)
 {
@@ -149,12 +172,22 @@ TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels): TSpillScalerData(
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(TA2SpillScalerData* a): TSpillScalerData((TSpillScalerData*) a)
+TA2SpillScalerData::TA2SpillScalerData(const TA2SpillScalerData& a):
+   TSpillScalerData(a)
 {
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d): TA2SpillScalerData()
+TA2SpillScalerData& TA2SpillScalerData::operator=(const TA2SpillScalerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpillScalerData::operator=(rhs);
+   return *this;
+}
+
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d):
+   TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
@@ -191,21 +224,33 @@ TAGSpillScalerData::~TAGSpillScalerData()
 {
 
 }
-TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels): TSpillScalerData(n_scaler_channels)
+
+TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels):
+   TSpillScalerData(n_scaler_channels)
 {
 
 }
 
-TAGSpillScalerData::TAGSpillScalerData(TAGSpillScalerData* a): TSpillScalerData((TSpillScalerData*) a)
+TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a):
+   TSpillScalerData(a)
 {
 
+}
+
+TAGSpillScalerData& TAGSpillScalerData::operator=(const TAGSpillScalerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpillScalerData::operator=(rhs);
+   return *this;
 }
 /*TAGSpillScalerData* TAGSpillScalerData::operator/(const TAGSpillScalerData* b)
 {
    std::cout<<"JOE IMPLEMENT ME"<<std::endl;
    return NULL;
 }*/
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d): TAGSpillScalerData()
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+   TAGSpillScalerData()
 {
    for (int i=0; i<CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
    {
@@ -235,7 +280,6 @@ void TAGSpillScalerData::Print()
 
 ClassImp(TSpillSequencerData);
 
-
 TSpillSequencerData::TSpillSequencerData()
 {
    fSequenceNum=-1;
@@ -244,15 +288,27 @@ TSpillSequencerData::TSpillSequencerData()
    fStartState =-1;
    fStopState  =-1;
 }
-TSpillSequencerData::TSpillSequencerData(TSpillSequencerData* a)
+
+TSpillSequencerData::TSpillSequencerData(const TSpillSequencerData& a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+   fSequenceNum  =a.fSequenceNum;
+   fDumpID       =a.fDumpID;
+   fSeqName      =a.fSeqName;
+   fStartState   =a.fStartState;
+   fStopState    =a.fStopState;
 }
 
+TSpillSequencerData& TSpillSequencerData::operator=(const TSpillSequencerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   fSequenceNum  =rhs.fSequenceNum;
+   fDumpID       =rhs.fDumpID;
+   fSeqName      =rhs.fSeqName;
+   fStartState   =rhs.fStartState;
+   fStopState    =rhs.fStopState;
+   return *this;
+}
 
 TSpillSequencerData::~TSpillSequencerData()
 {
@@ -269,12 +325,15 @@ void TSpillSequencerData::Print()
 }
 #ifdef BUILD_A2
 ClassImp(TA2SpillSequencerData);
-TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
+TA2SpillSequencerData::TA2SpillSequencerData():
+   TSpillSequencerData()
 {
 }
+
 TA2SpillSequencerData::~TA2SpillSequencerData()
 {
 }
+
 TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d)
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
@@ -303,18 +362,23 @@ void TA2SpillScalerData::Print()
 }
 
 
-TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
+TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a):
+   TSpillSequencerData(a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+}
+
+TA2SpillSequencerData& TA2SpillSequencerData::operator=(const TA2SpillSequencerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpillSequencerData::operator=(rhs);
+   return *this;
 }
 #endif
 #ifdef BUILD_AG
 ClassImp(TAGSpillSequencerData);
-TAGSpillSequencerData::TAGSpillSequencerData(): TSpillSequencerData()
+TAGSpillSequencerData::TAGSpillSequencerData():
+   TSpillSequencerData()
 {
 }
 TAGSpillSequencerData::~TAGSpillSequencerData()
@@ -330,13 +394,17 @@ TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CH
 }
 
 
-TAGSpillSequencerData::TAGSpillSequencerData(TAGSpillSequencerData* a)
+TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a):
+   TSpillSequencerData(a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+}
+
+TAGSpillSequencerData& TAGSpillSequencerData::operator=(const TAGSpillSequencerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpillSequencerData::operator=(rhs);
+   return *this;
 }
 #endif
 
@@ -391,18 +459,23 @@ void TSpill::InitByName(const char* format, va_list args)
    Print();
 }
 
-TSpill::TSpill(TSpill* a): RunNumber(a->RunNumber)
+TSpill::TSpill(const TSpill& a)
 {
-   Name         =a->Name;
-   IsDumpType   =a->IsDumpType;
-   Unixtime     =a->Unixtime;
+   RunNumber    =a.RunNumber;
+   Name         =a.Name;
+   IsDumpType   =a.IsDumpType;
+   Unixtime     =a.Unixtime;
 }
 
-TSpill* TSpill::operator/(const TSpill* b)
+TSpill& TSpill::operator=(const TSpill& rhs)
 {
-   //Joe you need to set this up
-   TSpill* a = new TSpill();
-   return a;
+   if (this == &rhs)
+      return *this;
+   RunNumber    =rhs.RunNumber;
+   Name         =rhs.Name;
+   IsDumpType   =rhs.IsDumpType;
+   Unixtime     =rhs.Unixtime;
+   return *this;
 }
 
 void TSpill::Print()
@@ -416,10 +489,12 @@ int TSpill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
    return -1;
 }
+
 TString TSpill::Content(std::vector<int>*, int& )
 {
    return Name;
 }
+
 bool TSpill::DumpHasMathSymbol() const
 {
    char symbols[5]="+/*-";
@@ -447,6 +522,7 @@ TA2Spill::TA2Spill()
    SeqData    =NULL;
    ScalerData =NULL;
 }
+
 TA2Spill::TA2Spill(int runno): TSpill(runno)
 {
    SeqData    =NULL;
@@ -463,7 +539,8 @@ TA2Spill::TA2Spill(int runno, const char* format, ...): TSpill(runno)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): TSpill(runno,d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
+   TSpill(runno,d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
@@ -471,17 +548,29 @@ TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): 
    //Print();
 }
 
-TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)
+TA2Spill::TA2Spill(const TA2Spill& a):
+   TSpill(a)
 {
-   if (a->ScalerData)
-      ScalerData=new TA2SpillScalerData(a->ScalerData);
+   if (a.ScalerData)
+      ScalerData = new TA2SpillScalerData(*a.ScalerData);
    else
-      ScalerData=NULL;
-   if (a->SeqData)
-      SeqData=new TA2SpillSequencerData(a->SeqData);
+      ScalerData = NULL;
+   if (a.SeqData)
+      SeqData = new TA2SpillSequencerData(*a.SeqData);
    else
-      SeqData=NULL;
+      SeqData = NULL;
 }
+
+TA2Spill& TA2Spill::operator=(const TA2Spill& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpill::operator=(rhs);
+   ScalerData = rhs.ScalerData;
+   SeqData = rhs.SeqData;
+   return *this;
+}
+
 TA2Spill::~TA2Spill()
 {
    if (ScalerData)
@@ -493,7 +582,6 @@ TA2Spill::~TA2Spill()
 }
 
 #include "assert.h"
-
 
 TA2Spill* TA2Spill::operator/( TA2Spill* b)
 {
@@ -522,6 +610,7 @@ TA2Spill* TA2Spill::operator/( TA2Spill* b)
    c->IsDumpType=false;
    return c;
 }
+
 TA2Spill* TA2Spill::operator+( TA2Spill* b)
 {
    //c=a/b
@@ -563,6 +652,7 @@ bool TA2Spill::Ready( bool have_svd)
       return true;
    }
 }
+
 void TA2Spill::Print()
 {
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
@@ -649,7 +739,6 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    return log;
 }
 
-
 int TA2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
    if (!SeqData) return -1;
@@ -694,7 +783,9 @@ TAGSpill::TAGSpill()
 {
 
 }
-TAGSpill::TAGSpill(int runno, const char* format, ...): TSpill(runno)
+
+TAGSpill::TAGSpill(int runno, const char* format, ...):
+   TSpill(runno)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -715,10 +806,22 @@ TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*C
 TAGSpill::~TAGSpill()
 {
 }
-TAGSpill::TAGSpill(TAGSpill* a)
-{
 
+TAGSpill::TAGSpill(const TAGSpill& a)
+{
+   assert(!"FIXME");
 }
+
+TAGSpill& TAGSpill::operator=(const TAGSpill& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   TSpill::operator=(rhs);
+   ScalerData = rhs.ScalerData;
+   SeqData = rhs.SeqData;
+   return *this;
+}
+
 TString TAGSpill::Content(std::vector<std::pair<int,int>>* chrono_channels, int& n_chans)
 {
    char buf[800];
