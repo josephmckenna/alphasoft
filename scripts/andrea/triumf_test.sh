@@ -60,8 +60,8 @@ set -x
 ###########################################################################################################################################    #######################################################
 
 ### horizontal - AW3.1kV - Trig. MLU1 - T00 up 
-agana.exe -O$DATADIR/test/cosmics904578.root --mt $MIDASDATA/run904578sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904578.log&
+#agana.exe -O$DATADIR/test/cosmics904578.root --mt $MIDASDATA/run904578sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904578.log&
 
 
 ### horizontal w/ Sleeve - AW3.2kV - Trig. MLU1 -- T12/13 up
-#agana.exe -O$DATADIR/test/cosmics904608.root --mt $MIDASDATA/run904608sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904608.log&
+agana.exe -O$DATADIR/test/cosmics904608.root --mt $MIDASDATA/run904608sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904608.log&

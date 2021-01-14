@@ -60,6 +60,9 @@ set -x
 
 ############################################################################################################################################################################################
 
-### horizontal w/ Sleeve - AW3.1kV - Trig. MLU1 
+### horizontal w/ Sleeve - AW3.1kV - Trig. MLU1 -- T11 up
 #agana.exe -O$DATADIR/test/cosmics904619.root --mt $MIDASDATA/run904619sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904619.log&
-gdb -ex=r --args agana.exe -O$DATADIR/test/cosmics904619.root --mt $MIDASDATA/run904619sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF
+#gdb -ex=r --args agana.exe -O$DATADIR/test/cosmics904619.root --mt $MIDASDATA/run904619sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF
+
+### horizontal w/ Sleeve - AW3.2kV - Trig. MLU1 -- T11 up
+agana.exe -O$DATADIR/test/cosmics904620.root --mt $MIDASDATA/run904620sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904620.log&
