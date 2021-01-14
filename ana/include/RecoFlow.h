@@ -30,7 +30,7 @@ class AgBarEventFlow: public TAFlowEvent
    {
       if (BarEvent)
          {
-            BarEvent->Reset();
+            //   BarEvent->Reset();
             delete BarEvent;
          }
    }
