@@ -48,6 +48,7 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    rm -rf ${AGRELEASE}/${LCG_VERSION_PATH}_build
    mkdir -p ${AGRELEASE}/${LCG_VERSION_PATH}_build
    INSTALL_PATH="/cvmfs/alpha.cern.ch/alphasoft/${LCG_VERSION_PATH}"
+   echo "INSTALL PATH: ${INSTALL_PATH}"
    mkdir -p ${INSTALL_PATH}
    cd ${AGRELEASE}/${LCG_VERSION_PATH}_build
    #Check if we need cmake3 command or cmake
