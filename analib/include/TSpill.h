@@ -30,7 +30,10 @@ class TSpillScalerData: public TObject
    TSpillScalerData();
    ~TSpillScalerData();
    TSpillScalerData(int n_scaler_channels);
-   TSpillScalerData(TSpillScalerData* a);
+   TSpillScalerData(const TSpillScalerData& a);
+   TSpillScalerData& operator =(const TSpillScalerData& rhs);
+   double GetStartTime() const { return StartTime; }
+   double GetStopTime() const { return StopTime; }
    template <class ScalerData>
    ScalerData* operator/(const ScalerData* b);
    template <class ScalerData>
@@ -51,7 +54,8 @@ class TA2SpillScalerData: public TSpillScalerData
    //TA2SpillScalerData();
    ~TA2SpillScalerData();
    TA2SpillScalerData(int n_scaler_channels=NUM_SIS_CHANNELS*NUM_SIS_MODULES);
-   TA2SpillScalerData(TA2SpillScalerData* a);
+   TA2SpillScalerData(const TA2SpillScalerData& a);
+   TA2SpillScalerData& operator =(const TA2SpillScalerData& rhs);
    //TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
    TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    using TObject::Print;
@@ -71,7 +75,8 @@ class TAGSpillScalerData: public TSpillScalerData
    //TAGSpillScalerData();
    ~TAGSpillScalerData();
    TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
-   TAGSpillScalerData(TAGSpillScalerData* a);
+   TAGSpillScalerData(const TAGSpillScalerData& a);
+   TAGSpillScalerData& operator =(const TAGSpillScalerData& rhs);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
    TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    using TObject::Print;
@@ -90,7 +95,8 @@ class TSpillSequencerData: public TObject
    int          fStopState;
    TSpillSequencerData();
    ~TSpillSequencerData();
-   TSpillSequencerData(TSpillSequencerData* a);
+   TSpillSequencerData(const TSpillSequencerData& a);
+   TSpillSequencerData& operator =(const TSpillSequencerData& rhs);
 //   TSpillSequencerData(DumpPair* d);
    TSpillSequencerData* operator/(const TSpillSequencerData* b);
    using TObject::Print;
@@ -104,7 +110,8 @@ class TA2SpillSequencerData: public TSpillSequencerData
    public:
    TA2SpillSequencerData();
    ~TA2SpillSequencerData();
-   TA2SpillSequencerData(TA2SpillSequencerData* s);
+   TA2SpillSequencerData(const TA2SpillSequencerData& s);
+   TA2SpillSequencerData& operator =(const TA2SpillSequencerData& rhs);
    TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
 
 
@@ -117,7 +124,8 @@ class TAGSpillSequencerData: public TSpillSequencerData
    public:
    TAGSpillSequencerData();
    ~TAGSpillSequencerData();
-   TAGSpillSequencerData(TAGSpillSequencerData* s);
+   TAGSpillSequencerData(const TAGSpillSequencerData& s);
+   TAGSpillSequencerData& operator =(const TAGSpillSequencerData& rhs);
    TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
 
 
@@ -127,7 +135,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
 class TSpill: public TObject
 {
 public:
-   const int             RunNumber;
+   int                   RunNumber;
    bool                  IsDumpType;
    bool                  IsInfoType;
    int                   Unixtime;
@@ -139,9 +147,11 @@ public:
    //TSpill(const char* name);
    void InitByName(const char* format, va_list args);
    TSpill(int runno, const char* format, ...);
-   TSpill* operator/(const TSpill* b);
-   TSpill(TSpill* a);
+   TSpill(const TSpill& a);
+   TSpill& operator =(const TSpill& rhs);
    bool IsMatchForDumpName(std::string dumpname, bool exact = true);
+   virtual double GetStartTime() const = 0;
+   virtual double GetStopTime() const = 0;
    bool DumpHasMathSymbol() const;
    using TObject::Print;
    virtual void Print();
@@ -165,7 +175,22 @@ public:
    TA2Spill(int runnno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    TA2Spill* operator/( TA2Spill* b);
    TA2Spill* operator+( TA2Spill* b);
-   TA2Spill(const TA2Spill* a);
+   TA2Spill(const TA2Spill& a);
+   TA2Spill& operator =(const TA2Spill& rhs);
+   double GetStartTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStartTime();
+      else
+         return -1.;
+   }
+   double GetStopTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStopTime();
+      else
+         return -1;
+   }
    using TObject::Print;
    virtual void Print();
 
@@ -188,7 +213,22 @@ public:
    TAGSpill(int runno, const char* format, ...);
    TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
-   TAGSpill(TAGSpill* a);
+   TAGSpill(const TAGSpill& a);
+   TAGSpill& operator =(const TAGSpill& rhs);
+   double GetStartTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStartTime();
+      else
+         return -1.;
+   }
+   double GetStopTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStopTime();
+      else
+         return -1;
+   }
    TString Content(std::vector<std::pair<int,int>>*, int& );
    ClassDef(TAGSpill,1);
 };
