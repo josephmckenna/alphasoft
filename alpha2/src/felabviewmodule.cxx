@@ -18,6 +18,14 @@
 #include "unistd.h"
 
 #include <iostream>
+struct felabviewEventTreeStruct
+{
+   TTree* felabEventTree = NULL;
+   TBranch* dataBranch = NULL;
+   TBranch* IDBranch = NULL;
+   TBranch* BNBranch = NULL;
+};
+
 class felabModuleFlags
 {
 public:
@@ -27,10 +35,8 @@ public:
 class felabviewModule: public TARunObject
 {
 private:
-   TTree* felabEventTree = NULL;
-   TBranch* dataBranch = NULL;
-   TBranch* IDBranch = NULL;
-   TBranch* BNBranch = NULL;
+   std::vector<felabviewEventTreeStruct> rootTrees; 
+   TTree* felabEventTree   = NULL;
 public:
    felabModuleFlags* fFlags;
    bool fTrace = true;
@@ -49,15 +55,19 @@ public:
          printf("felabviewFlow::dtor!\n");
    }
 
-  //Setters and Getters             
-   void                 SetfelabEventTree(TTree* m_felabtree)   { felabEventTree = m_felabtree; }
+  //Setters and Getters
+  void AddStructToRootTree(felabviewEventTreeStruct tStruct)
+  {
+     rootTrees.push_back(tStruct);
+  }             
+   /*void                 SetfelabEventTree(TTree* m_felabtree)   { felabEventTree = m_felabtree; }
    TTree*               GetfelabEventTree()                     { return felabEventTree; }
    void                 SetdataBranch(TBranch* m_dataBranch)    { dataBranch = m_dataBranch; }
    TBranch*             GetdataBranch()                         { return dataBranch; }
    void                 SetIDBranch(TBranch* m_IDBranch)        { IDBranch = m_IDBranch; }
    TBranch*             GetIDBranch()                           { return IDBranch; }
    void                 SetBNBranch(TBranch* m_BNBranch)        { BNBranch = m_BNBranch; }
-   TBranch*             GetBNBranch()                           { return BNBranch; }
+   TBranch*             GetBNBranch()                           { return BNBranch; }*/
 
    void BeginRun(TARunInfo* runinfo)
    {
@@ -76,124 +86,114 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
-      felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
-      printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent.");
-      printf("DEBUG: felabviewModule::AnalyzeFlowEvent. Just making sure the flow is an felabviewEvent \n \n \n");
-      std::string            BankName          = mf->GetBankName();
-      std::vector<double>    m_data            = mf->GetData();
-      uint32_t               MIDAS_TIME        = mf->GetMIDAS_TIME();
-      uint32_t               run_time          = mf->GetRunTime();
-      double                 labview_time      = mf->GetLabviewTime();
-      //This should now take an felabview flow event and then print and save to tree and return the same flow I guess.
-
-       printf("For bank %s: MidasTime: %d, run_time: %d, labview_time: %f \n", BankName.c_str(),MIDAS_TIME,run_time,labview_time);
-
-       int data_length = mf->GetData().size();
-       if(data_length>0)
-       {
-         printf("\n data_length = %d \n", data_length);
-         for(int i=0; i<data_length; i++)
+     {
+         felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
+         if(mf == 0x0)
          {
-            printf("For databank %d: Data: %f \n", i, mf->GetData().at(i));
+            printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n\n\n");
+            return flow;
          }
-       }
+         printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent.");
+         //std::string             flm_BankName          = mf->GetBankName();
+         std::vector<double>*    flm_data            = mf->GetData();
+         //uint32_t*               flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
+         //uint32_t*               flm_run_time          = mf->GetRunTime();
+         //double                  flm_labview_time      = mf->GetLabviewTime();
+         //This should now take an felabview flow event and then print and save to tree and return the same flow I guess.
+
+         //printf("For bank %s: MidasTime: %d, run_time: %d, labview_time: %f \n", mf->GetBankName().c_str(),*flm_MIDAS_TIME,*flm_run_time,flm_labview_time);
+
+         int data_length = mf->GetData()->size();
+         if(data_length>0)
+         {
+            printf("\n data_length = %d \n", data_length);
+            for(int i=0; i<data_length; i++)
+            {
+               printf("For databank %d: Data: %f \n", i, (*mf->GetData())[i]);
+            }
+         }
+         felabviewEventTreeStruct myTree;
+
+         const char *c = mf->GetBankName().c_str();
+         runinfo->fRoot->fOutputFile->cd();
+         if (!felabEventTree)
+            felabEventTree = new TTree("vector<double>","vectordata");
+         TBranch* b_variable = felabEventTree->GetBranch("vectordata");
+         if (!b_variable)
+            felabEventTree->Branch("vectordata","vector<double>",&flm_data,16000,1);
+         else
+            felabEventTree->SetBranchAddress("vectordata",&flm_data);
+         felabEventTree->Fill();
+
+         /*
+         myTree.felabEventTree = new TTree(c,c);
+
+         myTree.felabEventTree->Branch("dataBranch","std::vector<double>",&m_data,16000,1);
+         myTree.felabEventTree->SetBranchAddress("dataBranch",&m_data);
+         myTree.dataBranch = myTree.felabEventTree->GetBranch("dataBranch");
+
+         myTree.felabEventTree->Branch("IDBranch","int",&MIDAS_TIME,16000,1);
+         myTree.felabEventTree->SetBranchAddress("IDBranch",&MIDAS_TIME);
+         myTree.dataBranch = myTree.felabEventTree->GetBranch("IDBranch");
+
+         myTree.felabEventTree->Branch("BNBranch","int",&run_time,16000,1);
+         myTree.felabEventTree->SetBranchAddress("BNBranch",&run_time);
+         myTree.dataBranch = myTree.felabEventTree->GetBranch("BNBranch");
+      
+         myTree.felabEventTree->Fill();
+         */
+
+
+         AddStructToRootTree(myTree);
+      }
+
 
       return flow; 
-  }
+   }
 
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
      //Here we need convert a midas event with an ID of 6 and return a felabviewFlow event.
      if(me->event_id == 6)
-     {
-       printf("\n \n \n DEBUG: felabviewModule::Analyze. ID = %d \n \n \n", me->event_id);
-       
-       //We have the midas event we are looking for.
-       //Convert to a new felabview flow event then return. 
-       //So initialise a felabviewFE with the values found in me and return the flow.
-       u32 time_stamp = me->time_stamp;
-       u32 dataoff = me->data_offset;
-       std::cout << "time_stamp = " << time_stamp << std::endl;
-       std::cout << "data_offset = " << dataoff << std::endl;
-       
-       me->FindAllBanks();
-       printf("For bank %d: BankName: %s, DataSize: %d, DataOffset: %d \n", 0, me->banks[0].name.c_str(), me->banks[0].data_size, me->banks[0].data_offset);
-
-       int data_length = me->data.size();
-       if(data_length>0)
-       {
-         printf("\n data_length = %d \n", data_length);
-         for(int i=0; i<data_length; i++)
+      {
+         printf("DEBUG: felabviewModule::Analyze. ID = %d\n", me->event_id);
+         
+         //We have the midas event we are looking for.
+         //Convert to a new felabview flow event then return. 
+         //So initialise a felabviewFE with the values found in me and return the flow.
+         u32 time_stamp = me->time_stamp;
+         u32 dataoff = me->data_offset;
+         
+         me->FindAllBanks();
+         if(me->banks.size()>1)
          {
-            printf("For databank %d: Data: %d \n", i, me->data.at(i));
+            printf("\n \n \n DEBUG: felabviewModule::Analyze. Has multiple banks. Exit with error code 11. \n \n \n");
+            exit(11);
          }
-       }
+         std::string BN = me->banks[0].name.c_str();
 
-       char* m_pEventData = me->GetEventData();                     ///< get pointer to MIDAS event data
-       char* m_pBankData = me->GetBankData(&me->banks[0]);
-     }
+         double * rawmeData = (double*)me->GetBankData(&me->banks[0]);
+         int N = (int)(me->banks[0].data_size / 8);
+         //std::cout<<data1[0]<<"\t"<<data1[1]<<data1[2]<<"\t"<<data1[3]<<std::endl;
+         std::vector<double> meData;
+         for (int i=0; i<N; i++)
+         {
+            meData.push_back(rawmeData[i]);
+         }
 
-     std::string BN = me->banks[0].name.c_str();
-
-     double* a=(double*)me->GetEventData();
-     std::cout << "We have just created a =" << a << std::endl;
-
-     double * data1 = (double*)me->GetEventData();
-     std::cout<<data1[0]<<"\t"<<data1[1]<<std::endl;
-     std::cout<<*data1<<"\t"<< *(data1+1)<<std::endl;
-     std::cout<< *data1++<<"\t"<<*data1++<<std::endl;
-
-     std::vector<double> meData;
-     int N = me->data.size() - me->data_offset;
-     for (int i=0; i<N; i++)
-     {
-         std::cout << "We are pushing back a to create our vector of data. a[" << i << "] = " << a[i] <<std::endl;
-         meData.push_back(*(a+i));
-     }
-
-
-      felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, me->time_stamp, meData[0]);
-      flow = f;
+         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, me->time_stamp, meData[0]);
+         flow = f;
+      }
       return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
       printf("\n \n \n DEBUG: felabviewModule::AnalyzeSpecialEvent. ID = %d \n \n \n", event->event_id);
-      if(felabEventTree == NULL)
-      {
-        felabEventTree = new TTree("felabEventTree","felabEventTree");
-        SetfelabEventTree(felabEventTree);
-      }
-/*
-    if(event->event_id == 6)
-    {
-      TBranch* b_data = felabEventTree->GetBranch("dataBranch");
-      if (!b_data)
-        felabEventTree->Branch("dataBranch","dataBranch",&event->data,16000,1);
-      else
-        felabEventTree->SetBranchAddress("dataBranch",&event->data);
-
-      TBranch* b_ID = felabEventTree->GetBranch("IDBranch");
-      if (!b_ID)
-        felabEventTree->Branch("IDBranch","IDBranch",&event->event_id,16000,1);
-      else
-        felabEventTree->SetBranchAddress("IDBranch",&event->event_id);
-
-      TBranch* b_BN = felabEventTree->GetBranch("BNBranch");
-      if (!b_BN)
-        felabEventTree->Branch("BNBranch","BNBranch",&event->banks[0],16000,1);
-      else
-        felabEventTree->SetBranchAddress("BNBranch",&event->banks[0]);
-
-    
-      felabEventTree->Fill();
-
-    }
-*/
-    //   if (fTrace)
-    //      printf("RealTimeModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-    //             flowevent->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      
+       //if (fTrace)
+          //printf("RealTimeModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
+                 //event->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
@@ -229,8 +229,3 @@ public:
 };
 
 static TARegister tar(new FelabViewFactory);
-
-struct felabviewEventTree
-{
-    std::vector<TTree*> felabEventTree;
-};
