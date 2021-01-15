@@ -31,8 +31,8 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for gitinfo.h file
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
 
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
