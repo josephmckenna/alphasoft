@@ -19,7 +19,7 @@ execute_process(COMMAND git log -1 --format=%H OUTPUT_VARIABLE GIT_REVISION_FULL
 execute_process(COMMAND git log -1 --format=%D OUTPUT_VARIABLE GIT_BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND git diff --shortstat OUTPUT_VARIABLE GIT_DIFF_SHORT_STAT OUTPUT_STRIP_TRAILING_WHITESPACE)
 string(TIMESTAMP COMPILATION_DATE "%s" )
-configure_file(GitInfo.h.in GitInfo.h @ONLY)
+configure_file(GitInfo.h.in ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h DESTINATION include)
 
