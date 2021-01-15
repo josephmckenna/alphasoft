@@ -15,6 +15,7 @@ echo "update.sh args: ${THIS_SETUP}"
 
 if [ ${THIS_SETUP} == "update_git" ]; then
    cd ~/alphasoft
+   if
    if [ `git pull | wc -l` -gt 1 ]; then
       git submodule update --remote
       #I must leave cvmfs to publish the changes after git pull etc
@@ -63,7 +64,10 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
                          -DPRE_CONFIG=${THIS_SETUP} \
                  &> ~/alphasoft_${LCG_VERSION_NAME}_build.log
    make          &>> ~/alphasoft_${LCG_VERSION_NAME}_build.log
-   make install  &>> ~/alphasoft_${LCG_VERSION_NAME}_build.log
+   make install  &>> ~/alphasoft_${LCG_VERSION_NAME}_build.log  && \
+   echo "Build OK! Date: `date` GitVersion: `git log -1 --format=%h`" >> ~/alphasoft_${LCG_VERSION_NAME}_build.log 
+
+   echo 
    cp ~/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/
    cd ~/alphasoft
    echo "Cleaning up build path: ${AGRELEASE}/${LCG_VERSION_PATH}_build"
