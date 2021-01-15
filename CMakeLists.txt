@@ -95,12 +95,21 @@ file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cxx)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.h)
 
 #----------------------------------------------------------------------------
+# Automatically set the runtime path of your executable to your shared library
+#
+set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+#  set the RPATH before defining the targets - so above
+
+#----------------------------------------------------------------------------
 # Libraries...fun part
 #
 add_library(${library_name} ${sources} ${CMAKE_SHARED_LIBRARY_PREFIX}${library_name}_dict.cxx ${headers})
 target_link_libraries(${library_name} ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${VGM_LIBRARIES} ${VMC_LIBRARIES} ${Geant4VMC_LIBRARIES})
 
 install(TARGETS ${library_name} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${PROJECT_BINARY_DIR}/lib${library_name}_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${PROJECT_BINARY_DIR}/lib${library_name}.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Create the executables and link it
 add_executable(g4vmc_${program_name} ${program_name}.cxx)
@@ -108,3 +117,8 @@ target_link_libraries(g4vmc_${program_name} ${library_name})
 
 add_custom_target(${PROJECT_NAME} DEPENDS
                   g4vmc_${program_name})
+install(TARGETS g4vmc_${program_name} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+configure_file( ${PROJECT_SOURCE_DIR}/input/a2MC.ini
+                ${CMAKE_INSTALL_PREFIX}
+		COPYONLY )

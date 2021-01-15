@@ -1,7 +1,7 @@
 TOPDIR=/Users/germano/local
 ############# geant4_vmc installation directory and version ########################
-G4VMCINST=$TOPDIR/geant4_vmc.5.2/geant4_vmc_install
-G4VMCVER=5.2.0
+G4VMCINST=$TOPDIR/geant4_vmc.5.3/geant4_vmc_install
+G4VMCVER=5.3.0
 #############     VGM installation directory and version    ########################
 VGMINST=$TOPDIR/vgm.4.8/vgm_install
 VGMVER=4.8.0
