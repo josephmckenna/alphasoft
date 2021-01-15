@@ -5,19 +5,19 @@
 ## ENVIRONMENTAL PATH DEFINITION (WHERE DID YOU INSTALL VMC, VGM AND GEANT4_VMC ? ##
 ## ================================
 WORK_DIR=$(pwd)
-INST_DIR=/Users/germano/local
+INST_DIR=$HOME/packages
 ############# geant4_vmc installation directory and version ########################
-G4VMC=$INST_DIR/geant4_vmc.5.3/geant4_vmc_install
+G4VMC=$INST_DIR/geant4_vmc/install
 G4VMCVER=5.3.0
 #############     VGM installation directory and version    ########################
-VGM=$INST_DIR/vgm.4.8/vgm_install
-VGMVER=4.8.0
+VGM=$INST_DIR/vgm/vgm_install
+VGMVER=4.9.0
 #############     VMC installation directory and version    ########################
-VMC=$INST_DIR/vmc.1.0.p3/vmc_install
+VMC=$INST_DIR/vmc/vmc_install
 VMCVER=1.0.3
 #############     LIBRARY DIRECTORY SUFFIX (lib or lib64)   ########################
-LIB=lib     # in some systems this is required instead of LIB=lib64 (macosx?)
-#LIB=lib64  # in some systems this is required instead of LIB=lib (ubuntu?)
+#LIB=lib     # in some systems this is required instead of LIB=lib64 (macosx?)
+LIB=lib64  # in some systems this is required instead of LIB=lib (ubuntu?)
 
 if [[ "$1" == "clean" ]]; then
     echo "cleaning up"
