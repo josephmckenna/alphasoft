@@ -1,7 +1,7 @@
 
 add_custom_target(
     gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h
+    DEPENDS ${CMAKE_BINARY_DIR}/GitInfo.h
     )
 
 #add_custom_command(
@@ -19,9 +19,10 @@ execute_process(COMMAND git log -1 --format=%H OUTPUT_VARIABLE GIT_REVISION_FULL
 execute_process(COMMAND git log -1 --format=%D OUTPUT_VARIABLE GIT_BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND git diff --shortstat OUTPUT_VARIABLE GIT_DIFF_SHORT_STAT OUTPUT_STRIP_TRAILING_WHITESPACE)
 string(TIMESTAMP COMPILATION_DATE "%s" )
-configure_file(GitInfo.h.in ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h DESTINATION include)
+configure_file(GitInfo.h.in ${CMAKE_BINARY_DIR}/GitInfo.h @ONLY)
+message()
+include_directories(${CMAKE_BINARY_DIR})
+install(FILES ${CMAKE_BINARY_DIR}/GitInfo.h DESTINATION include)
 
 
 #Extra path for gitinfo.h file
