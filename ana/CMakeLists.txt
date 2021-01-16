@@ -61,7 +61,8 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+message(${CMAKE_MODULE_PATH})
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
@@ -145,6 +146,18 @@ foreach( LIST_FILE ${BINS} )
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
         "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+    )
+
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/pwb_module.cxx" 
+        "$ENV{AGRELEASE}/agana/pwb_module.cxx"
+    )
+
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/adc_module.cxx" 
+        "$ENV{AGRELEASE}/agana/adc_module.cxx"
     )
 
     #message(Modules: ${MODULES})

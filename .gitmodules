@@ -1,14 +1,8 @@
 [submodule "rootana"]
 	path = rootana
 	url = https://bitbucket.org/tmidas/rootana.git
-[submodule "simulation/submodules/CADMesh"]
-	path = simulation/submodules/CADMesh
-	url = https://github.com/christopherpoole/CADMesh.git
-	branch = master
-[submodule "simulation/submodules/garfieldpp"]
-	path = simulation/submodules/garfieldpp
-	url = https://gitlab.cern.ch/garfield/garfieldpp.git
-	branch = master
 [submodule "agana"]
 	path = agana
 	url = https://bitbucket.org/expalpha/agana.git
+
+

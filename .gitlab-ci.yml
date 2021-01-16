@@ -15,7 +15,7 @@ cache:
     - alphaStrips*offline.root
     - rootana
     - agana
-    - simulation/submodules
+    - agana/agcfmdb
     - BuildLog.txt
     - BuildSimLog.txt
     - LastBuildLog.txt
@@ -44,8 +44,7 @@ before_script:
     #Set up agana environment variables
     - . agconfig.sh
     - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
-    #Make sure we have the specified version of agana
-    - git submodule update agana
+
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -133,9 +132,9 @@ build-cc7-cmake:
     - rm -rf build bin
     - mkdir build
     - cd build
-    - cmake3 ../
-    - make | tee ../BuildLog.txt
-    - make install
+    - cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
+    - cmake3 --build .  2>&1 | tee ../BuildLog.txt
+    - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
   artifacts:
     when: on_failure
     paths:
@@ -173,10 +172,8 @@ build-cc7-cmake-a2:
 build-cc7:
   stage: build
   script: 
+#    - git submodule update --init --recursive
     - echo "Building"
-    - rm -rf rootana agana
-    - git submodule update --init rootana
-    - git submodule update --init --recursive agana 
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..

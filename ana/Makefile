@@ -6,15 +6,13 @@
 define get_modules
 	$(info Get modules for ${2} in file: $(patsubst $(BINDIR)/%.exe,%.modules,$(2)))
 	$(1)+= $$(patsubst %.o,$(OBJDIR)/%.o,$(shell grep -v '\#' $(patsubst $(BINDIR)/%.exe,%.modules,$(2))))
-	#Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
-	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o 
-	# wfsuppress.o wfsuppress2.o wfsuppress_pwb.o 
+        #Manually list agana libs needed for unpack_module by had here, cmake's solution (link to static lib) is more eligant 
+	$(1)+=$(OBJDIR)/ncfm.o $(OBJDIR)/Alpha16.o $(OBJDIR)/TsSync.o $(OBJDIR)/Feam.o $(OBJDIR)/Tdc.o $(OBJDIR)/FeamEVB.o $(OBJDIR)/FeamAsm.o $(OBJDIR)/PwbAsm.o $(OBJDIR)/AgEvent.o $(OBJDIR)/AgEVB.o $(OBJDIR)/TrgAsm.o $(OBJDIR)/Unpack.o $(OBJDIR)/AgAsm.o $(OBJDIR)/wfsuppress_adc.o $(OBJDIR)/wfsuppress_pwb.o
 endef
 
 
 OBJDIR=obj
 SRCDIR=src
-#SRCDIR +=../agana
 INCDIR=include
 BINDIR=..
 
@@ -33,11 +31,9 @@ LIBS   += -lSpectrum
 endif
 
 # get the rootana Makefile settings
-
-
 LIBS     += -L$(ROOTANASYS)/lib -lrootana
-LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
+LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
@@ -49,6 +45,7 @@ INCS += -I$(shell root-config --incdir)
 INCS += -I../alpha2/include
 INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
+# get the rootana Makefile settings
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 
 # select the main program - local custom main()
@@ -66,25 +63,22 @@ $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
 RLIBS = -L../recolib -L../aged -L../analib -lanalib -lagtpc -laged
-#USER_LIBS = libanalib.so libAGTPC.so libaged.so
-
-ALL += linkdirs gitinfo
-#BIN += $(BINDIR)/agana_noreco.exe $(BINDIR)/agana.exe $(BINDIR)/ag_events.exe
+ALL += linkdirs
+ALL += $(ALL_DEPS)
 BIN += $(BINS)
 
 all:: CXXFLAGS += -O3 -g -Wall -Wuninitialized $(BUILD_FLAGS)
 all:: $(ALL)
-all:: $(MODULES)
 all:: $(BIN)
 
 debug: CXXFLAGS += -O0 -g -Wall -Wuninitialized $(BUILD_FLAGS)
-debug: $(ALL) $(MODULES) $(BIN)
+debug: $(ALL) $(BIN)
 
 native: CXXFLAGS += -O3 -g -Wall -Wuninitialized -march=native $(BUILD_FLAGS)
-native: $(ALL) $(MODULES) $(BIN)
+native: $(ALL) $(BIN)
 
 O2: CXXFLAGS += -O2 -g -Wall -Wuninitialized $(BUILD_FLAGS)
-O2: $(ALL) $(MODULES) $(BIN)
+O2: $(ALL) $(BIN)
 
 .PRECIOUS: $(ALL_DEPS)
 
@@ -92,10 +86,7 @@ O2: $(ALL) $(MODULES) $(BIN)
 linkdirs:
 	mkdir -p obj
 
-gitinfo:
-	./GitInfo.sh include
-
-$(BINDIR)/%.exe: $(MAIN) $(USER_LIBS) $(ALL_DEPS) $(MODS)
+$(BINDIR)/%.exe: $(MAIN) $(ALL_DEPS) $(MODS)
 	$(eval $(call get_modules,$@MODS,$@))
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $($@MODS) $(INCS) $(RLIBS) $(LIBS)
 

@@ -11,7 +11,7 @@ from pathlib import Path
 import argparse
 
 def getlogname(cmd):
-    run=int(re.search('[0-9]{5}',cmd).group(0))
+    run=int(re.search('[0-9]{6}',cmd).group(0))
     logname='R'+str(run)+'.log'
     temp=re.search('sub[0-9]{3}',cmd).group(0)
     sub=int(re.search('[0-9]{3}',temp).group(0))
@@ -69,7 +69,7 @@ def parse_agana_args(subfile,aarg,nrec):
 def assemble(run,limit,argx,nrec):
     cmdlist=[]
     sub=0
-    subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
+    subrun='%s/run%06dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
     subfile=Path(subrun)
     while subfile.is_file():
         cmd=parse_agana_args(subrun,argx,nrec)
@@ -78,20 +78,20 @@ def assemble(run,limit,argx,nrec):
         sub+=1
         if limit > 0 and sub == limit:
             break
-        subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
+        subrun='%s/run%06dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
         subfile=Path(subrun)
     return cmdlist
 
 def addsubs(run):
-    cmd='hadd -ff output%05d.root '% (run)
+    cmd='hadd -ff output%06d.root '% (run)
     sub=0
-    subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+    subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
     subfile=Path(subrun)
     while subfile.is_file():
         cmd+=subrun
         cmd+=' '
         sub+=1
-        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+        subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
     print(cmd)
     sp.call(cmd, shell=True, stdout=open('/dev/null','w'),stderr=sp.STDOUT)
@@ -103,7 +103,7 @@ def addlogs(run):
     foutname='%s/R%d.log'%(workdir,run)
     with open(foutname,'w') as fout:
         sub=0
-        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+        subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
         while subfile.is_file():
             finname='%s/R%d/sub%03d/R%d.log'%(workdir,run,sub,run)
@@ -112,14 +112,14 @@ def addlogs(run):
                 for line in fin:
                     fout.write(line)
             sub+=1
-            subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+            subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
             subfile=Path(subrun)
 
 def addmaps(run):
     foutname='%s/pwbR%d.map'%(workdir,run)
     with open(foutname,'w') as fout:
         sub=0
-        subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+        subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
         subfile=Path(subrun)
         while subfile.is_file():
             finname='%s/R%d/sub%03d/pwbR%d.map'%(workdir,run,sub,run)
@@ -128,7 +128,7 @@ def addmaps(run):
                 for line in fin:
                     fout.write(line)
             sub+=1
-            subrun='%s/R%d/sub%03d/output%05d.root'%(workdir,run,sub,run)
+            subrun='%s/R%d/sub%03d/output%06d.root'%(workdir,run,sub,run)
             subfile=Path(subrun)
 
 def rmsubs(run):
