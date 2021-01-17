@@ -114,3 +114,15 @@ root-tree-viewer
 root-unfold
 root-unuran
 root-xproof
+#Extras original from gitlab CI pre-script
+lesstif-devel
+libXmu
+libXmu-devel
+libXft
+libXft-devel
+eos-client
+valgrind
+tee
+wget
+svn
+libzstd
