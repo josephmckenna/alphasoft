@@ -72,6 +72,10 @@ root-gdml
 root-genvector
 root-geom
 root-graf
+root-graf3d
+root-graf3d-csg
+root-graf3d-eve
+root-graf3d-gl
 root-gui
 root-gui-webdisplay
 root-hbook
