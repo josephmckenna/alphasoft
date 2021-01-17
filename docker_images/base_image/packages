@@ -97,6 +97,7 @@ root-netx
 root-notebook
 root-physics
 root-roofit
+root-spectrum
 root-smatrix
 root-splot
 root-sql-sqlite
