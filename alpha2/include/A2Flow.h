@@ -184,11 +184,11 @@ public:
    void                           SetBankName(std::string m_BankName)     { BankName = m_BankName; }
    virtual std::string            GetBankName()                           { return BankName; }
    void                           SetData(std::vector<double> inc_data)   { m_data = inc_data; }
-   virtual std::vector<double>*   GetData()                               { return &m_data; }
+   virtual std::vector<double>    GetData()                               { return m_data; }
    void                           SetMIDAS_TIME(uint32_t m_MIDAS_TIME)    { MIDAS_TIME = m_MIDAS_TIME; }
-   virtual uint32_t*              GetMIDAS_TIME()                         { return &MIDAS_TIME; }
+   virtual uint32_t               GetMIDAS_TIME()                         { return MIDAS_TIME; }
    void                           SetRunTime(uint32_t m_run_time)         { run_time = m_run_time; }
-   virtual uint32_t*              GetRunTime()                            { return &run_time; }
+   virtual uint32_t               GetRunTime()                            { return run_time; }
    void                           SetLabviewTime(double labview)          { labview_time = labview; }
    virtual double                 GetLabviewTime()                        { return labview_time; }
    
