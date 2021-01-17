@@ -1,4 +1,4 @@
-image: rootproject/root:6.22.00-centos7
+image: cern/cc7-base
 
 stages:
   - build
