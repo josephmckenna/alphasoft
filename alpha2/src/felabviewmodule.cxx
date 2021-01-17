@@ -30,6 +30,7 @@ class felabModuleFlags
 {
 public:
    bool fPrint = false;
+   bool fInitTimeSaved = false;
    bool fFakeRealtime = false;
 };
 class felabviewModule: public TARunObject
@@ -37,9 +38,11 @@ class felabviewModule: public TARunObject
 private:
    std::vector<felabviewEventTreeStruct> rootTrees; 
    TTree* felabEventTree   = NULL;
+   uint32_t initialEventTime;
 public:
    felabModuleFlags* fFlags;
    bool fTrace = true;
+   std::vector<TTree*> trees;
    
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -82,6 +85,8 @@ public:
       printf("\n \n \n DEBUG: felabviewModule::EndRun. \n \n \n");
     //   if (fTrace)
     //      printf("RealTimeModule::EndRun, run %d\n", flowevent->fRunNo);
+      //if (felabEventTree)
+         //felabEventTree->Write();
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -90,32 +95,79 @@ public:
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
          {
-            printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n\n\n");
+            printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
-         printf("\n \n \n DEBUG: felabviewModule::AnalyzeFlowEvent.");
-         //std::string             flm_BankName          = mf->GetBankName();
-         std::vector<double>*    flm_data            = mf->GetData();
-         //uint32_t*               flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
-         //uint32_t*               flm_run_time          = mf->GetRunTime();
+         printf("DEBUG: felabviewModule::AnalyzeFlowEvent.\n");
+         std::string               flm_BankName          = mf->GetBankName();
+         std::vector<double>       flm_data              = mf->GetData();
+         uint32_t                  flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
+         uint32_t                  flm_run_time          = mf->GetRunTime();
          //double                  flm_labview_time      = mf->GetLabviewTime();
          //This should now take an felabview flow event and then print and save to tree and return the same flow I guess.
 
          //printf("For bank %s: MidasTime: %d, run_time: %d, labview_time: %f \n", mf->GetBankName().c_str(),*flm_MIDAS_TIME,*flm_run_time,flm_labview_time);
 
-         int data_length = mf->GetData()->size();
+         int data_length = flm_data.size();
          if(data_length>0)
          {
-            printf("\n data_length = %d \n", data_length);
+            printf("data_length = %d \n", data_length);
             for(int i=0; i<data_length; i++)
             {
-               printf("For databank %d: Data: %f \n", i, (*mf->GetData())[i]);
+               printf("For databank %d: Data: %f \n", i, flm_data[i]);
             }
          }
          felabviewEventTreeStruct myTree;
+         std::string name = mf->GetBankName();
+         int numberoftrees = trees.size();
+         bool treeAlreadyExists;
+         TTree* currentTree;
+         for(int i=0; i<numberoftrees; i++)
+         {
+            std::string treename = trees[i]->GetName();
+            std::string currenteventname = name.c_str();
+            if(treename == currenteventname)
+            {
+               printf("Apparantly tree name: %s is equal to BANKNAME: %s \n", trees[i]->GetName(), name.c_str());
+               //If this is the case we need to add the current data as branch?
+               //And we'll have to flag;
+               //Also want to set "our" tree "t" to this tree.
+               treeAlreadyExists = true;
+               currentTree = trees[i]->GetTree();
+            }
+         }
+         if(!treeAlreadyExists)
+         {
+            currentTree = new TTree(name.c_str(),"Tree with vectors");
+            //we should then instead create this tree add the vector as a branch.
+         }
 
-         const char *c = mf->GetBankName().c_str();
-         runinfo->fRoot->fOutputFile->cd();
+         //once we have a tree created or pulled. We add our current data as a branch then fill.
+         //If the tree was created this run it needs to be added to the vector of trees.
+         //If it was just called this round then it doesnt need to be added to the vector and can merely be IGNORED
+         printf("Number of branches = %d", currentTree->GetNbranches());
+         printf("Number of branches = %lld", currentTree->GetEntries());
+         currentTree->Branch("data",&flm_data);
+         currentTree->Branch("t",&flm_MIDAS_TIME);
+         currentTree->Branch("rt",&flm_run_time);
+         currentTree->Fill();
+
+         if(!treeAlreadyExists)
+         {
+            trees.push_back(currentTree);
+         }
+
+
+         // TTree *t = new TTree(c,"Tree with vectors");
+         // //currentTree->Branch(name.c_str(),&flm_data);
+         // AddStructToRootTree(myTree);
+         // t->Fill();
+         // f->Write();
+         // delete f;
+
+         // name.append(".root");
+         // const char *c = name.c_str();
+         /*
          if (!felabEventTree)
             felabEventTree = new TTree("vector<double>","vectordata");
          TBranch* b_variable = felabEventTree->GetBranch("vectordata");
@@ -124,7 +176,7 @@ public:
          else
             felabEventTree->SetBranchAddress("vectordata",&flm_data);
          felabEventTree->Fill();
-
+         */
          /*
          myTree.felabEventTree = new TTree(c,c);
 
@@ -157,6 +209,10 @@ public:
      if(me->event_id == 6)
       {
          printf("DEBUG: felabviewModule::Analyze. ID = %d\n", me->event_id);
+         if(!fFlags->fInitTimeSaved)
+         {
+            initialEventTime = me->time_stamp;
+         }
          
          //We have the midas event we are looking for.
          //Convert to a new felabview flow event then return. 
@@ -181,7 +237,7 @@ public:
             meData.push_back(rawmeData[i]);
          }
 
-         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, me->time_stamp, meData[0]);
+         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, me->time_stamp - initialEventTime, meData[0]);
          flow = f;
       }
       return flow;
