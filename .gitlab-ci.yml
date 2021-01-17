@@ -1,4 +1,4 @@
-image: rootproject/root-cc7
+image: jmckenna/alphadocker
 
 stages:
   - build
