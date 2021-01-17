@@ -71,6 +71,8 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
+
+     
        
       hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
       hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
@@ -172,6 +174,10 @@ public:
       std::vector<Alpha16Channel*> channels = data->hits;
       TBarEvent* BarEvent = new TBarEvent();
 
+      //Root's fitting routines are often not thread safe, lock globally
+#ifdef MODULE_MULTITHREAD
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+#endif
       int num_bars = 0;
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
@@ -230,8 +236,6 @@ public:
             double maximum_time;
             double fit_start_time;
             double fit_end_time;
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            {
             
             TF1 *sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
             sgfit->SetParameters(max,imax,5,0.2);
@@ -258,7 +262,6 @@ public:
                   hit_num++;
                }
             delete sgfit;
-            }
             
             // Fills histograms
             hBars->Fill(bar);
@@ -276,9 +279,8 @@ public:
 
          }
 
-      hNumBars->Fill(num_bars);
-
-      return BarEvent;
+       hNumBars->Fill(num_bars);
+       return BarEvent;
    }
 
 };
