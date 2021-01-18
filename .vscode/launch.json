@@ -11,7 +11,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt"],
+            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
