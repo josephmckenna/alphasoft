@@ -15,7 +15,6 @@ echo "update.sh args: ${THIS_SETUP}"
 
 if [ ${THIS_SETUP} == "update_git" ]; then
    cd ~/alphasoft
-   if
    if [ `git pull | wc -l` -gt 1 ]; then
       git submodule update --remote
       #I must leave cvmfs to publish the changes after git pull etc
