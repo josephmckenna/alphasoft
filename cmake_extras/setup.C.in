@@ -1,9 +1,9 @@
 {
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
   
-  cout<<"Including: "<<(@INC_PATH@<<endl;
-  gSystem->AddIncludePath(@INC_PATH@);
-  gSystem->AddDynamicPath(@LIB_PATH@);
+  cout<<"Including: @INC_PATH@ "<<endl;
+  gSystem->AddIncludePath("@INC_PATH@");
+  gSystem->AddDynamicPath("@LIB_PATH@");
 
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
