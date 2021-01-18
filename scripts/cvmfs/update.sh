@@ -68,7 +68,7 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    echo "Build OK! Date: `date` GitVersion: `git log -1 --format=%h`" >> ~/alphasoft_${LCG_VERSION_NAME}_build.log 
 
    echo 
-   cp ~/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/
+   cp ~/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/build.log
    cd ~/alphasoft
    echo "Cleaning up build path: ${AGRELEASE}/${LCG_VERSION_PATH}_build"
    rm -rf ${AGRELEASE}/${LCG_VERSION_PATH}_build
