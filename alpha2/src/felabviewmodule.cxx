@@ -63,6 +63,9 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
          printf("DEBUG: felabviewModule::AnalyzeFlowEvent.\n");
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
@@ -115,10 +118,10 @@ public:
    {
      if(me->event_id == 6)
       {
-         printf("DEBUG: felabviewModule::Analyze. ID = %d\n", me->event_id);
          if(!fFlags->fInitTimeSaved)
          {
             initialEventTime = me->time_stamp;
+            fFlags->fInitTimeSaved = true;
          }
          
          u32 time_stamp = me->time_stamp;
