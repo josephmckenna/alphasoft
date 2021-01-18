@@ -189,8 +189,56 @@ public:
    }
 };
 
-class felabModulePrinter
+class felabViewModulePrinter
 {
+   private:
+      std::vector<TTree*> trees;
+
+   public:
+      void AddTreeToVector(TTree* t)
+      {
+         trees.push_back(t);
+      }
+      void BranchTreeFromData(TTree* t, TFormula::GradientStorage* flm_data, uint32_t* flm_MIDAS_TIME, uint32_t* flm_run_time)
+      {
+         t->Branch("data",&flm_data);
+         t->Branch("t",&flm_MIDAS_TIME);
+         t->Branch("rt",&flm_run_time);
+         t->Fill();
+      }
+      TTree* FindOrCreateTree(felabviewFlowEvent* mf)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         std::string               flm_BankName          = mf->GetBankName();
+         std::vector<double>       flm_data              = mf->GetData();
+         uint32_t                  flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
+         uint32_t                  flm_run_time          = mf->GetRunTime();
+
+         std::string name = mf->GetBankName();
+         int numberoftrees = trees.size();
+         bool treeAlreadyExists;
+         TTree* currentTree;
+
+         for(int i=0; i<numberoftrees; i++)
+         {
+            std::string treename = trees[i]->GetName();
+            std::string currenteventname = name.c_str();
+            if(treename == currenteventname)
+            {
+               treeAlreadyExists = true;
+               currentTree = trees[i]->GetTree();
+            }
+         }
+         if(!treeAlreadyExists)
+         {
+            currentTree = new TTree(name.c_str(),"Tree with vectors");
+         }
+         return currentTree;
+      }
+
+
 
 };
 
