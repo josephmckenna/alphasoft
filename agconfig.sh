@@ -225,6 +225,9 @@ lxplus* )
   echo 'c++       :' `which c++`
   echo 'cc        :' `which cc`
   echo "ROOTSYS   : ${ROOTSYS}"
+  if [ `which root-config | wc -c` -gt 5 ]; then
+  echo 'root      :' `root-config --version`
+  fi
   echo "ROOTANASYS: ${ROOTANASYS}"
   echo "AGRELEASE : ${AGRELEASE}"
   ;;
