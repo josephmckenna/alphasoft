@@ -14,7 +14,8 @@ echo "update.sh args: ${THIS_SETUP}"
 #Path is this file:
 
 if [ ${THIS_SETUP} == "update_git" ]; then
-   cd ~/alphasoft
+   cd /cvmfs/alpha.cern.ch/alphasoft
+   cvmfs_server transaction alpha.cern.ch
    if [ `git pull | wc -l` -gt 1 ]; then
       git submodule update --remote
       #I must leave cvmfs to publish the changes after git pull etc
@@ -27,15 +28,19 @@ if [ ${THIS_SETUP} == "update_git" ]; then
       echo "Nothing to pull.. skipping rebuild"
       return
    fi
+   cd ~/
+   cvmfs_server publish alpha.cern.ch
 elif [ ${THIS_SETUP} == "build" ]; then
-   cd ~/alphasoft/scripts/cvmfs
+   cd ~/
+   cp /cvmfs/alpha.cern.ch/alphasoft/scripts/cvmfs/update.sh .
+   cp /cvmfs/alpha.cern.ch/alphasoft/scripts/cvmfs/views.list .
    for i in `cat views.list`; do
       # Run each version as a subprocess to avoid polluting the ENVVARs
       ./update.sh ${i}
    done
 elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    #do stuff
-   cd ~/alphasoft
+   cd /cvmfs/alpha.cern.ch/alphasoft
    cvmfs_server transaction alpha.cern.ch
    echo ${THIS_SETUP}
    source ${THIS_SETUP}
@@ -67,8 +72,8 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    echo "Build OK! Date: `date` GitVersion: `git log -1 --format=%h`" >> ~/alphasoft_${LCG_VERSION_NAME}_build.log 
 
    echo 
-   cp ~/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/build.log
-   cd ~/alphasoft
+   cp /cvmfs/alpha.cern.ch/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/build.log
+   cd /cvmfs/alpha.cern.ch/alphasoft
    echo "Cleaning up build path: ${AGRELEASE}/${LCG_VERSION_PATH}_build"
    rm -rf ${AGRELEASE}/${LCG_VERSION_PATH}_build
    cd ${HOME}
