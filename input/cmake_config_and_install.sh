@@ -7,7 +7,7 @@
 
 #///< Working directory and packages (VGM, VMC and GEANT4_VMC) top directory
 WORK_DIR=$(pwd)
-INST_DIR=/Users/germano/local
+INST_DIR=/home/user/local
 #///< Library system suffix (either lib or lib64
 LIB=lib     # in some systems this is required instead of LIB=lib64 (macosx?, ubuntu?)
 #LIB=lib64  # in some systems this is required instead of LIB=lib (centos?)

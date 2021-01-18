@@ -25,7 +25,8 @@ The a2mc has been tested with:
 ///< 2. CONFIG, COMPILE AND INSTALL
 ///< --------------------------------------------------------------------------
 cd a2mc
-===> ***     Edit/change "cmake_config_install.sh" to reflect your local 
+source setup.sh
+===> ***     Edit/change "./cmake_config_install.sh" to match your local 
                        (GEANT4/VMC/VGM) installation paths.            *** <===
 source cmake_config_install.sh
 ------------------------------------ oOo --------------------------------------
