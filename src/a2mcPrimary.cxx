@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 #include "a2mcPrimary.h"
 
