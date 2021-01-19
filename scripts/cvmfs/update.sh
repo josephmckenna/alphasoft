@@ -19,7 +19,11 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    if [ `git pull | wc -l` -gt 1 ]; then
       git submodule update --remote
       #I must leave cvmfs to publish the changes after git pull etc
-      cd scripts/cvmfs
+      cp -v scripts/cvmfs/update.sh ~/
+      cp -v scripts/cvmfs/views.list ~/
+      cd ~/
+      cvmfs_server publish alpha.cern.ch
+      sleep 10
       #Git pull done, now go ahead and rebuild all valid views (in views.list)
       ./update.sh build
       echo "All done" 
@@ -32,8 +36,6 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    cvmfs_server publish alpha.cern.ch
 elif [ ${THIS_SETUP} == "build" ]; then
    cd ~/
-   cp /cvmfs/alpha.cern.ch/alphasoft/scripts/cvmfs/update.sh .
-   cp /cvmfs/alpha.cern.ch/alphasoft/scripts/cvmfs/views.list .
    for i in `cat views.list`; do
       # Run each version as a subprocess to avoid polluting the ENVVARs
       ./update.sh ${i}
