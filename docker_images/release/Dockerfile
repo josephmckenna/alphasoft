@@ -1,6 +1,6 @@
 FROM jmckenna/alphadocker
-COPY . /alphasoft
 WORKDIR /alphasoft
+COPY . /alphasoft
 RUN pwd \
 && ls \
 && source alphasoft/agconfig.sh \
