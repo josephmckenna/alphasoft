@@ -10,3 +10,4 @@ COPY . /alphasoft
 #&& make -j4 \
 #&& make install
 #CMD echo "$AGRELEASE"
+CMD bash
