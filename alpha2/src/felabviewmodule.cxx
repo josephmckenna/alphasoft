@@ -25,20 +25,11 @@ public:
    bool fFakeRealtime = false;
 };
 
-class felabViewModulePrinter
+class felabViewModuleWriter
 {
    private:
       std::vector<TTree*> trees;
-      bool treeAlreadyExists;
-
-   public:
-      void AddTreeToVector(TTree* t)
-      {
-         if(!treeAlreadyExists)
-         {
-            trees.push_back(t);
-         }
-      }
+   private:
       void BranchTreeFromData(TTree* t, felabviewFlowEvent* mf)
       {
          std::vector<double>       flm_data              = mf->GetData();
@@ -50,16 +41,13 @@ class felabViewModulePrinter
          t->Branch("rt",&flm_run_time);
          t->Fill();
       }
-      TTree* FindOrCreateTree(felabviewFlowEvent* mf)
+      TTree* FindOrCreateTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
-         //#ifdef HAVE_CXX11_THREADS
-         //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         //#endif
          std::string               flm_BankName          = mf->GetBankName();
 
          std::string name = mf->GetBankName();
          int numberoftrees = trees.size();
-         treeAlreadyExists = false;
+         bool treeAlreadyExists = false;
          TTree* currentTree;
 
          for(int i=0; i<numberoftrees; i++)
@@ -74,10 +62,22 @@ class felabViewModulePrinter
          }
          if(!treeAlreadyExists)
          {
+            runinfo->fRoot->fOutputFile->cd("felabview");
             currentTree = new TTree(name.c_str(),"Tree with vectors");
+            trees.push_back(currentTree);
          }
          return currentTree;
       }
+      public:
+      void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         TTree* t = FindOrCreateTree(runinfo, mf);
+         BranchTreeFromData(t, mf);
+      }
+
 };
 
 
@@ -86,7 +86,7 @@ class felabviewModule: public TARunObject
 private:
    TTree* felabEventTree   = NULL;
    uint32_t initialEventTime;
-   felabViewModulePrinter treePrinter;
+   felabViewModuleWriter treeWriter;
 
 public:
    felabModuleFlags* fFlags;
@@ -96,7 +96,7 @@ public:
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-      //ModuleName="Felab View Module";
+      ModuleName="felabview Module";
       if (fTrace)
          printf("felabviewFlow::ctor!\n");
    }
@@ -109,6 +109,8 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+      runinfo->fRoot->fOutputFile->cd();
+      gDirectory->mkdir("felabview")->cd();
       if (fTrace)
          printf("felabviewFlow::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
     }
@@ -122,9 +124,6 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
      {
-         #ifdef HAVE_CXX11_THREADS
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          printf("DEBUG: felabviewModule::AnalyzeFlowEvent.\n");
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
@@ -132,11 +131,7 @@ public:
             printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
-         TTree* t = treePrinter.FindOrCreateTree(mf);
-
-         treePrinter.BranchTreeFromData(t, mf);
-
-         treePrinter.AddTreeToVector(t);
+         treeWriter.SaveToTree(runinfo, mf);
       }
       return flow; 
    }
