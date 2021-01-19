@@ -3,10 +3,10 @@ COPY . /alphasoft
 WORKDIR /alphasoft
 RUN pwd \
 && ls \
-&& source agconfig.sh \
+&& source alphasoft/agconfig.sh \
 && mkdir build \
 && cd build \
-&& cmake ../ \
+&& cmake ../alphasoft \
 && make -j4 \
 && make install
 CMD echo "$AGRELEASE"
