@@ -1,4 +1,4 @@
-FROM jmckenna/rootana
+FROM jmckenna/alphadocker
 #COPY . /agdaq
 #WORKDIR /agdaq 
 RUN pwd \
