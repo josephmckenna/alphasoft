@@ -59,14 +59,10 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include agana)
 include_directories(include include)
-include_directories(include .) #Used for RootUtils
-#include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
 include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__alpha2 include/*.h LINKDEF LibLinkDef.hh )
+ROOT_GENERATE_DICTIONARY(G__alpha2 ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
