@@ -48,14 +48,16 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories(include include)
-include_directories(include ../recolib/include)
-include_directories(include ../ana/include)
-include_directories(include ../analib/include)
-include_directories(include ../a2lib/include)
-include_directories(include ../alpha2/include)
+include_directories(
+   include 
+   ../recolib/include
+   ../ana/include
+   ../analib/include
+   ../a2lib/include
+   ../alpha2/include
+   INTERFACE $<INSTALL_INTERFACE:include>)
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
+   include_directories(include ../rootana/include INTERFACE $<INSTALL_INTERFACE:include>)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
