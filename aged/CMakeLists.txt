@@ -59,12 +59,12 @@ include_directories (${FREETYPE_INCLUDE_DIRS})
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include $ENV{AGRELEASE}/agana)
+include_directories(include ../agana)
 include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/a2lib/include)
+include_directories(include ../analib/include)
+include_directories(include ../ana/include)
+include_directories(include ../recolib/include)
+include_directories(include ../a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 
 

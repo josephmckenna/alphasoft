@@ -43,13 +43,14 @@ find_package(ROOT REQUIRED COMPONENTS Minuit MathMore Minuit2 Spectrum)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include $ENV{AGRELEASE}/agana)
+include_directories(include ../agana)
 include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/simulation/geant4/include)
+include_directories(include ../analib/include)
+include_directories(include ../ana/include)
+include_directories(include ../simulation/geant4/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.hh)
+ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)

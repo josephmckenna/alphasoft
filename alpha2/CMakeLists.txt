@@ -86,14 +86,14 @@ endif()
 include_directories(include)
 
 #Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
+include_directories(../alpha2/include)
 #...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
+include_directories(../a2lib/include)
 
 #AG compatability includes
-#include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/ana/include)
+#include_directories(../recolib/include)
+include_directories(../analib/include)
+include_directories(../ana/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
 include_directories(include $ENV{ROOTANASYS}/include)
@@ -129,13 +129,12 @@ foreach( LIST_FILE ${BINS} )
     add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
+    target_include_directories(${bin} PUBLIC ../analib/include)
     if (BUILD_AG)
-       target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
+       target_include_directories(${bin} PUBLIC ../recolib/include)
     endif(BUILD_AG)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    #link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
-    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib )
+    link_directories(../alpha2 ../analib )
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)
