@@ -47,7 +47,7 @@ void a2mcPrimary::Print(const Option_t* /*opt*/) const
   	std::cout << "  Primary particle PDG Code " << fPdgCode << std::endl; 
 	std::cout << "  Origin: (" << fVox << ", " << fVoy << ", " << fVoz << ") cm" << std::endl;
 	std::cout << "  Mom: (" << fPox << ", " << fPoy << ", " << fPoz << ")  MeV/c" << std::endl;
-	if(!isnan(fVdx)) std::cout << "  Decay: (" << fVdx << ", " << fVdy << ", " << fVdz << ") cm" << std::endl;
+	if(!std::isnan(fVdx)) std::cout << "  Decay: (" << fVdx << ", " << fVdy << ", " << fVdz << ") cm" << std::endl;
 
 }
 
