@@ -17,10 +17,11 @@ if [ ${THIS_SETUP} == "update_git" ]; then
    cd /cvmfs/alpha.cern.ch/alphasoft
    cvmfs_server transaction alpha.cern.ch
    if [ `git pull | wc -l` -gt 1 ]; then
-      git submodule update --remote
-      #I must leave cvmfs to publish the changes after git pull etc
+      sleep 5
       cp -v scripts/cvmfs/update.sh ~/
       cp -v scripts/cvmfs/views.list ~/
+      git submodule update --remote
+      #I must leave cvmfs to publish the changes after git pull etc
       cd ~/
       cvmfs_server publish alpha.cern.ch
       sleep 10
