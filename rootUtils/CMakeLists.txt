@@ -48,16 +48,11 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories(
-   include 
-   ../recolib/include
+include_directories( 
    ../ana/include
-   ../analib/include
-   ../a2lib/include
-   ../alpha2/include
-   INTERFACE $<INSTALL_INTERFACE:include>)
+   )
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include INTERFACE $<INSTALL_INTERFACE:include>)
+   include_directories(include ../rootana/include)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
@@ -69,7 +64,11 @@ ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh
 
 
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
-add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx INTERFACE)
+add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
+target_include_directories( rootUtils
+   PUBLIC
+      include 
+   )
 if (BUILD_AG)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
 endif (BUILD_AG)
@@ -77,7 +76,12 @@ if (BUILD_A2)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2)
 endif (BUILD_A2)
 
-install(TARGETS rootUtils DESTINATION lib)
+install(TARGETS rootUtils 
+   LIBRARY
+      DESTINATION ${CMAKE_INSTALL_LIBDIR} 
+   PUBLIC_HEADER
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+   )
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)
