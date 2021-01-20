@@ -2,11 +2,11 @@ FROM jmckenna/alphadocker
 WORKDIR /alphasoft
 COPY . /alphasoft
 RUN pwd \
-&& ls \
-&& source agconfig.sh \
-&& mkdir build \
-&& cd build \
-&& cmake .. \
+&& ls * \
+&& source /alphasoft/agconfig.sh \
+&& mkdir /build \
+&& cd /build \
+&& cmake /alphasoft \
 && make -j4 \
 && make install
 CMD echo "$AGRELEASE"
