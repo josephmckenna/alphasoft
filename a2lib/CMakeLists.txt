@@ -63,7 +63,7 @@ include_directories(include include)
 include_directories(include ../analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 
-file(GLOB HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/*.h)
+file(GLOB HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
 ROOT_GENERATE_DICTIONARY(G__alpha2 ${HEADER_FILES} LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
