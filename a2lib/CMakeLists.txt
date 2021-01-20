@@ -63,8 +63,8 @@ include_directories(include include)
 include_directories(include ../analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 
-file(GLOB HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
-ROOT_GENERATE_DICTIONARY(G__alpha2 ${HEADER_FILES} LINKDEF LibLinkDef.hh )
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
+ROOT_GENERATE_DICTIONARY(G__alpha2 ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
@@ -83,4 +83,5 @@ endif()
 install(TARGETS alpha2 DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libalpha2.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
 install(FILES ${HEADER_FILES} DESTINATION include)
