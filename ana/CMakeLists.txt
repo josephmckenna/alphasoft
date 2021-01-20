@@ -100,7 +100,12 @@ find_library(LIBXT Xt)
 include_directories(../alpha2/include)
 #...which then needs UnpackVF48 in a2lib
 include_directories(../a2lib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
+
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
 
 message(${ROOT_INCLUDE_DIRS})
@@ -147,8 +152,12 @@ foreach( LIST_FILE ${BINS} )
     )
 
     #message(Modules: ${MODULES})
+    if (BUILT_IN_ROOTANA)
+       add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
+    else ()
+       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
+    endif (BUILT_IN_ROOTANA)
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
     #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app

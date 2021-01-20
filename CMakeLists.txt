@@ -32,7 +32,7 @@ set(PRE_CONFIG "" CACHE STRING "Pre-config script, used to build setup.{sh,py,C}
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
-
+option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -99,9 +99,12 @@ install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
 add_subdirectory(cmake_extras)
 
-#Universal libraries (Include some flow and TSpill stuff)
-get_submodule(rootana)
-add_subdirectory(rootana)
+
+if (BUILT_IN_ROOTANA)
+   #Universal libraries (Include some flow and TSpill stuff)
+   get_submodule(rootana)
+   add_subdirectory(rootana)
+endif(BUILT_IN_ROOTANA)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
