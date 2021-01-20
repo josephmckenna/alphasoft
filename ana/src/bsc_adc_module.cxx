@@ -97,16 +97,16 @@ public:
             hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
             hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
             hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
-            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,35000.);
-            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude", 15, -0.5, 15.5, 2000,0.,35000.);
+            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.);
+            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.);
          }
       }
       if ( !(fFlags->fProtoTOF) ) {
          hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
          hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
          hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,50000.);
-         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,50000.);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.);
+         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
          hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
          hWave = new TH1D("hWave","ADC Waveform",700,0,700);
          hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
@@ -295,7 +295,12 @@ public:
       
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
+                  if (fFlags->fProtoTOF) {
+                     BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
+                  }
+                  if ( !(fFlags->fProtoTOF) ) {
+                     BarEvent->AddADCHit(bar,amp_volts,fit_start_time*10);
+                  }
 
                }
 
@@ -316,7 +321,12 @@ public:
 
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,amp_volts,start_time*10);
+                  if (fFlags->fProtoTOF) {
+                     BarEvent->AddADCHit(chan,amp_volts,start_time*10);
+                  }
+                  if ( !(fFlags->fProtoTOF) ) {
+                     BarEvent->AddADCHit(bar,amp_volts,start_time*10);
+                  }
 
                }
 

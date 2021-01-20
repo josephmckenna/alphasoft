@@ -320,7 +320,7 @@ public:
                         AddTDCdata(barEvt,tdc);
                         CombineEnds(barEvt);
                         CalculateZ(barEvt);
-                        CalculateTOF(barEvt);
+                        //CalculateTOF(barEvt);
                      }
                   if( fFlags->fPulser )
                      {
@@ -544,6 +544,7 @@ public:
 
             // Exit if none found
             if (!bothit) continue;
+
 
             // Adds a BarHit containing the top hit and bottom hit
             if (fFlags->fProtoTOF) {

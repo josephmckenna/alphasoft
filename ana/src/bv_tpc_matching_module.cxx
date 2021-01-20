@@ -22,6 +22,7 @@ class MatchingModuleFlags
 {
 public:
    double fMagneticField = -1.;
+   bool fPrint = false;
 
    MatchingModuleFlags() // ctor
    { }
@@ -106,7 +107,7 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      printf("matchingmodule::begin!");
+      if (fFlags->fPrint) { printf("matchingmodule::begin!"); }
 
       analyzed_event = new TBarEvent;
       BscTree = new TTree("BscEventTree", "BscEventTree");
@@ -185,12 +186,12 @@ public:
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("PauseRun, run %d\n", runinfo->fRunNo);
+      if (fFlags->fPrint) {printf("PauseRun, run %d\n", runinfo->fRunNo);}
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("ResumeRun, run %d\n", runinfo->fRunNo);
+      if (fFlags->fPrint) {printf("ResumeRun, run %d\n", runinfo->fRunNo);}
    }
 
    // Main function
@@ -216,6 +217,27 @@ public:
 #endif
          return flow;
       }
+      TBarEvent *barEvt=bf->BarEvent;
+      if (!barEvt)
+      {
+         if (fFlags->fPrint) {printf("matchingmodule: TBarEvent not found!");}
+         return flow;
+      }
+
+      AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
+      if (!anaflow)
+      {
+         if (fFlags->fPrint) {printf("matchingmodule: AgAnalysisFlow not found!");}
+         return flow;
+      }
+      TStoreEvent* e = anaflow->fEvent;
+      if (!e)
+      {
+         if (fFlags->fPrint) {printf("matchingmodule: TStoreEvent not found!");}
+         return flow;
+      }
+      const TObjArray* LineArray = e->GetLineArray();
+      const TObjArray* HelixArray = e->GetHelixArray();
       
       AgEvent* age = ef->fEvent;
       // prepare event to store in TTree
@@ -233,26 +255,25 @@ public:
       // Main functions
       if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
          {
-            std::vector<TVector3> helix_points = GetHelices(flow);
-            MatchPoints(flow, helix_points);
-            FillHistos(flow);
-            TimeOfFlight(flow, helix_points);
+            std::vector<TVector3> helix_points = GetHelices(HelixArray);
+            MatchPoints(barEvt, helix_points);
+            FillHistos(barEvt);
+            TimeOfFlight(barEvt, helix_points);
          }
       else
          {
-            std::vector<TVector3> line_points = GetLines(flow);
-            MatchPoints(flow, line_points);
-            FillHistos(flow);
-            TimeOfFlight(flow, line_points);
+            std::vector<TVector3> line_points = GetLines(LineArray);
+            MatchPoints(barEvt, line_points);
+            FillHistos(barEvt);
+            TimeOfFlight(barEvt, line_points);
          }
-      TBarEvent* evt = bf->BarEvent;
-      if( evt )
+      if( barEvt )
          {
-            for(int i=0; i<evt->GetNBars(); ++i)
-               analyzed_event->AddBarHit(evt->GetBars().at(i));
+            for(int i=0; i<barEvt->GetNBars(); ++i)
+               analyzed_event->AddBarHit(barEvt->GetBars().at(i));
 
-            for(int i=0; i<evt->GetNEnds(); ++i)
-               analyzed_event->AddEndHit(evt->GetEndHits().at(i));
+            for(int i=0; i<barEvt->GetNEnds(); ++i)
+               analyzed_event->AddEndHit(barEvt->GetEndHits().at(i));
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);            
             BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
             BscTree->Fill();
@@ -268,13 +289,9 @@ public:
    //________________________________
    // MAIN FUNCTIONS
 
-   std::vector<TVector3> GetLines(TAFlowEvent* flow)
+   std::vector<TVector3> GetLines(const TObjArray* LineArray)
    {
       std::vector<TVector3> line_points;
-      AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return line_points; }
-      TStoreEvent* e = anaflow->fEvent;
-      const TObjArray* LineArray = e->GetLineArray();
       for (auto line: *LineArray)
          {
             TStoreLine* l = (TStoreLine*)line;
@@ -284,13 +301,9 @@ public:
          }
       return line_points;
    }
-   std::vector<TVector3> GetHelices(TAFlowEvent* flow)
+   std::vector<TVector3> GetHelices(const TObjArray* HelixArray)
    {
       std::vector<TVector3> helix_points;
-      AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
-      if (!anaflow) {if(fTrace)std::cout<<"matchingmodule: AgAnalysisFlow not found!"<<std::endl; return helix_points; }
-      TStoreEvent* e = anaflow->fEvent;
-      const TObjArray* HelixArray = e->GetHelixArray();
       for (auto helix: *HelixArray)
          {
             TStoreHelix* h = (TStoreHelix*)helix;
@@ -300,11 +313,8 @@ public:
          }
       return helix_points;
    }
-   void MatchPoints(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
+   void MatchPoints(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
    {
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) {if(fTrace)std::cout<<"matchingmodule: AgBarEventFlow not found!"<<std::endl; return; }
-      TBarEvent *barEvt=bef->BarEvent;
       hNHits->Fill(barEvt->GetBars().size(),tpc_points.size());
       if (tpc_points.size()==0) return;
       for (BarHit* hit: barEvt->GetBars())
@@ -340,11 +350,8 @@ public:
          }
    }
 
-   void FillHistos(TAFlowEvent* flow)
+   void FillHistos(TBarEvent* barEvt)
    {
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) { return; }
-      TBarEvent *barEvt=bef->BarEvent;
       for (BarHit* hit: barEvt->GetBars())
          {
             int bar = hit->GetBar();
@@ -372,11 +379,8 @@ public:
          }
    }
 
-   void TimeOfFlight(TAFlowEvent* flow, std::vector<TVector3> tpc_points)
+   void TimeOfFlight(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
    {
-      AgBarEventFlow *bef=flow->Find<AgBarEventFlow>(); // Gets list of bv hits from flow
-      if (!bef) { return; }
-      TBarEvent *barEvt=bef->BarEvent;
       std::vector<BarHit*> bars = barEvt->GetBars();
       int nbv = bars.size();
       int ntpc = tpc_points.size();
@@ -574,6 +578,8 @@ public:
                fFlags.fMagneticField = atof(args[++i].c_str());
                printf("Magnetic Field (incompatible with --loadcalib)\n");
             }
+         if( args[i] == "--bscprint")
+            fFlags.fPrint = true;
          }
    }
 
