@@ -65,8 +65,11 @@ include_directories(include ../analib/include)
 include_directories(include ../ana/include)
 include_directories(include ../recolib/include)
 include_directories(include ../a2lib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
-
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)

@@ -96,7 +96,11 @@ include_directories(../analib/include)
 include_directories(../ana/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
-include_directories(include $ENV{ROOTANASYS}/include)
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
 
 message(${ROOT_INCLUDE_DIRS})
