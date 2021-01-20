@@ -237,13 +237,15 @@ public:
             double fit_start_time;
             double fit_end_time;
             
-            TF1 *sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
+            TString fname=TString::Format("sgfit_%d_%d",data->counter,i);
+            TF1 *sgfit = new TF1(fname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
             sgfit->SetParameters(max,imax,5,0.2);
             sgfit->SetParLimits(0,0.9*max,100*max);
             sgfit->SetParLimits(1,0,500);
             sgfit->SetParLimits(2,0,100);
             sgfit->SetParLimits(3,0,2);
-            hWave->Fit("sgfit","RQ0");
+            //hWave->Fit("sgfit","RQ0");
+            hWave->Fit(fname,"RQ0");
             // Extrapolates amplitude and interpolates start and end times
             fit_amp = sgfit->GetParameter(0) - baseline;
             maximum_time = sgfit->GetMaximumX();
