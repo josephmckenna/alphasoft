@@ -84,22 +84,22 @@ if(MIDAS_FOUND)
 endif()
 
 # Include directories
-include_directories($ENV{AGRELEASE}/agana)
+include_directories(../agana)
 include_directories(include)
-include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/aged/include)
+include_directories(../recolib/include)
+include_directories(../analib/include)
+include_directories(../aged/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
-link_directories(${bin} $ENV{AGRELEASE}/analib)
+link_directories(${bin} ../analib)
 find_library(LIBXM Xm)
 find_library(LIBXT Xt)
 
 
 #Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
+include_directories(../alpha2/include)
 #...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
+include_directories(../a2lib/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 
 
@@ -131,19 +131,19 @@ foreach( LIST_FILE ${BINS} )
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
-        "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+        "../agana/unpack_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/pwb_module.cxx" 
-        "$ENV{AGRELEASE}/agana/pwb_module.cxx"
+        "../agana/pwb_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/adc_module.cxx" 
-        "$ENV{AGRELEASE}/agana/adc_module.cxx"
+        "../agana/adc_module.cxx"
     )
 
     #message(Modules: ${MODULES})
@@ -154,9 +154,9 @@ foreach( LIST_FILE ${BINS} )
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC agana)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
+    target_include_directories(${bin} PUBLIC ../recolib/include)
+    target_include_directories(${bin} PUBLIC ../analib/include)
+    target_include_directories(${bin} PUBLIC ../aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
 

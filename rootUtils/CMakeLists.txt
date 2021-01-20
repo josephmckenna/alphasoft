@@ -49,14 +49,15 @@ include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
 include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{AGRELEASE}/alpha2/include)
+include_directories(include ../recolib/include)
+include_directories(include ../ana/include)
+include_directories(include ../analib/include)
+include_directories(include ../a2lib/include)
+include_directories(include ../alpha2/include)
 include_directories(include $ENV{ROOTANASYS}/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
+ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 
