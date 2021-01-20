@@ -60,7 +60,6 @@ include(${ROOT_USE_FILE})
 
 # Include directories
 include_directories(include ../agana)
-include_directories(include include)
 include_directories(include ../analib/include)
 include_directories(include ../ana/include)
 include_directories(include ../recolib/include)
@@ -83,6 +82,7 @@ if(ROOTANA_SUBMOD)
   add_dependencies(aged rootana)
 endif()
 target_link_libraries(aged ${LIBXFT} ${LIBXM} ${LIBXRENDER} ${LIBXT})
+target_include_directories(aged PUBLIC include) 
 
 install(TARGETS aged DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)
