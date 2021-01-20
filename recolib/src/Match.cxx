@@ -420,8 +420,8 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 #ifdef RESCUE_FIT
             stat=false;
 #endif
-	      }
-      delete ff;
+	}
+      //      delete ff;
 
 #ifdef RESCUE_FIT
       if( !stat )
@@ -463,8 +463,9 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
             }
         }
 #endif
-      delete hh;
+      delete ff;
     } // wizard peak finding failed
+  delete hh;
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
   manalzer_global_mtx->unlock();
