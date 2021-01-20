@@ -6,7 +6,7 @@ RUN pwd \
 && source /alphasoft/agconfig.sh \
 && mkdir /build \
 && cd /build \
-&& cmake /alphasoft \
+&& cmake3 /alphasoft \
 && make -j4 \
 && make install
 CMD echo "$AGRELEASE"
