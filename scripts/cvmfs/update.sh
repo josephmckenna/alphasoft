@@ -14,8 +14,8 @@ echo "update.sh args: ${THIS_SETUP}"
 #Path is this file:
 
 if [ ${THIS_SETUP} == "update_git" ]; then
-   cd /cvmfs/alpha.cern.ch/alphasoft
    cvmfs_server transaction alpha.cern.ch
+   cd /cvmfs/alpha.cern.ch/alphasoft
    if [ `git pull | wc -l` -gt 1 ]; then
       sleep 5
       cp -v scripts/cvmfs/update.sh ~/
