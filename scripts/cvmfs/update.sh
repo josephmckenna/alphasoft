@@ -73,7 +73,7 @@ elif [ `echo "${THIS_SETUP}" | grep '.sh' | wc -l` -eq 1 ]; then
    make          &>> ~/alphasoft_${LCG_VERSION_NAME}_build.log
    make install  &>> ~/alphasoft_${LCG_VERSION_NAME}_build.log  && \
    echo "Build OK! Date: `date` GitVersion: `git log -1 --format=%h`" >> ~/alphasoft_${LCG_VERSION_NAME}_build.log 
-   cp /cvmfs/alpha.cern.ch/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/build.log
+   cp ~/alphasoft_${LCG_VERSION_NAME}_build.log ${INSTALL_PATH}/build.log
    cd /cvmfs/alpha.cern.ch/alphasoft
    echo "Cleaning up build path: ${AGRELEASE}/${LCG_VERSION_PATH}_build"
    rm -rf ${AGRELEASE}/${LCG_VERSION_PATH}_build
