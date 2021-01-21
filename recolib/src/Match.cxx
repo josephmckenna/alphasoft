@@ -360,7 +360,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
       ff->SetParameter(2,padSigma);
 
       start = std::chrono::high_resolution_clock::now();
-      int r = hh->Fit(ff,"B0NQ","");
+      int r = hh->Fit(ff,"B0NQ");
       stop = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
       if( diagnostic ) htimefit->Fill(duration.count());
@@ -421,7 +421,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
             stat=false;
 #endif
 	}
-      //      delete ff;
+      delete ff;
 
 #ifdef RESCUE_FIT
       if( !stat )
@@ -463,7 +463,6 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
             }
         }
 #endif
-      delete ff;
     } // wizard peak finding failed
   delete hh;
   if( fTrace )
