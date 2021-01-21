@@ -29,16 +29,39 @@ class felabViewModuleWriter
 {
    private:
       std::vector<TTree*> trees;
+      std::vector<TBranch*> dataBranchVec;
+      std::vector<TBranch*> MIDAS_TIMEBranchVec;
+      std::vector<TBranch*> run_timeBranchVec;
    private:
       void BranchTreeFromData(TTree* t, felabviewFlowEvent* mf)
       {
-         std::vector<double>       flm_data              = mf->GetData();
+         std::vector<double>*       flm_data              = mf->GetData();
          uint32_t                  flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
          uint32_t                  flm_run_time          = mf->GetRunTime();
 
-         t->Branch("data",&flm_data);
-         t->Branch("t",&flm_MIDAS_TIME);
-         t->Branch("rt",&flm_run_time);
+         TBranch* data_b = t->GetBranch("data");
+         if (!data_b)
+            t->Branch("data",&flm_data);
+         else
+         {
+            t->SetBranchAddress("data",&flm_data);
+         }
+
+         TBranch* MIDAS_TIME_b = t->GetBranch("t");
+         if (!MIDAS_TIME_b)
+            t->Branch("t",&flm_MIDAS_TIME);
+         else
+         {
+            t->SetBranchAddress("t",&flm_MIDAS_TIME);
+         }
+
+         TBranch* run_time_b = t->GetBranch("rt");
+         if (!run_time_b)
+            t->Branch("rt",&flm_run_time);
+         {
+            t->SetBranchAddress("rt",&flm_run_time);
+         }
+         
          t->Fill();
       }
       TTree* FindOrCreateTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
@@ -124,11 +147,10 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
      {
-         printf("DEBUG: felabviewModule::AnalyzeFlowEvent.\n");
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
          {
-            printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
+            //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
          treeWriter.SaveToTree(runinfo, mf);
@@ -152,7 +174,7 @@ public:
          me->FindAllBanks();
          if(me->banks.size()>1)
          {
-            printf("\n \n \n DEBUG: felabviewModule::Analyze. Has multiple banks. Exit with error code 11. This should never be hit. \n \n \n");
+            //printf("\n \n \n DEBUG: felabviewModule::Analyze. Has multiple banks. Exit with error code 11. This should never be hit. \n \n \n");
             exit(11);
          }
 
