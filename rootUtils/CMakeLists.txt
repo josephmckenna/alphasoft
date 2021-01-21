@@ -69,7 +69,7 @@ ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh
 
 
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
-add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx INTERFACE)
+add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
 if (BUILD_AG)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
 endif (BUILD_AG)
