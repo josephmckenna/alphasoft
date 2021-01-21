@@ -278,7 +278,7 @@ void ReadEventTree::DisplayHisto()
             htpad->Draw("same");
             //htt->GetYaxis()->SetRangeUser(0.,htpad->GetBinContent(htpad->GetMaximumBin())*1.1);
             int btemp=htt->FindBin(1000.);
-            htt->GetYaxis()->SetRangeUser(0.,htt->GetBinContent(btemp)*1.1);
+            htt->GetYaxis()->SetRangeUser(0.,htt->GetBinContent(btemp)*1.2);
             htt->GetXaxis()->SetTitle("Drift Time [ns]");
 
             cdec->cd(5);
