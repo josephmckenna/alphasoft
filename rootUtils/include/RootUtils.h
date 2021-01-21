@@ -14,6 +14,7 @@
 #include "TGraph.h"
 
 #include "TSpill.h"
+#include "TA2Spill.h"
 
 
 //Root Utils headers:
