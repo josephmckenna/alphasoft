@@ -7,6 +7,7 @@ RUN pwd \
 && mkdir /build \
 && cd /build \
 && cmake3 /alphasoft \
+&& cat GitInfo.h \
 && make -j4 \
 && make install
 CMD echo "$AGRELEASE"
