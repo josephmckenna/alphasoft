@@ -194,7 +194,7 @@ class SISEventFlow: public TAFlowEvent
   }
 };
 
-#include "TSpill.h"
+#include "TA2Spill.h"
 
 class A2SpillFlow: public TAFlowEvent
 {

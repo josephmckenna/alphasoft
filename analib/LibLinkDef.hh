@@ -27,11 +27,6 @@
 #pragma link C++ class  TSpillScalerData+;
 #pragma link C++ class  TSpillSequencerData+;
 //Experiment specific Spill classes (child classses)
-#ifdef BUILD_A2
-  #pragma link C++ class  TA2Spill+;
-  #pragma link C++ class  TA2SpillScalerData+;
-  #pragma link C++ class  TA2SpillSequencerData+;
-#endif
 #ifdef BUILD_AG
   #pragma link C++ class  TAGSpill+;
   #pragma link C++ class  TAGSpillScalerData+;
