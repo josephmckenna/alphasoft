@@ -31,21 +31,8 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for gitinfo.h file
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_custom_target(
-    gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
-    )
-
-add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
-    )
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
 
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
@@ -61,8 +48,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-message(${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
@@ -98,23 +84,28 @@ if(MIDAS_FOUND)
 endif()
 
 # Include directories
-include_directories($ENV{AGRELEASE}/agana)
+include_directories(../agana)
 include_directories(include)
-include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/aged/include)
+include_directories(../recolib/include)
+include_directories(../analib/include)
+include_directories(../aged/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
-link_directories(${bin} $ENV{AGRELEASE}/analib)
+link_directories(${bin} ../analib)
 find_library(LIBXM Xm)
 find_library(LIBXT Xt)
 
 
 #Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
+include_directories(../alpha2/include)
 #...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
+include_directories(../a2lib/include)
+
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
 
 message(${ROOT_INCLUDE_DIRS})
@@ -145,32 +136,36 @@ foreach( LIST_FILE ${BINS} )
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
-        "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+        "../agana/unpack_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/pwb_module.cxx" 
-        "$ENV{AGRELEASE}/agana/pwb_module.cxx"
+        "../agana/pwb_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/adc_module.cxx" 
-        "$ENV{AGRELEASE}/agana/adc_module.cxx"
+        "../agana/adc_module.cxx"
     )
 
     #message(Modules: ${MODULES})
+    if (BUILT_IN_ROOTANA)
+       add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
+    else ()
+       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
+    endif (BUILT_IN_ROOTANA)
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} gitinfo)
+    #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC agana)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
+    target_include_directories(${bin} PUBLIC ../recolib/include)
+    target_include_directories(${bin} PUBLIC ../analib/include)
+    target_include_directories(${bin} PUBLIC ../aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
 
