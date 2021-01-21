@@ -44,7 +44,6 @@ include(${ROOT_USE_FILE})
 
 # Include directories
 include_directories(include ../agana)
-include_directories(include include)
 include_directories(include ../analib/include)
 include_directories(include ../ana/include)
 include_directories(include ../simulation/geant4/include)
@@ -55,6 +54,7 @@ ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc.cxx)
+target_include_directories(agtpc PUBLIC include)
 target_link_libraries(agtpc agana ${ROOT_LIBRARIES})
 
 install(TARGETS agtpc DESTINATION lib)

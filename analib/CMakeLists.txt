@@ -45,12 +45,6 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories(include ../agana)
-include_directories(include include)
-#include_directories(include .) #Used for RootUtils
-if (BUILD_AG)
-   include_directories(include ../recolib/include)
-endif(BUILD_AG)
 include_directories(include ../ana/include)
 include_directories(include ../a2lib/include)
 
@@ -67,6 +61,7 @@ ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
+target_include_directories(analib PUBLIC include ../agana)
 target_link_libraries(analib ${ROOT_LIBRARIES} )
 if (BUILD_AG)
    target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)

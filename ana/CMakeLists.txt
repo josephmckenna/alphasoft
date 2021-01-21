@@ -83,23 +83,11 @@ if(MIDAS_FOUND)
   link_directories($ENV{MIDASSYS}/lib)
 endif()
 
-# Include directories
-include_directories(../agana)
-include_directories(include)
-include_directories(../recolib/include)
-include_directories(../analib/include)
-include_directories(../aged/include)
-include_directories(${ROOT_INCLUDE_DIRS})
+include_directories(../a2lib/include ../alpha2/include)
 
 link_directories(${bin} ../analib)
 find_library(LIBXM Xm)
 find_library(LIBXT Xt)
-
-
-#Analysis Report needs A2Flow in alpha2...
-include_directories(../alpha2/include)
-#...which then needs UnpackVF48 in a2lib
-include_directories(../a2lib/include)
 
 if (BUILT_IN_ROOTANA)
    include_directories(include ../rootana/include)
@@ -162,10 +150,6 @@ foreach( LIST_FILE ${BINS} )
     #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC agana)
-    target_include_directories(${bin} PUBLIC ../recolib/include)
-    target_include_directories(${bin} PUBLIC ../analib/include)
-    target_include_directories(${bin} PUBLIC ../aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
 

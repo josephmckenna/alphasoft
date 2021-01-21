@@ -59,8 +59,6 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include include)
-include_directories(include ../analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
 
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
@@ -71,6 +69,7 @@ file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
 
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
+target_include_directories(alpha2 PUBLIC include)
 
 
 find_library(LIBSQLITE3 sqlite3)
