@@ -38,7 +38,7 @@ add_custom_command(
 
 
 find_package(ROOTANA)
-include_directories(include ${ROOTANA_INCLUDE_DIRS})
+include_directories(include ../analib/include ${ROOTANA_INCLUDE_DIRS})
 
 # Directories
 add_subdirectory(src)
