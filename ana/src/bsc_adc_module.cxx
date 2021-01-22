@@ -234,7 +234,7 @@ public:
             double maximum_time;
             double fit_start_time;
             double fit_end_time;
-            
+            {           
             //Root's fitting routines are often not thread safe, lock globally
 #ifdef MODULE_MULTITHREAD
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -269,6 +269,7 @@ public:
                   hit_num++;
                }
             delete sgfit;
+            }
             
             // Fills histograms
             hBars->Fill(bar);
