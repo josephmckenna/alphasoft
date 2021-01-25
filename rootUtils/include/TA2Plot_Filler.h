@@ -4,6 +4,7 @@
 
 
 #include "TA2Plot.h"
+#include <set>
 class TA2Plot_Filler
 {
 private:
@@ -18,6 +19,7 @@ private:
             return;
          }
       }
+      //std::cout<<"Add run number:"<<runNumber<<std::endl;
       runNumbers.push_back(runNumber);
    }
    void LoadData(int runNumber, double first_time, double last_time);

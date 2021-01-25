@@ -9,7 +9,7 @@ TA2Plot_Filler::~TA2Plot_Filler()
 }
 void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time)
 {
-
+   std::cout<<"Loading run data:"<<runNumber <<" over the range between "<< first_time << "s to "<< last_time << "s"<< std::endl;
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
    TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
@@ -52,13 +52,21 @@ void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time
 }
 void TA2Plot_Filler::LoadData()
 {
-   std::vector<double> last_times(plots.size(),0.);
-   std::vector<double> first_times(plots.size(),1E99);
-   for (size_t i=0; i<plots.size(); i++)
+   std::set<int> Runs;
+   for (auto &plot: plots)
+      for (auto& run : plot->GetArrayOfRuns())
+         Runs.insert(run);
+   std::vector<int> UniqueRuns(Runs.begin(),Runs.end());
+   Runs.clear();
+
+   std::vector<double> last_times(UniqueRuns.size(),0.);
+   std::vector<double> first_times(UniqueRuns.size(),1E99);
+   for (auto& plot: plots)
    {
       //Calculate our list time... so we can stop early
-      for (auto& t: plots[i]->GetTimeWindows())
+      for (auto& t: plot->GetTimeWindows())
       {
+         for (size_t i=0; i<UniqueRuns.size(); i++)
          if (t.runNumber==runNumbers[i])
          {
             if (t.tmax<0) last_times[i]=1E99;
