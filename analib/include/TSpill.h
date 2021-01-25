@@ -30,7 +30,10 @@ class TSpillScalerData: public TObject
    TSpillScalerData();
    ~TSpillScalerData();
    TSpillScalerData(int n_scaler_channels);
-   TSpillScalerData(TSpillScalerData* a);
+   TSpillScalerData(const TSpillScalerData& a);
+   TSpillScalerData& operator =(const TSpillScalerData& rhs);
+   double GetStartTime() const { return StartTime; }
+   double GetStopTime() const { return StopTime; }
    template <class ScalerData>
    ScalerData* operator/(const ScalerData* b)
    {
@@ -104,7 +107,8 @@ class TSpillSequencerData: public TObject
    int          fStopState;
    TSpillSequencerData();
    ~TSpillSequencerData();
-   TSpillSequencerData(TSpillSequencerData* a);
+   TSpillSequencerData(const TSpillSequencerData& a);
+   TSpillSequencerData& operator =(const TSpillSequencerData& rhs);
 //   TSpillSequencerData(DumpPair* d);
    TSpillSequencerData* operator/(const TSpillSequencerData* b);
    using TObject::Print;
@@ -115,7 +119,7 @@ class TSpillSequencerData: public TObject
 class TSpill: public TObject
 {
 public:
-   const int             RunNumber;
+   int                   RunNumber;
    bool                  IsDumpType;
    bool                  IsInfoType;
    int                   Unixtime;
@@ -127,9 +131,11 @@ public:
    //TSpill(const char* name);
    void InitByName(const char* format, va_list args);
    TSpill(int runno, const char* format, ...);
-   TSpill* operator/(const TSpill* b);
-   TSpill(TSpill* a);
+   TSpill(const TSpill& a);
+   TSpill& operator =(const TSpill& rhs);
    bool IsMatchForDumpName(std::string dumpname, bool exact = true);
+   virtual double GetStartTime() const = 0;
+   virtual double GetStopTime() const = 0;
    bool DumpHasMathSymbol() const;
    using TObject::Print;
    virtual void Print();

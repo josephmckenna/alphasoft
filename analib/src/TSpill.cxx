@@ -13,10 +13,12 @@ TSpillScalerData::TSpillScalerData()
    PassMVA           =0;
    VertexFilled      =false;
 }
+
 TSpillScalerData::~TSpillScalerData()
 {
 
 }
+
 TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scaler_channels,0),ScalerFilled(n_scaler_channels,0)
 {
    StartTime         =-1;
@@ -29,21 +31,42 @@ TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scale
    PassMVA           =0;
    VertexFilled      =false;
 }
-TSpillScalerData::TSpillScalerData(TSpillScalerData* a)
+
+TSpillScalerData::TSpillScalerData(const TSpillScalerData& a)
 {
-   StartTime         =a->StartTime;
-   StopTime          =a->StopTime;
-   DetectorCounts    =a->DetectorCounts;
-   ScalerFilled      =a->ScalerFilled;
+   StartTime         =a.StartTime;
+   StopTime          =a.StopTime;
+   DetectorCounts    =a.DetectorCounts;
+   ScalerFilled      =a.ScalerFilled;
    
-   FirstVertexEvent  =a->FirstVertexEvent;
-   LastVertexEvent   =a->LastVertexEvent;
-   VertexEvents      =a->VertexEvents;
-   Verticies         =a->Verticies;
-   PassCuts          =a->PassCuts;
-   PassMVA           =a->PassMVA;
-   VertexFilled      =a->VertexFilled;
+   FirstVertexEvent  =a.FirstVertexEvent;
+   LastVertexEvent   =a.LastVertexEvent;
+   VertexEvents      =a.VertexEvents;
+   Verticies         =a.Verticies;
+   PassCuts          =a.PassCuts;
+   PassMVA           =a.PassMVA;
+   VertexFilled      =a.VertexFilled;
 }
+
+TSpillScalerData& TSpillScalerData::operator=(const TSpillScalerData& rhs)
+{
+   if (this == &rhs)
+      return *this;
+   StartTime         =rhs.StartTime;
+   StopTime          =rhs.StopTime;
+   DetectorCounts    =rhs.DetectorCounts;
+   ScalerFilled      =rhs.ScalerFilled;
+   
+   FirstVertexEvent  =rhs.FirstVertexEvent;
+   LastVertexEvent   =rhs.LastVertexEvent;
+   VertexEvents      =rhs.VertexEvents;
+   Verticies         =rhs.Verticies;
+   PassCuts          =rhs.PassCuts;
+   PassMVA           =rhs.PassMVA;
+   VertexFilled      =rhs.VertexFilled;
+   return *this;
+}
+
 
 bool TSpillScalerData::Ready(bool have_vertex_detector)
 {
@@ -88,13 +111,13 @@ TSpillSequencerData::TSpillSequencerData()
    fStartState =-1;
    fStopState  =-1;
 }
-TSpillSequencerData::TSpillSequencerData(TSpillSequencerData* a)
+TSpillSequencerData::TSpillSequencerData(const TSpillSequencerData& a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+   fSequenceNum  =a.fSequenceNum;
+   fDumpID       =a.fDumpID;
+   fSeqName      =a.fSeqName;
+   fStartState   =a.fStartState;
+   fStopState    =a.fStopState;
 }
 
 
@@ -164,18 +187,23 @@ void TSpill::InitByName(const char* format, va_list args)
    Print();
 }
 
-TSpill::TSpill(TSpill* a): RunNumber(a->RunNumber)
+TSpill::TSpill(const TSpill& a)
 {
-   Name         =a->Name;
-   IsDumpType   =a->IsDumpType;
-   Unixtime     =a->Unixtime;
+   RunNumber    =a.RunNumber;
+   Name         =a.Name;
+   IsDumpType   =a.IsDumpType;
+   Unixtime     =a.Unixtime;
 }
 
-TSpill* TSpill::operator/(const TSpill* b)
+TSpill& TSpill::operator=(const TSpill& rhs)
 {
-   //Joe you need to set this up
-   TSpill* a = new TSpill();
-   return a;
+   if (this == &rhs)
+      return *this;
+   RunNumber    =rhs.RunNumber;
+   Name         =rhs.Name;
+   IsDumpType   =rhs.IsDumpType;
+   Unixtime     =rhs.Unixtime;
+   return *this;
 }
 
 void TSpill::Print()
@@ -189,10 +217,12 @@ int TSpill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
    return -1;
 }
+
 TString TSpill::Content(std::vector<int>*, int& )
 {
    return Name;
 }
+
 bool TSpill::DumpHasMathSymbol() const
 {
    char symbols[5]="+/*-";
