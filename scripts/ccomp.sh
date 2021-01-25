@@ -28,7 +28,7 @@ elif [[ "$1" == "noA2" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
+    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     time cmake3 --build . -- -j`nproc --ignore=2`
     time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
@@ -38,7 +38,7 @@ elif [[ "$1" == "nosim" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF 
+    cmake3 .. -DBUILD_AG_SIM=OFF -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     time cmake3 --build . -- -j`nproc --ignore=2`
     time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
@@ -50,7 +50,7 @@ elif [[ "$1" == "ci" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     cmake3 --build . 
     cmake3 --build . --target install
     ls -lh $AGRELEASE/bin
@@ -61,7 +61,7 @@ elif [[ "$1" == "debug" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     time cmake3 --build . -- -j`nproc --ignore=2`
     time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
@@ -73,10 +73,10 @@ elif [[ "$1" == "build" ]]; then
 #
     if [[ "$2" == "nosim" ]]; then
 	echo "without Simulation components"
-	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     else
 	echo "with Simulation components"
-	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     fi
 
     time cmake3 --build . -- -j`nproc --ignore=2`
@@ -88,7 +88,7 @@ elif [[ "$1" == "verbose" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
+    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
     cmake3 --build  . --verbose
     cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
