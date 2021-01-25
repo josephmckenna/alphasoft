@@ -17,7 +17,7 @@ TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels): TSpillScalerData(
 
 }
 
-TAGSpillScalerData::TAGSpillScalerData(TAGSpillScalerData* a): TSpillScalerData((TSpillScalerData*) a)
+TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScalerData(a)
 {
 
 }
@@ -70,13 +70,13 @@ TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CH
 }
 
 
-TAGSpillSequencerData::TAGSpillSequencerData(TAGSpillSequencerData* a)
+TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+   fSequenceNum  =a.fSequenceNum;
+   fDumpID       =a.fDumpID;
+   fSeqName      =a.fSeqName;
+   fStartState   =a.fStartState;
+   fStopState    =a.fStopState;
 }
 
 ClassImp(TAGSpill)

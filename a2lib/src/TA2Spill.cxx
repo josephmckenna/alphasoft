@@ -17,7 +17,7 @@ TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels): TSpillScalerData(
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(TA2SpillScalerData* a): TSpillScalerData((TSpillScalerData*) a)
+TA2SpillScalerData::TA2SpillScalerData(const TA2SpillScalerData& a): TSpillScalerData(a)
 {
 
 }
@@ -83,13 +83,13 @@ void TA2SpillScalerData::Print()
 }
 
 
-TA2SpillSequencerData::TA2SpillSequencerData(TA2SpillSequencerData* a)
+TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a)
 {
-   fSequenceNum  =a->fSequenceNum;
-   fDumpID       =a->fDumpID;
-   fSeqName      =a->fSeqName;
-   fStartState   =a->fStartState;
-   fStopState    =a->fStopState;
+   fSequenceNum  =a.fSequenceNum;
+   fDumpID       =a.fDumpID;
+   fSeqName      =a.fSeqName;
+   fStartState   =a.fStartState;
+   fStopState    =a.fStopState;
 }
 
 ClassImp(TA2Spill);
@@ -122,14 +122,14 @@ TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): 
    //Print();
 }
 
-TA2Spill::TA2Spill(const TA2Spill* a): TSpill((TSpill*)a)
+TA2Spill::TA2Spill(const TA2Spill& a): TSpill(a)
 {
-   if (a->ScalerData)
-      ScalerData=new TA2SpillScalerData(a->ScalerData);
+   if (a.ScalerData)
+      ScalerData=new TA2SpillScalerData(*a.ScalerData);
    else
       ScalerData=NULL;
-   if (a->SeqData)
-      SeqData=new TA2SpillSequencerData(a->SeqData);
+   if (a.SeqData)
+      SeqData=new TA2SpillSequencerData(*a.SeqData);
    else
       SeqData=NULL;
 }

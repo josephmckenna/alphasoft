@@ -37,7 +37,7 @@ std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> des
             //overload * is doing something special... so I need to 
             //dereference then get the pointer... then type cast it...
 
-            TA2Spill* b=new TA2Spill((const TA2Spill*) &(*spill));
+            TA2Spill* b = new TA2Spill(*spill);
             //b->Print();
             if (repetition.at(i)<0)
                //Copy spill into returned vector

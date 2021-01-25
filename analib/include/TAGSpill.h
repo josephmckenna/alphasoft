@@ -15,7 +15,7 @@ class TAGSpillScalerData: public TSpillScalerData
    //TAGSpillScalerData();
    ~TAGSpillScalerData();
    TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
-   TAGSpillScalerData(TAGSpillScalerData* a);
+   TAGSpillScalerData(const TAGSpillScalerData& a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
    TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    using TObject::Print;
@@ -28,7 +28,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
    public:
    TAGSpillSequencerData();
    ~TAGSpillSequencerData();
-   TAGSpillSequencerData(TAGSpillSequencerData* s);
+   TAGSpillSequencerData(const TAGSpillSequencerData& s);
    TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
 
 

@@ -14,7 +14,7 @@ class TA2SpillScalerData: public TSpillScalerData
    //TA2SpillScalerData();
    ~TA2SpillScalerData();
    TA2SpillScalerData(int n_scaler_channels=NUM_SIS_CHANNELS*NUM_SIS_MODULES);
-   TA2SpillScalerData(TA2SpillScalerData* a);
+   TA2SpillScalerData(const TA2SpillScalerData& a);
    //TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
    TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    using TObject::Print;
@@ -28,7 +28,7 @@ class TA2SpillSequencerData: public TSpillSequencerData
    public:
    TA2SpillSequencerData();
    ~TA2SpillSequencerData();
-   TA2SpillSequencerData(TA2SpillSequencerData* s);
+   TA2SpillSequencerData(const TA2SpillSequencerData& s);
    TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
 
 
@@ -46,7 +46,21 @@ public:
    TA2Spill(int runnno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    TA2Spill* operator/( TA2Spill* b);
    TA2Spill* operator+( TA2Spill* b);
-   TA2Spill(const TA2Spill* a);
+   TA2Spill(const TA2Spill& a);
+   double GetStartTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStartTime();
+      else
+         return -1.;
+   }
+   double GetStopTime() const
+   {
+      if (ScalerData)
+         return ScalerData->GetStopTime();
+      else
+         return -1;
+   }
    using TObject::Print;
    virtual void Print();
 
