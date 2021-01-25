@@ -42,7 +42,6 @@ ROOT.gInterpreter.ProcessLine('#define BUILD_AG 1')
 
 #ROOT.gInterpreter.AddIncludePath(thisFilePath + '/bin/include/')
 headers = os.listdir(thisFilePath + '/bin/include/')
-print( 'Loading headers: ')
-print( headers )
+print( 'Loading ' + str(len(headers)) + ' headers ' )
 for header in headers:
 	ROOT.gInterpreter.ProcessLine('#include "'  + header + '"' )
