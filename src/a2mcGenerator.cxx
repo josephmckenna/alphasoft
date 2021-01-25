@@ -39,6 +39,18 @@ void a2mcGenerator::Generate()
     Bool_t genOK = false;
     if( 0<=a2mcConf.GetGenType()&&a2mcConf.GetGenType()<= 9)   genOK = GenPbars();
     if(10<=a2mcConf.GetGenType()&&a2mcConf.GetGenType()<=19)   genOK = GenMuons();
+    ///< The weight limit (w_ratio) is related to the generation not to the number of
+    ///< triggered events in the silicon detector
+    Double_t w, w_ratio = 0.5; 
+    if(a2mcConf.GetGenType()==20) { ///< Mixed generation 
+        ///< Select antiproton or muon
+        w=gRandom->Uniform();
+        if (w<w_ratio) {
+            genOK = GenPbars();
+        } else { 
+            genOK = GenMuons();
+        }
+    }
     if(!genOK) {
         cout << "a2mcGenerator::Generate ==> Could not generate primary with gen_type = " << a2mcConf.GetGenType() << endl;
         return;
@@ -49,6 +61,8 @@ void a2mcGenerator::Generate()
         fGenMom[0],fGenMom[1],fGenMom[2], fTotE,
         fGenPos[0],fGenPos[1],fGenPos[2], 0., 
         0., 0., 0., kPPrimary, track_number, 1., 0);
+    return;
+
 ///< ##########################
 ///< Input legend
 ///< TVirtualMCStack->PushTrack 
@@ -67,7 +81,6 @@ void a2mcGenerator::Generate()
 //    weight - particle weight
 //    is - generation status code
 ///< ##########################
-    return;
 }
 
 //-----------------------------------------------------------------------------
@@ -77,9 +90,9 @@ Bool_t a2mcGenerator::GenPbars()
 //#   gen_type   [from a2MC.ini]
 //#   0 => antiprotons 
 //#       gen_mode 
-//#       0 -> center of the silicon detector [pointlike source] 
-//#       1 -> center of the silicon detector [Gaussian in Z, cylinder in radius]
-//#       2 -> center of the silicon detector [Uniform  in Z, cylinder in radius]
+//#       0 -> center of the silicon detector [Gaussian in Z, cylinder in radius]
+//#       1 -> center of the silicon detector [Uniform  in Z, cylinder in radius]
+//#       2 -> center of the silicon detector [pointlike source] 
     UInt_t gen_mode = a2mcConf.GetGenMode();
     if(gen_mode>2) {
         cout << "a2mcGenerator::GenPbars ==> Could not generate pbars with gen_mode = " << gen_mode << endl;
@@ -95,6 +108,7 @@ Bool_t a2mcGenerator::GenPbars()
     Double_t xySig, zSig;
     ///< Setting the paramenters [TEMPORARY - THEY NEED TO BE CHECKED]
     xySig   = 0.1;  // gaussian generation
+    if(gen_mode==2) xySig = 0.; ///< pointlike source
     zSig    = 0.6;   // gaussian generation 
     zmin    = -1.;   // uniform generation
     zmax    = +1.;   // uniform generation
@@ -102,14 +116,13 @@ Bool_t a2mcGenerator::GenPbars()
     ///<---------------------
     //|< 2) Vertex generation 
     //\<---------------------
-    if(gen_mode==0) xySig = 0.;
     fGenPos[0] = gRandom->Gaus(0.,xySig);
     fGenPos[1] = gRandom->Gaus(0.,xySig);
     fGenPos[2] = zgen;
-    if(gen_mode==1) {
+    if(gen_mode==0) {
         fGenPos[2] += gRandom->Gaus(0.,zSig);
     }
-    if(gen_mode==2) {
+    if(gen_mode==1) {
         fGenPos[2] += gRandom->Uniform(zmin,zmax);
     }
     ///<-----------------------
