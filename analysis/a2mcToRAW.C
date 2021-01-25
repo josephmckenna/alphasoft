@@ -27,7 +27,7 @@ void a2mcToRAW::WriteRAW() {
         fChain->GetEntry(fEvent);
         if(!GoodEvent()) continue;
         if(verbose) {
-            cout << "__________________o " << fEvent << " o_____________________" << endl;
+            cout << "____________________ EVENT # " << fEvent << " ==> Primary PDG Code " << fPdgCode << " _____________________" << endl;
             cout << "Number of silicon detector hits " << SilHits_ << endl;
         }
         for(UInt_t ih=0; ih<SilHits_; ih++) {
