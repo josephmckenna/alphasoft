@@ -55,6 +55,9 @@ private:
 public:
    void LoadRun(int runNumber);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
+   void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills );
+   //If spills are from one run, it is faster to call the function above
+   void AddDumpGates(std::vector<TA2Spill*> spills );
    TA2Plot();
    TA2Plot(double zmin, double zmax);
    virtual ~TA2Plot();
