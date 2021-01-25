@@ -141,7 +141,7 @@ public:
    //virtual TAPlot* LoadTAPlot(TString file);
 
    void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax);
-   void AddTimeGate(int runNumber, double tmin, double tmax);
+   void AddTimeGate(const int runNumber, const double tmin, const double tmax);
    virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) =0;
    //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
    //If spills are from one run, it is faster to call the function above

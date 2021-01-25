@@ -52,7 +52,7 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
    return;
 }
 //It is slightly faster to call AddTimeGates than this function
-void TAPlot::AddTimeGate(int runNumber, double tmin, double tmax)
+void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tmax)
 {
    AddRunNumber(runNumber);
 
