@@ -228,6 +228,22 @@ void TA2Plot::AddDumpGates(std::vector<TA2Spill*> spills )
    return;
 }
 
+void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills )
+{
+   for (TA2Spill& spill: spills)
+   {
+      if (spill.ScalerData)
+      {
+         AddTimeGate(spill.RunNumber,spill.GetStartTime(),spill.GetStopTime());
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return;
+}
+
 void TA2Plot::SetUpHistograms(bool zeroTime)
 {
 
