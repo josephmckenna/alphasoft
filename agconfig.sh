@@ -179,9 +179,10 @@ alphacpc04* | alphacpc09*  )
   ;;
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
-  export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata/"
   if [ `whoami` = "acapra" ] ; then
       acapra
+  else
+      export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
   fi
   ;;
 alphabeast* )
@@ -195,6 +196,9 @@ alphacrunch* )
 lxplus* )
   echo -e " \e[33mlxplus detected...\033[0m"
   lxplus
+  if [ `whoami` = "acapra" ] ; then
+      acapra
+  fi
   ;;
 * )
   if [ -n "${ROOTSYS}" ]; then
@@ -221,6 +225,9 @@ lxplus* )
   echo 'c++       :' `which c++`
   echo 'cc        :' `which cc`
   echo "ROOTSYS   : ${ROOTSYS}"
+  if [ `which root-config | wc -c` -gt 5 ]; then
+  echo 'root      :' `root-config --version`
+  fi
   echo "ROOTANASYS: ${ROOTANASYS}"
   echo "AGRELEASE : ${AGRELEASE}"
   ;;

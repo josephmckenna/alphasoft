@@ -257,11 +257,7 @@ public:
             BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
             BscTree->Fill();
          }
-      else delete analyzed_event;
-
-      
-      //AgBarEventFlow 
-
+      //delete analyzed_event; // seg fault
       return flow;
    }
 
