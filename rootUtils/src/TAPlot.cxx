@@ -51,6 +51,31 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
    }
    return;
 }
+//It is slightly faster to call AddTimeGates than this function
+void TAPlot::AddTimeGate(int runNumber, double tmin, double tmax)
+{
+   AddRunNumber(runNumber);
+
+   double length=tmax-tmin;
+   if (length>MaxDumpLength)
+      MaxDumpLength=length;
+   TimeWindows.push_back({runNumber,tmin,tmax});
+   fTotalTime+=tmax-tmin;
+   //Find the first start window
+   if (tmin<FirstTmin)
+      FirstTmin=tmin;
+   //Find the end of the last window (note: -ve tmax means end of run)
+   //Skip early if we are looking for end of run anyway
+   if (LastTmax<0)
+      return;
+   //Find the highest value
+   if (tmax>LastTmax)
+      LastTmax=tmax;
+   //Set -ve of we want end of run
+   if (tmax<0)
+      LastTmax=-1;
+   return;
+}
 
 
 void TAPlot::LoadData()

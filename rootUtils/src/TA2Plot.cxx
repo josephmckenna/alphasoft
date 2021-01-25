@@ -188,6 +188,11 @@ void TA2Plot::LoadRun(int runNumber)
 void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition )
 {
    std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber,description,repetition);
+   return AddDumpGates(runNumber, spills );
+}
+
+void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill*> spills )
+{
    std::vector<double> tmin;
    std::vector<double> tmax;
    
@@ -204,6 +209,23 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, 
       }
    }
    return AddTimeGates(runNumber,tmin,tmax);
+}
+
+//If spills are from one run, it is faster to call the function above
+void TA2Plot::AddDumpGates(std::vector<TA2Spill*> spills )
+{
+   for (auto & spill: spills)
+   {
+      if (spill->ScalerData)
+      {
+         AddTimeGate(spill->RunNumber,spill->GetStartTime(),spill->GetStopTime());
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return;
 }
 
 void TA2Plot::SetUpHistograms(bool zeroTime)
