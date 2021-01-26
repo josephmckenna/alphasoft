@@ -102,6 +102,8 @@ else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
 
+#feGEM (labVIEW logging)
+include_directories($ENV{AGRELEASE}/feGEM)
 
 message(${ROOT_INCLUDE_DIRS})
 
