@@ -33,6 +33,8 @@ TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
 #endif
 
+TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname);
+
 #endif
 
 /* emacs
