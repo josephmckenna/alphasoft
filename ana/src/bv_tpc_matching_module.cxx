@@ -217,18 +217,12 @@ public:
          return flow;
       }
       
-      AgEvent* age = ef->fEvent;
-      // prepare event to store in TTree
-      analyzed_event=new TBarEvent();
-      analyzed_event->Reset();
-      analyzed_event->SetID( age->counter );
-      analyzed_event->SetRunTime( age->time );
-
-      
-      //Root's fitting routines are often not thread safe
-      #ifdef MODULE_MULTITHREAD
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
+      // AgEvent* age = ef->fEvent;
+      // // prepare event to store in TTree
+      // analyzed_event=new TBarEvent();
+      // analyzed_event->Reset();
+      // analyzed_event->SetID( age->counter );
+      // analyzed_event->SetRunTime( age->time );
 
       // Main functions
       if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
@@ -245,25 +239,31 @@ public:
             FillHistos(flow);
             TimeOfFlight(flow, line_points);
          }
-      TBarEvent* evt = bf->BarEvent;
-      if( evt )
-         {
-            for(int i=0; i<evt->GetNBars(); ++i)
-               analyzed_event->AddBarHit(evt->GetBars().at(i));
+      //TBarEvent* evt = bf->BarEvent;
+      // if( evt )
+      //    {
+      //       for(int i=0; i<evt->GetNBars(); ++i)
+      //          analyzed_event->AddBarHit(evt->GetBars().at(i));
 
-            for(int i=0; i<evt->GetNEnds(); ++i)
-               analyzed_event->AddEndHit(evt->GetEndHits().at(i));
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);            
-            BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
-            BscTree->Fill();
-         }
-      // // Warning? This function doesn't return anything new to the flow. 
-      // // Does this module have nothing useful to any other modules?
+      //       for(int i=0; i<evt->GetNEnds(); ++i)
+      //          analyzed_event->AddEndHit(evt->GetEndHits().at(i));
+      //       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);            
+      //       BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
+      //       BscTree->Fill();
+      //    }
 
-      // delete analyzed_event; // seg fault
+      if( !bf->BarEvent ) return flow;
 
-      
-      //AgBarEventFlow 
+      {      
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         analyzed_event=bf->BarEvent;
+         BscTree->SetBranchAddress("BarrelEvent", &analyzed_event);
+         BscTree->Fill();
+         analyzed_event->Reset();
+      }
+      // Warning? This function doesn't return anything new to the flow. 
+      // Does this module have nothing useful to any other modules?
+      // AgBarEventFlow 
       return flow;
    }
 
