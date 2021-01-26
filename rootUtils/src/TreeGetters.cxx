@@ -101,6 +101,15 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
 }
 #endif
 
+TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("feGEM");
+   std::string CombinedName = Category + "\\" + Varname;
+   TTreeReader* t = new TTreeReader(CombinedName.c_str(), f->GetDirectory("/feGEM"));
+   return t;
+}
+
 /* emacs
  * Local Variables:
  * tab-width: 8
