@@ -97,19 +97,25 @@ void TAPlot::LoadfeGEMData(int runNumber, double last_time)
    for (auto& f: feGEM)
    {
       TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber,f.name);
-      if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<double>"))
+      TTree* tree = tree;
+      if  (!tree)
+      {
+         std::cout<<"Warning: " << f.GetName() << " not found for run " << runNumber << std::endl;
+         continue;
+      }
+      if (tree->GetBranchStatus("TStoreGEMData<double>"))
          LoadfeGEMData<double>(f,feGEMReader,"TStoreGEMData<double>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<float>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<float>"))
          LoadfeGEMData<float>(f,feGEMReader,"TStoreGEMData<float>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<bool>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<bool>"))
          LoadfeGEMData<bool>(f,feGEMReader,"TStoreGEMData<bool>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<int32_t>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<int32_t>"))
          LoadfeGEMData<int32_t>(f,feGEMReader,"TStoreGEMData<int32_t>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<uint32_t>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<uint32_t>"))
          LoadfeGEMData<uint32_t>(f,feGEMReader,"TStoreGEMData<uint32_t>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<uint16_t>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<uint16_t>"))
          LoadfeGEMData<uint16_t>(f,feGEMReader,"TStoreGEMData<uint16_t>",last_time);
-      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<char>"))
+      else if (tree->GetBranchStatus("TStoreGEMData<char>"))
          LoadfeGEMData<char>(f,feGEMReader,"TStoreGEMData<char>",last_time);
       else
          std::cout<<"Warning unable to find TStoreGEMData type"<<std::endl;   
