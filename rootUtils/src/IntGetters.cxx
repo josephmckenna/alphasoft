@@ -38,7 +38,7 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Dou
    Int_t Counts=0;
    double official_time;
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,Channel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{ChronoBoard,Channel},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)

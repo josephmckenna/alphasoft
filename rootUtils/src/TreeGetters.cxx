@@ -13,23 +13,23 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    return tree;
 }
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
+TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel)
 {
    TString Name="chrono/ChronoEventTree_";
-           Name+=Chronoboard;
+           Name+=ChronoBoardChannel.first;
            Name+="_";
-           Name+=ChronoChannel;
+           Name+=ChronoBoardChannel.second;
            Name+="OfficialTime";
    return Get_Tree_By_Name(runNumber,Name.Data());
 }
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, double &official_time)
+TTree* Get_Chrono_Tree(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel, double &official_time)
 {
    TString Name="chrono/ChronoEventTree_";
-           Name+=Chronoboard;
+           Name+=ChronoBoardChannel.first;
            Name+="_";
-           Name+=ChronoChannel;
+           Name+=ChronoBoardChannel.second;
    TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
    Name+="OfficialTime";
    TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
@@ -39,7 +39,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 }
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
+/*TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
 {
    Int_t chan=-1;
    Int_t board=-1;
@@ -49,7 +49,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &officia
        if (chan>-1) break;
    }
    return Get_Chrono_Tree(runNumber,board,chan,official_time);
-}
+}*/
 #endif
 #ifdef BUILD_AG
 TTree* Get_Chrono_Name_Tree(Int_t runNumber)
@@ -103,9 +103,14 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)
 {
+   std::string CombinedName = Category + "\\" + Varname;
+   return Get_feGEM_Tree(runNumber,CombinedName);
+}
+
+TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName)
+{
    TFile* f = Get_File(runNumber);
    TDirectory* d=f->GetDirectory("feGEM");
-   std::string CombinedName = Category + "\\" + Varname;
    TTreeReader* t = new TTreeReader(CombinedName.c_str(), f->GetDirectory("/feGEM"));
    return t;
 }

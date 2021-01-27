@@ -56,33 +56,65 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
 {
    AddRunNumber(runNumber);
 
-   double length=tmax-tmin;
-   if (length>MaxDumpLength)
-      MaxDumpLength=length;
+   double length = tmax - tmin;
+   if (length > MaxDumpLength)
+      MaxDumpLength = length;
    TimeWindows.push_back({runNumber,tmin,tmax});
-   fTotalTime+=tmax-tmin;
+   fTotalTime += tmax - tmin;
    //Find the first start window
-   if (tmin<FirstTmin)
-      FirstTmin=tmin;
+   if (tmin < FirstTmin)
+      FirstTmin = tmin;
    //Find the end of the last window (note: -ve tmax means end of run)
    //Skip early if we are looking for end of run anyway
-   if (LastTmax<0)
+   if (LastTmax < 0)
       return;
    //Find the highest value
-   if (tmax>LastTmax)
-      LastTmax=tmax;
+   if (tmax > LastTmax)
+      LastTmax = tmax;
    //Set -ve of we want end of run
-   if (tmax<0)
-      LastTmax=-1;
+   if (tmax < 0)
+      LastTmax = -1;
    return;
 }
 
+void TAPlot::LoadfeGEMData(int runNumber, double last_time)
+{
+   for (auto& f: feGEM)
+   {
+      TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber,f.name);
+      TTreeReaderValue<TStoreGEMData<double>> GEMEvent(*feGEMReader, "GEMData");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (feGEMReader->Next())
+      {
+         if (GEMEvent->GetRunTime()>last_time)
+            break;
+         f.AddGEMEvent(&(*GEMEvent), GetTimeWindows());
+      }
+   }
+   
+}
 
 void TAPlot::LoadData()
 {
    for (size_t i=0; i<Runs.size(); i++)
    {
-      LoadRun(Runs[i]);
+      double last_time=0;
+      int runNumber=Runs[i];
+      //Calculate our list time... so we can stop early
+      for (auto& t: GetTimeWindows())
+      {
+         if (t.runNumber==runNumber)
+         {
+            if (t.tmax<0) last_time=1E99;
+            if (last_time<t.tmax)
+            {
+               last_time=t.tmax;
+            }
+         }
+      }
+      LoadfeGEMData(runNumber, last_time);
+      LoadRun(runNumber, last_time);
    }
    return;
 }
