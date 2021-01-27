@@ -77,22 +77,43 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
    return;
 }
 
+template <typename T>
+void TAPlot::LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double last_time)
+{
+   TTreeReaderValue<TStoreGEMData<T>> GEMEvent(*feGEMReader, name);
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (feGEMReader->Next())
+   {
+      if (GEMEvent->GetRunTime()>last_time)
+         break;
+      f.AddGEMEvent(&(*GEMEvent), GetTimeWindows());
+   }
+   return;
+}
+
 void TAPlot::LoadfeGEMData(int runNumber, double last_time)
 {
    for (auto& f: feGEM)
    {
       TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber,f.name);
-      TTreeReaderValue<TStoreGEMData<double>> GEMEvent(*feGEMReader, "GEMData");
-      // I assume that file IO is the slowest part of this function... 
-      // so get multiple channels and multiple time windows in one pass
-      while (feGEMReader->Next())
-      {
-         if (GEMEvent->GetRunTime()>last_time)
-            break;
-         f.AddGEMEvent(&(*GEMEvent), GetTimeWindows());
-      }
+      if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<double>"))
+         LoadfeGEMData<double>(f,feGEMReader,"TStoreGEMData<double>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<float>"))
+         LoadfeGEMData<float>(f,feGEMReader,"TStoreGEMData<float>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<bool>"))
+         LoadfeGEMData<bool>(f,feGEMReader,"TStoreGEMData<bool>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<int32_t>"))
+         LoadfeGEMData<int32_t>(f,feGEMReader,"TStoreGEMData<int32_t>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<uint32_t>"))
+         LoadfeGEMData<uint32_t>(f,feGEMReader,"TStoreGEMData<uint32_t>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<uint16_t>"))
+         LoadfeGEMData<uint16_t>(f,feGEMReader,"TStoreGEMData<uint16_t>",last_time);
+      else if (feGEMReader->GetTree()->GetBranchStatus("TStoreGEMData<char>"))
+         LoadfeGEMData<char>(f,feGEMReader,"TStoreGEMData<char>",last_time);
+      else
+         std::cout<<"Warning unable to find TStoreGEMData type"<<std::endl;   
    }
-   
 }
 
 void TAPlot::LoadData()
