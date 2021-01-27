@@ -158,6 +158,7 @@ public:
       
       feGEM.push_back(new_entry);
    }
+   template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double last_time);
    void LoadfeGEMData(int RunNumber, double last_time);
    // default class member functions
    TAPlot();//, int MVAMode = 0);
