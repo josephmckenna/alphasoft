@@ -7,6 +7,7 @@
 #include "TFile.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TGraph.h"
 #include "TF1.h"
 #include "TCanvas.h"
 #include "TLine.h"
@@ -15,8 +16,33 @@
 #include "TStoreGEMEvent.h"
 #include <algorithm>
 #include <iostream>
-
+#include "TColor.h"
 #define SCALECUT 0.6
+
+class AlphaColourWheel
+{
+   private:
+      std::vector<int> colour_list{
+         kRed+2, kMagenta+3, kBlue +1, kCyan +1, kGreen + 3, kYellow + 3,
+         kOrange, kPink - 3, kViolet -2, kAzure - 3, kTeal -6, kSpring +8
+      };
+      int position;
+   public:
+      AlphaColourWheel() { position = 0;}
+      EColor GetNewColour()
+      {
+         ++position;
+         if ( position > colour_list.size())
+            position=0;
+         return (EColor)colour_list[position];
+      }
+      EColor GetCurrentColour()
+      {
+         return (EColor)colour_list[position];
+      }
+};
+
+
 struct VertexEvent
 {
    int runNumber; // I don't get set yet...
@@ -52,27 +78,35 @@ struct feGEMdata {
    std::string name;
    std::string title;
    int array_number;
-   std::vector<double> t;
-   std::vector<double> data;
+   //std::vector<double> t;
+   //std::vector<double> data;
+   std::map<int,TGraph*> plots;
    std::string GetName() { return name + "[" + std::to_string(array_number) + "]";}
    std::string GetNameID() { return name + "_" + std::to_string(array_number);}
    std::string GetTitle() { return title; }
    std::pair<double,double> GetMinMax()
    {
-       if (data.size()==0)
-          return {0.,0.};
-       if (data.size()==1)
-          return {data.front(),data.front()};
-       //std::pair<double, double> mn = *
-       //std::pair<auto,auto> a = std::minmax(data.begin(), data.end());
-       auto a = std::minmax_element(data.begin(), data.end());
-       return std::pair<double,double>(*a.first,*a.second);
-       //return mn;
+      double min = -1E99;
+      double max = 1E99;
+      for (auto& plot: plots)
+      {
+         double* Y = plot.second->GetY();
+         int N = plot.second->GetN();
+         for (int i = 0; i < N; i++)
+         {
+            if (Y[i] < min)
+               min = Y[i];
+            if (Y[i] > max )
+               max = Y[i];
+         }
+      }
+      return std::pair<double,double>(min,max);
    }
    template<typename T>
    void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const std::vector<TimeWindow>& timewindows)
    {
       double time=GEMEvent->GetRunTime();
+      //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
       for (auto& window: timewindows)
       {
          //If inside the time window
@@ -80,8 +114,8 @@ struct feGEMdata {
          //Or if after tmin and tmax is invalid (-1)
             (time > window.tmin && window.tmax<0) )
          {
-            t.push_back(time);
-            data.push_back((double)GEMEvent->GetArrayEntry(array_number));
+            TGraph* plot = plots[GEMEvent->GetRunNumber()];
+            plot->SetPoint(plot->GetN(), time, (double)GEMEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -236,7 +270,7 @@ public:
       HISTOS.Add(h);
       HISTO_POSITION[keyname]=HISTOS.GetEntries()-1;
    }
-   void FillfeGEMHistograms()
+   /*void FillfeGEMHistograms()
    {
       for (auto & p: feGEM)
       {
@@ -247,7 +281,7 @@ public:
          for (int j=0; j<p.data.size(); j++)
             GEM_Plot->Fill(p.t[j],p.data[j]);
       }
-   }
+   }*/
    void FillHistogram(const char* keyname,double x, int counts)
    {
       if (HISTO_POSITION.count(keyname))
@@ -274,7 +308,7 @@ public:
       if (HISTO_POSITION.count(keyname))
          ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Draw(settings);
       else
-         std::cout<<"Warning:"<< keyname << "not found"<<std::endl;
+         std::cout<<"Warning: Histogram"<< keyname << "not found"<<std::endl;
    }
    TLegend* DrawLines(TLegend* legend, const char* keyname)
    {

@@ -97,28 +97,28 @@ void TAPlot::LoadfeGEMData(int runNumber, double last_time)
    for (auto& f: feGEM)
    {
       TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber,f.name);
-      TTree* tree = tree;
+      TTree* tree = feGEMReader->GetTree();
       if  (!tree)
       {
-         std::cout<<"Warning: " << f.GetName() << " not found for run " << runNumber << std::endl;
+         std::cout<<"Warning: " << f.GetName() << " ("<<f.name<<") not found for run " << runNumber << std::endl;
          continue;
       }
       if (tree->GetBranchStatus("TStoreGEMData<double>"))
-         LoadfeGEMData<double>(f,feGEMReader,"TStoreGEMData<double>",last_time);
+         LoadfeGEMData<double>(f, feGEMReader, "TStoreGEMData<double>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<float>"))
-         LoadfeGEMData<float>(f,feGEMReader,"TStoreGEMData<float>",last_time);
+         LoadfeGEMData<float>(f, feGEMReader, "TStoreGEMData<float>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<bool>"))
-         LoadfeGEMData<bool>(f,feGEMReader,"TStoreGEMData<bool>",last_time);
+         LoadfeGEMData<bool>(f, feGEMReader, "TStoreGEMData<bool>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<int32_t>"))
-         LoadfeGEMData<int32_t>(f,feGEMReader,"TStoreGEMData<int32_t>",last_time);
+         LoadfeGEMData<int32_t>(f, feGEMReader, "TStoreGEMData<int32_t>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<uint32_t>"))
-         LoadfeGEMData<uint32_t>(f,feGEMReader,"TStoreGEMData<uint32_t>",last_time);
+         LoadfeGEMData<uint32_t>(f, feGEMReader, "TStoreGEMData<uint32_t>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<uint16_t>"))
-         LoadfeGEMData<uint16_t>(f,feGEMReader,"TStoreGEMData<uint16_t>",last_time);
+         LoadfeGEMData<uint16_t>(f, feGEMReader, "TStoreGEMData<uint16_t>", last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<char>"))
-         LoadfeGEMData<char>(f,feGEMReader,"TStoreGEMData<char>",last_time);
+         LoadfeGEMData<char>(f, feGEMReader, "TStoreGEMData<char>", last_time);
       else
-         std::cout<<"Warning unable to find TStoreGEMData type"<<std::endl;   
+         std::cout << "Warning unable to find TStoreGEMData type" << std::endl;   
    }
 }
 
@@ -126,17 +126,23 @@ void TAPlot::LoadData()
 {
    for (size_t i=0; i<Runs.size(); i++)
    {
-      double last_time=0;
-      int runNumber=Runs[i];
+      double last_time = 0;
+      int runNumber = Runs[i];
+      for (auto& f: feGEM)
+      {
+         TGraph* graph =  new TGraph();
+         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+         f.plots[runNumber] = graph;
+      }
       //Calculate our list time... so we can stop early
       for (auto& t: GetTimeWindows())
       {
          if (t.runNumber==runNumber)
          {
-            if (t.tmax<0) last_time=1E99;
-            if (last_time<t.tmax)
+            if (t.tmax<0) last_time = 1E99;
+            if (last_time < t.tmax)
             {
-               last_time=t.tmax;
+               last_time = t.tmax;
             }
          }
       }

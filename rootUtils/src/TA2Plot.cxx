@@ -141,7 +141,6 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
 
 void TA2Plot::LoadRun(int runNumber, double last_time)
 {
-
    //Something smarter for the future?
    //TSVDQODIntegrator SVDCounts(TA2RunQOD* q,tmin[0], tmax[0]);
    
@@ -234,7 +233,6 @@ void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills )
 
 void TA2Plot::SetUpHistograms(bool zeroTime)
 {
-
    const double XMAX(4.),YMAX(4.),RMAX(4.), ZMAX(30.);
 
    double TMin;
@@ -274,12 +272,12 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    for (int i=0; i<feGEM.size(); i++)
    {
       std::cout<<"Adding feGEM data:"<<feGEM[i].GetTitle().c_str() << " ("<<feGEM[i].GetName().c_str()<<")"<<std::endl;
-      TH1D* GEM_Plot = new TH1D(feGEM[i].GetTitle().c_str(),"t;t [s]; unknown units", GetNBins(), TMin, TMax);
-      std::pair<double,double> minmax = feGEM[i].GetMinMax();
+      //TH1D* GEM_Plot = new TH1D(feGEM[i].GetTitle().c_str(),"t;t [s]; unknown units", GetNBins(), TMin, TMax);
+      //std::pair<double,double> minmax = feGEM[i].GetMinMax();
       //std::cout<<"Range: {"<<minmax.first<<","<<minmax.second<<"}"<<std::endl;
-      GEM_Plot->SetMinimum(minmax.first);
-      GEM_Plot->SetMaximum(minmax.second);
-      AddHistogram(feGEM[i].GetName().c_str(),GEM_Plot);
+      //GEM_Plot->SetMinimum(minmax.first);
+      //GEM_Plot->SetMaximum(minmax.second);
+      //AddHistogram(feGEM[i].GetName().c_str(),GEM_Plot);
    }
 
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
@@ -343,7 +341,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
    ClearHisto();
    SetUpHistograms();
-   FillfeGEMHistograms();
+   //FillfeGEMHistograms();
    const double max_dump_length=GetMaxDumpLength();
    //Fill SIS histograms
    //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
@@ -570,9 +568,18 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   DrawHistogram("ztvtx","colz");
 
   cVTX->cd(6);
-  DrawHistogram(feGEM.at(0).GetName().c_str(),"HIST");
+  /*DrawHistogram(feGEM.at(0).GetName().c_str(),"HIST");
   for (int i=1; i<feGEM.size(); i++)
-     DrawHistogram(feGEM.at(i).GetName().c_str(),"HIST SAME");
+     DrawHistogram(feGEM.at(i).GetName().c_str(),"HIST SAME");*/
+   AlphaColourWheel colours;
+   for (auto& f: feGEM)
+   {
+      for (auto& plot: f.plots)
+      {
+         plot.second->SetLineColor(colours.GetNewColour());
+         plot.second->Draw("");
+      }
+   }
 
   cVTX->cd(7);
   // phi counts
