@@ -97,7 +97,7 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime(Int_t runNumber, Int_t b, Double_t 
    std::vector<double> x,y;
    int points=0;
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{b,4},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
@@ -124,7 +124,7 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Drift(Int_t runNumber, Int_t b, Dou
    std::vector<double> x,y;
    int points=0;
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{b,4},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    for (int i=0; i<t->GetEntries(); i++)
@@ -153,7 +153,7 @@ TGraph* Get_Chrono_EventTime_vs_OfficialTime_Matching(Int_t runNumber, Int_t b, 
    std::vector<double> x,y;
    int points=0;
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,b,4,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{b,4},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent",&e);
    double lastChrono=0;

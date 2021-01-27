@@ -54,6 +54,7 @@ void TA2Plot::SetSISChannels(int runNumber)
   delete sisch;
   return;
 }
+
 void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 {
    VertexEvent Event;
@@ -138,21 +139,8 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    }
 }
 
-void TA2Plot::LoadRun(int runNumber)
+void TA2Plot::LoadRun(int runNumber, double last_time)
 {
-   double last_time=0;
-   //Calculate our list time... so we can stop early
-   for (auto& t: GetTimeWindows())
-   {
-      if (t.runNumber==runNumber)
-      {
-         if (t.tmax<0) last_time=1E99;
-         if (last_time<t.tmax)
-         {
-            last_time=t.tmax;
-         }
-      }
-   }
 
    //Something smarter for the future?
    //TSVDQODIntegrator SVDCounts(TA2RunQOD* q,tmin[0], tmax[0]);
@@ -282,6 +270,18 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    atom_or->SetMinimum(0);
    AddHistogram("tAtomOR",atom_or);
 
+   //feGEM plots
+   for (int i=0; i<feGEM.size(); i++)
+   {
+      std::cout<<"Adding feGEM data:"<<feGEM[i].GetTitle().c_str() << " ("<<feGEM[i].GetName().c_str()<<")"<<std::endl;
+      TH1D* GEM_Plot = new TH1D(feGEM[i].GetTitle().c_str(),"t;t [s]; unknown units", GetNBins(), TMin, TMax);
+      std::pair<double,double> minmax = feGEM[i].GetMinMax();
+      //std::cout<<"Range: {"<<minmax.first<<","<<minmax.second<<"}"<<std::endl;
+      GEM_Plot->SetMinimum(minmax.first);
+      GEM_Plot->SetMaximum(minmax.second);
+      AddHistogram(feGEM[i].GetName().c_str(),GEM_Plot);
+   }
+
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
    TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
@@ -312,8 +312,8 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
       TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*1000., TMax*1000.);
       AddHistogram("ztvtx",hzt);
 
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
-      AddHistogram("phitvtx",hphit);
+      //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
+      //AddHistogram("phitvtx",hphit);
 
       //if (MVAMode)
       //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
@@ -329,8 +329,8 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
       TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
       AddHistogram("ztvtx",hzt);
 
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
-      AddHistogram("phitvtx",hphit);
+      //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
+      //AddHistogram("phitvtx",hphit);
 
       //if (MVAMode)
       //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [s];Counts", GetNBins(), TMin, TMax);
@@ -343,7 +343,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
    ClearHisto();
    SetUpHistograms();
-   
+   FillfeGEMHistograms();
    const double max_dump_length=GetMaxDumpLength();
    //Fill SIS histograms
    //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
@@ -428,7 +428,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());
-      FillHistogram("phitvtx",vtx.Phi(),time);
+      //FillHistogram("phitvtx",vtx.Phi(),time);
       FillHistogram("xyvtx",vtx.X(), vtx.Y());
       FillHistogram("zvtx",vtx.Z());
       FillHistogram("rvtx",vtx.Perp());
@@ -564,12 +564,15 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   cVTX->cd(5);
   // Z-R-counts
   //cVTX->cd(5)->SetFillStyle(4000 );
-  DrawHistogram("phitvtx","colz");
-
-  cVTX->cd(6);
+  //DrawHistogram("phitvtx","colz");
   // Z-T-counts
   //cVTX->cd(6)->SetFillStyle(4000 );
   DrawHistogram("ztvtx","colz");
+
+  cVTX->cd(6);
+  DrawHistogram(feGEM.at(0).GetName().c_str(),"HIST");
+  for (int i=1; i<feGEM.size(); i++)
+     DrawHistogram(feGEM.at(i).GetName().c_str(),"HIST SAME");
 
   cVTX->cd(7);
   // phi counts

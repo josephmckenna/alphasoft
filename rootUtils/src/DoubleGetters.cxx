@@ -4,7 +4,7 @@
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
    Double_t OfficialTime;
-   TTree* t=Get_Chrono_Tree(runNumber,Board,CHRONO_CLOCK_CHANNEL,OfficialTime);
+   TTree* t=Get_Chrono_Tree(runNumber,{Board,CHRONO_CLOCK_CHANNEL},OfficialTime);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(t->GetEntries()-1);
@@ -52,7 +52,7 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
 {
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,Board,Channel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{Board,Channel},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    if (repetition+offset>t->GetEntries()) return -1;

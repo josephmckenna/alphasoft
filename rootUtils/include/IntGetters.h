@@ -1,6 +1,9 @@
-#include "RootUtils.h"
 #ifndef _IntGetters_
 #define _IntGetters_
+#include "TChrono_Event.h"
+#include "TStoreEvent.hh"
+#include "TreeGetters.h"
+#include "DoubleGetters.h"
 
 #ifdef BUILD_AG
 ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch=kFALSE);

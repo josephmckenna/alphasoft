@@ -6,7 +6,7 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   double official_time;
-  TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
+  TTree* t=Get_Chrono_Tree(runNumber,{Chronoboard,ChronoChannel},official_time);
   TChrono_Event* e=new TChrono_Event();
   TString name=Get_Chrono_Name(runNumber,Chronoboard,ChronoChannel);
   TString Title="R";
@@ -66,7 +66,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 {
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{Chronoboard,ChronoChannel},official_time);
    TChrono_Event* e=new TChrono_Event();
    TString name=Get_Chrono_Name(runNumber,Chronoboard,ChronoChannel);
    TString Title="Chrono Time between Events - Board:";

@@ -11,7 +11,10 @@
 #include "TCanvas.h"
 #include "TLine.h"
 #include "TLegend.h"
-
+#include "TreeGetters.h"
+#include "TStoreGEMEvent.h"
+#include <algorithm>
+#include <iostream>
 
 #define SCALECUT 0.6
 struct VertexEvent
@@ -30,6 +33,9 @@ struct VertexEvent
    int nTracks; // reconstructed (good) helices
 };
 
+
+
+
 struct TimeWindow
 {
    int runNumber;
@@ -38,6 +44,47 @@ struct TimeWindow
    void print()
    {
       std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << std::endl;
+   }
+};
+
+struct feGEMdata {
+   //#public:
+   std::string name;
+   std::string title;
+   int array_number;
+   std::vector<double> t;
+   std::vector<double> data;
+   std::string GetName() { return name + "[" + std::to_string(array_number) + "]";}
+   std::string GetNameID() { return name + "_" + std::to_string(array_number);}
+   std::string GetTitle() { return title; }
+   std::pair<double,double> GetMinMax()
+   {
+       if (data.size()==0)
+          return {0.,0.};
+       if (data.size()==1)
+          return {data.front(),data.front()};
+       //std::pair<double, double> mn = *
+       //std::pair<auto,auto> a = std::minmax(data.begin(), data.end());
+       auto a = std::minmax_element(data.begin(), data.end());
+       return std::pair<double,double>(*a.first,*a.second);
+       //return mn;
+   }
+   template<typename T>
+   void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const std::vector<TimeWindow>& timewindows)
+   {
+      double time=GEMEvent->GetRunTime();
+      for (auto& window: timewindows)
+      {
+         //If inside the time window
+         if ( (time > window.tmin && time < window.tmax) ||
+         //Or if after tmin and tmax is invalid (-1)
+            (time > window.tmin && window.tmax<0) )
+         {
+            t.push_back(time);
+            data.push_back((double)GEMEvent->GetArrayEntry(array_number));
+         }
+      }
+      return;
    }
 };
 
@@ -84,7 +131,34 @@ private:
 
    std::vector<VertexEvent> VertexEvents;
    std::vector<int> Runs;
+
 public:
+   std::vector<feGEMdata> feGEM;
+   
+   void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
+   {
+      //Perhaps this line should be a function used everywhere
+      std::string name = Category + "\\" + Varname;
+
+      for (auto& d: feGEM)
+      {
+         if (d.array_number!= ArrayEntry)
+            continue;
+         if (d.name!=name)
+            continue;
+         std::cout<<"GEM Channel "<< name.c_str()<< "["<<ArrayEntry<<"] already registered"<<std::endl;
+      }
+      feGEMdata new_entry;
+      new_entry.name = name;
+      if (title.size() == 0)
+         new_entry.title = name;
+      else
+         new_entry.title = title;
+      new_entry.array_number = ArrayEntry;
+      
+      feGEM.push_back(new_entry);
+   }
+   void LoadfeGEMData(int RunNumber, double last_time);
    // default class member functions
    TAPlot();//, int MVAMode = 0);
    virtual ~TAPlot();
@@ -146,7 +220,7 @@ public:
    //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
    //If spills are from one run, it is faster to call the function above
    //?virtual void AddDumpGates(std::vector<TA2Spill*> spills ) =0;
-   virtual void LoadRun(int runNumber) {};
+   virtual void LoadRun(int runNumber, double last_time) {};
    void LoadData();
 
    void AutoTimeRange();
@@ -160,6 +234,18 @@ public:
    {
       HISTOS.Add(h);
       HISTO_POSITION[keyname]=HISTOS.GetEntries()-1;
+   }
+   void FillfeGEMHistograms()
+   {
+      for (auto & p: feGEM)
+      {
+         TH1D* GEM_Plot = GetTH1D(p.GetName().c_str());
+         std::pair<double,double> minmax = p.GetMinMax();
+         GEM_Plot->SetMinimum(minmax.first);
+         GEM_Plot->SetMaximum(minmax.second);
+         for (int j=0; j<p.data.size(); j++)
+            GEM_Plot->Fill(p.t[j],p.data[j]);
+      }
    }
    void FillHistogram(const char* keyname,double x, int counts)
    {
@@ -186,6 +272,8 @@ public:
    {
       if (HISTO_POSITION.count(keyname))
          ((TH1D*)HISTOS.At(HISTO_POSITION.at(keyname)))->Draw(settings);
+      else
+         std::cout<<"Warning:"<< keyname << "not found"<<std::endl;
    }
    TLegend* DrawLines(TLegend* legend, const char* keyname)
    {
