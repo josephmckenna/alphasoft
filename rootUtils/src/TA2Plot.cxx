@@ -180,21 +180,21 @@ void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
 
 void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition )
 {
-   std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber,description,repetition);
    return AddDumpGates(runNumber, spills );
 }
 
-void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill*> spills )
+void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills )
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
    
    for (auto & spill: spills)
    {
-      if (spill->ScalerData)
+      if (spill.ScalerData)
       {
-         tmin.push_back(spill->ScalerData->StartTime);
-         tmax.push_back(spill->ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->StartTime);
+         tmax.push_back(spill.ScalerData->StopTime);
       }
       else
       {
@@ -205,22 +205,6 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill*> spills )
 }
 
 //If spills are from one run, it is faster to call the function above
-void TA2Plot::AddDumpGates(std::vector<TA2Spill*> spills )
-{
-   for (auto & spill: spills)
-   {
-      if (spill->ScalerData)
-      {
-         AddTimeGate(spill->RunNumber,spill->GetStartTime(),spill->GetStopTime());
-      }
-      else
-      {
-         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
-      }
-   }
-   return;
-}
-
 void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills )
 {
    for (TA2Spill& spill: spills)

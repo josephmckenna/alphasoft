@@ -206,16 +206,16 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills)
+std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
    for (auto & spill: spills)
    {
-      if (spill->ScalerData)
+      if (spill.ScalerData)
       {
-         tmin.push_back(spill->ScalerData->StartTime);
-         tmax.push_back(spill->ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->StartTime);
+         tmax.push_back(spill.ScalerData->StopTime);
       }
       else
       {
@@ -228,7 +228,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 #ifdef BUILD_A2
 std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
-   std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber, description, repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
    return Get_SIS( runNumber, SIS_Channel, spills);
 }
 #endif
