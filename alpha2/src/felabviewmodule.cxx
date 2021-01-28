@@ -14,6 +14,7 @@
 #include <vector>
 #include <iterator>
 #include "unistd.h"
+#include "TStoreLabVIEWEvent.h"
 
 #include <iostream>
 
@@ -33,7 +34,7 @@ class felabViewModuleWriter
       std::vector<TBranch*> MIDAS_TIMEBranchVec;
       std::vector<TBranch*> run_timeBranchVec;
    private:
-      void BranchTreeFromData(TTree* t, felabviewFlowEvent* mf)
+      void BranchTreeFromData(TTree* t, felabviewFlowEvent* mf, TStoreLabVIEWEvent* LVEvent)
       {
          std::vector<double>*       flm_data              = mf->GetData();
          uint32_t                  flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
@@ -60,6 +61,13 @@ class felabViewModuleWriter
             t->Branch("rt",&flm_run_time);
          {
             t->SetBranchAddress("rt",&flm_run_time);
+         }
+
+         TBranch* TAObj_b = t->GetBranch("TStoreLabVIEWEvent");
+         if (!TAObj_b)
+            t->Branch("TStoreLabVIEWEvent",&LVEvent);
+         {
+            t->SetBranchAddress("TStoreLabVIEWEvent",&LVEvent);
          }
          
          t->Fill();
@@ -91,6 +99,15 @@ class felabViewModuleWriter
          }
          return currentTree;
       }
+      TStoreLabVIEWEvent CreateTAObjectFromFlow(TARunInfo* runinfo, felabviewFlowEvent* mf)
+      {
+         std::string t_BankName = mf->GetBankName();
+         std::vector<double> t_data = *mf->GetData();
+         uint32_t t_MIDAS_TIME = mf->GetMIDAS_TIME();
+         uint32_t t_run_time = mf->GetRunTime();
+         double t_labview_time = mf->GetLabviewTime();
+         return TStoreLabVIEWEvent(t_BankName, t_data, t_MIDAS_TIME, t_run_time, t_labview_time);
+      }
       public:
       void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
@@ -98,11 +115,12 @@ class felabViewModuleWriter
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          #endif
          TTree* t = FindOrCreateTree(runinfo, mf);
-         BranchTreeFromData(t, mf);
+         TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
+         BranchTreeFromData(t, mf, &m_LabViewEvent);
+         
       }
 
 };
-
 
 class felabviewModule: public TARunObject
 {
