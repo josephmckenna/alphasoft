@@ -105,6 +105,7 @@ if (BUILT_IN_ROOTANA)
    get_submodule(rootana)
    add_subdirectory(rootana)
 endif(BUILT_IN_ROOTANA)
+get_submodule(feGEM)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
