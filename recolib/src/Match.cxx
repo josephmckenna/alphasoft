@@ -31,7 +31,7 @@ TH1D* Match::htimeblobs=NULL;
 TH1D* Match::htimefit=NULL;
 
 
-Match::Match(const AnaSettings* ana_set):
+Match::Match(const AnaSettings* ana_set, bool mt):
    fTrace(false),
    fDebug(false),
    ana_settings(ana_set),
@@ -52,9 +52,23 @@ Match::Match(const AnaSettings* ana_set):
 {
   //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
+  if( mt )
+    CentreOfGravityFunction=2;
+
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
-  if ( CentreOfGravity.EqualTo("CentreOfGravity") ) CentreOfGravityFunction=1;
+  if ( CentreOfGravity.EqualTo("CentreOfGravity") )
+    { 
+      std::cout<<"Match::Match this CoG is NOT THREAD SAFE"<<std::endl;
+      CentreOfGravityFunction=1; 
+    }
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
+
+  if( mt )
+    {
+      std::cout<<"Match::Match MT-mode: selecting thread-safe CentreOfGravity_blobs"<<std::endl;
+      CentreOfGravityFunction=2;
+    }
+
   if ( CentreOfGravityFunction <= 0 )
     {
       std::cout<<"Match::Match(json) No valid CentreOfGravityMethod function in json"<<std::endl;
