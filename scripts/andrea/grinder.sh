@@ -2,7 +2,7 @@
 
 LIMITEVENTS=2000
 RUNNO=904620
-i=2
+i=6
 
 DIR="${AGRELEASE}/RunLogs"
 if [ ! -d "RunLogs" ]; then
@@ -23,4 +23,4 @@ ALPHATEST="$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
 set -x
 valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" agana.exe ${Event_Limit} --mt -O${AGRELEASE}/run${RUNNO}sub000leaktest.root ${MIDASDATA}/run${RUNNO}sub000.mid.lz4 ${MODULESFLAGS} &> ${ALPHATEST} &
 
-tail -f ${ALPHATEST}
+#tail -f ${ALPHATEST}
