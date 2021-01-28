@@ -14,6 +14,7 @@
 #include "TLegend.h"
 #include "TreeGetters.h"
 #include "TStoreGEMEvent.h"
+#include "TStoreLabVIEWEvent.h"
 #include <algorithm>
 #include <iostream>
 #include "TColor.h"
@@ -73,7 +74,8 @@ struct TimeWindow
    }
 };
 
-struct feGEMdata {
+class feENVdata {
+   public:
    //#public:
    std::string name;
    std::string title;
@@ -102,6 +104,11 @@ struct feGEMdata {
       }
       return std::pair<double,double>(min,max);
    }
+};
+
+class feGEMdata: public feENVdata
+{
+   public:
    template<typename T>
    void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const std::vector<TimeWindow>& timewindows)
    {
@@ -121,6 +128,30 @@ struct feGEMdata {
       return;
    }
 };
+
+
+class feLVdata: public feENVdata
+{
+   public:
+   void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const std::vector<TimeWindow>& timewindows)
+   {
+      double time=LVEvent->GetRunTime();
+      //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
+      for (auto& window: timewindows)
+      {
+         //If inside the time window
+         if ( (time > window.tmin && time < window.tmax) ||
+         //Or if after tmin and tmax is invalid (-1)
+            (time > window.tmin && window.tmax<0) )
+         {
+            TGraph& plot = plots[LVEvent->GetRunNumber()];
+            plot.SetPoint(plot.GetN(), time, LVEvent->GetArrayEntry(array_number));
+         }
+      }
+      return;
+   }
+};
+
 
 class TAPlot: public TObject
 {
@@ -168,6 +199,7 @@ private:
 
 public:
    std::vector<feGEMdata> feGEM;
+   std::vector<feLVdata> feLV;
    static std::string CombinedName(const std::string& Category, const std::string& Varname)
    {
       return std::string(Category + "\\" + Varname);
@@ -198,9 +230,33 @@ public:
       std::string name = CombinedName(Category, Varname);
       return SetGEMChannel(name,ArrayEntry,title);
    }
+    void SetLVChannel(const std::string& name, int ArrayEntry, std::string title="")
+   {
+      for (auto& d: feLV)
+      {
+         if (d.array_number!= ArrayEntry)
+            continue;
+         if (d.name!=name)
+            continue;
+         std::cout<<"LV Channel "<< name.c_str()<< "["<<ArrayEntry<<"] already registered"<<std::endl;
+      }
+      feLVdata new_entry;
+      new_entry.name = name;
+      if (title.size() == 0)
+         new_entry.title = name;
+      else
+         new_entry.title = title;
+      new_entry.array_number = ArrayEntry;
+      
+      feLV.push_back(new_entry);
+   }
 
    template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
    void LoadfeGEMData(int RunNumber, double first_time, double last_time);
+
+   void LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
+   void LoadfeLVData(int RunNumber, double first_time, double last_time);
+
    // default class member functions
    TAPlot();//, int MVAMode = 0);
    virtual ~TAPlot();

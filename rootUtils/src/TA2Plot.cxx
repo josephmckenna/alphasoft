@@ -558,11 +558,29 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   DrawHistogram("ztvtx","colz");
 
   cVTX->cd(6);
+  TVirtualPad *cVTX_2 = NULL;
+  if (feGEM.size() && feLV.size())
+  {
+   cVTX_2 = cVTX->cd(6);
+   gPad->Divide(1, 2);
+  }
+  if (cVTX_2) 
+     cVTX_2->cd(1);
   /*DrawHistogram(feGEM.at(0).GetName().c_str(),"HIST");
   for (int i=1; i<feGEM.size(); i++)
      DrawHistogram(feGEM.at(i).GetName().c_str(),"HIST SAME");*/
    AlphaColourWheel colours;
    for (auto& f: feGEM)
+   {
+      for (auto& plot: f.plots)
+      {
+         plot.second.SetLineColor(colours.GetNewColour());
+         plot.second.Draw("");
+      }
+   }
+  if (cVTX_2) 
+     cVTX_2->cd(2);
+   for (auto& f: feLV)
    {
       for (auto& plot: f.plots)
       {

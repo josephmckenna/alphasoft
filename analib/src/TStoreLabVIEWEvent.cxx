@@ -13,6 +13,7 @@ TStoreLabVIEWEvent::TStoreLabVIEWEvent()
     run_time = 0;
     labview_time = 0;
     fDescription = "NULL";
+    RunNumber = -1;
 }
 
 TStoreLabVIEWEvent::TStoreLabVIEWEvent(TStoreLabVIEWEvent* Event) // <-- this is not a copy constructor  -- AC 2018
@@ -26,9 +27,9 @@ TStoreLabVIEWEvent::TStoreLabVIEWEvent(TStoreLabVIEWEvent* Event) // <-- this is
 }
 
 TStoreLabVIEWEvent::TStoreLabVIEWEvent(std::string p_BankName, std::vector<double> p_data, 
-    uint32_t p_MIDAS_TIME, uint32_t p_run_time, double p_labview_time)
+    uint32_t p_MIDAS_TIME, uint32_t p_run_time, double p_labview_time, int p_run_number)
     : BankName(p_BankName), m_data(p_data), MIDAS_TIME(p_MIDAS_TIME), 
-    run_time(p_run_time), labview_time(p_labview_time)
+    run_time(p_run_time), labview_time(p_labview_time), RunNumber( p_run_number)
 {
 }
 
