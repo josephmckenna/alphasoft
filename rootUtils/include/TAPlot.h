@@ -80,7 +80,7 @@ struct feGEMdata {
    int array_number;
    //std::vector<double> t;
    //std::vector<double> data;
-   std::map<int,TGraph*> plots;
+   std::map<int,TGraph> plots;
    std::string GetName() { return name + "[" + std::to_string(array_number) + "]";}
    std::string GetNameID() { return name + "_" + std::to_string(array_number);}
    std::string GetTitle() { return title; }
@@ -90,8 +90,8 @@ struct feGEMdata {
       double max = 1E99;
       for (auto& plot: plots)
       {
-         double* Y = plot.second->GetY();
-         int N = plot.second->GetN();
+         double* Y = plot.second.GetY();
+         int N = plot.second.GetN();
          for (int i = 0; i < N; i++)
          {
             if (Y[i] < min)
@@ -114,8 +114,8 @@ struct feGEMdata {
          //Or if after tmin and tmax is invalid (-1)
             (time > window.tmin && window.tmax<0) )
          {
-            TGraph* plot = plots[GEMEvent->GetRunNumber()];
-            plot->SetPoint(plot->GetN(), time, (double)GEMEvent->GetArrayEntry(array_number));
+            TGraph& plot = plots[GEMEvent->GetRunNumber()];
+            plot.SetPoint(plot.GetN(), time, (double)GEMEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -168,12 +168,12 @@ private:
 
 public:
    std::vector<feGEMdata> feGEM;
-   
-   void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
+   static std::string CombinedName(const std::string& Category, const std::string& Varname)
    {
-      //Perhaps this line should be a function used everywhere
-      std::string name = Category + "\\" + Varname;
-
+      return std::string(Category + "\\" + Varname);
+   }
+   void SetGEMChannel(const std::string& name, int ArrayEntry, std::string title="")
+   {
       for (auto& d: feGEM)
       {
          if (d.array_number!= ArrayEntry)
@@ -192,8 +192,15 @@ public:
       
       feGEM.push_back(new_entry);
    }
-   template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double last_time);
-   void LoadfeGEMData(int RunNumber, double last_time);
+   void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
+   {
+      //Perhaps this line should be a function used everywhere
+      std::string name = CombinedName(Category, Varname);
+      return SetGEMChannel(name,ArrayEntry,title);
+   }
+
+   template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
+   void LoadfeGEMData(int RunNumber, double first_time, double last_time);
    // default class member functions
    TAPlot();//, int MVAMode = 0);
    virtual ~TAPlot();
@@ -255,7 +262,7 @@ public:
    //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
    //If spills are from one run, it is faster to call the function above
    //?virtual void AddDumpGates(std::vector<TA2Spill*> spills ) =0;
-   virtual void LoadRun(int runNumber, double last_time) {};
+   virtual void LoadRun(int runNumber, double first_time, double last_time) {};
    void LoadData();
 
    void AutoTimeRange();

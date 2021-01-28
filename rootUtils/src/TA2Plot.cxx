@@ -139,7 +139,7 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    }
 }
 
-void TA2Plot::LoadRun(int runNumber, double last_time)
+void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
 {
    //Something smarter for the future?
    //TSVDQODIntegrator SVDCounts(TA2RunQOD* q,tmin[0], tmax[0]);
@@ -152,7 +152,10 @@ void TA2Plot::LoadRun(int runNumber, double last_time)
    // so get multiple channels and multiple time windows in one pass
    while (SVDReader->Next())
    {
-      if (SVDEvent->t>last_time)
+      double t = SVDEvent->t;
+      if (t < first_time)
+         continue;
+      if (t > last_time)
          break;
       AddSVDEvent(&(*SVDEvent));
    }
@@ -166,7 +169,10 @@ void TA2Plot::LoadRun(int runNumber, double last_time)
    // so get multiple channels and multiple time windows in one pass
    while (SISReader->Next())
    {
-      if (SISEvent->GetRunTime()>last_time)
+      double t = SISEvent->GetRunTime();
+      if (t < first_time)
+         continue;
+      if (t > last_time)
          break;
       AddSISEvent(&(*SISEvent));
    }
@@ -576,8 +582,8 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
    {
       for (auto& plot: f.plots)
       {
-         plot.second->SetLineColor(colours.GetNewColour());
-         plot.second->Draw("");
+         plot.second.SetLineColor(colours.GetNewColour());
+         plot.second.Draw("");
       }
    }
 
