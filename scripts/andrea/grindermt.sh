@@ -6,11 +6,10 @@ RUNNO=904139
 i=17
 
 DIR="${AGRELEASE}/RunLogs"
-if [ ! -d "RunLogs" ]; then
-    mkdir -p RunLogs
+if [ ! -d "${DIR}" ]; then
+    mkdir -p ${DIR}
 fi
 
-#BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 BRANCH=$(git status | head -1 | awk '{print $4}')
 
 LEAKTEST="$DIR/LeakTest${i}_${BRANCH}.log"
