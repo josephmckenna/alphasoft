@@ -70,7 +70,13 @@ void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last
 void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time)
 {
    std::cout<<"TA2Plot_Filler Loading run data:"<<runNumber <<" over the range between "<< first_time << "s to "<< last_time << "s"<< std::endl;
-
+   for (TA2Plot* p: plots)
+      for (auto& f: p->feGEM)
+      {
+         TGraph& graph = f.plots[runNumber];
+         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+      }
+   
    LoadfeGEMData(runNumber, first_time, last_time);
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
