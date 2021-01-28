@@ -19,15 +19,16 @@ public:
   
   ~GaussFunction() {}
   
-  double m() const {return theMean;}
-  double s() const {return theSigma;}
-  double c() const {return theConstant;}
+  inline double m() const {return theMean;}
+  inline double s() const {return theSigma;}
+  inline double c() const {return theConstant;}
 
   double operator()(double x) const 
   {
-    return
+     double t=(x-m())/s();
+     return c()*exp(-0.5*t*t);
       //      c()*exp(-0.5*(x-m())*(x-m())/(s()*s()))/(sqrt(2.*M_PI)*s());
-      c()*exp(-0.5*(x-m())*(x-m())/(s()*s()));
+      //c()*exp(-0.5*(x-m())*(x-m())/(s()*s()));
   }
 
 private:
