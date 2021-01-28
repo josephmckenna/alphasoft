@@ -32,6 +32,7 @@ class felabViewModuleWriter
       std::vector<TBranch*> dataBranchVec;
       std::vector<TBranch*> MIDAS_TIMEBranchVec;
       std::vector<TBranch*> run_timeBranchVec;
+      int runNumber;
    private:
       void BranchTreeFromData(TTree* t, TStoreLabVIEWEvent* LVEvent)
       {
@@ -78,7 +79,7 @@ class felabViewModuleWriter
          uint32_t t_MIDAS_TIME = mf->GetMIDAS_TIME();
          uint32_t t_run_time = mf->GetRunTime();
          double t_labview_time = mf->GetLabviewTime();
-         return TStoreLabVIEWEvent(t_BankName, t_data, t_MIDAS_TIME, t_run_time, t_labview_time);
+         return TStoreLabVIEWEvent(t_BankName, t_data, t_MIDAS_TIME, t_run_time, t_labview_time, runNumber);
       }
       public:
       void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
@@ -88,8 +89,11 @@ class felabViewModuleWriter
          #endif
          TTree* t = FindOrCreateTree(runinfo, mf);
          TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
-         BranchTreeFromData(t, &m_LabViewEvent);
-         
+         BranchTreeFromData(t, &m_LabViewEvent);  
+      }
+      void SetRunNumber(int RunNumber)
+      {
+         runNumber = RunNumber;
       }
 
 };
@@ -124,6 +128,7 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd();
+      treeWriter.SetRunNumber(runinfo->fRunNo);
       gDirectory->mkdir("felabview")->cd();
       if (fTrace)
          printf("felabviewFlow::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());

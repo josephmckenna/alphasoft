@@ -115,6 +115,14 @@ TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName)
    return t;
 }
 
+TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("felabview");
+   TTreeReader* t = new TTreeReader(BankName.c_str(), f->GetDirectory("/felabview"));
+   return t;
+}
+
 /* emacs
  * Local Variables:
  * tab-width: 8

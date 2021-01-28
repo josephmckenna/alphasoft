@@ -126,6 +126,44 @@ void TAPlot::LoadfeGEMData(int runNumber, double first_time, double last_time)
    }
 }
 
+void TAPlot::LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name, double first_time, double last_time)
+{
+   TTreeReaderValue<TStoreLabVIEWEvent> LVEvent(*feLVReader, name);
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (feLVReader->Next())
+   {
+      double t=LVEvent->GetRunTime();
+      std::cout<<t<<std::endl;
+      //A rough cut on the time window is very fast...
+      if (t < first_time)
+         continue;
+      if (t > last_time)
+         break;
+      std::cout << __LINE__ << std::endl;
+      f.AddLVEvent(&(*LVEvent), GetTimeWindows());
+   }
+   return;
+}
+
+void TAPlot::LoadfeLVData(int runNumber, double first_time, double last_time)
+{
+   for (auto& f: feLV)
+   {
+      TTreeReader* feLVReader=Get_feLV_Tree(runNumber,f.name);
+      TTree* tree = feLVReader->GetTree();
+      if  (!tree)
+      {
+         std::cout<<"Warning: " << f.GetName() << " ("<<f.name<<") not found for run " << runNumber << std::endl;
+         continue;
+      }
+      if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
+         LoadfeLVData(f, feLVReader, "TStoreLabVIEWEvent", first_time, last_time);
+      else
+         std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
+   }
+}
+
 void TAPlot::LoadData()
 {
    for (size_t i=0; i<Runs.size(); i++)
@@ -138,6 +176,12 @@ void TAPlot::LoadData()
          TGraph& graph = f.plots[runNumber];
          graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
       }
+      for (auto& f: feLV)
+      {
+         TGraph& graph = f.plots[runNumber];
+         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+      }
+      
       //Calculate our list time... so we can stop early
       for (auto& t: GetTimeWindows())
       {
@@ -151,6 +195,7 @@ void TAPlot::LoadData()
          }
       }
       LoadfeGEMData(runNumber, first_time, last_time);
+      LoadfeLVData(runNumber, first_time, last_time);
       LoadRun(runNumber, first_time, last_time);
    }
    return;

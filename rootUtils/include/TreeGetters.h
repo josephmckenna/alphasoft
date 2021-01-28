@@ -38,6 +38,8 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber);
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname);
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName);
 
+TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName);
+
 #endif
 
 /* emacs
