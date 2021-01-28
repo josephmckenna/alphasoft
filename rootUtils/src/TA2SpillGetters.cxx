@@ -2,7 +2,7 @@
 #ifdef BUILD_A2
 #include "TA2SpillGetters.h"
 
-std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
+std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
 {
 
    // The TA2Spill Tree is small... 
@@ -19,7 +19,7 @@ std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> des
       description[i].push_back('"');
    }
 
-   std::vector<TA2Spill*> spills;
+   std::vector<TA2Spill> spills;
 
    while (reader->Next())
    {
@@ -37,13 +37,12 @@ std::vector<TA2Spill*> Get_A2_Spills(int runNumber, std::vector<std::string> des
             //overload * is doing something special... so I need to 
             //dereference then get the pointer... then type cast it...
 
-            TA2Spill* b = new TA2Spill(*spill);
             //b->Print();
             if (repetition.at(i)<0)
                //Copy spill into returned vector
-               spills.push_back(b); //This cast is sketchy...
+               spills.push_back(*spill); //This cast is sketchy...
             else if (repetition.at(i)==match_counter[i]++)
-               spills.push_back(b);
+               spills.push_back(*spill);
             else
                continue;
          } 
