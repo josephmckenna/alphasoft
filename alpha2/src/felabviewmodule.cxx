@@ -22,7 +22,6 @@ class felabModuleFlags
 {
 public:
    bool fPrint = false;
-   bool fInitTimeSaved = false;
    bool fFakeRealtime = false;
 };
 
@@ -34,35 +33,8 @@ class felabViewModuleWriter
       std::vector<TBranch*> MIDAS_TIMEBranchVec;
       std::vector<TBranch*> run_timeBranchVec;
    private:
-      void BranchTreeFromData(TTree* t, felabviewFlowEvent* mf, TStoreLabVIEWEvent* LVEvent)
+      void BranchTreeFromData(TTree* t, TStoreLabVIEWEvent* LVEvent)
       {
-         std::vector<double>*       flm_data              = mf->GetData();
-         uint32_t                  flm_MIDAS_TIME        = mf->GetMIDAS_TIME();
-         uint32_t                  flm_run_time          = mf->GetRunTime();
-
-         TBranch* data_b = t->GetBranch("data");
-         if (!data_b)
-            t->Branch("data",&flm_data);
-         else
-         {
-            t->SetBranchAddress("data",&flm_data);
-         }
-
-         TBranch* MIDAS_TIME_b = t->GetBranch("t");
-         if (!MIDAS_TIME_b)
-            t->Branch("t",&flm_MIDAS_TIME);
-         else
-         {
-            t->SetBranchAddress("t",&flm_MIDAS_TIME);
-         }
-
-         TBranch* run_time_b = t->GetBranch("rt");
-         if (!run_time_b)
-            t->Branch("rt",&flm_run_time);
-         {
-            t->SetBranchAddress("rt",&flm_run_time);
-         }
-
          TBranch* TAObj_b = t->GetBranch("TStoreLabVIEWEvent");
          if (!TAObj_b)
             t->Branch("TStoreLabVIEWEvent",&LVEvent);
@@ -116,7 +88,7 @@ class felabViewModuleWriter
          #endif
          TTree* t = FindOrCreateTree(runinfo, mf);
          TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
-         BranchTreeFromData(t, mf, &m_LabViewEvent);
+         BranchTreeFromData(t, &m_LabViewEvent);
          
       }
 
@@ -128,6 +100,7 @@ private:
    TTree* felabEventTree   = NULL;
    uint32_t initialEventTime;
    felabViewModuleWriter treeWriter;
+   bool fInitTimeSaved = false;
 
 public:
    felabModuleFlags* fFlags;
@@ -180,15 +153,15 @@ public:
    {
      if(me->event_id == 6)
       {
-         if(!fFlags->fInitTimeSaved)
+         if(!fInitTimeSaved)
          {
             initialEventTime = me->time_stamp;
-            fFlags->fInitTimeSaved = true;
+            fInitTimeSaved = true;
          }
          
          u32 time_stamp = me->time_stamp;
          u32 dataoff = me->data_offset;
-         
+
          me->FindAllBanks();
          if(me->banks.size()>1)
          {
@@ -208,6 +181,9 @@ public:
 
          felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, (me->time_stamp - initialEventTime), meData[0]);
          flow = f;
+
+         if(meData[0]-3525550000 > 0)
+            printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
       }
       return flow;
    }
