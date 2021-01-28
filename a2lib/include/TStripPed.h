@@ -8,9 +8,9 @@
 class TStripPed: public TObject
 {
 public:
-   //std::vector<int>* histo;
+   std::vector<int>* histo;
    TH1F* histo1;
-   //std::vector<int>* rawhisto;
+   std::vector<int>* rawhisto;
    double sigma=99999.;
    double rawADCMean=0.;
    double rawADCRMS=0.;
