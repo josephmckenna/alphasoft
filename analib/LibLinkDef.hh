@@ -50,6 +50,12 @@
 #pragma link C++ class SeqXML_Event+;
 #pragma link C++ class SeqXML_ChainLink+;
 
+//LMG - These lines were required to build. 
+//Remember to ask Joe if I was supposed to manually add this or I'm missed an autocompile somewhere.
+#ifdef BUILD_AG
+#pragma link C++ class  TStoreLabVIEWEvent+;
+#endif
+
 #endif
 
 /* emacs
