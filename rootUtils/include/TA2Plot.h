@@ -55,7 +55,7 @@ private:
    void AddEvent(TSISEvent* event, int channel,double time_offset=0);
    void AddEvent(TSVD_QOD* event,double time_offset=0);
 public:
-   void LoadRun(int runNumber, double last_time);
+   void LoadRun(int runNumber, double first_time, double last_time);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
    void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills );
    //If spills are from one run, it is faster to call the function above

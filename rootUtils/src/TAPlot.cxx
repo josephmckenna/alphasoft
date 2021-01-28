@@ -78,21 +78,25 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
 }
 
 template <typename T>
-void TAPlot::LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double last_time)
+void TAPlot::LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time)
 {
    TTreeReaderValue<TStoreGEMData<T>> GEMEvent(*feGEMReader, name);
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
    while (feGEMReader->Next())
    {
-      if (GEMEvent->GetRunTime()>last_time)
+      double t=GEMEvent->GetRunTime();
+      //A rough cut on the time window is very fast...
+      if (t < first_time)
+         continue;
+      if (t > last_time)
          break;
       f.AddGEMEvent(&(*GEMEvent), GetTimeWindows());
    }
    return;
 }
 
-void TAPlot::LoadfeGEMData(int runNumber, double last_time)
+void TAPlot::LoadfeGEMData(int runNumber, double first_time, double last_time)
 {
    for (auto& f: feGEM)
    {
@@ -104,19 +108,19 @@ void TAPlot::LoadfeGEMData(int runNumber, double last_time)
          continue;
       }
       if (tree->GetBranchStatus("TStoreGEMData<double>"))
-         LoadfeGEMData<double>(f, feGEMReader, "TStoreGEMData<double>", last_time);
+         LoadfeGEMData<double>(f, feGEMReader, "TStoreGEMData<double>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<float>"))
-         LoadfeGEMData<float>(f, feGEMReader, "TStoreGEMData<float>", last_time);
+         LoadfeGEMData<float>(f, feGEMReader, "TStoreGEMData<float>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<bool>"))
-         LoadfeGEMData<bool>(f, feGEMReader, "TStoreGEMData<bool>", last_time);
+         LoadfeGEMData<bool>(f, feGEMReader, "TStoreGEMData<bool>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<int32_t>"))
-         LoadfeGEMData<int32_t>(f, feGEMReader, "TStoreGEMData<int32_t>", last_time);
+         LoadfeGEMData<int32_t>(f, feGEMReader, "TStoreGEMData<int32_t>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<uint32_t>"))
-         LoadfeGEMData<uint32_t>(f, feGEMReader, "TStoreGEMData<uint32_t>", last_time);
+         LoadfeGEMData<uint32_t>(f, feGEMReader, "TStoreGEMData<uint32_t>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<uint16_t>"))
-         LoadfeGEMData<uint16_t>(f, feGEMReader, "TStoreGEMData<uint16_t>", last_time);
+         LoadfeGEMData<uint16_t>(f, feGEMReader, "TStoreGEMData<uint16_t>", first_time, last_time);
       else if (tree->GetBranchStatus("TStoreGEMData<char>"))
-         LoadfeGEMData<char>(f, feGEMReader, "TStoreGEMData<char>", last_time);
+         LoadfeGEMData<char>(f, feGEMReader, "TStoreGEMData<char>", first_time, last_time);
       else
          std::cout << "Warning unable to find TStoreGEMData type" << std::endl;   
    }
@@ -127,12 +131,12 @@ void TAPlot::LoadData()
    for (size_t i=0; i<Runs.size(); i++)
    {
       double last_time = 0;
+      double first_time = 1E99;
       int runNumber = Runs[i];
       for (auto& f: feGEM)
       {
-         TGraph* graph =  new TGraph();
-         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-         f.plots[runNumber] = graph;
+         TGraph& graph = f.plots[runNumber];
+         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
       }
       //Calculate our list time... so we can stop early
       for (auto& t: GetTimeWindows())
@@ -141,13 +145,13 @@ void TAPlot::LoadData()
          {
             if (t.tmax<0) last_time = 1E99;
             if (last_time < t.tmax)
-            {
                last_time = t.tmax;
-            }
+            if (first_time > t.tmin )
+               first_time = t.tmin;
          }
       }
-      LoadfeGEMData(runNumber, last_time);
-      LoadRun(runNumber, last_time);
+      LoadfeGEMData(runNumber, first_time, last_time);
+      LoadRun(runNumber, first_time, last_time);
    }
    return;
 }
