@@ -66,18 +66,67 @@ void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last
       }
    }
 }
+void TA2Plot_Filler::LoadfeLVData(feLVdata& f, TA2Plot* p, TTreeReader* feLVReader, const char* name, double first_time, double last_time)
+{
+   TTreeReaderValue<TStoreLabVIEWEvent> LVEvent(*feLVReader, name);
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (feLVReader->Next())
+   {
+      double t=LVEvent->GetRunTime();
+      std::cout<<t<<std::endl;
+      //A rough cut on the time window is very fast...
+      if (t < first_time)
+         continue;
+      if (t > last_time)
+         break;
+      f.AddLVEvent(&(*LVEvent), p->GetTimeWindows());
+   }
+   return;
+}
+
+void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_time)
+{
+   for (TA2Plot* p: plots)
+   {
+      //If current runNumber isn't in plot... skip
+      if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
+         continue;
+      for (auto& f: p->feLV)
+      {
+         TTreeReader* feLVReader=Get_feLV_Tree(runNumber,f.name);
+         TTree* tree = feLVReader->GetTree();
+         if  (!tree)
+         {
+            std::cout<<"Warning: " << f.GetName() << " ("<<f.name<<") not found for run " << runNumber << std::endl;
+            continue;
+         }
+         if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
+            LoadfeLVData(f, p, feLVReader, "TStoreLabVIEWEvent", first_time, last_time);
+         else
+            std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
+      }
+   }
+}
 
 void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time)
 {
    std::cout<<"TA2Plot_Filler Loading run data:"<<runNumber <<" over the range between "<< first_time << "s to "<< last_time << "s"<< std::endl;
    for (TA2Plot* p: plots)
+   {
       for (auto& f: p->feGEM)
       {
          TGraph& graph = f.plots[runNumber];
          graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
       }
-   
+      for (auto& f: p->feLV)
+      {
+         TGraph& graph = f.plots[runNumber];
+         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+      }
+   }
    LoadfeGEMData(runNumber, first_time, last_time);
+   LoadfeLVData(runNumber, first_time, last_time);
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
@@ -128,11 +177,16 @@ void TA2Plot_Filler::LoadData()
    std::vector<int> UniqueRuns(Runs.begin(),Runs.end());
    Runs.clear();
    for (auto &plot: plots)
+   {
       for (auto& c: GEMChannels)
       {
          plot->SetGEMChannel(c.CombinedName,c.ArrayEntry,c.title);
       }
-
+      for (auto& c: LVChannels)
+      {
+         plot->SetLVChannel(c.BankName,c.ArrayEntry,c.title);
+      }
+   }
    std::vector<double> last_times(UniqueRuns.size(),0.);
    std::vector<double> first_times(UniqueRuns.size(),1E99);
    for (auto& plot: plots)

@@ -23,7 +23,20 @@ class GEMChannel
       ArrayEntry =_ArrayEntry;
       title      =_title;
    }
-   
+};
+
+class LVChannel
+{
+   public:
+      std::string BankName;
+      int ArrayEntry;
+      std::string title;
+   LVChannel(const std::string& _BankName, int _ArrayEntry, const std::string& _title)
+   {
+      BankName   =_BankName;
+      ArrayEntry =_ArrayEntry;
+      title      =_title;
+   }
 };
 
 class TA2Plot_Filler
@@ -32,6 +45,7 @@ private:
    std::vector<TA2Plot*> plots;
    std::vector<int>      runNumbers;
    std::vector<GEMChannel> GEMChannels;
+   std::vector<LVChannel>  LVChannels;
 
    
    void AddRunNumber(int runNumber)
@@ -50,6 +64,10 @@ private:
 template <typename T>
 void LoadfeGEMData(feGEMdata& f, TA2Plot* p, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
 void LoadfeGEMData(int runNumber, double first_time, double last_time);
+
+void LoadfeLVData(feLVdata& f, TA2Plot* p, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
+void LoadfeLVData(int runNumber, double first_time, double last_time);
+
 void LoadData(int runNumber, double first_time, double last_time);
 public:
    TA2Plot_Filler();
@@ -60,6 +78,8 @@ public:
          AddRunNumber(no);
       for (auto& f: plot->feGEM)
          SetGEMChannel(f.GetName(),f.array_number);
+      for (auto& f: plot->feLV)
+         SetLVChannel(f.GetName(),f.array_number);
       for (TA2Plot* p: plots)
       {
           if (p==plot)
@@ -87,7 +107,6 @@ public:
             }
          }
       }
-
       GEMChannels.push_back(GEMChannel(CombinedName,ArrayEntry,title));
    }
    void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
@@ -95,6 +114,27 @@ public:
       std::string name = TAPlot::CombinedName(Category,Varname);
       SetGEMChannel(name, ArrayEntry, title);
    }
+
+   void SetLVChannel(const std::string& BankName, int ArrayEntry, std::string title="")
+   {
+      for (auto& g: LVChannels)
+      {
+         if (g.ArrayEntry == ArrayEntry)
+         {
+            if (g.BankName == BankName)
+            {
+               if (title.size() > g.title.size())
+               {
+                  //The latest SetGEMChannel may overwrite a new title
+                  g.title = title;
+               }
+               return;
+            }
+         }
+      }
+      LVChannels.push_back(LVChannel(BankName,ArrayEntry,title));
+   }
+
    void LoadData();
 
 };
