@@ -61,11 +61,11 @@ public:
    //If spills are from one run, it is faster to call the function above
    void AddDumpGates(std::vector<TA2Spill> spills );
 
-   TA2Plot();
-   TA2Plot(double zmin, double zmax);
+   TA2Plot(bool zerotime = true);
+   TA2Plot(double zmin, double zmax,bool zerotime = true);
    virtual ~TA2Plot();
    
-   void SetUpHistograms(bool zeroTime=true);
+   void SetUpHistograms();
    void FillHisto(bool ApplyCuts=true, int MVAMode=0);
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)

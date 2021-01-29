@@ -4,7 +4,8 @@ ClassImp(TAPlot);
 
 //Default Constructor
 //TAPlot::TAPlot(Bool_t ApplyCuts)//, Int_t MVAMode)
-TAPlot::TAPlot()
+TAPlot::TAPlot(bool zerotime):
+   ZeroTimeAxis(zerotime)
 {
    Nbin=100; 
    DrawStyle=0;
@@ -13,17 +14,10 @@ TAPlot::TAPlot()
    FirstTmin=1E99;
    LastTmax=1.;
 
+   fTotalTime = -1.;
+   fTotalVert = -1.;
 
-  fTotalTime = -1.;
-  fTotalVert = -1.;
-
-  fVerbose=false;
-
-  feGEMmg = new TMultiGraph();
-  feLVmg = new TMultiGraph();
-   
-
-  //fApplyCuts=ApplyCuts;
+   fVerbose=false;
 }
 
 void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
@@ -138,13 +132,11 @@ void TAPlot::LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name
    while (feLVReader->Next())
    {
       double t=LVEvent->GetRunTime();
-      std::cout<<t<<std::endl;
       //A rough cut on the time window is very fast...
       if (t < first_time)
          continue;
       if (t > last_time)
          break;
-      std::cout << __LINE__ << std::endl;
       f.AddLVEvent(&(*LVEvent), GetTimeWindows());
    }
    return;
@@ -152,6 +144,7 @@ void TAPlot::LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name
 
 void TAPlot::LoadfeLVData(int runNumber, double first_time, double last_time)
 {
+   //For each unique variable being logged
    for (auto& f: feLV)
    {
       TTreeReader* feLVReader=Get_feLV_Tree(runNumber,f.name);
@@ -170,25 +163,6 @@ void TAPlot::LoadfeLVData(int runNumber, double first_time, double last_time)
 
 void TAPlot::LoadData()
 {
-   AlphaColourWheel colours;
-   for (size_t i=0; i<TimeWindows.size(); i++)
-   {
-      for (auto& f: feGEM)
-      {
-         TGraph* graph = f.GetPlot(i)->GetGraph();
-         graph->SetLineColor(colours.GetNewColour());
-         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-         feGEMmg->Add(graph);
-      }
-      for (auto& f: feLV)
-      {
-         TGraph* graph = f.GetPlot(i)->GetGraph();
-         graph->SetLineColor(colours.GetNewColour());
-         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-         feLVmg->Add(graph);
-      }
-   }
-
    for (size_t i=0; i<Runs.size(); i++)
    {
       double last_time = 0;

@@ -8,26 +8,6 @@ TA2Plot_Filler::~TA2Plot_Filler()
 {
 }
 
-
-template <typename T>
-void TA2Plot_Filler::LoadfeGEMData(feGEMdata& f,TA2Plot* p, TTreeReader* feGEMReader, const char* name, double first_time, double last_time)
-{
-   TTreeReaderValue<TStoreGEMData<T>> GEMEvent(*feGEMReader, name);
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (feGEMReader->Next())
-   {
-      double t=GEMEvent->GetRunTime();
-      //A rough cut on the time window is very fast...
-      if (t < first_time)
-         continue;
-      if (t > last_time)
-         break;
-      f.AddGEMEvent(&(*GEMEvent), p->GetTimeWindows());
-   }
-   return;
-}
-
 void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last_time)
 { 
    //feGEM isn't grouped... we could gain speed by reading only once and filling groups of feGEM
@@ -38,50 +18,8 @@ void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      for (auto& f: p->feGEM)
-      {
-         TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber,f.name);
-         TTree* tree = feGEMReader->GetTree();
-         if  (!tree)
-         {
-            std::cout<<"Warning: " << f.GetName() << " ("<<f.name<<") not found for run " << runNumber << std::endl;
-            continue;
-         }
-         if (tree->GetBranchStatus("TStoreGEMData<double>"))
-            LoadfeGEMData<double>(f, p, feGEMReader, "TStoreGEMData<double>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<float>"))
-            LoadfeGEMData<float>(f, p, feGEMReader, "TStoreGEMData<float>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<bool>"))
-            LoadfeGEMData<bool>(f, p, feGEMReader, "TStoreGEMData<bool>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<int32_t>"))
-            LoadfeGEMData<int32_t>(f, p, feGEMReader, "TStoreGEMData<int32_t>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<uint32_t>"))
-            LoadfeGEMData<uint32_t>(f, p, feGEMReader, "TStoreGEMData<uint32_t>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<uint16_t>"))
-            LoadfeGEMData<uint16_t>(f, p, feGEMReader, "TStoreGEMData<uint16_t>", first_time, last_time);
-         else if (tree->GetBranchStatus("TStoreGEMData<char>"))
-            LoadfeGEMData<char>(f, p, feGEMReader, "TStoreGEMData<char>", first_time, last_time);
-         else
-            std::cout << "Warning unable to find TStoreGEMData type" << std::endl;   
-      }
+      p->LoadfeGEMData(runNumber,first_time, last_time);
    }
-}
-void TA2Plot_Filler::LoadfeLVData(feLVdata& f, TA2Plot* p, TTreeReader* feLVReader, const char* name, double first_time, double last_time)
-{
-   TTreeReaderValue<TStoreLabVIEWEvent> LVEvent(*feLVReader, name);
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (feLVReader->Next())
-   {
-      double t=LVEvent->GetRunTime();
-      //A rough cut on the time window is very fast...
-      if (t < first_time)
-         continue;
-      if (t > last_time)
-         break;
-      f.AddLVEvent(&(*LVEvent), p->GetTimeWindows());
-   }
-   return;
 }
 
 void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_time)
@@ -91,20 +29,7 @@ void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      for (auto& f: p->feLV)
-      {
-         TTreeReader* feLVReader=Get_feLV_Tree(runNumber,f.name);
-         TTree* tree = feLVReader->GetTree();
-         if  (!tree)
-         {
-            std::cout<<"Warning: " << f.GetName() << " ("<<f.name<<") not found for run " << runNumber << std::endl;
-            continue;
-         }
-         if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
-            LoadfeLVData(f, p, feLVReader, "TStoreLabVIEWEvent", first_time, last_time);
-         else
-            std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
-      }
+      p->LoadfeLVData(runNumber, first_time, last_time);
    }
 }
 
