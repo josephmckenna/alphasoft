@@ -44,4 +44,6 @@ void DriftTimePlot()
   legdec->AddEntry(htt,"AW","l");
   legdec->AddEntry(htpad,"pad","l");
   legdec->Draw("same");
+
+  cdec->SaveAs(".pdf"); cdec->SaveAs(".pdf");
 }
