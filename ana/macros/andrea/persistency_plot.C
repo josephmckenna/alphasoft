@@ -23,7 +23,7 @@ void persistency_plot()
   ht->SetMinimum(0.);
   int xsize=1300, ysize=700;
   if( gROOT->IsBatch() ){
-    xsize=2300; ysize=1700;}
+    xsize=3200; ysize=1700;}
   TString cname="ccdeconvR";
   cname+=run;
   TCanvas* cc = new TCanvas(cname,cname,1700,900);
