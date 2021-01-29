@@ -19,15 +19,16 @@ public:
   
   ~GaussFunction() {}
   
-  double m() const {return theMean;}
-  double s() const {return theSigma;}
-  double c() const {return theConstant;}
+  inline double m() const {return theMean;}
+  inline double s() const {return theSigma;}
+  inline double c() const {return theConstant;}
 
   double operator()(double x) const 
   {
-    return
+     double t=(x-m())/s();
+     return c()*exp(-0.5*t*t);
       //      c()*exp(-0.5*(x-m())*(x-m())/(s()*s()))/(sqrt(2.*M_PI)*s());
-      c()*exp(-0.5*(x-m())*(x-m())/(s()*s()));
+      //c()*exp(-0.5*(x-m())*(x-m())/(s()*s()));
   }
 
 private:
@@ -63,26 +64,23 @@ public:
   
   ~MultiGaussFunction() {}
   
-  // double c(int i=0) const {return theConstant[i];}
-  // double m(int i=0) const {return theMean[i];}
-  // double s(int i=0) const {return theSigma[i];}
-  double c(int i=0) const {return Gfunc[i].c();}
-  double m(int i=0) const {return Gfunc[i].m();}
-  double s(int i=0) const {return Gfunc[i].s();}
+  inline double c(int i=0) const {return Gfunc[i].c();}
+  inline double m(int i=0) const {return Gfunc[i].m();}
+  inline double s(int i=0) const {return Gfunc[i].s();}
 
   double operator()(double x) const 
   {
-    double sum=0;
-    for( int i=0; i<Ngauss; ++i )
-      sum+=Gfunc[i](x);
+     double sum=0.0;
+    // for( int i=0; i<Ngauss; ++i )
+    //   sum+=Gfunc[i](x);
+    // double sum = std::accumulate(vector.begin(), vector.end(),
+    //                            decltype(vector)::value_type(0));
+    for( auto& g : Gfunc ) sum += g(x);
     return sum;
   }
 
 private:
   int Ngauss;
-  // std::vector<double> theConstant;
-  // std::vector<double> theMean;
-  // std::vector<double> theSigma;
   std::vector<GaussFunction> Gfunc;
 };
 
