@@ -46,42 +46,6 @@
 #define VF48_COINCTIME 0.000010
 
 //Copy of MIDAS bank (used to speed up multithreading, copy time is negligable compared to unpack time)
-class VF48data
-{
-  public:
-     int       size32[nVF48];
-     uint32_t *data32[nVF48];
-    //char* data[NUM_VF48_MODULES];
-    //int size[NUM_VF48_MODULES];
-  VF48data()
-  {
-    for (int i=0; i<nVF48; i++)
-    {
-      size32[i]=0;
-      data32[i]=NULL;
-    }
-  }
-  void AddVF48data(int unit, const void* _data, int _size)
-  {
-
-    //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
-    //int       size32 = size;
-  //32const uint32_t *data32 = (const uint32_t*)data;
-    if (!_size) return;
-    size32[unit]=_size;
-    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
-    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
-    return;
-  }
-  ~VF48data()
-  {
-     for (int i=0; i<nVF48; i++)
-     {
-       // if (data32[i])
-           free( data32[i] );
-     }
-  }
-};
 
 
 
@@ -122,15 +86,6 @@ public:
    int gSOffset[NUM_VF48_MODULES];
    double gSettingsFrequencies[VF48_MAX_MODULES];
 
-
-   //MIDAS data waiting to be unpacked
-   
-   std::deque<VF48data*> VF48dataQueue;
-   std::mutex VF48dataQueueLock;
-   //Unpacked VF48 events
-   std::deque<VF48event*> VF48eventQueue;
-   std::mutex VF48eventQueueLock;
-
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
@@ -169,14 +124,14 @@ public:
          printf("UnpackModule::dtor!\n");
       delete vfu;
 
-      size_t VF48eventQueueSize=VF48eventQueue.size();
+      /*size_t VF48eventQueueSize=VF48eventQueue.size();
       if (VF48eventQueueSize)
       {
          std::cout<<"UnpackModule Warning: "<<VF48eventQueueSize<<" VF48 events not analyised"<<std::endl;
          for (size_t i=0; i<VF48eventQueueSize; i++)
             delete VF48eventQueue[i];
          VF48eventQueue.clear();
-      }
+      }*/
    }
 
 
@@ -212,8 +167,8 @@ public:
 
    void PreEndRun(TARunInfo* runinfo)
    {
-      QueueEventFromData();
-      SendQueueToFlow(runinfo);
+      //UnpackVF48Flow();
+      //SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
       //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
@@ -238,110 +193,21 @@ public:
       if (fTrace)
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
-   void SendQueueToFlow(TARunInfo* runinfo)
-   {
-      VF48event* e = NULL;
-      while (1)
-      {
-         {
-            std::lock_guard<std::mutex> lock(VF48eventQueueLock);
-            if (!VF48eventQueue.size()) return;
-            //if (VF48eventQueue.size()> 30){
-            //   std::cout<<"size in main" << VF48eventQueue.size()<<std::endl; //continue;
-            //}
-            //std::cout<<"Popping event, size now:"<<VF48eventQueue.size()<<std::endl;
-            e=VF48eventQueue.front();
-            VF48eventQueue.pop_front();
-         }
-         if (e)
-         {
-            TAFlowEvent* timer=NULL;
-            runinfo->AddToFlowQueue(new VF48EventFlow(timer,e));
-            e=NULL;
-         }
-         //   flow=new VF48EventFlow(flow,e);
-      }
-   }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      QueueEventFromData();
-      SendQueueToFlow(runinfo);
+      //UnpackVF48Flow();
+      //SendQueueToFlow(runinfo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+
+   std::vector<VF48event*> UnpackVF48Flow(VF48DataFlow* data_flow)
    {
-      SendQueueToFlow(runinfo);
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      if (fFlags->fUnpackOff)
-      {
-#ifdef MANALYZER_PROFILER
-         *flags |= TAFlag_SKIP_PROFILE;
-#endif
-         return flow;
-      }
+      //Unpacked VF48 events
+      std::vector<VF48event*> VF48eventQueue;
 
-      if (event->event_id != 11)
+      for (VF48data* d: data_flow->VF48dataQueue)
       {
-#ifdef MANALYZER_PROFILER
-         *flags |= TAFlag_SKIP_PROFILE;
-#endif
-         return flow;
-      }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
-#endif
-
-      event->FindAllBanks();
-      
-      bool data_added=false;
-      for (int i=0; i<NUM_VF48_MODULES; i++) 
-      {
-         char bankname[5];
-         bankname[0] = 'V';
-         bankname[1] = 'F';
-         bankname[2] = 'A';
-         bankname[3] = '0' + i;
-         bankname[4] = 0;
-         //int size = event->LocateBank(NULL,bankname,&ptr);
-         TMBank* vf48_bank = event->FindBank(bankname); 
-         if (!vf48_bank) continue;
-         int size=vf48_bank->data_size/4;
-         if (size>0)
-         {
-            VF48data* d = new VF48data();
-            d->AddVF48data(i,event->GetBankData(vf48_bank), size);
-            std::lock_guard<std::mutex> lock(VF48dataQueueLock);
-            VF48dataQueue.push_back(d);
-            data_added=true;
-         }
-      }
-      if (!data_added)
-      {
-#ifdef MANALYZER_PROFILER
-         *flags |= TAFlag_SKIP_PROFILE;
-#endif
-      }
-      SendQueueToFlow(runinfo);
-      return flow;
-   }
-
-   int QueueEventFromData()
-   {
-      int EventsQueued=0;
-      VF48data* d=NULL;
-      while (1)
-      {
-         std::lock_guard<std::mutex> lock(VF48dataQueueLock);
-         if (VF48dataQueue.size())
-         {
-            d=VF48dataQueue.front();
-            VF48dataQueue.pop_front();
-         }
-         else
-         {
-            return EventsQueued;
-         }
          for (int i=0; i<NUM_VF48_MODULES; i++) 
          {
             //std::cout<<fe->size32[i]<<"\t";
@@ -383,23 +249,19 @@ public:
                //flow=new VF48EventFlow(flow,e);
                if (e)
                {
-                  std::lock_guard<std::mutex> lock(VF48eventQueueLock);
                   //e->PrintSummary();
                   VF48eventQueue.push_back(e);
-                  EventsQueued++;
                   //std::cout<<"size:"<<VF48eventQueue.size()<<std::endl;
                }
             }
          }
-        delete d;
+         delete d;
       }
-      return EventsQueued;
+      return VF48eventQueue;
    }
 
-
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
@@ -408,8 +270,81 @@ public:
 #endif
          return flow;
       }
-      int VF48EventsQueued=QueueEventFromData();
-      if (!VF48EventsQueued)
+
+      if (event->event_id != 11)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+#ifdef MANALYZER_PROFILER
+      START_TIMER
+#endif
+
+      event->FindAllBanks();
+      VF48DataFlow* dataflow = NULL;
+      bool data_added=false;
+      for (int i=0; i<NUM_VF48_MODULES; i++) 
+      {
+         char bankname[5];
+         bankname[0] = 'V';
+         bankname[1] = 'F';
+         bankname[2] = 'A';
+         bankname[3] = '0' + i;
+         bankname[4] = 0;
+         //int size = event->LocateBank(NULL,bankname,&ptr);
+         TMBank* vf48_bank = event->FindBank(bankname); 
+         if (!vf48_bank) continue;
+         int size=vf48_bank->data_size/4;
+         if (size>0)
+         {
+            if (!dataflow)
+            {
+               dataflow = new VF48DataFlow(flow);
+               flow = dataflow;
+            }
+            VF48data* d = new VF48data();
+            d->AddVF48data(i,event->GetBankData(vf48_bank), size);
+            dataflow->AddData(d);
+            data_added=true;
+         }
+      }
+      if (!data_added)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
+      }
+#define ALLOW_MULTHITHREADED_UNPACK 1
+#if ALLOW_MULTHITHREADED_UNPACK
+      return flow;
+   }
+
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+#endif
+      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      if (fFlags->fUnpackOff)
+      {
+#ifdef MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      VF48DataFlow* data_flow=flow->Find<VF48DataFlow>();
+      bool flow_queued = false;
+      if (data_flow)
+      {
+         std::vector<VF48event*> vf48events = UnpackVF48Flow(data_flow);
+         if (vf48events.size())
+            flow_queued = true;
+         for (VF48event* event: vf48events)
+            runinfo->AddToFlowQueue(new VF48EventFlow(NULL,event));
+         vf48events.clear();
+      }
+
+      if (!flow_queued)
       {
 #ifdef MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;

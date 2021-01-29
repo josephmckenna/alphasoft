@@ -473,7 +473,11 @@ struct ChronoChannelEvent {
       }
       //Chronoflow->PrintChronoFlow();
 
-      if (ChronoEventsFlow->size()==0) return flow;
+      if (ChronoEventsFlow->size()==0)
+         {
+            delete ChronoEventsFlow;
+            return flow;
+         }
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
       return flow;

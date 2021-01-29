@@ -6,6 +6,7 @@
 #include "TString.h"
 #include "sqlite3.h"
 #include "DumpHandling.h"
+#include "Sequencer_Channels.h"
 
 //Base class for SIS and Chronobox integrals
 class TSpillScalerData: public TObject
@@ -35,7 +36,7 @@ class TSpillScalerData: public TObject
    template <class ScalerData>
    ScalerData* operator+(const ScalerData* b);
    bool Ready( bool have_vertex_detector);
-
+   double GetDumpLength() { return StopTime - StartTime; };
 
    ClassDef(TSpillScalerData,1);
 };
@@ -78,6 +79,7 @@ class TAGSpillScalerData: public TSpillScalerData
    ClassDef(TAGSpillScalerData,1);
 };
 #endif
+
 class TSpillSequencerData: public TObject
 {
    public:
@@ -139,6 +141,7 @@ public:
    TSpill(int runno, const char* format, ...);
    TSpill* operator/(const TSpill* b);
    TSpill(TSpill* a);
+   bool IsMatchForDumpName(std::string dumpname, bool exact = true);
    bool DumpHasMathSymbol() const;
    using TObject::Print;
    virtual void Print();

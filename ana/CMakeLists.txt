@@ -148,6 +148,18 @@ foreach( LIST_FILE ${BINS} )
         "$ENV{AGRELEASE}/agana/unpack_module.cxx"
     )
 
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/pwb_module.cxx" 
+        "$ENV{AGRELEASE}/agana/pwb_module.cxx"
+    )
+
+    replace_list_item(
+        MODULES 
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/adc_module.cxx" 
+        "$ENV{AGRELEASE}/agana/adc_module.cxx"
+    )
+
     #message(Modules: ${MODULES})
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )

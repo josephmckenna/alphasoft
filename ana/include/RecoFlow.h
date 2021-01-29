@@ -30,7 +30,7 @@ class AgBarEventFlow: public TAFlowEvent
    {
       if (BarEvent)
          {
-            BarEvent->Reset();
+            //   BarEvent->Reset();
             delete BarEvent;
          }
    }
@@ -135,7 +135,7 @@ class DumpFlow: public TAFlowEvent
       states.clear();
       DumpMarkers.clear();
    }
-  void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
+  void AddDumpEvent(Int_t _SequencerNum, Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
    {
       if (SequencerNum<0) SequencerNum=_SequencerNum;
       else if (SequencerNum!=_SequencerNum)
@@ -143,15 +143,17 @@ class DumpFlow: public TAFlowEvent
          std::cout<<"ERROR! Parsing sequencer data that has data for more than one sequencer... something went very wrong"<<std::endl;
          exit(1);
       }
-      DumpMarker Marker;
-      Marker.Description   = _Description;
-      Marker.fSequencerID  = _SequencerNum;
-      Marker.fSequenceCount= _SeqCount;
-      Marker.DumpType      = _DumpType;
-      Marker.fonCount      = _onCount;
-      Marker.fonState      = _onState;
-      Marker.fRunTime      = -1.;
-      Marker.MidasTime     = SequenceStartTime;
+
+      DumpMarker Marker(
+         _Description,
+         _SequencerNum,
+         _SeqCount,
+         _DumpType,
+         _onCount,
+         _onState,
+         -1.,
+         SequenceStartTime
+         );
       DumpMarkers.push_back(Marker);
    }
    void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t _SequenceStartTime, TString _Description, const char* _DumpType, Int_t _onCount, Int_t _onState) 
@@ -333,7 +335,8 @@ public:
 
   void AddMatchSignals( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*ss )
   {
-    matchSig=ss;
+     //matchSig=ss;
+     matchSig= new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >(*ss);
   }
 
   void AddAWWaveforms(std::vector<ALPHAg::wf_ref>* af)
