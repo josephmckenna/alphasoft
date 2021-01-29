@@ -71,6 +71,8 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
+
+     
        
       hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
       hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
@@ -169,6 +171,8 @@ public:
 
    TBarEvent* AnalyzeBars(const Alpha16Event* data, TARunInfo* runinfo)
    {
+      
+
       std::vector<Alpha16Channel*> channels = data->hits;
       TBarEvent* BarEvent = new TBarEvent();
 
@@ -230,16 +234,23 @@ public:
             double maximum_time;
             double fit_start_time;
             double fit_end_time;
+            {           
+            //Root's fitting routines are often not thread safe, lock globally
+#ifdef MODULE_MULTITHREAD
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            {
-            
-            TF1 *sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
+#endif
+            TString fname=TString::Format("sgfit_%d_%d",data->counter,i);
+            TF1 *sgfit = new TF1(fname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
+            //TF1 *sgfit = new TF1(fname,sgfunc,start_time-1,end_time+1,4);
             sgfit->SetParameters(max,imax,5,0.2);
             sgfit->SetParLimits(0,0.9*max,100*max);
             sgfit->SetParLimits(1,0,500);
             sgfit->SetParLimits(2,0,100);
             sgfit->SetParLimits(3,0,2);
-            hWave->Fit("sgfit","RQ0");
+
+            //hWave->Fit("sgfit","RQ0");
+            hWave->Fit(fname,"RQ0");
+            //hWave->Fit(sgfit,"RQ0");
             // Extrapolates amplitude and interpolates start and end times
             fit_amp = sgfit->GetParameter(0) - baseline;
             maximum_time = sgfit->GetMaximumX();
@@ -276,10 +287,19 @@ public:
 
          }
 
-      hNumBars->Fill(num_bars);
-
-      return BarEvent;
+       hNumBars->Fill(num_bars);
+       return BarEvent;
    }
+
+   static double sgfunc(double* x, double* p)
+    {
+            // "[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))"
+            double xx=x[0];
+            double skew=0.;
+            if( xx>p[1] ) skew = p[3]*(xx-p[1]);
+            double t=(xx-p[1])/(p[2]+skew);
+            return p[0]*exp(-0.5*pow(t,2.));
+    }
 
 };
 
