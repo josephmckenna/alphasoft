@@ -108,7 +108,7 @@ private:
 
 public:
    felabModuleFlags* fFlags;
-   bool fTrace = true;
+   bool fTrace = false;
    std::vector<TTree*> trees;
    
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
@@ -186,9 +186,9 @@ public:
 
          felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, (me->time_stamp - initialEventTime), meData[0]);
          flow = f;
-
-         if(meData[0]-3525550000 > 0)
-            printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
+         if (fTrace)
+             if(meData[0]-3525550000 > 0)
+                printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
       }
       return flow;
    }
