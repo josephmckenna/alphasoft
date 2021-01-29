@@ -61,6 +61,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
          DataLoader.BookPlot(VertexPlot[i][j]);
       }
    }
+   DataLoader.SetLVChannel("D243",2);
    //Load all data in a single pass of each tree (I am aiming for efficiency)
    DataLoader.LoadData();
 
@@ -79,7 +80,10 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
             if (j==1)
                title+="C";
             if (runNumber==57208 && j!=1)
-               VertexPlot[i][j]->DrawCanvas(title);
+            {
+               TCanvas* c1 = VertexPlot[i][j]->DrawCanvas(title);
+               c1->SaveAs(title+".png");
+            }
          }
       }
    }
@@ -128,9 +132,9 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
 }
 
 
-int Plot_2018_243_Cooled_Lineshape()
+int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs )
 {
-   bool DrawVerticecs=false;
+   
    
    Plot_243_Light_Lineshape(57181,DrawVerticecs);
    Plot_243_Light_Lineshape(57195,DrawVerticecs);
