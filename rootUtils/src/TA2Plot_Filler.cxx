@@ -74,7 +74,6 @@ void TA2Plot_Filler::LoadfeLVData(feLVdata& f, TA2Plot* p, TTreeReader* feLVRead
    while (feLVReader->Next())
    {
       double t=LVEvent->GetRunTime();
-      std::cout<<t<<std::endl;
       //A rough cut on the time window is very fast...
       if (t < first_time)
          continue;
@@ -112,19 +111,33 @@ void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_
 void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time)
 {
    std::cout<<"TA2Plot_Filler Loading run data:"<<runNumber <<" over the range between "<< first_time << "s to "<< last_time << "s"<< std::endl;
-   for (TA2Plot* p: plots)
+   AlphaColourWheel colours;
+   /*for (TA2Plot* p: plots)
    {
-      for (auto& f: p->feGEM)
+      for (size_t i=0; i<p->GetTimeWindows().size(); i++)
       {
-         TGraph& graph = f.plots[runNumber];
-         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+         for (auto& f: p->feGEM)
+         {
+            for (auto& g: f.plots)
+            {
+               TGraph* graph = g->GetGraph();
+               graph->SetLineColor(colours.GetNewColour());
+               graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+               feGEMmg->Add(graph);
+            }
+         } 
+         for (auto& f: p->feLV)
+         {
+            for (auto& g: f.plots)
+            {
+               TGraph* graph = g->GetGraph();
+               graph->SetLineColor(colours.GetNewColour());
+               graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+               feLVmg->Add(graph);
+            }
+         }
       }
-      for (auto& f: p->feLV)
-      {
-         TGraph& graph = f.plots[runNumber];
-         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-      }
-   }
+   }*/
    LoadfeGEMData(runNumber, first_time, last_time);
    LoadfeLVData(runNumber, first_time, last_time);
 
