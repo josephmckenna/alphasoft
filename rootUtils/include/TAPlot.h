@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <iostream>
 #include "TColor.h"
+#include "TMultiGraph.h"
+   
 #define SCALECUT 0.6
 
 class AlphaColourWheel
@@ -74,15 +76,37 @@ struct TimeWindow
    }
 };
 
+class feENVdataPlot
+{
+   public:
+   std::vector<double> t;
+   std::vector<double> RunTime;
+   std::vector<double> data;
+   public:
+   void AddPoint(double _t, double _RunTime, double _data)
+   {
+      t.push_back(_t);
+      RunTime.push_back(_RunTime);
+      data.push_back(_data);
+   }
+   TGraph* GetGraph(bool zerotime)
+   {
+      if (zerotime)
+         return new TGraph(data.size(),t.data(),data.data());
+      else
+         return new TGraph(data.size(),RunTime.data(),data.data());
+   }
+};
+
 class feENVdata {
    public:
    //#public:
    std::string name;
    std::string title;
    int array_number;
-   //std::vector<double> t;
-   //std::vector<double> data;
-   std::map<int,TGraph> plots;
+   //One TGraph per run per window (size of Windows)
+   std::vector<feENVdataPlot*> plots;
+
    std::string GetName() { return name + "[" + std::to_string(array_number) + "]";}
    std::string GetNameID() { return name + "_" + std::to_string(array_number);}
    std::string GetTitle() { return title; }
@@ -92,17 +116,23 @@ class feENVdata {
       double max = 1E99;
       for (auto& plot: plots)
       {
-         double* Y = plot.second.GetY();
-         int N = plot.second.GetN();
-         for (int i = 0; i < N; i++)
+         for (double& d: plot->data)
          {
-            if (Y[i] < min)
-               min = Y[i];
-            if (Y[i] > max )
-               max = Y[i];
+            if (d < min)
+               min = d;
+            if (d > max )
+               max = d;
          }
       }
       return std::pair<double,double>(min,max);
+   }
+   feENVdataPlot* GetPlot(int i)
+   {
+      while (i>=plots.size())
+      {
+         plots.push_back(new feENVdataPlot());
+      }
+      return plots.at(i);
    }
 };
 
@@ -114,15 +144,17 @@ class feGEMdata: public feENVdata
    {
       double time=GEMEvent->GetRunTime();
       //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
-      for (auto& window: timewindows)
+      //for (auto& window: timewindows)
+      for (size_t i=0; i<timewindows.size(); i++)
       {
+         auto& window = timewindows[i];
          //If inside the time window
          if ( (time > window.tmin && time < window.tmax) ||
          //Or if after tmin and tmax is invalid (-1)
             (time > window.tmin && window.tmax<0) )
          {
-            TGraph& plot = plots[GEMEvent->GetRunNumber()];
-            plot.SetPoint(plot.GetN(), time, (double)GEMEvent->GetArrayEntry(array_number));
+            feENVdataPlot* plot = GetPlot(i);
+            plot->AddPoint(time - window.tmin, time, (double)GEMEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -137,15 +169,17 @@ class feLVdata: public feENVdata
    {
       double time=LVEvent->GetRunTime();
       //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
-      for (auto& window: timewindows)
+      //for (auto& window: timewindows)
+      for (size_t i=0; i<timewindows.size(); i++)
       {
+         auto& window = timewindows[i];
          //If inside the time window
          if ( (time > window.tmin && time < window.tmax) ||
          //Or if after tmin and tmax is invalid (-1)
             (time > window.tmin && window.tmax<0) )
          {
-            TGraph& plot = plots[LVEvent->GetRunNumber()];
-            plot.SetPoint(plot.GetN(), time, LVEvent->GetArrayEntry(array_number));
+            feENVdataPlot* plot = GetPlot(i);
+            plot->AddPoint( time - window.tmin, time,LVEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -200,6 +234,9 @@ private:
 public:
    std::vector<feGEMdata> feGEM;
    std::vector<feLVdata> feLV;
+   TMultiGraph *feGEMmg;
+   TMultiGraph *feLVmg;
+   
    static std::string CombinedName(const std::string& Category, const std::string& Varname)
    {
       return std::string(Category + "\\" + Varname);

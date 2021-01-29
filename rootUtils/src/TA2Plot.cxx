@@ -574,20 +574,24 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
    {
       for (auto& plot: f.plots)
       {
-         plot.second.SetLineColor(colours.GetNewColour());
-         plot.second.Draw("");
+         TGraph* graph = plot->GetGraph();
+         graph->SetMarkerColor(colours.GetNewColour());
+         feGEMmg->Add(graph);
       }
    }
+   feGEMmg->Draw("A*");
   if (cVTX_2) 
      cVTX_2->cd(2);
    for (auto& f: feLV)
    {
       for (auto& plot: f.plots)
       {
-         plot.second.SetLineColor(colours.GetNewColour());
-         plot.second.Draw("");
+         TGraph* graph = plot->GetGraph();
+         graph->SetMarkerColor(colours.GetNewColour());
+         feLVmg->Add(graph);
       }
    }
+   feLVmg->Draw("A*");
 
   cVTX->cd(7);
   // phi counts

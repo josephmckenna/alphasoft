@@ -19,6 +19,10 @@ TAPlot::TAPlot()
 
   fVerbose=false;
 
+  feGEMmg = new TMultiGraph();
+  feLVmg = new TMultiGraph();
+   
+
   //fApplyCuts=ApplyCuts;
 }
 
@@ -166,22 +170,30 @@ void TAPlot::LoadfeLVData(int runNumber, double first_time, double last_time)
 
 void TAPlot::LoadData()
 {
+   AlphaColourWheel colours;
+   for (size_t i=0; i<TimeWindows.size(); i++)
+   {
+      for (auto& f: feGEM)
+      {
+         TGraph* graph = f.GetPlot(i)->GetGraph();
+         graph->SetLineColor(colours.GetNewColour());
+         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+         feGEMmg->Add(graph);
+      }
+      for (auto& f: feLV)
+      {
+         TGraph* graph = f.GetPlot(i)->GetGraph();
+         graph->SetLineColor(colours.GetNewColour());
+         graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+         feLVmg->Add(graph);
+      }
+   }
+
    for (size_t i=0; i<Runs.size(); i++)
    {
       double last_time = 0;
       double first_time = 1E99;
       int runNumber = Runs[i];
-      for (auto& f: feGEM)
-      {
-         TGraph& graph = f.plots[runNumber];
-         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-      }
-      for (auto& f: feLV)
-      {
-         TGraph& graph = f.plots[runNumber];
-         graph.SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
-      }
-      
       //Calculate our list time... so we can stop early
       for (auto& t: GetTimeWindows())
       {
