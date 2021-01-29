@@ -13,7 +13,9 @@ endif()
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
+endif()
 
 if(DEFINED ENV{AGRELEASE})
    message("AGRELEASE set to " $ENV{AGRELEASE}) 
@@ -31,9 +33,6 @@ option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 
 
-
-set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin")
-message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
 if(_insource)
@@ -74,11 +73,19 @@ set( _AGANA_STATIC TRUE)
 
 #Send these settings as precompiler flags (mostly used in rootUtils)
 if (BUILD_AG)
-   add_compile_definitions(BUILD_AG)
+   if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
+      add_definitions(-DBUILD_AG)
+   else()
+      add_compile_definitions(BUILD_AG)
+   endif()
    message(STATUS "Building AG software")
 endif (BUILD_AG)
 if (BUILD_A2)
-   add_compile_definitions(BUILD_A2)
+   if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
+      add_definitions(-DBUILD_A2)
+   else()
+      add_compile_definitions(BUILD_A2)
+   endif()
    message(STATUS "Building A2 software")
 endif (BUILD_A2)
 
@@ -130,3 +137,6 @@ find_package(ROOT REQUIRED COMPONENTS)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
+
+message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
+

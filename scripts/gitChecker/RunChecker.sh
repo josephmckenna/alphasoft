@@ -46,9 +46,6 @@ mkdir -p $AGRELEASE/testlogs
 cd $AGRELEASE/bin
 
 start_ana=`date +%s`
-#rm -vf $AGRELEASE/LookUp*.dat
-echo "Running from $PWD : agana.exe -O${AGRELEASE}/output${RUNNO}.root $AGRELEASE/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
-agana.exe -O${AGRELEASE}/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
 
 if [ ! -f ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4  ]; then
   eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGMIDASDATA}
@@ -60,10 +57,6 @@ fi
 #./agana.exe -h
 #Calling with a fake input file and --help finishes with a exit code 0 (not fail)
 
-GITHASH=`git rev-parse --short HEAD`
-#Fails when detached:
-#BRANCH=`git branch | grep \* | cut -c 3-`
-BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
 mkdir -p $AGRELEASE/testlogs
 cd $AGRELEASE/bin
@@ -72,6 +65,8 @@ start_ana=`date +%s`
 #rm -vf $AGRELEASE/LookUp*.dat
 echo "Running from $PWD : ./agana.exe -O${AGRELEASE}/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
 ./agana.exe -O${AGRELEASE}/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+
+
 
 if [ ! -f ${AGMIDASDATA}/run02364sub000.mid.lz4  ]; then
   eos cp /eos/experiment/ALPHAg/midasdata_old/run02364sub000.mid.lz4 ${AGMIDASDATA}
@@ -92,6 +87,7 @@ if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
 fi
 
 end_ana=`date +%s`
+
 mtstart_ana=`date +%s`
 cd $AGRELEASE/bin
 echo "Running from $PWD

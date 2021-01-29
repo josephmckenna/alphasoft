@@ -40,6 +40,25 @@ class DumpMarker
       fRunTime=-1.;
       MidasTime=0;
    }
+   DumpMarker(
+      TString _Description,
+      Int_t _SequencerNum,
+      Int_t _SeqCount,
+      DumpMarker::DumpTypes _DumpType,
+      Int_t _onCount,
+      Int_t _onState,
+      double runTime,
+      uint32_t _MidasTime) 
+   {
+      Description   = _Description;
+      fSequencerID  = _SequencerNum;
+      fSequenceCount= _SeqCount;
+      DumpType      = _DumpType;
+      fonCount      = _onCount;
+      fonState      = _onState;
+      fRunTime      = runTime;
+      MidasTime     = _MidasTime;
+   }
    DumpMarker(const char* name,DumpTypes type): DumpMarker()
    {
       Description=name;
