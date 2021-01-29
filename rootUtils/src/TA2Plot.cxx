@@ -4,12 +4,12 @@
 #ifdef BUILD_A2
 ClassImp(TA2Plot);
 
-TA2Plot::TA2Plot(): TAPlot()
+TA2Plot::TA2Plot(bool zerotime): TAPlot(zerotime)
 {
    ZMinCut=-99999.;
    ZMaxCut= 99999.;
 }
-TA2Plot::TA2Plot(double zmin, double zmax): TAPlot()
+TA2Plot::TA2Plot(double zmin, double zmax, bool zerotime): TAPlot(zerotime)
 {
    ZMinCut = zmin;
    ZMaxCut = zmax;
@@ -221,13 +221,13 @@ void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills )
    return;
 }
 
-void TA2Plot::SetUpHistograms(bool zeroTime)
+void TA2Plot::SetUpHistograms()
 {
    const double XMAX(4.),YMAX(4.),RMAX(4.), ZMAX(30.);
 
    double TMin;
    double TMax;
-   if (zeroTime)
+   if (ZeroTimeAxis)
    {
       TMin=0;
       TMax=GetMaxDumpLength();
@@ -257,18 +257,6 @@ void TA2Plot::SetUpHistograms(bool zeroTime)
    atom_or->SetLineColor(kGreen);
    atom_or->SetMinimum(0);
    AddHistogram("tAtomOR",atom_or);
-
-   //feGEM plots
-   for (int i=0; i<feGEM.size(); i++)
-   {
-      std::cout<<"Adding feGEM data:"<<feGEM[i].GetTitle().c_str() << " ("<<feGEM[i].GetName().c_str()<<")"<<std::endl;
-      //TH1D* GEM_Plot = new TH1D(feGEM[i].GetTitle().c_str(),"t;t [s]; unknown units", GetNBins(), TMin, TMax);
-      //std::pair<double,double> minmax = feGEM[i].GetMinMax();
-      //std::cout<<"Range: {"<<minmax.first<<","<<minmax.second<<"}"<<std::endl;
-      //GEM_Plot->SetMinimum(minmax.first);
-      //GEM_Plot->SetMaximum(minmax.second);
-      //AddHistogram(feGEM[i].GetName().c_str(),GEM_Plot);
-   }
 
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
@@ -344,7 +332,11 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          runno=sisevent.runNumber;
          SetSISChannels(runno);
       }
-      double time = sisevent.t;
+      double time;
+      if (ZeroTimeAxis)
+         time = sisevent.t;
+      else
+         time = sisevent.OfficialTime;
       if (max_dump_length<SCALECUT) 
          time=time*1000.;
       int Channel         = sisevent.SIS_Channel;
@@ -372,7 +364,11 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    TVector3 vtx;
    for (auto& vtxevent: GetVertexEvents())
    {
-      Double_t time = vtxevent.t;
+      Double_t time;
+      if (ZeroTimeAxis)
+         time = vtxevent.t;
+      else
+         time = vtxevent.RunTime;
       if (max_dump_length<SCALECUT)
          time=time*1000.;
       vtx=TVector3(vtxevent.x,vtxevent.y,vtxevent.z);
@@ -559,7 +555,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 
   cVTX->cd(6);
   TVirtualPad *cVTX_2 = NULL;
-  if (feGEM.size() && feLV.size())
+  if (HaveGEMData() && HaveLVData())
   {
    cVTX_2 = cVTX->cd(6);
    gPad->Divide(1, 2);
@@ -569,29 +565,26 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   /*DrawHistogram(feGEM.at(0).GetName().c_str(),"HIST");
   for (int i=1; i<feGEM.size(); i++)
      DrawHistogram(feGEM.at(i).GetName().c_str(),"HIST SAME");*/
-   AlphaColourWheel colours;
-   for (auto& f: feGEM)
+   std::pair<TLegend*,TMultiGraph*> gm=GetGEMGraphs();
+   if (gm.first)
    {
-      for (auto& plot: f.plots)
-      {
-         TGraph* graph = plot->GetGraph();
-         graph->SetMarkerColor(colours.GetNewColour());
-         feGEMmg->Add(graph);
-      }
+      //Draw TMultigraph
+      gm.second->Draw("AL*");
+      //Draw legend
+      gm.first->Draw();
    }
-   feGEMmg->Draw("A*");
-  if (cVTX_2) 
-     cVTX_2->cd(2);
-   for (auto& f: feLV)
+
+   if (cVTX_2) 
+      cVTX_2->cd(2);
+   
+   std::pair<TLegend*,TMultiGraph*> lv=GetLVGraphs();
+   if (lv.first)
    {
-      for (auto& plot: f.plots)
-      {
-         TGraph* graph = plot->GetGraph();
-         graph->SetMarkerColor(colours.GetNewColour());
-         feLVmg->Add(graph);
-      }
+      //Draw TMultigraph
+      lv.second->Draw("AL*");
+      //Draw legend
+      lv.first->Draw();
    }
-   feLVmg->Draw("A*");
 
   cVTX->cd(7);
   // phi counts

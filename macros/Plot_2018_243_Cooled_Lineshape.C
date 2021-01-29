@@ -2,7 +2,7 @@
 
 
 
-void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
+void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
 {
    double zcut=10.;
    
@@ -15,8 +15,8 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
          
    for (int i=0; i<9; i++)
    {
-      VertexPlot[i][0]=new TA2Plot(-zcut,zcut);
-      VertexPlot[i][1]=new TA2Plot(-zcut,zcut);
+      VertexPlot[i][0]=new TA2Plot(-zcut,zcut,ZeroTime);
+      VertexPlot[i][1]=new TA2Plot(-zcut,zcut,ZeroTime);
       std::cout<<"Populating frequency "<<i<<std::endl;
       for (int k=0; k<4; k++)
       {
@@ -132,13 +132,13 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices)
 }
 
 
-int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs )
+int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs, bool zeroTime)
 {
    
    
-   Plot_243_Light_Lineshape(57181,DrawVerticecs);
-   Plot_243_Light_Lineshape(57195,DrawVerticecs);
-   Plot_243_Light_Lineshape(57208,DrawVerticecs);
+   Plot_243_Light_Lineshape(57181,DrawVerticecs, zeroTime);
+   Plot_243_Light_Lineshape(57195,DrawVerticecs, zeroTime);
+   Plot_243_Light_Lineshape(57208,DrawVerticecs, zeroTime);
    
    //Note: Missing in this macro:
    // 1. Dark Periods

@@ -17,35 +17,14 @@
 #include "TStoreLabVIEWEvent.h"
 #include <algorithm>
 #include <iostream>
-#include "TColor.h"
+#include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
    
 #define SCALECUT 0.6
 
-class AlphaColourWheel
-{
-   private:
-      std::vector<int> colour_list{
-         kRed+2, kMagenta+3, kBlue +1, kCyan +1, kGreen + 3, kYellow + 3,
-         kOrange, kPink - 3, kViolet -2, kAzure - 3, kTeal -6, kSpring +8
-      };
-      int position;
-   public:
-      AlphaColourWheel() { position = 0;}
-      EColor GetNewColour()
-      {
-         ++position;
-         if ( position > colour_list.size())
-            position=0;
-         return (EColor)colour_list[position];
-      }
-      EColor GetCurrentColour()
-      {
-         return (EColor)colour_list[position];
-      }
-};
+//Basic internal containers:
 
-
+//SVD / TPC vertex
 struct VertexEvent
 {
    int runNumber; // I don't get set yet...
@@ -62,9 +41,7 @@ struct VertexEvent
    int nTracks; // reconstructed (good) helices
 };
 
-
-
-
+//Any time window
 struct TimeWindow
 {
    int runNumber;
@@ -76,6 +53,7 @@ struct TimeWindow
    }
 };
 
+//Generic feLabVIEW / feGEM data inside a time window
 class feENVdataPlot
 {
    public:
@@ -98,15 +76,17 @@ class feENVdataPlot
    }
 };
 
+//Collection of feLabVIEW / feGEM data with the same name (the same source)
 class feENVdata {
    public:
    //#public:
    std::string name;
    std::string title;
    int array_number;
+   private:
    //One TGraph per run per window (size of Windows)
    std::vector<feENVdataPlot*> plots;
-
+   public:
    std::string GetName() { return name + "[" + std::to_string(array_number) + "]";}
    std::string GetNameID() { return name + "_" + std::to_string(array_number);}
    std::string GetTitle() { return title; }
@@ -130,12 +110,21 @@ class feENVdata {
    {
       while (i>=plots.size())
       {
-         plots.push_back(new feENVdataPlot());
+         feENVdataPlot* graph = new feENVdataPlot();
+         plots.push_back(graph);
       }
       return plots.at(i);
    }
+   TGraph* BuildGraph(int i, bool zeroTime)
+   {
+      TGraph* graph = GetPlot(i)->GetGraph(zeroTime);
+      graph->SetNameTitle(GetName().c_str(),std::string( GetTitle() + "; t [s];").c_str());
+      return graph;
+   }
+      
 };
 
+//Specialise the above for feGEM
 class feGEMdata: public feENVdata
 {
    public:
@@ -159,9 +148,13 @@ class feGEMdata: public feENVdata
       }
       return;
    }
+   static std::string CombinedName(const std::string& Category, const std::string& Varname)
+   {
+      return std::string(Category + "\\" + Varname);
+   }
 };
 
-
+//Specialise the above for feLabVIEW
 class feLVdata: public feENVdata
 {
    public:
@@ -231,16 +224,13 @@ private:
    std::vector<VertexEvent> VertexEvents;
    std::vector<int> Runs;
 
-public:
    std::vector<feGEMdata> feGEM;
    std::vector<feLVdata> feLV;
-   TMultiGraph *feGEMmg;
-   TMultiGraph *feLVmg;
-   
-   static std::string CombinedName(const std::string& Category, const std::string& Varname)
-   {
-      return std::string(Category + "\\" + Varname);
-   }
+
+public:
+   //Use a time axis that counts from Zero of a dump window (default true)
+   const bool ZeroTimeAxis;
+
    void SetGEMChannel(const std::string& name, int ArrayEntry, std::string title="")
    {
       for (auto& d: feGEM)
@@ -261,13 +251,67 @@ public:
       
       feGEM.push_back(new_entry);
    }
+
    void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
    {
       //Perhaps this line should be a function used everywhere
-      std::string name = CombinedName(Category, Varname);
+      std::string name = feGEMdata::CombinedName(Category, Varname);
       return SetGEMChannel(name,ArrayEntry,title);
    }
-    void SetLVChannel(const std::string& name, int ArrayEntry, std::string title="")
+
+   std::vector<std::pair<std::string,int>> GetGEMChannels()
+   {
+      std::vector<std::pair<std::string,int>> channels;
+      for (auto& f: feGEM)
+         channels.push_back({f.GetName(),f.array_number});
+      return channels;
+   }
+
+   std::pair<TLegend*,TMultiGraph*> GetGEMGraphs()
+   {
+       TMultiGraph *feGEMmg = NULL;
+      TLegend* legend = NULL;
+      if (feLV.size()==0)
+         return {legend,feGEMmg};
+      feGEMmg = new TMultiGraph();
+      legend = new TLegend(0.1,0.7,0.48,0.9);
+      //For each unique variable being logged
+      int ColourOffset = 0;
+      for (auto& f: feGEM)
+      {
+         std::map<std::string,TGraph*> unique_labels;
+         const std::vector<int> UniqueRuns = GetArrayOfRuns();
+         for (int i=0; i< TimeWindows.size(); i++)
+         {
+            int ColourID=0;
+            for ( ; ColourID< UniqueRuns.size(); ColourID++)
+            {
+               if (TimeWindows.at(i).runNumber == UniqueRuns.at(ColourID))
+                  break;
+            }
+            TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
+            graph->SetLineColor(GetColour(ColourID + ColourOffset));
+            graph->SetMarkerColor(GetColour(ColourID + ColourOffset));
+            unique_labels[f.GetName()] = graph;
+            //if (i==0)
+            //   legend->AddEntry(graph,f.GetName().c_str());
+            feGEMmg->Add(graph);
+         }
+         for (auto& a: unique_labels)
+         {
+            legend->AddEntry(a.second,a.first.c_str());
+         }
+         ColourOffset++;
+      }
+      return {legend,feGEMmg};
+   }
+
+   bool HaveGEMData()
+   {
+      return (feGEM.size() != 0);
+   }
+
+   void SetLVChannel(const std::string& name, int ArrayEntry, std::string title="")
    {
       for (auto& d: feLV)
       {
@@ -288,6 +332,59 @@ public:
       feLV.push_back(new_entry);
    }
 
+   std::vector<std::pair<std::string,int>> GetLVChannels()
+   {
+      std::vector<std::pair<std::string,int>> channels;
+      for (auto& f: feGEM)
+         channels.push_back({f.GetName(),f.array_number});
+      return channels;
+   }
+
+   std::pair<TLegend*,TMultiGraph*> GetLVGraphs()
+   {
+       TMultiGraph *feLVmg = NULL;
+      TLegend* legend = NULL;
+      if (feLV.size()==0)
+         return {legend,feLVmg};
+      feLVmg = new TMultiGraph();
+      legend = new TLegend(0.1,0.7,0.48,0.9);
+      //For each unique variable being logged
+      int ColourOffset = 0;
+      for (auto& f: feLV)
+      {
+         std::map<std::string,TGraph*> unique_labels;
+         
+         const std::vector<int> UniqueRuns = GetArrayOfRuns();
+         for (int i=0; i< TimeWindows.size(); i++)
+         {
+            int ColourID=0;
+            for ( ; ColourID< UniqueRuns.size(); ColourID++)
+            {
+               if (TimeWindows.at(i).runNumber == UniqueRuns.at(ColourID))
+                  break;
+            }
+            TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
+            graph->SetLineColor(GetColour(ColourID + ColourOffset));
+            graph->SetMarkerColor(GetColour(ColourID + ColourOffset));
+            unique_labels[f.GetName()] = graph;
+            //if (i==0)
+            //   legend->AddEntry(graph,f.GetName().c_str());
+            feLVmg->Add(graph);
+         }
+         for (auto& a: unique_labels)
+         {
+            legend->AddEntry(a.second,a.first.c_str());
+         }
+         ColourOffset++;
+      }
+      return {legend,feLVmg};
+   }
+   
+   bool HaveLVData()
+   {
+      return (feGEM.size() != 0);
+   }
+
    template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
    void LoadfeGEMData(int RunNumber, double first_time, double last_time);
 
@@ -295,7 +392,7 @@ public:
    void LoadfeLVData(int RunNumber, double first_time, double last_time);
 
    // default class member functions
-   TAPlot();//, int MVAMode = 0);
+   TAPlot(bool zerotime = true);//, int MVAMode = 0);
    virtual ~TAPlot();
    void Print(Option_t *option="") const;
    int GetNBins() const { return Nbin; }

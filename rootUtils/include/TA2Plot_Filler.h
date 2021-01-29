@@ -13,7 +13,7 @@ class GEMChannel
       std::string title;
    GEMChannel(const std::string& Category, const std::string& Varname, int _ArrayEntry, const std::string& _title)
    {
-      CombinedName = TAPlot::CombinedName(Category,Varname);
+      CombinedName = feGEMdata::CombinedName(Category,Varname);
       ArrayEntry =_ArrayEntry;
       title      =_title;
    }
@@ -61,11 +61,7 @@ private:
       runNumbers.push_back(runNumber);
    }
 
-template <typename T>
-void LoadfeGEMData(feGEMdata& f, TA2Plot* p, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
 void LoadfeGEMData(int runNumber, double first_time, double last_time);
-
-void LoadfeLVData(feLVdata& f, TA2Plot* p, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
 void LoadfeLVData(int runNumber, double first_time, double last_time);
 
 void LoadData(int runNumber, double first_time, double last_time);
@@ -76,10 +72,10 @@ public:
    {
       for (auto& no: plot->GetArrayOfRuns())
          AddRunNumber(no);
-      for (auto& f: plot->feGEM)
-         SetGEMChannel(f.GetName(),f.array_number);
-      for (auto& f: plot->feLV)
-         SetLVChannel(f.GetName(),f.array_number);
+      for (auto& f: plot->GetGEMChannels())
+         SetGEMChannel(f.first,f.second);
+      for (auto& f: plot->GetLVChannels())
+         SetLVChannel(f.first,f.second);
       for (TA2Plot* p: plots)
       {
           if (p==plot)
@@ -111,7 +107,7 @@ public:
    }
    void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
    {
-      std::string name = TAPlot::CombinedName(Category,Varname);
+      std::string name = feGEMdata::CombinedName(Category,Varname);
       SetGEMChannel(name, ArrayEntry, title);
    }
 
