@@ -8,25 +8,23 @@ TStoreLabVIEWEvent::TStoreLabVIEWEvent()
 {
 // ctor
     BankName = "NULL";
-    //m_data = std::vector<double> a;
     MIDAS_TIME = 0;
     run_time = 0;
     labview_time = 0;
-    fDescription = "NULL";
 }
 
-TStoreLabVIEWEvent::TStoreLabVIEWEvent(TStoreLabVIEWEvent* Event) // <-- this is not a copy constructor  -- AC 2018
+TStoreLabVIEWEvent::TStoreLabVIEWEvent(const TStoreLabVIEWEvent& Event):
+   m_data(Event.GetData())
 {
 //copy constructor
-    BankName = Event->GetBankName();
-    m_data = *Event->GetData();
-    MIDAS_TIME = Event->GetMIDAS_TIME();
-    run_time = Event->GetRunTime();
-    labview_time = Event->GetLabviewTime();
+    BankName = Event.GetBankName();
+    MIDAS_TIME = Event.GetMIDAS_TIME();
+    run_time = Event.GetRunTime();
+    labview_time = Event.GetLabviewTime();
 }
 
 TStoreLabVIEWEvent::TStoreLabVIEWEvent(std::string p_BankName, std::vector<double> p_data, 
-    uint32_t p_MIDAS_TIME, uint32_t p_run_time, double p_labview_time)
+    uint32_t p_MIDAS_TIME, double p_run_time, double p_labview_time)
     : BankName(p_BankName), m_data(p_data), MIDAS_TIME(p_MIDAS_TIME), 
     run_time(p_run_time), labview_time(p_labview_time)
 {
@@ -35,11 +33,10 @@ TStoreLabVIEWEvent::TStoreLabVIEWEvent(std::string p_BankName, std::vector<doubl
 void TStoreLabVIEWEvent::Reset()
 {
     BankName = "NULL";
-    //m_data = [];
+    m_data.clear();
     MIDAS_TIME = 0;
     run_time = 0;
     labview_time = 0;
-    fDescription = "NULL";
 }
 
 void TStoreLabVIEWEvent::Print()
@@ -49,12 +46,10 @@ void TStoreLabVIEWEvent::Print()
   std::cout<<"MIDAS_TIME:\t"<<MIDAS_TIME<<std::endl;
   std::cout<<"run_time:\t"<<run_time<<std::endl;
   std::cout<<"labview_time:\t"<<labview_time<<std::endl;
-  std::cout<<"Description:\t"<<fDescription<<std::endl;
 }
 
 TStoreLabVIEWEvent::~TStoreLabVIEWEvent()
 {
-
 
 }
 
