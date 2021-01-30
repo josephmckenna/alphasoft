@@ -11,6 +11,7 @@
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
+  #include "BuildConfig.h"
   
   
   gSystem->Load("libMinuit2");
