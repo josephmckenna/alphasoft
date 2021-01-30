@@ -46,6 +46,11 @@ INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
 
+ifdef MIDASSYS
+LIBS     += -L$(MIDASSYS)/lib -lmidas -lutil -lrt
+INCS     += -I$(MIDASSYS)/include
+endif
+
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
 # or standard main() from rootana

@@ -6,7 +6,7 @@ fi
 
 
 #FILE_LIST=($(ls -rt $DATADIR/test/*.root))
-FILE_LIST=("$DATADIR/dev/cosmics904690.root" "$DATADIR/dev/cosmics904648sub000.root")
+FILE_LIST=("$DATADIR/agmini/cosmics904690.root" "$DATADIR/agmini/cosmics904648sub000.root")
 
 
 echo "list of file:" ${FILE_LIST[*]}
@@ -20,3 +20,4 @@ for RF in ${FILE_LIST[*]}; do
     #MainEventTree.exe -f $RF -p 1 -s 1
     set +x
 done
+
