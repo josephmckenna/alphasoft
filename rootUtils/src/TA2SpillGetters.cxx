@@ -2,6 +2,16 @@
 #ifdef BUILD_A2
 #include "TA2SpillGetters.h"
 
+
+std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* repetition)
+{
+    std::vector<std::string> desc = listTupleToVector_String(description);
+    std::vector<int> reps= listTupleToVector_Int( repetition);
+
+    return Get_A2_Spills(runNumber,desc, reps);
+}
+
+
 std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
 {
 
@@ -50,14 +60,6 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
    }
 
    return spills;
-}
-
-std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* repetition)
-{
-    std::vector<std::string> desc = listTupleToVector_String(description);
-    std::vector<int> reps= listTupleToVector_Int( repetition);
-
-    return Get_A2_Spills(runNumber,desc, reps);
 }
 
 #endif

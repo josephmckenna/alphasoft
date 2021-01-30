@@ -16,6 +16,13 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin);
 Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition=1, Int_t offset=0);
 Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition=1, Int_t offset=0);
 
+
+#ifdef BUILD_A2
+
+Int_t GetSISChannel(int runNumber, const char* ChannelName);
+std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames);
+
+#endif
 //*************************************************************
 // Energy Analysis
 //*************************************************************
