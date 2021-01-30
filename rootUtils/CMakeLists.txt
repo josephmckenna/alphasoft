@@ -41,6 +41,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 find_package (Python COMPONENTS Interpreter Development)
 if (${Python_FOUND})
+   message("Python found! Enabling python interface")
    add_definitions(-DHAVE_PYTHON)
    include_directories(${Python_INCLUDE_DIRS})
    link_libraries(${Python_})
