@@ -183,8 +183,9 @@ public:
          {
             meData.push_back(rawmeData[i]);
          }
-
-         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, (me->time_stamp - initialEventTime), meData[0]);
+         // I need a range check to assure meData[0] is the right format
+         double runTime = meData[0] - initialEventTime;
+         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, runTime, meData[0]);
          flow = f;
          if (fTrace)
              if(meData[0]-3525550000 > 0)
