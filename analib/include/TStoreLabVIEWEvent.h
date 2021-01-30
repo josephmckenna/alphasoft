@@ -16,40 +16,24 @@ class TStoreLabVIEWEvent: public TObject
     std::string BankName;
     std::vector<double> m_data;
     uint32_t MIDAS_TIME;
-    uint32_t run_time;
+    double run_time;
     double labview_time;
 
-    TString fDescription;
-  
   public:
-    TStoreLabVIEWEvent(TStoreLabVIEWEvent* Event);
+    TStoreLabVIEWEvent(const TStoreLabVIEWEvent& Event);
     TStoreLabVIEWEvent();
     TStoreLabVIEWEvent(std::string p_BankName, 
-    std::vector<double> p_data, uint32_t p_MIDAS_TIME, uint32_t p_run_time, double p_labview_time);
+        std::vector<double> p_data, uint32_t p_MIDAS_TIME, double p_run_time, double p_labview_time);
 
     using TObject::Print;
     virtual void Print();
     virtual ~TStoreLabVIEWEvent();
-    TString Clean(TString a) { 
-      TString b(a);
-      b.ReplaceAll("\r","\n");//Fix windows' stupid miss use of return carriadge 
-      return b;
-    }
-   virtual std::string            GetBankName()                           { return BankName; }
-   virtual std::vector<double>*   GetData()                               { return &m_data; }
-   virtual uint32_t               GetMIDAS_TIME()                         { return MIDAS_TIME; }
-   virtual uint32_t               GetRunTime()                            { return run_time; }
-   virtual double                 GetLabviewTime()                        { return labview_time; }
-     
-    
-    void SetDescription( TString Description )
-    {
-      //Clean up leading and ending " marks
-      if (Description.BeginsWith("\"")) Description.Remove(0,1);
-      if (Description.EndsWith("\"")) Description.Remove(Description.Sizeof()-2,1);
-      fDescription = Description;
-    }
 
+    std::string               GetBankName() const          { return BankName; }
+    const std::vector<double> GetData() const              { return m_data; }
+    uint32_t                  GetMIDAS_TIME() const        { return MIDAS_TIME; }
+    double                    GetRunTime() const           { return run_time; }
+    double                    GetLabviewTime() const       { return labview_time; }
 
     void Reset();
   
