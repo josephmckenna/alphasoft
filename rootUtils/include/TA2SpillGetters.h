@@ -9,7 +9,7 @@
 #include "PythonTools.h"
 
 #ifdef HAVE_PYTHON
-//Wrapper for functions below...
+//Wrapper for functions below... but its broken... why?
 std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* repetition);
 #endif
 
