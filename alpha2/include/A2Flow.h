@@ -235,14 +235,14 @@ private:
     std::string BankName;
     std::vector<double> m_data;
     uint32_t MIDAS_TIME;
-    uint32_t run_time;
+    double run_time;
     double labview_time;
 public:
    //Setters and Getters
    virtual std::string            GetBankName()                           { return BankName; }
    virtual std::vector<double>*   GetData()                               { return &m_data; }
    virtual uint32_t               GetMIDAS_TIME()                         { return MIDAS_TIME; }
-   virtual uint32_t               GetRunTime()                            { return run_time; }
+   virtual double                 GetRunTime()                            { return run_time; }
    virtual double                 GetLabviewTime()                        { return labview_time; }
    
    felabviewFlowEvent(TAFlowEvent* flowevent)
