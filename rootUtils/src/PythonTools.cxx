@@ -50,15 +50,22 @@ std::vector<std::string> listTupleToVector_String(PyObject* incoming) {
    if (PyTuple_Check(incoming)) {
       for(Py_ssize_t i = 0; i < PyTuple_Size(incoming); i++) {
          PyObject *value = PyTuple_GetItem(incoming, i);
-         //data.push_back( PyUnicode_AsUTF8(value) );
-            data.push_back( PyString_AsString(value) );
+#if PY_MAJOR_VERSION >= 3
+         data.push_back( PyUnicode_AsUTF8(value) );
+#else
+         data.push_back( PyString_AsString(value) );
+#endif
       }
    } else {
       if (PyList_Check(incoming)) {
          for(Py_ssize_t i = 0; i < PyList_Size(incoming); i++) {
             PyObject *value = PyList_GetItem(incoming, i);
             //data.push_back( PyUnicode_AsUTF8(value) );
-                data.push_back( PyString_AsString(value) );
+#if PY_MAJOR_VERSION >= 3
+            data.push_back( PyUnicode_AsUTF8(value) );
+#else
+            data.push_back( PyString_AsString(value) );
+#endif
          }
       } else {
          //throw logic_error("Passed PyObject pointer was not a list or tuple!");
