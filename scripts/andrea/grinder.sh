@@ -2,7 +2,7 @@
 
 LIMITEVENTS=2000
 RUNNO=904620
-i=15
+i=2
 
 DIR="${AGRELEASE}/RunLogs"
 if [ ! -d "${DIR}" ]; then
