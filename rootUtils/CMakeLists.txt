@@ -39,6 +39,13 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
+find_package (Python COMPONENTS Interpreter Development)
+if (${Python_FOUND})
+   add_definitions(-DHAVE_PYTHON)
+   include_directories(${Python_INCLUDE_DIRS})
+   link_libraries(${Python_})
+endif()
+
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
@@ -75,6 +82,9 @@ endif (BUILD_AG)
 if (BUILD_A2)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2)
 endif (BUILD_A2)
+if (${Python_FOUND})
+   target_link_libraries(rootUtils ${Python_LIBRARIES})
+endif()
 
 install(TARGETS rootUtils 
    LIBRARY
