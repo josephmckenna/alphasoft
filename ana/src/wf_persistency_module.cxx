@@ -49,7 +49,7 @@ public:
       fTrace=fFlags->fVerbose;
       ModuleName="WFpersistencyModule";
       if( fTrace )
-         printf("%s::ctor!\n",ModuleName);
+         printf("WFpersistencyModule::ctor!\n");
     
       fCounter=0;
       fTarget=fFlags->fAnodeWire;
