@@ -114,7 +114,26 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 }
 #endif
 
+#ifdef BUILD_A2
 
+Int_t GetSISChannel(int runNumber, const char* ChannelName)
+{
+   int chan=-1;
+   TSISChannels sisch(runNumber);
+   chan=sisch.GetChannel(ChannelName);
+   return chan;
+}
+std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames)
+{
+    std::vector<Int_t> channels;
+    TSISChannels sisch(runNumber);
+    for (auto& name: ChannelNames)
+    {
+        channels.push_back(sisch.GetChannel(name.c_str()));
+    }
+    return channels;
+}
+#endif
 
 //*************************************************************
 // Energy Analysis
