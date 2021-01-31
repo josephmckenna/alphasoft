@@ -182,6 +182,7 @@ public:
       }
 
       if(esig){
+         if( !esig->awSig ) return flow;
          for (unsigned i=0; i<esig->awSig->size(); i++) {
             fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig->at(i).idx);
             fASignalTree->GetBranch("time")->SetAddress(&esig->awSig->at(i).t);

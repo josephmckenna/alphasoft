@@ -35,6 +35,7 @@ LIBS     += -L$(ROOTANASYS)/lib -lrootana
 LIBS     += -L$(shell root-config --libdir)
 LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic
 
+
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
 INCS += -I../analib/include
@@ -47,6 +48,11 @@ INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
 # get the rootana Makefile settings
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+
+ifdef MIDASSYS
+LIBS     += -L$(MIDASSYS)/lib -lmidas -lutil -lrt
+INCS     += -I$(MIDASSYS)/include
+endif
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
