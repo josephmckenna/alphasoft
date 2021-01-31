@@ -15,12 +15,6 @@
 #pragma link C++ class  TSiliconVA+;
 #pragma link C++ class  TSiliconModule+;
 
-//Experiment specific Spill classes (child classses)
-#ifdef BUILD_A2
-  #pragma link C++ class  TA2Spill+;
-  #pragma link C++ class  TA2SpillScalerData+;
-  #pragma link C++ class  TA2SpillSequencerData+;
-#endif
 
 //Legacy:
 
