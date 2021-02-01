@@ -52,7 +52,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
    return GetSISTimeAndCounts(runNumber,GetSISChannel(runNumber,ChannelName),tmin,tmax);
 }
 
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<TA2Spill> spills)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, const std::vector<TA2Spill>& spills)
 {
     std::vector<double> tmin;
     std::vector<double> tmax;
@@ -64,7 +64,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
     return GetSISTimeAndCounts(runNumber, SIS_Channel, tmin, tmax);
 }
 
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const char* ChannelName, std::vector<TA2Spill> spills)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const char* ChannelName, const std::vector<TA2Spill>& spills)
 {
     return GetSISTimeAndCounts(runNumber,GetSISChannel(runNumber,ChannelName),spills);
 }
