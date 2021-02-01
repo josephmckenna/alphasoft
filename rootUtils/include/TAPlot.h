@@ -367,9 +367,12 @@ public:
             graph->SetLineColor(GetColour(ColourID + ColourOffset));
             graph->SetMarkerColor(GetColour(ColourID + ColourOffset));
             unique_labels[f.GetName()] = graph;
+            
             //if (i==0)
             //   legend->AddEntry(graph,f.GetName().c_str());
-            feLVmg->Add(graph);
+            //Add the graph only if there is data in it
+            if (graph->GetN())
+               feLVmg->Add(graph);
          }
          for (auto& a: unique_labels)
          {
