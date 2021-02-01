@@ -37,12 +37,16 @@ execute_process(
     OUTPUT_VARIABLE GIT_BRANCH 
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
 execute_process(
     COMMAND git diff --shortstat 
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
     OUTPUT_VARIABLE GIT_DIFF_SHORT_STAT 
     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+if (NOT GIT_DIFF_SHORT_STAT)
+   set(GIT_DIFF_SHORT_STAT "no diff")
+endif()
 string(TIMESTAMP COMPILATION_DATE "%s" )
 configure_file(GitInfo.h.in ${CMAKE_BINARY_DIR}/GitInfo.h @ONLY)
 include_directories(${CMAKE_BINARY_DIR})
