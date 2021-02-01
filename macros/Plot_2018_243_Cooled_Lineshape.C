@@ -79,11 +79,17 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
                title+="D";
             if (j==1)
                title+="C";
-            if (runNumber==57208 && j!=1)
+            if (runNumber==57208 && j==1)
             {
-               TCanvas* c1 = VertexPlot[i][j]->DrawCanvas(title);
-               c1->SaveAs(title+".png");
+               continue;
             }
+            TCanvas* c1 = VertexPlot[i][j]->DrawCanvas(title);
+            TString save_as = "R";
+            save_as += runNumber;
+            save_as += title;
+            save_as += ".png";
+            c1->SaveAs(save_as);
+
          }
       }
    }
@@ -128,6 +134,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
    //c->cd(4);
    //hCState->Draw("HIST");
    c->Update();
+   c->SaveAs(title + ".png");
    return;
 }
 
