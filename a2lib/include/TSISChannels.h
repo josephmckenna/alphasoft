@@ -1,6 +1,6 @@
 #ifndef __TSISChannels__
 #define __TSISChannels__
-
+#include "ALPHA2SettingsDatabase.h"
 // TSISChannels Class =====================================================================================
 // Class containing the SIS channel mapping information.  "SIS" refers to the model number of scaler
 // modules; Struck Innovative Systeme SIS3820.  

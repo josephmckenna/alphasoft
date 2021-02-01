@@ -84,3 +84,5 @@ install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libalpha2.rootmap DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)
 install(FILES ${HEADER_FILES} DESTINATION include)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.db DESTINATION db)
+
