@@ -6,8 +6,8 @@
   
   std::cout<<"Including: @INC_PATH@ "<<std::endl;
   
-  gSystem->AddIncludePath("@INC_PATH@");
-  gSystem->AddIncludePath("@BIN_PATH@");
+  gInterpreter->AddIncludePath("@INC_PATH@");
+
   gSystem->AddDynamicPath("@LIB_PATH@");
 
   gSystem->Load("libMinuit2");
