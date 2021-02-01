@@ -15,28 +15,28 @@
   std::cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
   if(s==0) std::cout<<"... ok"<<std::endl;
-  else std::cout<<"Error!<<std::std::endl;
+  else std::cout<<"Error!"<<std::endl;
 
   libname="libanalib.so";
   libname=gSystem->FindDynamicLibrary(libname);
   std::cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) std::cout<<"... ok"<<std::endl;
-  else std::cout<<"Error!<<std::std::endl;
+  else std::cout<<"Error!"<<std::endl;
 
   libname="libalpha2.so";
   libname=gSystem->FindDynamicLibrary(libname);
   std::cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) std::cout<<"... ok"<<std::endl;
-  else std::cout<<"Error!<<std::std::endl;
+  else std::cout<<"Error!"<<std::endl;
 
   libname="librootUtils.so";
   libname=gSystem->FindDynamicLibrary(libname);
   std::cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) std::cout<<"... ok"<<std::endl;
-  else std::cout<<"Error!<<std::std::endl;
+  else std::cout<<"Error!"<<std::endl;
 
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
