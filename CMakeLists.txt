@@ -95,6 +95,10 @@ if (BUILD_A2)
 else()
    file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_A2\n")
 endif (BUILD_A2)
+
+
+add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
+#file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
 install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
 add_subdirectory(cmake_extras)
