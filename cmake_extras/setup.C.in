@@ -48,6 +48,28 @@
   //gStyle->SetPalette(kNeon);
   //gStyle->SetPalette(1);
   //gStyle->SetPalette(kRedBlue);
+  
+
+  //We can't blindly include all header files as Xm / X11 from root conflict for some reason
+  gROOT->ProcessLine("#include \"BuildConfig.h\"");
+  gROOT->ProcessLine("#include \"RootUtils.h\"");
+   /*TSystemDirectory b("","@INC_PATH@");
+   TList* headers=b.GetListOfFiles();
+   for (int i=0; i<headers->GetEntries(); i++ )
+   {
+      TString header=headers->At(i)->GetName();
+      if (header.EndsWith(".h") || header.EndsWith(".hh"))
+      {
+         TString line = "#include \"";
+         line += header;
+         line += "\"";
+         std::cout<<"Including "<<line <<std::endl;
+         gInterpreter->ProcessLine(line);
+      }
+   }*/
+
+
+
 
 #else
    std::cout<<"setup.C already called"<<std::endl;
