@@ -2,12 +2,17 @@
 TFile *Get_File(Int_t run_number, Bool_t die)
 {
   TFile *f = NULL;
+#ifdef ALPHASOFT_DB_INSTALL_PATH
+//Local data path unknown... use current path... then AGOUTPUT to find files
+  TString file_name(get_current_dir_name());
+#else
   TString file_name(getenv("AGRELEASE"));
   if (file_name.Length()<10)
   {
      std::cout <<"$AGRELEASE not set... please source agconfig.sh"<<std::endl;
      exit(0123);
   }
+#endif
   //  file_name += "/ana/output";
   TString file_path(getenv("AGOUTPUT"));
   if( file_path.Length()>1 )
