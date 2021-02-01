@@ -16,7 +16,7 @@ std::pair<Int_t,Int_t> GetChronoBoardChannel(Int_t runNumber, const char* Channe
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<std::pair<double,int>> TimeCounts;
-
+   //TimeCounts.reserve(1000000); //Ready for 1M results
    assert(tmin.size() == tmax.size());
    const int entries = tmin.size();
 
@@ -56,6 +56,8 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
 {
     std::vector<double> tmin;
     std::vector<double> tmax;
+    tmin.reserve(spills.size());
+    tmax.reserve(spills.size());
     for (auto& s: spills)
     {
         tmin.push_back(s.GetStartTime());
