@@ -1,4 +1,7 @@
 {
+#ifndef _INTERACTIVE_SETUP_
+#define _INTERACTIVE_SETUP_
+  
   std::cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<std::endl;
   
   std::cout<<"Including: @INC_PATH@ "<<std::endl;
@@ -45,4 +48,10 @@
   //gStyle->SetPalette(kNeon);
   //gStyle->SetPalette(1);
   //gStyle->SetPalette(kRedBlue);
+
+#else
+   std::cout<<"setup.C already called"<<std::endl;
+
+#endif
+
 }
