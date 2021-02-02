@@ -108,7 +108,6 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
       //Or if after tmin and tmax is invalid (-1)
            ( t > window.tmin && window.tmax < 0 ) )
       {
-std::cout<<"min: "<<window.tmin <<"\tmax: "<<window.tmax<<"\ttzero: "<<window.tzero<<"\tt: "<<t<<std::endl;
          AddEvent(SVDEvent, window.tzero);
          //This event has been written to the array... so I dont need
          //to check the other windows... break! Move to next SISEvent
@@ -235,18 +234,13 @@ void TA2Plot::SetUpHistograms()
    if (ZeroTimeAxis)
    {
       TMin=GetBiggestTzero();
-      TMax=GetMaxDumpLength();
+      TMax=GetMaxDumpLength() + TMin;
    }
    else
    {
       TMin=GetFirstTmin();
       TMax=GetLastTmax();
    }
-
-
-   
-   
-
 
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
