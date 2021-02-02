@@ -68,7 +68,7 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
    Event.x            =event->x;
    Event.y            =event->y;
    Event.z            =event->z;
-   Event.t            =event->t-time_offset; //Plot time (based off offical time)
+   Event.t            =event->t - time_offset; //Plot time (based off offical time)
    Event.EventTime    =event->VF48Timestamp; //TPC time stamp
    Event.RunTime      =event->t; //Official Time
    Event.nHelices     =-1; // helices used for vertexing
@@ -82,7 +82,7 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
    SISPlotEvent Event;
    Event.runNumber    =event->GetRunNumber(); // I don't get set yet...
    //int clock
-   Event.t            =event->GetRunTime()-time_offset; //Plot time (based off offical time)
+   Event.t            =event->GetRunTime() - time_offset; //Plot time (based off official time)
    Event.OfficialTime =event->GetRunTime();
    Event.Counts       =event->GetCountsInChannel(channel);
    Event.SIS_Channel  =channel;
@@ -104,13 +104,14 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    for (auto& window: GetTimeWindows())
    {
       //If inside the time window
-      if ( (t>window.tmin && t< window.tmax) ||
+      if ( ( t > window.tmin && t < window.tmax ) ||
       //Or if after tmin and tmax is invalid (-1)
-           (t>window.tmin && window.tmax<0) )
+           ( t > window.tmin && window.tmax < 0 ) )
       {
-         AddEvent(SVDEvent,window.tmin);
+std::cout<<"min: "<<window.tmin <<"\tmax: "<<window.tmax<<"\ttzero: "<<window.tzero<<"\tt: "<<t<<std::endl;
+         AddEvent(SVDEvent, window.tzero);
          //This event has been written to the array... so I dont need
-         //to check the other winodws... break! Move to next SISEvent
+         //to check the other windows... break! Move to next SISEvent
          break;
       }
    }
@@ -124,20 +125,20 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    for (auto& window: GetTimeWindows())
    {
       //If inside the time window
-      if ( (t>window.tmin && t< window.tmax) ||
+      if ( ( t > window.tmin && t < window.tmax ) ||
       //Or if after tmin and tmax is invalid (-1)
-           (t>window.tmin && window.tmax<0) )
+           ( t > window.tmin && window.tmax < 0 ) )
       {
          for (int i=0; i<n_sis; i++)
          {
             int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
             if (counts)
             {
-               AddEvent(SISEvent,SISChannels[i],window.tmin);
+               AddEvent(SISEvent, SISChannels[i], window.tzero);
             }
          }
          //This event has been written to the array... so I dont need
-         //to check the other winodws... break! Move to next SISEvent
+         //to check the other windows... break! Move to next SISEvent
          break;
       }
    }
@@ -233,7 +234,7 @@ void TA2Plot::SetUpHistograms()
    double TMax;
    if (ZeroTimeAxis)
    {
-      TMin=0;
+      TMin=GetBiggestTzero();
       TMax=GetMaxDumpLength();
    }
    else
@@ -242,25 +243,10 @@ void TA2Plot::SetUpHistograms()
       TMax=GetLastTmax();
    }
 
-   //SIS channels:
-   TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [s];events", GetNBins(), TMin, TMax);
-   triggers->SetMarkerColor(kRed);
-   triggers->SetLineColor(kRed);
-   triggers->SetMinimum(0);
-   AddHistogram("tIO32_nobusy",triggers);
-   
-   TH1D* read_triggers=new TH1D("tIO32", "t;t [s];events", GetNBins(), TMin, TMax);
-   read_triggers->SetMarkerColor(kViolet);
-   read_triggers->SetLineColor(kViolet);
-   read_triggers->SetMinimum(0);
-   AddHistogram("tIO32",read_triggers);
+
    
    
-   TH1D* atom_or=new TH1D("tAtomOR", "t;t [s];events", GetNBins(), TMin, TMax);
-   atom_or->SetMarkerColor(kGreen);
-   atom_or->SetLineColor(kGreen);
-   atom_or->SetMinimum(0);
-   AddHistogram("tAtomOR",atom_or);
+
 
    AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
@@ -283,6 +269,25 @@ void TA2Plot::SetUpHistograms()
 
    if (GetMaxDumpLength()<SCALECUT) 
    {
+      //SIS channels:
+      TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
+      triggers->SetMarkerColor(kRed);
+      triggers->SetLineColor(kRed);
+      triggers->SetMinimum(0);
+      AddHistogram("tIO32_nobusy",triggers);
+   
+      TH1D* read_triggers=new TH1D("tIO32", "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
+      read_triggers->SetMarkerColor(kViolet);
+      read_triggers->SetLineColor(kViolet);
+      read_triggers->SetMinimum(0);
+      AddHistogram("tIO32",read_triggers);
+
+      TH1D* atom_or=new TH1D("tAtomOR", "t;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
+      atom_or->SetMarkerColor(kGreen);
+      atom_or->SetLineColor(kGreen);
+      atom_or->SetMinimum(0);
+      AddHistogram("tAtomOR",atom_or);
+
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
       ht->SetLineColor(kMagenta);
       ht->SetMarkerColor(kMagenta);
@@ -300,6 +305,25 @@ void TA2Plot::SetUpHistograms()
    }
    else
    {
+      //SIS channels:
+      TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [s];events", GetNBins(), TMin, TMax);
+      triggers->SetMarkerColor(kRed);
+      triggers->SetLineColor(kRed);
+      triggers->SetMinimum(0);
+      AddHistogram("tIO32_nobusy",triggers);
+   
+      TH1D* read_triggers=new TH1D("tIO32", "t;t [s];events", GetNBins(), TMin, TMax);
+      read_triggers->SetMarkerColor(kViolet);
+      read_triggers->SetLineColor(kViolet);
+      read_triggers->SetMinimum(0);
+      AddHistogram("tIO32",read_triggers);
+
+      TH1D* atom_or=new TH1D("tAtomOR", "t;t [s];events", GetNBins(), TMin, TMax);
+      atom_or->SetMarkerColor(kGreen);
+      atom_or->SetLineColor(kGreen);
+      atom_or->SetMinimum(0);
+      AddHistogram("tAtomOR",atom_or);
+   
       TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", GetNBins(), TMin, TMax); 
       ht->SetLineColor(kMagenta);
       ht->SetMarkerColor(kMagenta);
@@ -345,7 +369,6 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          time=time*1000.;
       int Channel         = sisevent.SIS_Channel;
       int CountsInChannel = sisevent.Counts;
- 
       if (Channel == trig)
          FillHistogram("tIO32",time,CountsInChannel);
       else if (Channel == trig_nobusy)
@@ -436,7 +459,6 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       delete fr;
       AddHistogram("rdens",hrdens);
    }
-
 }
 
 TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)

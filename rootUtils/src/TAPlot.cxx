@@ -13,6 +13,8 @@ TAPlot::TAPlot(bool zerotime):
 
    FirstTmin=1E99;
    LastTmax=1.;
+   BiggestTzero = 0.;
+   MaxDumpLength = 0.;
 
    fTotalTime = -1.;
    fTotalVert = -1.;
@@ -20,22 +22,28 @@ TAPlot::TAPlot(bool zerotime):
    fVerbose=false;
 }
 
-void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
+void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero)
 {
    AddRunNumber(runNumber);
 
-   assert(tmin.size()==tmax.size());
+   assert(tmin.size() == tmax.size());
+   assert(tmin.size() == tzero.size());
 
    for (size_t i=0; i<tmin.size(); i++)
    {
       double length=tmax[i]-tmin[i];
       if (length>MaxDumpLength)
          MaxDumpLength=length;
-      TimeWindows.push_back({runNumber,tmin[i],tmax[i]});
+      TimeWindows.push_back(
+         TimeWindow(runNumber,tmin[i],tmax[i],tzero[i])
+         );
       fTotalTime+=tmax[i]-tmin[i];
       //Find the first start window
       if (tmin[i]<FirstTmin)
          FirstTmin=tmin[i];
+      //Largest time before 'zero' (-ve number)
+      if ( tmin[i] - tzero[i] < BiggestTzero)
+         BiggestTzero = tmin[i] - tzero[i];
       //Find the end of the last window (note: -ve tmax means end of run)
       //Skip early if we are looking for end of run anyway
       if (LastTmax<0)
@@ -49,19 +57,31 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
    }
    return;
 }
-//It is slightly faster to call AddTimeGates than this function
-void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tmax)
+void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
+{
+   std::vector<double> tzero;
+   tzero.reserve(tmin.size());
+   for (auto& t: tmin)
+      tzero.push_back(t);
+   return AddTimeGates(runNumber,tmin,tmax,tzero);
+}
+void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tmax, const double tzero)
 {
    AddRunNumber(runNumber);
 
    double length = tmax - tmin;
    if (length > MaxDumpLength)
       MaxDumpLength = length;
-   TimeWindows.push_back({runNumber,tmin,tmax});
+   TimeWindows.push_back(
+      TimeWindow(runNumber,tmin,tmax,tzero)
+      );
    fTotalTime += tmax - tmin;
    //Find the first start window
    if (tmin < FirstTmin)
       FirstTmin = tmin;
+   //Largest time before 'zero' (-ve number)
+   if ( tmin - tzero < BiggestTzero)
+      BiggestTzero = tmin - tzero;
    //Find the end of the last window (note: -ve tmax means end of run)
    //Skip early if we are looking for end of run anyway
    if (LastTmax < 0)
@@ -73,6 +93,13 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
    if (tmax < 0)
       LastTmax = -1;
    return;
+
+}
+
+//It is slightly faster to call AddTimeGates than this function
+void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tmax)
+{
+   return AddTimeGate(runNumber,tmin,tmax,tmin);
 }
 
 template <typename T>

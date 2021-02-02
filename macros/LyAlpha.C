@@ -25,8 +25,8 @@ for (int i=0; i<9; i++)
         freq[i]->AddTimeGate(
             runNumber,
             pulse.first-0.1, //Min time (before pulse)
-            pulse.first + 0.9); //Max time (after pulse)
-            //pulse.first); //Definition of 'zero' time
+            pulse.first + 0.9, //Max time (after pulse)
+            pulse.first); //Definition of 'zero' time
     }
 }
 

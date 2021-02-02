@@ -42,14 +42,33 @@ struct VertexEvent
 };
 
 //Any time window
-struct TimeWindow
+class TimeWindow
 {
+   public:
    int runNumber;
    double tmin;
    double tmax;
+   double tzero;
+   TimeWindow()
+   {
+      runNumber = -1;
+      tmin = -1;
+      tmax = -1;
+      tzero = -1;
+   }
+   TimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
+   {
+      runNumber = _runNumber;
+      tmin = _tmin;
+      tmax = _tmax;
+      tzero = _tzero;
+      assert(tmax>tmin);
+      assert(tzero>tmin);
+      assert(tzero<tmax);
+   }
    void print()
    {
-      std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << std::endl;
+      std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << "\ttzero"<< tzero<< std::endl;
    }
 };
 
@@ -143,7 +162,7 @@ class feGEMdata: public feENVdata
             (time > window.tmin && window.tmax<0) )
          {
             feENVdataPlot* plot = GetPlot(i);
-            plot->AddPoint(time - window.tmin, time, (double)GEMEvent->GetArrayEntry(array_number));
+            plot->AddPoint(time - window.tzero, time, (double)GEMEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -172,7 +191,7 @@ class feLVdata: public feENVdata
             (time > window.tmin && window.tmax<0) )
          {
             feENVdataPlot* plot = GetPlot(i);
-            plot->AddPoint( time - window.tmin, time,LVEvent->GetArrayEntry(array_number));
+            plot->AddPoint( time - window.tzero, time,LVEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -194,6 +213,7 @@ private:
 
    double FirstTmin;
    double LastTmax;
+   double BiggestTzero;
    double MaxDumpLength;
    std::vector<TimeWindow> TimeWindows;
    double fTotalTime;
@@ -448,8 +468,9 @@ public:
    void AddToTAPlot(TAPlot *ialphaplot);
    //virtual void AddToTAPlot(TString file);
    //virtual TAPlot* LoadTAPlot(TString file);
-
+   void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero);
    void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax);
+   void AddTimeGate(const int runNumber, const double tmin, const double tmax, const double tzero);
    void AddTimeGate(const int runNumber, const double tmin, const double tmax);
    virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) =0;
    //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
@@ -459,9 +480,10 @@ public:
    void LoadData();
 
    void AutoTimeRange();
-   int GetMaxDumpLength() const { return MaxDumpLength; }
-   int GetFirstTmin() const     { return FirstTmin;     }
-   int GetLastTmax() const      { return LastTmax;      }
+   double GetMaxDumpLength() const { return MaxDumpLength; }
+   double GetFirstTmin() const     { return FirstTmin;     }
+   double GetLastTmax() const      { return LastTmax;      }
+   double GetBiggestTzero() const  { return BiggestTzero;  }
  
   //void SetTimeRange(double tmin_, double tmax_);
    template <class T>
