@@ -24,8 +24,8 @@ for (int i=0; i<9; i++)
         //std::cout<<pulse.first-0.01<<std::endl;
         freq[i]->AddTimeGate(
             runNumber,
-            pulse.first-0.1, //Min time (before pulse)
-            pulse.first + 0.9, //Max time (after pulse)
+            pulse.first-0.01, //Min time (before pulse)
+            pulse.first + 0.09, //Max time (after pulse)
             pulse.first); //Definition of 'zero' time
     }
 }
