@@ -68,3 +68,4 @@ bin
 output
 *.save
 *_C.d
+.vscode/settings.json
