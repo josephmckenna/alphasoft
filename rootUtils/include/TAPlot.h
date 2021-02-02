@@ -162,7 +162,7 @@ class feGEMdata: public feENVdata
             (time > window.tmin && window.tmax<0) )
          {
             feENVdataPlot* plot = GetPlot(i);
-            plot->AddPoint(time - window.tzero, time, (double)GEMEvent->GetArrayEntry(array_number));
+            plot->AddPoint(time, time - window.tzero, (double)GEMEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -191,7 +191,7 @@ class feLVdata: public feENVdata
             (time > window.tmin && window.tmax<0) )
          {
             feENVdataPlot* plot = GetPlot(i);
-            plot->AddPoint( time - window.tzero, time,LVEvent->GetArrayEntry(array_number));
+            plot->AddPoint( time, time - window.tzero, LVEvent->GetArrayEntry(array_number));
          }
       }
       return;
@@ -362,7 +362,7 @@ public:
 
    std::pair<TLegend*,TMultiGraph*> GetLVGraphs()
    {
-       TMultiGraph *feLVmg = NULL;
+      TMultiGraph *feLVmg = NULL;
       TLegend* legend = NULL;
       if (feLV.size()==0)
          return {legend,feLVmg};
@@ -373,7 +373,7 @@ public:
       for (auto& f: feLV)
       {
          std::map<std::string,TGraph*> unique_labels;
-         
+
          const std::vector<int> UniqueRuns = GetArrayOfRuns();
          for (int i=0; i< TimeWindows.size(); i++)
          {
