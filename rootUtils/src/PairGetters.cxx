@@ -16,6 +16,12 @@ std::pair<Int_t,Int_t> GetChronoBoardChannel(Int_t runNumber, const char* Channe
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<std::pair<double,int>> TimeCounts;
+   if (SIS_Channel<0)
+   {
+      std::cout<<"Unkown SIS channel!"<<std::endl;
+      return TimeCounts;
+   }
+   
    //TimeCounts.reserve(1000000); //Ready for 1M results
    assert(tmin.size() == tmax.size());
    const int entries = tmin.size();
@@ -39,9 +45,14 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
       {
           if (t > tmin[i])
              if (t < tmax[i])
-                TimeCounts.push_back(
-                    {t, SISEvent->GetCountsInChannel(SIS_Channel)}
-                    );
+             {
+                int counts = SISEvent->GetCountsInChannel(SIS_Channel);
+                if (counts)
+                {
+                  TimeCounts.push_back(std::make_pair(t, counts));
+                }
+             }
+                
       }
    }
    return TimeCounts;
