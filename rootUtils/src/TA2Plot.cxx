@@ -89,7 +89,11 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 
    SISEvents.push_back(Event);
 }
-
++//TODO: Pre sort windows (we should never have overlapping windows...)
++//Sort tmins... then search for first tmin < t
++//check if valid tmax > t
++//Perhaps replace std::vector<TimeWindows> with its own class...
++// two vectors would make a better memory layout... not a struct?
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
    double t=SVDEvent->t;
