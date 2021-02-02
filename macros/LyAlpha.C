@@ -1,4 +1,4 @@
-void PlotLyAlphaScan(int runNumber = 57019)
+void PlotLyAlphaScan(int runNumber = 57019, int n_dumps = -1)
 {
 
 TA2Plot* freq[9];
@@ -8,11 +8,13 @@ for (int i=0; i<9; i++)
 {
     std::cout<<"Adding Freq "<<i<<std::endl;
     freq[i] = new TA2Plot(-10.,10.);
+
+
     std::string dump="Lyman Alpha Freq "+ std::to_string(i);
-    std::vector<TA2Spill> dumps=Get_A2_Spills(runNumber,{dump},{-1});
+    std::vector<TA2Spill> dumps=Get_A2_Spills(runNumber,{dump},{n_dumps});
     std::cout<<dumps.size() << " dumps found"<<std::endl;
     std::vector<std::pair<double,int>> qpulses=GetSISTimeAndCounts(
-       57156,  //Run Number
+       runNumber,  //Run Number
        "QPULSE",   //SIS CHannel name (you can also use the number, in this case "QPULSE" == 53)
        dumps
     );
@@ -20,7 +22,11 @@ for (int i=0; i<9; i++)
     for (std::pair<double,int>& pulse: qpulses)
     {
         //std::cout<<pulse.first-0.01<<std::endl;
-        freq[i]->AddTimeGate(runNumber,pulse.first-0.1, pulse.first + 0.9);
+        freq[i]->AddTimeGate(
+            runNumber,
+            pulse.first-0.1, //Min time (before pulse)
+            pulse.first + 0.9); //Max time (after pulse)
+            //pulse.first); //Definition of 'zero' time
     }
 }
 
