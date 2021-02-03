@@ -150,6 +150,7 @@ build-cc7-cmake-ag:
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
     - make | tee ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -164,6 +165,7 @@ build-cc7-cmake-a2:
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
     - make | tee ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -178,6 +180,7 @@ build-cc7:
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
+  cache: {}
   artifacts:
     when: on_failure
     paths:
