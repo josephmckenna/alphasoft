@@ -248,11 +248,6 @@ public:
 #endif
          return flow;
       }
-      
-#ifdef MANALYZER_PROFILER
-      START_TIMER
-#endif
-
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {

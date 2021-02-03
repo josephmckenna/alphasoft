@@ -376,9 +376,9 @@ public:
          std::map<std::string,TGraph*> unique_labels;
 
          const std::vector<int> UniqueRuns = GetArrayOfRuns();
-         for (int i=0; i< TimeWindows.size(); i++)
+         for (size_t i=0; i< TimeWindows.size(); i++)
          {
-            int ColourID=0;
+            size_t ColourID=0;
             for ( ; ColourID< UniqueRuns.size(); ColourID++)
             {
                if (TimeWindows.at(i).runNumber == UniqueRuns.at(ColourID))
