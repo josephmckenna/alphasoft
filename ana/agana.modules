@@ -16,6 +16,7 @@ deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
 # GS
 bv_tpc_matching_module.o
 # AC
+wf_persistency_module.o
 histo_module.o
 phspectrum_module.o
 # LM
