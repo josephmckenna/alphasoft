@@ -47,8 +47,6 @@ class felabViewModuleWriter
       }
       TTree* FindOrCreateTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
-         std::string               flm_BankName          = mf->GetBankName();
-
          std::string name = mf->GetBankName();
          int numberoftrees = trees.size();
          bool treeAlreadyExists = false;
@@ -77,11 +75,20 @@ class felabViewModuleWriter
          std::string t_BankName = mf->GetBankName();
          std::vector<double> t_data = *mf->GetData();
          uint32_t t_MIDAS_TIME = mf->GetMIDAS_TIME();
-         uint32_t t_run_time = mf->GetRunTime();
+         double t_run_time = mf->GetRunTime();
          double t_labview_time = mf->GetLabviewTime();
          return TStoreLabVIEWEvent(t_BankName, t_data, t_MIDAS_TIME, t_run_time, t_labview_time, runNumber);
       }
       public:
+      void WriteTrees(TARunInfo* runinfo)
+      {
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         runinfo->fRoot->fOutputFile->cd("felabview");
+         for (TTree* t: trees)
+            t->Write();
+      }
       void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
          #ifdef HAVE_CXX11_THREADS
@@ -138,6 +145,7 @@ public:
    {
       if (fTrace)
          printf("felabviewModule::EndRun, run %d\n", runinfo->fRunNo);
+      treeWriter.WriteTrees(runinfo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -176,9 +184,9 @@ public:
             //printf("\n \n \n DEBUG: felabviewModule::Analyze. Has multiple banks. Exit with error code 11. This should never be hit. \n \n \n");
             exit(11);
          }
-
+         
          std::string BN = me->banks[0].name.c_str();
-
+         
          double * rawmeData = (double*)me->GetBankData(&me->banks[0]);
          int N = (int)(me->banks[0].data_size / 8);
          std::vector<double> meData;
@@ -187,12 +195,18 @@ public:
             meData.push_back(rawmeData[i]);
          }
          // I need a range check to assure meData[0] is the right format
-         double runTime = meData[0] - initialEventTime - 2082844800;
+         double runTime = meData[0] - (double)initialEventTime - (double)2082844800;
          felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, runTime, meData[0]);
          flow = f;
          if (fTrace)
+         if (BN=="D243")
+         {
+             
              if(meData[0]-3525550000 > 0)
                 printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
+                for (int i=0; i<meData.size(); i++)
+                   std::cout<<meData[i]<<std::endl;
+			}
       }
       else
       {  //No work done... skip profiler
