@@ -315,7 +315,8 @@ public:
             unique_labels[f.GetName()] = graph;
             //if (i==0)
             //   legend->AddEntry(graph,f.GetName().c_str());
-            feGEMmg->Add(graph);
+            if (graph->GetN())
+               feGEMmg->Add(graph);
          }
          for (auto& a: unique_labels)
          {
