@@ -24,6 +24,7 @@ public:
    AnaSettings* ana_settings=0;
 
    bool fADCnorm=false;
+   bool fPersEnabled=false;
    
 public:
    DeconvAwFlags() // ctor
@@ -74,7 +75,7 @@ public:
                    runinfo->fRunNo, 
                    fFlags->fADCnorm,   // dis/en-able normalization of WF
                    fFlags->fDiag );    // dis/en-able histogramming
-      d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
+      d.SetDisplay( !fFlags->fBatch || fFlags->fPersEnabled ); // dis/en-able wf storage for aged
 
       d.PrintADCsettings();
    }
@@ -183,8 +184,9 @@ public:
                   //               flow_sig->adc32range = d.GetAdcRange();
                }
             
-            if( !fFlags->fBatch ) flow_sig->AddAWWaveforms( d.GetAWwaveforms() );
-            
+            if( !fFlags->fBatch || fFlags->fPersEnabled ) 
+               flow_sig->AddAWWaveforms( d.GetAWwaveforms() );
+
             flow = flow_sig;
          }
       ++fCounter;
@@ -257,6 +259,8 @@ public:
 
          if( args[i] == "--adcnorm" ) fFlags.fADCnorm=true;
          if( args[i] == "--wfnorm" ) fFlags.fADCnorm=true;
+
+         if( args[i] == "--persistency" ) fFlags.fPersEnabled=true;
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
