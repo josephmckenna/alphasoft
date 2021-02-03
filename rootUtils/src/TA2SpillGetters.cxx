@@ -9,14 +9,14 @@
 //SystemError: vector<TA2Spill> ::Get_A2_Spillsa(int runNumber, _object* description, _object* repetition) =>
 //    problem in C++; program state has been reset
 
-
+#ifdef HAVE_PYTHON
 std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* repetition)
 {
     std::vector<std::string> desc = listTupleToVector_String(description);
     std::vector<int> reps= listTupleToVector_Int( repetition);
     return Get_A2_Spills(runNumber,desc, reps);
 }
-
+#endif
 
 std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
 {
