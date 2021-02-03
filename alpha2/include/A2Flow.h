@@ -251,7 +251,7 @@ public:
    }
 
     felabviewFlowEvent(TAFlowEvent* flowevent, std::string m_BankName, std::vector<double> m_pdata, 
-    uint32_t m_MIDAS_TIME, uint32_t m_run_time, double m_labview_time)
+       uint32_t m_MIDAS_TIME, double m_run_time, double m_labview_time)
       : TAFlowEvent(flowevent), BankName(m_BankName), m_data(m_pdata), 
       MIDAS_TIME(m_MIDAS_TIME), run_time(m_run_time), labview_time(m_labview_time)
    {
