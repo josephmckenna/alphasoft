@@ -173,7 +173,7 @@ build-cc7-cmake-a2:
 build-cc7:
   stage: build
   script: 
-#    - git submodule update --init --recursive
+    - git submodule update --init --recursive
     - echo "Building"
     - make clean
     - make 2>&1 | tee BuildLog.txt
