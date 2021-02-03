@@ -457,7 +457,9 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
 TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 {
-
+   
+   
+   std::cout<<"TAPlot Processing time : ~" << GetApproximateProcessingTime() <<"s"<<std::endl;
    FillHisto(ApplyCuts,MVAMode);
 
    TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
