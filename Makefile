@@ -3,11 +3,11 @@
 #
 
 # compilation and version info
-DEPS = gitinfo
+DEPS = gitinfo fetchfeGEM fetchagana
 
 #If rootana is within this folder, build it...
 ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
-DEPS += buildrootana
+DEPS += fetchrootana buildrootana
 endif
 
 AGLIBS = libanalib.so libagtpc.so libaged.so
@@ -99,6 +99,19 @@ rootUtils.so: $(DEPS)
 buildrootana:
 	@echo "Building rootana submodule"
 	cd rootana && $(MAKE) $(MFLAGS)
+
+fetchrootana:
+	@echo "Fetching rootana submodule"
+	git submodule update --init rootana
+
+fetchfeGEM:
+	@echo "Fetching feGEM submodule"
+	git submodule update --init feGEM
+
+fetchagana:
+	@echo "Fetching agana submodule"
+	git submodule update --init agana
+
 #$(MAKE) -C rootana $(MFLAGS)
 #cd rootana && $(MAKE) obj/manalyzer_main.o
 #$(MAKE) -C rootana
