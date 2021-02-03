@@ -135,8 +135,9 @@ clean::
 	cd rootUtils/ && $(MAKE) clean
 
 ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
+ifneq (,$(wildcard rootana/Makefile))
 clean::
 	cd rootana/ && $(MAKE) clean
 	rm -f obj/manalyzer_main.o
 endif
-
+endif
