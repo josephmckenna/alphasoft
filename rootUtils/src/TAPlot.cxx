@@ -7,6 +7,8 @@ ClassImp(TAPlot);
 TAPlot::TAPlot(bool zerotime):
    ZeroTimeAxis(zerotime)
 {
+   ObjectConstructionTime = std::chrono::high_resolution_clock::now();
+   DataLoadedTime = std::chrono::high_resolution_clock::from_time_t(0);
    Nbin=100; 
    DrawStyle=0;
    gLegendDetail=1; 
@@ -211,6 +213,7 @@ void TAPlot::LoadData()
       LoadfeLVData(runNumber, first_time, last_time);
       LoadRun(runNumber, first_time, last_time);
    }
+   LoadingDataLoadingDone();
    return;
 }
 
