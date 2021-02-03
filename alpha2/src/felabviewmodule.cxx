@@ -146,6 +146,9 @@ public:
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
          {
+#ifdef MANALYZER_PROFILER
+            *flags |= TAFlag_SKIP_PROFILE;
+#endif
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
@@ -190,6 +193,12 @@ public:
          if (fTrace)
              if(meData[0]-3525550000 > 0)
                 printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
+      }
+      else
+      {  //No work done... skip profiler
+#ifdef MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
       }
       return flow;
    }
