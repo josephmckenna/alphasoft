@@ -153,7 +153,7 @@ fi
 
 
 if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
-    echo "ROOTANA submodule enabled: " ` git log -1 --format=%h`
+    echo "ROOTANA submodule enabled: " ` cd ${AGRELEASE}/rootana && git log -1 --format=%h`
 fi
 
 
