@@ -152,6 +152,11 @@ void TA2Plot_Filler::LoadData()
    {
       LoadData(runNumbers[i],first_times[i],last_times[i]);
    }
+   //Give the TAPlots a timestamp so we can track how long processing has taken
+   for (auto& plot: plots)
+   {
+      plot->LoadingDataLoadingDone();
+   }
 }
 
 #endif

@@ -19,6 +19,7 @@
 #include <iostream>
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
+#include <chrono>
    
 #define SCALECUT 0.6
 
@@ -246,6 +247,9 @@ private:
 
    std::vector<feGEMdata> feGEM;
    std::vector<feLVdata> feLV;
+   std::chrono::high_resolution_clock::time_point ObjectConstructionTime;
+   std::chrono::high_resolution_clock::time_point DataLoadedTime;
+  
 
 public:
    //Use a time axis that counts from Zero of a dump window (default true)
@@ -415,6 +419,18 @@ public:
    void LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
    void LoadfeLVData(int RunNumber, double first_time, double last_time);
 
+   double GetApproximateProcessingTime()
+   {
+      if ( DataLoadedTime == std::chrono::high_resolution_clock::from_time_t(0) )
+         LoadingDataLoadingDone();
+      std::chrono::duration<double> d = 
+         std::chrono::duration_cast<std::chrono::seconds>( DataLoadedTime - ObjectConstructionTime );
+      return d.count();
+   }
+   void LoadingDataLoadingDone()
+   {
+      DataLoadedTime = std::chrono::high_resolution_clock::now();
+   }
    // default class member functions
    TAPlot(bool zerotime = true);//, int MVAMode = 0);
    virtual ~TAPlot();
