@@ -277,9 +277,6 @@ public:
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
-#endif
 
       event->FindAllBanks();
       VF48DataFlow* dataflow = NULL;
