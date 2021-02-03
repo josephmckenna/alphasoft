@@ -89,9 +89,9 @@ endif()
 
 install(TARGETS rootUtils 
    LIBRARY
-      DESTINATION ${CMAKE_INSTALL_LIBDIR} 
+      DESTINATION lib 
    PUBLIC_HEADER
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      DESTINATION include
    )
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
