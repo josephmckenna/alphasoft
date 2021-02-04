@@ -87,3 +87,40 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
 }
 
 #endif
+
+
+std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* BankName, int ArrayNo, double tmin, double tmax)
+{
+   std::vector<std::pair<double,double>> lvdata;
+   TTreeReader* feLVReader=Get_feLV_Tree(runNumber,BankName);
+   TTree* tree = feLVReader->GetTree();
+   if  (!tree)
+   {
+      std::cout<<"Warning: " << BankName << " not found for run " << runNumber << std::endl;
+      return lvdata;
+   }
+   if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
+   {
+      TTreeReaderValue<TStoreLabVIEWEvent> LVEvent(*feLVReader, "TStoreLabVIEWEvent");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (feLVReader->Next())
+      { 
+         double t=LVEvent->GetRunTime();
+         //A rough cut on the time window is very fast...
+         if (t < tmin)
+            continue;
+         if (t > tmax)
+            break;
+         lvdata.push_back(
+            std::make_pair(t, LVEvent->GetArrayEntry(ArrayNo))
+            );
+      }
+   }
+   return lvdata;
+}
+
+std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* BankName, int ArrayNo, const TA2Spill& spill)
+{
+    return GetLVData(runNumber,BankName,ArrayNo,spill.GetStartTime(), spill.GetStopTime());
+}
