@@ -233,12 +233,6 @@ private:
    std::vector<double> Ejections;
    std::vector<double> Injections;
 
-   int CATStart;
-   int CATStop;
-   int RCTStart;
-   int RCTStop;
-   int ATMStart;
-   int ATMStop;
    std::vector<double> DumpStarts;
    std::vector<double> DumpStops;
 
