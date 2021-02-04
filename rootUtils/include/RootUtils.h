@@ -25,6 +25,7 @@
 #include "DoubleGetters.h"
 #include "FileGetters.h"
 #include "IntGetters.h"
+#include "PairGetters.h"
 #include "PlotGetters.h"
 #include "PrintTools.h"
 #include "TH1DGetters.h"
