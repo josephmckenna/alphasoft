@@ -22,8 +22,6 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for GitInfo.h file
-include_directories(${CMAKE_BINARY_DIR})
 
 # Directories
 add_subdirectory(src)
@@ -132,7 +130,6 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC ../analib/include)

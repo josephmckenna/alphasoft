@@ -99,6 +99,14 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
    TTreeReader* t=new TTreeReader("A2SpillTree", f);
    return t;
 }
+
+TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("AnalysisReport");
+   TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
+   return t;
+}
 #endif
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)
@@ -122,6 +130,7 @@ TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName)
    TTreeReader* t = new TTreeReader(BankName.c_str(), f->GetDirectory("/felabview"));
    return t;
 }
+
 
 /* emacs
  * Local Variables:

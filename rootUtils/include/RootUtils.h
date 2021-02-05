@@ -35,6 +35,7 @@
 #include "TGraphGetters.h"
 #include "TSplineGetters.h"
 #include "BinaryRunners.h"
+#include "AnalysisReportGetters.h"
 
 #include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59

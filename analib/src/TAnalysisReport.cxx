@@ -13,6 +13,30 @@ TAnalysisReport::TAnalysisReport():
     //ctor
 }
 
+TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
+   runNumber(r.runNumber),
+   GitBranch(r.GitBranch), 
+   CompilationDate(r.CompilationDate), 
+   GitDate(r.GitDate), 
+   GitHash(r.GitHash),
+   GitHashLong(r.GitHashLong),
+   GitDiff(r.GitDiff)
+{
+    StartRunUnixTime = r.StartRunUnixTime;
+    StopRunUnixTime = r.StopRunUnixTime;
+    ProgramName = r.ProgramName;
+    ProgramPath = r.ProgramPath;
+    ProgramPathFull = r.ProgramPathFull;
+    Duration = r.Duration;
+    AnalysisHost = r.AnalysisHost;
+}
+
+TAnalysisReport TAnalysisReport::operator=(const TAnalysisReport& r)
+{
+    return TAnalysisReport(r);
+}
+
+
 TAnalysisReport::TAnalysisReport(int runno):
     runNumber(runno), 
     GitBranch(GIT_BRANCH), 
@@ -54,20 +78,18 @@ TAnalysisReport::~TAnalysisReport()
 {
     //dtor
 }
-double TAnalysisReport::PrintHeader()
+void TAnalysisReport::PrintHeader()
 {
     printf("===========================================================\n");
     printf("%s Report for run %d\n",ProgramName.c_str(),runNumber);
     printf("===========================================================\n");
     std::cout <<"Start Run: "<<GetRunStartTimeString();
     std::cout <<"Stop Run: "<<GetRunStopTimeString();
-    int rough_time=-1;
     if( StopRunUnixTime > StartRunUnixTime )
     {
-        rough_time=StopRunUnixTime-StartRunUnixTime;
-        std::cout <<"Duration: ~"<<rough_time<<"s"<<std::endl;
+        std::cout <<"Duration: ~"<<StopRunUnixTime-StartRunUnixTime<<"s"<<std::endl;
     }
-    return rough_time;
+    return;
 }
 void TAnalysisReport::PrintFooter()
 {
@@ -81,73 +103,156 @@ void TAnalysisReport::PrintFooter()
     printf("===========================================================\n");
 }
 #ifdef BUILD_A2
+
+//We dont want these as members of the class...
+static TH1D* SVD_N_RawHits;
+static TH1D* SVD_P_RawHits;
+static TH1D* SVD_RawHits;
+static TH1D* SVD_Hits;
+static TH1D* SVD_Tracks;
+static TH1D* SVD_Verts;
+static TH1D* SVD_Pass;
+
 ClassImp(TA2AnalysisReport);
 TA2AnalysisReport::TA2AnalysisReport()
 {
     //ctor
+
 }
+
+
+TA2AnalysisReport::TA2AnalysisReport(const TA2AnalysisReport& r): TAnalysisReport(r)
+{
+    nSVDEvents = r.nSVDEvents;
+    LastVF48TimeStamp = r.LastVF48TimeStamp;
+
+    SVD_N_RawHits_Mode = r.SVD_N_RawHits_Mode;
+    SVD_N_RawHits_Mean = r.SVD_N_RawHits_Mean;
+    SVD_P_RawHits_Mode = r.SVD_P_RawHits_Mode;
+    SVD_P_RawHits_Mean = r.SVD_P_RawHits_Mean;
+    SVD_Hits_Mode      = r.SVD_Hits_Mode;
+    SVD_Hits_Mean      = r.SVD_Hits_Mean;
+    SVD_Tracks_Mode    = r.SVD_Tracks_Mode;
+    SVD_Tracks_Mean    = r.SVD_Tracks_Mean;
+
+    SVD_Verts_Sum      = r.SVD_Verts_Sum;
+    SVD_PassCut_Sum    = r.SVD_PassCut_Sum;
+
+    SVD_Verts_Mean     = r.SVD_Verts_Mean;
+    SVD_Vert_Rate      = r.SVD_Vert_Rate;
+    
+    SVD_PassCut_Mean   = r.SVD_PassCut_Mean;
+    SVD_PassCut_Rate   = r.SVD_PassCut_Rate;
+
+}
+
+TA2AnalysisReport TA2AnalysisReport::operator=(const TA2AnalysisReport& r)
+{
+    return TA2AnalysisReport(r);
+}
+
 TA2AnalysisReport::TA2AnalysisReport(int runno): TAnalysisReport(runno)
 {
     nSVDEvents = 0;
     LastVF48TimeStamp = -1;
+    SVD_Verts_Sum = 0;
+    SVD_PassCut_Sum = 0;
+
+    SVD_N_RawHits = new TH1D("SVD_N_RawHits","SVD_N_RawHits; Multiplicity; Count",1000,0,1000);
+    SVD_P_RawHits = new TH1D("SVD_P_RawHits","SVD_P_RawHits; Multiplicity; Count",1000,0,1000);
+    //MeanMode SVD_N_Clusters = new TH1D(1000};
+    //MeanMode SVD_P_Clusters = new TH1D(1000};
+    SVD_RawHits = new TH1D("SVD_RawHits","SVD_RawHits; Multiplicity; Count",1000,0,1000);
+    SVD_Hits = new TH1D("SVD_Hits","SVD_Hits;Multiplicity; Count ",1000,0,1000);
+    SVD_Tracks = new TH1D("SVD_Tracks","SVD_Tracks; Multiplicity; Count",100,0,100);
+    SVD_Verts = new TH1D("SVD_Verts","SVD_Verts; Multiplicity; Count",2,0,2);
+    SVD_Pass = new TH1D("SVD_Pass","SVD_Pass; Multiplicity; Count",2,0,2);
 }
+
 TA2AnalysisReport::~TA2AnalysisReport()
 {
     //dtor
+    delete SVD_N_RawHits;
+    delete SVD_P_RawHits;
+    delete SVD_RawHits;
+    delete SVD_Hits;
+    delete SVD_Tracks;
+    delete SVD_Verts;
+    delete SVD_Pass;
 }
 
-void TA2AnalysisReport::FillSVD(TSiliconEvent* se)
+void TA2AnalysisReport::FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t& raw_hits, const Int_t& hits, const Int_t& tracks, const Int_t& verts, int pass, double time)
 {
-    SVD_N_RawHits.InsertValue(se->GetNsideNRawHits());
-    SVD_P_RawHits.InsertValue(se->GetPsideNRawHits());
-    //SVD_N_Clusters.InsertValue(se->GetNNClusters());
-    //SVD_P_Clusters.InsertValue(se->GetNPClusters());
-    SVD_RawHits.InsertValue(se->GetNRawHits());
-    SVD_Hits.InsertValue(se->GetNHits());
-    SVD_Tracks.InsertValue(se->GetNTracks());
-    SVD_Verts.InsertValue(se->GetNVertices());
-    SVD_Pass.InsertValue((int)se->GetPassedCuts());
-    LastVF48TimeStamp = se->GetVF48Timestamp();
+    SVD_N_RawHits->Fill(nraw);
+    SVD_P_RawHits->Fill(praw);
+    //SVD_N_Clusters->Fill(se->GetNNClusters());
+    //SVD_P_Clusters->Fill(se->GetNPClusters());
+    SVD_RawHits->Fill(raw_hits);
+    SVD_Hits->Fill(hits);
+    SVD_Tracks->Fill(tracks);
+    SVD_Verts->Fill(verts);
+    SVD_Verts_Sum += verts;
+
+    SVD_Pass->Fill(pass);
+    SVD_PassCut_Sum += pass;
+
+    LastVF48TimeStamp = time;
     nSVDEvents++;
     return;
+}
+void TA2AnalysisReport::Flush()
+{
+    SVD_N_RawHits_Mode = SVD_N_RawHits->GetMaximumBin() - 1;
+    SVD_N_RawHits_Mean = SVD_N_RawHits->GetMean();
+    SVD_P_RawHits_Mode = SVD_P_RawHits->GetMaximumBin() - 1;
+    SVD_P_RawHits_Mean = SVD_P_RawHits->GetMean();
+    SVD_Hits_Mode      = SVD_Hits->GetMaximumBin() - 1;
+    SVD_Hits_Mean      = SVD_Hits->GetMean();
+    SVD_Tracks_Mode    = SVD_Tracks->GetMaximumBin() - 1;
+    SVD_Tracks_Mean    = SVD_Tracks->GetMean();
+    SVD_Verts_Mean     = SVD_Verts->GetMean();
+    SVD_Vert_Rate      = SVD_Verts_Sum / ( (double)(GetRunStopTime()-GetRunStartTime()));
+    SVD_PassCut_Mean   = SVD_Pass->GetMean();
+    SVD_PassCut_Rate   = SVD_PassCut_Sum/ ( (double)(GetRunStopTime()-GetRunStartTime()));
+
 }
 
 void TA2AnalysisReport::Print()
 {
-    double rough_time = PrintHeader();
+
+
+    PrintHeader();
     if(nSVDEvents>0)
     {
         std::cout <<"Number of SVD Events:\t"<<nSVDEvents<<std::endl;
         std::cout <<"               \tMode\tMean"<<std::endl;
-        std::cout <<"SVD #RawNHits: \t"<<SVD_N_RawHits.GetMode()<<"\t"<<SVD_N_RawHits.GetMean()<<std::endl;
-        std::cout <<"SVD #RawPHits: \t"<<SVD_P_RawHits.GetMode()<<"\t"<<SVD_P_RawHits.GetMean()<<std::endl;
-        //std::cout <<"Mean SVD #RawHits: \t" <<SVD_RawHits.GetMode()  <<"\t"<<SVD_RawHits.GetMean()  <<std::endl;
-        std::cout <<"SVD #Hits: \t"    <<SVD_Hits.GetMode()     <<"\t"<<SVD_Hits.GetMean()     <<std::endl;
-        std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks.GetMode()   <<"\t"<<SVD_Tracks.GetMean()   <<std::endl;
+        std::cout <<"SVD #RawNHits: \t"<<SVD_N_RawHits_Mode<<"\t"<<SVD_N_RawHits_Mean<<std::endl;
+        std::cout <<"SVD #RawPHits: \t"<<SVD_P_RawHits_Mode<<"\t"<<SVD_P_RawHits_Mean<<std::endl;
+        //std::cout <<"Mean SVD #RawHits: \t" <<SVD_RawHits->GetMode()  <<"\t"<<SVD_RawHits->GetMean()  <<std::endl;
+        std::cout <<"SVD #Hits: \t"    <<SVD_Hits_Mode     <<"\t"<<SVD_Hits_Mean     <<std::endl;
+        std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks_Mode   <<"\t"<<SVD_Tracks_Mean   <<std::endl;
         std::cout<<"----------------Sum-----Mean---------"<<std::endl;
         //std::cout<<"SVD Events:\t"<< SVD_Verts
-        std::cout <<"SVD #Events:\t"   <<SVD_Tracks.GetEntires()<<std::endl;
-        std::cout <<"SVD #Verts:\t"    <<SVD_Verts.GetSum()     <<"\t"<<SVD_Verts.GetMean();
-        if (rough_time>0)
+        std::cout <<"SVD #Events:\t"   <<nSVDEvents<<std::endl;
+        std::cout <<"SVD #Verts:\t"    <<SVD_Verts_Sum     <<"\t"<<SVD_Verts_Mean;
+        if (GetRunStopTime()-GetRunStartTime()>0)
         {
-            double SVD_vertrate=SVD_Verts.GetRate(1,rough_time);
-            if (SVD_vertrate<0.1)
-                printf("\t~(%.1fmHz)",SVD_vertrate*1000.);
+            if (SVD_Vert_Rate<0.1)
+                printf("\t~(%.1fmHz)",SVD_Vert_Rate*1000.);
             else
-                printf("\t~(%.1fHz)",SVD_vertrate);
+                printf("\t~(%.1fHz)",SVD_Vert_Rate);
         }
         std::cout<<std::endl;
-        std::cout <<"SVD #Pass cuts:\t"<<SVD_Pass.GetSum()         <<"\t"<<SVD_Pass.GetMean();
-        if (rough_time>0)
+        std::cout <<"SVD #Pass cuts:\t"<<SVD_PassCut_Sum         <<"\t"<<SVD_PassCut_Mean;
+        if (GetRunStopTime()-GetRunStartTime()>0)
         {
-            double SVD_passrate=SVD_Pass.GetRate(1,rough_time);
-            if (SVD_passrate<0.1)
-                printf("\t~(%.1fmHz)",SVD_passrate*1000.);
+            if (SVD_PassCut_Rate<0.1)
+                printf("\t~(%.1fmHz)",SVD_PassCut_Rate*1000.);
             else
-                printf("\t~(%.1fHz)",SVD_passrate);
+                printf("\t~(%.1fHz)",SVD_PassCut_Rate);
         }
         std::cout<<std::endl;
-        std::cout <<"Time of Last Event: "<<LastVF48TimeStamp<<" s"<<std::endl;
+        std::cout <<"Time of Last VF48 Event: "<<LastVF48TimeStamp<<" s"<<std::endl;
     }
     PrintFooter();
 }
