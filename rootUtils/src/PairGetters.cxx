@@ -119,8 +119,9 @@ std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* Ban
    }
    return lvdata;
 }
-
+#ifdef BUILD_A2
 std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* BankName, int ArrayNo, const TA2Spill& spill)
 {
     return GetLVData(runNumber,BankName,ArrayNo,spill.GetStartTime(), spill.GetStopTime());
 }
+#endif

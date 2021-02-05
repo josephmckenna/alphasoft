@@ -19,6 +19,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
 
 
 std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* BankName, int ArrayNo, double tmin, double tmax);
+#ifdef BUILD_A2
 std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* BankName, int ArrayNo, const TA2Spill& spill);
-
+#endif
 #endif
