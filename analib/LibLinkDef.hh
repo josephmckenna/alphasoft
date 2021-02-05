@@ -62,6 +62,13 @@
 
 #pragma link C++ class  TStoreLabVIEWEvent+;
 
+
+#pragma link C++ class TAnalysisReport+;
+//Utility class used inside TAnalysisReport (faster that a TH1D)
+#pragma link C++ class MeanMode+;
+#ifdef BUILD_A2
+#pragma link C++ class TA2AnalysisReport+;
+#endif
 #endif
 
 /* emacs
