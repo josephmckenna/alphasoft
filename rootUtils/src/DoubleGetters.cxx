@@ -178,6 +178,8 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
 Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
 {
    TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
+   if (!SISReader->GetTree())
+      return -1.;
    TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
    SISReader->SetEntry(SISReader->GetEntries() -1 );
    double t = SISEvent->GetRunTime();
@@ -187,6 +189,8 @@ Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
 {
       //More performance is maybe available if we use DataFrames...
    TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
+   if (!SVDReader->GetTree())
+      return -1.;
    TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
    SVDReader->SetEntry(SVDReader->GetEntries() -1 );
    double t = SVDEvent->t;
