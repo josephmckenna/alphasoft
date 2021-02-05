@@ -144,32 +144,53 @@ TSpill::TSpill(): RunNumber(-1)
    Unixtime   =0;
 }
 
-bool TSpill::IsMatchForDumpName(std::string dumpname, bool exact)
+// The first string may contain wildcard characters : * or ?
+//https://www.geeksforgeeks.org/wildcard-character-matching/
+bool TSpill::MatchWithWildCards(const char *first, const char * second) 
+{ 
+    // If we reach at the end of both strings, we are done 
+    if (*first == '\0' && *second == '\0') 
+        return true; 
+  
+    // Make sure that the characters after '*' are present 
+    // in second string. This function assumes that the first 
+    // string will not contain two consecutive '*' 
+    if (*first == '*' && *(first+1) != '\0' && *second == '\0') 
+        return false; 
+  
+    // If the first string contains '?', or current characters 
+    // of both strings match 
+    if (*first == '?' || *first == *second) 
+        return MatchWithWildCards(first+1, second+1); 
+  
+    // If there is *, then there are two possibilities 
+    // a) We consider current character of second string 
+    // b) We ignore current character of second string. 
+    if (*first == '*') 
+        return MatchWithWildCards(first+1, second) || MatchWithWildCards(first, second+1); 
+    return false; 
+} 
+
+//Always an exact match unless wild cards are used
+bool TSpill::IsMatchForDumpName(const std::string& dumpname)
 {
-   //Compare but ignore leading '"' mark
-   if (Name.compare(1,dumpname.size(),dumpname.c_str())==0)
-   {
-      //If we need an exact match... make sure lengths match
-      if (exact)
-      {
-         return Name.size() - 2 == dumpname.size();
-      }
-      else
-      {
-         return true;
-      }
-   }
-   return false;
+   std::string QuoteMarkFreeName;
+   if (Name[0]=='"' && Name[Name.size()-1]=='"')
+      QuoteMarkFreeName=Name.substr(1,Name.size()-2);
+   else
+      QuoteMarkFreeName=Name;
+   return MatchWithWildCards(dumpname.c_str(),QuoteMarkFreeName.c_str());
 }
 
-TSpill::TSpill(int runno): RunNumber(runno)
+TSpill::TSpill(int runno, uint32_t unixtime): RunNumber(runno)
 {
    IsDumpType =true; //By default, expect this to be a dump
    IsInfoType =false;
-   Unixtime   =0;
+   Unixtime   =unixtime;
 }
-TSpill::TSpill(int runno, const char* format, ...): RunNumber(runno)
+TSpill::TSpill(int runno, uint32_t unixtime, const char* format, ...): RunNumber(runno)
 {
+   Unixtime = unixtime;
    va_list args;
    va_start(args,format);
    InitByName(format,args);
@@ -180,7 +201,6 @@ void TSpill::InitByName(const char* format, va_list args)
    char buf[256];
    vsnprintf(buf,255,format,args);
    Name       =buf;
-   Unixtime   =0;
    IsDumpType =false; //By default, expect this to be a information if given a string at construction
    IsInfoType =false;
    std::cout<<"NewSpill:";

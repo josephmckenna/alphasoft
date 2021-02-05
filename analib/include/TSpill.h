@@ -122,18 +122,22 @@ public:
    int                   RunNumber;
    bool                  IsDumpType;
    bool                  IsInfoType;
-   int                   Unixtime;
+   uint32_t              Unixtime;
    std::string           Name;
 
    TSpill();
-   TSpill(int runno);
+   TSpill(int runno, uint32_t unixtime);
    ~TSpill();
    //TSpill(const char* name);
    void InitByName(const char* format, va_list args);
-   TSpill(int runno, const char* format, ...);
+   TSpill(int runno, uint32_t unixtime, const char* format, ...);
    TSpill(const TSpill& a);
    TSpill& operator =(const TSpill& rhs);
-   bool IsMatchForDumpName(std::string dumpname, bool exact = true);
+private:
+   //Recursive function to compare strings with wildcard support (called by IsMatchForDumpName)
+   bool MatchWithWildCards(const char *first, const char * second);
+public:
+   bool IsMatchForDumpName(const std::string& dumpname);
    virtual double GetStartTime() const = 0;
    virtual double GetStopTime() const = 0;
    bool DumpHasMathSymbol() const;

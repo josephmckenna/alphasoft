@@ -41,7 +41,7 @@ public:
    TAGSpillScalerData* ScalerData;
    TAGSpillSequencerData*  SeqData;
    TAGSpill();
-   TAGSpill(int runno, const char* format, ...);
+   TAGSpill(int runno, uint32_t unixtime, const char* format, ...);
    TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
    TAGSpill(TAGSpill* a);

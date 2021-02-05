@@ -98,13 +98,13 @@ TA2Spill::TA2Spill()
    SeqData    =NULL;
    ScalerData =NULL;
 }
-TA2Spill::TA2Spill(int runno): TSpill(runno)
+TA2Spill::TA2Spill(int runno, uint32_t unixtime): TSpill(runno, unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
 }
 
-TA2Spill::TA2Spill(int runno, const char* format, ...): TSpill(runno)
+TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...): TSpill(runno,unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -114,7 +114,8 @@ TA2Spill::TA2Spill(int runno, const char* format, ...): TSpill(runno)
    va_end(args);
 }
 
-TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ): TSpill(runno,d->StartDumpMarker->Description.c_str())
+TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
+   TSpill(runno, d->StartDumpMarker->MidasTime, d->StartDumpMarker->Description.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
@@ -149,7 +150,7 @@ TA2Spill::~TA2Spill()
 TA2Spill* TA2Spill::operator/( TA2Spill* b)
 {
    //c=a/b
-   TA2Spill* c=new TA2Spill(this->RunNumber);
+   TA2Spill* c=new TA2Spill(this->RunNumber, this->Unixtime);
    c->IsInfoType=true;
    assert(this->RunNumber == b->RunNumber);
 
@@ -176,7 +177,7 @@ TA2Spill* TA2Spill::operator/( TA2Spill* b)
 TA2Spill* TA2Spill::operator+( TA2Spill* b)
 {
    //c=a/b
-   TA2Spill* c=new TA2Spill(this->RunNumber);
+   TA2Spill* c=new TA2Spill(this->RunNumber, this->Unixtime);
    c->IsInfoType=true;
    assert(this->RunNumber == b->RunNumber);
 
