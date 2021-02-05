@@ -187,7 +187,7 @@ Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
 {
       //More performance is maybe available if we use DataFrames...
    TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
-   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficalTime");
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
    SVDReader->SetEntry(SVDReader->GetEntries() -1 );
    double t = SVDEvent->t;
    return t;

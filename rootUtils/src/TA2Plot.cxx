@@ -151,7 +151,7 @@ void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
    TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
-   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficalTime");
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
    while (SVDReader->Next())
