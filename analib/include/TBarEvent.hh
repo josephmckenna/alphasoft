@@ -18,6 +18,7 @@ private:
   int fBarID=-1;
   //TDC data
   double fTDCTime=-1;
+  double fTDCTimeRaw=-1;
   //ADC data'
   double fADCTime=-1;
   double fAmp=-1;
@@ -35,9 +36,10 @@ public:
      fAmp=_fAmp;
      fADCTime=_fADCTime;
   }
-  void SetTDCHit(double _fTDCTime)
+  void SetTDCHit(double _fTDCTime, double _fTDCTimeRaw)
   {
      fTDCTime=_fTDCTime;
+     fTDCTimeRaw=_fTDCTimeRaw;
      fTDCMatched=true;
   } 
   
@@ -46,6 +48,7 @@ public:
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
   double GetTDCTime() const {return fTDCTime; }
+  double GetTDCTimeRaw() const {return fTDCTimeRaw; }
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
@@ -97,6 +100,8 @@ public:
   double GetAmpBot() const {return fBotHit->GetAmp();}
   double GetTDCTop() const {return fTopHit->GetTDCTime();}
   double GetTDCBot() const {return fBotHit->GetTDCTime();}
+  double GetTDCTopRaw() const {return fTopHit->GetTDCTimeRaw();}
+  double GetTDCBotRaw() const {return fBotHit->GetTDCTimeRaw();}
   TVector3 GetTPC() const {return fTPC;}
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
