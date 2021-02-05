@@ -181,7 +181,8 @@ public:
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      gDirectory->mkdir("AnalysisReport")->cd();
       fFlags->AnalysisReport=new TA2AnalysisReport(runinfo->fRunNo);
       uint32_t midas_start_time = -1 ;
       #ifdef INCLUDE_VirtualOdb_H
@@ -204,10 +205,11 @@ public:
       #ifdef INCLUDE_MVODB_H
       runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
       #endif
+      runinfo->fRoot->fOutputFile->cd("AnalysisReport");
       fFlags->AnalysisReport->SetStopTime(midas_stop_time);
+      //Fill internal containers with histogram data
+      fFlags->AnalysisReport->Flush();
 
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->mkdir("AnalysisReport")->cd();
       //Do the tree writing... I only have one report... so 
       TTree* t=new TTree("AnalysisReport","AnalysisReport");
       t->Branch("TA2AnalysisReport","TA2AnalysisReport",&fFlags->AnalysisReport,32000,0);
@@ -248,8 +250,19 @@ public:
          if(SilFlow)
          {
             TSiliconEvent* se=SilFlow->silevent;
-            fFlags->AnalysisReport->FillSVD(se);
-            continue;
+            fFlags->AnalysisReport->FillSVD(
+                se->GetNsideNRawHits(),
+                se->GetPsideNRawHits(),
+                //SVD_N_Clusters->Fill(se->GetNNClusters());
+                //SVD_P_Clusters->Fill(se->GetNPClusters());
+                se->GetNRawHits(),
+                se->GetNHits(),
+                se->GetNTracks(),
+                se->GetNVertices(),
+                se->GetPassedCuts(),
+                se->GetVF48Timestamp()
+                );
+    
          }
          const A2SpillFlow* SpillFlow= dynamic_cast<A2SpillFlow*>(f);
          if (SpillFlow)
@@ -310,7 +323,7 @@ public:
       fFlags.DumpLogs.Print();
 #endif
       fFlags.AnalysisReport->Print();
-      delete fFlags.AnalysisReport;
+      //delete fFlags.AnalysisReport;
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)

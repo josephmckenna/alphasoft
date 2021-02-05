@@ -8,66 +8,7 @@
 #include "TObject.h"
 #include <unistd.h> // readlink()
 #include <ctime>
-
-#include "GitInfo.h"
-//Fast class for calculating Mean and Mode of data
-class MeanMode: public TObject
-{
-    private:
-    const int mode_size;
-    std::vector<int>* mode_hist;
-    double running_mean;
-    int entries;
-    public:
-    MeanMode(const int size): mode_size(size)
-    {
-        mode_hist=new std::vector<int>(size,0);
-        running_mean=0;
-        entries=0;
-    }
-    ~MeanMode()
-    {
-        mode_hist->clear();
-        delete mode_hist;
-    }
-    void InsertValue(const int &x)
-    {
-        if (x<mode_size)
-            (*mode_hist)[x]++;
-        else
-            mode_hist->back()++;
-        running_mean+=(double)x;
-        entries++;
-        return;
-    }
-    double GetSum()
-    {
-        return running_mean;
-    }
-    int GetEntires()
-    {
-        return entries;
-    }
-    double GetMean()
-    {
-        return running_mean/(double)entries;
-    }
-    long unsigned GetMode()
-    {
-        int* mode_ptr=std::max_element(&mode_hist->front(),&mode_hist->back());
-        return (long unsigned)(mode_ptr-&mode_hist->front());
-    }
-    int GetBin(const int x)
-    {
-        return mode_hist->at(x);
-    }
-    double GetRate(const int bin,const int t)
-    {
-        return (double) mode_hist->at(bin)/t;
-    }
-    ClassDef(MeanMode,1);
-};
-
+#include "TH1D.h"
 
 class TAnalysisReport: public TObject
 {
@@ -93,8 +34,26 @@ private:
     const std::string GitDiff;
 public:
     TAnalysisReport();
+    TAnalysisReport(const TAnalysisReport& r);
+    TAnalysisReport operator=(const TAnalysisReport& r);
     TAnalysisReport(int runno);
     virtual ~TAnalysisReport();
+    int GetRunNumber() const
+    {
+        return runNumber;
+    }
+    std::string GetProgramName() const
+    {
+        return ProgramName;
+    }
+    std::string GetProgramPath() const
+    {
+        return ProgramPath;
+    }
+    std::string GetProgramPathFull() const
+    {
+        return ProgramPathFull;
+    }
     void SetStartTime(uint32_t time)
     {
         StartRunUnixTime = time;
@@ -111,17 +70,21 @@ public:
     {
         return StopRunUnixTime;
     }
-    std::string GetRunStartTimeString()
+    std::string GetRunStartTimeString() const
     {
         time_t t = StartRunUnixTime;
         return std::string(asctime(localtime(&t)));
     }
-    std::string GetRunStopTimeString()
+    std::string GetRunStopTimeString() const
     {
         if (StopRunUnixTime==0)
             return std::string("UNKNOWN\t(end-of-run ODB entry not processed)");
         time_t t = StopRunUnixTime;
         return std::string(asctime(localtime(&t)));
+    }
+    double GetDuration() const
+    {
+        return Duration;
     }
     std::string GetAnalysisHost() const
     {
@@ -169,7 +132,7 @@ public:
     {
         return GitDiff;
     }
-    double PrintHeader();
+    void PrintHeader();
     void PrintFooter();
     ClassDef(TAnalysisReport,1);
 };
@@ -203,27 +166,42 @@ Git diff (shortstat): 3 files changed, 38 insertions(+), 2 deletions(-)
 
 
 #ifdef BUILD_A2
-#include "TSiliconEvent.h"
 class TA2AnalysisReport: public TAnalysisReport
 {
 private:
     //ALPHA 2
     int nSVDEvents=0;
-    MeanMode SVD_N_RawHits{1000};
-    MeanMode SVD_P_RawHits{1000};
-    //MeanMode SVD_N_Clusters(1000);
-    //MeanMode SVD_P_Clusters(1000);
-    MeanMode SVD_RawHits{1000};
-    MeanMode SVD_Hits{1000};
-    MeanMode SVD_Tracks{100};
-    MeanMode SVD_Verts{10};
-    MeanMode SVD_Pass{2};
     double LastVF48TimeStamp;
+
+    int SVD_N_RawHits_Mode;
+    double SVD_N_RawHits_Mean;
+    int SVD_P_RawHits_Mode;
+    double SVD_P_RawHits_Mean;
+    int SVD_Hits_Mode;
+    double SVD_Hits_Mean;
+    int SVD_Tracks_Mode;
+    double SVD_Tracks_Mean;
+
+    int SVD_Verts_Sum;
+    int SVD_PassCut_Sum;
+
+    double SVD_Verts_Mean;
+    double SVD_Vert_Rate;
+    
+    double SVD_PassCut_Mean;
+    double SVD_PassCut_Rate;
+
+
+
  public:
     TA2AnalysisReport();
+    TA2AnalysisReport(const TA2AnalysisReport& r);
+    TA2AnalysisReport operator=(const TA2AnalysisReport& r);
     TA2AnalysisReport(int runno);
     virtual ~TA2AnalysisReport();
-    void FillSVD(TSiliconEvent* se);
+    void FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t& raw_hits, const Int_t& hits, const Int_t& tracks, const Int_t& verts, int pass, double time);
+    void Flush();
+
     using TObject::Print;
     virtual void Print();
     ClassDef(TA2AnalysisReport,1);

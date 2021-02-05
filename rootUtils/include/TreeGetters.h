@@ -34,12 +34,15 @@ TTree* Get_Seq_Event_Tree(Int_t runNumber);
 TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
 TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
+TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber);
 #endif
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname);
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName);
 
 TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName);
+
+
 
 #endif
 

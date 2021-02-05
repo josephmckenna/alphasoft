@@ -23,6 +23,9 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
+
 # Directories
 add_subdirectory(src)
 
@@ -61,6 +64,7 @@ ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
+add_dependencies(analib gitinfo)
 target_include_directories(analib PUBLIC include ../agana)
 target_link_libraries(analib ${ROOT_LIBRARIES} )
 if (BUILD_AG)
