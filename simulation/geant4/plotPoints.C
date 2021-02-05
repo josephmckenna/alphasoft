@@ -7,6 +7,11 @@
 #include "TCanvas.h"
 #include "TClonesArray.h"
 #include "TGraph.h"
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include "TMath.h"
+#include "TAxis.h"
+
 
 #include <iostream>
 using namespace std;

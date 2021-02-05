@@ -43,7 +43,12 @@ Deconv::Deconv(std::string json):fTrace(false), fDiagnostic(false), fAged(false)
    fPWBThres=ana_settings->GetDouble("DeconvModule","PWBthr");
    fADCpeak=ana_settings->GetDouble("DeconvModule","AWthr");
    fPWBpeak=ana_settings->GetDouble("DeconvModule","PADthr");
-   Setup();
+   //fADCThres=100; //PW
+   //for(int i=0;i<100;i++){ //PW Instead, put this loop where fADCThres is called
+   //   fADCThres = i;       //PW
+   //   Setup();             //PW
+   //}                       //PW
+   Setup(); //PW uncomment this
 }
 
 Deconv::Deconv(AnaSettings* s):fTrace(false), fDiagnostic(false), fAged(false),
@@ -350,7 +355,7 @@ int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
    fAnodeIndex.clear();
    fAnodeIndex.reserve( Nentries );
  
-   // find intresting channels
+   // find interesting channels
    unsigned int index=0; //wfholder index
    for( int j=0; j<Nentries; ++j )
       {

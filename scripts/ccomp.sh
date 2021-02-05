@@ -61,7 +61,11 @@ elif [[ "$1" == "debug" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
+    if [[ "$2" == "wsim" ]]; then
+	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
+    else
+	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
+    fi
     time cmake3 --build . -- -j`nproc --ignore=2`
     time cmake3 --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE

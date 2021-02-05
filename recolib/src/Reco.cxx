@@ -295,12 +295,15 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
 
 void Reco::AddMChits( const TClonesArray* points )
 {
+   std::cout<<"Add MC hits here"<<std::endl; //PW debugging
    int Npoints = points->GetEntries();
    for( int j=0; j<Npoints; ++j )
       {
+         std::cout<< "j is: " << j << std::endl; // PW
          TMChit* h = (TMChit*) points->At(j);
          double time = h->GetTime(),
             zed = h->GetZ();
+         std::cout<< "z is: " << zed <<std::endl; // PW debugging
 
          double rad = fSTR->GetRadius( time , zed ), lor = fSTR->GetAzimuth( time , zed ),
             err = fSTR->GetdRdt( time , zed ), erp = fSTR->GetdPhidt( time , zed );
