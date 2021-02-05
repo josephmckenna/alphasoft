@@ -174,6 +174,37 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
 }
 #endif
 
+#if BUILD_A2
+Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
+{
+   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
+   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+   SISReader->SetEntry(SISReader->GetEntries() -1 );
+   double t = SISEvent->GetRunTime();
+   return t;   
+}
+Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
+{
+      //More performance is maybe available if we use DataFrames...
+   TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficalTime");
+   SVDReader->SetEntry(SVDReader->GetEntries() -1 );
+   double t = SVDEvent->t;
+   return t;
+}
+Double_t GetA2TotalRunTime(Int_t runNumber)
+{
+   double SISTime = GetTotalRunTimeFromSIS(runNumber);
+   double SVDTime = GetTotalRunTimeFromSVD(runNumber);
+   if (SISTime > SVDTime)
+      return SISTime;
+   else
+      return SVDTime;
+}
+
+
+#endif
+
 /* emacs
  * Local Variables:
  * tab-width: 8
