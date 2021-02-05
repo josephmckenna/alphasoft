@@ -41,9 +41,9 @@ public:
    TA2SpillScalerData* ScalerData;
    TA2SpillSequencerData*  SeqData;
    TA2Spill();
-   TA2Spill(int runno);
-   TA2Spill(int runnno, const char* format, ...);
-   TA2Spill(int runnno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
+   TA2Spill(int runno, uint32_t unixtime);
+   TA2Spill(int runno, uint32_t unixtime, const char* format, ...);
+   TA2Spill(int runno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
    TA2Spill* operator/( TA2Spill* b);
    TA2Spill* operator+( TA2Spill* b);
    TA2Spill(const TA2Spill& a);

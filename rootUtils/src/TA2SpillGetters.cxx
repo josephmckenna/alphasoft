@@ -27,13 +27,6 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
 
    assert(description.size()==repetition.size());
    int match_counter[description.size()];
-   for (size_t i=0; i<description.size(); i++)
-   {
-      match_counter[i]=0;
-      //Dump markers are surrounded by quote marks...
-      description[i].insert(0,"\"");
-      description[i].push_back('"');
-   }
 
    std::vector<TA2Spill> spills;
 
@@ -42,13 +35,9 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
       //std::cout<<"Name:"<<spill->Name.c_str()<<std::endl;
       for (size_t i=0; i<description.size(); i++)
       {
-         if (strcmp(description[i].c_str(),spill->Name.c_str())==0)
+         if (spill->IsMatchForDumpName(description[i]))
          {
-            //std::cout<<"Match dump found:"<<description[i].c_str()<<"=="<<spill->Name.c_str()<<std::endl;
-            //If we asked for all repetitions
-
             //spill->Print();
-
             //This TTreeReader value is odd... the dereferencing 
             //overload * is doing something special... so I need to 
             //dereference then get the pointer... then type cast it...

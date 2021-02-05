@@ -84,7 +84,7 @@ TAGSpill::TAGSpill()
 {
 
 }
-TAGSpill::TAGSpill(int runno, const char* format, ...): TSpill(runno)
+TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...): TSpill(runno,unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -94,8 +94,10 @@ TAGSpill::TAGSpill(int runno, const char* format, ...): TSpill(runno)
    va_end(args);
 }
 
-TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d ): TSpill(runno,d->StartDumpMarker->Description.c_str())
+TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+   TSpill(runno, d->StartDumpMarker->MidasTime, d->StartDumpMarker->Description.c_str())
 {
+   
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TAGSpillScalerData(d);
    SeqData = new TAGSpillSequencerData(d);
