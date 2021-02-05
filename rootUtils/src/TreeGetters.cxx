@@ -73,7 +73,7 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
 {
    TTree* t=Get_StoreEvent_Tree(runNumber);
    TTree* tf=Get_Tree_By_Name(runNumber,"StoreEventOfficialTime");
-   tf->SetBranchAddress("OfficalTime",&time);
+   tf->SetBranchAddress("OfficialTime",&time);
    t->AddFriend(tf);
    return t;
 }
