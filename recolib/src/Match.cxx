@@ -94,7 +94,6 @@ void Match::Setup(TFile* OutputFile)
     {
       if( OutputFile )
         { 
-<<<<<<< Updated upstream
           OutputFile->cd(); // select correct ROOT directory
 	  int error_level_save = gErrorIgnoreLevel;
 	  gErrorIgnoreLevel = kFatal;
@@ -103,11 +102,6 @@ void Match::Setup(TFile* OutputFile)
 	  else 
 	    gDirectory->cd("padmatch");
 	  gErrorIgnoreLevel = error_level_save;
-=======
-	  OutputFile->cd(); // select correct ROOT directory
-	  gDirectory->mkdir("padmatch")->cd();
-	  std::cout << "Setup OutputFile here" << std::endl; //PW debugging
->>>>>>> Stashed changes
         }
       else
         gFile->cd();
@@ -115,7 +109,6 @@ void Match::Setup(TFile* OutputFile)
       if (!hcognpeaks)
          hcognpeaks = new TH1D("hcognpeaks","cCombPads CoG - Number of Avals",int(maxPadGroups+1.),
                             0.,maxPadGroups+1.);
-<<<<<<< Updated upstream
       // if (!hcognpeaksrms)
       //   hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
       // 			       0.,maxPadGroups+1.);
@@ -142,20 +135,6 @@ void Match::Setup(TFile* OutputFile)
         htimeblobs = new TH1D("htimeblobs","Timing of Blob Finding;Time [us]",1000,0.,10000.);
       if (!htimefit)
         htimefit = new TH1D("htimefit","Timing of Fit;Time [us]",1000,0.,10000.);
-=======
-      hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
-			       0.,maxPadGroups+1.);
-      hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
-				 0.,maxPadGroups+1.);
-      hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
-      hcogerr = new TH1D("hcogerr","CombPads CoG - Error on Mean;[mm]",2000,0.,20.);
-
-      hcogpadssigma = new TH2D("hcogpadssigma","CombPads CoG - Pad Index Vs. Sigma Charge Induced;pad index;#sigma [mm]",32*576,0.,32.*576.,1000,0.,140.);
-      hcogpadsamp = new TH2D("hcogpadsamp","CombPads CoG - Pad Index Vs. Amplitude Charge Induced;pad index;Amplitude [a.u.]",32*576,0.,32.*576.,1000,0.,4000.);
-      hcogpadsint = new TH2D("hcogpadsint","CombPads CoG - Pad Index Vs. Integral Charge Induced;pad index;Tot. Charge [a.u.]",32*576,0.,32.*576.,1000,0.,10000.);
-      hcogpadsampamp = new TH2D("hcogpadsampamp","CombPads CoG - Gaussian fit amplitude Vs. Max. Signal height;max. height;Gauss Amplitude",1000,0.,4000.,1000,0.,4000.);
-      std::cout << "Setup OutputFile else" << std::endl; //PW debugging
->>>>>>> Stashed changes
     }
 }
 
@@ -171,7 +150,6 @@ std::pair<std::set<short>,std::vector< std::vector<ALPHAg::signal> >> Match::Par
       //ipd->print();
       secs.insert( ipd->sec );
       pad_bysec.at(ipd->sec).push_back(*ipd);
-      //std::cout << "PartionBySector " << std::endl; //PW debugging
     }
   return {secs,pad_bysec};
 }
@@ -182,12 +160,7 @@ std::vector< std::vector<ALPHAg::signal> > Match::PartitionByTime( std::vector<A
   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> sig_bytime(sig.begin(),
 						      sig.end());
   double temp=-999999.;
-<<<<<<< Updated upstream
   std::vector< std::vector<ALPHAg::signal> > pad_bytime;
-=======
-  //std::cout << "PartitionByTime" << std::endl; //PW debugging
-  std::vector< std::vector<signal> > pad_bytime;
->>>>>>> Stashed changes
   for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
     {
       if( fDebug ) isig->print();
@@ -212,7 +185,6 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
     std::cout<<"Match::CombPads!"<<std::endl;
 
   // combine pads in the same column only
-<<<<<<< Updated upstream
   std::vector< std::vector<ALPHAg::signal> > pad_bysec;
   std::set<short> secs;
   std::tie(secs, pad_bysec) = PartitionBySector( padsignals ) ;
@@ -221,13 +193,6 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
     std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
 
   std::vector< std::vector<ALPHAg::signal> > comb;
-=======
-  std::vector< std::vector<signal> > pad_bysec;
-  std::set<short> secs = PartionBySector( padsignals, pad_bysec ) ;
-  std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
-  std::vector< std::vector<signal> > comb;
-  //std::cout << "Combine Pads here?" << std::endl; //PW debugging
->>>>>>> Stashed changes
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
@@ -289,7 +254,6 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
     {
       std::cout<<"Match::CombinePads comb size: "<<comb->size()<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
-<<<<<<< Updated upstream
       std::cout<<"Match::CombinePads sssigv: ";
       if( fDebug ) {
         for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
@@ -297,19 +261,10 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
             std::cout<<sigv->size()<<" ";
           }
       }
-=======
-      std::cout<<"Match::CombinePads sssigv: ";      
-      for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-	{
-	  std::cout<<sigv->size()<<" ";
-	  //std::cout << "Combine Pads here I believe " << std::endl; //PW debugging
-	}
->>>>>>> Stashed changes
       std::cout<<"\n";
     }
   
   switch(CentreOfGravityFunction) {
-<<<<<<< Updated upstream
   case 0: 
     {
       std::cout<<""<<std::endl;
@@ -322,50 +277,6 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
 	CentreOfGravity(*sigv,CombinedPads);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
-=======
-  case 0: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity(*sigv);
-    std::cout << "not this (Case 0)" << std::endl; //PW debugging
-    break;
-  }
-  case 1: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_nofit(*sigv);
-    std::cout << "not this (Case 1)" << std::endl; //PW debugging
-    break;
-  }
-  case 2: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_nohisto(*sigv);
-    std::cout << "not this (Case 2)" << std::endl; //PW debugging
-    break;
-  }
-  case 3: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_single_peak(*sigv);
-    std::cout << "not this (Case 3)" << std::endl; //PW debugging
-    break;
-  }
-  case 4: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_multi_peak(*sigv);
-    std::cout << "not this (Case 4)" << std::endl; //PW debugging
-    break;
-  }
-  case 5: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      CentreOfGravity_histoblobs(*sigv);
-    std::cout << "not this (Case 5)" << std::endl; //PW debugging
-    break;
-  }
- case 6: {
-    for( auto sigv=comb.begin(); sigv!=comb.end(); ++sigv )
-      {
-	int nsig = sigv->size();
-	int ncog = CentreOfGravity_blobs(*sigv);
-	//std::cout << "This should be the case we use " << std::endl; //PW debugging
->>>>>>> Stashed changes
 	if( fTrace ) 
 	  std::cout << "Match::CombinePads Time taken CentreOfGravity: "
 		    << duration.count() << " us" << std::endl; 
@@ -405,7 +316,7 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
 void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* CombinedPads )
 {
   if(!vsig.size()) return;
-  std::cout << "This should not be working (Centre of Gravity)" << std::endl; //PW debugging
+
   //Root's fitting routines are often not thread safe, lock globally
   manalzer_global_mtx->lock();
   double time = vsig.begin()->t;
@@ -461,17 +372,12 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
       ff->SetParameter(0,peaky[i]);
       ff->SetParameter(1,peakx[i]);
       ff->SetParameter(2,padSigma);
-<<<<<<< Updated upstream
 
       start = std::chrono::high_resolution_clock::now();
       int r = hh->Fit(ff,"B0NQ");
       stop = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
       if( diagnostic ) htimefit->Fill(duration.count());
-=======
-      std::cout << ff << std::endl; // PW debugging
-      int r = hh->Fit(ff,"B0NQ","");
->>>>>>> Stashed changes
 #ifdef RESCUE_FIT
       bool stat=true;
 #endif
@@ -578,78 +484,6 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
   manalzer_global_mtx->unlock();
 }
 
-<<<<<<< Updated upstream
-=======
-// Legacy method, left in place for testing, but TH1 independent method should prob. be used.
-std::vector<std::pair<double, double> > Match::FindBlobs(TH1D *h, const std::vector<int> &cumulBins){
-  std::vector<std::pair<double, double> > blobs;
-  double blobwidth = 5.;
-  double minRMS = 2.;
-
-  int binmask = 4;
-  int minNbins = 7;
-
-  TAxis *ax = h->GetXaxis();
-  int firstbin = ax->GetFirst();
-  int lastbin = ax->GetLast();
-
-  double mean = 0.;
-  double rms = 0.;
-  Double_t stats[4];
-  std::cout << " Find Blobs" << std::endl; //PW debugging
-  h->GetStats(stats);
-  if(stats[0]){
-    mean = stats[2]/stats[0];
-    rms = sqrt(abs(stats[3]/stats[0] - mean*mean));
-  } else {
-    return blobs;
-  }
-  int maxbin = h->GetMaximumBin();
-  double maxpos = h->GetXaxis()->GetBinCenter(maxbin);
-  double max = h->GetMaximum();
-
-  // double rms = h->GetRMS(); // This is slower, as it contains a bunch of ifs and recomputes mean
-  // std::cout << "OOOOOOOOOOOOOO RMS: " << rms << " , mean: " << mean << std::endl;
-  if(rms < blobwidth && abs(maxpos-mean) < blobwidth){
-    if(rms > minRMS){
-      // std::cout << "OOOOOOOOOOOOOO rms ok" << std::endl;
-      blobs.emplace_back(maxpos, max);
-    } else {
-      // std::cout << "OOOOOOOOOOOOOO rms too small" << std::endl;
-    }
-  } else {
-    bool badmax = false;
-    if((lastbin < h->GetNbinsX()) && (maxbin == lastbin)){
-      badmax = (h->GetBinContent(lastbin+1) > max);
-    }
-    if((firstbin > 1) && (maxbin == firstbin)){
-      badmax = (h->GetBinContent(firstbin-1) > max);
-    }
-    if(!badmax){
-      blobs.emplace_back(maxpos, max);
-    }
-
-    int cutbin = maxbin-binmask;
-    std::vector<std::pair<double, double> > subblobs;
-    if(cutbin-firstbin > minNbins){
-      if(cumulBins[cutbin]-cumulBins[std::min(firstbin,0)] > padsNmin){
-	ax->SetRange(firstbin, cutbin);
-	subblobs = FindBlobs(h, cumulBins);
-	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
-      }
-    }
-    cutbin = maxbin+binmask;
-    if(lastbin-cutbin > minNbins){
-      if(cumulBins[lastbin]-cumulBins[cutbin] > padsNmin){
-	ax->SetRange(cutbin, lastbin);
-	subblobs = FindBlobs(h, cumulBins);
-	blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
-      }
-    }
-  }
-  return blobs;
-}
->>>>>>> Stashed changes
 
 // TH1-independent method to find peaks in pad charge distribution
 std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> &sigs,
@@ -680,10 +514,6 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
 
   double blobwidth = 5.;
   double minRMS = 2.;
-<<<<<<< Updated upstream
-=======
-  //std::cout << "Also find blobs? " << std::endl; //PW debugging
->>>>>>> Stashed changes
   int padmask = 4;
 
   double mean,rms;

@@ -99,27 +99,10 @@ int main(int argc, char** argv)
          std::cerr<<"[main]# AnaSettings "<<fname<<" doesn't exist, using default: "<<settings<<std::endl;
     }
    AnaSettings* ana_settings = new AnaSettings(settings.c_str());
-<<<<<<< Updated upstream
    std::cout<<"--------------------------------------------------"<<std::endl;
    cout<<"READ settings file"<<endl;
    ana_settings->Print();
    std::cout<<"--------------------------------------------------"<<std::endl;
-=======
-   ana_settings->Print(); //Original line PW
-   //cout<<"ana_settings are: "<<ana_settings<<endl; //PW
-   cout<<"settings are located here: "<<settings<<endl; //PW
-   cout<<"HERE"<<endl; //PW
-
-   Deconv d(settings);
-   d.SetPWBdelay(50.);
-   d.SetPedestalLength(0);
-   //d.SetTrace(true);
-   cout<<"--------------------------------------------------"<<endl;
-   cout<<"[main]# Deconv Settings"<<endl;
-   d.PrintADCsettings();
-   d.PrintPWBsettings();
-   cout<<"--------------------------------------------------"<<endl;
->>>>>>> Stashed changes
 
    finderChoice finder = adaptive;
    if( parser.count("finder") )
@@ -142,16 +125,7 @@ int main(int argc, char** argv)
             }
          else std::cerr<<"[main]# Unknown track finder mode \""<<cf<<"\", using adaptive"<<std::endl;
       }
-<<<<<<< Updated upstream
    std::cout<<"[main]# Using track finder: "<<finder<<std::endl;
-=======
-   cout<<"[main]# Using track finder: "<<finder<<endl;
-   
-   //Match m(settings);
-   Match m(ana_settings); //uncomment this PW
-   //   m.SetDiagnostic(false);
-   m.SetDiagnostic(true); //uncomment this PW
->>>>>>> Stashed changes
    
    double B=1.0;
    if( parser.count("Bfield") )
@@ -159,17 +133,7 @@ int main(int argc, char** argv)
          std::string Bfield = parser.retrieve<std::string>("Bfield");
          B = stod(Bfield);
       }
-<<<<<<< Updated upstream
    std::cout<<"[main]# Magnetic Field: "<<B<<" T"<<std::endl;
-=======
-   cout<<"[main]# Magnetic Field: "<<B<<" T"<<endl;
-
-   //Reco r(settings,B);
-   Reco r(ana_settings,B);
-
-   Reco rMC(ana_settings,B);
-   //Reco rMC(settings,B);
->>>>>>> Stashed changes
 
    bool draw = false;
    if( parser.count("draw") )
@@ -210,18 +174,11 @@ int main(int argc, char** argv)
    outname += basename(fname); // from fileutility.hh
    std::cout<<"[main]# saving output to: "<<outname<<std::endl;
 
-<<<<<<< Updated upstream
    ProcessEvents proc(ana_settings,B,outname);
    if( draw ) proc.SetDraw();
    proc.SetFinder(finder);
    if( verb )
       proc.SetVerboseLevel(2);
-=======
-   Utils u(outname,B,draw);
-   TObjString sett = ana_settings->GetSettingsString();
-   u.WriteSettings(&sett);
-   m.Setup(0); //Uncomment this PW
->>>>>>> Stashed changes
 
    for( int i=0; i<Nevents; ++i )
       {
@@ -237,100 +194,14 @@ int main(int argc, char** argv)
 
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
-<<<<<<< Updated upstream
-=======
-         cout<<"[main]# "<<i<<"\tMCvertex: "; 
-         mcvtx->Print();
-
-         double res = kUnknown;
-
-         if( sv > 0 ) 
-            { 
-               res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
-               u.VertexPlots(&Vertex);
-            }
-         else res = u.PointResolution(r.GetHelices(),mcvtx);
-
-         cout<<"[main]# "<<i<<"\tResolution: ";        
-         auto prec = cout.precision();
-         cout.precision(2);
-         cout<<res<<" mm"<<endl;
-         cout.precision(prec);
-         // cout<<"[main]# "<<i<<"\tUsedHelixPlots: "
-         //     <<Vertex.GetHelixStack()->GetEntriesFast()<<endl;
-         u.UsedHelixPlots( Vertex.GetHelixStack() );
-         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-         //fout<<res<<endl;
->>>>>>> Stashed changes
 
          proc.ProcessVertex(mcvtx);
          
          if( tGarf )
             { 
                tGarf->GetEntry(i);
-<<<<<<< Updated upstream
                proc.Finish(garfpp_hits, aw_hits);
                if( enableMC ) proc.ProcessMonteCarlo(aw_hits,mcvtx);
-=======
-               
-               if( draw )
-                  {
-                     u.Display(garfpp_hits, aw_hits, r.GetPoints(), r.GetTracks(), r.GetHelices());
-                     if(finder == neural) 
-                        u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
-                  }
-               
-               if( enableMC )
-                  {
-                     //================================================================
-                     // MC hits reco
-                     cout<<"[main]# "<<i<<"\tMC reco"<<endl;
-                    
-                     rMC.AddMChits( aw_hits );
-                     cout<<"[main]# "<<i<<"\tMC spacepoints: "<<rMC.GetNumberOfPoints()<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     // find tracks
-                     int ntracksMC = rMC.FindTracks(finder);
-                     cout<<"[main]# "<<i<<"\tMCpattrec: "<<ntracksMC<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     if(finder == neural) 
-                        u.DebugNeuralNet( (NeuralFinder*) rMC.GetTracksFinder() );
-                     
-                     cout<<"[main]# "<<i<<"\tMC tracks: "<<rMC.GetNumberOfTracks()<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     rMC.SetTrace( true );
-                     nlin = rMC.FitLines();
-                     cout<<"[main]# "<<i<<"\tline: "<<nlin<<endl;
-                     nhel = rMC.FitHelix();
-                     cout<<"[main]# "<<i<<"\tMC helix: "<<nhel<<endl;
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     rMC.SetTrace( false );
-                     
-                     TFitVertex MCVertex(i);
-                     int svMC = r.RecVertex(&MCVertex);
-                     if( svMC > 0 ) MCVertex.Print();
-                     
-                     res = u.PointResolution(rMC.GetHelices(),mcvtx);
-                     cout<<"[main]# "<<i<<"\tMC Resolution: ";
-                     prec = cout.precision();
-                     cout.precision(2);
-                     cout<<res<<" mm"<<endl;
-                     cout.precision(prec);
-                     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                     
-                     rMC.Reset();
-                  }
-            }
-         else if( draw )
-            {
-               u.Display(r.GetPoints(), r.GetTracks(), r.GetHelices());
-               if(finder == neural) 
-                  u.DisplayNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
->>>>>>> Stashed changes
             }
          else
             proc.Finish();  
