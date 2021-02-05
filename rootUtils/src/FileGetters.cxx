@@ -70,8 +70,8 @@ TFile *Get_File(Int_t run_number, Bool_t die)
     //If the file isnt found locally... find it remotely on EOS
     f = TFile::Open(EOS_name);
   }
-  if (!f->IsOpen())
-  //if(f==NULL)
+  //if (!f->IsOpen())
+  if(f==NULL)
   {
     if (die)
     {
