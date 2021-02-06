@@ -20,7 +20,11 @@ TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
    GitDate(r.GitDate), 
    GitHash(r.GitHash),
    GitHashLong(r.GitHashLong),
-   GitDiff(r.GitDiff)
+   GitDiff(r.GitDiff),
+   BoolValue(r.BoolValue),
+   IntValue(r.IntValue),
+   DoubleValue(r.DoubleValue),
+   StringValue(r.StringValue)
 {
     StartRunUnixTime = r.StartRunUnixTime;
     StopRunUnixTime = r.StopRunUnixTime;
@@ -29,6 +33,8 @@ TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
     ProgramPathFull = r.ProgramPathFull;
     Duration = r.Duration;
     AnalysisHost = r.AnalysisHost;
+
+    
 }
 
 TAnalysisReport TAnalysisReport::operator=(const TAnalysisReport& r)
@@ -126,23 +132,8 @@ TA2AnalysisReport::TA2AnalysisReport(const TA2AnalysisReport& r): TAnalysisRepor
     nSVDEvents = r.nSVDEvents;
     LastVF48TimeStamp = r.LastVF48TimeStamp;
 
-    SVD_N_RawHits_Mode = r.SVD_N_RawHits_Mode;
-    SVD_N_RawHits_Mean = r.SVD_N_RawHits_Mean;
-    SVD_P_RawHits_Mode = r.SVD_P_RawHits_Mode;
-    SVD_P_RawHits_Mean = r.SVD_P_RawHits_Mean;
-    SVD_Hits_Mode      = r.SVD_Hits_Mode;
-    SVD_Hits_Mean      = r.SVD_Hits_Mean;
-    SVD_Tracks_Mode    = r.SVD_Tracks_Mode;
-    SVD_Tracks_Mean    = r.SVD_Tracks_Mean;
-
     SVD_Verts_Sum      = r.SVD_Verts_Sum;
     SVD_PassCut_Sum    = r.SVD_PassCut_Sum;
-
-    SVD_Verts_Mean     = r.SVD_Verts_Mean;
-    SVD_Vert_Rate      = r.SVD_Vert_Rate;
-    
-    SVD_PassCut_Mean   = r.SVD_PassCut_Mean;
-    SVD_PassCut_Rate   = r.SVD_PassCut_Rate;
 
 }
 
@@ -202,19 +193,20 @@ void TA2AnalysisReport::FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t
 }
 void TA2AnalysisReport::Flush()
 {
-    SVD_N_RawHits_Mode = SVD_N_RawHits->GetMaximumBin() - 1;
-    SVD_N_RawHits_Mean = SVD_N_RawHits->GetMean();
-    SVD_P_RawHits_Mode = SVD_P_RawHits->GetMaximumBin() - 1;
-    SVD_P_RawHits_Mean = SVD_P_RawHits->GetMean();
-    SVD_Hits_Mode      = SVD_Hits->GetMaximumBin() - 1;
-    SVD_Hits_Mean      = SVD_Hits->GetMean();
-    SVD_Tracks_Mode    = SVD_Tracks->GetMaximumBin() - 1;
-    SVD_Tracks_Mean    = SVD_Tracks->GetMean();
-    SVD_Verts_Mean     = SVD_Verts->GetMean();
-    SVD_Vert_Rate      = SVD_Verts_Sum / ( (double)(GetRunStopTime()-GetRunStartTime()));
-    SVD_PassCut_Mean   = SVD_Pass->GetMean();
-    SVD_PassCut_Rate   = SVD_PassCut_Sum/ ( (double)(GetRunStopTime()-GetRunStartTime()));
-
+    IntValue["SVD_N_RawHits_Mode"]    = SVD_N_RawHits->GetMaximumBin() - 1;
+    DoubleValue["SVD_N_RawHits_Mean"] = SVD_N_RawHits->GetMean();
+    IntValue["SVD_P_RawHits_Mode"]    = SVD_P_RawHits->GetMaximumBin() - 1;
+    DoubleValue["SVD_P_RawHits_Mean"] = SVD_P_RawHits->GetMean();
+    IntValue["SVD_Hits_Mode"]         = SVD_Hits->GetMaximumBin() - 1;
+    DoubleValue["SVD_Hits_Mean"]      = SVD_Hits->GetMean();
+    IntValue["SVD_Tracks_Mode"]       = SVD_Tracks->GetMaximumBin() - 1;
+    DoubleValue["SVD_Tracks_Mean"]    = SVD_Tracks->GetMean();
+    DoubleValue["SVD_Verts_Mean"]     = SVD_Verts->GetMean();
+    IntValue["SVD_Verts_Sum"]         = SVD_Verts_Sum;
+    DoubleValue["SVD_Vert_Rate"]      = SVD_Verts_Sum / ( (double)(GetRunStopTime()-GetRunStartTime()));
+    DoubleValue["SVD_PassCut_Mean"]   = SVD_Pass->GetMean();
+    DoubleValue["SVD_PassCut_Sum"]    = SVD_PassCut_Sum;
+    DoubleValue["SVD_PassCut_Rate"]   = SVD_PassCut_Sum/ ( (double)(GetRunStopTime()-GetRunStartTime()));
 }
 
 void TA2AnalysisReport::Print()
@@ -226,30 +218,30 @@ void TA2AnalysisReport::Print()
     {
         std::cout <<"Number of SVD Events:\t"<<nSVDEvents<<std::endl;
         std::cout <<"               \tMode\tMean"<<std::endl;
-        std::cout <<"SVD #RawNHits: \t"<<SVD_N_RawHits_Mode<<"\t"<<SVD_N_RawHits_Mean<<std::endl;
-        std::cout <<"SVD #RawPHits: \t"<<SVD_P_RawHits_Mode<<"\t"<<SVD_P_RawHits_Mean<<std::endl;
+        std::cout <<"SVD #RawNHits: \t"<<IntValue["SVD_N_RawHits_Mode"]<<"\t"<<DoubleValue["SVD_N_RawHits_Mean"]<<std::endl;
+        std::cout <<"SVD #RawPHits: \t"<<IntValue["SVD_P_RawHits_Mode"]<<"\t"<<DoubleValue["SVD_P_RawHits_Mean"]<<std::endl;
         //std::cout <<"Mean SVD #RawHits: \t" <<SVD_RawHits->GetMode()  <<"\t"<<SVD_RawHits->GetMean()  <<std::endl;
-        std::cout <<"SVD #Hits: \t"    <<SVD_Hits_Mode     <<"\t"<<SVD_Hits_Mean     <<std::endl;
-        std::cout <<"SVD #Tracks:\t"   <<SVD_Tracks_Mode   <<"\t"<<SVD_Tracks_Mean   <<std::endl;
+        std::cout <<"SVD #Hits: \t"    <<IntValue["SVD_Hits_Mode"]     <<"\t"<<DoubleValue["SVD_Hits_Mean"]     <<std::endl;
+        std::cout <<"SVD #Tracks:\t"   <<IntValue["SVD_Tracks_Mode"]   <<"\t"<<DoubleValue["SVD_Tracks_Mean"]   <<std::endl;
         std::cout<<"----------------Sum-----Mean---------"<<std::endl;
         //std::cout<<"SVD Events:\t"<< SVD_Verts
         std::cout <<"SVD #Events:\t"   <<nSVDEvents<<std::endl;
-        std::cout <<"SVD #Verts:\t"    <<SVD_Verts_Sum     <<"\t"<<SVD_Verts_Mean;
+        std::cout <<"SVD #Verts:\t"    <<SVD_Verts_Sum     <<"\t"<<DoubleValue["SVD_Verts_Mean"];
         if (GetRunStopTime()-GetRunStartTime()>0)
         {
-            if (SVD_Vert_Rate<0.1)
-                printf("\t~(%.1fmHz)",SVD_Vert_Rate*1000.);
+            if (DoubleValue["SVD_Vert_Rate"]<0.1)
+                printf("\t~(%.1fmHz)",DoubleValue["SVD_Vert_Rate"]*1000.);
             else
-                printf("\t~(%.1fHz)",SVD_Vert_Rate);
+                printf("\t~(%.1fHz)",DoubleValue["SVD_Vert_Rate"]);
         }
         std::cout<<std::endl;
-        std::cout <<"SVD #Pass cuts:\t"<<SVD_PassCut_Sum         <<"\t"<<SVD_PassCut_Mean;
+        std::cout <<"SVD #Pass cuts:\t"<<SVD_PassCut_Sum         <<"\t"<<DoubleValue["SVD_PassCut_Mean"];
         if (GetRunStopTime()-GetRunStartTime()>0)
         {
-            if (SVD_PassCut_Rate<0.1)
-                printf("\t~(%.1fmHz)",SVD_PassCut_Rate*1000.);
+            if (DoubleValue["SVD_PassCut_Rate"]<0.1)
+                printf("\t~(%.1fmHz)",DoubleValue["SVD_PassCut_Rate"]*1000.);
             else
-                printf("\t~(%.1fHz)",SVD_PassCut_Rate);
+                printf("\t~(%.1fHz)",DoubleValue["SVD_PassCut_Rate"]);
         }
         std::cout<<std::endl;
         std::cout <<"Time of Last VF48 Event: "<<LastVF48TimeStamp<<" s"<<std::endl;
