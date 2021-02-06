@@ -9,6 +9,7 @@
 #include <unistd.h> // readlink()
 #include <ctime>
 #include "TH1D.h"
+#include <map>
 
 class TAnalysisReport: public TObject
 {
@@ -33,6 +34,13 @@ private:
     const std::string GitHashLong;
     const std::string GitDiff;
 public:
+    //General containers for child classes to store data
+    //Its not super fast, but these only get called at Flush and Print (once per run)
+    std::map<std::string, bool> BoolValue;
+    std::map<std::string, int> IntValue;
+    std::map<std::string, double> DoubleValue;
+    std::map<std::string, std::string> StringValue;
+
     TAnalysisReport();
     TAnalysisReport(const TAnalysisReport& r);
     TAnalysisReport operator=(const TAnalysisReport& r);
@@ -166,32 +174,17 @@ Git diff (shortstat): 3 files changed, 38 insertions(+), 2 deletions(-)
 
 
 #ifdef BUILD_A2
+//ALPHA 2
 class TA2AnalysisReport: public TAnalysisReport
 {
 private:
-    //ALPHA 2
+
+    // These are fast counters... do not use IntValue and DoubleValue maps for 
+    // these as we want to use these every event (not just at the end of run)
     int nSVDEvents=0;
     double LastVF48TimeStamp;
-
-    int SVD_N_RawHits_Mode;
-    double SVD_N_RawHits_Mean;
-    int SVD_P_RawHits_Mode;
-    double SVD_P_RawHits_Mean;
-    int SVD_Hits_Mode;
-    double SVD_Hits_Mean;
-    int SVD_Tracks_Mode;
-    double SVD_Tracks_Mean;
-
     int SVD_Verts_Sum;
     int SVD_PassCut_Sum;
-
-    double SVD_Verts_Mean;
-    double SVD_Vert_Rate;
-    
-    double SVD_PassCut_Mean;
-    double SVD_PassCut_Rate;
-
-
 
  public:
     TA2AnalysisReport();
