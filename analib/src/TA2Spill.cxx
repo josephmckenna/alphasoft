@@ -59,7 +59,10 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
-   fSeqName    = SeqNames.at(fSequenceNum);
+   if ( fSequenceNum < 0 )
+      fSeqName = "Sequencer Unknown";
+   else
+      fSeqName    = SeqNames.at(fSequenceNum);
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
