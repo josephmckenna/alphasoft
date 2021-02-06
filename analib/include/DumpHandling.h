@@ -683,12 +683,17 @@ public:
             }
             if (pair->StartDumpMarker->fRunTime<0)
             {
-
-               error_queue.push_back(new SpillType(fRunNo,
+               if (pair->StopDumpMarker)
+                  error_queue.push_back(new SpillType(fRunNo,
                                                    pair->StartDumpMarker->MidasTime,
                                                    "XXXX %s has no start time!... deleting %s start dump",
-                                                   ordered_stops.front()->Description.c_str(),
-                                                   ordered_starts.front()->Description.c_str()));
+                                                   pair->StartDumpMarker->Description.c_str(),
+                                                   pair->StopDumpMarker->Description.c_str()));
+               else
+                  error_queue.push_back(new SpillType(fRunNo,
+                                                   pair->StartDumpMarker->MidasTime,
+                                                   "XXXX %s has no start time!... It also has not stop dump marker",
+                                                   pair->StartDumpMarker->Description.c_str()));
                //ordered_starts.pop_front();
                //ordered_stops.pop_front();
                //return AddStopTime(midas_time,t);
