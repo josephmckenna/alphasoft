@@ -1,10 +1,10 @@
 #include "AnalysisReportGetters.h"
 
 #ifdef BUILD_A2
-TA2AnalysisReport Get_A2Analysis_Report(int runNumber)
+TA2AnalysisReport Get_A2Analysis_Report(int runNumber, bool force)
 {
     TTreeReader* t=Get_TA2AnalysisReport_Tree(runNumber);
-    if (t->GetEntries()>1)
+    if (t->GetEntries(force)>1)
     {
         std::cout<<"Warning! More than one analysis report in run?!?! What?"<<std::endl;
     }
