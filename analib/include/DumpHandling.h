@@ -636,7 +636,7 @@ public:
       if (ordered_stops.front()->MidasTime > midas_time && ordered_stops.front()->MidasTime!=0)
       {
          error_queue.push_back(new SpillType(fRunNo,midas_time,"Error, bad unix time of dump... Aborted sequence detected? Skipping dump"));
-         ordered_starts.front()->Print();
+         ordered_stops.front()->Print();
 
          std::cout<<ordered_stops.front()->MidasTime <<" > "<< midas_time <<std::endl;
          ordered_stops.pop_front();
