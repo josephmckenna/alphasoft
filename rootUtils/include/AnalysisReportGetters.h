@@ -5,7 +5,7 @@
 #include "TAnalysisReport.h"
 #include "TreeGetters.h"
 #ifdef BUILD_A2
-TA2AnalysisReport Get_A2Analysis_Report(int runNumber);
+TA2AnalysisReport Get_A2Analysis_Report(int runNumber, bool force = false);
 
 #endif
 
