@@ -1,12 +1,12 @@
 #include "TAPlot.h"
 
 ClassImp(TAPlot);
-
 //Default Constructor
 //TAPlot::TAPlot(Bool_t ApplyCuts)//, Int_t MVAMode)
 TAPlot::TAPlot(bool zerotime):
    ZeroTimeAxis(zerotime)
 {
+  
    ObjectConstructionTime = std::chrono::high_resolution_clock::now();
    DataLoadedTime = std::chrono::high_resolution_clock::from_time_t(0);
    Nbin=100; 

@@ -242,53 +242,53 @@ void TA2Plot::SetUpHistograms()
       TMax=GetLastTmax();
    }
 
-   AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
+   AddHistogram("zvtx",new TH1D((GetTAPlotTitle() + "_zvtx").c_str(), "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
+   TH1D* hr = new TH1D((GetTAPlotTitle() + "_rvtx").c_str(), "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
    hr->SetMinimum(0);
    AddHistogram("rvtx",hr);
 
-   TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
+   TH1D* hphi = new TH1D((GetTAPlotTitle() + "_phivtx").c_str(), "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
    hphi->SetMinimum(0);
    AddHistogram("phivtx",hphi);
 
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
+   TH2D* hxy = new TH2D((GetTAPlotTitle() + "_xyvtx").c_str(), "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
    AddHistogram("xyvtx",hxy);
 
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
+   TH2D* hzr = new TH2D((GetTAPlotTitle() + "_zrvtx").c_str(), "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
    AddHistogram("zrvtx",hzr);
 
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
+   TH2D* hzphi = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
    AddHistogram("zphivtx",hzphi);
 
    if (GetMaxDumpLength()<SCALECUT) 
    {
       //SIS channels:
-      TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
+      TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
       triggers->SetMarkerColor(kRed);
       triggers->SetLineColor(kRed);
       triggers->SetMinimum(0);
       AddHistogram("tIO32_nobusy",triggers);
    
-      TH1D* read_triggers=new TH1D("tIO32", "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
+      TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
       read_triggers->SetMarkerColor(kViolet);
       read_triggers->SetLineColor(kViolet);
       read_triggers->SetMinimum(0);
       AddHistogram("tIO32",read_triggers);
 
-      TH1D* atom_or=new TH1D("tAtomOR", "t;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
+      TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), "t;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
       atom_or->SetMarkerColor(kGreen);
       atom_or->SetLineColor(kGreen);
       atom_or->SetMinimum(0);
       AddHistogram("tAtomOR",atom_or);
 
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
+      TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), "t Vertex;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
       ht->SetLineColor(kMagenta);
       ht->SetMarkerColor(kMagenta);
       ht->SetMinimum(0);
       AddHistogram("tvtx",ht);
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*1000., TMax*1000.);
+      TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), "Z-T Vertex;z [cm];t [ms]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*1000., TMax*1000.);
       AddHistogram("ztvtx",hzt);
 
       //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
@@ -300,31 +300,31 @@ void TA2Plot::SetUpHistograms()
    else
    {
       //SIS channels:
-      TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [s];events", GetNBins(), TMin, TMax);
+      TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
       triggers->SetMarkerColor(kRed);
       triggers->SetLineColor(kRed);
       triggers->SetMinimum(0);
       AddHistogram("tIO32_nobusy",triggers);
    
-      TH1D* read_triggers=new TH1D("tIO32", "t;t [s];events", GetNBins(), TMin, TMax);
+      TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
       read_triggers->SetMarkerColor(kViolet);
       read_triggers->SetLineColor(kViolet);
       read_triggers->SetMinimum(0);
       AddHistogram("tIO32",read_triggers);
 
-      TH1D* atom_or=new TH1D("tAtomOR", "t;t [s];events", GetNBins(), TMin, TMax);
+      TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
       atom_or->SetMarkerColor(kGreen);
       atom_or->SetLineColor(kGreen);
       atom_or->SetMinimum(0);
       AddHistogram("tAtomOR",atom_or);
    
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", GetNBins(), TMin, TMax); 
+      TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), "t Vertex;t [s];events", GetNBins(), TMin, TMax); 
       ht->SetLineColor(kMagenta);
       ht->SetMarkerColor(kMagenta);
       ht->SetMinimum(0);
       AddHistogram("tvtx",ht);
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
+      TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
       AddHistogram("ztvtx",hzt);
 
       //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
@@ -458,11 +458,12 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 {
    
-   
+   SetTAPlotTitle(Name);
    std::cout<<"TAPlot Processing time : ~" << GetApproximateProcessingTime() <<"s"<<std::endl;
+   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    FillHisto(ApplyCuts,MVAMode);
 
-   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
+
    //Scale factor to scale down to ms:
    if (GetMaxDumpLength()<SCALECUT) SetTimeFactor(1000.);
    cVTX->Divide(4, 2);

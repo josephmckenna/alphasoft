@@ -204,6 +204,9 @@ class TAPlot: public TObject
 {
 
 private:
+   //Used to give the TCanvas a title
+   std::string title;
+   
    int MVAMode; //Default 0;
    int Nbin; // 100;
    int DrawStyle; //Switch between colour modes
@@ -248,6 +251,15 @@ private:
 public:
    //Use a time axis that counts from Zero of a dump window (default true)
    const bool ZeroTimeAxis;
+
+   void SetTAPlotTitle(const std::string& _title)
+   {
+      title=_title;
+   }
+   std::string GetTAPlotTitle()
+   {
+      return title;
+   }
 
    void SetGEMChannel(const std::string& name, int ArrayEntry, std::string title="")
    {
