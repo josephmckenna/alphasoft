@@ -192,6 +192,14 @@ private:
     TA2AnalysisReport operator=(const TA2AnalysisReport& r);
     TA2AnalysisReport(int runno);
     virtual ~TA2AnalysisReport();
+    int GetPassCutSum()
+    {
+        return SVD_PassCut_Sum;
+    }
+    int GetVertexSum()
+    {
+        return SVD_Verts_Sum;
+    }
     void FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t& raw_hits, const Int_t& hits, const Int_t& tracks, const Int_t& verts, int pass, double time);
     void Flush();
 
