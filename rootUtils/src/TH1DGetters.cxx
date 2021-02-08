@@ -6,7 +6,7 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   double official_time;
-  TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
+  TTree* t=Get_Chrono_Tree(runNumber,{Chronoboard,ChronoChannel},official_time);
   TChrono_Event* e=new TChrono_Event();
   TString name=Get_Chrono_Name(runNumber,Chronoboard,ChronoChannel);
   TString Title="R";
@@ -66,7 +66,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 {
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,Chronoboard,ChronoChannel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{Chronoboard,ChronoChannel},official_time);
    TChrono_Event* e=new TChrono_Event();
    TString name=Get_Chrono_Name(runNumber,Chronoboard,ChronoChannel);
    TString Title="Chrono Time between Events - Board:";
@@ -206,16 +206,16 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills)
+std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
    for (auto & spill: spills)
    {
-      if (spill->ScalerData)
+      if (spill.ScalerData)
       {
-         tmin.push_back(spill->ScalerData->StartTime);
-         tmax.push_back(spill->ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->StartTime);
+         tmax.push_back(spill.ScalerData->StopTime);
       }
       else
       {
@@ -228,7 +228,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 #ifdef BUILD_A2
 std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
-   std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber, description, repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
    return Get_SIS( runNumber, SIS_Channel, spills);
 }
 #endif

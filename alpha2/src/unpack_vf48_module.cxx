@@ -32,6 +32,7 @@
 #include "midasio.h"
 
 #include "TSettings.h"
+#include "ALPHA2SettingsDatabase.h"
 
 #include "SiMod.h"
 #include "UnpackVF48.h"
@@ -96,9 +97,7 @@ public:
          printf("UnpackModule::ctor!\n");
       vfu = new UnpackVF48();
       // load the sqlite3 db
-      char dbName[255]; 
-      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      TSettings* SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
       for (int m=0; m<NUM_VF48_MODULES; m++)
       {
          gSettingsFrequencies[m]= SettingsDB->GetVF48Frequency( runinfo->fRunNo, m);
@@ -278,9 +277,6 @@ public:
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
-#endif
 
       event->FindAllBanks();
       VF48DataFlow* dataflow = NULL;

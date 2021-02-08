@@ -605,7 +605,7 @@ void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double>
    for (size_t i=0; i<hh.size(); i++)
       hh[i]->Draw();
 }
-void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill*> spills)
+void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,spills);
    for (size_t i=0; i<hh.size(); i++)
@@ -613,7 +613,7 @@ void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spil
 }
 void Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
-   std::vector<TA2Spill*> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
    
    std::vector<TH1D*> hh=Get_SIS(runNumber,SIS_Channel,s);
    for (size_t i=0; i<hh.size(); i++)
@@ -631,16 +631,16 @@ void Plot_SVD(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
    c->Draw();
 }
 
-void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills)
+void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
    for (auto & spill: spills)
    {
-      if (spill->ScalerData)
+      if (spill.ScalerData)
       {
-         tmin.push_back(spill->ScalerData->StartTime);
-         tmax.push_back(spill->ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->StartTime);
+         tmax.push_back(spill.ScalerData->StopTime);
       }
       else
       {
@@ -652,7 +652,7 @@ void Plot_SVD(Int_t runNumber, std::vector<TA2Spill*> spills)
 
 void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition)
 {
-   std::vector<TA2Spill*> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
    return Plot_SVD(runNumber,s);
 }
 #endif

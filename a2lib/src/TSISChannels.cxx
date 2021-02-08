@@ -12,20 +12,14 @@
 
 ClassImp(TSISChannels);
 
-char * AGRELEASE = getenv ("AGRELEASE");
-
 TSISChannels::TSISChannels()
 {
-   char dbName[255]; 
-   sprintf(dbName,"%s/a2lib/main.db",AGRELEASE);
-   gSettingsDB = new TSettings(dbName); 
+   gSettingsDB = ALPHA2SettingsDatabase::GetTSettings(); 
 }
 
 TSISChannels::TSISChannels( Int_t run_number )
 {
-   char dbName[255]; 
-   sprintf(dbName,"%s/a2lib/main.db",AGRELEASE);
-   gSettingsDB = new TSettings(dbName); 
+   gSettingsDB = ALPHA2SettingsDatabase::GetTSettings(); 
    _run_number = run_number;
    _io32=GetChannel("IO32_TRIG",run_number);
    _io32_nobusy=GetChannel("IO32_TRIG_NOBUSY",run_number);
