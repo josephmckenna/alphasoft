@@ -94,13 +94,18 @@ set(SIM_SCRIPTS
 foreach(_script ${SIM_SCRIPTS})
   configure_file(
     ${PROJECT_SOURCE_DIR}/${_script}
-    ${PROJECT_BINARY_DIR}/${_script}
+    ${CMAKE_INSTALL_PREFIX}/simulation/${_script}
     COPYONLY
     )
 endforeach()
 
-##----------------------------------------------------------------------------
-## Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
-##
-##install(TARGETS rTPCsim DESTINATION bin)
+#----------------------------------------------------------------------------
+# Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
+#
+install(TARGETS rTPCsim DESTINATION simulation)
+install(TARGETS G4out DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh)
+install(FILES ${HEADER_FILES} DESTINATION include)
 
