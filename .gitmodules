@@ -4,5 +4,7 @@
 [submodule "agana"]
 	path = agana
 	url = https://bitbucket.org/expalpha/agana.git
-
+[submodule "feGEM"]
+	path = feGEM
+	url = https://github.com/josephmckenna/feGEM.git
 

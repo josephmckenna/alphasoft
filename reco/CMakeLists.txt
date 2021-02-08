@@ -31,16 +31,16 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
 link_libraries(${ROOT_LIBRARIES} XMLParser XMLIO XMLParser XMLIO Minuit2)
 
 # Include directories
-include_directories($ENV{AGRELEASE}/agana)
-include_directories($ENV{AGRELEASE}/rootUtils/include)
-include_directories($ENV{AGRELEASE}/a2lib/include)
+include_directories(../agana)
+include_directories(../rootUtils/include)
+include_directories(../a2lib/include)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/ana/include)
-include_directories($ENV{AGRELEASE}/simulation/geant4/include)
+include_directories(../recolib/include)
+include_directories(../analib)
+include_directories(../analib/include)
+include_directories(../ana/include)
+include_directories(../simulation/geant4/include)
 
 
 find_package(ROOTANA)
@@ -49,7 +49,7 @@ include_directories(include ${ROOTANA_INCLUDE_DIRS})
 
 
 include(${ROOT_USE_FILE})
-ROOT_GENERATE_DICTIONARY(G4inDict $ENV{AGRELEASE}/simulation/geant4/include/TWaveform.hh $ENV{AGRELEASE}/simulation/geant4/include/TMChit.hh LINKDEF $ENV{AGRELEASE}/simulation/geant4/include/G4outLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G4inDict ../simulation/geant4/include/TWaveform.hh ../simulation/geant4/include/TMChit.hh LINKDEF ../simulation/geant4/include/G4outLinkDef.hh)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
