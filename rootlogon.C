@@ -43,6 +43,12 @@
   if(s==0) cout<<"... ok"<<endl;
 
 
+  libname="libG4out.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
+
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
   //gStyle->SetPalette(kAurora);
