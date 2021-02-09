@@ -108,29 +108,29 @@ double TStripPed::GetMean(const double &_min, const double &_max)
    if (start<0)
       start=0;
    double x=GetX(start);
-   printf("GetMeanDataVector: min = %f, \t max = %f, \t start = %d, \t stop = %d, \t x_min = %f, \t x_max = %f \n",_min,_max,start,stop,GetX(start),GetX(stop));
-   printf("GetMeanDataHistogram: min = %f, \t max = %f, \t start = %d, \t stop = %d, \t x_min = %f, \t x_max = %f \n",histo1->GetXaxis()->GetXmin(),histo1->GetXaxis()->GetXmax(),histo1->GetMinimumBin(),histo1->GetMaximumBin(),histo1->GetMinimum(),histo1->GetMaximum());
+   //printf("GetMeanDataVector: min = %f, \t max = %f, \t start = %d, \t stop = %d, \t x_min = %f, \t x_max = %f \n",_min,_max,start,stop,GetX(start),GetX(stop));
+   //printf("GetMeanDataHistogram: min = %f, \t max = %f, \t start = %d, \t stop = %d, \t x_min = %f, \t x_max = %f \n",histo1->GetXaxis()->GetXmin(),histo1->GetXaxis()->GetXmax(),histo1->GetMinimumBin(),histo1->GetMaximumBin(),histo1->GetMinimum(),histo1->GetMaximum());
    //x += strip_bin_width/2;
    //Changed from < to <=
    for (int i=start; i<=stop; i++)
    {
       
       const double count=(double)(*histo)[i];
-      printf("bin:%d\tx:%f\t%f\n",i,x,count);
+      //printf("bin:%d\tx:%f\t%f\n",i,x,count);
       counts+=count;
       mean+=x*(double)count;
       x+=strip_bin_width;
    }
-   histo1->Print("all");
+   //histo1->Print("all");
    double output = mean/(double)counts;
    double histooutput = histo1->GetMean();
-   printf("Counts Before: \t %d, \t %f \n", counts, histo1->Integral());
+   //printf("Counts Before: \t %d, \t %f \n", counts, histo1->Integral());
    histo1->GetXaxis()->SetRangeUser(_min, _max);
    double histooutputafterfilter = histo1->GetMean();
-   printf("Counts After: \t %d, \t %f \n", counts, histo1->Integral());
+   //printf("Counts After: \t %d, \t %f \n", counts, histo1->Integral());
    histo1->GetXaxis()->SetRangeUser(0, 0);
    double histooutputafterreset = histo1->GetMean();
-   printf("Mean: \t %f,\t %f,\t %f,\t %f,\n", output, histooutput, histooutputafterfilter, histooutputafterreset);
+   //printf("Mean: \t %f,\t %f,\t %f,\t %f,\n", output, histooutput, histooutputafterfilter, histooutputafterreset);
 
    return output;
 
@@ -215,7 +215,7 @@ double TStripPed::GetRAWStdev(const double& mean, int min, int max)
    f3->Close();*/
 
    double histooutputafterreset = histo1->GetStdDev();
-   printf("RMS: \t %f,\t %f,\t %f,\t %f,\n", output, histooutput, histooutputafterfilter, histooutputafterreset);
+   //printf("RMS: \t %f,\t %f,\t %f,\t %f,\n", output, histooutput, histooutputafterfilter, histooutputafterreset);
 
    /*int argc = 1;
    char** argv;
@@ -256,7 +256,7 @@ double TStripPed::GetRMS(const double& mean,const double& _min, const double& _m
    double histooutputafterfilter = histo1->GetRMS();
    histo1->GetXaxis()->SetRangeUser(0, 0);
    double histooutputafterreset = histo1->GetRMS();
-   printf("\n\nRMS: \t %f,\t %f,\t %f,\t %f,\t", output, histooutput, histooutputafterfilter, histooutputafterreset);
+   //printf("\n\nRMS: \t %f,\t %f,\t %f,\t %f,\t", output, histooutput, histooutputafterfilter, histooutputafterreset);
    return output;
    //return sqrt(RMS/(double)counts);
 
@@ -309,24 +309,24 @@ printf("stripMean4:%f\n",stripMean);
 
 
 //   stripMeanSubRMS=GetRAWStdev(rawADCMean,min,max);
-   printf("Mins: \t %f,\t %f,,\t %f,\n", min, max, histo1->GetMean());
+   //printf("Mins: \t %f,\t %f,,\t %f,\n", min, max, histo1->GetMean());
 
    //printf("stripMeanSubRMS:%f\tStripRMSsAfterFilter:%f\n",stripMeanSubRMS,StripRMSsAfterFilter);
    //printf("Histo Mean:%f\t Histo RMS:%f\t Histo STDDEV:%f\n",histo1->GetMean(),histo1->GetRMS(), histo1->GetStdDev());
-   printf("\n\nMean difference: %f\t STDDEV/RMS difference: %f", stripMean - histo1->GetMean(), initialRMS - histo1->GetStdDev());
+   //printf("\n\nMean difference: %f\t STDDEV/RMS difference: %f", stripMean - histo1->GetMean(), initialRMS - histo1->GetStdDev());
    histo1->GetXaxis()->SetRangeUser(min, max);
    //printf("Histo Mean:%f\t Histo RMS:%f\t Histo STDDEV:%f\n",histo1->GetMean(),histo1->GetRMS(), histo1->GetStdDev());
-   printf("\nMean difference: %f\t STDDEV/RMS difference: %f\n\n", stripMeanSubRMS - histo1->GetMean(), StripRMSsAfterFilter - histo1->GetStdDev());
+   //printf("\nMean difference: %f\t STDDEV/RMS difference: %f\n\n", stripMeanSubRMS - histo1->GetMean(), StripRMSsAfterFilter - histo1->GetStdDev());
    //histo1->GetXaxis()->SetRangeUser(0, 0);
    
    Double_t givenMean = stripMeanSubRMS;
    Double_t histomean = histo1->GetMean();
 
-   if((givenMean - histomean) > 0.001)
+   /*if((givenMean - histomean) > 0.001)
    {
       histo1->GetXaxis()->SetRangeUser(0, 0);
       std::string name1(histo1->GetName());
-      printf("Error in the means. Printing data for debug. Histo: %s", name1.c_str());
+      //printf("Error in the means. Printing data for debug. Histo: %s", name1.c_str());
       TFile *f1 = new TFile(name1.append("HistoBefore.root").c_str(),"UPDATE");
       f1->WriteTObject(histo1);
       f1->Close();
@@ -337,7 +337,7 @@ printf("stripMean4:%f\n",stripMean);
       f2->Close();
 
       histo1->GetXaxis()->SetRangeUser(0, 0);
-   }
+   }*/
    bool usingOldMethod = true;  
    if(usingOldMethod)
    {
