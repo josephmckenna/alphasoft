@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/alpha2/alphaStrips.exe",
+            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
+            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz"],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "logging": { "trace": true, "traceResponse": true },
+
+            /*"sourceFileMap": {
+                "${workspaceFolder}/build/alpha2/": "${workspaceFolder}/alpha2/",
+                "${workspaceFolder}/build/analib/": "${workspaceFolder}/analib/"
+            }*/
+            
+        }
+    ]
+}

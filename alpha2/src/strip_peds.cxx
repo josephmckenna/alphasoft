@@ -118,7 +118,7 @@ public:
 		  for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
 		  {
 			  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
-			  Strip_ADCs.push_back(new TStripPed(fFlags->nPedBins, fFlags->pedBinWidth));
+			  Strip_ADCs.push_back(new TStripPed(i, fFlags->nPedBins, fFlags->pedBinWidth));
 			  
 		  }
 	  }
