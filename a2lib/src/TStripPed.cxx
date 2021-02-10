@@ -299,7 +299,7 @@ void TStripPed::CalculatePed()
    
    //printf("\nstripMean:%f\n",stripMean);
    stripMeanSubRMS=GetMean(min,max);
-   StripRMSsAfterFilter=GetStdev(stripMeanSubRMS,min,max);
+   StripRMSsAfterFilter=GetStdev(stripMean,min,max);
 /*printf("stripMean2:%f\t",stripMean);
 stripMean=GetMean();
 printf("stripMean3:%f\n",stripMean);
@@ -341,7 +341,7 @@ printf("stripMean4:%f\n",stripMean);
    bool usingOldMethod = true;  
    if(usingOldMethod)
    {
-      stripMeanSubRMS = stripMeanSubRMS;
+      stripMeanSubRMS = stripMean;
       StripRMSsAfterFilter = StripRMSsAfterFilter;
    }
    else
