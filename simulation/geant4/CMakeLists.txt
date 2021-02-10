@@ -68,15 +68,17 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 		    ${CADMESH_INCLUDE_DIRS})
 link_directories($ENV{GARFIELD_HOME}/install/lib)
 
-#ROOT_GENERATE_DICTIONARY(G4outDict include/TMChit.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh)
-ROOT_GENERATE_DICTIONARY(G4outDict TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
+ROOT_GENERATE_DICTIONARY(G__G4out TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
+set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TMChit.cc ${PROJECT_SOURCE_DIR}/src/TWaveform.cc)
+add_library(G4out SHARED ${LIBRARY_SOURCES} G__G4out.cxx)
+
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4, 
 # Garfield++, CRY, CADMesh and ROOT libraries
 #
-add_executable(rTPCsim rTPCsim.cc G4outDict.cxx ${sources} ${headers})
+add_executable(rTPCsim rTPCsim.cc G__G4out ${sources} ${headers})
 
 target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
 
@@ -92,13 +94,18 @@ set(SIM_SCRIPTS
 foreach(_script ${SIM_SCRIPTS})
   configure_file(
     ${PROJECT_SOURCE_DIR}/${_script}
-    ${PROJECT_BINARY_DIR}/${_script}
+    ${CMAKE_INSTALL_PREFIX}/simulation/${_script}
     COPYONLY
     )
 endforeach()
 
-##----------------------------------------------------------------------------
-## Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
-##
-##install(TARGETS rTPCsim DESTINATION bin)
+#----------------------------------------------------------------------------
+# Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
+#
+install(TARGETS rTPCsim DESTINATION simulation)
+install(TARGETS G4out DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh)
+install(FILES ${HEADER_FILES} DESTINATION include)
 
