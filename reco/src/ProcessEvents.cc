@@ -8,6 +8,7 @@
 
 #include "ProcessEvents.hh"
 #include <iostream>
+#include <mutex>          // std::mutex
 
 #include "TFitVertex.hh"
 
@@ -31,9 +32,13 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    d.PrintPWBsettings();
    std::cout<<"--------------------------------------------------"<<std::endl;
 
-
+   std::mutex Lock;
    m.SetDiagnostic(true);
-   if( issim ) m.Setup(0);
+   if( issim )
+      {
+         m.Setup(0);
+         m.SetGlobalLockVariable(&Lock);
+      }
 
    //leaw.SetDebug();
    leaw.SetRMSBaselineCut( a->GetDouble("LEModule","ADCrms") );
