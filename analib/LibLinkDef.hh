@@ -59,6 +59,7 @@
 #pragma link C++ class TStoreGEMData<uint32_t>+;
 #pragma link C++ class TStoreGEMData<uint16_t>+;
 #pragma link C++ class TStoreGEMData<char>+;
+#pragma link C++ class TStoreGEMFile+;
 
 #pragma link C++ class  TStoreLabVIEWEvent+;
 
