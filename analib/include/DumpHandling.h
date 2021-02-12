@@ -657,6 +657,7 @@ public:
               std::cout<<"Deleteing bad sequence:"<<BadSeq;
          for (size_t i=0; i<ordered_starts.size(); i++)
          {
+            if (ordered_starts.at(i))
             if (ordered_starts.at(i)->fSequenceCount == BadSeq)
             {
                std::cout<<"REMOVING START:"<<ordered_starts.at(i)->Description.c_str()<<std::endl;
@@ -669,6 +670,7 @@ public:
          }
          for (size_t i=0; i<ordered_stops.size(); i++)
          {
+            if (ordered_stops.at(i))
             if (ordered_stops.at(i)->fSequenceCount == BadSeq)
             {
                std::cout<<"REMOVING STOP:"<<ordered_stops.at(i)->Description.c_str()<<std::endl;
