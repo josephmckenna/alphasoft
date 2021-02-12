@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------
 # Setup the project
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(rTPCsim)
 
 #----------------------------------------------------------------------------
@@ -21,18 +21,6 @@ endif()
 include(${Geant4_USE_FILE})
 
 #----------------------------------------------------------------------------
-#CADMesh 
-#find_package(cadmesh REQUIRED)
-#if(cadmesh_FOUND)
-#  message(STATUS "CADMesh found!")
-  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
-#endif(cadmesh_FOUND)
-# just write it down explicitly down the 
-#set(CADMESH_INCLUDE_DIRS $ENV{CADMESH_HOME}/include)
-#set(cadmesh_LIBRARIES -L$ENV{CADMESH_HOME}/lib cadmesh assimp tet)
-#
-
-#----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
 find_package(ROOT QUIET REQUIRED)
@@ -48,6 +36,24 @@ EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_
 set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 
 #----------------------------------------------------------------------------
+# Find Garfield++ (required package)
+#
+find_package(Garfield REQUIRED)
+if(NOT GARFIELD_FOUND)
+  list(APPEND CMAKE_PREFIX_PATH $ENV{GARFIELD_HOME})
+endif()
+message("Garfield++:" ${GARFIELD_INCLUDE_DIR})
+set(GARFIELDPP $ENV{AGRELEASE}/simulation/garfieldpp)
+
+#----------------------------------------------------------------------------
+# CADMesh
+#
+set(CADMESH_INCLUDE_DIRS $ENV{AGRELEASE}/simulation/CADMesh/include 
+                         $ENV{AGRELEASE}/simulation/CADMesh/external/tetgen 
+                         $ENV{AGRELEASE}/simulation/CADMesh/external/assimp/include/assimp
+			 )
+
+#----------------------------------------------------------------------------
 # include CRY (required package)
 #
 set(CRY $ENV{CRYHOME})
@@ -57,16 +63,14 @@ set(CRY_LIBRARIES ${CRY}/lib/libCRY.a)
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 #
-set(GARFIELDPP $ENV{AGRELEASE}/simulation/garfieldpp)
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${GARFIELDPP}/include
 		    ${Geant4_INCLUDE_DIR}
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/install/include/Garfield
-		    $ENV{GARFIELD_HOME}/install/Heed
+		    ${GARFIELD_INCLUDE_DIR}/Garfield
 		    ${CRY_INCLUDE_DIR}
 		    ${CADMESH_INCLUDE_DIRS})
-link_directories($ENV{GARFIELD_HOME}/install/lib)
+#link_directories($ENV{GARFIELD_HOME}/lib)
 
 ROOT_GENERATE_DICTIONARY(G__G4out TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
 set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TMChit.cc ${PROJECT_SOURCE_DIR}/src/TWaveform.cc)
@@ -74,13 +78,15 @@ add_library(G4out SHARED ${LIBRARY_SOURCES} G__G4out.cxx)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
+
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4, 
 # Garfield++, CRY, CADMesh and ROOT libraries
 #
 add_executable(rTPCsim rTPCsim.cc G__G4out ${sources} ${headers})
-
-target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
+add_dependencies(rTPCsim cadmesh)
+link_directories(rTPCsim ${CMAKE_BINARY_DIR}/simulation/CADMesh)
+target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cadmesh)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we

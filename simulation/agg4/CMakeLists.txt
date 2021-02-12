@@ -23,11 +23,10 @@ include(${Geant4_USE_FILE})
 
 #----------------------------------------------------------------------------
 ##CADMesh 
-#find_package(cadmesh)
-#if(cadmesh_FOUND)
-#  message(STATUS "CADMesh found!")
-#  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
-#endif(cadmesh_FOUND)
+set(CADMESH_INCLUDE_DIRS $ENV{AGRELEASE}/simulation/CADMesh/include 
+                         $ENV{AGRELEASE}/simulation/CADMesh/external/tetgen 
+                         $ENV{AGRELEASE}/simulation/CADMesh/external/assimp/include/assimp
+			 )
 
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
@@ -88,7 +87,7 @@ ROOT_GENERATE_DICTIONARY( G4dict TMChit.hh TDigi.hh TScintDigi.hh TTPCelement.hh
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(agg4 agg4.cc G4dict.cxx $ENV{AGRELEASE}/simulation/garfieldpp/src/TPCBase.cc ${sources} ${headers})
-target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} ${cadmesh_LIBRARIES}) # ${AG_LIBRARIES}
+target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cadmesh) # ${AG_LIBRARIES}
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
