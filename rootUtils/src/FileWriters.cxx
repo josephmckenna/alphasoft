@@ -1,10 +1,10 @@
 #include "FileWriters.h"
 
 
-void WriteTStoreGEMFile(TStoreGEMFile* file)
+std::string WriteTStoreGEMFile(TStoreGEMFile* file)
 {
     const std::vector<char> file_data = file->GetData();
-    size_t size = file_data.size();
+    int size = file_data.size();
     std::string filename, filepath, fileMD5;
     char* FILE = nullptr;
     const char* d = file_data.data();
@@ -54,7 +54,7 @@ std::vector<std::string> DumpFilesSavedInMIDAS(Int_t runNumber, const char* cate
    std::string filename = std::string("FILE:") + category + "\\" + varname;
    std::vector<std::string> files_written;
    std::vector<TTreeReader*> trees = Get_feGEM_File_Trees(runNumber,filename);
-   for (int i=0; i<trees.size(); i++)
+   for (size_t i=0; i<trees.size(); i++)
    {
       TTreeReader* reader = trees.at(i);
       TTreeReaderValue<TStoreGEMFile> file(*reader, "TStoreGEMFile<char>");
