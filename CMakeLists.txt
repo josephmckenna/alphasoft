@@ -32,6 +32,7 @@ set(PRE_CONFIG "" CACHE STRING "Pre-config script, used to build setup.{sh,py,C}
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
+option(BUILD_A2_SIM "Build A2 Simulation" OFF)
 option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
 
 # Enforce out-of-source builds 
@@ -138,7 +139,10 @@ if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
-
+if (BUILD_A2_SIM)
+   get_submodule(simulation/a2mc)
+   add_subdirectory(simulation/a2mc)
+endif(BUILD_A2_SIM)
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
