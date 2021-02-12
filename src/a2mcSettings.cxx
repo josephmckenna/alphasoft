@@ -15,7 +15,7 @@ a2mcSettings::a2mcSettings() :
     tracks_lim(0),
     verbose(0)
 {
-    init("a2MC.ini");
+    init(std::string(INI_INSTALL_PATH) + "/a2MC.ini");
 }
 
 a2mcSettings::~a2mcSettings()

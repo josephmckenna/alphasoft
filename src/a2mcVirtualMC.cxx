@@ -328,19 +328,19 @@ void a2mcVirtualMC::WriteLog() {
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat a2MC.ini >> " << sf.str();; 
+    ss << "cat "<<INI_INSTALL_PATH<<"/a2MC.ini >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat src/a2mcApparatus.cxx >> " << sf.str();; 
+    ss << "cat "<<A2_MC_SRC_PATH<<"/src/a2mcApparatus.cxx >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat src/a2mcGenerator.cxx >> " << sf.str();; 
+    ss << "cat "<<A2_MC_SRC_PATH<<"/src/a2mcGenerator.cxx >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat src/a2mcVirtualMC.cxx >> " << sf.str();; 
+    ss << "cat "<<A2_MC_SRC_PATH<<"/src/a2mcVirtualMC.cxx >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     cout << "Writing log into file " << sf.str() << endl;

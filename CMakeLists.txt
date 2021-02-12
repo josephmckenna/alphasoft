@@ -21,7 +21,7 @@ set(library_name vmc_${PROJECT_NAME})
 set(g4library_name geant4_${PROJECT_NAME})
 set(program_name ${PROJECT_NAME})
 #message(STATUS "library_name = ${library_name}")
-
+set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
 #----------------------------------------------------------------------------
 # CMake Module Path
 #
@@ -58,6 +58,14 @@ find_package(Geant4VMC CONFIG REQUIRED)
 include_directories(${Geant4VMC_INCLUDE_DIRS})
 find_package(VMC CONFIG REQUIRED)
 include_directories(${VMC_INCLUDE_DIRS})
+
+
+#----------------------------------------------------------------------------
+# Hard code the path to the installation (for a2MC.ini)
+#
+
+add_compile_options(-DINI_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}\" )
+add_compile_options(-DA2_MC_SRC_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}\" )
 
 #----------------------------------------------------------------------------
 # Generate Root dictionaries
@@ -119,6 +127,5 @@ add_custom_target(${PROJECT_NAME} DEPENDS
                   g4vmc_${program_name})
 install(TARGETS g4vmc_${program_name} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-configure_file( ${PROJECT_SOURCE_DIR}/input/a2MC.ini
-                ${CMAKE_INSTALL_PREFIX}
-		COPYONLY )
+
+install(FILES ${PROJECT_SOURCE_DIR}/input/a2MC.ini DESTINATION  ${CMAKE_INSTALL_PREFIX} )
