@@ -8,4 +8,4 @@
 
 [submodule "simulation/CADMesh"]
 	path = simulation/CADMesh
-	url = https://github.com/christopherpoole/CADMesh.git
+	url = https://github.com/a-capra/CADMesh.git
