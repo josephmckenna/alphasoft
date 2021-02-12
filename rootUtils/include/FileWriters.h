@@ -3,8 +3,8 @@
 
 #include "TreeGetters.h"
 #include "TStoreGEMEvent.h"
-void WriteTStoreGEMFile(TStoreGEMFile* file);
-void DumpFilesSavedInMIDAS(Int_t runNumber, const char* category, const char* varname);
+std::string WriteTStoreGEMFile(TStoreGEMFile* file);
+std::vector<std::string> DumpFilesSavedInMIDAS(Int_t runNumber, const char* category, const char* varname);
 
 
 
