@@ -187,6 +187,23 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+
+build-cc7-cmake-a2-sim:
+  image: jmckenna/geant4_vmc
+  stage: build
+  script:
+    - echo "Building"
+    - mkdir -p build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2_SIM=ON -DBUILD_A2=ON -DBUILD_AG=OFF
+    - make | tee ../BuildLog.txt
+  cache: {}
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
 #simulation:
 #  stage: test_more
 #  image: jmckenna/cc7_root6_geant4
