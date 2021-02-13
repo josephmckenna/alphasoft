@@ -4,7 +4,7 @@ WORKDIR /
 RUN git clone https://gitlab.cern.ch/garfield/garfieldpp.git
 RUN mkdir build_garfieldpp
 WORKDIR build_garfieldpp
-RUN cmake3  ../garfiledpp
+RUN cmake3  ../garfieldpp
 RUN make -j4
 RUN make install
 
