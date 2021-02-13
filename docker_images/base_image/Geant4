@@ -7,7 +7,7 @@ libxerces-c-dev libx11-dev libgl1-mesa-dev xerces-c xerces-c-devel libXmu libXmu
 
 #Build geant4
 #RUN mkdir geant4
-RUN git clone --branch geant4-10.7-release --depth 1 https://github.com/Geant4/geant4.git
+RUN git clone --branch geant4-10.6-release --depth 1 https://github.com/Geant4/geant4.git
 #WORKDIR geant4
 
 RUN mkdir build
