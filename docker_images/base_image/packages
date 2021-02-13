@@ -91,6 +91,7 @@ root-minuit2
 root-mlp
 root-montecarlo-eg
 root-montecarlo-pythia8
+root-montecarlo-vmc
 root-multiproc
 root-net
 root-net-auth
