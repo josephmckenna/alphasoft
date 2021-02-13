@@ -189,7 +189,7 @@ build-cc7:
 
 
 build-cc7-cmake-a2-sim:
-  image: jmckenna/geant4_vmc
+  image: jmckenna/alphadocker:geant4_vmc
   stage: build
   script:
     - echo "Building"
