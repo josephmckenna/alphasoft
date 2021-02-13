@@ -1,17 +1,17 @@
 FROM jmckenna/alphadocker:geant4
 WORKDIR /
 
-RUN git clone https://github.com/vmc-project/vgm.git
-RUN mkdir build_vgm
-WORKDIR build_vgm
-RUN cmake3  ../vgm
-RUN make -j4
-RUN make install
-
 RUN git clone https://github.com/vmc-project/vmc.git
 RUN mkdir build_vmc
 WORKDIR build_vmc
 RUN cmake3  ../vmc
+RUN make -j4
+RUN make install
+
+RUN git clone https://github.com/vmc-project/vgm.git
+RUN mkdir build_vgm
+WORKDIR build_vgm
+RUN cmake3  ../vgm
 RUN make -j4
 RUN make install
 
