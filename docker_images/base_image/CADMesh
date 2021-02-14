@@ -1,6 +1,6 @@
 FROM jmckenna/alphadocker:garfieldpp
 WORKDIR /
-
+RUN yum install tetgen-1.5.0-4 assimp-devel-3.1.1-2 -y
 RUN git clone --depth 1 https://github.com/christopherpoole/CADMesh.git
 RUN mkdir build_CADMesh
 WORKDIR build_CADMesh
