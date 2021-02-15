@@ -2,7 +2,7 @@
 # Setup the project
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(rTPCsim)
-
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
 # Find Geant4 package, activating all available UI and Vis drivers by default
 # You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
@@ -84,6 +84,7 @@ add_executable(rTPCsim rTPCsim.cc G4outDict.cxx ${sources} ${headers})
 
 target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
 
+
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
 # build rTPCsim. This is so that we can run the executable directly because it
@@ -104,5 +105,7 @@ endforeach()
 ##----------------------------------------------------------------------------
 ## Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 ##
-##install(TARGETS rTPCsim DESTINATION bin)
+
+install(TARGETS rTPCsim DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${SIM_SCRIPTS} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
