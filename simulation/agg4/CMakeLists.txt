@@ -62,9 +62,12 @@ endif()
 #----------------------------------------------------------------------------
 # include CRY (required package)
 #
-set(CRY $ENV{CRYHOME})
-set(CRY_INCLUDE_DIR ${CRY}/src)
-set(CRY_LIBRARIES ${CRY}/lib/libCRY.a)
+ExternalProject_Get_Property(CRY-1.7 source_dir)
+set(CRY_INCLUDE_DIRS "${source_dir}/src")
+set(CRY_LIBRARY_DIR "${source_dir}/lib")
+set(CRY_LIBRARIES "libCRY.a")
+link_directories(${CRY_LIBRARY_DIR})
+include_directories(${CRY_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
