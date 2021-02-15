@@ -157,6 +157,22 @@ build-cc7-cmake-ag:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
+build-cc7-cmake-ag-sim:
+  stage: build
+  image: jmckenna/alphadocker:CADMesh
+  script:
+    - echo "Building"
+    - mkdir -p build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
+    - make | tee ../BuildLog.txt
+  cache: {}
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
 build-cc7-cmake-a2:
   stage: build
   script:
