@@ -1,7 +1,7 @@
 FROM jmckenna/alphadocker:geant4
 WORKDIR /
 
-RUN git clone --depth 1 https://gitlab.cern.ch/jmckenna/garfieldpp.git
+RUN git clone --depth 1 https://gitlab.cern.ch/garfield/garfieldpp.git
 RUN mkdir build_garfieldpp
 WORKDIR build_garfieldpp
 RUN cmake3 -DROOTSYS=/usr/lib ../garfieldpp
