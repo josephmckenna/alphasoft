@@ -257,8 +257,8 @@ test:
     - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
-    - build-cc7-cmake
-  needs: ["build-cc7-cmake"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   artifacts:
     when: on_success
     paths:
