@@ -53,7 +53,7 @@
 #include "G4Region.hh"
 #include "G4RegionStore.hh"
 
-#include "MediumMagboltz.hh"
+#include "Garfield/MediumMagboltz.hh"
 #include "HeedInterfaceModel.hh"
 #include "HeedOnlyModel.hh"
 
@@ -595,28 +595,27 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
 
   // Liquid Helium
   G4String filename = env_path + file_path + "lHe" + file_ext;
-  CADMesh * lHe_mesh = new CADMesh((char*) filename.c_str());
-  G4VSolid* lHe_solid = lHe_mesh->TessellatedMesh();
+  std::shared_ptr<CADMesh::TessellatedMesh> lHe_mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+  G4VSolid* lHe_solid = lHe_mesh->GetSolid();
   G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, materials["lHe"], "lHe");
   G4RotationMatrix* r = new G4RotationMatrix();
   r->rotateY(90*degree);
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicAG, false, 0, checkOverlaps);
   lHe_log->SetVisAttributes(G4Colour(0.,0.3,0.7));
-  delete lHe_mesh;
+
 
   // CAD Cryostat Volumes
   for(uint i = 0; i < volumes.size(); ++i) 
     {
       filename=env_path + file_path + std::to_string(i) + file_ext;
-      CADMesh * mesh = new CADMesh((char*) filename.c_str());
-      G4VSolid* cad_solid = mesh->TessellatedMesh();
+      std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+      G4VSolid* cad_solid = mesh->GetSolid();
       volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
       if( kMat )
 	{
 	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicAG, false, 0, checkOverlaps);
 	  volumes[i].cad_logical->SetVisAttributes(G4Colour(volumes[i].R,volumes[i].G,volumes[i].B,1));
 	}
-      delete mesh;
     }
 }
 

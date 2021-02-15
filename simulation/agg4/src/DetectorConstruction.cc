@@ -415,26 +415,25 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // Liquid Helium
   std::string filename=env_path + file_path + "lHe" + file_ext;
-  CADMesh * mesh = new CADMesh((char*) filename.c_str());
-  G4VSolid* lHe_solid = mesh->TessellatedMesh();
+  std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+  G4VSolid* lHe_solid = mesh->GetSolid();
   G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, lHe, "lHe");
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0);
   lHe_log->SetVisAttributes(G4Color(1,0,0,0));
-  delete mesh;
 
   // CAD Cryostat Volumes
   for(int i = 0; i < 41; i ++) 
     {
       filename=env_path + file_path + std::to_string(i) + file_ext;
-      CADMesh * mesh = new CADMesh((char*) filename.c_str());
-      G4VSolid* cad_solid = mesh->TessellatedMesh();
+      std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+      G4VSolid* cad_solid = mesh->GetSolid();
       volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
       if( kMat )
 	{
 	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicWorld, false, 0);
 	  volumes[i].cad_logical->SetVisAttributes(G4Color(volumes[i].R,volumes[i].G,volumes[i].B,1));
 	}
-      delete mesh;
+
     }
 
 
