@@ -32,29 +32,11 @@ endif(cadmesh_FOUND)
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
-find_package(ROOT QUIET)
+find_package(ROOT REQUIRED COMPONENTS MathMore)
 if(NOT ROOT_FOUND)
   message(STATUS "Geant4: ROOT package not found.")  
   return()
 else()
-  find_library(ROOTMATHMORE_LIBRARY MathMore
-    PATHS ${ROOT_LIBRARY_DIR})
-  if(ROOTMATHMORE_LIBRARY)
-    list(APPEND ROOT_LIBRARIES -lMathMore)
-    message(STATUS 
-      "Library -lMathMore was added to the linkage list")
-  else()
-    message(WARNING
-      "Could not find ROOT MathMore library")
-  endif()
-
-  EXECUTE_PROCESS(COMMAND 
-    root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-shadow ${ROOT_CXX_FLAGS}")
-
-  EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
-
   # useful macros such as ROOT_GENERATE_DICTIONARY below
   include(${ROOT_USE_FILE})
 endif()
@@ -84,13 +66,13 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # 
 #ROOT_GENERATE_DICTIONARY( G4dict include/TMChit.hh include/TDigi.hh include/TScintDigi.hh include/TTPCelement.hh include/TAnode.hh include/TPads.hh include/TWaveform.hh LINKDEF include/G4outLinkDef.hh )
-ROOT_GENERATE_DICTIONARY( G4dict TMChit.hh TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh )
+ROOT_GENERATE_DICTIONARY( G__G4dict TMChit.hh TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh )
 
 
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
-add_executable(agg4 agg4.cc G4dict.cxx $ENV{AGRELEASE}/simulation/garfieldpp/src/TPCBase.cc ${sources} ${headers})
+add_executable(agg4 agg4.cc $ENV{AGRELEASE}/simulation/garfieldpp/src/TPCBase.cc ${sources} ${headers} G__G4dict.cxx)
 target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} ${cadmesh_LIBRARIES}) # ${AG_LIBRARIES}
 
 #----------------------------------------------------------------------------
@@ -102,15 +84,11 @@ set(AGG4_SCRIPTS
   settings.dat annihilation.dat cry.file cosmics.mac pionly.mac ResolutionTestsOnAxis.mac ResolutionTestsOnGas.mac run.mac vis.mac multirun.sh
   )
 
-foreach(_script ${AGG4_SCRIPTS})
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/${_script}
-    ${PROJECT_BINARY_DIR}/${_script}
-    COPYONLY
-    )
-endforeach()
 ##----------------------------------------------------------------------------
 ## Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 ##
-#install(TARGETS agg4 DESTINATION bin)
-
+install(TARGETS agg4 DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${AGG4_SCRIPTS} DESTINATION ${CMAKE_INSTALL_PREFIX}/agg4_scripts)
+# I want these in ${CMAKE_INSTALL_PREFIX}/lib I think... but it gets upset... I guess because we are dealing with an .exe and not a .so?
+install(FILES ${PROJECT_BINARY_DIR}/libG4dict_rdict.pcm DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(FILES ${PROJECT_BINARY_DIR}/libG4dict.rootmap DESTINATION ${CMAKE_INSTALL_PREFIX})

@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(agdaq)
 
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
@@ -37,7 +38,8 @@ foreach(target ${BINS})
 
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target} ${sources})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield -lgfortran -lGeom)
-
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield )
+  install(TARGETS ${bin} DESTINATION ${CMAKE_INSTALL_PREFIX})
 endforeach(target ${BINS})
+
 
