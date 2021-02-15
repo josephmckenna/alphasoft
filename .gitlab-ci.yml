@@ -126,7 +126,25 @@ before_script:
 #      - BuildLog.txt
 #      - ana/include/GitInfo.h
 
-build-cc7-cmake:
+
+build-cc7-cmake-full:
+  stage: build
+  image: jmckenna/alphadocker:CADMesh
+  script:
+    - echo "Building"
+    - rm -rf build bin
+    - mkdir build
+    - cd build
+    - cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
+    - cmake3 --build .  2>&1 | tee ../BuildLog.txt
+    - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-no-sim:
   stage: build
   script:
     - echo "Building"
@@ -136,6 +154,7 @@ build-cc7-cmake:
     - cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
     - cmake3 --build .  2>&1 | tee ../BuildLog.txt
     - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -239,6 +258,7 @@ test:
     - cp -v testlogs/* public/
   dependencies:
     - build-cc7-cmake
+  needs: ["build-cc7-cmake"]
   artifacts:
     when: on_success
     paths:
