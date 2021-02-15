@@ -9,14 +9,14 @@
 #include <TGraph.h>
 #include <TAxis.h>
 
-#include "Plotting.hh"
+#include "Garfield/Plotting.hh"
 
-#include "ComponentAnalyticField.hh"
-#include "MediumMagboltz.hh"
-#include "SolidBox.hh"
-#include "GeometrySimple.hh"
-#include "Sensor.hh"
-#include "FundamentalConstants.hh"
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/SolidBox.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/Sensor.hh"
+#include "Garfield/FundamentalConstants.hh"
 
 #include "TPC.hh"
 #include "Helpers.hh"

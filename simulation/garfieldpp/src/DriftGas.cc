@@ -4,8 +4,8 @@
 #include <TMath.h>
 #include <TString.h>
 
-#include "ComponentAnalyticField.hh"
-#include "MediumMagboltz.hh"
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/MediumMagboltz.hh"
 
 using namespace TMath;
 using namespace Garfield;

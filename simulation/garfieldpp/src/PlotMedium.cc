@@ -8,8 +8,8 @@
 #include <TApplication.h>
 #include <TFile.h>
 
-#include "MediumMagboltz.hh"
-#include "ViewMedium.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/ViewMedium.hh"
 
 using namespace Garfield;
 using std::string;

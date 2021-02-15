@@ -10,23 +10,23 @@
 #include <TNtuple.h>
 #include <TFile.h>
 
-#include "MediumMagboltz.hh"
-#include "GeometrySimple.hh"
-#include "SolidTube.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/SolidTube.hh"
 
 #include "TPC.hh"
-#include "Sensor.hh"
+#include "Garfield/Sensor.hh"
 
-#include "DriftLineRKF.hh"
-#include "AvalancheMC.hh"
-#include "AvalancheMicroscopic.hh"
+#include "Garfield/DriftLineRKF.hh"
+#include "Garfield/AvalancheMC.hh"
+#include "Garfield/AvalancheMicroscopic.hh"
 
-#include "ViewCell.hh"
-#include "ViewField.hh"
-#include "ViewDrift.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/ViewField.hh"
+#include "Garfield/ViewDrift.hh"
 
 #include <TRandom2.h>
-#include "Random.hh"
+#include "Garfield/Random.hh"
 
 #include "Helpers.hh"
 

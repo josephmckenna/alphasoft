@@ -5,9 +5,9 @@
 #include <string>
 #include <iostream>
 
-#include "Component.hh"
-#include "ComponentAnalyticField.hh"
-#include "FundamentalConstants.hh"
+#include "Garfield/Component.hh"
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/FundamentalConstants.hh"
 
 #include "MagneticFieldMap.hh"
 

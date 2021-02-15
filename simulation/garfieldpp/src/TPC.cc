@@ -4,10 +4,6 @@
 #include <TMath.h>
 #include <TString.h>
 
-#include <GeometrySimple.hh>
-#include <SolidTube.hh>
-#include <Medium.hh>
-
 #include "ComponentBmap.hh"
 #include "TPC.hh"
 
