@@ -8,9 +8,9 @@
 #include <TH2D.h>
 #include <TCanvas.h>
 
-#include "Medium.hh"
-#include "MediumMagboltz.hh"
-#include "Sensor.hh"
+#include "Garfield/Medium.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/Sensor.hh"
 
 using Garfield::Sensor;
 using Garfield::Medium;

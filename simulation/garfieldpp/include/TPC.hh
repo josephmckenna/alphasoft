@@ -7,9 +7,10 @@
 
 #include <cmath>
 
-#include <GeometrySimple.hh>
-#include <Medium.hh>
-#include <SolidTube.hh>
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/Medium.hh"
+
 #include "ComponentBmap.hh"
 
 #include "TPCBase.hh"
