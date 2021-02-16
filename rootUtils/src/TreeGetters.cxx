@@ -13,23 +13,23 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    return tree;
 }
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel)
+TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel)
 {
    TString Name="chrono/ChronoEventTree_";
-           Name+=Chronoboard;
+           Name+=ChronoBoardChannel.first;
            Name+="_";
-           Name+=ChronoChannel;
+           Name+=ChronoBoardChannel.second;
            Name+="OfficialTime";
    return Get_Tree_By_Name(runNumber,Name.Data());
 }
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, double &official_time)
+TTree* Get_Chrono_Tree(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel, double &official_time)
 {
    TString Name="chrono/ChronoEventTree_";
-           Name+=Chronoboard;
+           Name+=ChronoBoardChannel.first;
            Name+="_";
-           Name+=ChronoChannel;
+           Name+=ChronoBoardChannel.second;
    TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
    Name+="OfficialTime";
    TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
@@ -39,7 +39,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 }
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
+/*TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
 {
    Int_t chan=-1;
    Int_t board=-1;
@@ -49,7 +49,7 @@ TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &officia
        if (chan>-1) break;
    }
    return Get_Chrono_Tree(runNumber,board,chan,official_time);
-}
+}*/
 #endif
 #ifdef BUILD_AG
 TTree* Get_Chrono_Name_Tree(Int_t runNumber)
@@ -73,7 +73,7 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
 {
    TTree* t=Get_StoreEvent_Tree(runNumber);
    TTree* tf=Get_Tree_By_Name(runNumber,"StoreEventOfficialTime");
-   tf->SetBranchAddress("OfficalTime",&time);
+   tf->SetBranchAddress("OfficialTime",&time);
    t->AddFriend(tf);
    return t;
 }
@@ -99,8 +99,54 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber)
    TTreeReader* t=new TTreeReader("A2SpillTree", f);
    return t;
 }
+
+TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("AnalysisReport");
+   TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
+   return t;
+}
 #endif
 
+TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)
+{
+   std::string CombinedName = Category + "\\" + Varname;
+   return Get_feGEM_Tree(runNumber,CombinedName);
+}
+
+TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("feGEM");
+   TTreeReader* t = new TTreeReader(CombinedName.c_str(), f->GetDirectory("/feGEM"));
+   return t;
+}
+
+TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("felabview");
+   TTreeReader* t = new TTreeReader(BankName.c_str(), f->GetDirectory("/felabview"));
+   return t;
+}
+
+std::vector<TTreeReader*> Get_feGEM_File_Trees(Int_t runNumber, const std::string& CombinedName)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d = f->GetDirectory("feGEM");
+   TList* aa = d->GetListOfKeys();
+   std::vector<TTreeReader*> trees;
+   for (int i=0; i<aa->GetEntries(); i++)
+   {
+      if (strncmp(CombinedName.c_str(),aa->At(i)->GetName(),CombinedName.size())==0)
+      {
+         TTreeReader* t = new TTreeReader(aa->At(i)->GetName(), f->GetDirectory("/feGEM"));
+         trees.push_back(t);
+      }
+   }
+   return trees;
+}
 
 /* emacs
  * Local Variables:

@@ -22,21 +22,6 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for gitinfo.h file
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_custom_target(
-    a2gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
-    )
-
-add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
-    )
 
 # Directories
 add_subdirectory(src)
@@ -99,18 +84,24 @@ endif()
 include_directories(include)
 
 #Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
+include_directories(../alpha2/include)
 #...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
+include_directories(../a2lib/include)
 
 #AG compatability includes
-#include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/ana/include)
+#include_directories(../recolib/include)
+include_directories(../analib/include)
+include_directories(../ana/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
-include_directories(include $ENV{ROOTANASYS}/include)
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
+#feGEM (labVIEW logging)
+include_directories($ENV{AGRELEASE}/feGEM)
 
 message(${ROOT_INCLUDE_DIRS})
 
@@ -139,16 +130,14 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} a2gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
+    target_include_directories(${bin} PUBLIC ../analib/include)
     if (BUILD_AG)
-       target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
+       target_include_directories(${bin} PUBLIC ../recolib/include)
     endif(BUILD_AG)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    #link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
-    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib )
+    link_directories(../alpha2 ../analib )
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)

@@ -1,0 +1,79 @@
+{
+#ifndef _INTERACTIVE_SETUP_
+#define _INTERACTIVE_SETUP_
+  
+  std::cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<std::endl;
+  
+  std::cout<<"Including: @INC_PATH@ "<<std::endl;
+  
+  gInterpreter->AddIncludePath("@INC_PATH@");
+
+  gSystem->AddDynamicPath("@LIB_PATH@");
+
+  gSystem->Load("libMinuit2");
+  gSystem->Load("libGeom");
+
+  TString libname("libagtpc.so");
+  libname=gSystem->FindDynamicLibrary(libname);
+  std::cout<<"Loading: "<<libname;
+  int s=gSystem->Load( libname );
+  if(s==0) std::cout<<"... ok"<<std::endl;
+  else std::cout<<"Error!"<<std::endl;
+
+  libname="libanalib.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  std::cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) std::cout<<"... ok"<<std::endl;
+  else std::cout<<"Error!"<<std::endl;
+
+  libname="libalpha2.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  std::cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) std::cout<<"... ok"<<std::endl;
+  else std::cout<<"Error!"<<std::endl;
+
+  libname="librootUtils.so";
+  libname=gSystem->FindDynamicLibrary(libname);
+  std::cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) std::cout<<"... ok"<<std::endl;
+  else std::cout<<"Error!"<<std::endl;
+
+  gStyle->SetOptStat(1011111);
+  //gStyle->SetPalette(kRainBow);
+  //gStyle->SetPalette(kAurora);
+  gStyle->SetPalette(kCool);
+  //gStyle->SetPalette(kNeon);
+  //gStyle->SetPalette(1);
+  //gStyle->SetPalette(kRedBlue);
+  
+
+  //We can't blindly include all header files as Xm / X11 from root conflict for some reason
+  gROOT->ProcessLine("#include \"BuildConfig.h\"");
+  gROOT->ProcessLine("#include \"RootUtils.h\"");
+   /*TSystemDirectory b("","@INC_PATH@");
+   TList* headers=b.GetListOfFiles();
+   for (int i=0; i<headers->GetEntries(); i++ )
+   {
+      TString header=headers->At(i)->GetName();
+      if (header.EndsWith(".h") || header.EndsWith(".hh"))
+      {
+         TString line = "#include \"";
+         line += header;
+         line += "\"";
+         std::cout<<"Including "<<line <<std::endl;
+         gInterpreter->ProcessLine(line);
+      }
+   }*/
+
+
+
+
+#else
+   std::cout<<"setup.C already called"<<std::endl;
+
+#endif
+
+}

@@ -1,0 +1,69 @@
+
+add_custom_target(
+    gitinfo ALL
+    DEPENDS ${CMAKE_BINARY_DIR}/GitInfo.h
+    )
+
+#add_custom_command(
+#    OUTPUT
+#        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
+#        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
+#
+#    )
+
+
+# this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
+execute_process(
+    COMMAND git log -1 --format=%at 
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
+    OUTPUT_VARIABLE GIT_DATE 
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+execute_process(
+    COMMAND git log -1 --format=%h 
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
+    OUTPUT_VARIABLE GIT_REVISION 
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+execute_process(
+    COMMAND git log -1 --format=%H 
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
+    OUTPUT_VARIABLE GIT_REVISION_FULL 
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD 
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
+    OUTPUT_VARIABLE GIT_BRANCH 
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+execute_process(
+    COMMAND git diff --shortstat 
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} 
+    OUTPUT_VARIABLE GIT_DIFF_SHORT_STAT 
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+if (NOT GIT_DIFF_SHORT_STAT)
+   set(GIT_DIFF_SHORT_STAT "no diff")
+endif()
+string(TIMESTAMP COMPILATION_DATE "%s" )
+configure_file(GitInfo.h.in ${CMAKE_BINARY_DIR}/GitInfo.h @ONLY)
+include_directories(${CMAKE_BINARY_DIR})
+install(FILES ${CMAKE_BINARY_DIR}/GitInfo.h DESTINATION include)
+
+
+#setup.sh/py/C files for SWAN notebooks
+if(PRE_CONFIG)
+   message("PRE_CONFIG: ${PRE_CONFIG} being added to ${CMAKE_INSTALL_PREFIX}/setup.{sh,py,C}")
+endif()
+set(AGRELEASE $ENV{AGRELEASE})
+set(BIN_PATH ${CMAKE_INSTALL_PREFIX})
+set(LIB_PATH ${CMAKE_INSTALL_PREFIX}/lib)
+set(INC_PATH ${CMAKE_INSTALL_PREFIX}/include)
+configure_file(setup.sh.in ${CMAKE_CURRENT_BINARY_DIR}/setup.sh @ONLY)
+configure_file(setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py @ONLY)
+configure_file(setup.C.in ${CMAKE_CURRENT_BINARY_DIR}/setup.C @ONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.sh ${CMAKE_CURRENT_BINARY_DIR}/setup.py ${CMAKE_CURRENT_BINARY_DIR}/setup.C DESTINATION .)
+

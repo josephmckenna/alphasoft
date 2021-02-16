@@ -50,6 +50,25 @@
 #pragma link C++ class SeqXML_Event+;
 #pragma link C++ class SeqXML_ChainLink+;
 
+#pragma link C++ class TStoreGEMEventHeader+;
+#pragma link C++ class TLVTimestamp+;
+#pragma link C++ class TStoreGEMData<double>+;
+#pragma link C++ class TStoreGEMData<float>+;
+#pragma link C++ class TStoreGEMData<bool>+;
+#pragma link C++ class TStoreGEMData<int32_t>+;
+#pragma link C++ class TStoreGEMData<uint32_t>+;
+#pragma link C++ class TStoreGEMData<uint16_t>+;
+#pragma link C++ class TStoreGEMData<char>+;
+#pragma link C++ class TStoreGEMFile+;
+
+#pragma link C++ class  TStoreLabVIEWEvent+;
+
+
+#pragma link C++ class TAnalysisReport+;
+
+#ifdef BUILD_A2
+#pragma link C++ class TA2AnalysisReport+;
+#endif
 #endif
 
 /* emacs

@@ -24,6 +24,8 @@
 
 #include "SignalsType.hh"
 
+struct Alpha16Channel;
+struct FeamChannel;
 class Ledge
 {
 public:

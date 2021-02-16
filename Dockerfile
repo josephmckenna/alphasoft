@@ -1,6 +1,14 @@
-FROM jmckenna/rootana
-RUN yum -y install lesstif-devel libXmu libXmu-devel 
-COPY . /agdaq
-WORKDIR /agdaq 
-RUN /bin/bash -c "source /rootana/thisrootana.sh; source /agdaq/agconfig.sh; make"
+FROM jmckenna/alphadocker
+WORKDIR /alphasoft
+COPY . /alphasoft
+RUN pwd \
+&& ls * \
+&& source /alphasoft/agconfig.sh \
+&& mkdir /build \
+&& cd /build \
+&& cmake3 /alphasoft \
+&& cat GitInfo.h \
+&& make -j4 \
+&& make install
 CMD echo "$AGRELEASE"
+#RUN ["root","-l"]

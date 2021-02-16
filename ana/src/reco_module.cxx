@@ -203,8 +203,9 @@ public:
 
       if( fFlags->fRecOff )
          {
+            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-            EventTree->Fill();
+            EventTree->Fill();}
             flow = new AgAnalysisFlow(flow, analyzed_event);
             return flow;
          }
@@ -213,15 +214,17 @@ public:
          {
             if (age->time<fFlags->start_time)
                {
+                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();
+                  EventTree->Fill();}
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->time>fFlags->stop_time)
                {
+                  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);{
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();
+                  EventTree->Fill();}
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
@@ -231,15 +234,17 @@ public:
          {
             if (age->counter<fFlags->start_event)
                {
+                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();
+                  EventTree->Fill();}
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->counter>fFlags->stop_event)
                {
+                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();
+                  EventTree->Fill();}
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }

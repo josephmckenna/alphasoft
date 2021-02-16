@@ -1,12 +1,14 @@
+
+#ifndef _PlotGetters_
+#define _PlotGetters_
 #include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
 #include "TPaveText.h"
-#ifndef _PlotGetters_
-#define _PlotGetters_
 
-
+#include "TAPlot.h"
 #include "TA2Plot.h"
+#include "TAGPlot.h"
 #ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition=1, Int_t offset=0);

@@ -39,12 +39,18 @@ INCS += -I../ana/include
 INCS += -I../agana
 INCS += -I../analib/include
 INCS += -I../aged/include
+INCS += -I../feGEM
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
 INCS += -I../alpha2/include
 INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+
+ifdef MIDASSYS
+LIBS     += -L$(MIDASSYS)/lib -lmidas -lutil -lrt
+INCS     += -I$(MIDASSYS)/include
+endif
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o

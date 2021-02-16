@@ -38,7 +38,7 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Dou
    Int_t Counts=0;
    double official_time;
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,ChronoBoard,Channel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{ChronoBoard,Channel},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)
@@ -114,7 +114,26 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 }
 #endif
 
+#ifdef BUILD_A2
 
+Int_t GetSISChannel(int runNumber, const char* ChannelName)
+{
+   int chan=-1;
+   TSISChannels sisch(runNumber);
+   chan=sisch.GetChannel(ChannelName);
+   return chan;
+}
+std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames)
+{
+    std::vector<Int_t> channels;
+    TSISChannels sisch(runNumber);
+    for (auto& name: ChannelNames)
+    {
+        channels.push_back(sisch.GetChannel(name.c_str()));
+    }
+    return channels;
+}
+#endif
 
 //*************************************************************
 // Energy Analysis

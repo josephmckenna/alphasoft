@@ -8,7 +8,8 @@
 #include "TSISEvent.h"
 #include "TSVD_QOD.h"
 #include "TSISChannels.h"
-#include "TreeGetters.h"
+#include "TA2Spill.h"
+#include "TA2SpillGetters.h"
 
 class TA2Plot: public TAPlot
 {
@@ -44,22 +45,27 @@ public:
       int Counts;
       int SIS_Channel;
    };
+
    void SetSISChannels(int runNumber);
    std::vector<SISPlotEvent> SISEvents;
-   
+
    void AddSVDEvent(TSVD_QOD* SVDEvent);
    void AddSISEvent(TSISEvent* SISEvent);
 private:
    void AddEvent(TSISEvent* event, int channel,double time_offset=0);
    void AddEvent(TSVD_QOD* event,double time_offset=0);
 public:
-   void LoadRun(int runNumber);
+   void LoadRun(int runNumber, double first_time, double last_time);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
-   TA2Plot();
-   TA2Plot(double zmin, double zmax);
+   void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
+   //If spills are from one run, it is faster to call the function above
+   void AddDumpGates(std::vector<TA2Spill> spills );
+
+   TA2Plot(bool zerotime = true);
+   TA2Plot(double zmin, double zmax,bool zerotime = true);
    virtual ~TA2Plot();
    
-   void SetUpHistograms(bool zeroTime=true);
+   void SetUpHistograms();
    void FillHisto(bool ApplyCuts=true, int MVAMode=0);
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
