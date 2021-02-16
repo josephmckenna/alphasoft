@@ -34,6 +34,13 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+#include <TMath.h>
+#include <TTree.h>
+#include <TH1.h>
+#include <TClonesArray.h>
+#include <TVector3.h>
+#include <TVector.h>
+
 #include "EventAction.hh"
 #include "G4Event.hh"
 #include "RunAction.hh"
@@ -47,12 +54,6 @@
 #include "G4VHitsCollection.hh"
 #include "G4SDManager.hh"
 
-#include <TMath.h>
-#include <TTree.h>
-#include <TH1.h>
-#include <TClonesArray.h>
-#include <TVector3.h>
-#include <TVector.h>
 
 #include "TMChit.hh"
 #include "TDigi.hh"
@@ -201,7 +202,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
   
   G4double r,t_d,phi,dphi,alpha,angle,rphi,z;
   int j=0;
-  for(int i=0;i<THC->entries();++i)
+  for(size_t i=0;i<THC->entries();++i)
     {
       TPCHit* aHit = (*THC)[i];
       //      aHit->PrintPolar();
@@ -513,10 +514,10 @@ void EventAction::FillHisto(TPCHitsCollection* THC)
         fRunAction->GetNpairsHisto()->Fill(fNpairs);
       }
 
-  for (unsigned int m=0;m<fPgamma.size();++m)
+  for (size_t _m=0;_m<fPgamma.size();++_m)
     {
-      fRunAction->GetPgammaHisto()->Fill( fPgamma.at(m)->mag() );
-      fRunAction->GetDCAgammaHisto()->Fill( *(fDCAgamma.at(m)) );
+      fRunAction->GetPgammaHisto()->Fill( fPgamma.at(_m)->mag() );
+      fRunAction->GetDCAgammaHisto()->Fill( *(fDCAgamma.at(_m)) );
     }
 
   fRpositrons.clear();
@@ -540,7 +541,7 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
   TClonesArray& mchitarray = *(fRunAction->GetScintBarsMCHitsArray());
 
   // Add Scintillators Hits -- Digitization
-  for(int i=0;i<BHC->entries();++i)
+  for(size_t i=0;i<BHC->entries();++i)
     {
       ScintBarHit* aHit = (*BHC)[i];
       //      aHit->PrintPolar();

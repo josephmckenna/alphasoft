@@ -11,19 +11,16 @@
 #include "Garfield/MediumMagboltz.hh"
 #include "Garfield/ViewMedium.hh"
 
-using namespace Garfield;
-using std::string;
-
 int main(int argc, char * argv[])
 {
-  string path2gasfile(getenv("AGRELEASE"));
+  std::string path2gasfile(getenv("AGRELEASE"));
   path2gasfile+="/simulation/common/gas_files/";
   //int len = path2gasfile.size();
-  string gasfile("ar_70_co2_30_725Torr_20E200000_4B1.10.gas");
+  std::string gasfile("ar_70_co2_30_725Torr_20E200000_4B1.10.gas");
   path2gasfile+=gasfile;
   std::cout<<"GAS file: "<<path2gasfile<<std::endl;
 
-  string gastag(gasfile.substr(0,gasfile.length()-4));
+  std::string gastag(gasfile.substr(0,gasfile.length()-4));
   std::cout<<"gas tag: "<<gastag<<std::endl;
 
   TApplication app("app", &argc, argv);
@@ -33,11 +30,11 @@ int main(int argc, char * argv[])
   TFile* fout = TFile::Open(fname.Data(),"RECREATE");
 
   // Create the medium
-  MediumMagboltz* gas = new MediumMagboltz();
+  Garfield::MediumMagboltz* gas = new Garfield::MediumMagboltz();
   // Gas file created with other software
   if(!gas->LoadGasFile(path2gasfile.c_str())) return -2;
 
-  string ionfile(getenv("GARFIELD_HOME"));
+  std::string ionfile(getenv("GARFIELD_HOME"));
   ionfile+="/Data/IonMobility_Ar+_Ar.txt";
   if(!gas->LoadIonMobility(ionfile.c_str())) return -1;
 
@@ -52,7 +49,7 @@ int main(int argc, char * argv[])
   // double BF = 1.; // T
   // double theta = TMath::PiOver2(); // rad
 
-  ViewMedium* mviewV = new ViewMedium();
+  Garfield::ViewMedium* mviewV = new Garfield::ViewMedium();
   mviewV->SetMedium(gas);
   //  mviewV->SetElectricFieldRange(100.,1.1e5);
   mviewV->SetCanvas((TCanvas*)c->cd(1));
@@ -75,7 +72,7 @@ int main(int argc, char * argv[])
   c->cd(1);
   legV->Draw("same");
 
-  ViewMedium* mviewD = new ViewMedium();
+  Garfield::ViewMedium* mviewD = new Garfield::ViewMedium();
   mviewD->SetMedium(gas);
   //  mviewD->SetElectricFieldRange(100.,1.1e5);
   mviewD->SetCanvas((TCanvas*)c->cd(2));
@@ -95,7 +92,7 @@ int main(int argc, char * argv[])
   legD->Draw("same");
 
 
-  ViewMedium* mviewT = new ViewMedium();
+  Garfield::ViewMedium* mviewT = new Garfield::ViewMedium();
   mviewT->SetMedium(gas);
   //  mviewT->SetElectricFieldRange(100.,Emax);
   mviewT->SetCanvas((TCanvas*)c->cd(3));
@@ -133,14 +130,14 @@ int main(int argc, char * argv[])
     }
 
 
-  ViewMedium* mviewA = new ViewMedium();
+  Garfield::ViewMedium* mviewA = new Garfield::ViewMedium();
   mviewA->SetMedium(gas);
   //  mviewA->SetElectricFieldRange(100.,Emax);
   mviewA->SetCanvas((TCanvas*)c->cd(4));
   //  mviewA->PlotElectronAttachment('e',EF,BF,theta);
   mviewA->PlotElectronAttachment('e');
 
-  ViewMedium* mviewTb = new ViewMedium();
+  Garfield::ViewMedium* mviewTb = new Garfield::ViewMedium();
   mviewTb->SetMedium(gas);
   //mviewTb->SetElectricFieldRange(100.,5.e5);
   //mviewTb->SetMagneticFieldRange(0.,2.);
@@ -152,7 +149,7 @@ int main(int argc, char * argv[])
 
   cname=TString::Format("IonVelocity_%s",gastag.c_str());
   TCanvas* cIon = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-  ViewMedium* mviewI = new ViewMedium();
+  Garfield::ViewMedium* mviewI = new Garfield::ViewMedium();
   mviewI->SetMedium(gas);
   //mviewI->SetElectricFieldRange(100.,Emax);
   mviewI->SetCanvas(cIon);
@@ -163,7 +160,7 @@ int main(int argc, char * argv[])
 
   cname=TString::Format("LorentzAngle_%s",gastag.c_str());
   TCanvas* cLor = new TCanvas(cname.Data(),cname.Data(),1200,1000);
-  ViewMedium* mviewL = new ViewMedium();
+  Garfield::ViewMedium* mviewL = new Garfield::ViewMedium();
   mviewL->SetMedium(gas);
   //mviewL->SetElectricFieldRange(100.,Emax);
   mviewL->SetCanvas(cLor);

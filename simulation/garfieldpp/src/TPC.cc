@@ -118,19 +118,19 @@ void TPC::init()
   std::cout<<"TPC::init() ---> drift cell Type: "<<GetCellType()<<std::endl;
 }
 
-void TPC::SetGas(Medium *m)
+void TPC::SetGas(Garfield::Medium *m)
 {
   std::cout<<"TPC::SetGas(Medium*)"<<std::endl;
   medium = m;
   std::cout<<"TPC::SetGas Temperature: "<<medium->GetTemperature()
 	   <<" K\tPressure: "<<medium->GetPressure()<<" torr"<<std::endl;
   geo.Clear();
-  chamber = new SolidTube(0., 0., 0.,
+  chamber = new Garfield::SolidTube(0., 0., 0.,
 			  CathodeRadius, ROradius,
 			  FullLengthZ);
   geo.AddSolid(chamber,medium);
  
-  vector<double> ef, bf, ang;
+  std::vector<double> ef, bf, ang;
   double bmin, bmax;
   GetBRange(bmin, bmax);
   medium->GetFieldGrid(ef, bf, ang);

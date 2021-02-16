@@ -30,9 +30,6 @@
 
 #include "Helpers.hh"
 
-using namespace std;
-using namespace Garfield;
-
 #define DEBUG 0
 
 int main(int argc, char * argv[])
@@ -61,7 +58,7 @@ int main(int argc, char * argv[])
 
   //  unsigned int the_seed = 919850618;
   unsigned int the_seed = 20160903;
-  randomEngine.Seed(the_seed);
+  Garfield::randomEngine.Seed(the_seed);
 
   TString fname = TString::Format("Avalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm.root",
 				  CathodeVoltage,AnodeVoltage,FieldVoltage,
@@ -71,7 +68,7 @@ int main(int argc, char * argv[])
 
   if(!fout->IsOpen())
     {
-      cerr << "Something went wrong opening the output file. Does the directory exist?" << endl;
+      std::cerr << "Something went wrong opening the output file. Does the directory exist?" << std::endl;
       return -1;
     }
 
@@ -80,12 +77,12 @@ int main(int argc, char * argv[])
   TNtuple ntfionpos("ntfionpos","ion final position","x:y:z:t");
 
   // Create the medium
-  MediumMagboltz *gas = new MediumMagboltz;
+  Garfield::MediumMagboltz *gas = new Garfield::MediumMagboltz;
   // Gas file created with other software
   TString gasfile = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",
 				    getenv("AGRELEASE"));
   if( LoadGas(gas,gasfile.Data()) )
-    cerr<<gasfile<<endl;
+    std::cerr<<gasfile<<std::endl;
   else
     return -47;
   TString garfdata = TString::Format("%s/Data/IonMobility_Ar+_Ar.txt",
@@ -104,35 +101,35 @@ int main(int argc, char * argv[])
   if( B >= 0. )
     {
       drift_cell.SetMagneticField(0.,0.,MagneticField);
-      cerr<<"Magnetic Field set to "<<MagneticField<<" T"<<endl;
+      std::cerr<<"Magnetic Field set to "<<MagneticField<<" T"<<std::endl;
     }
   else
     {
       if( !drift_cell.SetSymmetries("rz") ) 
 	{
-	  cerr<<"set symm failed"<<endl;
+	  std::cerr<<"set symm failed"<<std::endl;
 	  return -46;
 	}
       // set scale parameter to convert Gauss to Tesla (or to go to 0.65T later)
       if( !drift_cell.ReadMagneticFieldMap(BfieldMap.Data(), MagneticField*1.e-4) ) 
 	{
-	  cerr<<"READ B-map failed"<<endl;
+	  std::cerr<<"READ B-map failed"<<std::endl;
 	  return -49;
 	} 
-      cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<endl;
+      std::cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<std::endl;
     }
   drift_cell.SetGas(gas);
   drift_cell.init();
 
   // Finally assembling a Sensor object
-  Sensor sensor;
+  Garfield::Sensor sensor;
   //  sensor.DisableDebugging();
   // Calculate the electric field
   sensor.AddComponent(&drift_cell);
 
   // Request signal calculation for the electrode named with labels above,
   // using the weighting field provided by the Component object cmp.
-  vector<string> anodes = drift_cell.GetAnodeReadouts();
+  std::vector<std::string> anodes = drift_cell.GetAnodeReadouts();
   for(unsigned int a=0; a < anodes.size(); ++a)
     sensor.AddElectrode(&drift_cell,anodes[a]);
 
@@ -158,13 +155,13 @@ int main(int argc, char * argv[])
 				   CathodeVoltage,AnodeVoltage,FieldVoltage,r0,phi0,z0);
 
   TCanvas cc(ccname.Data(),ccname.Data(), 1400, 1400);
-  ViewCell viewCell;
+  Garfield::ViewCell viewCell;
   viewCell.SetComponent(&drift_cell);
   viewCell.SetCanvas(&cc);
   viewCell.SetArea(areaX1,areaY1,areaZ1,areaX2,areaY2,areaZ2);
 
   // Construct object to visualise drift lines
-  ViewDrift viewdrift;
+  Garfield::ViewDrift viewdrift;
   viewdrift.SetCanvas(&cc);
   viewdrift.SetArea(areaX1,areaY1,areaZ1,areaX2,areaY2,areaZ2);
 
@@ -182,7 +179,7 @@ int main(int argc, char * argv[])
   // eaval.EnablePlotting(&viewdrift);
   // //----------------------------------------------------
   // Microscopic Avalanche
-  AvalancheMicroscopic eaval;
+  Garfield::AvalancheMicroscopic eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
   //  eaval.DisableSignalCalculation();
@@ -193,7 +190,7 @@ int main(int argc, char * argv[])
   //----------------------------------------------------
   // Transport Class for Ions
   // MC Avalanche
-  AvalancheMC iaval;
+  Garfield::AvalancheMC iaval;
   iaval.SetSensor(&sensor);
   iaval.EnableMagneticField();
   iaval.EnableSignalCalculation();
@@ -206,35 +203,35 @@ int main(int argc, char * argv[])
   rndm.SetSeed(the_seed);
 
   // Start simulation
-  cerr<<"\nBEGIN"<<endl;
+  std::cerr<<"\nBEGIN"<<std::endl;
   sensor.ClearSignal();
   sensor.NewSignal();
   
-  cerr<<"AvalancheElectron:";
+  std::cerr<<"AvalancheElectron:";
   //  cerr<<"Drift Electron RKF:";
   //  double z0=0., // cm
   double  t0=0.; //ns
-  cerr<<" r0 = "<<r0<<" cm; phi0 = "<<phi0<<" rad = "<<phi0*TMath::RadToDeg()<<" deg"<<endl;
+  std::cerr<<" r0 = "<<r0<<" cm; phi0 = "<<phi0<<" rad = "<<phi0*TMath::RadToDeg()<<" deg"<<std::endl;
   double x0 = r0*TMath::Cos(phi0), y0 = r0*TMath::Sin(phi0); //cm
-  cerr<<" x0 = "<<x0<<"; y0 = "<<y0<<"; z0 = "<<z0<<"  cm"<<endl;
+  std::cerr<<" x0 = "<<x0<<"; y0 = "<<y0<<"; z0 = "<<z0<<"  cm"<<std::endl;
   //  double e0 = 0.;// eV
   double e0 = 0.6; // eV
 
   double Ex,Ey,Ez,VV,Bx,By,Bz;
   int s=0;
-  Medium* m;
+  Garfield::Medium* m;
   sensor.ElectricField(x0,y0,z0,Ex,Ey,Ez,VV,m,s);
-  if( s ) cerr<<"Bad E field\n";
+  if( s ) std::cerr<<"Bad E field\n";
   else {
-    cerr<<"In "<<m->GetName()<<" E = ("<<Ex<<","<<Ey<<","<<Ez<<") V/cm\t";
-    cerr<<"V = "<<VV<<" V\t";
+    std::cerr<<"In "<<m->GetName()<<" E = ("<<Ex<<","<<Ey<<","<<Ez<<") V/cm\t";
+    std::cerr<<"V = "<<VV<<" V\t";
   }
   sensor.MagneticField(x0,y0,z0,Bx,By,Bz,s);
-  if( s ) cerr<<"Bad B field\n";
+  if( s ) std::cerr<<"Bad B field\n";
   else {
-    cerr<<" B = ("<<Bx<<","<<By<<","<<Bz<<") T\n";
+    std::cerr<<" B = ("<<Bx<<","<<By<<","<<Bz<<") T\n";
   }
-  cerr<<"---------------------------------------------------------\n"<<endl;
+  std::cerr<<"---------------------------------------------------------\n"<<std::endl;
 
   double Nions = 100.;
   //  int Nelectrons = 1000;
@@ -246,22 +243,22 @@ int main(int argc, char * argv[])
     {
       int ne,ni;
       ne=ni=0;
-      cerr<<den<<endl;
+      std::cerr<<den<<std::endl;
       while(ni == 0)
       	{
-	  cerr<<"e- init: "<<x0<<"\t"<<y0<<"\t"<<z0<<"\t"<<t0<<"\t"<<e0<<"\n";
+	  std::cerr<<"e- init: "<<x0<<"\t"<<y0<<"\t"<<z0<<"\t"<<t0<<"\t"<<e0<<"\n";
 	  eaval.AvalancheElectron(x0, y0, z0, t0, e0);
 	  //  eaval.DriftElectron(x0, y0, z0, t0, e0);
 
 	  eaval.GetAvalancheSize(ne,ni);
-	  cerr<<"Avalanche Size: #ions = "<<ni<<"; #e- "<<ne<<endl;
+	  std::cerr<<"Avalanche Size: #ions = "<<ni<<"; #e- "<<ne<<std::endl;
 	}
       double exf,eyf,ezf,etf,eef;
       exf=eyf=ezf=etf=eef=-1.;
    
       iaval.SetIonSignalScalingFactor(double(ni)/Nions);
 
-      cerr<<"Tracking "<<Nions<<" out of "<<eaval.GetNumberOfElectronEndpoints()<<" ions..."<<endl;
+      std::cerr<<"Tracking "<<Nions<<" out of "<<eaval.GetNumberOfElectronEndpoints()<<" ions..."<<std::endl;
       for(unsigned i=0; i<eaval.GetNumberOfElectronEndpoints(); ++i)
 	{
 	  double xi,yi,zi,ti,
@@ -283,15 +280,15 @@ int main(int argc, char * argv[])
 	      etf=tf;
 	      eef=ef;
 	      //	  estat=status;
-	      cerr<<"EEP test: ri = "<<ri
-		  <<" cm; phii = "<<TMath::ATan2(yi,xi)*TMath::RadToDeg()<<" deg"<<endl;
+	      std::cerr<<"EEP test: ri = "<<ri
+		  <<" cm; phii = "<<TMath::ATan2(yi,xi)*TMath::RadToDeg()<<" deg"<<std::endl;
 	    }
 	  ntionpos.Fill(xi,yi,zi,ti);
 	  //      ntionpos.Fill(xf,yf,zf,tf);
 #if DEBUG>0
-	  cerr<<i<<"\n\tinit: "
+	  std::cerr<<i<<"\n\tinit: "
 	      <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
-	      <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<endl;
+	      <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<std::endl;
 #endif
 	  if( i >= Nions ) continue;
 	  iaval.DriftIon(xi,yi,zi,ti);
@@ -300,15 +297,15 @@ int main(int argc, char * argv[])
 	  double xf_ion,yf_ion,zf_ion,tf_ion;
 	  iaval.GetDriftLinePoint(NN-1, xf_ion, yf_ion, zf_ion, tf_ion);
 #if DEBUG>0
-	  cerr<<"\t\tion endpoint: "<<xf_ion<<"\t"<<yf_ion<<"\t"<<zf_ion<<"\t"<<tf_ion<<endl;
+	  std::cerr<<"\t\tion endpoint: "<<xf_ion<<"\t"<<yf_ion<<"\t"<<zf_ion<<"\t"<<tf_ion<<std::endl;
 #endif
 
 	  ntfionpos.Fill(xf_ion, yf_ion, zf_ion, tf_ion);
 	}
       ntefin.Fill(exf,eyf,ezf,etf);
-      cerr<<"\nEEP e- endpoint: "<<exf<<"\t"<<eyf<<"\t"<<ezf<<"\t"<<etf<<"\t"<<eef<<"\n"<<endl;
+      std::cerr<<"\nEEP e- endpoint: "<<exf<<"\t"<<eyf<<"\t"<<ezf<<"\t"<<etf<<"\t"<<eef<<"\n"<<std::endl;
     }
-  cerr<<"END"<<endl;
+  std::cerr<<"END"<<std::endl;
 
   fout->cd();
   ntefin.Write();
@@ -322,7 +319,7 @@ int main(int argc, char * argv[])
   // fout->cd();
   // cc.Write();
 
-  cerr<<"READOUT!"<<endl;
+  std::cerr<<"READOUT!"<<std::endl;
   //  Sensor ROsens(sensor);
   // AFTER Response Function
   //  ROsens.SetTransferFunction(Hpads);
@@ -333,7 +330,7 @@ int main(int argc, char * argv[])
   bool convolute = true;
   if( convolute )
     {
-      cerr<<"Apply the transfer function"<<endl;
+      std::cerr<<"Apply the transfer function"<<std::endl;
       // Apply the transfer function
       sensor.ConvoluteSignals();
       //      ROsens.ConvoluteSignals();
@@ -352,7 +349,7 @@ int main(int argc, char * argv[])
   //  TH1D hro = GetROSignal(&ROsens, &roname, convolute);
   TH1D hro = GetROSignal(&sensor, &roname, convolute);
   hro.Write();
-  cerr<<"READOUT complete"<<endl;
+  std::cerr<<"READOUT complete"<<std::endl;
 
   return 0;
 }

@@ -12,11 +12,7 @@
 #include "Garfield/MediumMagboltz.hh"
 #include "Garfield/Sensor.hh"
 
-using Garfield::Sensor;
-using Garfield::Medium;
-using Garfield::MediumMagboltz;
-
-bool LoadGas(MediumMagboltz *gas, const char *gasfile){
+bool LoadGas(Garfield::MediumMagboltz *gas, const char *gasfile){
     if(gas->LoadGasFile(gasfile)) return true;
     else {
         std::ostringstream oss;
@@ -56,11 +52,11 @@ double Hands(double t)
 }
 
 // Read-out signal extraction
-TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
+TH1D GetROSignal(Garfield::Sensor* sensor, TString* electrode, bool conv=false)
 {
   double Tstart, BinWidth;
   unsigned int nBins;
-  s->GetTimeWindow(Tstart, BinWidth, nBins);
+  sensor->GetTimeWindow(Tstart, BinWidth, nBins);
   double Tstop = Tstart + BinWidth * double(nBins) ;
   std::cout<<"Plotting: "<<electrode->Data()<<" from: "<<Tstart<<" to: "<<Tstop<<" ns in "<<nBins<<" bins"<<std::endl;
   TString hname  = TString::Format("h%s", electrode->Data());
@@ -76,7 +72,7 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
   TH1D hs(hname.Data(),htitle.Data(),nBins,Tstart,Tstop);
 
   for(unsigned int b=1; b<=nBins; ++b)
-    hs.SetBinContent(b,s->GetSignal(electrode->Data(),b));
+    hs.SetBinContent(b,sensor->GetSignal(electrode->Data(),b));
 
   int mbin=hs.GetMinimumBin();
   std::cout<<hs.GetName()<<" peak "<<hs.GetBinContent(mbin)<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
@@ -85,19 +81,19 @@ TH1D GetROSignal(Sensor* s, TString* electrode, bool conv=false)
 }
 
 // Extract angle between electron velocity and electric field at given point
-double LorentzAngle(double x, double y, double z, Sensor* s)
+double LorentzAngle(double x, double y, double z, Garfield::Sensor* sensor)
 {
   // Electric and Magnetic Fields
   double Ex,Ey,Ez,VV,Bx,By,Bz;
   int stat;
   // Drift Velocity
-  Medium* m;
+  Garfield::Medium* medium;
   double Vx,Vy,Vz;
-  s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,stat);
+  sensor->ElectricField(x,y,z,Ex,Ey,Ez,VV,medium,stat);
   if( stat ) return -99999.;
-  s->MagneticField(x,y,z,Bx,By,Bz,stat);
+  sensor->MagneticField(x,y,z,Bx,By,Bz,stat);
   if( stat ) return -99999.;
-  m->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  medium->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
   // Lorentz Angle
   TVector3 V(Vx,Vy,Vz);
   TVector3 E(Ex,Ey,Ez);
@@ -108,7 +104,7 @@ double LorentzAngle(double x, double y, double z, Sensor* s)
   return TMath::Pi()-V.Angle(E);
 }
 
-double CalculateGain(double AWdiam, Sensor* s)
+double CalculateGain(double AWdiam, Garfield::Sensor* sensor)
 {
   //  Electric and Magnetic Fields
   double Ex,Ey,Ez,VV,Bx,By,Bz;
@@ -125,14 +121,14 @@ double CalculateGain(double AWdiam, Sensor* s)
     {
       x = radius*TMath::Cos(phi);
       //      y = radius*TMath::Sin(phi);
-      Medium* m;
-      s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,status);
+      Garfield::Medium* medium;
+      sensor->ElectricField(x,y,z,Ex,Ey,Ez,VV,medium,status);
       if( status ) continue;
       //      cout<<"V = "<<VV<<" V @ ("<<x<<","<<y<<","<<z<<") cm\t";
-      s->MagneticField(x,y,z,Bx,By,Bz,status);
+      sensor->MagneticField(x,y,z,Bx,By,Bz,status);
       if( status ) continue;
       double alpha;
-      m->ElectronTownsend(Ex,Ey,Ez,Bx,By,Bz,alpha);
+      medium->ElectronTownsend(Ex,Ey,Ez,Bx,By,Bz,alpha);
       // double pt = ((MediumGas*)m)->GetPressureTabled(), pp = m->GetPressure();
       // double scale = pt/pp;
       // alpha*=scale;
@@ -167,17 +163,17 @@ void Polar2Cartesian(const double r, const double theta,
 TH2D _hEv;
 TH2D _hrE;
 TH2D _hrv;
-double ElectricFieldHisto(double x, double y, double z, Sensor* s)
+double ElectricFieldHisto(double x, double y, double z, Garfield::Sensor* sensor)
 {
   // Electric and Magnetic Fields
   double Ex,Ey,Ez,VV,Bx,By,Bz;
   int dummy;
   // Drift Velocity
-  Medium* m;
+  Garfield::Medium* medium;
   double Vx,Vy,Vz;
-  s->ElectricField(x,y,z,Ex,Ey,Ez,VV,m,dummy);
-  s->MagneticField(x,y,z,Bx,By,Bz,dummy);
-  m->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  sensor->ElectricField(x,y,z,Ex,Ey,Ez,VV,medium,dummy);
+  sensor->MagneticField(x,y,z,Bx,By,Bz,dummy);
+  medium->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
   // Lorentz Angle
   TVector3 V(Vx,Vy,Vz);
   TVector3 E(Ex,Ey,Ez);

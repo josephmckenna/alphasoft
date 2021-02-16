@@ -7,16 +7,11 @@
 #include "Garfield/ComponentAnalyticField.hh"
 #include "Garfield/MediumMagboltz.hh"
 
-using namespace TMath;
-using namespace Garfield;
-
-using std::cout;
-using std::endl;
 
 int makeGas(double CO2frac = 10, int nEF = 20, double EFmax = 200000, int nBF = 6, double BFmax = 1.25, int nTh = 5, double thetaMax = 180)
 {
     // Make a medium
-    MediumMagboltz* gas = new MediumMagboltz();
+    Garfield::MediumMagboltz* gas = new Garfield::MediumMagboltz();
     gas->SetComposition("ar", 100.-CO2frac, "co2", CO2frac);
     //    gas->SetComposition("ar", 64., "co2", 26., "cf4", 10.);
     // //    double o2frac = 0.2;// %
@@ -39,7 +34,7 @@ int makeGas(double CO2frac = 10, int nEF = 20, double EFmax = 200000, int nBF = 
     // Set magnetic field (BF) range covered by gas table.
     double BFmin = 0.; // T
     if(BFmax == 0 && nBF > 1){
-        cout << "Asking for multiple magnetic fields between 0 and 0 doesn't make sense. Reducing to one field." << endl;
+        std::cout << "Asking for multiple magnetic fields between 0 and 0 doesn't make sense. Reducing to one field." << std::endl;
         nBF = 1;
     }
     if(nBF == 1){
@@ -59,12 +54,12 @@ int makeGas(double CO2frac = 10, int nEF = 20, double EFmax = 200000, int nBF = 
                       BFmin, BFmax, nBF,
                       thetaMin, thetaMax, nTh);
 
-    cout << nEF << " E fields from   " << EFmin << " to " << EFmax << endl;
-    cout << nBF << " B fields from   " << BFmin << " to " << BFmax << endl;
-    cout << nTh << " E-B angles from " << thetaMin << " to " << thetaMax << endl << endl;
+    std::cout << nEF << " E fields from   " << EFmin << " to " << EFmax << std::endl;
+    std::cout << nBF << " B fields from   " << BFmin << " to " << BFmax << std::endl;
+    std::cout << nTh << " E-B angles from " << thetaMin << " to " << thetaMax << std::endl << std::endl;
 
-    cout << "gas->SetFieldGrid(" << EFmin << ", " << EFmax << ", " <<  nEF << ", " << useLog << ", " <<
-        BFmin << ", " <<  BFmax << ", " <<  nBF << ", " <<  thetaMin << ", " << thetaMax << ", " << nTh << ")" << endl;
+    std::cout << "gas->SetFieldGrid(" << EFmin << ", " << EFmax << ", " <<  nEF << ", " << useLog << ", " <<
+        BFmin << ", " <<  BFmax << ", " <<  nBF << ", " <<  thetaMin << ", " << thetaMax << ", " << nTh << ")" << std::endl;
     //  gas->SetFieldGrid(EFmin, EFmax, nEF, useLog);
 
 

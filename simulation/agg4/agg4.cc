@@ -29,10 +29,11 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+#include <TMath.h>
+
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
 
-#include "G4SystemOfUnits.hh"
 
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
@@ -42,7 +43,7 @@
 #include "StackingAction.hh"
 #include "SteppingAction.hh"
 
-#include <TMath.h>
+
 #include <fstream>
 
 #ifdef G4VIS_USE
@@ -123,7 +124,7 @@ int main(int argc,char** argv)
   G4cout<<"Max Drift time: "<<ElectronDrift::ElectronDriftInstance()->GetTime( TPCBase::TPCBaseInstance()->GetCathodeRadius(true) )<<" ns"<<G4endl;
 
   gNbars = 64;
-  gBarLength = 2.5*m;
+  gBarLength = 2.5*CLHEP::m;
 
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;
