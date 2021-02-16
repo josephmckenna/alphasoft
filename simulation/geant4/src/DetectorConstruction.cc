@@ -635,10 +635,11 @@ void DetectorConstruction::ConstructGarfieldGeometry()
   G4String gasFile = fGasModelParameters->GetGasFile();
   G4String ionMobFile = fGasModelParameters->GetIonMobilityFile();
 
-  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
+  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz();
   MediumMagboltz->SetPressure(fGasPressure/bar*750.06158);
   MediumMagboltz->SetTemperature(fGasTemperature);
   G4cout << gasFile << G4endl;
+  std::cout<<"Loading garfield data from " <<getenv("GARFIELD_HOME")<<std::endl;
   const G4String path = getenv("GARFIELD_HOME");
   G4AutoLock lock(&aMutex);
   bool stat;
