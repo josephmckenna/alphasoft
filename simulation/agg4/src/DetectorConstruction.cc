@@ -415,8 +415,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   // Liquid Helium
   std::string filename=env_path + file_path + "lHe" + file_ext;
-  std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
-  G4VSolid* lHe_solid = mesh->GetSolid();
+  std::shared_ptr<CADMesh::TessellatedMesh>  meshlHe = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+  G4VSolid* lHe_solid = meshlHe->GetSolid();
   G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, lHe, "lHe");
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicWorld, false, 0);
   lHe_log->SetVisAttributes(G4Color(1,0,0,0));
@@ -425,8 +425,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   for(int i = 0; i < 41; i ++) 
     {
       filename=env_path + file_path + std::to_string(i) + file_ext;
-      std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
-      G4VSolid* cad_solid = mesh->GetSolid();
+      std::shared_ptr<CADMesh::TessellatedMesh>  mesh_vol = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+      G4VSolid* cad_solid = mesh_vol->GetSolid();
       volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
       if( kMat )
 	{

@@ -31,6 +31,12 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+#include "TClonesArray.h"
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include "TTree.h"
+#include "TRandom3.h"
+
 #include "PrimaryGeneratorAction.hh"
 #include "PrimaryGeneratorMessenger.hh"
 
@@ -57,11 +63,7 @@
 
 #include "ScintPadProto.hh"
 
-#include "TClonesArray.h"
-#include "TVector3.h"
-#include "TLorentzVector.h"
-#include "TTree.h"
-#include "TRandom3.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,21 +104,21 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   }
   
   // Read annihilation positions
-  char s[80];
+  char annipos[80];
   if(gMagneticField == 0.65) {
-    strcpy(s,getenv("AGRELEASE"));
-    strcat(s,"/simulation/common/Annihilation_Files/Down/annipos_0.65T_down.csv");
-    down_anni_file = s;
-    strcpy(s,getenv("AGRELEASE"));
-    strcat(s,"/simulation/common/Annihilation_Files/Up/annipos_0.65T_up.csv");
-    up_anni_file = s;
+    strcpy(annipos,getenv("AGRELEASE"));
+    strcat(annipos,"/simulation/common/Annihilation_Files/Down/annipos_0.65T_down.csv");
+    down_anni_file = annipos;
+    strcpy(annipos,getenv("AGRELEASE"));
+    strcat(annipos,"/simulation/common/Annihilation_Files/Up/annipos_0.65T_up.csv");
+    up_anni_file = annipos;
   } else if(gMagneticField == 1.0) {
-    strcpy(s,getenv("AGRELEASE"));
-    strcat(s,"/simulation/common/Annihilation_Files/Down/annipos_1T_down.csv");
-    down_anni_file = s;
-    strcpy(s,getenv("AGRELEASE"));
-    strcat(s,"/simulation/common/Annihilation_Files/Up/annipos_1T_up.csv");
-    up_anni_file = s;
+    strcpy(annipos,getenv("AGRELEASE"));
+    strcat(annipos,"/simulation/common/Annihilation_Files/Down/annipos_1T_down.csv");
+    down_anni_file = annipos;
+    strcpy(annipos,getenv("AGRELEASE"));
+    strcat(annipos,"/simulation/common/Annihilation_Files/Up/annipos_1T_up.csv");
+    up_anni_file = annipos;
   }
   
   std::string opened_file;

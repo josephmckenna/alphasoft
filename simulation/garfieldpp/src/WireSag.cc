@@ -21,8 +21,6 @@
 #include "TPC.hh"
 #include "Helpers.hh"
 
-using namespace Garfield;
-
 int main(int argc, char * argv[]) 
 {
 
@@ -32,7 +30,7 @@ int main(int argc, char * argv[])
   double Bfield = 1.;//T
 
   TApplication app("app", &argc, argv);
-  plottingEngine.SetDefaultStyle();
+  Garfield::plottingEngine.SetDefaultStyle();
  
   // // Make a gas medium.
   // MediumMagboltz gas;
@@ -51,7 +49,7 @@ int main(int argc, char * argv[])
   // cmp.SetPeriodicityX(0.15);
 
   // Create the medium
-  MediumMagboltz* gas = new MediumMagboltz();
+  Garfield::MediumMagboltz* gas = new Garfield::MediumMagboltz();
   // Gas file created with other software
   TString gasfile = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",
 				    getenv("AGRELEASE"));
