@@ -24,13 +24,10 @@ include(${Geant4_USE_FILE})
 #CADMesh 
 find_package(cadmesh REQUIRED)
 if(cadmesh_FOUND)
-  message(STATUS "CADMesh found!")
   #message(STATUS "${CADMESH_INCLUDE_DIRS}")
+else()
+  message(FATAL_ERROR "CADMesh not found!!!")
 endif(cadmesh_FOUND)
-# just write it down explicitly down the 
-#set(CADMESH_INCLUDE_DIRS $ENV{CADMESH_HOME}/include)
-#set(cadmesh_LIBRARIES -L$ENV{CADMESH_HOME}/lib cadmesh assimp tet)
-#
 
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
@@ -41,11 +38,6 @@ if(NOT ROOT_FOUND)
   return()
 endif()
 include(${ROOT_USE_FILE})
-EXECUTE_PROCESS(COMMAND 
-  root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-shadow ${ROOT_CXX_FLAGS}")
-EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 
 #----------------------------------------------------------------------------
 # include CRY (required package)
