@@ -257,7 +257,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
       double ot;
-      TTree* trigger_tree =  Get_Chrono_Tree( runNumber, CHRONO_FLAG_NAME, ot );
+      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,GetChronoBoardChannel(runNumber, CHRONO_FLAG_NAME), ot );
 
       if( trigger_tree == NULL )
          continue; //Error state?

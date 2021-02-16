@@ -28,6 +28,7 @@
 #include "midasio.h"
 
 #include "TSettings.h"
+#include "ALPHA2SettingsDatabase.h"
 
 #include "SiMod.h"
 #include "UnpackVF48.h"
@@ -113,8 +114,7 @@ public:
          if (stripRMS<0) BadRMSValues++;
          fStripRMSs[i] = stripRMS;// fabs(stripRMS) < 200. ? stripRMS : 200.;
          fStripMeans[i]= stripMean;//fabs(stripMean)<200? stripMean : 0.;
-         //LMG, turned off temporarily - clogging the output.
-         //std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<std::endl;
+         //std::cout<<"Mean:"<<stripMean<<"\tRMS:"<<stripRMS<<"\n";
       }
       
       delete striprms_tree;
@@ -266,9 +266,7 @@ public:
       ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
       // load the sqlite3 db
-      char dbName[255]; 
-      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
       const int m=fFlags->ProcessVF48;
       {
          // extract VF48 sampling parameters from sqlite db

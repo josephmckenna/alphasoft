@@ -103,7 +103,7 @@ private:
    ALPHAg::padmap pmap;
 
 public:
-   Match(const AnaSettings* ana_settings);
+   Match(const AnaSettings* ana_settings, bool mt=false);
    Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
    ~Match();
    void SetGlobalLockVariable(std::mutex* _manalyzerLock)

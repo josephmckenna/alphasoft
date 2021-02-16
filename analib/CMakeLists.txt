@@ -23,6 +23,9 @@ if ($ENV{CLICOLOR_FORCE})
     endif ()
 endif ()
 
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
+
 # Directories
 add_subdirectory(src)
 
@@ -34,7 +37,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
@@ -45,29 +48,32 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories(include $ENV{AGRELEASE}/agana)
-include_directories(include include)
-#include_directories(include .) #Used for RootUtils
-if (BUILD_AG)
-   include_directories(include $ENV{AGRELEASE}/recolib/include)
-endif(BUILD_AG)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
+include_directories(include ../ana/include)
+include_directories(include ../a2lib/include)
+
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
+
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__analib include/*.h LINKDEF LibLinkDef.hh)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h include/*.hh)
+ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
+add_dependencies(analib gitinfo)
+target_include_directories(analib PUBLIC include ../agana)
 target_link_libraries(analib ${ROOT_LIBRARIES} )
 if (BUILD_AG)
    target_link_libraries(analib ${ROOT_LIBRARIES} agtpc)
 endif(BUILD_AG)
+
 install(TARGETS analib DESTINATION lib)
 
-add_custom_command( TARGET analib POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libanalib.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-                  )
+install(FILES ${PROJECT_BINARY_DIR}/libanalib_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libanalib.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

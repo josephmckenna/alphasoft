@@ -4,6 +4,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 
 #include <iostream>
 #include <iomanip>

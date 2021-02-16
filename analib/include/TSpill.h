@@ -1,11 +1,12 @@
-#ifndef _TA2Spill_
-#define _TA2Spill_
+#ifndef _TSpill_
+#define _TSpill_
 #include "TObject.h"
 #include <iostream>
 #include <bitset>
 #include "TString.h"
 #include "sqlite3.h"
 #include "DumpHandling.h"
+#include "Sequencer_Channels.h"
 
 //Base class for SIS and Chronobox integrals
 class TSpillScalerData: public TObject
@@ -29,55 +30,73 @@ class TSpillScalerData: public TObject
    TSpillScalerData();
    ~TSpillScalerData();
    TSpillScalerData(int n_scaler_channels);
-   TSpillScalerData(TSpillScalerData* a);
+   TSpillScalerData(const TSpillScalerData& a);
+   TSpillScalerData& operator =(const TSpillScalerData& rhs);
+   double GetStartTime() const { return StartTime; }
+   double GetStopTime() const { return StopTime; }
    template <class ScalerData>
-   ScalerData* operator/(const ScalerData* b);
-   template <class ScalerData>
-   ScalerData* operator+(const ScalerData* b);
-   bool Ready( bool have_vertex_detector);
+   ScalerData* operator/(const ScalerData* b)
+   {
+      ScalerData* c=new ScalerData(this->DetectorCounts.size());
 
+      c->VertexFilled=this->VertexFilled;
+      c->ScalerFilled=this->ScalerFilled;
+
+      c->StartTime=b->StartTime;
+      c->StopTime=this->StopTime;
+
+      for (size_t i=0; i<DetectorCounts.size(); i++)
+      {
+         //std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
+         if (b->DetectorCounts[i])
+            c->DetectorCounts[i]=100*(double)this->DetectorCounts[i]/(double)b->DetectorCounts[i];
+         else
+            c->DetectorCounts[i]=std::numeric_limits<int>::infinity();
+      }
+      if (b->VertexEvents)
+         c->VertexEvents= 100*(double)this->VertexEvents / (double)b->VertexEvents;
+      if (b->Verticies)
+         c->Verticies   = 100*(double)this->Verticies  / (double)b->Verticies;
+      if (b->PassCuts)
+         c->PassCuts    = 100*(double)this->PassCuts   / (double)b->PassCuts;
+      if (b->PassMVA)
+         c->PassMVA     = 100*(double)this->PassMVA    / (double)b->PassMVA;
+      return c;
+   }
+   template <class ScalerData>
+   ScalerData* operator+(const ScalerData* b)
+   {
+      ScalerData* c=new ScalerData(this->DetectorCounts.size());
+
+      c->VertexFilled=this->VertexFilled;
+      c->ScalerFilled=this->ScalerFilled;
+
+      c->StartTime =b->StartTime;
+      c->StopTime  =this->StopTime;
+
+      for (size_t i=0; i<DetectorCounts.size(); i++)
+      {
+         //std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
+         if (b->DetectorCounts[i])
+            c->DetectorCounts[i]=this->DetectorCounts[i]+b->DetectorCounts[i];
+         else
+            c->DetectorCounts[i]=std::numeric_limits<int>::infinity();
+      }
+      if (b->VertexEvents)
+         c->VertexEvents= this->VertexEvents + b->VertexEvents;
+      if (b->Verticies)
+         c->Verticies = this->Verticies  + b->Verticies;
+      if (b->PassCuts)
+         c->PassCuts  = this->PassCuts   + b->PassCuts;
+      if (b->PassMVA)
+        c->PassMVA   = this->PassMVA    + b->PassMVA;
+      return c;
+   }
+   bool Ready( bool have_vertex_detector);
+   double GetDumpLength() { return StopTime - StartTime; };
 
    ClassDef(TSpillScalerData,1);
 };
-#ifdef BUILD_A2
-#include "TSVD_QOD.h"
-#include "TSISEvent.h"
-
-//Class to integrate SIS and VF48 event counts
-class TA2SpillScalerData: public TSpillScalerData
-{
-   public:
-   //TA2SpillScalerData();
-   ~TA2SpillScalerData();
-   TA2SpillScalerData(int n_scaler_channels=NUM_SIS_CHANNELS*NUM_SIS_MODULES);
-   TA2SpillScalerData(TA2SpillScalerData* a);
-   //TA2SpillScalerData* operator/(const TA2SpillScalerData* b);
-   TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
-   using TObject::Print;
-   virtual void Print();
-
-   ClassDef(TA2SpillScalerData,1);
-};
-#endif
-#ifdef BUILD_AG
-#include "TStoreEvent.hh"
-#include "TChrono_Event.h"
-#include "chrono_module.h"
-//Class to inegrate AG scaler and data counts
-class TAGSpillScalerData: public TSpillScalerData
-{
-   public:
-   //TAGSpillScalerData();
-   ~TAGSpillScalerData();
-   TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
-   TAGSpillScalerData(TAGSpillScalerData* a);
-   //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
-   TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
-   using TObject::Print;
-   virtual void Print();
-   ClassDef(TAGSpillScalerData,1);
-};
-#endif
 class TSpillSequencerData: public TObject
 {
    public:
@@ -88,7 +107,8 @@ class TSpillSequencerData: public TObject
    int          fStopState;
    TSpillSequencerData();
    ~TSpillSequencerData();
-   TSpillSequencerData(TSpillSequencerData* a);
+   TSpillSequencerData(const TSpillSequencerData& a);
+   TSpillSequencerData& operator =(const TSpillSequencerData& rhs);
 //   TSpillSequencerData(DumpPair* d);
    TSpillSequencerData* operator/(const TSpillSequencerData* b);
    using TObject::Print;
@@ -96,49 +116,30 @@ class TSpillSequencerData: public TObject
 
    ClassDef(TSpillSequencerData,1);
 };
-#ifdef BUILD_A2
-class TA2SpillSequencerData: public TSpillSequencerData
-{
-   public:
-   TA2SpillSequencerData();
-   ~TA2SpillSequencerData();
-   TA2SpillSequencerData(TA2SpillSequencerData* s);
-   TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
-
-
-   ClassDef(TA2SpillSequencerData,1);
-};
-#endif
-#ifdef BUILD_AG
-class TAGSpillSequencerData: public TSpillSequencerData
-{
-   public:
-   TAGSpillSequencerData();
-   ~TAGSpillSequencerData();
-   TAGSpillSequencerData(TAGSpillSequencerData* s);
-   TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
-
-
-   ClassDef(TAGSpillSequencerData,1);
-};
-#endif
 class TSpill: public TObject
 {
 public:
-   const int             RunNumber;
+   int                   RunNumber;
    bool                  IsDumpType;
    bool                  IsInfoType;
-   int                   Unixtime;
+   uint32_t              Unixtime;
    std::string           Name;
 
    TSpill();
-   TSpill(int runno);
+   TSpill(int runno, uint32_t unixtime);
    ~TSpill();
    //TSpill(const char* name);
    void InitByName(const char* format, va_list args);
-   TSpill(int runno, const char* format, ...);
-   TSpill* operator/(const TSpill* b);
-   TSpill(TSpill* a);
+   TSpill(int runno, uint32_t unixtime, const char* format, ...);
+   TSpill(const TSpill& a);
+   TSpill& operator =(const TSpill& rhs);
+private:
+   //Recursive function to compare strings with wildcard support (called by IsMatchForDumpName)
+   bool MatchWithWildCards(const char *first, const char * second);
+public:
+   bool IsMatchForDumpName(const std::string& dumpname);
+   virtual double GetStartTime() const = 0;
+   virtual double GetStopTime() const = 0;
    bool DumpHasMathSymbol() const;
    using TObject::Print;
    virtual void Print();
@@ -150,45 +151,5 @@ public:
    ClassDef(TSpill,1);
 
 };
-#ifdef BUILD_A2
-class TA2Spill: public TSpill
-{
-public:
-   TA2SpillScalerData* ScalerData;
-   TA2SpillSequencerData*  SeqData;
-   TA2Spill();
-   TA2Spill(int runno);
-   TA2Spill(int runnno, const char* format, ...);
-   TA2Spill(int runnno, DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d);
-   TA2Spill* operator/( TA2Spill* b);
-   TA2Spill* operator+( TA2Spill* b);
-   TA2Spill(const TA2Spill* a);
-   using TObject::Print;
-   virtual void Print();
-
-
-   int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   TString Content(std::vector<int>*, int& );
-   
-   bool Ready( bool have_svd);
-   ~TA2Spill();
-   ClassDef(TA2Spill,1);
-};
-#endif
-#ifdef BUILD_AG
-class TAGSpill: public TSpill
-{
-public:
-   TAGSpillScalerData* ScalerData;
-   TAGSpillSequencerData*  SeqData;
-   TAGSpill();
-   TAGSpill(int runno, const char* format, ...);
-   TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
-   ~TAGSpill();
-   TAGSpill(TAGSpill* a);
-   TString Content(std::vector<std::pair<int,int>>*, int& );
-   ClassDef(TAGSpill,1);
-};
-#endif
 
 #endif

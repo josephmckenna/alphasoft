@@ -9,6 +9,44 @@ double min_ofl=-1111.;
 
 void SetHistoLimits( int run ) {
   if(0)  {  /*donothing*/  }
+  else if( run == 904687 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      min_occ=4200.;
+      max_amp=1500.;
+      min_amp=700.;
+      //max_ofl=500.;
+      min_ofl=1.;
+    }
+  else if( run == 904685 )
+    {
+      cout<<"Setting histo limits for run "<<run<<endl;
+      min_occ=300.;
+      max_amp=1400.;
+      min_amp=500.;
+      //max_ofl=500.;
+      min_ofl=1.;
+    }
+  else if( run == 904512 )
+    {
+      cout<<"Setting histo for combined run "<<run<<endl;
+      //max_occ=13000.;
+      min_occ=5000.;
+      max_amp=1300.;
+      min_amp=600.;
+      max_ofl=900.;
+      min_ofl=1.;
+    }
+  else if( run == 904502 )
+    {
+      cout<<"Setting histo for combined run "<<run<<endl;
+      //max_occ=13000.;
+      min_occ=9000.;
+      max_amp=1600.;
+      min_amp=900.;
+      //max_ofl=500.;
+      min_ofl=1.;
+    }
   else if( run == 904503 )
     {
       cout<<"Setting histo limits for run "<<run<<endl;

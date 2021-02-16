@@ -1,4 +1,4 @@
-image: rootproject/root-cc7
+image: jmckenna/alphadocker
 
 stages:
   - build
@@ -15,7 +15,7 @@ cache:
     - alphaStrips*offline.root
     - rootana
     - agana
-    - simulation/submodules
+    - agana/agcfmdb
     - BuildLog.txt
     - BuildSimLog.txt
     - LastBuildLog.txt
@@ -43,9 +43,9 @@ before_script:
     #- . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.02/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
     #Set up agana environment variables
     - . agconfig.sh
-    - yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
-    #Make sure we have the specified version of agana
-    - git submodule update agana
+    # Now handled in our own docker image
+    #- yum install -y lesstif-devel libXmu libXmu-devel libXft libXft-devel eos-client valgrind tee wget svn libzstd
+
 
 #build-ubuntu:
 #  #Overwrite global image
@@ -133,9 +133,9 @@ build-cc7-cmake:
     - rm -rf build bin
     - mkdir build
     - cd build
-    - cmake3 ../
-    - make
-    - make install
+    - cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
+    - cmake3 --build .  2>&1 | tee ../BuildLog.txt
+    - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
   artifacts:
     when: on_failure
     paths:
@@ -150,6 +150,7 @@ build-cc7-cmake-ag:
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
     - make | tee ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -164,6 +165,7 @@ build-cc7-cmake-a2:
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
     - make | tee ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -173,13 +175,12 @@ build-cc7-cmake-a2:
 build-cc7:
   stage: build
   script: 
+    - git submodule update --init --recursive
     - echo "Building"
-    - rm -rf rootana agana
-    - git submodule update --init rootana
-    - git submodule update --init --recursive agana 
     - make clean
     - make 2>&1 | tee BuildLog.txt
     - cd ..
+  cache: {}
   artifacts:
     when: on_failure
     paths:

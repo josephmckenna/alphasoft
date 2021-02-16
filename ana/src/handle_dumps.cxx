@@ -208,7 +208,7 @@ public:
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
-      dumplist[iSeq].setup();
+      dumplist[iSeq].setup(me->time_stamp);
       
       for(auto dump: DumpFlow->DumpMarkers)
       {

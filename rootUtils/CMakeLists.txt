@@ -37,7 +37,15 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+
+find_package (Python COMPONENTS Interpreter Development)
+if (${Python_FOUND})
+   message("Python found! Enabling python interface")
+   add_definitions(-DHAVE_PYTHON)
+   include_directories(${Python_INCLUDE_DIRS})
+   link_libraries(${Python_})
+endif()
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
@@ -48,32 +56,44 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{AGRELEASE}/alpha2/include)
-include_directories(include $ENV{ROOTANASYS}/include)
+include_directories( 
+   ../ana/include
+   )
+if (BUILT_IN_ROOTANA)
+   include_directories(include ../rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
+ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 
 
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
-add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
+add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
+target_include_directories( rootUtils
+   PUBLIC
+      include 
+   )
 if (BUILD_AG)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
 endif (BUILD_AG)
 if (BUILD_A2)
-   target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2)
+   target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2 analib)
 endif (BUILD_A2)
+if (${Python_FOUND})
+   target_link_libraries(rootUtils ${Python_LIBRARIES})
+endif()
 
-install(TARGETS rootUtils DESTINATION lib)
-
-add_custom_command( TARGET rootUtils POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-                  )
+install(TARGETS rootUtils 
+   LIBRARY
+      DESTINATION lib 
+   PUBLIC_HEADER
+      DESTINATION include
+   )
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

@@ -1,6 +1,6 @@
 [submodule "rootana"]
 	path = rootana
-	url = https://bitbucket.org/lgolino/rootana.git
+	url = https://bitbucket.org/tmidas/rootana.git
 [submodule "simulation/submodules/CADMesh"]
 	path = simulation/submodules/CADMesh
 	url = https://github.com/christopherpoole/CADMesh.git
@@ -12,3 +12,7 @@
 [submodule "agana"]
 	path = agana
 	url = https://bitbucket.org/expalpha/agana.git
+[submodule "feGEM"]
+	path = feGEM
+	url = https://github.com/josephmckenna/feGEM.git
+

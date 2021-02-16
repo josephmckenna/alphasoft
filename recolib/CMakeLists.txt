@@ -34,7 +34,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit MathMore Minuit2 Spectrum)
@@ -43,23 +43,22 @@ find_package(ROOT REQUIRED COMPONENTS Minuit MathMore Minuit2 Spectrum)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include $ENV{AGRELEASE}/agana)
-include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/simulation/geant4/include)
+include_directories(include ../agana)
+include_directories(include ../analib/include)
+include_directories(include ../ana/include)
+include_directories(include ../simulation/geant4/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__agtpc include/*.hh  LINKDEF RecoLinkDef.hh)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.hh)
+ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc.cxx)
+target_include_directories(agtpc PUBLIC include)
 target_link_libraries(agtpc agana ${ROOT_LIBRARIES})
 
 install(TARGETS agtpc DESTINATION lib)
-
-add_custom_command( TARGET agtpc POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-		    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/libagtpc.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-		    )
+install(FILES ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libagtpc.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.hh)
+install(FILES ${HEADER_FILES} DESTINATION include)

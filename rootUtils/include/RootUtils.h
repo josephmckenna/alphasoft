@@ -14,6 +14,7 @@
 #include "TGraph.h"
 
 #include "TSpill.h"
+#include "TA2Spill.h"
 
 
 //Root Utils headers:
@@ -24,6 +25,7 @@
 #include "DoubleGetters.h"
 #include "FileGetters.h"
 #include "IntGetters.h"
+#include "PairGetters.h"
 #include "PlotGetters.h"
 #include "PrintTools.h"
 #include "TH1DGetters.h"
@@ -33,6 +35,8 @@
 #include "TGraphGetters.h"
 #include "TSplineGetters.h"
 #include "BinaryRunners.h"
+#include "AnalysisReportGetters.h"
+#include "FileWriters.h"
 
 #include "Sequencer_Channels.h"
 #define CLOCK_CHANNEL 59

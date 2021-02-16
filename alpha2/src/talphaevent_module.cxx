@@ -28,6 +28,7 @@
 #include "midasio.h"
 
 #include "TSettings.h"
+#include "ALPHA2SettingsDatabase.h"
 
 #include "SiMod.h"
 #include "UnpackVF48.h"
@@ -88,9 +89,7 @@ public:
          printf("AlphaEventModule::ctor!\n");
       
       // load the sqlite3 db
-      char dbName[255]; 
-      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      TSettings *SettingsDB = new TSettings(dbName,runinfo->fRunNo);
+      TSettings *SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
 
       char name[200];
       sprintf(name,"%s%s%s",
