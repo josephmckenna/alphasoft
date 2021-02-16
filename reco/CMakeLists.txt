@@ -44,7 +44,7 @@ include_directories(../simulation/geant4/include)
 
 
 find_package(ROOTANA)
-message(${ROOTANA_INCLUDE_DIRS})
+#message(${ROOTANA_INCLUDE_DIRS})
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
 
 
