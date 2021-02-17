@@ -134,7 +134,12 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
 {
   G4int RunNumber=aRun->GetRunID();
   G4cout << "### Run " << RunNumber << " start." << G4endl;
-
+  const char* datadir = getenv("DATADIR");
+  if (!datadir)
+  {
+     std::cout<<"Please set environment variable DATADIR"<<std::endl;
+     exit(1);
+  }
   TString fileName;
   if(fTag.isNull())
     {
