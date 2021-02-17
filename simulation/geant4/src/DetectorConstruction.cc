@@ -589,13 +589,20 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   if( !logicAG ) return;
 
   // CAD files path
+#ifdef CAD_FILE_PATH
+  //CMakeBuild installs the CAD files from a tar.gz, then passes the compiler definition CAD_FILE_PATH
+  G4String env_path = "";
+  G4String file_path = CAD_FILE_PATH;
+  std::string file_ext = "_ASCII.stl";
+#else
   G4String env_path = getenv("AGRELEASE");
   G4String file_path = "/simulation/common/CAD_Files/";
-  G4String file_ext = ".stl";
-
+  std::string file_ext = ".stl";
+#endif
   // Liquid Helium
-  G4String filename = env_path + file_path + "lHe" + file_ext;
-  std::shared_ptr<CADMesh::TessellatedMesh> lHe_mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+  G4String filename = env_path + file_path + file_ext;
+  std::cout<<filename<<std::endl;
+  auto lHe_mesh = CADMesh::TessellatedMesh::FromSTL(filename);
   G4VSolid* lHe_solid = lHe_mesh->GetSolid();
   G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, materials["lHe"], "lHe");
   G4RotationMatrix* r = new G4RotationMatrix();
@@ -608,7 +615,7 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   for(uint i = 0; i < volumes.size(); ++i) 
     {
       filename=env_path + file_path + std::to_string(i) + file_ext;
-      std::shared_ptr<CADMesh::TessellatedMesh>  mesh = CADMesh::TessellatedMesh::FromSTL((char*) filename.c_str());
+      auto mesh = CADMesh::TessellatedMesh::FromSTL(filename);
       G4VSolid* cad_solid = mesh->GetSolid();
       volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
       if( kMat )
