@@ -45,7 +45,7 @@ class MatchModule: public TARunObject
 {
 public:
    MatchFlags* fFlags = NULL;
-   bool fTrace;
+   bool fTrace = false;
    int fCounter = 0;
    bool diagnostic = false;
    
