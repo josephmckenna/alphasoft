@@ -126,12 +126,7 @@ if (BUILD_AG)
 endif (BUILD_AG)
 if (BUILD_AG_SIM)
    #get_submodule(simulation/garfieldpp)
-   add_subdirectory(simulation/CRY)
-   add_subdirectory(simulation/garfieldpp)
-   #get_submodule(simulation/submodules/CADMesh)
-   #add_subdirectory(simulation/submodules/CADMesh)
-   add_subdirectory(simulation/geant4)
-   add_subdirectory(simulation/agg4)
+   add_subdirectory(simulation)
 endif (BUILD_AG_SIM)
 
 #A2 libraries
