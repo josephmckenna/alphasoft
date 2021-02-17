@@ -115,8 +115,8 @@ if [ -f $AGRELEASE/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log || :
 fi
 cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
-cp -v $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
-#cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
+#cp -v $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
 
 if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
   cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
