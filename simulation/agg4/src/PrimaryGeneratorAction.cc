@@ -104,7 +104,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   }
   
   // Read annihilation positions
-  char annipos[80];
+  char annipos[200];
   if(gMagneticField == 0.65) {
     strcpy(annipos,getenv("AGRELEASE"));
     strcat(annipos,"/simulation/common/Annihilation_Files/Down/annipos_0.65T_down.csv");
