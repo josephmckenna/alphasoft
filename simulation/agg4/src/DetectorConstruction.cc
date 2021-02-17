@@ -168,9 +168,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   r->rotateY(90*degree);
 
   // CAD files path
-  std::string env_path = getenv("AGRELEASE");
-  std::string file_path = "/simulation/common/CAD_Files/";
+#ifdef CAD_FILE_PATH
+  //CMakeBuild installs the CAD files from a tar.gz, then passes the compiler definition CAD_FILE_PATH
+  G4String env_path = "";
+  G4String file_path = CAD_FILE_PATH;
+  std::string file_ext = "_ASCII.stl";
+#else
+  G4String env_path = getenv("AGRELEASE");
+  G4String file_path = "/simulation/common/CAD_Files/";
   std::string file_ext = ".stl";
+#endif
+
 
   // Maps
   struct volume {

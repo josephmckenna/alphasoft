@@ -77,6 +77,7 @@ add_library(G4dict SHARED ${sources} G__G4dict.cxx)
 # Add the executable, and link it to the Geant4 libraries
 #
 add_executable(agg4 agg4.cc $ENV{AGRELEASE}/simulation/garfieldpp/src/TPCBase.cc ${sources} ${headers} G__G4dict.cxx)
+add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
 target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} ${cadmesh_LIBRARIES}) # ${AG_LIBRARIES}
 
 #----------------------------------------------------------------------------
