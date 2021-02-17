@@ -2,11 +2,12 @@ FROM jmckenna/alphadocker:geant4
 WORKDIR /
 
 RUN git clone --depth 1 https://gitlab.cern.ch/garfield/garfieldpp.git
+ENV GARFIELD_HOME /garfieldpp
 RUN mkdir build_garfieldpp
 WORKDIR build_garfieldpp
 RUN cmake3 -DROOTSYS=/usr/lib ../garfieldpp
 RUN make -j4
 RUN make install
-
+ENV LD_LIBRARY_PATH /usr/local/lib/:${LD_LIBRARY_PATH}
 WORKDIR /
 CMD /bin/bash
