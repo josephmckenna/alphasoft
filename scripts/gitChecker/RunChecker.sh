@@ -93,7 +93,8 @@ cd $AGRELEASE/bin
 echo "Running from $PWD
 ./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 "
- /usr/bin/time -v ./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+#agana.exe --mt is broke... needs a bigger fix
+#./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 mtend_ana=`date +%s`
 
 cd $AGRELEASE
