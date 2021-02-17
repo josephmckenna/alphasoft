@@ -201,7 +201,7 @@ void HeedModel::SetTracking()
   
 void HeedModel::CreateChamberView()
 {
-  char str[30];
+  char str[200];
   strcpy(str,fName);
   strcat(str,"_chamber");
   fChamber = new TCanvas(str, "Chamber View", 700, 700);
@@ -210,7 +210,7 @@ void HeedModel::CreateChamberView()
   cellView->SetCanvas(fChamber);
   cellView->Plot2d();
   fChamber->Update();
-  char str2[30];
+  char str2[200];
   strcpy(str2,fName);
   strcat(str2,"_chamber.pdf");
   fChamber->Print(str2);
