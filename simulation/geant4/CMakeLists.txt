@@ -75,7 +75,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 # Garfield++, CRY, CADMesh and ROOT libraries
 #
 add_executable(rTPCsim rTPCsim.cc G__G4out ${sources} ${headers})
-
+add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
 target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom ${CRY_LIBRARIES} ${cadmesh_LIBRARIES})
 
 #----------------------------------------------------------------------------
@@ -93,8 +93,9 @@ set(SIM_SCRIPTS
 #
 install(TARGETS rTPCsim DESTINATION simulation)
 install(TARGETS G4out DESTINATION lib)
-install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION lib)
-install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION simulation)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION simulation)
+
 file(GLOB HEADER_FILES include/*.hh)
 install(FILES ${HEADER_FILES} DESTINATION include)
 install(FILES ${SIM_SCRIPTS} DESTINATION simulation)
