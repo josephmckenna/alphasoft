@@ -600,7 +600,7 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   std::string file_ext = ".stl";
 #endif
   // Liquid Helium
-  G4String filename = env_path + file_path + file_ext;
+  G4String filename = env_path + file_path + "lHe" + file_ext;
   std::cout<<filename<<std::endl;
   auto lHe_mesh = CADMesh::TessellatedMesh::FromSTL(filename);
   G4VSolid* lHe_solid = lHe_mesh->GetSolid();
