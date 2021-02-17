@@ -32,12 +32,12 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    d.PrintPWBsettings();
    std::cout<<"--------------------------------------------------"<<std::endl;
 
-   std::mutex Lock;
+   std::mutex* Lock = new std::mutex();
    m.SetDiagnostic(true);
    if( issim )
       {
          m.Setup(0);
-         m.SetGlobalLockVariable(&Lock);
+         m.SetGlobalLockVariable(Lock);
       }
 
    //leaw.SetDebug();
