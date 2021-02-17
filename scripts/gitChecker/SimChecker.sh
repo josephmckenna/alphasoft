@@ -22,6 +22,7 @@ start=`date +%s`
 cd ${AGRELEASE}/bin/simulation
 ls
 export MCDATA=${AGRELEASE}/simulation
+export LD_LIBRARY_PATH=/usr/local/lib/:${LD_LIBRARY_PATH}
 rm -f *.root
 ./rTPCsim runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
