@@ -20,9 +20,10 @@ mkdir -p $AGRELEASE/simlogs
 start=`date +%s`
 
 cd ${AGRELEASE}/bin/simulation
+ls
 export MCDATA=${AGRELEASE}/simulation
 rm -f *.root
-./rTPC runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
+./rTPCsim runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
 
 cd ../reco
