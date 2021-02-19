@@ -34,11 +34,16 @@ GITHASH=`git rev-parse --short HEAD`
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
-cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-./SpeedTest.sh ${RUNNO} NOBUILD 1500
+mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
 
-cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-./SpeedTest.sh ${RUNNO} NOBUILD 1500
+
+cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
+cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
+
+cd $AGRELEASE/scripts/A2UnitTest
+./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
+cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
 
 
@@ -51,11 +56,6 @@ if [[ $(hostname -s) = *runner* ]]; then
       exit
    fi
 
-   mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
-   cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
-   cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
    cd ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
    callgrind_annotate SpeedTest*.out &> annotatedSpeed.txt

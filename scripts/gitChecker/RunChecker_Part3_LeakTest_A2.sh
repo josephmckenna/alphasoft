@@ -37,7 +37,7 @@ mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
 
 #VALGRIND might be out of memory when running alphaStrips?
 cd $AGRELEASE/scripts/A2UnitTest
-./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD 
+./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t LEAK
 #Copy alphaStrips result
 cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
@@ -47,7 +47,7 @@ cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 #Now test alphaAnalysis
 cd $AGRELEASE/scripts/A2UnitTest
-./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD 
+./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t LEAK
 cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 if [[ $(hostname -s) = *runner* ]]; then
