@@ -7,7 +7,8 @@ echo "./LeakCheckProg.sh -p agana.exe -r 45000 -b NOBUILD -m \"--argumentformodu
 echo "-r 12345      Set run number"
 echo "-b [string]   Build option, valid strings: FASTBUILD NOBUILD "
 echo "-n 6          FASTBUILD Threads"
-while getopts p:r:b:l:m:n: option
+echo "-t [string]   Test type, valid string LEAK SPEED THREAD"
+while getopts p:r:b:l:m:n:t: option
 do
 case "${option}"
 in
@@ -17,12 +18,24 @@ b) DOBUILD=${OPTARG};;
 l) LIMITEVENTS=${OPTARG};;
 m) MODULEFLAGS=${OPTARG};;
 n) BUILD_THREADS=${OPTARG};;
+t) TEST_TYPE=${OPTARG};;
 esac
 done
 if [ -h ${PROG} ]; then
    echo "FATAL: You must give me a program to run"
    exit
 fi
+if [ -h ${TEST_TYPE} ]; then
+   echo "FATAL: You must give a test type"
+   exit
+fi
+if [ ${TEST_TYPE} == "LEAK" ] || [ ${TEST_TYPE} == "SPEED" ] || [ ${TEST_TYPE} == "THREAD" ]; then
+   echo "Valid test type"
+else
+   echo "Invalid test type"
+   exit
+fi
+
 echo "PROGRAM:      ${PROG}"
 echo "RUNNO:        ${RUNNO}"
 echo "DOBUILD:      ${DOBUILD}"
@@ -60,11 +73,11 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd ${DIR}
 for i in `seq 1 100000`; do
    READYTOGO=1
-  for logfile in ${PROG}_LeakTest${i}_${BRANCH}.log \
-                  ${PROG}_LeakTest_git_diff_${i}_${BRANCH}.log \
-                  ${PROG}_LeakTest_AnalysisOut_${i}_${BRANCH}.log \
-                  ${PROG}_LeakTest_MacroOut_${i}_${BRANCH}.log \
-                  ${PROG}_StripLeakTest_Build_${i}_${BRANCH}.log; do
+  for logfile in ${PROG}_${TEST_TYPE}_${i}_${BRANCH}.log \
+                  ${PROG}_${TEST_TYPE}_git_diff_${i}_${BRANCH}.log \
+                  ${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log \
+                  ${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log \
+                  ${PROG}_${TEST_TYPE}_Build_${i}_${BRANCH}.log; do
       if [ -e ${logfile} ]; then
          ls -lh ${logfile}
          READYTOGO=0
@@ -72,20 +85,20 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      LEAKTEST="$DIR/${PROG}_LeakTest${i}_${BRANCH}.log"
-      LAST_LEAKTEST="$DIR/${PROG}_LeakTest${i}_${BRANCH}.log"
+      VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.log"
+      LAST_VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.log"
 
-      ALPHATEST="$DIR/${PROG}_LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-      LAST_ALPHATEST="$DIR/${PROG}_LeakTest_AnalysisOut_${i}_${BRANCH}.log"
+      ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
+      LAST_ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
 
-      MACROTEST="$DIR/${PROG}_LeakTest_MacroOut_${i}_${BRANCH}.log"
-      LAST_MACROTEST="$DIR/${PROG}_LeakTest_MacroOut_${i}_${BRANCH}.log"
+      MACROTEST="$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log"
+      LAST_MACROTEST="$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log"
 
-      GITDIFF="$DIR/${PROG}_LeakTest_git_diff_${i}_${BRANCH}.log"
-      LAST_GITDIFF="$DIR/${PROG}_LeakTest_git_diff_${i}_${BRANCH}.log"
+      GITDIFF="$DIR/${PROG}_${TEST_TYPE}_git_diff_${i}_${BRANCH}.log"
+      LAST_GITDIFF="$DIR/${PROG}_${TEST_TYPE}_git_diff_${i}_${BRANCH}.log"
 
-      BUILDLOG="$DIR/${PROG}_LeakTest_Build_${i}_${BRANCH}.log"
-      LAST_BUILDLOG="$DIR/${PROG}_LeakTest_Build_${i}_${BRANCH}.log"
+      BUILDLOG="$DIR/${PROG}_${TEST_TYPE}_Build_${i}_${BRANCH}.log"
+      LAST_BUILDLOG="$DIR/${PROG}_${TEST_TYPE}_Build_${i}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -119,30 +132,46 @@ fi
 cd $AGRELEASE
 git diff > ${GITDIFF}
 
-echo $LEAKTEST
+echo $VALGRINDTEST
 ls -l -h $AGRELEASE/bin/*.exe
 echo "Running..."
 if [ -f ${ROOTSYS}/etc/valgrind-root.supp ]; then
 SUPP="--suppressions=${ROOTSYS}/etc/valgrind-root.supp"
 fi
-set -x
-#Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
-valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${LEAKTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+
+
+if [ ${TEST_TYPE} == "LEAK" ]; then
+   #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
+   set -x
+   valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+elif [ ${TEST_TYPE} == "SPEED" ]; then
+   #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
+   set -x
+   valgrind --tool=callgrind --callgrind-out-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
+elif [ ${TEST_TYPE} == "THREAD" ]; then
+   #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
+   set -x
+   valgrind -v --tool=helgrind --error-limit=no  --log-file="${VALGRINDTEST}" ${PROG} --mt ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+else
+   echo "FATAL Test type not understood"
+fi
+
+
 cd $AGRELEASE
 set +x
 
  
-cat ${LEAKTEST} | cut -f2- -d' ' > ${LEAKTEST}.nopid
+cat ${VALGRINDTEST} | cut -f2- -d' ' > ${VALGRINDTEST}.nopid
 
 #echo ".L macros/ReadEventTree.C 
 #ReadEventTree()
 #.q
 #" | root -l -b *${RUNNO}*.root &> ${MACROTEST}
 
-cat ${LEAKTEST}.nopid | tail -n 16
+cat ${VALGRINDTEST}.nopid | tail -n 16
 
-if [ -f ${LEAKTEST} ] && [ -f ${LAST_LEAKTEST} ]; then
-   diff -u ${LEAKTEST} ${LAST_LEAKTEST} > $AGRELEASE/scripts/A2UnitTest/LeakDiff.log
+if [ -f ${VALGRINDTEST} ] && [ -f ${LAST_VALGRINDTEST} ]; then
+   diff -u ${VALGRINDTEST} ${LAST_VALGRINDTEST} > $AGRELEASE/scripts/A2UnitTest/LeakDiff.log
 else
    echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/LeakDiff.log
 fi
@@ -153,11 +182,11 @@ else
    echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/AnalysisDiff.log
 fi
 
-#   diff -u "$DIR/${PROG}_LeakTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/${PROG}_LeakTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+#   diff -u "$DIR/${PROG}_${TEST_TYPE}_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 
 echo "done..."
 echo "check:
-  ${LEAKTEST}
+  ${VALGRINDTEST}
   ${ALPHATEST}
   ${MACROTEST}
           "
