@@ -37,7 +37,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
 
 
-cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+cd $AGRELEASE/scripts/A2UnitTest
 ./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
 cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
