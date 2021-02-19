@@ -36,16 +36,16 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
 
 #VALGRIND might be out of memory when running alphaStrips?
-cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-./LeakCheck.sh ${RUNNO} NOBUILD 
+cd $AGRELEASE/scripts/A2UnitTest
+./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD 
 
 #Force alphaStrips to run again, since the above is crashing
-cd $AGRELEASE/bin
-./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> ${AGRELEASE}/${GITHASH}/A2LeakTest/S${RUNNO}.log
-#Now test alphaAnalysis
-cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-./LeakCheck.sh ${RUNNO} NOBUILD 
+#cd $AGRELEASE/bin
+#./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> ${AGRELEASE}/${GITHASH}/A2LeakTest/S${RUNNO}.log
 
+#Now test alphaAnalysis
+cd $AGRELEASE/scripts/A2UnitTest
+./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD 
 
 if [[ $(hostname -s) = *runner* ]]; then
 
