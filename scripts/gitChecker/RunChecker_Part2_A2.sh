@@ -63,7 +63,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    ls
    if [ `ls *.nopid | wc -l` -gt 0 ]; then
       tail -n 18 *.nopid &> annotatedLeaks.txt
-      head -50 annotatedLeak.txt &> elogMessage.txt
+      head -50 annotatedLeaks.txt &> elogMessage.txt
    fi
 
    echo "Gitlab runner identified! Making an elog post"
