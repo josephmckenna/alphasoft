@@ -297,31 +297,35 @@ testspeedAg:
     - callgrind.log
 
 
-testleakA2:
+A2_Leak_Test:
   stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part2_A2.sh
+    - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
     - test
-  artifacts:
-    paths:
-    - leaktest.log
 
-testspeedA2:
+A2_Speed_Test:
   stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part3_A2.sh
+    - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
     - test
-  artifacts:
-    paths:
-    - callgrind.log
+
+A2_Thread_Test:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_ThreadTest_A2.sh
+  dependencies:
+    - test
 
 #pages:
 #  script:
