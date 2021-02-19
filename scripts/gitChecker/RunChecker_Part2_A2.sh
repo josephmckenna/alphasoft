@@ -60,9 +60,11 @@ if [[ $(hostname -s) = *runner* ]]; then
    fi
 
    cd ${AGRELEASE}/${GITHASH}/A2LeakTest
-   tail -n 18 *.nopid &> annotatedLeaks.txt
-   head -50 annotatedLeak.txt &> elogMessage.txt
-
+   ls
+   if [ `ls *.nopid | wc -l` -gt 0 ]; then
+      tail -n 18 *.nopid &> annotatedLeaks.txt
+      head -50 annotatedLeak.txt &> elogMessage.txt
+   fi
 
    echo "Gitlab runner identified! Making an elog post"
 
