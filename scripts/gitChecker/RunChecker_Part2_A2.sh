@@ -38,6 +38,8 @@ mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
 #VALGRIND might be out of memory when running alphaStrips?
 cd $AGRELEASE/scripts/A2UnitTest
 ./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD 
+#Copy alphaStrips result
+cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 #Force alphaStrips to run again, since the above is crashing
 #cd $AGRELEASE/bin
@@ -46,6 +48,7 @@ cd $AGRELEASE/scripts/A2UnitTest
 #Now test alphaAnalysis
 cd $AGRELEASE/scripts/A2UnitTest
 ./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD 
+cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 
@@ -56,15 +59,8 @@ if [[ $(hostname -s) = *runner* ]]; then
       exit
    fi
 
-   #Copy alphaStrips result
-   cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-   cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
-   #cp *.nopid  ${AGRELEASE}/alphaStrips_leaktest.log
-   cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-   cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
-   #cp *.nopid  ${AGRELEASE}/alphaAnalysis_leaktest.log
    cd ${AGRELEASE}/${GITHASH}/A2LeakTest
-   tail -n 18 *.nopid &> annotatedLeak.txt
+   tail -n 18 *.nopid &> annotatedLeaks.txt
    head -50 annotatedLeak.txt &> elogMessage.txt
 
 
