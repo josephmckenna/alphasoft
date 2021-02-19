@@ -27,10 +27,10 @@ rm -f *.root
 ./rTPCsim runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
 
-cd ../reco
-ROOT_FILE=`ls ../simulation/*.root`
+
+ROOT_FILE=`ls -tr ${MCDATA}/*.root | tail -n 1`
 echo "root file: ${ROOT_FILE}"
-./g4ana.exe --rootfile ${ROOT_FILE} &>$AGRELEASE/simlogs/analysis_of_sim_${GITHASH}.log
+g4ana.exe --rootfile ${ROOT_FILE} &>$AGRELEASE/simlogs/analysis_of_sim_${GITHASH}.log
 #cp $AGRELEASE/simlogs/analysis_${GITHASH}.log ~/${GITHASH}/
 end=`date +%s`
 
