@@ -1,15 +1,13 @@
 #include "ComponentBmap.hh"
 
-using namespace std;
-
 namespace Garfield {
   ComponentBmap::ComponentBmap(bool pol):Bmap(pol){
         m_className = "ComponentBmap";
         
-        cout << m_className << " created." << endl;
+        std::cout << m_className << " created." << std::endl;
     }
 
-    bool ComponentBmap::SetSymmetries(string sym){
+    bool ComponentBmap::SetSymmetries(std::string sym){
       return Bmap.SetSymmetries(sym);
     }
 

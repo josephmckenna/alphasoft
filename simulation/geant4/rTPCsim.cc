@@ -49,7 +49,7 @@
 #endif
 
 //Header for Garfield random engine
-#include "Random.hh"
+#include "Garfield/Random.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

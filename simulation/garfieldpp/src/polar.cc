@@ -9,35 +9,33 @@
 #include <TGraph.h>
 #include <TAxis.h>
 
-#include "Plotting.hh"
+#include "Garfield/Plotting.hh"
 
-#include "ComponentAnalyticField.hh"
-#include "MediumMagboltz.hh"
-#include "SolidTube.hh"
-#include "GeometrySimple.hh"
-#include "Sensor.hh"
-#include "FundamentalConstants.hh"
-#include "ViewField.hh"
-#include "ViewCell.hh"
-
-using namespace Garfield;
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/Sensor.hh"
+#include "Garfield/FundamentalConstants.hh"
+#include "Garfield/ViewField.hh"
+#include "Garfield/ViewCell.hh"
 
 int main(int argc, char * argv[]) { 
 
   TApplication app("app", &argc, argv);
-  plottingEngine.SetDefaultStyle();
+  Garfield::plottingEngine.SetDefaultStyle();
  
   // Make a gas medium.
-  MediumMagboltz gas;
+  Garfield::MediumMagboltz gas;
 
   // Build the geometry.
   constexpr double lZ = 115.2;
   constexpr double rRO = 19.03;
-  GeometrySimple geo;
-  SolidTube tube(0, 0, 0, 0, rRO, lZ);
+  Garfield::GeometrySimple geo;
+  Garfield::SolidTube tube(0, 0, 0, 0, rRO, lZ);
   geo.AddSolid(&tube, &gas);
 
-  ComponentAnalyticField cmp;
+  Garfield::ComponentAnalyticField cmp;
   cmp.SetGeometry(&geo);
   cmp.SetPolarCoordinates();
   // Outer wall.
@@ -78,7 +76,7 @@ int main(int argc, char * argv[]) {
   cmp.PrintCell();
 
   TCanvas cPotential;
-  ViewField fieldView;
+  Garfield::ViewField fieldView;
   fieldView.SetCanvas(&cPotential);
   fieldView.SetComponent(&cmp);
   fieldView.SetArea(-1.1 * rRO, -1.1 * rRO,
@@ -86,7 +84,7 @@ int main(int argc, char * argv[]) {
   fieldView.PlotContour();
   //  fieldView.PlotContour("e");
 
-  ViewCell cellView;
+  Garfield::ViewCell cellView;
   cellView.SetCanvas(&cPotential);
   cellView.SetComponent(&cmp);
   cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,

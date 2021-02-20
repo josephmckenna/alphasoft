@@ -100,21 +100,21 @@ void HeedOnlyModel::Run(G4FastStep& fastStep,const G4FastTrack& fastTrack,
        // Retrieve the electrons of the cluster.
       for (int i = 0; i < ncl; ++i) 
 	{
-	  double x, y, z, t, e, dx, dy, dz;
-	  fTrackHeed->GetElectron(i, x, y, z, t, e, dx, dy, dz);
+	  double x_electron, y_electron, z_electron, t_electron, e_electron, dx_electron, dy_electron, dz_electron;
+	  fTrackHeed->GetElectron(i, x_electron, y_electron, z_electron, t_electron, e_electron, dx_electron, dy_electron, dz_electron);
 	  ChamberHit* hit = new ChamberHit();
-	  hit->SetPos(G4ThreeVector(x*CLHEP::cm,y*CLHEP::cm,z*CLHEP::cm));
-	  hit->SetTime(t);
-	  hit->SetEnergy(e);
+	  hit->SetPos(G4ThreeVector(x_electron*CLHEP::cm,y_electron*CLHEP::cm,z_electron*CLHEP::cm));
+	  hit->SetTime(t_electron);
+	  hit->SetEnergy(e_electron);
 	  hit->SetTrackID(i);
 	  hit->SetModelName(fName);
 	  fTPCSD->InsertChamberHit(hit);
           if( fVerboseLevel > 1 )
              G4cout << "\t Drift e- #" << i 
-                    << " (x,y,z,t) = (" << G4BestUnit(x,"Length") << "," << G4BestUnit(y,"Length") << "," 
-                    << G4BestUnit(z,"Length") << "," << G4BestUnit(t,"Time") 
-                    << ")  Energy: " << G4BestUnit(e,"Energy") << G4endl;
-	  Drift(x,y,z,t);
+                    << " (x,y,z,t) = (" << G4BestUnit(x_electron,"Length") << "," << G4BestUnit(y_electron,"Length") << "," 
+                    << G4BestUnit(z_electron,"Length") << "," << G4BestUnit(t_electron,"Time") 
+                    << ")  Energy: " << G4BestUnit(e_electron,"Energy") << G4endl;
+	  Drift(x_electron,y_electron,z_electron,t_electron);
 	}
     }
   PlotTrack();

@@ -11,6 +11,7 @@
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
+  #include "BuildConfig.h"
   
   
   gSystem->Load("libMinuit2");
@@ -49,6 +50,7 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
+  gInterpreter->ProcessLine("#include \"RootUtils.h\"");
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
   //gStyle->SetPalette(kAurora);

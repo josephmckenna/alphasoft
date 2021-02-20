@@ -39,6 +39,7 @@ INCS += -I../ana/include
 INCS += -I../agana
 INCS += -I../analib/include
 INCS += -I../aged/include
+INCS += -I../feGEM
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
 INCS += -I../alpha2/include

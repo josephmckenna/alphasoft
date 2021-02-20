@@ -15,6 +15,10 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
 
+#Build in version of CRY build from tar... 
+export CRYHOME=${AGRELEASE}/build/simulation/CRY/CRY-1.7-prefix/src/CRY-1.7
+export CRYDATAPATH=${AGRELEASE}/build/simulation/CRY/CRY-1.7-prefix/src/CRY-1.7/data
+
 #export AG_CFM=${AGRELEASE}/ana #obsolete
 
 # It can be used to tell the ROOTUTILS to fetch an output
@@ -153,7 +157,7 @@ fi
 
 
 if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
-    echo "ROOTANA submodule enabled"
+    echo "ROOTANA submodule enabled: " ` cd ${AGRELEASE}/rootana && git log -1 --format=%h`
 fi
 
 

@@ -1,0 +1,30 @@
+#Auto generating setup.sh config
+
+export AGRELEASE=@AGRELEASE@
+
+#Check if preconfig string 
+if [ -z "@PRE_CONFIG@" ]; then
+   echo "Pre configure script not set"
+else
+   if [ -d @PRE_CONFIG@ ]; then
+      echo "Sourcing pre-config: @PRE_CONFIG@"
+      source @PRE_CONFIG@
+   else
+      echo "Pre-config not found: @PRE_CONFIG@"
+   fi
+fi
+
+#Get all basic config stuff
+source ${AGRELEASE}/agconfig.sh
+
+if [ -d @BIN_PATH@ ]; then
+   export PATH=@BIN_PATH@:${PATH}
+fi
+
+if [ -d @LD_LIBRARY_PATH@ ]; then
+   export LD_LIBRARY_PATH=@LIB_PATH@:${LD_LIBRARY_PATH}
+fi
+
+if [ -d @ROOT_INCLUDE_PATH@ ]; then
+   export ROOT_INCLUDE_PATH=@INC_PATH@:${ROOT_INCLUDE_PATH}
+fi

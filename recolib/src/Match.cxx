@@ -34,6 +34,7 @@ TH1D* Match::htimefit=NULL;
 Match::Match(const AnaSettings* ana_set, bool mt):
    fTrace(false),
    fDebug(false),
+   fMT(mt),
    ana_settings(ana_set),
    fCoincTime(     ana_settings->GetDouble("MatchModule","coincTime")),
    maxPadGroups(   ana_settings->GetDouble("MatchModule","maxPadGroups")),
@@ -52,7 +53,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
 {
   //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
-  if( mt )
+  if( fMT )
     CentreOfGravityFunction=2;
 
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
@@ -63,7 +64,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
     }
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
 
-  if( mt )
+  if( fMT )
     {
       std::cout<<"Match::Match MT-mode: selecting thread-safe CentreOfGravity_blobs"<<std::endl;
       CentreOfGravityFunction=2;
@@ -651,10 +652,12 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	    {
 	      if( fabs(pos) < ALPHAg::_halflength )
 		{
-		  manalzer_global_mtx->lock();
+		  if (fMT)
+         manalzer_global_mtx->lock();
 		  // create new signal with combined pads
 		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
-		  manalzer_global_mtx->unlock();
+		  if (fMT)
+    		  manalzer_global_mtx->unlock();
 		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
 		  //padcog.push_back(pad_cog);
 		  ++nPositions;

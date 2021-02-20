@@ -29,8 +29,8 @@ public:
 
   inline void SetElectrode( std::string n ) { fName = n; }
   inline void SetElectrode( char* n ) { fName = n; }
-  inline void SetModel( std::string m ) { fModel = m; }
-  inline void SetModel( char* m ) { fModel = m; }
+  inline void SetModel( std::string _model ) { fModel = _model; }
+  inline void SetModel( char* _model ) { fModel = _model; }
 
   // inline void SetWaveform( std::vector<double> wf ) { fWaveform = wf; }
   // inline void SetWaveformAt( uint i, double v) { fWaveform[i] = v; }

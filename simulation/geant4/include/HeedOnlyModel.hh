@@ -14,16 +14,16 @@
 
 #include "G4ThreeVector.hh"
 
-#include "AvalancheMicroscopic.hh"
-#include "AvalancheMC.hh"
-#include "DriftLineRKF.hh"
+#include "Garfield/AvalancheMicroscopic.hh"
+#include "Garfield/AvalancheMC.hh"
+#include "Garfield/DriftLineRKF.hh"
 
 //Visualization
 #include "TCanvas.h"
-#include "ViewCell.hh"
-#include "ViewDrift.hh"
-#include "ViewSignal.hh"
-#include "ViewField.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/ViewDrift.hh"
+#include "Garfield/ViewSignal.hh"
+#include "Garfield/ViewField.hh"
 
 #include "G4VFastSimulationModel.hh"
 

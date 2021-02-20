@@ -97,17 +97,17 @@ public:
                if (ColdDump)
                {
                   delete ColdDump;
-                  ColdDump=NULL;
+                  ColdDump = NULL;
                }
-               HotDump=new TA2Spill(s);
+               HotDump = new TA2Spill(*s);
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
                if (ColdDump)
                   delete ColdDump;
-               ColdDump=new TA2Spill(s);
+               ColdDump = new TA2Spill(*s);
                std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
-               TA2Spill* eff=*ColdDump/(*ColdDump+HotDump);
+               TA2Spill* eff = *ColdDump/(*ColdDump+HotDump);
                //eff->Print();
                SpillFlow->spill_events.push_back(eff);
             }

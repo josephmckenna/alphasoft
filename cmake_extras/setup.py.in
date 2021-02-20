@@ -1,0 +1,36 @@
+import os
+
+
+#This file is in AGRELEASE path... so set AGRELEASE accordingly
+AGRELEASE = '@AGRELEASE@'
+print("Setting AGRELEASE = " + AGRELEASE )
+os.environ['AGRELEASE'] = AGRELEASE
+
+os.environ['EOS_MGM_URL'] = 'root://eospublic.cern.ch'
+
+os.environ['PATH'] = "@BIN_PATH@:" + os.environ['PATH']
+os.environ['LD_LIBRARY_PATH'] = "@LIB_PATH@:" + os.environ['LD_LIBRARY_PATH'] 
+os.environ['ROOT_INCLUDE_PATH'] = "@INC_PATH@:" + os.environ['ROOT_INCLUDE_PATH']
+
+
+#Set up run time environment (after project is compiled)
+print("import ROOT")
+import ROOT
+
+# We can help the auto complete by including headers... not used for now
+#ROOT.gInterpreter.ProcessLine('#include "my_header.h"')`
+
+# Loading our libraries means we can interact with objects that we've stored in out root file
+# Note, order matters a bit... librootUtils.so should be last as it depends on those before
+for library in [ 'libaged.so', 'libagtpc.so', 'libanalib.so', 'libalpha2.so', 'librootUtils.so' ]:
+        print("Loading lib: " + library)
+        ROOT.gSystem.Load( '@LIB_PATH@' + library)
+
+
+ROOT.gInterpreter.ProcessLine('#include BuildDefinitions.h')
+
+headers = os.listdir( '@INC_PATH@' )
+print( 'Loading headers: ')
+print( headers )
+for header in headers:
+        ROOT.gInterpreter.ProcessLine('#include "'  + header + '"' )

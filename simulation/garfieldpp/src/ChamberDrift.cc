@@ -2,17 +2,17 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "MediumMagboltz.hh"
+#include "Garfield/MediumMagboltz.hh"
 #include "TPC.hh"
-#include "Sensor.hh"
+#include "Garfield/Sensor.hh"
 
-#include "DriftLineRKF.hh"
+#include "Garfield/DriftLineRKF.hh"
 
-#include "ViewCell.hh"
-#include "ViewField.hh"
-#include "ViewDrift.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/ViewField.hh"
+#include "Garfield/ViewDrift.hh"
 
-#include "Random.hh"
+#include "Garfield/Random.hh"
 
 #include "Helpers.hh"
 

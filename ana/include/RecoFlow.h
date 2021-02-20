@@ -172,7 +172,7 @@ class DumpFlow: public TAFlowEvent
    }
 };
 #ifdef BUILD_AG
-#include "TSpill.h"
+#include "TAGSpill.h"
 
 class AGSpillFlow: public TAFlowEvent
 {
