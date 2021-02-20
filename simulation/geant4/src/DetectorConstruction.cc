@@ -53,7 +53,7 @@
 #include "G4Region.hh"
 #include "G4RegionStore.hh"
 
-#include "MediumMagboltz.hh"
+#include "Garfield/MediumMagboltz.hh"
 #include "HeedInterfaceModel.hh"
 #include "HeedOnlyModel.hh"
 
@@ -589,34 +589,40 @@ void DetectorConstruction::BuildCryostat(bool checkOverlaps)
   if( !logicAG ) return;
 
   // CAD files path
+#ifdef CAD_FILE_PATH
+  //CMakeBuild installs the CAD files from a tar.gz, then passes the compiler definition CAD_FILE_PATH
+  G4String env_path = "";
+  G4String file_path = CAD_FILE_PATH;
+  std::string file_ext = "_ASCII.stl";
+#else
   G4String env_path = getenv("AGRELEASE");
   G4String file_path = "/simulation/common/CAD_Files/";
-  G4String file_ext = ".stl";
-
+  std::string file_ext = ".stl";
+#endif
   // Liquid Helium
   G4String filename = env_path + file_path + "lHe" + file_ext;
-  CADMesh * lHe_mesh = new CADMesh((char*) filename.c_str());
-  G4VSolid* lHe_solid = lHe_mesh->TessellatedMesh();
+  std::cout<<filename<<std::endl;
+  auto lHe_mesh = CADMesh::TessellatedMesh::FromSTL(filename);
+  G4VSolid* lHe_solid = lHe_mesh->GetSolid();
   G4LogicalVolume* lHe_log = new G4LogicalVolume(lHe_solid, materials["lHe"], "lHe");
   G4RotationMatrix* r = new G4RotationMatrix();
   r->rotateY(90*degree);
   new G4PVPlacement(r, G4ThreeVector(), lHe_log, "lHe", logicAG, false, 0, checkOverlaps);
   lHe_log->SetVisAttributes(G4Colour(0.,0.3,0.7));
-  delete lHe_mesh;
+
 
   // CAD Cryostat Volumes
   for(uint i = 0; i < volumes.size(); ++i) 
     {
       filename=env_path + file_path + std::to_string(i) + file_ext;
-      CADMesh * mesh = new CADMesh((char*) filename.c_str());
-      G4VSolid* cad_solid = mesh->TessellatedMesh();
+      auto mesh = CADMesh::TessellatedMesh::FromSTL(filename);
+      G4VSolid* cad_solid = mesh->GetSolid();
       volumes[i].cad_logical = new G4LogicalVolume(cad_solid, volumes[i].material, volumes[i].name);
       if( kMat )
 	{
 	  new G4PVPlacement(r,G4ThreeVector(), volumes[i].cad_logical, volumes[i].name, logicAG, false, 0, checkOverlaps);
 	  volumes[i].cad_logical->SetVisAttributes(G4Colour(volumes[i].R,volumes[i].G,volumes[i].B,1));
 	}
-      delete mesh;
     }
 }
 
@@ -636,10 +642,11 @@ void DetectorConstruction::ConstructGarfieldGeometry()
   G4String gasFile = fGasModelParameters->GetGasFile();
   G4String ionMobFile = fGasModelParameters->GetIonMobilityFile();
 
-  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz;
+  Garfield::MediumMagboltz* MediumMagboltz = new Garfield::MediumMagboltz();
   MediumMagboltz->SetPressure(fGasPressure/bar*750.06158);
   MediumMagboltz->SetTemperature(fGasTemperature);
   G4cout << gasFile << G4endl;
+  std::cout<<"Loading garfield data from " <<getenv("GARFIELD_HOME")<<std::endl;
   const G4String path = getenv("GARFIELD_HOME");
   G4AutoLock lock(&aMutex);
   bool stat;

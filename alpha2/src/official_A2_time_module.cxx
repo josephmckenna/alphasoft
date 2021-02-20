@@ -1,5 +1,5 @@
 //
-// Module to generate friend trees with 'Offical' cross calibrated 
+// Module to generate friend trees with 'Official' cross calibrated 
 // time between all modules (EVB and chronoboxes)
 // I.E Convert 'RunTime' to 'Official Time'
 // JTK McKENNA
@@ -139,11 +139,11 @@ public:
          runinfo->fRoot->fOutputFile->cd();
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
       }
-      TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
+      TBranch* b_variable = SVDOfficial->GetBranch("OfficialTime");
       if (!b_variable)
-         SVDOfficial->Branch("OfficalTime","TSVD_QOD",&e,32000,0);
+         SVDOfficial->Branch("OfficialTime","TSVD_QOD",&e,32000,0);
       else
-         SVDOfficial->SetBranchAddress("OfficalTime",&e);
+         SVDOfficial->SetBranchAddress("OfficialTime",&e);
       SVDOfficial->Fill();
       //std::cout<<"Saving at t:"<<e->t<<std::endl;
    }

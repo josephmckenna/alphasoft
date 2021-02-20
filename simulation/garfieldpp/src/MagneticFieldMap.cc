@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-typedef vector<double> record_t;
+typedef std::vector<double> record_t;
 //-----------------------------------------------------------------------------
 // Let's overload the stream input operator to read a list of CSV fields (which a CSV record).
 // Remember, a record is a list of doubles separated by commas ','.
@@ -13,12 +13,12 @@ std::istream& operator >> ( std::istream& ins, record_t& record )
   record.clear();
 
   // read the entire line into a string (a CSV record is terminated by a newline)
-  string line;
+  std::string line;
   getline( ins, line );
 
   // now we'll use a stringstream to separate the fields out of the line
   std::stringstream ss( line );
-  string field;
+  std::string field;
   while (getline( ss, field, ',' ))
     {
       // for each field we wish to convert it to a double
@@ -76,7 +76,7 @@ void MagneticFieldMap::MagneticField(double x, double y, double z,
 
       double phi = y;
       bool rot_sym(false);
-      for(set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++)
+      for(std::set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++)
 	{
 	  switch(*it)
 	    {
@@ -135,7 +135,7 @@ void MagneticFieldMap::MagneticField(double x, double y, double z,
     double ddy = iy_d - iy0;
     double ddz = iz_d - iz0;
 
-    vector<double> field;
+    std::vector<double> field;
 
     for(unsigned int i = 0; i < BfieldMap[0][0][0].size(); i++)
       {
@@ -180,19 +180,19 @@ void MagneticFieldMap::MagneticField(double x, double y, double z,
     }
 }
 
-bool MagneticFieldMap::ReadMap(const string filename, float scale)
+bool MagneticFieldMap::ReadMap(const std::string filename, float scale)
 {
   std::ifstream f(filename.c_str());
   if(f.is_open())
     {
-      set<double> magnitudes;
+      std::set<double> magnitudes;
       xmin = ymin = zmin = 1.e9;
       xmax = ymax = zmax =-1.e9;
       dx = dy = dz = 0.;
       int lnr(0);
       double xlast(1.e99), ylast(1.e99), zlast(1.e99);
-      vector<vector<double> > zvals;
-      vector<vector<vector<double> > > yvals;
+      std::vector<std::vector<double> > zvals;
+      std::vector<std::vector<std::vector<double> > > yvals;
       bool rot_sym(false);
       bool first(true);
       unsigned int nentries(0);
@@ -202,7 +202,7 @@ bool MagneticFieldMap::ReadMap(const string filename, float scale)
 	  lnr++;
 	  if(f.peek() == '#' || f.peek() == 'r')
 	    {
-	      string line;
+	      std::string line;
 	      getline(f, line);
 	      if(line.find("#Symmetries:") == 0)
 		{
@@ -326,7 +326,7 @@ bool MagneticFieldMap::ReadMap(const string filename, float scale)
 	      if(entries[2] > zmax) zmax = entries[2];
 	    }
       
-	  vector<double> field;
+	  std::vector<double> field;
 	  int dim = 3;
 	  if( rot_sym ) dim = 2;
 

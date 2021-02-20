@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(agdaq)
 
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
@@ -21,12 +22,12 @@ set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 #
+find_package(Garfield REQUIRED)
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/install/include/Garfield
-		    $ENV{GARFIELD_HOME}/include/Garfield
-		    $ENV{GARFIELD_HOME}/install/Heed)
-link_directories($ENV{GARFIELD_HOME}/install/lib $ENV{ROOTSYS}/lib)
+                    ${GARFIELD_INCLUDE_DIRS})
+
+link_libraries(${GARFIELD_LIBRARIES})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/ComponentBmap.cc ${PROJECT_SOURCE_DIR}/src/MagneticFieldMap.cc ${PROJECT_SOURCE_DIR}/src/TPCBase.cc ${PROJECT_SOURCE_DIR}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
@@ -37,7 +38,9 @@ foreach(target ${BINS})
 
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target} ${sources})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} -lGarfield -lgfortran -lGeom)
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield )
+  install(TARGETS ${bin} DESTINATION simulation)
+endforeach(target ${BINS})
 
 endforeach(target ${BINS})
 

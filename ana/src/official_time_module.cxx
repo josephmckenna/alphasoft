@@ -1,5 +1,5 @@
 //
-// Module to generate friend trees with 'Offical' cross calibrated 
+// Module to generate friend trees with 'Official' cross calibrated 
 // time between all modules (EVB and chronoboxes)
 // I.E Convert 'RunTime' to 'Official Time'
 // JTK McKENNA
@@ -79,7 +79,7 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       
       TPCOfficial=new TTree("StoreEventOfficialTime","StoreEventOfficialTime");
-      TPCOfficial->Branch("OfficalTime",&TPC_TimeStamp, 32000, 0);
+      TPCOfficial->Branch("OfficialTime",&TPC_TimeStamp, 32000, 0);
       gDirectory->cd("/chrono");
       for (int board=0; board<CHRONO_N_BOARDS; board++)
       {

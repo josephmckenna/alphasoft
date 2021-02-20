@@ -17,6 +17,7 @@ class Match
 private:
    bool fTrace;
    bool fDebug;
+   bool fMT;
    bool diagnostic;
 
    std::mutex* manalzer_global_mtx;

@@ -38,7 +38,7 @@ add_custom_command(
 
 
 find_package(ROOTANA)
-include_directories(include ${ROOTANA_INCLUDE_DIRS})
+include_directories(include ../analib/include ${ROOTANA_INCLUDE_DIRS})
 
 # Directories
 add_subdirectory(src)
@@ -59,20 +59,17 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 include(${ROOT_USE_FILE})
 
 # Include directories
-include_directories(include agana)
-include_directories(include include)
-include_directories(include .) #Used for RootUtils
-#include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
 include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__alpha2 include/*.h LINKDEF LibLinkDef.hh )
+
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
+ROOT_GENERATE_DICTIONARY(G__alpha2 ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh )
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
 
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
+target_include_directories(alpha2 PUBLIC include)
 
 
 find_library(LIBSQLITE3 sqlite3)
@@ -87,3 +84,5 @@ install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libalpha2.rootmap DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)
 install(FILES ${HEADER_FILES} DESTINATION include)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.db DESTINATION db)
+

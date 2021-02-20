@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#Script only used in the 'make' build of project... cmake project uses ${AGRELEASE}/GitInfo.h.in
 OUTPUT_PATH=${1}
 echo "Logging git info into ${OUTPUT_PATH}/GitInfo.h"
 echo "#define GIT_DATE            "  $( git log -n 1 --date=raw | grep Date | cut -b 8-19 ) > ${OUTPUT_PATH}/GitInfo.h

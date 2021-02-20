@@ -23,6 +23,13 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime);
 Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime);
 #endif
+
+#ifdef BUILD_A2
+Double_t GetTotalRunTimeFromSIS(Int_t runNumber);
+Double_t GetTotalRunTimeFromSVD(Int_t runNumber);
+Double_t GetA2TotalRunTime(Int_t runNumber);
+#endif
+
 #endif
 
 /* emacs
