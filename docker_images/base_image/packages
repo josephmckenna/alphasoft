@@ -13,6 +13,7 @@ ftgl-devel
 gcc
 gcc-c++
 gcc-gfortran
+gdb
 gfal2-all
 gfal2-devel
 giflib-devel
