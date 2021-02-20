@@ -58,8 +58,8 @@ if [[ $(hostname -s) = *runner* ]]; then
    if [ `ls *_SPEED_*.out | wc -l` -gt 0 ]; then
       callgrind_annotate *_SPEED_*.out &> annotatedSpeed.txt
       head -50 annotatedSpeed.txt &> elogMessage.txt
-      cp SpeedTest*.out  ${AGRELEASE}/callgrind.log
-      gzip SpeedTest*.out
+      cp *_SPEED_*.out  ${AGRELEASE}/callgrind.log
+      gzip *_SPEED_*.out
    fi
 
    echo "Gitlab runner identified! Making an elog post"
