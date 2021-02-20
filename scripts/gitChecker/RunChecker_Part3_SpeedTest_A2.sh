@@ -45,8 +45,6 @@ cd $AGRELEASE/scripts/A2UnitTest
 ./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
 cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
-
-
 if [[ $(hostname -s) = *runner* ]]; then
 
    if [ ${ELOG_NO} -gt 15000 ]; then
@@ -57,11 +55,12 @@ if [[ $(hostname -s) = *runner* ]]; then
    fi
 
    cd ${AGRELEASE}/${GITHASH}/A2SpeedTest
-
-   callgrind_annotate SpeedTest*.out &> annotatedSpeed.txt
-   head -50 annotatedSpeed.txt &> elogMessage.txt
-   cp SpeedTest*.out  ${AGRELEASE}/callgrind.log
-   gzip SpeedTest*.out
+   if [ `ls *_SPEED_*.out | wc -l` -gt 0 ]; then
+      callgrind_annotate *_SPEED_*Test*.out &> annotatedSpeed.txt
+      head -50 annotatedSpeed.txt &> elogMessage.txt
+      cp SpeedTest*.out  ${AGRELEASE}/callgrind.log
+      gzip SpeedTest*.out
+   fi
 
    echo "Gitlab runner identified! Making an elog post"
 
