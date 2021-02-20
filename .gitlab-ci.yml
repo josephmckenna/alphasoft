@@ -222,7 +222,19 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-simulation:
+elog:
+   stage: test
+   script:
+     - . agconfig.sh
+     - cd scripts/gitChecker
+     - rm -rf $AGRELEASE/ana/AutoPlots/*
+     - ls -l $AGRELEASE/bin/*.exe
+     - ./RunChecker.sh
+   dependencies:
+    - build-cc7-cmake-full
+   needs: ["build-cc7-cmake-full"]
+
+AG_Simulation:
   stage: test_more
   image: jmckenna/alphadocker:CADMesh
   script:
@@ -233,7 +245,7 @@ simulation:
     - mkdir -p public
     - cp -v simlogs/* public/
   dependencies:
-    - test
+    - elog
   artifacts:
     when: on_success
     paths:
@@ -245,15 +257,102 @@ simulation:
       - BuildLog.txt
       - simlogs/*
 
-test:
+
+
+test_R03586:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cd scripts
+    - ls -l $AGRELEASE/bin/*.exe
+    - ./run_in_gdb.sh -r 03586 -p agana.exe -e AG -m "--usetimerange 0. 15.0"
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildLog.txt
+    - testlogs/agana_run*.log
+    - testlogs/mt_agana_run*.log
+
+test_R02364:
   stage: test
   script:
     - . agconfig.sh
     - cd scripts/gitChecker
-    - rm -rf $AGRELEASE/ana/AutoPlots/*
     - ls -l $AGRELEASE/bin/*.exe
-    - ./RunChecker.sh
-    - cd -
+    - ./run_in_gdb.sh -r 02364 -p agana.exe -e AG -m "--usetimerange 0. 5.0"
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildLog.txt
+    - testlogs/agana_run*.log
+    - testlogs/mt_agana_run*.log
+
+
+test_R02364_mt:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cd scripts
+    - ls -l $AGRELEASE/bin/*.exe
+    - ./run_in_gdb.sh -r 02364 -p "agana.exe --mt" -e AG -m "--usetimerange 0. 5.0"
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildLog.txt
+    - testlogs/agana_run*.log
+    - testlogs/mt_agana_run*.log
+
+test_R45000:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cd scripts
+    - ls -l $AGRELEASE/bin/*.exe
+    - ./run_in_gdb.sh -r 45000 -p alphaStrips.exe -e A2
+    - ./run_in_gdb.sh -r 45000 -p alphaAnalysis.exe -e A2
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildLog.txt
+    - testlogs/agana_run*.log
+    - testlogs/mt_agana_run*.log
+
+test_R45000_mt:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cd scripts/
+    - ls -l $AGRELEASE/bin/*.exe
+    - ./run_in_gdb.sh -r 45000 -p "alphaStrips.exe --mt" -e A2
+    - ./run_in_gdb.sh -r 45000 -p "alphaAnalysis.exe --mt" -e A2
     - mkdir -p public
     - cp -v testlogs/* public/
   dependencies:
@@ -278,7 +377,7 @@ testleakAg:
     - cd scripts/gitChecker
     - ./RunChecker_Part2.sh
   dependencies:
-    - test
+    - elog
   artifacts:
     paths:
     - leaktest.log
@@ -291,7 +390,7 @@ testspeedAg:
     - cd scripts/gitChecker
     - ./RunChecker_Part3.sh
   dependencies:
-    - test
+    - elog
   artifacts:
     paths:
     - callgrind.log
@@ -305,7 +404,7 @@ A2_Leak_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
-    - test
+    - elog
 
 A2_Speed_Test:
   stage: test_more
@@ -315,7 +414,7 @@ A2_Speed_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
-    - test
+    - elog
 
 A2_Thread_Test:
   stage: test_more
@@ -325,7 +424,7 @@ A2_Thread_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
-    - test
+    - elog
 
 #pages:
 #  script:
