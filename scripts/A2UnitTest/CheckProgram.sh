@@ -85,8 +85,8 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
-      VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.log"
-      LAST_VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.log"
+      VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.out"
+      LAST_VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.out"
 
       ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
       LAST_ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
