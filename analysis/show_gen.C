@@ -219,9 +219,10 @@ TH1D*   hDecayAnn() {
     for (imap = ann_products.begin(); imap != ann_products.end(); ++imap) {
         string key = imap->first;
         TParticlePDG *particle = pdgDB->GetParticle(key.c_str());
+        cout << key << " pdgcode " << particle->PdgCode()  << endl;
         ostringstream s;
         s   << "Sum(MCTracks.fPdgCode==" << particle->PdgCode() 
-            << "&& MCTracks.fVx==fVdx && MCTracks.fVy==fVdy && MCTracks.fVz==fVdz)";
+            << "&& abs(MCTracks.fVx-fVdx)<1.e-1 && abs(MCTracks.fVy-fVdy)<1.e-1 && abs(MCTracks.fVz-fVdz)<1.e-1)";
         auto n = d->Define("ntrks", s.str()).Sum("ntrks");
         imap->second = *n;
     }
