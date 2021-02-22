@@ -135,7 +135,7 @@ build-cc7-cmake-full:
     - rm -rf build bin
     - mkdir build
     - cd build
-    - cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
+    - cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DBUILD_A2=ON -DBUILD_AG=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
     - cmake3 --build .  2>&1 | tee ../BuildLog.txt
     - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
   artifacts:
@@ -229,6 +229,29 @@ AG_Simulation:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
     - cd scripts/gitChecker
     - ./AGSimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - test
+  artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
+    when: on_failure
+    paths:
+      - BuildSimLog.txt
+      - BuildLog.txt
+      - simlogs/*
+
+A2_Simulation:
+  stage: test_more
+  image: jmckenna/alphadocker:CADMesh
+  script:
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./A2SimChecker.sh
     - cd -
     - mkdir -p public
     - cp -v simlogs/* public/
