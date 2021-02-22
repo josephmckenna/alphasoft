@@ -37,12 +37,12 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p ${AGRELEASE}/${GITHASH}/A2ThreadTest/
 
 cd $AGRELEASE/scripts/A2UnitTest
-./LeakCheckProg.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t THREAD
+./CheckProgram.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t THREAD
 cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2ThreadTest
 
 
 cd $AGRELEASE/scripts/A2UnitTest
-./LeakCheckProg.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t THREAD
+./CheckProgram.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t THREAD
 cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2ThreadTest
 
 
@@ -60,7 +60,7 @@ if [[ $(hostname -s) = *runner* ]]; then
 
    cd ${AGRELEASE}/${GITHASH}/A2ThreadTest
 
-   #head -50 annotatedSpeed.txt &> elogMessage.txt
+   grep SUMMARY *.out &> elogMessage.txt
  
    echo "Gitlab runner identified! Making an elog post"
 
