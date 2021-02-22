@@ -136,7 +136,6 @@ if (BUILD_A2)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
 if (BUILD_A2_SIM)
-   get_submodule(simulation/a2mc)
    add_subdirectory(simulation/a2mc)
 endif(BUILD_A2_SIM)
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
