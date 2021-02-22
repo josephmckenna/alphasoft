@@ -18,15 +18,8 @@ fi
 
 . ${AGRELEASE}/variables
 
-
-cd $AGRELEASE/alpha2
+cd $AGRELEASE
 export EOS_MGM_URL=root://eospublic.cern.ch
-
-if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
-  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
-else
-  echo "run${RUNNO}sub00000.mid.gz found locally"
-fi
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
