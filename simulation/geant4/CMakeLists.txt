@@ -59,8 +59,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${GARFIELDPP}/include
 		    ${Geant4_INCLUDE_DIR}
                     ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/install/include/Garfield
-		    $ENV{GARFIELD_HOME}/install/Heed
+        ${GARFIELD_INCLUDE_DIR}
 		    ${CADMESH_INCLUDE_DIRS})
 link_directories($ENV{GARFIELD_HOME}/install/lib)
 
