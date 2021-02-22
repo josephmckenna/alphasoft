@@ -25,8 +25,6 @@ include(${Geant4_USE_FILE})
 find_package(cadmesh REQUIRED)
 if(cadmesh_FOUND)
   #message(STATUS "${CADMESH_INCLUDE_DIRS}")
-  #Its not very cmake... cadmesh's lib path and dependaces are very gnumake style :(
-  add_compile_options(${cadmesh_LIBRARIES})
 else()
   message(FATAL_ERROR "CADMesh not found!!!")
 endif(cadmesh_FOUND)
