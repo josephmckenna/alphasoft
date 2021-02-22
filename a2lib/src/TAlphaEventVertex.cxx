@@ -1,5 +1,4 @@
 //TAlphaEventVertex
-#include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventVertex.h"
@@ -119,8 +118,9 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  minimdca(10);
-  upar =minimdca.Parameters();
+  minimdca(100);
+  ROOT::Minuit2::FunctionMinimum min = minimdca();
+  //upar =minimdca.Parameters();
   //minimdca = new TMinuit(3);
   //minimdca->SetPrintLevel(-1);
 
@@ -147,9 +147,9 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca->GetParameter(1,miny,erry);
   //minimdca->GetParameter(2,minz,errz);
 
-  fX = upar.Value(0);
-  fY = upar.Value(1);
-  fZ = upar.Value(2);
+  fX = min.UserState().Value(0);
+  fY = min.UserState().Value(1);
+  fZ = min.UserState().Value(2);
 
   //delete minimdca;
 
@@ -209,8 +209,10 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini(10);
-  upar =mini.Parameters();
+  mini(100);
+  ROOT::Minuit2::FunctionMinimum min = mini();
+  //upar =mini.Parameters();
+  
   //mini = new TMinuit(1);
   //mini->SetPrintLevel(-1);
 
@@ -232,7 +234,8 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
 
   // Grab the results
   //mini->GetParameter(0,s,errs);
-  s=upar.Value(0);
+  s=min.UserState().Value(0);
+  //s=upar.Value(0);
   TVector3 h = helix->GetPoint3D_C(s);
   dca->SetXYZ( h.X(), h.Y(), h.Z() );
 
@@ -264,8 +267,10 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   //minidca->SetParameter(1, "s_b", 0, 0.1, -100, 100 )
   
   // create Minimizer (default is Migrad)
-  minidca(100);
-  upar =minidca.Parameters();
+  minidca(400);
+  //minidca();
+  ROOT::Minuit2::FunctionMinimum min = minidca();
+  //upar =minidca.Parameters();
   //int iret = minidca.Minimize();
   //minidca = new TMinuit(2);
   // minidca->SetPrintLevel(-1);
@@ -293,8 +298,13 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   // Grab the results
   //minidca->GetParameter(0,s_a,errs_a);
   //minidca->GetParameter(1,s_b,errs_b);
-  s_a=upar.Value(0);
-  s_b=upar.Value(1);
+  //min.userState().value
+  //s_a=upar.Value(0);
+  //s_a = min.UserState().Value("s_a");
+  s_a = min.UserState().Value(0);
+  //s_b=upar.Value(1);
+  //s_b = min.UserState().Value("s_b");
+  s_a = min.UserState().Value(1);
 
   TVector3 vha = ha->GetPoint3D_C(s_a);
   TVector3 vhb = hb->GetPoint3D_C(s_b);
