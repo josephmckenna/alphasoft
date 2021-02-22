@@ -19,37 +19,35 @@ endif()
 # Setup Geant4 include directories and compile definitions
 #
 include(${Geant4_USE_FILE})
+include_directories(${Geant4_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
 #CADMesh 
 find_package(cadmesh REQUIRED)
 if(cadmesh_FOUND)
-  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
+  message(STATUS "${CADMESH_INCLUDE_DIRS}")
 else()
   message(FATAL_ERROR "CADMesh not found!!!")
+  return()
 endif(cadmesh_FOUND)
+include_directories(${CADMESH_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
-find_package(ROOT QUIET REQUIRED)
+find_package(ROOT REQUIRED COMPONENTS MathMore)
 if(NOT ROOT_FOUND)
   message(STATUS "rTPCsim: ROOT package not found.")  
   return()
+else()
+  # useful macros such as ROOT_GENERATE_DICTIONARY below
+  include(${ROOT_USE_FILE})
 endif()
-include(${ROOT_USE_FILE})
-EXECUTE_PROCESS(COMMAND 
-  root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-shadow ${ROOT_CXX_FLAGS}")
-EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
+include_directories(${ROOT_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
 # include CRY (required package)
 #
-#set(CRY $ENV{CRYHOME})
-#set(CRY_INCLUDE_DIR ${CRY}/src)
-#set(CRY_LIBRARIES ${CRY}/lib/libCRY.a)
 ExternalProject_Get_Property(CRY-1.7 source_dir)
 set(CRY_INCLUDE_DIRS "${source_dir}/src")
 set(CRY_LIBRARY_DIR "${source_dir}/lib")
@@ -61,14 +59,7 @@ include_directories(${CRY_INCLUDE_DIRS})
 #
 set(GARFIELDPP $ENV{AGRELEASE}/simulation/garfieldpp)
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${GARFIELDPP}/include
-		    ${Geant4_INCLUDE_DIR}
-                    ${ROOT_INCLUDE_DIR}
-		    $ENV{GARFIELD_HOME}/install/include/Garfield
-		    $ENV{GARFIELD_HOME}/install/Heed
-		    ${CRY_INCLUDE_DIR}
-		    ${CADMESH_INCLUDE_DIRS})
-link_directories($ENV{GARFIELD_HOME}/install/lib)
+                    ${GARFIELDPP}/include)
 
 ROOT_GENERATE_DICTIONARY(G__G4out TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
 set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TMChit.cc ${PROJECT_SOURCE_DIR}/src/TWaveform.cc)
