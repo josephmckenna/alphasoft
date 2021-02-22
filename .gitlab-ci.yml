@@ -98,106 +98,6 @@ before_script:
 #    paths:
 #      - BuildLog.txt
 #      - ana/include/GitInfo.h
-    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
-    - make | tee ../BuildLog.txt
-  cache: {}
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
-
-build-cc7:
-  stage: build
-  script: 
-    - git submodule update --init --recursive
-    - echo "Building"
-    - make clean
-    - make 2>&1 | tee BuildLog.txt
-    - cd ..
-  cache: {}
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
-
-simulation:
-  stage: test_more
-  image: jmckenna/alphadocker:CADMesh
-  script:
-    - . agconfig.sh install_sim | tee BuildSimLog.txt
-    - cd scripts/gitChecker
-    - ./SimChecker.sh
-    - cd -
-    - mkdir -p public
-    - cp -v simlogs/* public/
-  dependencies:
-    - test
-  artifacts:
-    when: on_success
-    paths:
-      - public
-      - variables
-    when: on_failure
-    paths:
-      - BuildSimLog.txt
-      - BuildLog.txt
-      - simlogs/*
-
-test:
-  stage: test
-  script:
-    - . agconfig.sh
-    - cd scripts/gitChecker
-    - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/bin/*.exe
-    - ./RunChecker.sh
-    - cd -
-    - mkdir -p public
-    - cp -v testlogs/* public/
-  dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
-  artifacts:
-    when: on_success
-    paths:
-    - public
-    - variables
-    when: on_failure
-    paths:
-    - BuildLog.txt
-    - testlogs/agana_run*.log
-    - testlogs/mt_agana_run*.log
-
-testleakAg:
-  stage: test_more
-  script:
-    - . agconfig.sh
-    - cat variables
-    - cd scripts/gitChecker
-    - ./RunChecker_Part2.sh
-  dependencies:
-    - test
-  artifacts:
-    paths:
-    - leaktest.log
-
-testspeedAg:
-  stage: test_more
-  script:
-    - . agconfig.sh
-    - cat variables
-    - cd scripts/gitChecker
-    - ./RunChecker_Part3.sh
-  dependencies:
-    - test
-  artifacts:
-    paths:
-    - callgrind.log
-
-
-A2_Leak_Test:
 
 #build-fedora-clang:
 #  image: rootproject/root:6.20.06-fedora32
@@ -298,6 +198,106 @@ build-cc7-cmake-a2:
     - echo "Building"
     - mkdir -p build
     - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_AG=OFF
+    - make | tee ../BuildLog.txt
+  cache: {}
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7:
+  stage: build
+  script: 
+    - git submodule update --init --recursive
+    - echo "Building"
+    - make clean
+    - make 2>&1 | tee BuildLog.txt
+    - cd ..
+  cache: {}
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+simulation:
+  stage: test_more
+  image: jmckenna/alphadocker:CADMesh
+  script:
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./SimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - test
+  artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
+    when: on_failure
+    paths:
+      - BuildSimLog.txt
+      - BuildLog.txt
+      - simlogs/*
+
+test:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cd scripts/gitChecker
+    - rm -rf $AGRELEASE/ana/AutoPlots/*
+    - ls -l $AGRELEASE/bin/*.exe
+    - ./RunChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v testlogs/* public/
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_success
+    paths:
+    - public
+    - variables
+    when: on_failure
+    paths:
+    - BuildLog.txt
+    - testlogs/agana_run*.log
+    - testlogs/mt_agana_run*.log
+
+testleakAg:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part2.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - leaktest.log
+
+testspeedAg:
+  stage: test_more
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3.sh
+  dependencies:
+    - test
+  artifacts:
+    paths:
+    - callgrind.log
+
+
+A2_Leak_Test:
   stage: test_more
   script:
     - . agconfig.sh
