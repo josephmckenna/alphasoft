@@ -7,7 +7,5 @@
 [submodule "feGEM"]
 	path = feGEM
 	url = https://github.com/josephmckenna/feGEM.git
-[submodule "a2mc"]
-	path = simulations/a2mc
-	url = https://gitlab.cern.ch/unibs/a2mc.git
+
 
