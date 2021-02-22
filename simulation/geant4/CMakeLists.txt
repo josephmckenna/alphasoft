@@ -25,7 +25,9 @@ include_directories(${Geant4_INCLUDE_DIR})
 #CADMesh 
 find_package(cadmesh REQUIRED)
 if(cadmesh_FOUND)
-  message(STATUS "${CADMESH_INCLUDE_DIRS}")
+  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
+  #Its not very cmake... cadmesh's lib path and dependaces are very gnumake style :(
+  add_compile_options(${cadmesh_LIBRARIES})
 else()
   message(FATAL_ERROR "CADMesh not found!!!")
   return()
@@ -48,6 +50,9 @@ include_directories(${ROOT_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # include CRY (required package)
 #
+#set(CRY $ENV{CRYHOME})
+#set(CRY_INCLUDE_DIR ${CRY}/src)
+#set(CRY_LIBRARIES ${CRY}/lib/libCRY.a)
 ExternalProject_Get_Property(CRY-1.7 source_dir)
 set(CRY_INCLUDE_DIRS "${source_dir}/src")
 set(CRY_LIBRARY_DIR "${source_dir}/lib")

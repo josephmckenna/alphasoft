@@ -144,6 +144,9 @@ public:
          SVDOfficial->Branch("OfficialTime","TSVD_QOD",&e,32000,0);
       else
          SVDOfficial->SetBranchAddress("OfficialTime",&e);
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       SVDOfficial->Fill();
       //std::cout<<"Saving at t:"<<e->t<<std::endl;
    }
