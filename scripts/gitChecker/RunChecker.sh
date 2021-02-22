@@ -1,6 +1,112 @@
 #!/bin/bash
 set -e
 
+RUNNO=${1}
+if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
+  echo "Running for RUNNO=${RUNNO}"
+else
+  #RUNNO=02364
+  #RUNNO=03213
+  RUNNO=03586 #Has magnetic field, Has Bars
+  echo "Using default RUNNO of ${RUNNO}"
+fi
+
+if [ `echo "${AGRELEASE}" | wc -c` -gt 3 ]; then
+  echo "AGRELEASE set ok: $AGRELEASE"
+else
+  echo "AGRELEASE envvar not set... exiting"
+  exit
+fi
+
+
+start=`date +%s`
+
+mkdir -p $AGRELEASE/testlogs
+
+cd $AGRELEASE
+
+export EOS_MGM_URL=root://eospublic.cern.ch
+
+if [ ! -f $AGMIDASDATA/run${RUNNO}sub000.mid.lz4  ]; then
+  eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 $AGMIDASDATA/
+else
+  echo "$AGRELEASE/run${RUNNO}sub000.mid.lz4 found locally"
+fi
+
+#Calling -h returns with a non-zero exit code
+#./agana.exe -h
+#Calling with a fake input file and --help finishes with a exit code 0 (not fail)
+
+GITHASH=`git rev-parse --short HEAD`
+#Fails when detached:
+#BRANCH=`git branch | grep \* | cut -c 3-`
+BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
+
+mkdir -p $AGRELEASE/testlogs
+cd $AGRELEASE/bin
+
+start_ana=`date +%s`
+
+if [ ! -f ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4  ]; then
+  eos cp /eos/experiment/ALPHAg/midasdata_old/run${RUNNO}sub000.mid.lz4 ${AGMIDASDATA}
+else
+  echo "$AGRELEASE/run${RUNNO}sub000.mid.lz4 found locally"
+fi
+
+#Calling -h returns with a non-zero exit code
+#./agana.exe -h
+#Calling with a fake input file and --help finishes with a exit code 0 (not fail)
+
+
+mkdir -p $AGRELEASE/testlogs
+cd $AGRELEASE/bin
+
+start_ana=`date +%s`
+#rm -vf $AGRELEASE/LookUp*.dat
+echo "Running from $PWD : ./agana.exe -O${AGRELEASE}/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
+./agana.exe -O${AGRELEASE}/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+
+
+
+if [ ! -f ${AGMIDASDATA}/run02364sub000.mid.lz4  ]; then
+  eos cp /eos/experiment/ALPHAg/midasdata_old/run02364sub000.mid.lz4 ${AGMIDASDATA}
+else
+  echo "run02364sub000.mid.lz4 found locally"
+fi
+echo "Running from $PWD: ./agana.exe -O${AGRELEASE}/output2364.root ${AGMIDASDATA}/run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
+./agana.exe -O${AGRELEASE}/output2364.root ${AGMIDASDATA}/run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
+echo "done"
+
+if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
+   echo "Making diff of analysis..."
+   #Catch exit state (1 if there is a differnce) with ||
+   diff -u `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log || :
+   if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
+       cat $AGRELEASE/testlogs/AnalysisDiff.log
+   fi
+fi
+
+end_ana=`date +%s`
+
+mtstart_ana=`date +%s`
+cd $AGRELEASE/bin
+echo "Running from $PWD
+./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+"
+#agana.exe --mt is broke... needs a bigger fix
+#./agana.exe -O${AGRELEASE}/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+mtend_ana=`date +%s`
+
+cd $AGRELEASE
+
+tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+
+#The root macro is gone... lets replace this soonish
+#echo ".L macros/ReadEventTree.C 
+#ReadEventTree()
+#.q
+#" | root -l -b *${RUNNO}*.root &> $AGRELEASE/testlogs/ReadEventTree_${RUNNO}_${GITHASH}.log
+
 #Move git logs to alphadaq
 
 mkdir -p ~/${GITHASH}
@@ -8,7 +114,13 @@ cp -v $AGRELEASE/BuildLog.txt ~/${GITHASH}/
 if [ -f $AGRELEASE/LastBuildLog.txt ]; then
    diff -u $AGRELEASE/LastBuildLog.txt $AGRELEASE/BuildLog.txt > ~/${GITHASH}/BuildDiff.log || :
 fi
+cp -v $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+#cp -v $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log ~/${GITHASH}/
+cp -v $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log ~/${GITHASH}/
 
+if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
+  cp -v $AGRELEASE/testlogs/AnalysisDiff.log ~/${GITHASH}/
+fi
 end=`date +%s`
 
 if [[ $(hostname -s) = *runner* ]]; then
@@ -30,10 +142,17 @@ if [[ $(hostname -s) = *runner* ]]; then
    ERRORS=`grep -i Error $AGRELEASE/BuildLog.txt | wc -l`
    WARNINGS=`grep -i Warning $AGRELEASE/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
-   echo "Last log diff:" >> ~/${GITHASH}/elogMessage.txt
-   git log -p -n1 >> ~/${GITHASH}/elogMessage.txt
+   echo "Analysis Diff:" >> ~/${GITHASH}/elogMessage.txt
+   if [ -f  ~/${GITHASH}/AnalysisDiff.log ]; then
+   cat ~/${GITHASH}/AnalysisDiff.log >> ~/${GITHASH}/elogMessage.txt
+   fi
    echo ""  >> ~/${GITHASH}/elogMessage.txt
+   echo "Analysis tail:" >> ~/${GITHASH}/elogMessage.txt
+   tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log >> ~/${GITHASH}/elogMessage.txt
    
+   echo ""  >> ~/${GITHASH}/elogMessage.txt
+   echo "Single thread/ Multithread tail diff:"  >> ~/${GITHASH}/elogMessage.txt
+   diff -u <(tail -n 15 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log) <(tail -n 15 $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log)  >> ~/${GITHASH}/elogMessage.txt || :
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
@@ -53,4 +172,3 @@ fi
 #./agana.exe fakefile -- --help
 #echo "Add more here"
 #Set up variables for next job:
-
