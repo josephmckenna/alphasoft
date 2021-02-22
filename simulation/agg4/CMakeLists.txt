@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------
 # Setup the project
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(agg4)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
@@ -24,9 +24,9 @@ include(${Geant4_USE_FILE})
 #CADMesh 
 find_package(cadmesh REQUIRED)
 if(cadmesh_FOUND)
+  message(STATUS "${CADMESH_INCLUDE_DIRS}")
 else()
-  message(STATUS "CADMesh not found!!!")
-  #message(STATUS "${CADMESH_INCLUDE_DIRS}")
+  message(FATAL_ERROR "CADMesh not found!!!")
 endif(cadmesh_FOUND)
 
 #----------------------------------------------------------------------------
@@ -40,7 +40,6 @@ else()
   # useful macros such as ROOT_GENERATE_DICTIONARY below
   include(${ROOT_USE_FILE})
 endif()
-include(${ROOT_USE_FILE})
 
 #----------------------------------------------------------------------------
 # include CRY (required package)
@@ -51,7 +50,6 @@ set(CRY_LIBRARY_DIR "${source_dir}/lib")
 set(CRY_LIBRARIES "libCRY.a")
 link_directories(${CRY_LIBRARY_DIR})
 include_directories(${CRY_INCLUDE_DIRS})
-
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 #
