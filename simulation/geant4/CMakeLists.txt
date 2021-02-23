@@ -16,6 +16,9 @@ else()
   find_package(Geant4 REQUIRED)
 endif()
 
+#----------------------------------------------------------------------------
+# Setup Geant4 include directories and compile definitions
+#
 include(${Geant4_USE_FILE})
 include_directories(${Geant4_INCLUDE_DIR})
 
@@ -67,6 +70,8 @@ file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(APPEND sources ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/ComponentBmap.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/MagneticFieldMap.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
+file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc ${GARFIELDPP}/src/ComponentBmap.cc ${GARFIELDPP}/src/MagneticFieldMap.cc ${GARFIELDPP}/src/TPCBase.cc ${GARFIELDPP}/src/TPC.cc)
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4, 
 # Garfield++, CRY, CADMesh and ROOT libraries
@@ -84,10 +89,15 @@ set(SIM_SCRIPTS
   cry.file vis.mac runHeedInterface.mac runHeedOnly.mac
   )
 
+
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS rTPCsim DESTINATION simulation)
+install(TARGETS G4out DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION simulation)
+install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION simulation)
+
 file(GLOB HEADER_FILES include/*.hh)
 install(FILES ${HEADER_FILES} DESTINATION include)
 install(FILES ${SIM_SCRIPTS} DESTINATION simulation)

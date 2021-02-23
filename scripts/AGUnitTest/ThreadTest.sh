@@ -103,13 +103,13 @@ cat ${ThreadTEST}.nopid | tail -n 16
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
    echo diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/ThreadTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/ThreadTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
-   diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   diff -u "$DIR/ThreadTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   diff -u "$DIR/ThreadTest${BEFORE}_${BRANCH}.log.nopid" "$DIR/ThreadTest${i}_${BRANCH}.log.nopid" > $AGRELEASE/scripts/AGUnitTest/ThreadDiff.log
+   diff -u "$DIR/ThreadTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
+   diff -u "$DIR/ThreadTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/ThreadTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/MacroDiff.log
 else
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/ThreadDiff.log
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/ThreadDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
