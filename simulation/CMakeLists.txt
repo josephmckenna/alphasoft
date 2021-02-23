@@ -18,10 +18,11 @@ endif()
 #----------------------------------------------------------------------------
 
 add_subdirectory(common)
+add_subdirectory(garfieldpp)
+get_submodule(cry)
 add_subdirectory(cry)
 get_submodule(CADMesh)
 add_subdirectory(CADMesh)
-add_subdirectory(garfieldpp)
 add_subdirectory(G4out)
 add_subdirectory(geant4)
 add_subdirectory(agg4)
