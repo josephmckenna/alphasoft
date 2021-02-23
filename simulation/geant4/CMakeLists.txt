@@ -52,12 +52,8 @@ link_libraries(${GARFIELD_LIBRARIES})
 #----------------------------------------------------------------------------
 # include CRY (required package)
 #
-ExternalProject_Get_Property(CRY-1.7 source_dir)
-set(CRY_INCLUDE_DIRS "${source_dir}/src")
-set(CRY_LIBRARY_DIR "${source_dir}/lib")
-set(CRY_LIBRARIES "libCRY.a")
-link_directories(${CRY_LIBRARY_DIR})
-include_directories(${CRY_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/simulation/cry/include)
+link_directories(${CMAKE_BINARY_DIR}/simulation/cry)
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
@@ -76,7 +72,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(rTPCsim rTPCsim.cc ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
-target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cadmesh G4out)
+target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
