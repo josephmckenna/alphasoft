@@ -31,13 +31,14 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    d.PrintADCsettings();
    d.PrintPWBsettings();
    std::cout<<"--------------------------------------------------"<<std::endl;
-
-   std::mutex Lock;
+   
+   std::mutex* Lock = new std::mutex;
+   //std::mutex Lock;
    m.SetDiagnostic(true);
    if( issim )
       {
          m.Setup(0);
-         m.SetGlobalLockVariable(&Lock);
+         m.SetGlobalLockVariable(Lock);
       }
 
    //leaw.SetDebug();
@@ -72,6 +73,7 @@ void ProcessEvents::SetDraw()
 {
    kDraw=true;
    u.MakeCanvases();
+   std::cout<<"Makes it past SetDraw()"<<std::endl; //PW 
 }
 
 
@@ -89,6 +91,8 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    nsig = d.FindPadTimes( padsignals );
    std::cout<<"[proc]# "<<EventNo<<"\tFindPadTimes: "<<nsig<<std::endl;
    m.Init();
+   std::cout<<"match initialized"<<std::endl; //PW
+   std::cout<<"nsig is: "<<nsig<<std::endl; //PW
    if( nsig == 0 ) return;
    if( nsig > 70000 ) return;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -106,14 +110,18 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
                
    if( kVerb>=2 ) u.PrintSignals( CombinedPads );
                
-   if( kDraw ) u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),CombinedPads,false);
-               
+   if( kDraw ){
+      std::cout<<"should be sending draw here"<<std::endl; //PW
+      u.Draw(d.GetAnodeSignal(),d.GetPadSignal(),CombinedPads,false);
+      std::cout<<"passes draw"<<std::endl; //PW
+   }
    if( npads == 0 ) return;
 
    // match electrodes
    // Andrea! Does this diff make sense? This function needed two arguments
+   std::cout<<"something weird here"<<std::endl; //PW
    std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(),d.GetPadSignal() );
-
+   std::cout<<"spacepoints"<<std::endl; //PW
    ProcessPoints(spacepoints);
 }
 

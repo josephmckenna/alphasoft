@@ -31,6 +31,7 @@ Utils::Utils(double B):fHisto(),pmap(),
    creco->Divide(2,2);
 
    MakeCanvases();
+   std::cout<<"Make the canvases but also BookG4Histos"<<std::endl; //PW
 }
 
 
@@ -46,6 +47,7 @@ void Utils::MakeCanvases()
    
    creco = new TCanvas("creco","creco",2400,2400);
    creco->Divide(2,2);
+   std::cout<<"Simple. Make the canvases"<<std::endl; //PW
 }
 
 void Utils::BookG4Histos()
@@ -77,6 +79,7 @@ void Utils::BookG4Histos()
    fHisto.Book("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
                100,0.,TMath::TwoPi(),90,109.,174.);
    fHisto.Book("hvtxres","Vertex Resolution;[mm]",200,0.,200.);
+   std::cout<<"BookG4Histos"<<std::endl; //PW
 }
 
 void Utils::BookAGG4Histos()
@@ -109,6 +112,7 @@ void Utils::BookAGG4Histos()
    fHisto.Book("hvrMC","MC Vertex X-Y",500,-50.,50.,500,-50.,50.);
    fHisto.GetHisto("hvrMC")->SetMarkerColor(kRed);
    fHisto.Book("hvrRC","REC Vertex X-Y",500,-50.,50.,500,-50.,50.);
+   std::cout<<"BookAGG4Histos"<<std::endl; //PW
 }
 
 void Utils::BookRecoHistos()
@@ -179,6 +183,7 @@ void Utils::BookRecoHistos()
    fHisto.Book("hvtxzed","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto.Book("hvtxzedphi","Vertex Z-#phi;z [mm];#phi [deg]",100,-1152.,1152.,180,0.,360.);
 
+   std::cout<<"BookRecoHistos"<<std::endl; //PW
 }
 
 
@@ -197,6 +202,7 @@ void Utils::FillRecoPointsHistos(const TObjArray* points)
          fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
          fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
       }
+   std::cout<<"FillRecoPointsHistos"<<std::endl; //PW
 }
 
 void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
@@ -222,6 +228,7 @@ void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
                ++Npointstracks;
             }
       }
+   std::cout<<"FillRecoTracksHisto"<<std::endl; //PW
 }
 
 void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
@@ -284,6 +291,7 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
                //    cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
             }
       }
+   std::cout<<"FillFitTracksReco"<<std::endl; //PW
 }
 
 void Utils::FillRecoVertex(const TFitVertex* Vertex)
@@ -295,6 +303,7 @@ void Utils::FillRecoVertex(const TFitVertex* Vertex)
    fHisto.FillHisto("hvtxphi",phi);
    fHisto.FillHisto("hvtxzed",Vertex->GetElevation());
    fHisto.FillHisto("hvtxzedphi",Vertex->GetElevation(),phi);
+   std::cout<<"FillRecoVertex"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -317,6 +326,7 @@ void Utils::FillFinalHistos(const Reco* r, int ntracks)
       fHisto.FillHisto("hgoodpattreceff", double(Npoints)/double(ntracks));
    else
       fHisto.FillHisto("hgoodpattreceff",0.);
+   std::cout<<"FillFinalHistos"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -346,6 +356,7 @@ void Utils::DebugNeuralNet(NeuralFinder* pattrec)
    for(double v: nv) hnv->Fill(v);
    new TCanvas;
    hnv->Draw();
+   std::cout<<"neural"<<std::endl; //PW
 }
 
 void Utils::DebugNeuralNetMC(NeuralFinder* pattrec)
@@ -355,6 +366,7 @@ void Utils::DebugNeuralNetMC(NeuralFinder* pattrec)
    for(double w: pwMC) hwMC->Fill(w);
    new TCanvas;
    hwMC->Draw();
+   std::cout<<"neural"<<std::endl; //PW
 }
 
 void Utils::DisplayNeuralNet(NeuralFinder* pattrec)
@@ -367,6 +379,7 @@ void Utils::DisplayNeuralNet(NeuralFinder* pattrec)
    // PlotNeurons(creco, pattrec->GetTrackNeurons(2), kCyan);
    // PlotNeurons(creco, pattrec->GetTrackNeurons(3), kOrange);
    // PlotNeurons(creco, pattrec->GetTrackNeurons(4), kViolet);
+   std::cout<<"neural"<<std::endl; //PW
 }
 
 void Utils::PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, int col_ )
@@ -414,6 +427,7 @@ void Utils::PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, i
          }
       }
    }
+   std::cout<<"neural"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -429,6 +443,7 @@ void Utils::Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
    PlotTracksFound(creco, tracks);
    PlotFitHelices(creco, helices);
    DrawTPCxy(creco);
+   std::cout<<"DisplayPlots"<<std::endl; //PW
 }
 
 void Utils::Display(const std::vector<TSpacePoint*>* recopoints,
@@ -439,6 +454,7 @@ void Utils::Display(const std::vector<TSpacePoint*>* recopoints,
    PlotTracksFound(creco, tracks);
    PlotFitHelices(creco, helices);
    DrawTPCxy(creco);
+   std::cout<<"DisplayPlots"<<std::endl; //PW
 }
 
 
@@ -509,6 +525,7 @@ void Utils::PlotMCpoints(TCanvas* c, const TClonesArray* points)
    // hh->GetYaxis()->SetRangeUser(21.,28.);
    hh->GetYaxis()->SetRangeUser(TMath::MinElement(gzphi->GetN(),gzphi->GetY())*0.9,
                                 TMath::MaxElement(gzphi->GetN(),gzphi->GetY())*1.1);
+   std::cout<<"Plot MC points"<<std::endl; //PW
 }
 
 void Utils::PlotAWhits(TCanvas* c, const TClonesArray* points)
@@ -556,6 +573,7 @@ void Utils::PlotAWhits(TCanvas* c, const TClonesArray* points)
    grphi->Draw("Psame");
    c->cd(4);
    gzphi->Draw("Psame");
+   std::cout<<"Plot AW points"<<std::endl; //PW
 }
 
 void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
@@ -631,6 +649,7 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
          c->cd(4);
          gzphi->Draw("Psame");
       }
+   std::cout<<"Plot reco points"<<std::endl; //PW
 }
 
 void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
@@ -692,6 +711,7 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
          c->cd(4);
          gzphi->Draw("Psame");
       }
+      std::cout<<"Plot tracks found"<<std::endl; //PW
 }
 
 void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
@@ -755,6 +775,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          c->cd(4);
          hzphi->Draw("Psame");
       }
+      std::cout<<"Plot fit helices"<<std::endl; //PW
 }
 
 void Utils::DrawTPCxy(TCanvas* c)
@@ -821,12 +842,14 @@ void Utils::DrawTPCxy(TCanvas* c)
    FWrz->SetLineWidth(2);
    c->cd(2);
    FWrz->Draw("same");
+      std::cout<<"Plot TPCxy"<<std::endl; //PW
 }
 
 void Utils::PrintSignals(std::vector<ALPHAg::signal>* sig)
 {
    for(auto s: *sig)
       s.print();
+   std::cout<<"Print Signals"<<std::endl; //PW
 }
 
 TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
@@ -842,6 +865,7 @@ TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
          h->Fill(s.t,s.height);
       }
    return h;
+      std::cout<<"Plot signals"<<std::endl; //PW
 }
 
 void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, 
@@ -897,6 +921,7 @@ void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>
    gPad->SetGridx();
    hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
    hoccaw->GetXaxis()->SetLabelSize(0.02);
+   std::cout<<"first draw function"<<std::endl; //PW
 }
 
 void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, bool norm)
@@ -951,6 +976,7 @@ void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>
    gPad->SetGridx();
    hoccaw->GetXaxis()->SetNdivisions(32,kFALSE);
    hoccaw->GetXaxis()->SetLabelSize(0.02);
+   std::cout<<"second draw function"<<std::endl; //PW
 }
 
 
@@ -977,6 +1003,7 @@ TH1D* Utils::PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name)
             }
       }
    return h;
+   std::cout<<"plot occupancy"<<std::endl; //PW
 }
 
 TH2D* Utils::PlotSignals(std::vector<ALPHAg::signal>* awsignals,
@@ -1028,6 +1055,7 @@ TH2D* Utils::PlotSignals(std::vector<ALPHAg::signal>* awsignals,
             }
       }
    return hh;
+   std::cout<<"plot signals"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -1037,6 +1065,7 @@ double Utils::Average(std::vector<double>* v)
    double avg=0.;
    for( auto& x: *v ) avg+=x;
    return avg/double(v->size());
+   std::cout<<"average"<<std::endl; //PW
 }
 
 double Utils::EvaluateMatch_byResZ(TClonesArray* lines)
@@ -1051,6 +1080,7 @@ double Utils::EvaluateMatch_byResZ(TClonesArray* lines)
       }
    if( Nlines != 0 ) resZ/=double(Nlines);
    return resZ;
+   std::cout<<"evaluate match"<<std::endl; //PW
 }
 
 int Utils::EvaluatePattRec(TClonesArray* lines)
@@ -1065,6 +1095,7 @@ int Utils::EvaluatePattRec(TClonesArray* lines)
       }
    if( Nlines != 0 ) Npoints/=Nlines;
    return Npoints;
+   std::cout<<"evaluate pattern"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -1108,6 +1139,7 @@ double Utils::PointResolution(std::vector<TFitHelix*>* helices, const TVector3* 
       }
    if( N>0 ) res/=N;
    return res;
+   std::cout<<"point resolution complete"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -1138,6 +1170,7 @@ void Utils::HelixPlots(std::vector<TFitHelix*>* helices)
             }
       }
    fHisto.FillHisto("hNhel",double(nhel));
+   std::cout<<"helix plot"<<std::endl; //PW
 }
 
 void Utils::UsedHelixPlots(const TObjArray* helices)
@@ -1199,6 +1232,7 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
       }
    fHisto.FillHisto("hNusedhel",double(nhel));
    //   std::cout<<"Utils::UsedHelixPlots Used Helices: "<<nhel<<std::endl;
+   std::cout<<"Used helix Plots"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -1222,6 +1256,7 @@ double Utils::VertexResolution(const TVector3* vtx, const TVector3* mcvtx)
                              (vtx->Z()-mcvtx->Z())*(vtx->Z() - mcvtx->Z()) );
    fHisto.FillHisto("hvtxres",res);
    return res;
+   std::cout<<"Vertex resolution"<<std::endl; //PW
 }
 
 // ===============================================================================================
@@ -1234,6 +1269,7 @@ void Utils::VertexPlots(const TFitVertex* v)
    fHisto.FillHisto("hAxiProf",vtx->Z());
 
    fHisto.FillHisto("hVchi2", v->GetChi2());
+   std::cout<<"Vertex Plots"<<std::endl; //PW
 }
 
 // ===============================================================================================

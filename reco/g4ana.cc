@@ -176,21 +176,32 @@ int main(int argc, char** argv)
 
    ProcessEvents proc(ana_settings,B,outname);
    if( draw ) proc.SetDraw();
+   std::cout<<"This is where draw should start"<<std::endl; //PW
    proc.SetFinder(finder);
    if( verb )
       proc.SetVerboseLevel(2);
-
+   std::cout<<"first if statement"<<std::endl; //PW
    for( int i=0; i<Nevents; ++i )
       {
+         std::cout<<"in the for loop"<<std::endl; //PW
          tSig->GetEntry(i);
          proc.SetEventNumber(i);
 
-         if(twod)
+         if(twod){
+            std::cout<<"twod"<<std::endl; //PW
             proc.ProcessWaveform_2D(AWsignals);
-         else if(led)
+         std::cout<<"process waveform 2d"<<std::endl;
+         } //PW
+         else if(led){
+            std::cout<<"led"<<std::endl; //PW
             proc.ProcessWaveform_led(AWsignals,PADsignals);
-         else
+         std::cout<<"process waveform led"<<std::endl; //PW
+         }
+         else{
+            std::cout<<"process"<<std::endl; //PW
             proc.ProcessWaveform_deconv(AWsignals,PADsignals);
+         std::cout<<"process waveform deconv"<<std::endl; //PW
+         }
 
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
@@ -201,17 +212,22 @@ int main(int argc, char** argv)
             { 
                tGarf->GetEntry(i);
                proc.Finish(garfpp_hits, aw_hits);
+         std::cout<<"finish processing gpp"<<std::endl; //PW
                if( enableMC ) proc.ProcessMonteCarlo(aw_hits,mcvtx);
             }
-         else
-            proc.Finish();  
-
+         else{
+            proc.Finish(); 
+         std::cout<<"finish"<<std::endl;
+         } //PW 
+         std::cout<<"end of for loop"<<std::endl; //PW
+         proc.Finish();
       }// events loop
    
    std::cout<<"[main]# Finished"<<std::endl;
    if( draw ){
       // new TBrowser;
       app->Run();
+      std::cout<<"This also outputs draw?"<<std::endl; //PW
    }
    std::cout<<"[main]# End Run"<<std::endl;
    return 0;

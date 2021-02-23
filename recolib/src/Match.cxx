@@ -288,6 +288,7 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
     auto cogstart = std::chrono::high_resolution_clock::now();
     for( unsigned i=0; i<comb->size(); ++i)
       {
+	//CentreOfGravity_blobs( std::ref(comb->at(i)), CombinedPads);
 	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,
 					 std::ref(comb->at(i)), CombinedPads ) );
       }   
