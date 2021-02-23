@@ -102,12 +102,12 @@ end=`date +%s`
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
    echo diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/SimTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/SimTest${BEFORE}_${BRANCH}.log" "$DIR/SimTest${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/SimTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/SimTest${BEFORE}_${BRANCH}.log" "$DIR/SimTest${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/LeakDiff.log
+   diff -u "$DIR/SimTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/SimTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
 else
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/LeakDiff.log
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
-   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/LeakDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
