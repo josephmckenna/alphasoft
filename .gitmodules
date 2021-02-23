@@ -10,3 +10,6 @@
 [submodule "simulation/CADMesh"]
 	path = simulation/CADMesh
 	url = https://github.com/a-capra/CADMesh.git
+[submodule "simulation/cry"]
+	path = simulation/cry
+	url = https://bitbucket.org/a-capra/cry.git
