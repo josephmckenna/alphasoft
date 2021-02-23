@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.3)
 project(gpp)
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
 #
@@ -13,22 +14,11 @@ find_package(ROOT 6.0 REQUIRED COMPONENTS Geom Gdml)
 include(${ROOT_USE_FILE})
 include_directories(${ROOT_INCLUDE_DIR})
 
-
-#EXECUTE_PROCESS(COMMAND 
-#  root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-shadow ${ROOT_CXX_FLAGS}")
-
-#EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-#set(CMAKE_EXE_LINKER_FLAGS "${ROOT_LD_FLAGS}")
-
-
 #----------------------------------------------------------------------------
-# Locate Garfield++
+# Garfield++
 #
-find_package(Garfield REQUIRED)
 include_directories(${GARFIELD_INCLUDE_DIRS})
 link_libraries(${GARFIELD_LIBRARIES})
-message(STATUS "Garfield++ Headers: ${GARFIELD_INCLUDE_DIR}")
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
