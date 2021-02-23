@@ -1,7 +1,11 @@
-FROM jmckenna/alphadocker:geant4
+FROM jmckenna/alphadocker:geant4_vmc
 WORKDIR /
 
-RUN git clone --depth 1 https://gitlab.cern.ch/jmckenna/garfieldpp.git
+RUN git clone --depth 1 https://gitlab.cern.ch/garfield/garfieldpp.git
+ENV GARFIELD_HOME /garfieldpp
+ENV CMAKE_PREFIX_PATH ${GARFIELD_HOME}/install:${CMAKE_PREFIX_PATH}
+ENV HEED_DATABASE ${GARFIELD_HOME}/Heed/heed++/database
+
 RUN mkdir build_garfieldpp
 WORKDIR build_garfieldpp
 RUN cmake3 -DROOTSYS=/usr/lib ../garfieldpp
