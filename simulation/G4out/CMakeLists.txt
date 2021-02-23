@@ -14,7 +14,6 @@ include(${ROOT_USE_FILE})
 
 ROOT_GENERATE_DICTIONARY(G__G4out ${headers} LINKDEF include/G4outLinkDef.hh)
 add_library(G4out SHARED ${sources} G__G4out)
-target_link_libraries(G4out ${ROOT_LIBRARIES})
 
 install(TARGETS G4out DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION lib)
