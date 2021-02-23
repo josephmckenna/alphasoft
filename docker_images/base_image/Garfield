@@ -1,4 +1,4 @@
-FROM jmckenna/alphadocker:geant4
+FROM jmckenna/alphadocker:geant4_vmc
 WORKDIR /
 
 RUN git clone --depth 1 https://gitlab.cern.ch/garfield/garfieldpp.git
