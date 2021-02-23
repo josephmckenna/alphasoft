@@ -1,6 +1,6 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(alphasoft)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
@@ -84,14 +84,16 @@ endif()
 include_directories(include)
 
 #Analysis Report needs A2Flow in alpha2...
-include_directories(../alpha2/include)
+#include_directories(../alpha2/include)
+include_directories(${CMAKE_SOURCE_DIR}/alpha2/include)
 #...which then needs UnpackVF48 in a2lib
-include_directories(../a2lib/include)
+#include_directories(../a2lib/include)
+include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
+
 
 #AG compatability includes
-#include_directories(../recolib/include)
-include_directories(../analib/include)
-include_directories(../ana/include)
+include_directories(${CMAKE_SOURCE_DIR}/analib/include)
+include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 include_directories(${ROOT_INCLUDE_DIRS})
 
 if (BUILT_IN_ROOTANA)
