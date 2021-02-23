@@ -43,12 +43,9 @@ include_directories(${ROOT_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # include CRY (required package)
 #
-ExternalProject_Get_Property(CRY-1.7 source_dir)
-set(CRY_INCLUDE_DIRS "${source_dir}/src")
-set(CRY_LIBRARY_DIR "${source_dir}/lib")
-set(CRY_LIBRARIES "libCRY.a")
-link_directories(${CRY_LIBRARY_DIR})
-include_directories(${CRY_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/simulation/cry/include)
+link_directories(${CMAKE_BINARY_DIR}/simulation/cry)
+
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
@@ -58,7 +55,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 		    ${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
 ROOT_GENERATE_DICTIONARY( G__G4dict TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh LINKDEF include/G4dictLinkDef.hh )
-add_library(G4dict SHARED ${sources} G__G4dict.cxx)
+set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigi.cc ${PROJECT_SOURCE_DIR}/src/TTPCelement.cc ${PROJECT_SOURCE_DIR}/src/TAnode.cc ${PROJECT_SOURCE_DIR}/src/TPads.cc)
+add_library(G4dict SHARED ${LIBRARY_SOURCES} G__G4dict)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(APPEND sources ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc)
@@ -69,7 +67,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(agg4 agg4.cc G__G4dict ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
-target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cadmesh G4out)
+target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -85,7 +83,6 @@ set(AGG4_SCRIPTS
 #
 install(TARGETS agg4 DESTINATION simulation)
 install(TARGETS G4dict DESTINATION lib)
-# I want these in ${CMAKE_INSTALL_PREFIX}/lib I think... but it gets upset... I guess because we are dealing with an .exe and not a .so?
 install(FILES ${PROJECT_BINARY_DIR}/libG4dict_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libG4dict.rootmap DESTINATION lib)
 install(FILES ${headers} DESTINATION include)
