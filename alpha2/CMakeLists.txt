@@ -1,6 +1,8 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alphasoft)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
