@@ -9,4 +9,4 @@
 	url = https://github.com/josephmckenna/feGEM.git
 [submodule "simulation/CADMesh"]
 	path = simulation/CADMesh
-	url = https://github.com/josephmckenna/CADMesh.git
+	url = https://github.com/a-capra/CADMesh.git
