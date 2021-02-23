@@ -8,7 +8,7 @@ TAPlot::TAPlot(bool zerotime):
 {
   
    ObjectConstructionTime = std::chrono::high_resolution_clock::now();
-   DataLoadedTime = std::chrono::high_resolution_clock::from_time_t(0);
+
    Nbin=100; 
    DrawStyle=0;
    gLegendDetail=1; 
