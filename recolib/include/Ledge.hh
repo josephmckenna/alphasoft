@@ -41,9 +41,11 @@ public:
 
   int FindAnodeTimes(const Alpha16Event*);
   int FindPadTimes(const FeamEvent*);
+#ifdef BUILD_AG_SIM
   int FindAnodeTimes(TClonesArray*);
   int FindPadTimes(TClonesArray*);
-  
+#endif  
+
   std::vector<ALPHAg::signal>* Analyze(std::vector<Alpha16Channel*> );
   std::vector<ALPHAg::signal>* Analyze(std::vector<FeamChannel*> );
   int Analyze(const std::vector<int>*, double& time, double& amp, double& err);
