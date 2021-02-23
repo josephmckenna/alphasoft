@@ -16,5 +16,17 @@ RUN cmake3 -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Re
 RUN make -j4
 RUN make install
 
+ENV G4NEUTRONHPDATA /usr/local/share/Geant4-10.5.1/data/G4NDL4.5
+ENV G4LEDATA /usr/local/share/Geant4-10.5.1/data/G4EMLOW7.7
+ENV G4LEVELGAMMADATA /usr/local/share/Geant4-10.5.1/data/PhotonEvaporation5.3
+ENV G4RADIOACTIVEDATA /usr/local/share/Geant4-10.5.1/data/RadioactiveDecay5.3
+ENV G4PARTICLEXSDATA /usr/local/share/Geant4-10.5.1/data/G4PARTICLEXS1.1
+ENV G4PIIDATA /usr/local/share/Geant4-10.5.1/data/G4PII1.3
+ENV G4REALSURFACEDATA /usr/local/share/Geant4-10.5.1/data/RealSurface2.1.1
+ENV G4SAIDXSDATA /usr/local/share/Geant4-10.5.1/data/G4SAIDDATA2.0
+ENV G4ABLADATA /usr/local/share/Geant4-10.5.1/data/G4ABLA3.1
+ENV G4INCLDATA /usr/local/share/Geant4-10.5.1/data/G4INCL1.0
+ENV G4ENSDFSTATEDATA /usr/local/share/Geant4-10.5.1/data/G4ENSDFSTATE2.2
+
 WORKDIR /
 CMD /bin/bash
