@@ -18,7 +18,7 @@ endif()
 #----------------------------------------------------------------------------
 
 add_subdirectory(common)
-add_subdirectory(CRY)
+add_subdirectory(cry)
 get_submodule(CADMesh)
 add_subdirectory(CADMesh)
 add_subdirectory(garfieldpp)
