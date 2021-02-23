@@ -1,7 +1,6 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-
-project(agdaq)
+project(alphasoft)
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
@@ -55,7 +54,7 @@ endif ()
 
 function(get_submodule MODULE_NAME)
    if(GIT_SUBMODULE)
-      if(EXISTS "$ENV{AGRELEASE}/${MODULE_NAME}/.git")
+      if(EXISTS "${PROJECT_SOURCE_DIR}/${MODULE_NAME}/.git")
          message("${MODULE_NAME} submodule ok")
       else()
          message(STATUS "Submodule ${MODULE_NAME} update --init")
@@ -124,9 +123,10 @@ if (BUILD_AG)
    add_subdirectory(ana)
    add_subdirectory(reco)
 endif (BUILD_AG)
+
 if (BUILD_AG_SIM)
-   #get_submodule(simulation/garfieldpp)
-   add_subdirectory(simulation)
+  message(STATUS "Building AG simulation")
+  add_subdirectory(simulation)
 endif (BUILD_AG_SIM)
 
 #A2 libraries
