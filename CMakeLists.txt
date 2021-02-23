@@ -95,6 +95,18 @@ else()
    file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_A2\n")
 endif (BUILD_A2)
 
+if (BUILD_AG_SIM)
+   if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
+      add_definitions(-DBUILD_AG_SIM)
+   else()
+      add_compile_definitions(BUILD_AG_SIM)
+   endif()
+   message(STATUS "Building AG simulation software")
+   file(WRITE ${CMAKE_BINARY_DIR}/BuildConfig.h "#define BUILD_AG_SIM\n")
+else()
+   file(WRITE ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_AG_SIM\n")
+endif(BUILD_AG_SIM)
+
 
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
 #file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
@@ -125,7 +137,6 @@ if (BUILD_AG)
 endif (BUILD_AG)
 
 if (BUILD_AG_SIM)
-  message(STATUS "Building AG simulation")
   add_subdirectory(simulation)
 endif (BUILD_AG_SIM)
 

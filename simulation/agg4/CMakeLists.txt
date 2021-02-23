@@ -54,9 +54,10 @@ include_directories(${CRY_INCLUDE_DIRS})
 # Locate sources and headers for this project
 #
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include)
+                    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include
+		    ${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
-ROOT_GENERATE_DICTIONARY( G__G4dict TMChit.hh TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh )
+ROOT_GENERATE_DICTIONARY( G__G4dict TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh LINKDEF include/G4dictLinkDef.hh )
 add_library(G4dict SHARED ${sources} G__G4dict.cxx)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
@@ -68,7 +69,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(agg4 agg4.cc G__G4dict ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
-target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cadmesh)
+target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -76,7 +77,7 @@ target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES
 # relies on these scripts being in the current working directory.
 #
 set(AGG4_SCRIPTS
-  settings.dat annihilation.dat cry.file cosmics.mac pionly.mac ResolutionTestsOnAxis.mac ResolutionTestsOnGas.mac run.mac vis.mac
+  settings.dat annihilation.dat cosmics.mac pionly.mac ResolutionTestsOnAxis.mac ResolutionTestsOnGas.mac run.mac vis.mac
   )
 
 #----------------------------------------------------------------------------

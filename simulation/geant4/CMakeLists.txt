@@ -60,11 +60,8 @@ include_directories(${CRY_INCLUDE_DIRS})
 # Locate sources and headers for this project
 #
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include)
-
-ROOT_GENERATE_DICTIONARY(G__G4out TMChit.hh TWaveform.hh LINKDEF include/G4outLinkDef.hh)
-set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TMChit.cc ${PROJECT_SOURCE_DIR}/src/TWaveform.cc)
-add_library(G4out SHARED ${LIBRARY_SOURCES} G__G4out.cxx)
+                    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include
+		    ${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(APPEND sources ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/ComponentBmap.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/MagneticFieldMap.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPC.cc)
@@ -74,9 +71,9 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 # Add the executable, and link it to the Geant4, 
 # Garfield++, CRY, CADMesh and ROOT libraries
 #
-add_executable(rTPCsim rTPCsim.cc G__G4out ${sources} ${headers})
+add_executable(rTPCsim rTPCsim.cc ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
-target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cadmesh)
+target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -91,10 +88,6 @@ set(SIM_SCRIPTS
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS rTPCsim DESTINATION simulation)
-install(TARGETS G4out DESTINATION lib)
-install(FILES ${PROJECT_BINARY_DIR}/libG4out_rdict.pcm DESTINATION simulation)
-install(FILES ${PROJECT_BINARY_DIR}/libG4out.rootmap DESTINATION simulation)
-
 file(GLOB HEADER_FILES include/*.hh)
 install(FILES ${HEADER_FILES} DESTINATION include)
 install(FILES ${SIM_SCRIPTS} DESTINATION simulation)
