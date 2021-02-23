@@ -88,9 +88,6 @@ int main(int argc,char** argv)
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
-  //char setname[80];
-  //sprintf(setname,"%s/settings.dat",getenv("RUN_TPC"));
-  //std::ifstream fset(setname);
   std::ifstream fset("./settings.dat");
   fset>>gPadTime; //ns
   fset>>gAnodeTime; //ns
