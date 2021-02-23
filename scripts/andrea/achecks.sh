@@ -37,6 +37,7 @@ GITHASH=`git rev-parse --short HEAD`
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
+cd $AGRELEASE/bin
 
 echo "Running from $PWD : ./agana.exe -O${AGRELEASE}/bin/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
 ./agana.exe -O${AGRELEASE}/bin/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
