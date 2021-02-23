@@ -43,11 +43,11 @@ target_link_libraries(agreco.exe ${ROOT_LIBRARIES})
 add_executable( MainEventTree.exe MainEventTree.cc ${sources} ${headers} )
 target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES})
     
-install(TARGETS agreco.exe MainEventTree.exe DESTINATION)# "${CMAKE_INSTALL_PREFIX}")
+install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
   add_executable( g4ana.exe g4ana.cc ${sources} ${headers} )
   target_link_libraries(g4ana.exe ${ROOT_LIBRARIES} G4out)
-  install(TARGETS g4ana.exe DESTINATION)# "${CMAKE_INSTALL_PREFIX}")
+  install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)
