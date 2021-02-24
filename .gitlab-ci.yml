@@ -134,6 +134,10 @@ build-cc7-cmake-full:
     - cd scripts/gitChecker
     - ./BuildAndElog.sh
   artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
     when: on_failure
     paths:
       - BuildLog.txt
@@ -232,10 +236,6 @@ AG_Simulation:
   needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
-    when: on_success
-    paths:
-      - public
-      - variables
     when: on_failure
     paths:
       - BuildSimLog.txt
