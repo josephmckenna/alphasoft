@@ -66,5 +66,5 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "Tail of elog:"
    tail -n 100 elog_posting.log
    ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9] | tail -n 1`
-   echo "export ELOG_NO=$ELOG_NO" > ${AGRELEASE}/variables
+   echo "export ELOG_NO=$ELOG_NO" > ~/variables
 fi
