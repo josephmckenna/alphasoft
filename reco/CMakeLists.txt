@@ -7,6 +7,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
 include_directories(${ROOT_INCLUDE_DIRS})
+include(${ROOT_USE_FILE})
 
 # Locate ROOTANA 
 find_package(ROOTANA)
@@ -37,6 +38,7 @@ endif (BUILD_AG)
 if (BUILD_A2)
    link_libraries(agtpc alpha2)
 endif (BUILD_A2)
+link_libraries(${ROOT_LIBRARIES})
  
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 target_link_libraries(agreco.exe ${ROOT_LIBRARIES})
