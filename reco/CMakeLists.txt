@@ -4,6 +4,17 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(agreco)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
+#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
+#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
+if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
+    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
+        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+    endif()
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+
+
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
 include_directories(${ROOT_INCLUDE_DIRS})
