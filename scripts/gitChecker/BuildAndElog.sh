@@ -51,7 +51,7 @@ if [[ $(hostname -s) = *runner* ]]; then
    WARNINGS=`grep -i Warning $AGRELEASE/BuildLog.txt | wc -l`
    echo "${ERRORS} Error and ${WARNINGS} Warnings during build..." >> ~/${GITHASH}/elogMessage.txt
    echo ""  >> ~/${GITHASH}/elogMessage.txt
-   grep -i 'Warning\|Error' >> ~/${GITHASH}/elogMessage.txt
+   grep -i 'Warning\|Error' $AGRELEASE/BuildLog.txt  >> ~/${GITHASH}/elogMessage.txt
    #Limit the size of the elogMessage
    if [ `cat ~/${GITHASH}/elogMessage.txt | wc -l` -gt 400 ]; then
       mv ~/${GITHASH}/elogMessage.txt ~/${GITHASH}/elogMessage_full.txt
@@ -61,8 +61,8 @@ if [[ $(hostname -s) = *runner* ]]; then
 
    #Move files to alphadaq (so that they can be added to elog post)
    scp -r ~/${GITHASH} alpha@alphadaq:~/gitCheckerReports/
-   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
-   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Run=\"${RUNNO}\" -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " &> elog_posting.log
+   echo "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v "
+   ssh -X alpha@alphadaq "~/packages/elog/elog -h localhost -a Author=${HOSTNAME} -a Subject=\"git-checker: $GITHASH (${BRANCH})\" -a Tags=\"gitcheck\" -m ~/gitCheckerReports/${GITHASH}/elogMessage.txt ${FILES}  -p 8080 -l AutoAnalysis -v " &> elog_posting.log
    echo "Tail of elog:"
    tail -n 100 elog_posting.log
    ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9] | tail -n 1`
