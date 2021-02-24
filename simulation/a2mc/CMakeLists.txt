@@ -29,11 +29,6 @@ set(CMAKE_MODULE_PATH
     ${Geant4VMC_DIR}/Modules
     ${CMAKE_MODULE_PATH})
 
-#----------------------------------------------------------------------------
-# VMC Configuration file
-# (for building MC independent code)
-#
-include(UseVMC)
 
 #----------------------------------------------------------------------------
 # Setup project include directories; compile definitions; link libraries
@@ -59,6 +54,11 @@ include_directories(${Geant4VMC_INCLUDE_DIRS})
 find_package(VMC CONFIG REQUIRED)
 include_directories(${VMC_INCLUDE_DIRS})
 
+#----------------------------------------------------------------------------
+# VMC Configuration file
+# (for building MC independent code)
+#
+include(UseVMC)
 
 #----------------------------------------------------------------------------
 # Hard code the path to the installation (for a2MC.ini)
