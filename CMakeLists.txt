@@ -55,7 +55,7 @@ endif ()
 
 function(get_submodule MODULE_NAME)
    if(GIT_SUBMODULE)
-      if(EXISTS "${PROJECT_SOURCE_DIR}/${MODULE_NAME}/.git")
+      if(EXISTS "${CMAKE_SOURCE_DIR}/${MODULE_NAME}/.git")
          message("${MODULE_NAME} submodule ok")
       else()
          message(STATUS "Submodule ${MODULE_NAME} update --init")
