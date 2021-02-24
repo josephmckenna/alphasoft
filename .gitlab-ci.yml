@@ -258,6 +258,7 @@ A2_Simulation:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
   cache: {}
+  artifacts:
     when: on_failure
     paths:
       - BuildSimLog.txt
