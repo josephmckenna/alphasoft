@@ -72,6 +72,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(rTPCsim rTPCsim.cc ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
+add_compile_definitions(CRYDATAPATH="${CRY_DATA_PATH}")
 target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
@@ -80,7 +81,7 @@ target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_L
 # relies on these scripts being in the current working directory.
 #
 set(SIM_SCRIPTS
-  cry.file vis.mac runHeedInterface.mac runHeedOnly.mac
+  cry.file init_vis.mac vis.mac runHeedInterface.mac runHeedOnly.mac
   )
 
 
