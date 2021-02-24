@@ -37,6 +37,7 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    if( issim )
       {
          m.Setup(0);
+         m.SetMultiThread(true);
          m.SetGlobalLockVariable(Lock);
       }
 
