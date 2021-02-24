@@ -588,6 +588,7 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
          grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
          gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
       }
+   if( Npoints==0 ) as=false;
    if( as )
       {
          c->cd(1);
