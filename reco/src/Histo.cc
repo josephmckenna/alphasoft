@@ -80,14 +80,18 @@ int Histo::WriteObject(TObject* obj, std::string oname)
    return bytes_written;
 }
 
-void Histo::Save()
+int Histo::Save()
 {
+   int N=0;
    fROOT->cd();
-  for( auto h : fH1 )
-     h.second->Write();  
-  for( auto h : fH2 )
-     h.second->Write();  
-  fROOT->Write();
+   for( auto h : fH1 ) {
+      h.second->Write();
+      ++N; }  
+   for( auto h : fH2 ) {
+      h.second->Write();
+      ++N; }
+   fROOT->Write();
+   return N;
 }
 
 /* emacs
