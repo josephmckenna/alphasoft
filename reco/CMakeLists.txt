@@ -27,9 +27,9 @@ include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 
 include_directories(${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
-
-file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
+set(sources ${PROJECT_SOURCE_DIR}/src/Histo.cc ${PROJECT_SOURCE_DIR}/src/Utils.cc)
+set(headers ${PROJECT_SOURCE_DIR}/include/Histo.hh ${PROJECT_SOURCE_DIR}/include/Utils.hh 
+            ${PROJECT_SOURCE_DIR}/include/argparse.hh)
 
 link_libraries(agana rootUtils)
 if (BUILD_AG)
@@ -42,14 +42,18 @@ link_libraries(${ROOT_LIBRARIES})
  
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 target_link_libraries(agreco.exe ${ROOT_LIBRARIES})
-add_executable( MainEventTree.exe MainEventTree.cc ${sources} ${headers} )
+add_executable( MainEventTree.exe MainEventTree.cc 
+                  ${sources} ${PROJECT_SOURCE_DIR}/src/ReadEventTree.cc
+                  ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
 target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES})
     
 install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
-  add_executable( g4ana.exe g4ana.cc ${sources} ${headers} )
+  add_executable( g4ana.exe g4ana.cc 
+                    ${sources} ${PROJECT_SOURCE_DIR}/src/ProcessEvents.cc ${PROJECT_SOURCE_DIR}/src/fileutility.cc
+                    ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh ${PROJECT_SOURCE_DIR}/include/fileutility.hh )
   target_link_libraries(g4ana.exe ${ROOT_LIBRARIES} G4out)
   install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)
