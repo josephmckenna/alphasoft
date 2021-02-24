@@ -96,11 +96,11 @@ cat ${LEAKTEST}.nopid | tail -n 16
 if [ $TESTID -gt 1 ]; then
    BEFORE=`expr ${TESTID} - 1`
    echo diff -u "$DIR/LeakTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/LeakTest_AnalysisOut_${i}_${BRANCH}.log"
-   diff -u "$DIR/RecoTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
-   diff -u "$DIR/RecoTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/AGUnitTest/MacroDiff.log
+   diff -u "$DIR/RecoTest_AnalysisOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_AnalysisOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   diff -u "$DIR/RecoTest_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/RecoTest_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 else
-   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/AnalysisDiff.log
-   echo "No previous log to diff" > $AGRELEASE/scripts/AGUnitTest/MacroDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
 fi
 echo "done..."
 echo "check:
