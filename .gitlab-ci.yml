@@ -3,7 +3,6 @@ image: jmckenna/alphadocker
 stages:
   - build
   - test
-  - test_more
 #  - pages
 
 cache:
@@ -132,12 +131,8 @@ build-cc7-cmake-full:
   image: jmckenna/alphadocker:CADMesh
   script:
     - echo "Building"
-    - rm -rf build bin
-    - mkdir build
-    - cd build
-    - cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DBUILD_A2=ON -DBUILD_AG=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
-    - cmake3 --build .  2>&1 | tee ../BuildLog.txt
-    - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
+    - cd scripts/gitChecker
+    - ./BuildAndElog.sh
   artifacts:
     when: on_failure
     paths:
@@ -223,7 +218,7 @@ build-cc7:
       - ana/include/GitInfo.h
 
 AG_Simulation:
-  stage: test_more
+  stage: test
   image: jmckenna/alphadocker:CADMesh
   script:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
@@ -233,8 +228,8 @@ AG_Simulation:
     - mkdir -p public
     - cp -v simlogs/* public/
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
     when: on_success
@@ -248,7 +243,7 @@ AG_Simulation:
       - simlogs/*
 
 A2_Simulation:
-  stage: test_more
+  stage: test
   image: jmckenna/alphadocker:CADMesh
   script:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
@@ -258,8 +253,8 @@ A2_Simulation:
     - mkdir -p public
     - cp -v simlogs/* public/
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
     when: on_success
@@ -272,110 +267,85 @@ A2_Simulation:
       - BuildLog.txt
       - simlogs/*
 
-test:
-  stage: test
-  script:
-    - . agconfig.sh
-    - cd scripts/gitChecker
-    - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/bin/*.exe
-    - ./RunChecker.sh
-    - cd -
-    - mkdir -p public
-    - cp -v testlogs/* public/
-  dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
-  artifacts:
-    when: on_success
-    paths:
-    - public
-    - variables
-    when: on_failure
-    paths:
-    - BuildLog.txt
-    - testlogs/agana_run*.log
-    - testlogs/mt_agana_run*.log
-
 AG_Leak_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_AG.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
     paths:
     - leaktest.log
 
 AG_Speed_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_AG.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
     paths:
     - callgrind.log
 
 AG_Thread_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_AG.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
   artifacts:
     paths:
     - callgrind.log
 
 A2_Leak_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
 
 A2_Speed_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
 
 A2_Thread_Test:
-  stage: test_more
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
-    - test
-  needs: ["test"]
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   cache: {}
 
 #pages:
