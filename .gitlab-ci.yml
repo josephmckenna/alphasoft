@@ -234,6 +234,8 @@ AG_Simulation:
     - cp -v simlogs/* public/
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
   artifacts:
     when: on_success
     paths:
@@ -257,6 +259,8 @@ A2_Simulation:
     - cp -v simlogs/* public/
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
   artifacts:
     when: on_success
     paths:
@@ -302,6 +306,8 @@ AG_Leak_Test:
     - ./RunChecker_Part3_LeakTest_AG.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
   artifacts:
     paths:
     - leaktest.log
@@ -315,6 +321,8 @@ AG_Speed_Test:
     - ./RunChecker_Part3_SpeedTest_AG.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
   artifacts:
     paths:
     - callgrind.log
@@ -328,6 +336,8 @@ AG_Thread_Test:
     - ./RunChecker_Part3_ThreadTest_AG.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
   artifacts:
     paths:
     - callgrind.log
@@ -341,8 +351,10 @@ A2_Leak_Test:
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
 
-A2_Speed_Test:
+  A2_Speed_Test:
   stage: test_more
   script:
     - . agconfig.sh
@@ -351,6 +363,8 @@ A2_Speed_Test:
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
 
 A2_Thread_Test:
   stage: test_more
@@ -361,6 +375,8 @@ A2_Thread_Test:
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
     - test
+  needs: ["test"]
+  cache: {}
 
 #pages:
 #  script:
