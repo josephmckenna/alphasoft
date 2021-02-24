@@ -129,6 +129,7 @@ public:
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }
    void SetDiagnostic(bool d) { diagnostic=d; }
+   void SetMultiThread(bool m) { fMT=m; }
 };
 
 
