@@ -89,6 +89,7 @@ public:
    void VertexPlots(const TFitVertex* v);
 
    void WriteSettings(TObjString*);
+   void WriteHisto();
 
    inline void SetTmax(double t) {tmax=t;}
 };

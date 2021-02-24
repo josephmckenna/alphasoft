@@ -312,6 +312,11 @@ void ProcessEvents::Finish(TClonesArray* garfpp_hits, TClonesArray* aw_hits)
    r.Reset();
 }
 
+void ProcessEvents::End()
+{
+   u.WriteHisto();
+}
+
 
 
 /* emacs
