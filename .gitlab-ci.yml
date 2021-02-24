@@ -354,7 +354,7 @@ A2_Leak_Test:
   needs: ["test"]
   cache: {}
 
-  A2_Speed_Test:
+A2_Speed_Test:
   stage: test_more
   script:
     - . agconfig.sh
