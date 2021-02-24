@@ -18,6 +18,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
 include_directories(${ROOT_INCLUDE_DIRS})
+link_libraries(${ROOT_LIBRARIES})
 
 # Locate ROOTANA 
 find_package(ROOTANA)
