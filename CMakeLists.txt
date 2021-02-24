@@ -138,7 +138,9 @@ if (BUILD_AG)
 endif (BUILD_AG)
 
 if (BUILD_AG_SIM)
-  add_subdirectory(simulation)
+   get_submodule(simulation/cry)
+   get_submodule(simulation/CADMesh)
+   add_subdirectory(simulation)
 endif (BUILD_AG_SIM)
 
 #A2 libraries
