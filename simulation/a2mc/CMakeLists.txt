@@ -58,7 +58,7 @@ include_directories(${VMC_INCLUDE_DIRS})
 # VMC Configuration file
 # (for building MC independent code)
 #
-include(UseVMC)
+#include(UseVMC)
 
 #----------------------------------------------------------------------------
 # Hard code the path to the installation (for a2MC.ini)
