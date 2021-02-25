@@ -534,6 +534,7 @@ int Reco::RecVertex(TFitVertex* Vertex)
 void Reco::Reset()
 {
    if(pattrec) delete pattrec;
+   pattrec=0;
    
    //   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
    for (size_t i=0; i<fHelixArray.size(); i++)
