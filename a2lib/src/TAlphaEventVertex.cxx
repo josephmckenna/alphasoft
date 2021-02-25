@@ -118,8 +118,7 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  minimdca(100);
-  ROOT::Minuit2::FunctionMinimum min = minimdca();
+  ROOT::Minuit2::FunctionMinimum min = minimdca(100);
   //upar =minimdca.Parameters();
   //minimdca = new TMinuit(3);
   //minimdca->SetPrintLevel(-1);
@@ -209,8 +208,7 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini(100);
-  ROOT::Minuit2::FunctionMinimum min = mini();
+  ROOT::Minuit2::FunctionMinimum min = mini(100);
   //upar =mini.Parameters();
   
   //mini = new TMinuit(1);
@@ -252,7 +250,6 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   //minidca= new ROOT::Minuit2::Minuit2Minimizer();
   minuit2DCA fcn(ha,hb);
   ROOT::Minuit2::MnUserParameters upar;
-  //Oct 13 fits 1300mW sim
   upar.Add("s_a", 0, 0.1, -100, 100 );
   upar.Add("s_b", 0, 0.1, -100, 100 );
   // create MIGRAD minimizer
@@ -267,9 +264,8 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   //minidca->SetParameter(1, "s_b", 0, 0.1, -100, 100 )
   
   // create Minimizer (default is Migrad)
-  minidca(400);
   //minidca();
-  ROOT::Minuit2::FunctionMinimum min = minidca();
+  ROOT::Minuit2::FunctionMinimum min = minidca(400);
   //upar =minidca.Parameters();
   //int iret = minidca.Minimize();
   //minidca = new TMinuit(2);
