@@ -70,6 +70,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #
 add_executable(agg4 agg4.cc G__G4dict ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
+add_compile_definitions(CRYDATAPATH="${CRY_DATA_PATH}")
 target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out G4dict)
 
 #----------------------------------------------------------------------------
@@ -78,8 +79,7 @@ target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES
 # relies on these scripts being in the current working directory.
 #
 set(AGG4_SCRIPTS
-  settings.dat annihilation.dat cosmics.mac pionly.mac ResolutionTestsOnAxis.mac ResolutionTestsOnGas.mac run.mac vis.mac
-  )
+  settings.dat annihilation.dat cry.file cosmics.mac pionly.mac run.mac test.mac vis.mac)
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX

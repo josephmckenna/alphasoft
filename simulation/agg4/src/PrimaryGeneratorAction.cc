@@ -187,9 +187,6 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
 
   // Read the cry input file
   std::ifstream CRYFile;
-  // char CRYname[80];
-  // sprintf(CRYname,"%s/cry.file",getenv("RUN_TPC"));
-  // CRYFile.open(CRYname,std::ios::in);
   CRYFile.open("./cry.file",std::ios::in);
   char buffer[1000];
   std::string setupString("");
@@ -199,8 +196,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
       setupString.append(" ");
     }
   CRYFile.close();
-  char datadir[80];
+  char datadir[128];
+#ifdef CRYDATAPATH
+  sprintf(datadir,"%s",CRYDATAPATH);
+#else
   sprintf(datadir,"%s",getenv("CRYDATAPATH"));
+#endif
+  G4cout << "CRY data dir: "<< datadir << G4endl;
   // setup CRY generator
   CRYSetup *setup=new CRYSetup(setupString,datadir);
   fCosmicGen = new CRYGenerator(setup);
