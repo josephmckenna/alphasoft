@@ -137,8 +137,11 @@ if (BUILD_AG)
    add_subdirectory(reco)
 endif (BUILD_AG)
 
+# AG sim
 if (BUILD_AG_SIM)
   add_subdirectory(simulation)
+  get_submodule(simulation/cry)
+  get_submodule(simulation/CADMesh)
 endif (BUILD_AG_SIM)
 
 #A2 libraries
@@ -149,6 +152,8 @@ endif (BUILD_A2)
 if (BUILD_A2_SIM)
    add_subdirectory(simulation/a2mc)
 endif(BUILD_A2_SIM)
+
+
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
@@ -158,12 +163,10 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
     endif()
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED COMPONENTS)
-
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
-message("CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX} ")
+message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX} ")
 
