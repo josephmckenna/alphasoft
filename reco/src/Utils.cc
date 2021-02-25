@@ -23,24 +23,21 @@ Utils::Utils(double B):fHisto(),pmap(),
                        fMagneticField(B),tmax(4500.)
 {
    BookG4Histos();
-
-   csig = new TCanvas("csig","csig",2400,2400);
-   csig->Divide(2,2);
-   
-   creco = new TCanvas("creco","creco",2400,2400);
-   creco->Divide(2,2);
-
    MakeCanvases();
 }
 
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
-{}
+{
+   std::cout<<"Utils::Utils(std::string fname, double B)"<<std::endl;
+}
 
 
 void Utils::MakeCanvases()
 {
+   std::cout<<"Utils::MakeCanvases()"<<std::endl;
+   
    csig = new TCanvas("csig","csig",2400,2400);
    csig->Divide(2,2);
    
@@ -1243,6 +1240,13 @@ void Utils::WriteSettings(TObjString* sett)
    std::cout<<"Utils::WriteSettings AnaSettings to rootfile... "<<std::endl;
    int status = fHisto.WriteObject(sett,"ana_settings");
    if( status > 0 ) std::cout<<"Utils: Write AnaSettings Success!"<<std::endl;
+}
+
+void Utils::WriteHisto()
+{
+   std::cout<<"Utils::WriteHisto histograms to rootfile... "<<std::endl;
+   int status = fHisto.Save();
+   if( status > 0 ) std::cout<<"Utils: Write Histograms ok: "<<status<<std::endl;
 }
 
 // ===============================================================================================

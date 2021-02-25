@@ -3,10 +3,10 @@
 /control/verbose 2
 /tracking/verbose 0
 #
-/AGTPC/setZcenter 1 m
+/AGTPC/setZcenter 1.2 m
 #
 /AGTPC/setRunType 2
 #
 /AGTPC/setRunName cosmics
 #
-/run/beamOn 1000000
+/run/beamOn 1000
