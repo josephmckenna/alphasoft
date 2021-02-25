@@ -29,8 +29,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-
-#include "G4RunManagerFactory.hh"
+//#include "G4RunManagerFactory.hh"
 #include "G4RunManager.hh"
 #include "G4MTRunManager.hh"
 #include "G4UImanager.hh"
@@ -86,11 +85,11 @@ int main(int argc,char** argv)
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
-  // // Construct the default run manager
-  // G4RunManager * runManager = new G4RunManager;
   // Construct the default run manager
-  auto* runManager =
-    G4RunManagerFactory::CreateRunManager(G4RunManagerType::Default);
+  G4RunManager * runManager = new G4RunManager;
+  // Construct the default run manager
+  // auto* runManager =
+  //   G4RunManagerFactory::CreateRunManager(G4RunManagerType::Default);
 
   GasModelParameters* GasParam = new GasModelParameters();
 
