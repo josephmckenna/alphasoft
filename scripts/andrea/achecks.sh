@@ -19,7 +19,7 @@ fi
 
 start=`date +%s`
 
-mkdir -p $AGRELEASE/testlogs
+mkdir -p $AGRELEASE/RunLogs
 
 cd $AGRELEASE
 
@@ -40,7 +40,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 cd $AGRELEASE/bin
 
 echo "Running from $PWD : ./agana.exe -O${AGRELEASE}/bin/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time"
-./agana.exe -O${AGRELEASE}/bin/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/bin/output${RUNNO}.root ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/RunLogs/agana_run_${RUNNO}_${GITHASH}.log
 
 
 
@@ -50,15 +50,15 @@ else
   echo "${AGMIDASDATA}/run02364sub000.mid.lz4 found locally"
 fi
 echo "Running from $PWD: ./agana.exe -O${AGRELEASE}/bin/output2364.root ${AGMIDASDATA}/run02364sub000.mid.lz4 -- --usetimerange 0. 5.0 --time"
-./agana.exe -O${AGRELEASE}/bin/output2364.root ${AGMIDASDATA}/run02364sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/agana_run_02364_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/bin/output2364.root ${AGMIDASDATA}/run02364sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/RunLogs/agana_run_02364_${GITHASH}.log
 echo "done"
 
-if [ `ls $AGRELEASE/testlogs/agana_run_02364_* | wc -l` -gt 1 ]; then
+if [ `ls $AGRELEASE/RunLogs/agana_run_02364_* | wc -l` -gt 1 ]; then
    echo "Making diff of analysis..."
    #Catch exit state (1 if there is a differnce) with ||
-   diff -u `ls -tr $AGRELEASE/testlogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/testlogs/AnalysisDiff.log || :
-   if [ -f $AGRELEASE/testlogs/AnalysisDiff.log ]; then
-       cat $AGRELEASE/testlogs/AnalysisDiff.log
+   diff -u `ls -tr $AGRELEASE/RunLogs/agana_run_02364_* | tail -n 2 ` > $AGRELEASE/RunLogs/AnalysisDiff.log || :
+   if [ -f $AGRELEASE/RunLogs/AnalysisDiff.log ]; then
+       cat $AGRELEASE/RunLogs/AnalysisDiff.log
    fi
 fi
 
@@ -67,20 +67,20 @@ end_ana=`date +%s`
 mtstart_ana=`date +%s`
 cd $AGRELEASE/bin
 echo "Running from $PWD
-./agana.exe -O${AGRELEASE}/bin/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/bin/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/RunLogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 "
-./agana.exe -O${AGRELEASE}/bin/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+./agana.exe -O${AGRELEASE}/bin/output${RUNNO}mt.root --mt ${AGMIDASDATA}/run${RUNNO}sub000.mid.lz4 -- --usetimerange 0. 15.0 --time &> $AGRELEASE/RunLogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 
 if [[ $? -ne 0 ]]; then
     echo "mt test exit with error $?, running gdb..."
     gdb -ex="set logging on" -ex=r --args ./agana.exe -O/home/acapra/agsoft/bin/output03586mt.root --mt /daq/alpha_data0/acapra/alphag/midasdata/run03586sub000.mid.lz4 -- --usetimerange 0. 15.0 --time
-    mv gdb.txt $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+    mv gdb.txt $AGRELEASE/RunLogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 fi
 
 mtend_ana=`date +%s`
 
 cd $AGRELEASE
 
-tail -n 50 $AGRELEASE/testlogs/agana_run_${RUNNO}_${GITHASH}.log
-tail -n 50 $AGRELEASE/testlogs/mt_agana_run_${RUNNO}_${GITHASH}.log
+tail -n 50 $AGRELEASE/RunLogs/agana_run_${RUNNO}_${GITHASH}.log
+tail -n 50 $AGRELEASE/RunLogs/mt_agana_run_${RUNNO}_${GITHASH}.log
 
