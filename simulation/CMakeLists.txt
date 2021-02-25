@@ -1,3 +1,6 @@
+#Typically the subdirectory should contain its own project() command invocation so that a full build system will be generated in the subdirectory
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+project(alphasim)
 
 #----------------------------------------------------------------------------
 # Garfield++
@@ -17,10 +20,11 @@ endif()
 
 #----------------------------------------------------------------------------
 
-add_subdirectory(common)
-add_subdirectory(garfieldpp)
-add_subdirectory(cry)
-add_subdirectory(CADMesh)
-add_subdirectory(G4out)
-add_subdirectory(geant4)
-add_subdirectory(agg4)
+message(STATUS "Simulation ${CMAKE_CURRENT_SOURCE_DIR}")
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/garfieldpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cry)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/CADMesh)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/G4out)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/geant4)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/agg4)
