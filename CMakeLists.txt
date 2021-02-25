@@ -22,6 +22,12 @@ else()
    message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
 endif()
 
+# IDentify OS (linux, windows, etc.)
+string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
+string(TOLOWER ${OS_TYPE} OS_TYPE)
+add_compile_definitions(OSTYPE="${OS_TYPE}")
+message(STATUS "OS: ${CMAKE_SYSTEM} : ${OS_TYPE}")
+
 find_package(Git REQUIRED)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
    option(GIT_SUBMODULE "Check submodules during build" ON)
@@ -107,7 +113,6 @@ if (BUILD_AG_SIM)
 else()
    file(WRITE ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_AG_SIM\n")
 endif(BUILD_AG_SIM)
-
 
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
 #file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
