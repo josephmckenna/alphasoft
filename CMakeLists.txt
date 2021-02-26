@@ -22,6 +22,12 @@ else()
    message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
 endif()
 
+# IDentify OS (linux, windows, etc.)
+string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
+string(TOLOWER ${OS_TYPE} OS_TYPE)
+add_compile_definitions(OSTYPE="${OS_TYPE}")
+message(STATUS "OS: ${CMAKE_SYSTEM} : ${OS_TYPE}")
+
 find_package(Git REQUIRED)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
    option(GIT_SUBMODULE "Check submodules during build" ON)
@@ -152,8 +158,6 @@ endif (BUILD_A2)
 if (BUILD_A2_SIM)
    add_subdirectory(simulation/a2mc)
 endif(BUILD_A2_SIM)
-
-
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
@@ -163,6 +167,7 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
     endif()
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)

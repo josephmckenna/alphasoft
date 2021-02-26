@@ -311,40 +311,34 @@ AG_Thread_Test:
     - callgrind.log
 
 A2_Leak_Test:
-  stage: test
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
-  cache: {}
+    - test
 
 A2_Speed_Test:
-  stage: test
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
-  cache: {}
+    - test
 
 A2_Thread_Test:
-  stage: test
+  stage: test_more
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
-  cache: {}
+    - test
 
 #pages:
 #  script:
