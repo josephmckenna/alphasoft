@@ -14,20 +14,20 @@ using namespace std;
 #include <TAxis.h>
 #include <TMath.h>
 
-#include "Plotting.hh"
+#include "Garfield/Plotting.hh"
 
-#include "ComponentAnalyticField.hh"
-#include "MediumMagboltz.hh"
-#include "SolidTube.hh"
-#include "GeometrySimple.hh"
-#include "Sensor.hh"
-#include "FundamentalConstants.hh"
-#include "ViewField.hh"
-#include "ViewCell.hh"
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/Sensor.hh"
+#include "Garfield/FundamentalConstants.hh"
+#include "Garfield/ViewField.hh"
+#include "Garfield/ViewCell.hh"
 
-#include "DriftLineRKF.hh"
-#include "AvalancheMC.hh"
-#include "ViewDrift.hh"
+#include "Garfield/DriftLineRKF.hh"
+#include "Garfield/AvalancheMC.hh"
+#include "Garfield/ViewDrift.hh"
 
 using namespace Garfield;
 

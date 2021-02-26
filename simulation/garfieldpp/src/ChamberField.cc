@@ -7,14 +7,14 @@
 #include <TApplication.h>
 #include <TFile.h>
 
-#include "MediumMagboltz.hh"
-#include "GeometrySimple.hh"
-#include "SolidTube.hh"
-#include "Sensor.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/Sensor.hh"
 
-#include "ViewGeometry.hh"
-#include "ViewCell.hh"
-#include "ViewField.hh"
+#include "Garfield/ViewGeometry.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/ViewField.hh"
 
 #include "TPC.hh"
 #include "Helpers.hh"
