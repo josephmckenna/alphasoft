@@ -5,8 +5,10 @@
 #include <TDirectory.h>
 
 #include "Deconv.hh"
-#include "TWaveform.hh"
 
+#ifdef BUILD_AG_SIM
+#include "TWaveform.hh"
+#endif
 
 TH2D* Deconv::hADCped=0;
 TProfile* Deconv::hADCped_prox=0;
@@ -340,6 +342,7 @@ void Deconv::Reset()
       }
 }
 
+#ifdef BUILD_AG_SIM
 int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
 {
    int Nentries = AWsignals->GetEntries();
@@ -522,6 +525,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
   
    return nsig;
 }
+#endif
 
 int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {

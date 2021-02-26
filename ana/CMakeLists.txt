@@ -1,6 +1,8 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(alphasoft)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
@@ -36,9 +38,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
-
-# Directories
-add_subdirectory(src)
+message(STATUS "ROOTANA headers: ${ROOTANA_INCLUDE_DIRS}")
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
@@ -51,8 +51,12 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
+find_package(ROOT REQUIRED COMPONENTS MathMore Minuit2 XMLParser Spectrum)
+include_directories(${ROOT_INCLUDE_DIRS})
 link_libraries(${ROOT_LIBRARIES})
+# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
 
 
 
@@ -60,43 +64,34 @@ find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
 
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
 
 # MIDAS -- live analyzer
 set(MIDASSYS "" CACHE PATH "")
 if(MIDASSYS STREQUAL "")
     set(MIDASSYS "$ENV{MIDASSYS}")
+#    message(STATUS "Midas ${MIDASSYS}")
+#else()
+#    set(MIDAS_FOUND TRUE)
+#    message(STATUS "Midas FOUND")
+#    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+#    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
 endif()
-if(MIDASSYS STREQUAL "")
-    find_package(Midas QUIET)
-else()
-    set(MIDAS_FOUND TRUE)
-    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
-    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
-endif()
+find_package(Midas QUIET)
 if(MIDAS_FOUND)
-  message(STATUS "MIDAS found")
+  set(MIDASSYS "$ENV{MIDASSYS}")
+  message(STATUS "MIDAS found ${MIDASSYS}")
   message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
   message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
   link_libraries(${MIDAS_LIBRARIES})
-  link_directories($ENV{MIDASSYS}/lib)
+  link_directories(${MIDAS_LIBRARY_DIRS})
 endif()
 
-include_directories(../a2lib/include ../alpha2/include)
 
-link_directories(${bin} ../analib)
+include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
+include_directories(${CMAKE_SOURCE_DIR}/alpha2/include)
+link_directories(${CMAKE_SOURCE_DIR}/analib)
 find_library(LIBXM Xm)
 find_library(LIBXT Xt)
-
-if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
-else ()
-   include_directories(include $ENV{ROOTANASYS}/include)
-endif (BUILT_IN_ROOTANA)
-
-
-message(${ROOT_INCLUDE_DIRS})
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -157,5 +152,5 @@ foreach( LIST_FILE ${BINS} )
     find_library(LIBXT Xt)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
     
-    install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

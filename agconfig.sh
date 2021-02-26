@@ -15,8 +15,6 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
 
-#export AG_CFM=${AGRELEASE}/ana #obsolete
-
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
@@ -180,7 +178,11 @@ alphacpc04* | alphacpc09*  )
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
   export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+  export MIDASDATA="/daq/alpha_agmini/data"
   if [ `whoami` = "acapra" ] ; then
+      export DATADIR=/daq/alpha_data0/acapra/alphag
+      export MCDATA=${DATADIR}/MCdata
+      export GPPDATA=${DATADIR}/GPPdata
       acapra
   fi
   ;;

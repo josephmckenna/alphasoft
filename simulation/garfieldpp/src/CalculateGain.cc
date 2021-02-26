@@ -11,11 +11,11 @@
 #include "TFile.h"
 #include "TRandom3.h"
 
-#include "Random.hh"
+#include "Garfield/Random.hh"
 
-#include "MediumMagboltz.hh"
-#include "DriftLineRKF.hh"
-#include "Sensor.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/DriftLineRKF.hh"
+#include "Garfield/Sensor.hh"
 
 #include "TPC.hh"
 #include "Helpers.hh"

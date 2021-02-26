@@ -152,7 +152,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
   TClonesArray& hitarray = *(fRunAction->GetTPCHitsArray());
   G4cout << "EventAction::AddTPCHits Event # " << fEvtNb 
 	 << " # of hits: " << THC->entries() << G4endl;
-  for(int i=0;i<THC->entries();++i)
+  for(size_t i=0;i<THC->entries();++i)
     {
       TPCHit* aHit = (*THC)[i];
       new(hitarray[i]) TMChit(aHit->GetTrackID(),aHit->GetPDGcode(),
@@ -177,7 +177,7 @@ void EventAction::AddChamberHits(ChamberHitsCollection* CHC)
   TClonesArray& hitarray = *(fRunAction->GetGarfieldHitsArray());  
   G4cout << "EventAction::AddChamberHits Event # " << fEvtNb 
 	 << " # of hits: " << CHC->entries() << G4endl;
-  for(int i=0;i<CHC->entries();++i)
+  for(size_t i=0;i<CHC->entries();++i)
     {
       ChamberHit* aHit = (*CHC)[i];
       new(hitarray[i]) TMChit(aHit->GetTrackID(),-11,
@@ -195,7 +195,7 @@ void EventAction::AddAWhits(AWHitsCollection* AWHC)
   TClonesArray& hitarray = *(fRunAction->GetAnodeHitsArray());  
   G4cout << "EventAction::AddAWhits Event # " << fEvtNb 
 	 << " # of hits: " << AWHC->entries() << G4endl;
-  for(int i=0;i<AWHC->entries();++i)
+  for(size_t i=0;i<AWHC->entries();++i)
     {
       AWHit* aHit = (*AWHC)[i];
       new(hitarray[i]) TMChit(-1,-11,

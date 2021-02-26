@@ -14,19 +14,19 @@
 
 #include "GasModelParameters.hh"
 
-#include "ComponentAnalyticField.hh"  //Garfield field
+#include "Garfield/ComponentAnalyticField.hh"  //Garfield field
 
-#include "TrackHeed.hh"
+#include "Garfield/TrackHeed.hh"
 
-#include "DriftLineRKF.hh"
-#include "AvalancheMicroscopic.hh"
-#include "AvalancheMC.hh"
+#include "Garfield/DriftLineRKF.hh"
+#include "Garfield/AvalancheMicroscopic.hh"
+#include "Garfield/AvalancheMC.hh"
 
 #include "TCanvas.h"
-#include "ViewCell.hh"      //Visualization
-#include "ViewDrift.hh"
-#include "ViewSignal.hh"
-#include "ViewField.hh"
+#include "Garfield/ViewCell.hh"      //Visualization
+#include "Garfield/ViewDrift.hh"
+#include "Garfield/ViewSignal.hh"
+#include "Garfield/ViewField.hh"
 
 #include "G4VFastSimulationModel.hh"
 #include "G4ThreeVector.hh"

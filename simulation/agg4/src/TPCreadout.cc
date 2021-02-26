@@ -155,8 +155,8 @@ void TPCreadout::AddHit(double t, double z, double phi)  // correct pad signal a
       // 	       <<"\tcharge: "<<( (TPads*) fPadsArray->At(Pad) )->GetCharge()
       // 	       <<"\ttime: "<<( (TPads*) fPadsArray->At(Pad) )->GetLeadingEdgeDriftTime()
       // 	       <<" ns"<<std::endl;
-      double z,pdphi;
-      TPCBase::TPCBaseInstance()->GetPadPosition(Pad,z,pdphi);
+      double zz,pdphi;
+      TPCBase::TPCBaseInstance()->GetPadPosition(Pad,zz,pdphi);
       //      std::cout<<"TPCreadout::AddHit  pad: "<<Pad<<" @ "<<pdphi<<"    phi: "<<phi<<std::endl;
       AddInduction(t,Pad,f); // <-- this one used
       delete f;
