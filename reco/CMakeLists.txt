@@ -52,8 +52,9 @@ install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX}
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
   add_executable( g4ana.exe g4ana.cc 
-                    ${sources} ${PROJECT_SOURCE_DIR}/src/ProcessEvents.cc ${PROJECT_SOURCE_DIR}/src/fileutility.cc
-                    ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh ${PROJECT_SOURCE_DIR}/include/fileutility.hh )
+                    ${sources} ${PROJECT_SOURCE_DIR}/src/ProcessEvents.cc
+                    ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh 
+		    ${PROJECT_SOURCE_DIR}/include/fileutility.hh )
   target_link_libraries(g4ana.exe ${ROOT_LIBRARIES} G4out)
   install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)
