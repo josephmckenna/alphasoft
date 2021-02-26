@@ -114,7 +114,6 @@ else()
    file(WRITE ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_AG_SIM\n")
 endif(BUILD_AG_SIM)
 
-
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
 #file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
 install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
