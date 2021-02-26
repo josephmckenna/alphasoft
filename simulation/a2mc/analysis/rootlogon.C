@@ -6,13 +6,13 @@
   gSystem->Load("libMinuit2");
   gSystem->Load("libGeom");
 
-  TString libname("/home/acapra/packages/vmc/install/lib64/libVMCLibrary.so");
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  int s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+//  TString libname("/home/acapra/packages/vmc/install/lib64/libVMCLibrary.so");
+//  libname=gSystem->FindDynamicLibrary(libname);
+//  cout<<"Loading: "<<libname;
+//  int s=gSystem->Load( libname );
+//  if(s==0) cout<<"... ok"<<endl;
 
-  libname="../lib64/libvmc_a2MC.so";
+  TString libname="../lib/libvmc_a2MC.dylib";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
@@ -29,7 +29,7 @@
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
   
-  libname="libalpha2.so";
+  libname="libalpha2.dylib";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
