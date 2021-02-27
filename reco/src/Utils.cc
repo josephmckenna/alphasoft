@@ -834,11 +834,13 @@ TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
    std::string htitle(";t [ns];H [a.u.]");
    TH1D* h = new TH1D(hname.str().c_str(),htitle.c_str(),411,0.,16.*411.);
    h->SetStats(kFALSE);
+   if(sig) {
    for(auto s: *sig)
       {
          if( s.t < 16. ) continue;
          h->Fill(s.t,s.height);
       }
+   }
    return h;
 }
 
