@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 RUNNO=${1}
 if [ `echo "${RUNNO}" | wc -c` -gt 3 ]; then
