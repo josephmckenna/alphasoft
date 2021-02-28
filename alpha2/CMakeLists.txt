@@ -85,6 +85,8 @@ endif()
 # Include directories
 include_directories(include)
 
+include_directories(../libGEM/include)
+
 #Analysis Report needs A2Flow in alpha2...
 #include_directories(../alpha2/include)
 include_directories(${CMAKE_SOURCE_DIR}/alpha2/include)
@@ -145,6 +147,6 @@ foreach( LIST_FILE ${BINS} )
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} GEM)
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

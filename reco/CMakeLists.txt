@@ -16,6 +16,9 @@ include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/agana)
+
+include_directories(${CMAKE_SOURCE_DIR}/libGEM/include)
+
 include_directories(${CMAKE_SOURCE_DIR}/rootUtils/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
 
