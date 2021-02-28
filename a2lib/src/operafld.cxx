@@ -38,7 +38,7 @@ const int kYmin  = -50;
 #ifdef ALPHA1COMP
 const int kZmin  = -444;
 #else
-const int kZmin  = -420;
+const int kZmin  = -444;
 #endif
 
 const int kXmax  =  50;
@@ -46,7 +46,7 @@ const int kYmax  =  50;
 #ifdef ALPHA1COMP
 const int kZmax  =  444;
 #else
-const int kZmax  =  420;
+const int kZmax  =  444;
 #endif
 
 const int kXsize = kXmax - kXmin + 1;
@@ -323,7 +323,7 @@ static int readFile(FILE*fp)
       fprintf(stderr,"operafld: %s\n",line);
     }
 
-  fprintf(stderr,"operafld: Field map size: x: %d..%d, y: %d..%d, z: %d..%d\n",gMinX,gMaxX,gMinY,gMaxY,gMinZ,gMaxZ);
+  fprintf(stderr,"operafld: Field map size: x: | %d | %d |, y: | %d | %d |, z: | %d | %d |\n",gMinX,gMaxX,gMinY,gMaxY,gMinZ,gMaxZ);
 
   // read the field data
   while (1)
@@ -476,7 +476,7 @@ extern "C" int operainit_(char*filename)
 	break;
       }
   char fname[120];
-  sprintf(fname,"%s%s%s",getenv("AGRELEASE"),"/aux/",filename);
+  sprintf(fname,"%s%s%s",getenv("AGRELEASE"),"/",filename);
   FILE* fp = fopen(fname,"r");
   if (fp == 0)
     {

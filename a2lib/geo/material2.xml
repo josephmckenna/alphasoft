@@ -38,7 +38,7 @@
     <Dedx>0.05</Dedx><!-- Relative energy loss in one step -->
     <Epsil>0.0005</Epsil><!-- Tracking precision (cm) -->
     <Mnstep>0.0010</Mnstep><!-- Minimum step (cm) -->
-   <FieldMap>magnets/berkeley_and_octupole_and_mirrors_extended_mm.mag</FieldMap>
+   <FieldMap>simulation/a2mc/input/berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag</FieldMap>
   </parameters>
 
   <material>
