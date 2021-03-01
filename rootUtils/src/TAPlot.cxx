@@ -202,7 +202,8 @@ void TAPlot::LoadData()
       {
          if (t.runNumber==runNumber)
          {
-            if (t.tmax<0) last_time = 1E99;
+            if (t.tmax<0) 
+               last_time = 1E99;
             if (last_time < t.tmax)
                last_time = t.tmax;
             if (first_time > t.tmin )

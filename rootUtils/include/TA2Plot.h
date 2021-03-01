@@ -20,6 +20,8 @@ private:
    int trig;
    int trig_nobusy;
    int atom_or;
+   //new method
+   //std::map<int, int> trig;
 
   //Dump marker SIS channels:
    int CATStart;
@@ -63,12 +65,19 @@ public:
 
    TA2Plot(bool zerotime = true);
    TA2Plot(double zmin, double zmax,bool zerotime = true);
+   TA2Plot(const TA2Plot& m_TA2Plot);
    virtual ~TA2Plot();
+
+   friend TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& plotB);
+   friend TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& plotB);
+   TA2Plot& operator=(const TA2Plot& plotA);
    
    void SetUpHistograms();
    void FillHisto(bool ApplyCuts=true, int MVAMode=0);
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
+
+   
 };
 #endif
 #endif
