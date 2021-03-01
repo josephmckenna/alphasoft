@@ -236,7 +236,6 @@ AG_Simulation:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -257,7 +256,6 @@ A2_Simulation:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -275,7 +273,6 @@ AG_Leak_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
   artifacts:
     paths:
     - leaktest.log
@@ -290,7 +287,6 @@ AG_Speed_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
   artifacts:
     paths:
     - callgrind.log
@@ -305,7 +301,6 @@ AG_Thread_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
   artifacts:
     paths:
     - callgrind.log
@@ -320,7 +315,6 @@ A2_Leak_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
 
 A2_Speed_Test:
   stage: test
@@ -332,7 +326,6 @@ A2_Speed_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
 
 A2_Thread_Test:
   stage: test
@@ -344,7 +337,7 @@ A2_Thread_Test:
   dependencies:
     - build-cc7-cmake-full
   needs: ["build-cc7-cmake-full"]
-  cache: {}
+
 
 #pages:
 #  script:
