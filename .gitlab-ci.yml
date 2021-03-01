@@ -21,7 +21,7 @@ cache:
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
     - bin/
-    - ~/variables
+    - variables
 
 #Global before script (cc7)
 before_script:
@@ -134,13 +134,12 @@ build-cc7-cmake-full:
     - echo "Building"
     - cd scripts/gitChecker
     - ./BuildAndElog.sh
-    - cd ~/
-    - cat ~/variables
+    - cat ../../variables
   artifacts:
     when: on_success
     paths:
       - public
-      - ~/variables
+      - variables
     when: on_failure
     paths:
       - BuildLog.txt
@@ -268,7 +267,7 @@ AG_Leak_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_AG.sh
   dependencies:
@@ -282,7 +281,7 @@ AG_Speed_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_AG.sh
   dependencies:
@@ -296,7 +295,7 @@ AG_Thread_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_AG.sh
   dependencies:
@@ -310,7 +309,7 @@ A2_Leak_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
@@ -321,7 +320,7 @@ A2_Speed_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
@@ -332,7 +331,7 @@ A2_Thread_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cat ~/variables
+    - cat variables
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
