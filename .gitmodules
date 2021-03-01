@@ -10,3 +10,6 @@
 [submodule "simulation/cry"]
 	path = simulation/cry
 	url = https://bitbucket.org/a-capra/cry.git
+[submodule "libGEM"]
+	path = libGEM
+	url = https://bitbucket.org/expalpha/libgem.git
