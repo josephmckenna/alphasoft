@@ -1,10 +1,10 @@
 {
-  cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
+//  cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
 
-  gSystem->AddIncludePath("-I../include");
+//  gSystem->AddIncludePath("-I../include");
     
-  gSystem->Load("libMinuit2");
-  gSystem->Load("libGeom");
+//  gSystem->Load("libMinuit2");
+//  gSystem->Load("libGeom");
 
 //  TString libname("/home/acapra/packages/vmc/install/lib64/libVMCLibrary.so");
 //  libname=gSystem->FindDynamicLibrary(libname);
@@ -16,7 +16,7 @@
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+  if(s==0) cout<<" ... ok"<<endl;
 
  TString basedir(getenv("AGRELEASE"));
   if (basedir.Sizeof()<3)
@@ -25,15 +25,15 @@
      exit(1);
   }
 
-  TString incana("-I"); incana += basedir; incana += "/bin/include";
-  cout<<"Including: "<<incana<<endl;
-  gSystem->AddIncludePath(incana.Data());
+//  TString incana("-I"); incana += basedir; incana += "/bin/include";
+//  cout<<"Including: "<<incana<<endl;
+//  gSystem->AddIncludePath(incana.Data());
   
-  libname="libalpha2.dylib";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+//  libname="libalpha2.dylib";
+//  libname=gSystem->FindDynamicLibrary(libname);
+//  cout<<"Loading: "<<libname;
+//  s=gSystem->Load( libname );
+//  if(s==0) cout<<"... ok"<<endl;
 
   gStyle->SetOptStat(1011111);
   gStyle->SetPalette(kRainBow);

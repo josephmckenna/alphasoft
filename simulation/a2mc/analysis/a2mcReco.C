@@ -10,28 +10,27 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
-bool verbose = false;
 
 ///< Writing the RAW data file (from the MC output data file to the RAW data format)
 //=====================
-void a2mcReco::Reco() {
+void a2mcReco::Reco(bool verbose=false) {
     if (fChain == 0) return;
-    CreateOutputFile();
+    CreateHistos();
     fTotEvents = fChain->GetEntriesFast();
 ///< Loop on the events -> select the hits and the MC tracks to write to 
     Int_t nOutEvents = 0;
     if(verbose) cout << "Number of events " << fTotEvents << endl;
     fAlphaEvent = new TAlphaEvent(fAlphaEventMap);
     if(verbose) fAlphaEvent->SetVerboseLevel(1);
-    for (fEvent=0; fEvent<fTotEvents; fEvent++) {
+    for (fEvent=0; fEvent<fTotEvents; fEvent++) { ///< Loop over the events
         Long64_t ientry = LoadTree(fEvent);
         if (ientry < 0) break;
         fChain->GetEntry(fEvent);
         if(!GoodEvent()) continue;
         fAlphaEvent->DeleteEvent(); ///< Resetting fAlphaEvent
         if(verbose) {
-            cout << "____________________ EVENT # " << fEvent << " ==> Primary PDG Code " << fPdgCode << " _____________________" << endl;
-            cout << "Number of silicon detector hits " << SilHits_ << endl;
+            cout << "||| EVENT # " << fEvent << " ==> Primary PDG Code " << fPdgCode << " _" << endl;
+            cout << "\t Number of silicon detector hits " << SilHits_ << endl;
         }
         bool ok=false;
         for(UInt_t ih=0; ih<SilHits_; ih++) { ///< Loop over the silicon hits
@@ -79,21 +78,23 @@ void a2mcReco::Reco() {
         } ///< End of loop over the silicon hits
 
         if(ok) fAlphaEvent->RecEvent();
+        isRecV = false;
         TAlphaEventVertex *vertex = fAlphaEvent->GetVertex();
         if( vertex->IsGood() ) {
-            if( verbose ) vertex->Print();
-            Double_t X = vertex->X();
-            Double_t Y = vertex->Y();
-            Double_t Z = vertex->Z();
-            Double_t PHI = vertex->Phi();
-            Double_t R = sqrt(X*X+Y*Y);
+            isRecV = true;
+            fRecVox = vertex->X();
+            fRecVoy = vertex->Y();
+            fRecVoz = vertex->Z();
+            fRecPhi = vertex->Phi();
             if(verbose) {
                 cout << "MC  Vertex [" << fVox << ", " << fVoy << ", " << fVoz << "]" << endl;
-                cout << "Rec Vertex [" << X << ", " << Y << ", " << Z << "]" << endl;
+                cout << "Rec Vertex [" << fRecVox << ", " << fRecVoy << ", " << fRecVoz << "]" << endl;
             }
         }
+        FillHistos();
         nOutEvents++;
-    }
+    } ///< End of loop over the events
+//    CreateOutputFile();
     cout << "Writing " << nOutEvents << " \'good\' events in the RAW output file" << endl;
 }
 
@@ -105,14 +106,72 @@ Bool_t a2mcReco::GoodEvent() {
     return true;
 }
 
+void a2mcReco::ShowHistos() {
+    gROOT->cd();
+    TCanvas *cVertex = new TCanvas("cVertex", "MC/Rec/Diff vertex distributions", 1600,1200);
+    cVertex->Divide(3,3);
+    cVertex->cd(1); hMCVox->Draw();
+    cVertex->cd(2); hMCVoy->Draw();
+    cVertex->cd(3); hMCVoz->Draw();
+    cVertex->cd(4); hRecVox->Draw();
+    cVertex->cd(5); hRecVoy->Draw();
+    cVertex->cd(6); hRecVoz->Draw();
+    cVertex->cd(7); hDiffVox->Draw();
+    cVertex->cd(8); hDiffVoy->Draw();
+    cVertex->cd(9); hDiffVoz->Draw();
+
+    cVertex->Modified(); cVertex->Update();
+}
+void a2mcReco::FillHistos() {
+    gROOT->cd();
+    if(!isnan(fVox)) {
+        hMCVox->Fill(fVox);
+        hMCVoy->Fill(fVoy);
+        hMCVoz->Fill(fVoz);
+    }
+    if(isRecV) {
+        hRecVox->Fill(fRecVox);
+        hRecVoy->Fill(fRecVoy);
+        hRecVoz->Fill(fRecVoz);
+    }
+    if(!isnan(fVox)&&isRecV) {
+        hDiffVox->Fill(fRecVox-fVox);
+        hDiffVoy->Fill(fRecVoy-fVoy);
+        hDiffVoz->Fill(fRecVoz-fVoz);
+    }
+}
+
+void a2mcReco::CreateHistos() {
+    gROOT->cd();
+    Int_t nBinsVo = 100;
+    Float_t xMin = -10., xMax = +10.;
+    Float_t zMin = -10., zMax = +10.;
+    hMCVox   = new TH1F("hMCVox",   "MC Vox"  , nBinsVo, xMin, xMax);
+    hMCVoy   = new TH1F("hMCVoy",   "MC Voy"  , nBinsVo, xMin, xMax);
+    hMCVoz   = new TH1F("hMCVoz",   "MC Voz"  , nBinsVo, zMin, zMax);
+    hMCVor   = new TH1F("hMCVor",   "MC Vor"  , nBinsVo, xMin, xMax);
+    hRecVox  = new TH1F("hRecVox",  "Rec Vox" , nBinsVo, xMin, xMax);
+    hRecVoy  = new TH1F("hRecVoy",  "Rec Voy" , nBinsVo, xMin, xMax);
+    hRecVoz  = new TH1F("hRecVoz",  "Rec Voz" , nBinsVo, zMin, zMax);
+    hRecVor  = new TH1F("hRecVor",  "Rec Vor" , nBinsVo, xMin, xMax);
+    hDiffVox = new TH1F("hDiffVox", "Diff Vox", nBinsVo, xMin, xMax);
+    hDiffVoy = new TH1F("hDiffVoy", "Diff Voy", nBinsVo, xMin, xMax);
+    hDiffVoz = new TH1F("hDiffVoz", "Diff Voz", nBinsVo, zMin, zMax);
+    hDiffVor = new TH1F("hDiffVor", "Diff Vor", nBinsVo, xMin, xMax);
+}
+
 ///< Creating/Opening the RAW data output file 
 //=====================
 void a2mcReco::CreateOutputFile() {
 ///< Create the RAW output file
 //    std::ostringstream fileName;
-//    fileName << "./root/a2mcRAW_" << fRunNumber << ".bin";
+//    fileName << "./root/a2mcRAW_" << fRunNumber << ".root";
 //    cout << "Creating a2mcRAW file " << fileName.str() << endl;
+//    TFile *fRAW = new TFile(fileName.str().c_str(),"NEW");
+//    hMCVox->Write();
+//    fRAW->Close();
 }
+
 
 void a2mcReco::InitReco() {
     // Initialize geometry
