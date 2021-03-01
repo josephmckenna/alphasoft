@@ -21,6 +21,7 @@ cache:
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
     - bin/
+    - ~/variables
 
 #Global before script (cc7)
 before_script:
@@ -139,7 +140,7 @@ build-cc7-cmake-full:
     when: on_success
     paths:
       - public
-      - variables
+      - ~/variables
     when: on_failure
     paths:
       - BuildLog.txt
