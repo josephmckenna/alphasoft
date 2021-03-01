@@ -65,6 +65,7 @@
         "cerrno": "cpp",
         "cfloat": "cpp",
         "climits": "cpp",
-        "testMacro.C": "cpp"
+        "testMacro.C": "cpp",
+        "lukas.C": "cpp"
     }
 }

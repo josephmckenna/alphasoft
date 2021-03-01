@@ -71,6 +71,22 @@ class TimeWindow
    {
       std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << "\ttzero"<< tzero<< std::endl;
    }
+   TimeWindow(const TimeWindow& m_TimeWindow) :
+      runNumber (m_TimeWindow.runNumber),
+      tmin ( m_TimeWindow.tmin),
+      tmax (m_TimeWindow.tmax),
+      tzero (m_TimeWindow.tzero)
+   {
+   }
+   TimeWindow operator=(const TimeWindow m_TimeWindow)
+   {
+      this->runNumber = m_TimeWindow.runNumber;
+      this->tmin = m_TimeWindow.tmin;
+      this->tmax = m_TimeWindow.tmax;
+      this->tzero = m_TimeWindow.tzero;
+
+      return *this;
+   }
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
@@ -93,6 +109,26 @@ class feENVdataPlot
          return new TGraph(data.size(),t.data(),data.data());
       else
          return new TGraph(data.size(),RunTime.data(),data.data());
+   }
+   feENVdataPlot(const feENVdataPlot& m_feENVdataPlot) :
+      t (m_feENVdataPlot.t),
+      RunTime (m_feENVdataPlot.RunTime),
+      data (m_feENVdataPlot.data)
+   {
+   }
+   feENVdataPlot operator=(const feENVdataPlot m_feENVdataPlot)
+   {
+      this->t = m_feENVdataPlot.t;
+      this->RunTime = m_feENVdataPlot.RunTime;
+      this->data = m_feENVdataPlot.data;
+
+      return *this;
+   }
+   feENVdataPlot()
+   {
+   }
+   ~feENVdataPlot()
+   {
    }
 };
 
@@ -141,7 +177,29 @@ class feENVdata {
       graph->SetNameTitle(GetName().c_str(),std::string( GetTitle() + "; t [s];").c_str());
       return graph;
    }
+   feENVdata()
+   {
+      array_number = -1;
+   }
+   ~feENVdata()
+   {
+   }
+   feENVdata(const feENVdata& m_feENVdata) :
+      name ( m_feENVdata.name),
+      title ( m_feENVdata.title),
+      array_number ( m_feENVdata.array_number),
+      plots ( m_feENVdata.plots)
+   {
+   }
+   feENVdata operator=(const feENVdata m_feENVdata)
+   {
+      this->name = m_feENVdata.name;
+      this->title = m_feENVdata.title;
+      this->array_number = m_feENVdata.array_number;
+      this->plots = m_feENVdata.plots;
       
+      return *this;
+   }
 };
 
 //Specialise the above for feGEM
@@ -203,7 +261,8 @@ class feLVdata: public feENVdata
 class TAPlot: public TObject
 {
 
-private:
+//Warning LMG changed to protected from public
+protected:
    //Used to give the TCanvas a title
    std::string title;
    
@@ -219,7 +278,7 @@ private:
    double LastTmax;
    double BiggestTzero;
    double MaxDumpLength;
-   std::vector<TimeWindow> TimeWindows;
+   std::vector<TimeWindow> TimeWindows; //check dupes - fatal error
    double fTotalTime;
    int fTotalVert;
 
@@ -240,7 +299,7 @@ private:
    std::vector<double> DumpStops;
 
    std::vector<VertexEvent> VertexEvents;
-   std::vector<int> Runs;
+   std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
    std::vector<feGEMdata> feGEM;
    std::vector<feLVdata> feLV;
@@ -433,6 +492,7 @@ public:
          std::chrono::duration_cast<std::chrono::seconds>( DataLoadedTime - ObjectConstructionTime );
       return d.count();
    }
+   
    void LoadingDataLoadingDone()
    {
       DataLoadedTime = std::chrono::high_resolution_clock::now();
@@ -495,7 +555,7 @@ public:
    void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax);
    void AddTimeGate(const int runNumber, const double tmin, const double tmax, const double tzero);
    void AddTimeGate(const int runNumber, const double tmin, const double tmax);
-   virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) =0;
+   virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) {assert(!"Child class must have this");};
    //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
    //If spills are from one run, it is faster to call the function above
    //?virtual void AddDumpGates(std::vector<TA2Spill*> spills ) =0;
@@ -665,6 +725,127 @@ public:
 
    ClassDef(TAPlot, 1);
 
+   TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis),
+      title                         ( m_TAPlot.title ),
+      MVAMode                       ( m_TAPlot.MVAMode ),
+      Nbin                          ( m_TAPlot.Nbin ), 
+      DrawStyle                     ( m_TAPlot.DrawStyle ),
+      gLegendDetail                 ( m_TAPlot.gLegendDetail ), 
+      fApplyCuts                    ( m_TAPlot.fApplyCuts ),
+      fClassifierCut                ( m_TAPlot.fClassifierCut ),
+      FirstTmin                     ( m_TAPlot.FirstTmin ),
+      LastTmax                      ( m_TAPlot.LastTmax ),
+      BiggestTzero                  ( m_TAPlot.BiggestTzero ),
+      MaxDumpLength                 ( m_TAPlot.MaxDumpLength ),
+      TimeWindows                   ( m_TAPlot.TimeWindows ), 
+      fTotalTime                    ( m_TAPlot.fTotalTime ),
+      fTotalVert                    ( m_TAPlot.fTotalVert ),
+      fVerbose                      ( m_TAPlot.fVerbose ),
+      tFactor                       ( m_TAPlot.tFactor ),
+      HISTOS                        ( m_TAPlot.HISTOS ),
+      HISTO_POSITION                ( m_TAPlot.HISTO_POSITION ),
+      Ejections                     ( m_TAPlot.Ejections ),
+      Injections                    ( m_TAPlot.Injections ),
+      DumpStarts                    ( m_TAPlot.DumpStarts ),
+      DumpStops                     ( m_TAPlot.DumpStops ),
+      VertexEvents                  ( m_TAPlot.VertexEvents ),
+      Runs                          ( m_TAPlot.Runs ), 
+      feGEM                         ( m_TAPlot.feGEM ),
+      feLV                          ( m_TAPlot.feLV ),
+      ObjectConstructionTime        ( m_TAPlot.ObjectConstructionTime ),
+      DataLoadedTime                ( m_TAPlot.DataLoadedTime )
+   {
+   }
+   
+   TAPlot& operator=(const TAPlot& m_TAPlot)
+   {
+      this->title = m_TAPlot.title ;
+      this->MVAMode = m_TAPlot.MVAMode ;
+      this->Nbin = m_TAPlot.Nbin ; 
+      this->DrawStyle = m_TAPlot.DrawStyle ;
+      this->gLegendDetail = m_TAPlot.gLegendDetail ; 
+      this->fApplyCuts = m_TAPlot.fApplyCuts ;
+      this->fClassifierCut = m_TAPlot.fClassifierCut ;
+      this->FirstTmin = m_TAPlot.FirstTmin ;
+      this->LastTmax = m_TAPlot.LastTmax ;
+      this->BiggestTzero = m_TAPlot.BiggestTzero ;
+      this->MaxDumpLength = m_TAPlot.MaxDumpLength ;
+      this->TimeWindows = m_TAPlot.TimeWindows ; 
+      this->fTotalTime = m_TAPlot.fTotalTime ;
+      this->fTotalVert = m_TAPlot.fTotalVert ;
+      this->fVerbose = m_TAPlot.fVerbose ;
+      this->tFactor = m_TAPlot.tFactor ;
+      this->HISTOS = m_TAPlot.HISTOS ;
+      this->HISTO_POSITION = m_TAPlot.HISTO_POSITION ;
+      this->Ejections = m_TAPlot.Ejections ;
+      this->Injections = m_TAPlot.Injections ;
+      this->DumpStarts = m_TAPlot.DumpStarts ;
+      this->DumpStops = m_TAPlot.DumpStops ;
+      this->VertexEvents = m_TAPlot.VertexEvents ;
+      this->Runs = m_TAPlot.Runs ; 
+      this->feGEM = m_TAPlot.feGEM ;
+      this->feLV = m_TAPlot.feLV ;
+      this->ObjectConstructionTime = m_TAPlot.ObjectConstructionTime ;
+      this->DataLoadedTime = m_TAPlot.DataLoadedTime ;
+
+      return *this;
+   }
+
+   TAPlot& operator+(const TAPlot& plotA)
+   {
+      TAPlot* outputplot = new TAPlot(*this); //Create new from copy
+      //outputplot = this; //?? Maybe we want to copy this way
+
+      //Vectors- need concating
+      outputplot->Ejections.insert(outputplot->Ejections.end(), plotA.Ejections.begin(), plotA.Ejections.end() );
+      outputplot->Injections.insert(outputplot->Injections.end(), plotA.Injections.begin(), plotA.Injections.end() );
+      outputplot->DumpStarts.insert(outputplot->DumpStarts.end(), plotA.DumpStarts.begin(), plotA.DumpStarts.end() );
+      outputplot->DumpStops.insert(outputplot->DumpStops.end(), plotA.DumpStops.begin(), plotA.DumpStops.end() );
+      outputplot->TimeWindows.insert(outputplot->TimeWindows.end(), plotA.TimeWindows.begin(), plotA.TimeWindows.end() );
+      outputplot->VertexEvents.insert(outputplot->VertexEvents.end(), plotA.VertexEvents.begin(), plotA.VertexEvents.end() );
+      outputplot->Runs.insert(outputplot->Runs.end(), plotA.Runs.begin(), plotA.Runs.end() );//check dupes - ignore copies. AddRunNumber
+      outputplot->feGEM.insert(outputplot->feGEM.end(), plotA.feGEM.begin(), plotA.feGEM.end() );
+      outputplot->feLV.insert(outputplot->feLV.end(), plotA.feLV.begin(), plotA.feLV.end() );
+
+      //Strings
+      outputplot->title+= ", ";
+      outputplot->title+=plotA.title;
+
+      //Unsure - Just keep as is, no need to be overwritten.
+      //outputplot->MVAMode                = plotA.MVAMode;
+      //outputplot->Nbin                   = plotA.Nbin;
+      //outputplot->DrawStyle              = plotA.DrawStyle;
+      //outputplot->gLegendDetail          = plotA.gLegendDetail;
+      //outputplot->fApplyCuts             = plotA.fApplyCuts;
+      //Needs help - copy from A
+      //outputplot->fClassifierCut         = plotA.fClassifierCut;
+      //outputplot->fVerbose               = plotA.fVerbose;
+   
+      //All doubles
+      outputplot->FirstTmin              = (this->FirstTmin < plotA.FirstTmin)?this->FirstTmin:plotA.FirstTmin;
+      outputplot->LastTmax               = (this->LastTmax > plotA.LastTmax)?this->LastTmax:plotA.LastTmax;
+      outputplot->BiggestTzero           = (this->BiggestTzero > plotA.BiggestTzero)?this->BiggestTzero:plotA.BiggestTzero;
+      outputplot->MaxDumpLength          = (this->MaxDumpLength > plotA.MaxDumpLength)?this->MaxDumpLength:plotA.MaxDumpLength;
+      outputplot->fTotalTime             = (this->fTotalTime > plotA.fTotalTime)?this->fTotalTime:plotA.fTotalTime;
+      outputplot->ObjectConstructionTime = (this->ObjectConstructionTime < plotA.ObjectConstructionTime)?this->ObjectConstructionTime:plotA.ObjectConstructionTime;
+      outputplot->DataLoadedTime         = (this->DataLoadedTime > plotA.DataLoadedTime)?this->DataLoadedTime:plotA.DataLoadedTime;
+      outputplot->tFactor                = (this->tFactor < plotA.tFactor)?this->tFactor:plotA.tFactor;
+
+
+      //Total vertices?
+      outputplot->fTotalVert             += plotA.fTotalVert;
+
+      //Need a new addition overload- no for loop to 
+      //outputplot->HISTOS                 = plotA.HISTOS + plotb.HISTOS;
+      for(int i = 0; i<= plotA.HISTOS.GetSize(); i++)
+      {
+         outputplot->HISTOS.Add(plotA.HISTOS.At(i));
+      }
+      
+      outputplot->HISTO_POSITION.insert( plotA.HISTO_POSITION.begin(), plotA.HISTO_POSITION.end() );
+
+      return *outputplot;
+   }
 };
 
 #endif
