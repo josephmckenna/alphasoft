@@ -70,6 +70,9 @@
 #ifdef BUILD_A2
 #pragma link C++ class TA2AnalysisReport+;
 #endif
+#ifdef BUILD_AG
+#pragma link C++ class TAGAnalysisReport+;
+#endif
 #endif
 
 /* emacs
