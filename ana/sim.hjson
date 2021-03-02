@@ -1,9 +1,9 @@
 {
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
-        ADCthr: 14
+        ADCthr:  14
         PWBthr: 100
-        AWthr: 4
-        PADthr: 2
+        AWthr:    4
+        PADthr:   2
     }
     LEModule: {               // Leading Edge parameters (wrong here)
         ADCrms  : 1000
