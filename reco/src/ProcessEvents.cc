@@ -62,7 +62,6 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
          u.BookG4Histos();
          u.BookAGG4Histos();
       }
-   else
       u.BookRecoHistos();
 
    TObjString sett = a->GetSettingsString();
@@ -196,12 +195,14 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::
    else return;
    std::cout<<"[proc]# "<<EventNo<<"\tspacepoints: "<<r.GetNumberOfPoints()<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   u.FillRecoPointsHistos( r.GetPoints() );
 
    // find tracks
    //r.SetTrace(true);
    int ntracks = r.FindTracks(kFinder);
    std::cout<<"[proc]# "<<EventNo<<"\tpattrec: "<<ntracks<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   u.FillRecoTracksHisto( r.GetTracks() );
 
    if(kFinder == neural) 
       u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
@@ -219,7 +220,13 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::
    std::cout<<"[proc]# "<<EventNo<<"\thelix: "<<nhel<<std::endl;
    u.HelixPlots( r.GetHelices() );
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   //r.SetTrace( false );
+
+   std::vector<TTrack*>* tracks_array=0;
+   if( nhel > 0 ) 
+      tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
+   else if( nlin > 0 ) 
+      tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());      
+   if( tracks_array ) u.FillFitTracksHisto(tracks_array);
 }
 
 void ProcessEvents::ProcessVertex(TVector3* mcvtx)
@@ -240,6 +247,7 @@ void ProcessEvents::ProcessVertex(TVector3* mcvtx)
    double res = ALPHAg::kUnknown;
    if( sv > 0 ) 
       { 
+         u.FillRecoVertex(&Vertex);
          res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
          u.VertexPlots(&Vertex);
       }
