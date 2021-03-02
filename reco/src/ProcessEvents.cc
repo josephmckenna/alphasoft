@@ -99,7 +99,9 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    if(kVerb>=2) m.SetTrace(true);
    std::vector<ALPHAg::signal>* CombinedPads = m.CombinePads( d.GetPadSignal() );
    m.SetTrace(false);
-   uint npads = CombinedPads->size();
+   uint npads = 0;
+   if(CombinedPads)
+      npads = CombinedPads->size();
    std::cout<<"[proc]# "<<EventNo<<"\tCombinePads: "<<npads<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                
