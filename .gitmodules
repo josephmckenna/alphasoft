@@ -4,6 +4,9 @@
 [submodule "agana"]
 	path = agana
 	url = https://bitbucket.org/expalpha/agana.git
-[submodule "feGEM"]
-	path = feGEM
-	url = https://github.com/josephmckenna/feGEM.git
+[submodule "simulation/CADMesh"]
+	path = simulation/CADMesh
+	url = https://github.com/a-capra/CADMesh.git
+[submodule "simulation/cry"]
+	path = simulation/cry
+	url = https://bitbucket.org/a-capra/cry.git
