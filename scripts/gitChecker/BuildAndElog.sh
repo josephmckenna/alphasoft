@@ -23,7 +23,7 @@ cd build
 cmake3 -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DBUILD_A2=ON -DBUILD_AG=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin ../
 cmake3 --build .  2>&1 | tee ../BuildLog.txt
 cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
-
+cd ..
 
 #Move git logs to alphadaq
 
@@ -66,5 +66,5 @@ if [[ $(hostname -s) = *runner* ]]; then
    echo "Tail of elog:"
    tail -n 100 elog_posting.log
    ELOG_NO=`cat elog_posting.log  | grep ID= | tr 'Message successfully transmitted, ID=' "\n"| grep [0-9] | tail -n 1`
-   echo "export ELOG_NO=$ELOG_NO" > ~/variables
+   echo "export ELOG_NO=$ELOG_NO" > variables
 fi
