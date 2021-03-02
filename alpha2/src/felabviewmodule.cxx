@@ -121,7 +121,9 @@ public:
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef MANALYZER_PROFILER
       ModuleName="felabview Module";
+#endif
       if (fTrace)
          printf("felabviewFlow::ctor!\n");
    }
