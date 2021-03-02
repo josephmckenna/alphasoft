@@ -82,13 +82,13 @@ void a2mcReco::Reco(bool verbose=false) {
         TAlphaEventVertex *vertex = fAlphaEvent->GetVertex();
         if( vertex->IsGood() ) {
             isRecV = true;
-            fRecVox = vertex->X();
-            fRecVoy = vertex->Y();
-            fRecVoz = vertex->Z();
+            fRecVdx = vertex->X();
+            fRecVdy = vertex->Y();
+            fRecVdz = vertex->Z();
             fRecPhi = vertex->Phi();
             if(verbose) {
-                cout << "MC  Vertex [" << fVox << ", " << fVoy << ", " << fVoz << "]" << endl;
-                cout << "Rec Vertex [" << fRecVox << ", " << fRecVoy << ", " << fRecVoz << "]" << endl;
+                cout << "MC  Vertex [" << fVdx << ", " << fVdy << ", " << fVdz << "]" << endl;
+                cout << "Rec Vertex [" << fRecVdx << ", " << fRecVdy << ", " << fRecVdz << "]" << endl;
             }
         }
         FillHistos();
@@ -109,55 +109,62 @@ Bool_t a2mcReco::GoodEvent() {
 void a2mcReco::ShowHistos() {
     gROOT->cd();
     TCanvas *cVertex = new TCanvas("cVertex", "MC/Rec/Diff vertex distributions", 1600,1200);
-    cVertex->Divide(3,3);
-    cVertex->cd(1); hMCVox->Draw();
-    cVertex->cd(2); hMCVoy->Draw();
-    cVertex->cd(3); hMCVoz->Draw();
-    cVertex->cd(4); hRecVox->Draw();
-    cVertex->cd(5); hRecVoy->Draw();
-    cVertex->cd(6); hRecVoz->Draw();
-    cVertex->cd(7); hDiffVox->Draw();
-    cVertex->cd(8); hDiffVoy->Draw();
-    cVertex->cd(9); hDiffVoz->Draw();
+    cVertex->Divide(4,3);
+    int i=0;
+    cVertex->cd(++i); hMCVdx->Draw();
+    cVertex->cd(++i); hMCVdy->Draw();
+    cVertex->cd(++i); hMCVdz->Draw();
+    cVertex->cd(++i); hMCVdr->Draw();
+    cVertex->cd(++i); hRecVdx->Draw();
+    cVertex->cd(++i); hRecVdy->Draw();
+    cVertex->cd(++i); hRecVdz->Draw();
+    cVertex->cd(++i); hRecVdr->Draw();
+    cVertex->cd(++i); hDiffVdx->Draw();
+    cVertex->cd(++i); hDiffVdy->Draw();
+    cVertex->cd(++i); hDiffVdz->Draw();
+    cVertex->cd(++i); hDiffVdr->Draw();
 
     cVertex->Modified(); cVertex->Update();
 }
 void a2mcReco::FillHistos() {
     gROOT->cd();
-    if(!isnan(fVox)) {
-        hMCVox->Fill(fVox);
-        hMCVoy->Fill(fVoy);
-        hMCVoz->Fill(fVoz);
+    if(!isnan(fVdx)) {
+        hMCVdx->Fill(fVdx);
+        hMCVdy->Fill(fVdy);
+        hMCVdz->Fill(fVdz);
+        hMCVdr->Fill(sqrt(fVdx*fVdx+fVdy*fVdy));
     }
     if(isRecV) {
-        hRecVox->Fill(fRecVox);
-        hRecVoy->Fill(fRecVoy);
-        hRecVoz->Fill(fRecVoz);
+        hRecVdx->Fill(fRecVdx);
+        hRecVdy->Fill(fRecVdy);
+        hRecVdz->Fill(fRecVdz);
+        hRecVdr->Fill(sqrt(fRecVdx*fRecVdx+fRecVdy*fRecVdy));
     }
-    if(!isnan(fVox)&&isRecV) {
-        hDiffVox->Fill(fRecVox-fVox);
-        hDiffVoy->Fill(fRecVoy-fVoy);
-        hDiffVoz->Fill(fRecVoz-fVoz);
+    if(!isnan(fVdx)&&isRecV) {
+        hDiffVdx->Fill(fRecVdx-fVdx);
+        hDiffVdy->Fill(fRecVdy-fVdy);
+        hDiffVdz->Fill(fRecVdz-fVdz);
+        hDiffVdr->Fill(sqrt(fRecVdx*fRecVdx+fRecVdy*fRecVdy)-sqrt(fVdx*fVdx+fVdy*fVdy));
     }
 }
 
 void a2mcReco::CreateHistos() {
     gROOT->cd();
-    Int_t nBinsVo = 100;
+    Int_t nBinsVd = 100;
     Float_t xMin = -10., xMax = +10.;
     Float_t zMin = -10., zMax = +10.;
-    hMCVox   = new TH1F("hMCVox",   "MC Vox"  , nBinsVo, xMin, xMax);
-    hMCVoy   = new TH1F("hMCVoy",   "MC Voy"  , nBinsVo, xMin, xMax);
-    hMCVoz   = new TH1F("hMCVoz",   "MC Voz"  , nBinsVo, zMin, zMax);
-    hMCVor   = new TH1F("hMCVor",   "MC Vor"  , nBinsVo, xMin, xMax);
-    hRecVox  = new TH1F("hRecVox",  "Rec Vox" , nBinsVo, xMin, xMax);
-    hRecVoy  = new TH1F("hRecVoy",  "Rec Voy" , nBinsVo, xMin, xMax);
-    hRecVoz  = new TH1F("hRecVoz",  "Rec Voz" , nBinsVo, zMin, zMax);
-    hRecVor  = new TH1F("hRecVor",  "Rec Vor" , nBinsVo, xMin, xMax);
-    hDiffVox = new TH1F("hDiffVox", "Diff Vox", nBinsVo, xMin, xMax);
-    hDiffVoy = new TH1F("hDiffVoy", "Diff Voy", nBinsVo, xMin, xMax);
-    hDiffVoz = new TH1F("hDiffVoz", "Diff Voz", nBinsVo, zMin, zMax);
-    hDiffVor = new TH1F("hDiffVor", "Diff Vor", nBinsVo, xMin, xMax);
+    hMCVdx   = new TH1F("hMCVdx",   "MC Vdx"  , nBinsVd, xMin, xMax);
+    hMCVdy   = new TH1F("hMCVdy",   "MC Vdy"  , nBinsVd, xMin, xMax);
+    hMCVdz   = new TH1F("hMCVdz",   "MC Vdz"  , nBinsVd, zMin, zMax);
+    hMCVdr   = new TH1F("hMCVdr",   "MC Vdr"  , nBinsVd, xMin, xMax);
+    hRecVdx  = new TH1F("hRecVdx",  "Rec Vdx" , nBinsVd, xMin, xMax);
+    hRecVdy  = new TH1F("hRecVdy",  "Rec Vdy" , nBinsVd, xMin, xMax);
+    hRecVdz  = new TH1F("hRecVdz",  "Rec Vdz" , nBinsVd, zMin, zMax);
+    hRecVdr  = new TH1F("hRecVdr",  "Rec Vdr" , nBinsVd, xMin, xMax);
+    hDiffVdx = new TH1F("hDiffVdx", "Diff Vdx", nBinsVd, xMin, xMax);
+    hDiffVdy = new TH1F("hDiffVdy", "Diff Vdy", nBinsVd, xMin, xMax);
+    hDiffVdz = new TH1F("hDiffVdz", "Diff Vdz", nBinsVd, zMin, zMax);
+    hDiffVdr = new TH1F("hDiffVdr", "Diff Vdr", nBinsVd, xMin, xMax);
 }
 
 ///< Creating/Opening the RAW data output file 
@@ -168,7 +175,7 @@ void a2mcReco::CreateOutputFile() {
 //    fileName << "./root/a2mcRAW_" << fRunNumber << ".root";
 //    cout << "Creating a2mcRAW file " << fileName.str() << endl;
 //    TFile *fRAW = new TFile(fileName.str().c_str(),"NEW");
-//    hMCVox->Write();
+//    hMCVdx->Write();
 //    fRAW->Close();
 }
 

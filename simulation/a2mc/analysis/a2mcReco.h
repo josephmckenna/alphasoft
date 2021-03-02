@@ -28,9 +28,9 @@ public:
 
 private:    
 ///< Histos
-    TH1F *hMCVox, *hMCVoy, *hMCVoz, *hMCVor;
-    TH1F *hRecVox, *hRecVoy, *hRecVoz, *hRecVor;
-    TH1F *hDiffVox, *hDiffVoy, *hDiffVoz, *hDiffVor;
+    TH1F *hMCVdx, *hMCVdy, *hMCVdz, *hMCVdr;
+    TH1F *hRecVdx, *hRecVdy, *hRecVdz, *hRecVdr;
+    TH1F *hDiffVdx, *hDiffVdy, *hDiffVdz, *hDiffVdr;
 
 ///< Variables
     TFile          *fRAWFile;
@@ -44,9 +44,9 @@ private:
     TAlphaEvent*    fAlphaEvent=nullptr;
     TAlphaEventMap* fAlphaEventMap=nullptr;
     Bool_t          isRecV;
-    Double_t        fRecVox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
-    Double_t        fRecVoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
-    Double_t        fRecVoz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdx = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
     Double_t        fRecPhi = std::numeric_limits<double>::quiet_NaN();
 ///< Variables for the MC output
 // Fixed size dimensions of array or collections stored in the TTree if any.
