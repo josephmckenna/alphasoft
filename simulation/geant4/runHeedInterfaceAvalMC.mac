@@ -5,7 +5,6 @@
 /gasModelParameters/heed/heedinterface/addparticle gamma 0.0 10000000
 
 /gasModelParameters/heed/drift 1
-/gasModelParameters/heed/driftRKF 1
 
 /gasModelParameters/heed/signals 1
 /gasModelParameters/heed/noiseanodes 1
@@ -30,7 +29,7 @@
 ####################################
 ############# Run Setup ############
 ####################################
-/AGTPC/setRunName HeedInterface_emstd0_driftRKF
+/AGTPC/setRunName HeedInterface_emstd0_avalMC
 /random/setSeeds 18061985 10081985
 /run/initialize
 ####################################
