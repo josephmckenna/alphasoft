@@ -20,6 +20,7 @@ cache:
     - LastBuildLog.txt
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
+    - simulation/cry/data
     - bin/
     - variables
 
