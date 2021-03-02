@@ -18,29 +18,23 @@ fi
 
 . ${AGRELEASE}/variables
 
-
 cd $AGRELEASE
 export EOS_MGM_URL=root://eospublic.cern.ch
-
-if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
-  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
-else
-  echo "run${RUNNO}sub00000.mid.gz found locally"
-fi
-
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
 #BRANCH=`git branch | grep \* | cut -c 3-`
 BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/]*\/([^\ ]+).*$/\1/p' | tail -n 1 |  grep -o "[a-zA-Z0-9]*" | tr -d "\n\r" `
 
-cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-./SpeedTest.sh ${RUNNO} NOBUILD 1500
+mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
 
-cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-./SpeedTest.sh ${RUNNO} NOBUILD 1500
+cd $AGRELEASE/scripts/A2UnitTest
+./CheckProgram.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
+cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
-
+cd $AGRELEASE/scripts/A2UnitTest
+./CheckProgram.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
+cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 
@@ -51,17 +45,12 @@ if [[ $(hostname -s) = *runner* ]]; then
       exit
    fi
 
-   mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
-   cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
-   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
-   cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
-   cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
    cd ${AGRELEASE}/${GITHASH}/A2SpeedTest
-
-   callgrind_annotate SpeedTest*.out &> annotatedSpeed.txt
-   head -50 annotatedSpeed.txt &> elogMessage.txt
-   cp SpeedTest*.out  ${AGRELEASE}/callgrind.log
-   gzip SpeedTest*.out
+   if [ `ls *_SPEED_*.out | wc -l` -gt 0 ]; then
+      callgrind_annotate *_SPEED_*.out &> annotatedSpeed.txt
+      head -50 annotatedSpeed.txt &> elogMessage.txt
+      gzip *_SPEED_*.out
+   fi
 
    echo "Gitlab runner identified! Making an elog post"
 
