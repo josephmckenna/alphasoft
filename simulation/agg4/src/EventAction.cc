@@ -202,7 +202,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
   
   G4double r,t_d,phi,dphi,alpha,angle,rphi,z;
   int j=0;
-  for(size_t i=0;i<THC->entries();++i)
+  for(G4int i=0;i<THC->entries();++i)
     {
       TPCHit* aHit = (*THC)[i];
       //      aHit->PrintPolar();
@@ -541,7 +541,7 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
   TClonesArray& mchitarray = *(fRunAction->GetScintBarsMCHitsArray());
 
   // Add Scintillators Hits -- Digitization
-  for(size_t i=0;i<BHC->entries();++i)
+  for(G4int i=0;i<BHC->entries();++i)
     {
       ScintBarHit* aHit = (*BHC)[i];
       //      aHit->PrintPolar();
