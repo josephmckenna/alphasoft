@@ -2,7 +2,7 @@
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
         ADCthr: 1
         PWBthr: 1
-        AWthr: 4
+        AWthr:  4
         PADthr: 2
     }
     LEModule: {
