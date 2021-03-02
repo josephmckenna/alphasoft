@@ -18,8 +18,15 @@ fi
 
 . ${AGRELEASE}/variables
 
-cd $AGRELEASE
+
+cd $AGRELEASE/alpha2
 export EOS_MGM_URL=root://eospublic.cern.ch
+
+if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+else
+  echo "run${RUNNO}sub00000.mid.gz found locally"
+fi
 
 GITHASH=`git rev-parse --short HEAD`
 #Fails when detached:
@@ -29,19 +36,16 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
 
 #VALGRIND might be out of memory when running alphaStrips?
-cd $AGRELEASE/scripts/A2UnitTest
-./CheckProgram.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t LEAK
-#Copy alphaStrips result
-cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+./LeakCheck.sh ${RUNNO} NOBUILD 
 
 #Force alphaStrips to run again, since the above is crashing
-#cd $AGRELEASE/bin
-#./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> ${AGRELEASE}/${GITHASH}/A2LeakTest/S${RUNNO}.log
-
+cd $AGRELEASE/bin
+./alphaStrips.exe run${RUNNO}sub00000.mid.gz &> ${AGRELEASE}/${GITHASH}/A2LeakTest/S${RUNNO}.log
 #Now test alphaAnalysis
-cd $AGRELEASE/scripts/A2UnitTest
-./CheckProgram.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t LEAK
-cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
+./LeakCheck.sh ${RUNNO} NOBUILD 
+
 
 if [[ $(hostname -s) = *runner* ]]; then
 
@@ -52,12 +56,17 @@ if [[ $(hostname -s) = *runner* ]]; then
       exit
    fi
 
+   #Copy alphaStrips result
+   cd $AGRELEASE/scripts/A2UnitTest/alphaStrips
+   cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+   #cp *.nopid  ${AGRELEASE}/alphaStrips_leaktest.log
+   cd $AGRELEASE/scripts/A2UnitTest/alphaAnalysis
+   cp -v $( ls -tr | tail -n 5 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+   #cp *.nopid  ${AGRELEASE}/alphaAnalysis_leaktest.log
    cd ${AGRELEASE}/${GITHASH}/A2LeakTest
-   ls
-   if [ `ls *.nopid | wc -l` -gt 0 ]; then
-      tail -n 18 *.nopid &> annotatedLeaks.txt
-      head -50 annotatedLeaks.txt &> elogMessage.txt
-   fi
+   tail -n 18 *.nopid &> annotatedLeak.txt
+   head -50 annotatedLeak.txt &> elogMessage.txt
+
 
    echo "Gitlab runner identified! Making an elog post"
 

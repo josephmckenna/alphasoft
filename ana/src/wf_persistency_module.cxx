@@ -47,7 +47,9 @@ public:
                                                                        fFlags( flags )
    {
       fTrace=fFlags->fVerbose;
+#ifdef MANALYZER_PROFILER
       ModuleName="WFpersistencyModule";
+#endif
       if( fTrace )
          printf("WFpersistencyModule::ctor!\n");
     
@@ -100,7 +102,9 @@ public:
       // module disabled
       if( !fFlags->fEnabled )
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
       if( fTrace )
@@ -110,20 +114,26 @@ public:
 
       if (!ef || !ef->fEvent)
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif            
             return flow;
          }
       std::vector<ALPHAg::wf_ref>* awwf=SigFlow->AWwf;
       if( !awwf )
          {
+#ifdef MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
+#endif
             return flow;
          }
 #ifdef _TIME_ANALYSIS_
@@ -131,7 +141,9 @@ public:
 #endif   
          if( awwf->size() <= 0 ) 
             {
+#ifdef MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
+#endif
                return flow;
             }
       

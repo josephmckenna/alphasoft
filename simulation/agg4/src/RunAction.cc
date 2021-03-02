@@ -134,17 +134,17 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
 {
   G4int RunNumber=aRun->GetRunID();
   G4cout << "### Run " << RunNumber << " start." << G4endl;
-  const char* datadir = getenv("DATADIR");
+  const char* datadir = getenv("MCDATA");
   if (!datadir)
   {
-     std::cout<<"Please set environment variable DATADIR"<<std::endl;
+     std::cout<<"Please set environment variable MCDATA"<<std::endl;
      exit(1);
   }
   TString fileName;
   if(fTag.isNull())
     {
       fileName = TString::Format("%s/outAgTPC_%s_AWtime%1.0fns_PADtime%1.0fns_B%1.2fT_Q%1.0f.root",
-				 getenv("DATADIR"),
+				 getenv("MCDATA"),
 				 (kProto?"proto":"det"),
 				 gAnodeTime,gPadTime,
 				 gMagneticField,
@@ -154,7 +154,7 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
     {
       G4cout << "Output file tagged with _" << fTag.data() << G4endl;
       fileName = TString::Format("%s/outAgTPC_%s_AWtime%1.0fns_PADtime%1.0fns_B%1.2fT_Q%1.0f_%s.root",
-				getenv("DATADIR"),
+				getenv("MCDATA"),
 				(kProto?"proto":"det"),
 				gAnodeTime,gPadTime,
 				gMagneticField,

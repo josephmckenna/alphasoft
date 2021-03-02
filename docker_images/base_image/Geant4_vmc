@@ -22,5 +22,7 @@ RUN cmake3 -DROOT_vmc_FOUND=FALSE ../geant4_vmc
 RUN make -j4
 RUN make install
 
+ENV CMAKE_PREFIX_PATH /usr/local:${CMAKE_PREFIX_PATH}
+
 WORKDIR /
 CMD /bin/bash

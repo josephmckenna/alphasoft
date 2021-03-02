@@ -104,7 +104,9 @@ public:
 
    void Setup(TFile*);
 
+#ifdef BUILD_AG_SIM
    void AddMChits( const TClonesArray* mchits );
+#endif
 
    void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints );
    void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double zcut );

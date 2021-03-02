@@ -653,7 +653,7 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
 	      if( fabs(pos) < ALPHAg::_halflength )
 		{
 		  if (fMT)
-         manalzer_global_mtx->lock();
+		    manalzer_global_mtx->lock();
 		  // create new signal with combined pads
 		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
 		  if (fMT)

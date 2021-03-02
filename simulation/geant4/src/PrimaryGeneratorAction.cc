@@ -193,8 +193,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
       setupString.append(" ");
     }
   CRYFile.close();
-  char datadir[80];
+  char datadir[128];
+#ifdef CRYDATAPATH
+  sprintf(datadir,"%s",CRYDATAPATH);
+#else
   sprintf(datadir,"%s",getenv("CRYDATAPATH"));
+#endif
+  G4cout << "CRY data dir: "<< datadir << G4endl;
   // setup CRY generator
   CRYSetup *setup=new CRYSetup(setupString,datadir);
   fCosmicGen = new CRYGenerator(setup);

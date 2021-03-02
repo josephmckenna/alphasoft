@@ -207,8 +207,10 @@ int main(int argc, char** argv)
             proc.Finish();  
 
       }// events loop
-   
+
+   proc.End();
    std::cout<<"[main]# Finished"<<std::endl;
+
    if( draw ){
       // new TBrowser;
       app->Run();

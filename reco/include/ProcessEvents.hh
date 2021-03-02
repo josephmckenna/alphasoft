@@ -56,7 +56,7 @@ public:
 
    void Finish();
    void Finish(TClonesArray*,TClonesArray*);
-
+   void End();
 
 };
 #endif
