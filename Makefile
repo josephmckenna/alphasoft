@@ -105,8 +105,9 @@ fetchrootana:
 	git submodule update --init rootana
 
 fetchfeGEM:
-	@echo "Fetching feGEM submodule"
-	git submodule update --init feGEM
+	@echo "Fetching libGEM submodule"
+	git submodule update --init libGEM
+	$(MAKE) -C libGEM $(MFLAGS)
 
 fetchagana:
 	@echo "Fetching agana submodule"

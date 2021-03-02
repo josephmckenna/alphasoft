@@ -120,13 +120,15 @@ install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
 add_subdirectory(cmake_extras)
 
+get_submodule(libGEM)
+add_subdirectory(libGEM)
 
 if (BUILT_IN_ROOTANA)
    #Universal libraries (Include some flow and TSpill stuff)
    get_submodule(rootana)
    add_subdirectory(rootana)
 endif(BUILT_IN_ROOTANA)
-get_submodule(feGEM)
+
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
@@ -154,9 +156,11 @@ if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
+
 if (BUILD_A2_SIM)
    add_subdirectory(simulation/a2mc)
 endif(BUILD_A2_SIM)
+
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT

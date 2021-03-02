@@ -58,6 +58,7 @@ include_directories(${ROOTANA_INCLUDE_DIRS})
 # Include directories
 include_directories( 
    ../ana/include
+   ../libGEM/include
    )
 if (BUILT_IN_ROOTANA)
    include_directories(include ../rootana/include)
