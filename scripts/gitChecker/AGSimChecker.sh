@@ -18,7 +18,7 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p $AGRELEASE/simlogs
 
 start=`date +%s`
-
+export LD_LIBRARY_PATH=/usr/local:${LD_LIBRARY_PATH}
 cd ${AGRELEASE}/bin/simulation
 ls
 export MCDATA=${AGRELEASE}/simulation
