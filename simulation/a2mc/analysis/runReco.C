@@ -1,6 +1,5 @@
 ///< ##############################################
-///< Developed for the Alpha experiment [Dec. 2020]
-///< germano.bonomi@cern.ch
+///< Developed for the Alpha experiment [Mar. 2021]
 ///< ##############################################
 #include "a2mcReco.C"
 a2mcReco* gReco = 0;
@@ -17,8 +16,3 @@ void runReco(Int_t runNumber=0) {
     delete gReco;
 //    gROOT->ProcessLine(".q");
 }
-
-///< LEGEND
-//
-//
-//

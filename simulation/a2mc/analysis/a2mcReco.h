@@ -15,11 +15,12 @@ public:
     a2mcReco(Int_t runNumber=0);
     virtual ~a2mcReco();
     virtual void            Init(Int_t runNumber=0);
+    virtual void            InitTree(TTree *tree);
+    virtual Long64_t        LoadTree(Long64_t entry);
+    virtual Int_t           GetEntry(Long64_t entry);
     virtual void            InitReco();
     virtual Bool_t          GoodEvent();
-    virtual Int_t           GetEntry(Long64_t entry);
-    virtual Long64_t        LoadTree(Long64_t entry);
-    virtual void            InitTree(TTree *tree);
+    virtual Bool_t          FillAlphaEvent();
     virtual void            Reco(bool);
     virtual void            CreateHistos();
     virtual void            FillHistos();
@@ -169,6 +170,7 @@ Long64_t a2mcReco::LoadTree(Long64_t entry)
     if (fChain->GetTreeNumber() != fCurrent) {
         fCurrent = fChain->GetTreeNumber();
     }
+    fChain->GetEntry(entry);
     return centry;
 }
 
