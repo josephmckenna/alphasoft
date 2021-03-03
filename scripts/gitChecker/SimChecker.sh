@@ -18,17 +18,19 @@ BRANCH=`git branch --remote --verbose --no-abbrev --contains | sed -rne 's/^[^\/
 mkdir -p $AGRELEASE/simlogs
 
 start=`date +%s`
-
-cd ${AGRELEASE}/simulation
+export LD_LIBRARY_PATH=/usr/local:${LD_LIBRARY_PATH}
+cd ${AGRELEASE}/bin/simulation
+ls
 export MCDATA=${AGRELEASE}/simulation
+
 rm -f *.root
-./AGTPC runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
+./rTPCsim runHeedInterface.mac --GarSeed 55 &>$AGRELEASE/simlogs/simulation_${GITHASH}.log
 #cp $AGRELEASE/simlogs/simulation_${GITHASH}.log ~/${GITHASH}/
 
-cd ../reco
-ROOT_FILE=`ls ../simulation/*.root`
+
+ROOT_FILE=`ls -tr ${MCDATA}/*.root | tail -n 1`
 echo "root file: ${ROOT_FILE}"
-./g4ana.exe --rootfile ${ROOT_FILE} &>$AGRELEASE/simlogs/analysis_of_sim_${GITHASH}.log
+g4ana.exe --rootfile ${ROOT_FILE} &>$AGRELEASE/simlogs/analysis_of_sim_${GITHASH}.log
 #cp $AGRELEASE/simlogs/analysis_${GITHASH}.log ~/${GITHASH}/
 end=`date +%s`
 
