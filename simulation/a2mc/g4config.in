@@ -1,0 +1,63 @@
+# $Id: g4config.in 482 2010-02-09 15:07:33Z ivana $
+
+#------------------------------------------------
+# The Virtual Monte Carlo examples
+# Copyright (C) 2007, 2008 Ivana Hrivnacova
+# All rights reserved.
+#
+# For the licensing terms see geant4_vmc/LICENSE.
+# Contact: vmc@pcroot.cern.ch
+#-------------------------------------------------
+
+#
+# (called from Root macro Config.C)
+
+/control/cout/ignoreThreadsExcept 0
+
+######### RANDOM GENERATOR ##############
+/mcControl/useRootRandom true
+#/mcRandom/resetEngineFrom currentEvent.rndm
+#/mcRandom/resetEngineFrom currentRun.rndm
+#/mcRandom/saveThisRun
+
+
+######### VERBOSE OPTIONS ##############
+/mcVerbose/all 0
+/mcVerbose/geometryManager 1
+/mcVerbose/opGeometryManager 1
+
+
+# More info from the physics list
+# the verbosity level is passed to all contained physics lists and their
+# physics builders
+#/mcVerbose/composedPhysicsList 2
+# More info from optical processes
+#/mcVerbose/opticalPhysicsList 3
+#More info from geometry building
+
+
+######### TRACKING OPTIONS ##############
+#Uncomment this line to get a detail info from each step of the tracking
+######/tracking/verbose 1
+#Suppress verbose info from tracks which reached maximum number of steps
+#(default value is 30000)  
+/mcTracking/loopVerbose 1
+#/mcTracking/loopVerbose 0
+
+
+######## RANGE CUTS (GEANT4 CUTS) ##########
+/mcPhysics/rangeCuts 1.e-3 mm
+#/mcPhysics/rangeCutForGamma 1. mm
+#/mcPhysics/rangeCutForElectron 1. mm
+#/mcPhysics/rangeCutForPositron 1. mm
+#/mcPhysics/selectOpProcess Scintillation
+#/mcPhysics/setOpProcessActivation false
+#/mcDet/setMaxStepInLowDensityMaterials 1 cm
+
+
+############ VMC CUTS INFO #################
+#More info about regions construction 
+#and conversion of VMC cuts in cuts in range per regions 
+#/mcVerbose/regionsManager 2
+/mcRegions/print true
+
