@@ -56,15 +56,17 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories( 
-   ../ana/include
-   )
+
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
+   include_directories(include ${CMAKE_SOURCE_DIR}/rootana/include)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
-include_directories(include ${ROOT_INCLUDE_DIRS})
+include_directories(
+   include 
+   ${ROOT_INCLUDE_DIRS} 
+   ${CMAKE_SOURCE_DIR}/libGEM/include
+)
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
 ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
@@ -76,6 +78,8 @@ add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
 target_include_directories( rootUtils
    PUBLIC
       include 
+      ${CMAKE_SOURCE_DIR}/ana/include
+      ${CMAKE_SOURCE_DIR}/libGEM/include
    )
 if (BUILD_AG)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)

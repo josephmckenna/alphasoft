@@ -10,10 +10,10 @@ SRCDIR=src
 #CXX=$(shell root-config --cxx)
 ROO=rootcint
 
-INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../feGEM -I../ana/include -I../aged -I../a2lib/include -I$(INCDIR) -I.
+INCS+=-I../recolib/include -I../analib/include -I$(ROOTANASYS)/include -I../libGEM/include -I../ana/include -I../aged -I../a2lib/include -I$(INCDIR) -I.
 
 LDFLAGS=$(shell root-config --ldflags) -fPIC
-LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum 
+LDLIBS=$(shell root-config --glibs) -lMinuit -lMathMore -lGeom -lGL -lSpectrum -lGEM -L../libGEM
 
 INC= $(wildcard $(INCDIR)/*.h)
 INC+=$(wildcard $(INCDIR)/*.hh)
