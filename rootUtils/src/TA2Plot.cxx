@@ -694,18 +694,34 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   return cVTX;
 }
 
+/*void PrintFull()
+{
+   TAPlot::PrintFull();
+
+   std::cout << "Printing SISEvents at " << &SISEvents << std::endl;
+   std::cout << "SISEvents.size() = " << SISEvents.size() << std::endl;
+   std::cout << "First time window info:" << std::endl;
+   std::cout << "TimeWindows[0].runNumber = " << SISEvents.at(0).runNumber << std::endl;
+   std::cout << "TimeWindows[0].t = " << SISEvents.at(0).t << std::endl;
+   std::cout << "TimeWindows[0].OfficialTime = " << SISEvents.at(0).OfficialTime << std::endl;
+   std::cout << "TimeWindows[0].Counts = " << SISEvents.at(0).Counts << std::endl;
+
+}*/
+
 TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& plotB)
    {
-      TA2Plot outputplot(plotA);
+      TA2Plot* outputplot = new TA2Plot(plotA);
 
       //TA2Plot members - note: above is seperated correctly. 
-      std::cout << outputplot.SISEvents.size() << std::endl;
-      outputplot.SISEvents.insert(outputplot.SISEvents.end(), plotB.SISEvents.begin(), plotB.SISEvents.end() );
-      std::cout << outputplot.SISEvents.size() << std::endl;
+      //std::cout << outputplot->SISEvents.size() << std::endl;
+      //std::cout << plotB.SISEvents.size() << std::endl;
+      outputplot->SISEvents.insert(outputplot->SISEvents.end(), plotB.SISEvents.begin(), plotB.SISEvents.end() );
+      //std::cout << outputplot->SISEvents.size() << std::endl;
 
-      std::cout << outputplot.SISChannels.size() << std::endl;
-      outputplot.SISChannels.insert(outputplot.SISChannels.end(), plotB.SISChannels.begin(), plotB.SISChannels.end() );
-      std::cout << outputplot.SISChannels.size() << std::endl;
+      //std::cout << outputplot->SISChannels.size() << std::endl;
+      //std::cout << plotB.SISChannels.size() << std::endl;
+      outputplot->SISChannels.insert(outputplot->SISChannels.end(), plotB.SISChannels.begin(), plotB.SISChannels.end() );
+      //std::cout << outputplot->SISChannels.size() << std::endl;
 
       //Need help, just ints. All to become maps
       /*outputplot.trig           = plotA.trig;
@@ -727,7 +743,7 @@ TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& plotB)
       outputplot.ZMaxCut        = plotA.ZMaxCut;*/
 
 
-      return outputplot;
+      return *outputplot;
    };
 
 
@@ -755,23 +771,23 @@ TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
    return *this;
 }
 
-TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot),
-   SISChannels     (m_TA2Plot.SISChannels),
-   trig            (m_TA2Plot.trig),
-   trig_nobusy     (m_TA2Plot.trig_nobusy),
-   atom_or         (m_TA2Plot.atom_or),
-   CATStart        (m_TA2Plot.CATStart),
-   CATStop         (m_TA2Plot.CATStop),
-   RCTStart        (m_TA2Plot.RCTStart),
-   RCTStop         (m_TA2Plot.RCTStop),
-   ATMStart        (m_TA2Plot.ATMStart),
-   ATMStop         (m_TA2Plot.ATMStop),
-   Beam_Injection  (m_TA2Plot.Beam_Injection),
-   Beam_Ejection   (m_TA2Plot.Beam_Ejection),
-   ZMinCut         (m_TA2Plot.ZMinCut),
-   ZMaxCut         (m_TA2Plot.ZMaxCut),
-   SISEvents       (m_TA2Plot.SISEvents)
+TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
 {
+   SISChannels    = m_TA2Plot.SISChannels;
+   trig           = m_TA2Plot.trig;
+   trig_nobusy    = m_TA2Plot.trig_nobusy;
+   atom_or        = m_TA2Plot.atom_or;
+   CATStart       = m_TA2Plot.CATStart;
+   CATStop        = m_TA2Plot.CATStop;
+   RCTStart       = m_TA2Plot.RCTStart;
+   RCTStop        = m_TA2Plot.RCTStop;
+   ATMStart       = m_TA2Plot.ATMStart;
+   ATMStop        = m_TA2Plot.ATMStop;
+   Beam_Injection = m_TA2Plot.Beam_Injection;
+   Beam_Ejection  = m_TA2Plot.Beam_Ejection;
+   ZMinCut        = m_TA2Plot.ZMinCut;
+   ZMaxCut        = m_TA2Plot.ZMaxCut;
+   SISEvents      = m_TA2Plot.SISEvents;
 }
 
 TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& plotB)

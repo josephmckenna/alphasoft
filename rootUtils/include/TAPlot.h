@@ -26,20 +26,60 @@
 //Basic internal containers:
 
 //SVD / TPC vertex
-struct VertexEvent
+class VertexEvent
 {
-   int runNumber; // I don't get set yet...
-   int EventNo;
-   int CutsResult;
-   int VertexStatus;
-   double x;
-   double y;
-   double z;
-   double t; //Plot time (based off offical time)
-   double EventTime; //TPC time stamp
-   double RunTime; //Official Time
-   int nHelices; // helices used for vertexing
-   int nTracks; // reconstructed (good) helices
+   public:
+      int runNumber; // I don't get set yet...
+      int EventNo;
+      int CutsResult;
+      int VertexStatus;
+      double x;
+      double y;
+      double z;
+      double t; //Plot time (based off offical time)
+      double EventTime; //TPC time stamp
+      double RunTime; //Official Time
+      int nHelices; // helices used for vertexing
+      int nTracks; // reconstructed (good) helices
+
+      //LMG - Copy and assign operators
+      VertexEvent()
+      {
+      }
+      ~VertexEvent()
+      {
+      }
+      VertexEvent(const VertexEvent& m_VertexEvent)
+      {
+         runNumber        = m_VertexEvent.runNumber;
+         EventNo          = m_VertexEvent.EventNo;
+         CutsResult       = m_VertexEvent.CutsResult;
+         VertexStatus     = m_VertexEvent.VertexStatus;
+         x                = m_VertexEvent.x;
+         y                = m_VertexEvent.y;
+         z                = m_VertexEvent.z;
+         t                = m_VertexEvent.t;
+         EventTime        = m_VertexEvent.EventTime;
+         RunTime          = m_VertexEvent.RunTime;
+         nHelices         = m_VertexEvent.nHelices;
+         nTracks          = m_VertexEvent.nTracks;
+      }
+      VertexEvent operator=(const VertexEvent m_VertexEvent)
+      {
+         this->runNumber        = m_VertexEvent.runNumber;
+         this->EventNo          = m_VertexEvent.EventNo;
+         this->CutsResult       = m_VertexEvent.CutsResult;
+         this->VertexStatus     = m_VertexEvent.VertexStatus;
+         this->x                = m_VertexEvent.x;
+         this->y                = m_VertexEvent.y;
+         this->z                = m_VertexEvent.z;
+         this->t                = m_VertexEvent.t;
+         this->EventTime        = m_VertexEvent.EventTime;
+         this->RunTime          = m_VertexEvent.RunTime;
+         this->nHelices         = m_VertexEvent.nHelices;
+         this->nTracks          = m_VertexEvent.nTracks;
+         return *this;
+      }
 };
 
 //Any time window
@@ -71,12 +111,12 @@ class TimeWindow
    {
       std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << "\ttzero"<< tzero<< std::endl;
    }
-   TimeWindow(const TimeWindow& m_TimeWindow) :
-      runNumber (m_TimeWindow.runNumber),
-      tmin ( m_TimeWindow.tmin),
-      tmax (m_TimeWindow.tmax),
-      tzero (m_TimeWindow.tzero)
+   TimeWindow(const TimeWindow& m_TimeWindow)
    {
+      runNumber = m_TimeWindow.runNumber;
+      tmin = m_TimeWindow.tmin;
+      tmax = m_TimeWindow.tmax;
+      tzero = m_TimeWindow.tzero;
    }
    TimeWindow operator=(const TimeWindow m_TimeWindow)
    {
@@ -110,11 +150,11 @@ class feENVdataPlot
       else
          return new TGraph(data.size(),RunTime.data(),data.data());
    }
-   feENVdataPlot(const feENVdataPlot& m_feENVdataPlot) :
-      t (m_feENVdataPlot.t),
-      RunTime (m_feENVdataPlot.RunTime),
-      data (m_feENVdataPlot.data)
+   feENVdataPlot(const feENVdataPlot& m_feENVdataPlot)
    {
+      t = m_feENVdataPlot.t;
+      RunTime = m_feENVdataPlot.RunTime;
+      data = m_feENVdataPlot.data;
    }
    feENVdataPlot operator=(const feENVdataPlot m_feENVdataPlot)
    {
@@ -184,12 +224,12 @@ class feENVdata {
    ~feENVdata()
    {
    }
-   feENVdata(const feENVdata& m_feENVdata) :
-      name ( m_feENVdata.name),
-      title ( m_feENVdata.title),
-      array_number ( m_feENVdata.array_number),
-      plots ( m_feENVdata.plots)
+   feENVdata(const feENVdata& m_feENVdata)
    {
+      name = m_feENVdata.name;
+      title = m_feENVdata.title;
+      array_number = m_feENVdata.array_number;
+      plots = m_feENVdata.plots;
    }
    feENVdata operator=(const feENVdata m_feENVdata)
    {
@@ -721,40 +761,133 @@ public:
   
    //virtual void ExportCSV(TString filename, Bool_t PassedCutOnly=kFALSE);
 
+   virtual void PrintFull()
+   {
+      std::cout << "Printing TAPlot located at " << this << std::endl;
+      std::cout << "Title is " << title << std::endl;
+
+      std::cout << "MVAMode = " << MVAMode << std::endl;
+      std::cout << "Nbin = " << Nbin << std::endl;
+      std::cout << "DrawStyle = " << DrawStyle << std::endl;
+
+      std::cout << "gLegendDetail = " << gLegendDetail << std::endl;
+      std::cout << "fApplyCuts = " << fApplyCuts << std::endl;
+      std::cout << "fClassifierCut = " << fClassifierCut << std::endl;
+
+      std::cout << "FirstTmin = " << FirstTmin << std::endl;
+      std::cout << "LastTmax = " << LastTmax << std::endl;
+      std::cout << "BiggestTzero = " << BiggestTzero << std::endl;
+      std::cout << "MaxDumpLength = " << MaxDumpLength << std::endl;
+
+
+      std::cout << "Printing TimeWindows at " << &TimeWindows << std::endl;
+      std::cout << "TimeWindows.size() = " << TimeWindows.size() << std::endl;
+      std::cout << "First time window info:" << std::endl;
+      std::cout << "TimeWindows[0].runNumber = " << TimeWindows.at(0).runNumber << std::endl;
+      std::cout << "TimeWindows[0].tmax = " << TimeWindows.at(0).tmax << std::endl;
+      std::cout << "TimeWindows[0].tmin = " << TimeWindows.at(0).tmin << std::endl;
+      std::cout << "TimeWindows[0].tzero = " << TimeWindows.at(0).tzero << std::endl;
+
+      std::cout << "fTotalTime = " << fTotalTime << std::endl;
+      std::cout << "fTotalVert = " << fTotalVert << std::endl;
+
+
+      std::cout << "Printing HISTOS at " << &HISTOS << std::endl;
+      std::cout << "HISTOS.size() = " << HISTOS.GetSize() << std::endl;
+      std::cout << "First HISTOS info:" << std::endl;
+      std::cout << "HISTOS[0] = " << HISTOS.At(0) << std::endl;
+
+      std::cout << "Printing HISTO_POSITION at " << &HISTO_POSITION << std::endl;
+      std::cout << "HISTO_POSITION.size() = " << HISTO_POSITION.size() << std::endl;
+      std::cout << "First HISTO_POSITION info:" << std::endl;
+      std::cout << "HISTO_POSITION[0] string = " << HISTO_POSITION.begin()->first << std::endl;
+      std::cout << "HISTO_POSITION[0] int = " << HISTO_POSITION.begin()->second << std::endl;
+  
+      std::cout << "Printing Ejections at " << &Ejections << std::endl;
+      std::cout << "Ejections.size() = " << Ejections.size() << std::endl;
+      std::cout << "First Ejections info:" << std::endl;
+      std::cout << "Ejections[0] = " << Ejections.at(0) << std::endl;
+
+      std::cout << "Printing Injections at " << &Injections << std::endl;
+      std::cout << "Injections.size() = " << Injections.size() << std::endl;
+      std::cout << "First Injections info:" << std::endl;
+      std::cout << "Injections[0] = " << Injections.at(0) << std::endl;
+
+      std::cout << "Printing DumpStarts at " << &DumpStarts << std::endl;
+      std::cout << "DumpStarts.size() = " << DumpStarts.size() << std::endl;
+      std::cout << "First DumpStarts info:" << std::endl;
+      std::cout << "DumpStarts[0] = " << DumpStarts.at(0) << std::endl;
+
+      std::cout << "Printing DumpStops at " << &DumpStops << std::endl;
+      std::cout << "DumpStops.size() = " << DumpStops.size() << std::endl;
+      std::cout << "First DumpStops info:" << std::endl;
+      std::cout << "DumpStops[0] = " << DumpStops.at(0) << std::endl;
+
+      std::cout << "Printing VertexEvents at " << &VertexEvents << std::endl;
+      std::cout << "VertexEvents.size() = " << VertexEvents.size() << std::endl;
+      std::cout << "First VertexEvents info:" << std::endl;
+      std::cout << "VertexEvents[0].runNumber = " << VertexEvents.at(0).runNumber << std::endl;
+      std::cout << "VertexEvents[0].x = " << VertexEvents.at(0).x << std::endl;
+      std::cout << "VertexEvents[0].y = " << VertexEvents.at(0).y << std::endl;
+      std::cout << "VertexEvents[0].z = " << VertexEvents.at(0).z << std::endl;
+      std::cout << "VertexEvents[0].t = " << VertexEvents.at(0).t << std::endl;
+
+      std::cout << "Printing Runs at " << &Runs << std::endl;
+      std::cout << "Runs.size() = " << Runs.size() << std::endl;
+      std::cout << "First Runs info:" << std::endl;
+      std::cout << "Runs[0] = " << Runs.at(0) << std::endl;
+
+      //Leaving out for now, might add later.
+      //std::vector<feGEMdata> feGEM;
+      //std::vector<feLVdata> feLV;
+      //std::chrono::high_resolution_clock::time_point ObjectConstructionTime;
+      //std::chrono::high_resolution_clock::time_point DataLoadedTime;
+   }
+
 
 
    ClassDef(TAPlot, 1);
 
-   TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis),
-      title                         ( m_TAPlot.title ),
-      MVAMode                       ( m_TAPlot.MVAMode ),
-      Nbin                          ( m_TAPlot.Nbin ), 
-      DrawStyle                     ( m_TAPlot.DrawStyle ),
-      gLegendDetail                 ( m_TAPlot.gLegendDetail ), 
-      fApplyCuts                    ( m_TAPlot.fApplyCuts ),
-      fClassifierCut                ( m_TAPlot.fClassifierCut ),
-      FirstTmin                     ( m_TAPlot.FirstTmin ),
-      LastTmax                      ( m_TAPlot.LastTmax ),
-      BiggestTzero                  ( m_TAPlot.BiggestTzero ),
-      MaxDumpLength                 ( m_TAPlot.MaxDumpLength ),
-      TimeWindows                   ( m_TAPlot.TimeWindows ), 
-      fTotalTime                    ( m_TAPlot.fTotalTime ),
-      fTotalVert                    ( m_TAPlot.fTotalVert ),
-      fVerbose                      ( m_TAPlot.fVerbose ),
-      tFactor                       ( m_TAPlot.tFactor ),
-      HISTOS                        ( m_TAPlot.HISTOS ),
-      HISTO_POSITION                ( m_TAPlot.HISTO_POSITION ),
-      Ejections                     ( m_TAPlot.Ejections ),
-      Injections                    ( m_TAPlot.Injections ),
-      DumpStarts                    ( m_TAPlot.DumpStarts ),
-      DumpStops                     ( m_TAPlot.DumpStops ),
-      VertexEvents                  ( m_TAPlot.VertexEvents ),
-      Runs                          ( m_TAPlot.Runs ), 
-      feGEM                         ( m_TAPlot.feGEM ),
-      feLV                          ( m_TAPlot.feLV ),
-      ObjectConstructionTime        ( m_TAPlot.ObjectConstructionTime ),
-      DataLoadedTime                ( m_TAPlot.DataLoadedTime )
+   TAPlot(const TAPlot& m_TAPlot) : 
+   ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    {
+      title                         = m_TAPlot.title ;
+      MVAMode                       = m_TAPlot.MVAMode ;
+      Nbin                          = m_TAPlot.Nbin ; 
+      DrawStyle                     = m_TAPlot.DrawStyle ;
+      gLegendDetail                 = m_TAPlot.gLegendDetail ; 
+      fApplyCuts                    = m_TAPlot.fApplyCuts ;
+      fClassifierCut                = m_TAPlot.fClassifierCut ;
+      FirstTmin                     = m_TAPlot.FirstTmin ;
+      LastTmax                      = m_TAPlot.LastTmax ;
+      BiggestTzero                  = m_TAPlot.BiggestTzero ;
+      MaxDumpLength                 = m_TAPlot.MaxDumpLength ;
+      TimeWindows                   = m_TAPlot.TimeWindows ; 
+      fTotalTime                    = m_TAPlot.fTotalTime ;
+      fTotalVert                    = m_TAPlot.fTotalVert ;
+      fVerbose                      = m_TAPlot.fVerbose ;
+      tFactor                       = m_TAPlot.tFactor ;
+      /*for(int i=0;i<m_TAPlot.HISTOS.GetEntries();i++)
+      {
+         HISTOS.Add(m_TAPlot.HISTOS.At(i));
+      }*/
+      //HISTOS                        = m_TAPlot.HISTOS ;
+      //HISTO_POSITION                = m_TAPlot.HISTO_POSITION ;
+      Ejections                     = m_TAPlot.Ejections ;
+      Injections                    = m_TAPlot.Injections ;
+      DumpStarts                    = m_TAPlot.DumpStarts ;
+      DumpStops                     = m_TAPlot.DumpStops ;
+      //VertexEvents                  = m_TAPlot.VertexEvents ;
+      for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
+      {
+         VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
+         //std::cout << "x at " << i << " in copy = " << m_TAPlot.VertexEvents.at(i).x << std::endl;
+      }
+      Runs                          = m_TAPlot.Runs ; 
+      feGEM                         = m_TAPlot.feGEM ;
+      feLV                          = m_TAPlot.feLV ;
+      ObjectConstructionTime        = m_TAPlot.ObjectConstructionTime ;
+      DataLoadedTime                = m_TAPlot.DataLoadedTime ;
    }
    
    TAPlot& operator=(const TAPlot& m_TAPlot)

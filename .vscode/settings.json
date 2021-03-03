@@ -66,6 +66,7 @@
         "cfloat": "cpp",
         "climits": "cpp",
         "testMacro.C": "cpp",
-        "lukas.C": "cpp"
+        "lukas.C": "cpp",
+        "small.C": "cpp"
     }
 }
