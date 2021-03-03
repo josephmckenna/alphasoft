@@ -81,7 +81,7 @@ target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_L
 # relies on these scripts being in the current working directory.
 #
 set(SIM_SCRIPTS
-  cry.file init_vis.mac vis.mac runHeedInterface.mac runHeedOnly.mac
+  cry.file init_vis.mac vis.mac runHeedInterface.mac runHeedInterfaceAvalMC.mac runHeedOnly.mac
   )
 
 

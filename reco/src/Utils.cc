@@ -196,6 +196,23 @@ void Utils::FillRecoPointsHistos(const TObjArray* points)
       }
 }
 
+void Utils::FillRecoPointsHistos(std::vector<TSpacePoint*>* points)
+{  
+   int row,sec;
+   for(size_t p=0; p<points->size(); ++p)
+      {
+         TSpacePoint* ap = (TSpacePoint*) points->at(p);
+         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
+         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
+         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
+         pmap.get(ap->GetPad(),sec,row);
+         fHisto.FillHisto("hOccPadpoints",row,sec);
+         
+         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
+         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
+      }
+}
+
 void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
 {  
    int row,sec;
@@ -834,11 +851,13 @@ TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
    std::string htitle(";t [ns];H [a.u.]");
    TH1D* h = new TH1D(hname.str().c_str(),htitle.c_str(),411,0.,16.*411.);
    h->SetStats(kFALSE);
+   if(sig) {
    for(auto s: *sig)
       {
          if( s.t < 16. ) continue;
          h->Fill(s.t,s.height);
       }
+   }
    return h;
 }
 
