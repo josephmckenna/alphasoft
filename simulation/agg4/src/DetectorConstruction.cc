@@ -31,7 +31,6 @@
 #include "G4ExceptionSeverity.hh"
 
 #include "CADMesh.hh"
-//using namespace CADMesh;
 
 #include "G4RunManager.hh"
 #include "G4NistManager.hh"
@@ -791,3 +790,10 @@ void DetectorConstruction::UpdateGeometry()
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

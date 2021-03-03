@@ -19,6 +19,9 @@ else()
   find_package(Geant4 REQUIRED)
 endif()
 
+#----------------------------------------------------------------------------
+# Setup Geant4 include directories and compile definitions
+#
 include(${Geant4_USE_FILE})
 include_directories(${Geant4_INCLUDE_DIR})
 
