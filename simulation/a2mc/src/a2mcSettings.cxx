@@ -6,7 +6,7 @@
 #include "a2mcSettings.h"
 
 a2mcSettings::a2mcSettings() :
-    status(true),
+    status(false),
     gen_mode(0),
     inn_enviro(0),
     sil_det(0),
@@ -15,7 +15,7 @@ a2mcSettings::a2mcSettings() :
     tracks_lim(0),
     verbose(0)
 {
-    init(std::string(INI_INSTALL_PATH) + "/a2MC.ini");
+//    init(std::string(INI_INSTALL_PATH) + "/a2MC.ini");
 }
 
 a2mcSettings::~a2mcSettings()
@@ -23,9 +23,16 @@ a2mcSettings::~a2mcSettings()
 
 void a2mcSettings::init(std::string conf_filename)
 {
+    status = true;
+    ini_file = conf_filename;
     ///< This method read the configuration file and fill the corresponding flags 
     std::string line, dummy;
-    std::ifstream myfile (conf_filename.c_str());
+    std::ifstream myfile (ini_file.c_str());
+    ///< Checking if the ini_file exist, otherwise check the one distributed with the git repository
+    if(!myfile.is_open()) {
+        ini_file = "./input/a2MC.ini";
+        myfile.open(ini_file.c_str());
+    }
     if (myfile.is_open()) {
         size_t found;
         while ( getline (myfile,line) ) {
@@ -89,7 +96,7 @@ void a2mcSettings::init(std::string conf_filename)
         myfile.close();
     }  else {
         status = false;
-        std::cout << "a2mcSettings::init -> File " <<  conf_filename.c_str() << " doesn't exist - please get it from the git repository (input subdir)" << std::endl; 
+        std::cout << "a2mcSettings::init -> File " <<  ini_file.c_str() << " doesn't exist - please get it from the git repository (input subdir)" << std::endl; 
     }
 }
 

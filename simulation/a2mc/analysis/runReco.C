@@ -3,7 +3,7 @@
 ///< ##############################################
 #include "a2mcReco.C"
 a2mcReco* gReco = 0;
-bool verbose = false;
+bool verbose = true;
 //______________________________________________________________________________
 void runReco(Int_t runNumber=0) {
     ///< ======== Create the a2mcReco (it reads the MC output)
