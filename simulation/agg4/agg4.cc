@@ -29,9 +29,8 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-
-//#include "G4RunManagerFactory.hh"
 #include "G4RunManager.hh"
+#include "G4MTRunManager.hh"
 #include "G4UImanager.hh"
 
 #include "DetectorConstruction.hh"
