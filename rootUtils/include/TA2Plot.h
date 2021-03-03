@@ -77,6 +77,8 @@ public:
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
 
+   //void PrintFull();
+
    
 };
 #endif
