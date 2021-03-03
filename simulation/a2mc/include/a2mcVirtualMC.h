@@ -25,7 +25,7 @@ using namespace std;
 class a2mcVirtualMC : public TVirtualMCApplication
 {
 	public:
-		a2mcVirtualMC(const Char_t* name,  const Char_t *title, Int_t, a2mcSettings, string&, Int_t);
+		a2mcVirtualMC(const Char_t* name,  const Char_t *title, Int_t, a2mcSettings, string, Int_t);
 		a2mcVirtualMC();
 		virtual ~a2mcVirtualMC();
 

@@ -8,7 +8,7 @@
 ClassImp(a2mcVirtualMC)
 
 //_____________________________________________________________________________
-a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, a2mcSettings a2mc_conf, std::string& run_time, Int_t run_seed)
+a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, a2mcSettings a2mc_conf, std::string run_time, Int_t run_seed)
     : TVirtualMCApplication(name,title),
     runNumber(0),
     runSeed(0),

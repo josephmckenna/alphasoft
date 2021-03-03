@@ -18,9 +18,6 @@ int main(int argc, char** argv) {
     gInterpreter->SetProcessLineLock(false);
   
     Utility utils(argc, argv);
-    int nEvents     = utils.GetNEvents();
-    int runNumber   = utils.GetRun();
-    string runTime  = utils.GetRunTime();
     string iniFile  = utils.GetIniFile();
     a2mcSettings a2mcConf;
     a2mcConf.init(iniFile);
@@ -43,7 +40,7 @@ int main(int argc, char** argv) {
     gRandom->SetSeed(runSeed);
 //    gRandom->SetSeed(0);
     ///< Creating the Virtual MC object
-    a2mcVirtualMC* virtualMC = new a2mcVirtualMC("a2mcVirtualMC", "The Alpha2 MC", runNumber, a2mcConf, runTime, runSeed);
+    a2mcVirtualMC* virtualMC = new a2mcVirtualMC("a2mcVirtualMC", "The Alpha2 MC", utils.GetRun(), a2mcConf, utils.GetRunTime(), runSeed);
   
     ostringstream sgeo;
     sgeo << "geomRootToGeant4";
@@ -52,7 +49,7 @@ int main(int argc, char** argv) {
     geant4->ProcessGeantMacro("g4config.in");
   
     virtualMC->InitMC("");
-    virtualMC->RunMC(nEvents);
+    virtualMC->RunMC(utils.GetNEvents());
   
     delete virtualMC;
     return 0;
