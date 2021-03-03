@@ -56,12 +56,9 @@ find_package(ROOTANA)
 include_directories(${ROOTANA_INCLUDE_DIRS})
 
 # Include directories
-include_directories( 
-   ../ana/include
-   ../libGEM/include
-   )
+
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
+   include_directories(include ${CMAKE_SOURCE_DIR}/rootana/include)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
@@ -77,6 +74,8 @@ add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
 target_include_directories( rootUtils
    PUBLIC
       include 
+      ${CMAKE_SOURCE_DIR}/ana/include
+      ${CMAKE_SOURCE_DIR}/libGEM/include
    )
 if (BUILD_AG)
    target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
