@@ -28,7 +28,7 @@ void a2mcSettings::init(std::string conf_filename)
     ///< This method read the configuration file and fill the corresponding flags 
     std::string line, dummy;
     std::ifstream myfile (ini_file.c_str());
-    ///< Checking if the ini_file exist, otherwise check the one distributed with the git repository
+    ///< Checking if the ini_file exist, otherwise cp the one distributed with the git repository
     if(!myfile.is_open()&&ini_file=="./a2MC.ini") {
         std::system("cp ./input/a2MC.ini ./a2MC.ini"); ///< cp the input/a2MC.ini in the top dir
         myfile.open(ini_file.c_str());
