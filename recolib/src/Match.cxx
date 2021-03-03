@@ -214,6 +214,8 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
     }
   secs.clear();
   pad_bysec.clear();
+  if( fTrace )
+    std::cout<<"Match::CombPads # of teeth: "<<comb.size()<<std::endl;
   return comb;
 }
 

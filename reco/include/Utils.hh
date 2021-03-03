@@ -39,6 +39,7 @@ public:
    void BookAGG4Histos();
 
    void FillRecoPointsHistos(const TObjArray* points);
+   void FillRecoPointsHistos(std::vector<TSpacePoint*>* points);
    void FillRecoTracksHisto(std::vector<TTrack*>* found_tracks);
    void FillFitTracksHisto(std::vector<TTrack*>* tracks_array);
    void FillRecoVertex(const TFitVertex* Vertex);
