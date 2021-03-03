@@ -5,7 +5,6 @@
 #include <Riostream.h>
 #include <TGeoManager.h>
 #include <TVirtualGeoTrack.h>
-#include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
@@ -339,7 +338,7 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
 
   return 1; // successful exit code
 }
-#include "manalyzer.h"
+//#include "manalyzer.h"
 //_____________________________________________________________________
 Int_t TAlphaEventHelix::FitLineParameters()
 {
@@ -358,7 +357,8 @@ Int_t TAlphaEventHelix::FitLineParameters()
 
   // create Minimizer (default is Migrad)
   mini(40);
-  upar =mini.Parameters();
+  //upar =mini.Parameters();
+  ROOT::Minuit2::FunctionMinimum min = mini();
   /*
   
   
@@ -429,35 +429,41 @@ std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   fLambda = minifLambda;
   fChi2 = FCNafter;
 */
-  fz0     = upar.Value(0);
-  fLambda = upar.Value(1);
-  fChi2   = 0;
+  fz0     = min.UserState().Value(0);
+  fLambda = min.UserState().Value(1);
+
+  Int_t npar = 2;
+  Int_t iflag = 0;
+  Double_t FCNafter  = 0.;
+  Double_t par2[2] = {fz0,fLambda };
+  fcnHelix(npar,NULL,FCNafter,par2,iflag);
+  fChi2   = FCNafter;
   return kTRUE;
 }
 
 //_____________________________________________________________________
-void fcnHelix(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, Int_t /*iflag*/ )
+void TAlphaEventHelix::fcnHelix(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, Int_t /*iflag*/ )
 {
   // par[0] = z0
   // par[1] = Lambda
 
   //TAlphaEventHelix * helix = (TAlphaEventHelix*)gMinuit->GetObjectFit();
-  TAlphaEventHelix * helix = NULL;
+  //TAlphaEventHelix * helix = NULL;
 
   Double_t chi2 = 0;
   Double_t z0     = par[0];
   Double_t Lambda = par[1];
-  const int nhits=helix->GetNHits();
+  const int nhits=GetNHits();
   for( Int_t ihit = 0; ihit < nhits; ihit++ )
     {
-      TAlphaEventHit * hit = helix->GetHit( ihit );
+      TAlphaEventHit * hit = GetHit( ihit );
 
       Double_t x = hit->XMRS();
       Double_t y = hit->YMRS();
       Double_t z = hit->ZMRS();
 
       Int_t iflag=0;
-      Double_t s = helix->GetsFromR( TMath::Sqrt( x*x + y*y ), iflag );
+      Double_t s = GetsFromR( TMath::Sqrt( x*x + y*y ), iflag );
 
       Double_t zprime = z0 + Lambda*s;
       chi2 += (z-zprime)*(z-zprime)/hit->GetNSigma2();

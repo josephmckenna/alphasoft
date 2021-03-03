@@ -74,6 +74,7 @@ class TAlphaEventHelix: public TObject
   Int_t           DetermineLineParameters();
   void            DetermineSagitta();
   Int_t           FitLineParameters();
+  void            fcnHelix(Int_t &/*npar*/, Double_t * /*gin*/ , Double_t &f, Double_t *par, Int_t /*iflag*/ );
   void            First_to_Canonical( Bool_t Invert = kFALSE );
 
   Double_t        Geta() { return fa; }
