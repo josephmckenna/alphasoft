@@ -62,7 +62,11 @@ if (BUILT_IN_ROOTANA)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
-include_directories(include ${ROOT_INCLUDE_DIRS})
+include_directories(
+   include 
+   ${ROOT_INCLUDE_DIRS} 
+   ${CMAKE_SOURCE_DIR}/libGEM/include
+)
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
 ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
