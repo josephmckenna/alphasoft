@@ -1,6 +1,8 @@
 FROM jmckenna/alphadocker:geant4
 WORKDIR /
 
+ENV CMAKE_PREFIX_PATH /usr/local:${CMAKE_PREFIX_PATH}
+
 RUN git clone https://github.com/vmc-project/vmc.git
 RUN mkdir build_vmc
 WORKDIR build_vmc
@@ -18,11 +20,9 @@ RUN make install
 RUN git clone https://github.com/vmc-project/geant4_vmc.git
 RUN mkdir build_geant4_vmc
 WORKDIR build_geant4_vmc
-RUN cmake3 -DROOT_vmc_FOUND=FALSE ../geant4_vmc
+RUN cmake3 -DROOT_vmc_FOUND=FALSE -DGeant4VMC_USE_VGM=ON ../geant4_vmc
 RUN make -j4
 RUN make install
-
-ENV CMAKE_PREFIX_PATH /usr/local:${CMAKE_PREFIX_PATH}
 
 WORKDIR /
 CMD /bin/bash
