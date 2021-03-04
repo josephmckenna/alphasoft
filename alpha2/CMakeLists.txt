@@ -83,31 +83,13 @@ if(MIDAS_FOUND)
 endif()
 
 # Include directories
-include_directories(include)
 
-include_directories(../libGEM/include)
-
-#Analysis Report needs A2Flow in alpha2...
-#include_directories(../alpha2/include)
-include_directories(${CMAKE_SOURCE_DIR}/alpha2/include)
-#...which then needs UnpackVF48 in a2lib
-#include_directories(../a2lib/include)
-include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
-
-
-#AG compatability includes
-include_directories(${CMAKE_SOURCE_DIR}/analib/include)
-include_directories(${CMAKE_SOURCE_DIR}/ana/include)
-include_directories(${ROOT_INCLUDE_DIRS})
 
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
+   include_directories(include ${CMAKE_SOURCE_DIR}/rootana/include)
 else ()
    include_directories(include $ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
-
-#feGEM (labVIEW logging)
-include_directories($ENV{AGRELEASE}/feGEM)
 
 message(${ROOT_INCLUDE_DIRS})
 
@@ -137,13 +119,17 @@ foreach( LIST_FILE ${BINS} )
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
     # Make sure YourLib is linked to each app
-    target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC ../analib/include)
-    if (BUILD_AG)
-       target_include_directories(${bin} PUBLIC ../recolib/include)
-    endif(BUILD_AG)
-    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(../alpha2 ../analib )
+    target_include_directories(
+        ${bin} 
+        PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/analib/include
+        ${CMAKE_SOURCE_DIR}/libGEM/include
+        ${CMAKE_SOURCE_DIR}/a2lib/include
+        ${CMAKE_SOURCE_DIR}/ana/include
+        ${ROOT_INCLUDE_DIRS}
+    )
+    
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)
