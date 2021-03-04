@@ -1,6 +1,6 @@
 #include "TAnalysisReport.h"
 #include "GitInfo.h"
-ClassImp(TAnalysisReport);
+ClassImp(TAnalysisReport)
 TAnalysisReport::TAnalysisReport():
    runNumber(-1),
    GitBranch(GIT_BRANCH), 
@@ -110,6 +110,7 @@ void TAnalysisReport::PrintFooter()
     printf("Git diff (shortstat):%s\n",GetGitDiff().c_str());
     printf("===========================================================\n");
 }
+
 #ifdef BUILD_A2
 
 //We dont want these as members of the class...
@@ -121,7 +122,7 @@ static TH1D* SVD_Tracks;
 static TH1D* SVD_Verts;
 static TH1D* SVD_Pass;
 
-ClassImp(TA2AnalysisReport);
+ClassImp(TA2AnalysisReport)
 TA2AnalysisReport::TA2AnalysisReport()
 {
     //ctor
@@ -250,13 +251,13 @@ void TA2AnalysisReport::Print()
     }
     PrintFooter();
 }
+#endif
 
 
 
+#ifdef BUILD_AG
 
-
-
-ClassImp(TAGAnalysisReport);
+ClassImp(TAGAnalysisReport)
 TAGAnalysisReport::TAGAnalysisReport()
 {
     //ctor
