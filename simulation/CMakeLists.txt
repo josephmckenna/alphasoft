@@ -19,12 +19,20 @@ endif()
 
 
 #----------------------------------------------------------------------------
+set(CRY_DATA_PATH "${CMAKE_INSTALL_PREFIX}/cry/data/" CACHE INTERNAL "")
+if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
+  add_definitions(-DCRY_DATA_PATH="${CRY_DATA_PATH}")
+else()
+  add_compile_definitions(CRY_DATA_PATH="${CRY_DATA_PATH}")
+endif()
+file(GLOB CRY_DATA_FILES cry/data/*.data)
+install(FILES ${CRY_DATA_FILES} DESTINATION ${CRY_DATA_PATH})
 
 message(STATUS "Simulation ${CMAKE_CURRENT_SOURCE_DIR}")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/common)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/garfieldpp)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cry)
-set(CRY_DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cry/data/" CACHE INTERNAL "")
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/CADMesh)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/G4out)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/geant4)
