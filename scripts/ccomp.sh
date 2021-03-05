@@ -93,7 +93,8 @@ elif [[ "$1" == "build" ]]; then
 	${cmd} -DCMAKE_BUILD_TYPE=Release ..
     else
 	echo "with Simulation components"
-	${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
+	#${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
+	${cmd} -DBUILD_AG_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
     fi
 
     time ${cmd} --build . --target install -- -j`nproc --ignore=2`
