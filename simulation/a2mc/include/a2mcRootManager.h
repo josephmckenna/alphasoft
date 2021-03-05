@@ -6,6 +6,7 @@
 
 #include <TObject.h>
 #include <TTree.h>
+#include <TBranch.h>
 #include "TSystemDirectory.h"
 #include "TFile.h"
 
