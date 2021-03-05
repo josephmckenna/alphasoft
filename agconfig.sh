@@ -59,8 +59,7 @@ acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
     
-    export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
-    export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
+    # export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
     export PATH="$AGRELEASE/scripts/andrea":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
@@ -70,6 +69,7 @@ acapra()
 lxplus()
 {
   export AGMIDASDATA="/eos/experiment/ALPHAg/midasdata_old"
+  export A2MIDASDATA="/eos/experiment/alpha/midasdata"
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       if [[ -z "${ROOTSYS}" ]]; then
@@ -183,6 +183,7 @@ alphacpc04* | alphacpc09*  )
       export DATADIR=/daq/alpha_data0/acapra/alphag
       export MCDATA=${DATADIR}/MCdata
       export GPPDATA=${DATADIR}/GPPdata
+      export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
       acapra
   fi
   ;;
