@@ -1,4 +1,4 @@
-image: jmckenna/alphadocker
+image: tmidas/root6
 
 stages:
   - build
@@ -130,7 +130,7 @@ before_script:
 
 build-cc7-cmake-full:
   stage: build
-  image: jmckenna/alphadocker:garfieldpp
+  image: tmidas/garfieldpp
   script:
     - echo "Building"
     - cd scripts/gitChecker
@@ -180,7 +180,7 @@ build-cc7-cmake-ag:
 
 build-cc7-cmake-ag-sim:
   stage: build
-  image: jmckenna/alphadocker:garfieldpp
+  image: tmidas/garfieldpp
   script:
     - echo "Building"
     - mkdir -p build
@@ -226,7 +226,7 @@ build-cc7:
 
 AG_Simulation:
   stage: test
-  image: jmckenna/alphadocker:garfieldpp
+  image: tmidas/garfieldpp
   script:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
     - cd scripts/gitChecker
@@ -246,7 +246,7 @@ AG_Simulation:
 
 A2_Simulation:
   stage: test
-  image: jmckenna/alphadocker:garfieldpp
+  image: tmidas/garfieldpp
   script:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
     - cd scripts/gitChecker
