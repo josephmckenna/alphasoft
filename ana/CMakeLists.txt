@@ -60,21 +60,15 @@ message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
 
 
 
-find_package(X11 REQUIRED)
-link_libraries(${X11_LIBRARIES})
-include_directories(${X11_INCLUDE_DIR})
+#find_package(X11 REQUIRED)
+#link_libraries(${X11_LIBRARIES})
+#include_directories(${X11_INCLUDE_DIR})
 
 
 # MIDAS -- live analyzer
 set(MIDASSYS "" CACHE PATH "")
 if(MIDASSYS STREQUAL "")
     set(MIDASSYS "$ENV{MIDASSYS}")
-#    message(STATUS "Midas ${MIDASSYS}")
-#else()
-#    set(MIDAS_FOUND TRUE)
-#    message(STATUS "Midas FOUND")
-#    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
-#    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
 endif()
 find_package(Midas QUIET)
 if(MIDAS_FOUND)
