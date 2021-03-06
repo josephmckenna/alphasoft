@@ -124,6 +124,7 @@ AgedWindow::AgedWindow(int load_settings)
     mLabelText[0].font = NULL;
 #ifdef ANTI_ALIAS
     mLabelText[0].xftFont = NULL;
+    if(load_settings) printf("AgedWindow::AgedWindow Use ANTI-ALIASing\n");
 #endif
     mLabelText[0].string = NULL;
     mWarnDialog = NULL;
