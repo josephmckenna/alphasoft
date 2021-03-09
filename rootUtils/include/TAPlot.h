@@ -104,7 +104,7 @@ class TimeWindow
       tmax = _tmax;
       tzero = _tzero;
       assert(tmax>tmin);
-      assert(tzero>tmin);
+      assert(tzero>=tmin);
       assert(tzero<tmax);
    }
    void print()
@@ -301,7 +301,7 @@ class feLVdata: public feENVdata
 class TAPlot: public TObject
 {
 
-//Warning LMG changed to protected from public
+//Warning LMG changed to protected from private, now to public
 protected:
    //Used to give the TCanvas a title
    std::string title;
@@ -538,6 +538,7 @@ public:
       DataLoadedTime = std::chrono::high_resolution_clock::now();
    }
    // default class member functions
+   TAPlot(const TAPlot& m_TAPlot);
    TAPlot(bool zerotime = true);//, int MVAMode = 0);
    virtual ~TAPlot();
    void Print(Option_t *option="") const;
@@ -763,7 +764,9 @@ public:
 
    virtual void PrintFull()
    {
+      std::cout << "===========================" << std::endl;
       std::cout << "Printing TAPlot located at " << this << std::endl;
+      std::cout << "===========================" << std::endl;
       std::cout << "Title is " << title << std::endl;
 
       std::cout << "MVAMode = " << MVAMode << std::endl;
@@ -806,92 +809,73 @@ public:
       std::cout << "Printing Ejections at " << &Ejections << std::endl;
       std::cout << "Ejections.size() = " << Ejections.size() << std::endl;
       std::cout << "First Ejections info:" << std::endl;
-      std::cout << "Ejections[0] = " << Ejections.at(0) << std::endl;
+      if(Ejections.size() > 0)
+      {
+         std::cout << "Ejections[0] = " << Ejections.at(0) << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
 
       std::cout << "Printing Injections at " << &Injections << std::endl;
       std::cout << "Injections.size() = " << Injections.size() << std::endl;
       std::cout << "First Injections info:" << std::endl;
-      std::cout << "Injections[0] = " << Injections.at(0) << std::endl;
+      if(Injections.size() > 0)
+      {
+         std::cout << "Injections[0] = " << Injections.at(0) << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
 
       std::cout << "Printing DumpStarts at " << &DumpStarts << std::endl;
       std::cout << "DumpStarts.size() = " << DumpStarts.size() << std::endl;
       std::cout << "First DumpStarts info:" << std::endl;
-      std::cout << "DumpStarts[0] = " << DumpStarts.at(0) << std::endl;
+      if(DumpStarts.size() > 0)
+      {
+         std::cout << "DumpStarts[0] = " << DumpStarts.at(0) << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
 
       std::cout << "Printing DumpStops at " << &DumpStops << std::endl;
       std::cout << "DumpStops.size() = " << DumpStops.size() << std::endl;
       std::cout << "First DumpStops info:" << std::endl;
-      std::cout << "DumpStops[0] = " << DumpStops.at(0) << std::endl;
+      if(DumpStops.size() > 0)
+      {
+         std::cout << "DumpStops[0] = " << DumpStops.at(0) << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
 
       std::cout << "Printing VertexEvents at " << &VertexEvents << std::endl;
       std::cout << "VertexEvents.size() = " << VertexEvents.size() << std::endl;
       std::cout << "First VertexEvents info:" << std::endl;
-      std::cout << "VertexEvents[0].runNumber = " << VertexEvents.at(0).runNumber << std::endl;
-      std::cout << "VertexEvents[0].x = " << VertexEvents.at(0).x << std::endl;
-      std::cout << "VertexEvents[0].y = " << VertexEvents.at(0).y << std::endl;
-      std::cout << "VertexEvents[0].z = " << VertexEvents.at(0).z << std::endl;
-      std::cout << "VertexEvents[0].t = " << VertexEvents.at(0).t << std::endl;
+      if(VertexEvents.size() > 0)
+      {
+         std::cout << "VertexEvents[0].runNumber = " << VertexEvents.at(0).runNumber << std::endl;
+         std::cout << "VertexEvents[0].x = " << VertexEvents.at(0).x << std::endl;
+         std::cout << "VertexEvents[0].y = " << VertexEvents.at(0).y << std::endl;
+         std::cout << "VertexEvents[0].z = " << VertexEvents.at(0).z << std::endl;
+         std::cout << "VertexEvents[0].t = " << VertexEvents.at(0).t << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
 
       std::cout << "Printing Runs at " << &Runs << std::endl;
       std::cout << "Runs.size() = " << Runs.size() << std::endl;
       std::cout << "First Runs info:" << std::endl;
-      std::cout << "Runs[0] = " << Runs.at(0) << std::endl;
-
+      if(Runs.size() > 0)
+      {
+         std::cout << "Runs[0] = " << Runs.at(0) << std::endl;
+      }
+      else { std::cout << "Empty sorry, moving on to next member." << std::endl; }
       //Leaving out for now, might add later.
       //std::vector<feGEMdata> feGEM;
       //std::vector<feLVdata> feLV;
       //std::chrono::high_resolution_clock::time_point ObjectConstructionTime;
       //std::chrono::high_resolution_clock::time_point DataLoadedTime;
+
+      std::cout << "===========================" << std::endl;
+      std::cout << std::endl << std::endl << std::endl;
    }
 
-
-
-   ClassDef(TAPlot, 1);
-
-   TAPlot(const TAPlot& m_TAPlot) : 
-   ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
-   {
-      title                         = m_TAPlot.title ;
-      MVAMode                       = m_TAPlot.MVAMode ;
-      Nbin                          = m_TAPlot.Nbin ; 
-      DrawStyle                     = m_TAPlot.DrawStyle ;
-      gLegendDetail                 = m_TAPlot.gLegendDetail ; 
-      fApplyCuts                    = m_TAPlot.fApplyCuts ;
-      fClassifierCut                = m_TAPlot.fClassifierCut ;
-      FirstTmin                     = m_TAPlot.FirstTmin ;
-      LastTmax                      = m_TAPlot.LastTmax ;
-      BiggestTzero                  = m_TAPlot.BiggestTzero ;
-      MaxDumpLength                 = m_TAPlot.MaxDumpLength ;
-      TimeWindows                   = m_TAPlot.TimeWindows ; 
-      fTotalTime                    = m_TAPlot.fTotalTime ;
-      fTotalVert                    = m_TAPlot.fTotalVert ;
-      fVerbose                      = m_TAPlot.fVerbose ;
-      tFactor                       = m_TAPlot.tFactor ;
-      /*for(int i=0;i<m_TAPlot.HISTOS.GetEntries();i++)
-      {
-         HISTOS.Add(m_TAPlot.HISTOS.At(i));
-      }*/
-      //HISTOS                        = m_TAPlot.HISTOS ;
-      //HISTO_POSITION                = m_TAPlot.HISTO_POSITION ;
-      Ejections                     = m_TAPlot.Ejections ;
-      Injections                    = m_TAPlot.Injections ;
-      DumpStarts                    = m_TAPlot.DumpStarts ;
-      DumpStops                     = m_TAPlot.DumpStops ;
-      //VertexEvents                  = m_TAPlot.VertexEvents ;
-      for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
-      {
-         VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
-         //std::cout << "x at " << i << " in copy = " << m_TAPlot.VertexEvents.at(i).x << std::endl;
-      }
-      Runs                          = m_TAPlot.Runs ; 
-      feGEM                         = m_TAPlot.feGEM ;
-      feLV                          = m_TAPlot.feLV ;
-      ObjectConstructionTime        = m_TAPlot.ObjectConstructionTime ;
-      DataLoadedTime                = m_TAPlot.DataLoadedTime ;
-   }
-   
    TAPlot& operator=(const TAPlot& m_TAPlot)
    {
+      std::cout << "TAPlot = operator" << std::endl;
       this->title = m_TAPlot.title ;
       this->MVAMode = m_TAPlot.MVAMode ;
       this->Nbin = m_TAPlot.Nbin ; 
@@ -903,82 +887,176 @@ public:
       this->LastTmax = m_TAPlot.LastTmax ;
       this->BiggestTzero = m_TAPlot.BiggestTzero ;
       this->MaxDumpLength = m_TAPlot.MaxDumpLength ;
-      this->TimeWindows = m_TAPlot.TimeWindows ; 
+      
       this->fTotalTime = m_TAPlot.fTotalTime ;
       this->fTotalVert = m_TAPlot.fTotalVert ;
       this->fVerbose = m_TAPlot.fVerbose ;
       this->tFactor = m_TAPlot.tFactor ;
-      this->HISTOS = m_TAPlot.HISTOS ;
-      this->HISTO_POSITION = m_TAPlot.HISTO_POSITION ;
-      this->Ejections = m_TAPlot.Ejections ;
-      this->Injections = m_TAPlot.Injections ;
-      this->DumpStarts = m_TAPlot.DumpStarts ;
-      this->DumpStops = m_TAPlot.DumpStops ;
-      this->VertexEvents = m_TAPlot.VertexEvents ;
-      this->Runs = m_TAPlot.Runs ; 
-      this->feGEM = m_TAPlot.feGEM ;
-      this->feLV = m_TAPlot.feLV ;
+
+      for(int i=0;i<m_TAPlot.TimeWindows.size();i++)
+         this->TimeWindows.push_back(m_TAPlot.TimeWindows.at(i));
+
+      for(int i=0;i<m_TAPlot.Ejections.size();i++)
+         this->Ejections.push_back(m_TAPlot.Ejections.at(i));
+      
+      for(int i=0;i<m_TAPlot.Injections.size();i++)
+         this->Injections.push_back(m_TAPlot.Injections.at(i));
+      
+      for(int i=0;i<m_TAPlot.DumpStarts.size();i++)
+         this->DumpStarts.push_back(m_TAPlot.DumpStarts.at(i));
+      
+      for(int i=0;i<m_TAPlot.DumpStops.size();i++)
+         this->DumpStops.push_back(m_TAPlot.DumpStops.at(i));
+      
+      for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
+         this->VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
+      
+      for(int i=0;i<m_TAPlot.Runs.size();i++)
+         this->Runs.push_back(m_TAPlot.Runs.at(i));
+      
+      for(int i=0;i<m_TAPlot.feGEM.size();i++)
+         this->feGEM.push_back(m_TAPlot.feGEM.at(i));
+      
+      for(int i=0;i<m_TAPlot.feLV.size();i++)
+         this->feLV.push_back(m_TAPlot.feLV.at(i));
+
       this->ObjectConstructionTime = m_TAPlot.ObjectConstructionTime ;
       this->DataLoadedTime = m_TAPlot.DataLoadedTime ;
 
       return *this;
    }
 
-   TAPlot& operator+(const TAPlot& plotA)
+   virtual TAPlot& operator+=(const TAPlot &plotB) 
    {
-      TAPlot* outputplot = new TAPlot(*this); //Create new from copy
-      //outputplot = this; //?? Maybe we want to copy this way
+      std::cout << "TAPlot += operator" << std::endl;
 
       //Vectors- need concating
-      outputplot->Ejections.insert(outputplot->Ejections.end(), plotA.Ejections.begin(), plotA.Ejections.end() );
-      outputplot->Injections.insert(outputplot->Injections.end(), plotA.Injections.begin(), plotA.Injections.end() );
-      outputplot->DumpStarts.insert(outputplot->DumpStarts.end(), plotA.DumpStarts.begin(), plotA.DumpStarts.end() );
-      outputplot->DumpStops.insert(outputplot->DumpStops.end(), plotA.DumpStops.begin(), plotA.DumpStops.end() );
-      outputplot->TimeWindows.insert(outputplot->TimeWindows.end(), plotA.TimeWindows.begin(), plotA.TimeWindows.end() );
-      outputplot->VertexEvents.insert(outputplot->VertexEvents.end(), plotA.VertexEvents.begin(), plotA.VertexEvents.end() );
-      outputplot->Runs.insert(outputplot->Runs.end(), plotA.Runs.begin(), plotA.Runs.end() );//check dupes - ignore copies. AddRunNumber
-      outputplot->feGEM.insert(outputplot->feGEM.end(), plotA.feGEM.begin(), plotA.feGEM.end() );
-      outputplot->feLV.insert(outputplot->feLV.end(), plotA.feLV.begin(), plotA.feLV.end() );
+      this->Ejections.insert(this->Ejections.end(), plotB.Ejections.begin(), plotB.Ejections.end() );
+      std::cout << "How about here?" << std::endl;
+      this->Injections.insert(this->Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
+      this->DumpStarts.insert(this->DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
+      this->DumpStops.insert(this->DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
+      this->TimeWindows.insert(this->TimeWindows.end(), plotB.TimeWindows.begin(), plotB.TimeWindows.end() );
+      this->VertexEvents.insert(this->VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
+      this->Runs.insert(this->Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
+      this->feGEM.insert(this->feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
+      this->feLV.insert(this->feLV.end(), plotB.feLV.begin(), plotB.feLV.end() );
 
       //Strings
-      outputplot->title+= ", ";
-      outputplot->title+=plotA.title;
+      this->title+= ", ";
+      this->title+=plotB.title;
 
       //Unsure - Just keep as is, no need to be overwritten.
-      //outputplot->MVAMode                = plotA.MVAMode;
-      //outputplot->Nbin                   = plotA.Nbin;
-      //outputplot->DrawStyle              = plotA.DrawStyle;
-      //outputplot->gLegendDetail          = plotA.gLegendDetail;
-      //outputplot->fApplyCuts             = plotA.fApplyCuts;
+      //this->MVAMode                = plotB.MVAMode;
+      //this->Nbin                   = plotB.Nbin;
+      //this->DrawStyle              = plotB.DrawStyle;
+      //this->gLegendDetail          = plotB.gLegendDetail;
+      //this->fApplyCuts             = plotB.fApplyCuts;
       //Needs help - copy from A
-      //outputplot->fClassifierCut         = plotA.fClassifierCut;
-      //outputplot->fVerbose               = plotA.fVerbose;
+      //this->fClassifierCut         = plotB.fClassifierCut;
+      //this->fVerbose               = plotB.fVerbose;
    
       //All doubles
-      outputplot->FirstTmin              = (this->FirstTmin < plotA.FirstTmin)?this->FirstTmin:plotA.FirstTmin;
-      outputplot->LastTmax               = (this->LastTmax > plotA.LastTmax)?this->LastTmax:plotA.LastTmax;
-      outputplot->BiggestTzero           = (this->BiggestTzero > plotA.BiggestTzero)?this->BiggestTzero:plotA.BiggestTzero;
-      outputplot->MaxDumpLength          = (this->MaxDumpLength > plotA.MaxDumpLength)?this->MaxDumpLength:plotA.MaxDumpLength;
-      outputplot->fTotalTime             = (this->fTotalTime > plotA.fTotalTime)?this->fTotalTime:plotA.fTotalTime;
-      outputplot->ObjectConstructionTime = (this->ObjectConstructionTime < plotA.ObjectConstructionTime)?this->ObjectConstructionTime:plotA.ObjectConstructionTime;
-      outputplot->DataLoadedTime         = (this->DataLoadedTime > plotA.DataLoadedTime)?this->DataLoadedTime:plotA.DataLoadedTime;
-      outputplot->tFactor                = (this->tFactor < plotA.tFactor)?this->tFactor:plotA.tFactor;
+      this->FirstTmin              = (this->FirstTmin < plotB.FirstTmin)?this->FirstTmin:plotB.FirstTmin;
+      this->LastTmax               = (this->LastTmax > plotB.LastTmax)?this->LastTmax:plotB.LastTmax;
+      this->BiggestTzero           = (this->BiggestTzero > plotB.BiggestTzero)?this->BiggestTzero:plotB.BiggestTzero;
+      this->MaxDumpLength          = (this->MaxDumpLength > plotB.MaxDumpLength)?this->MaxDumpLength:plotB.MaxDumpLength;
+      this->fTotalTime             = (this->fTotalTime > plotB.fTotalTime)?this->fTotalTime:plotB.fTotalTime;
+      this->ObjectConstructionTime = (this->ObjectConstructionTime < plotB.ObjectConstructionTime)?this->ObjectConstructionTime:plotB.ObjectConstructionTime;
+      this->DataLoadedTime         = (this->DataLoadedTime > plotB.DataLoadedTime)?this->DataLoadedTime:plotB.DataLoadedTime;
+      this->tFactor                = (this->tFactor < plotB.tFactor)?this->tFactor:plotB.tFactor;
 
 
       //Total vertices?
-      outputplot->fTotalVert             += plotA.fTotalVert;
+      this->fTotalVert             += plotB.fTotalVert;
 
       //Need a new addition overload- no for loop to 
-      //outputplot->HISTOS                 = plotA.HISTOS + plotb.HISTOS;
-      for(int i = 0; i<= plotA.HISTOS.GetSize(); i++)
+      //this->HISTOS                 = plotB.HISTOS + plotb.HISTOS;
+      std::cout << "How about down here?" << std::endl;
+      for(int i = 0; i < plotB.HISTOS.GetSize(); i++)
       {
-         outputplot->HISTOS.Add(plotA.HISTOS.At(i));
+         this->HISTOS.Add(plotB.HISTOS.At(i));
       }
+      std::cout << "And after this?" << std::endl;
       
-      outputplot->HISTO_POSITION.insert( plotA.HISTO_POSITION.begin(), plotA.HISTO_POSITION.end() );
+      this->HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
-      return *outputplot;
+      return *this;
    }
+
+   friend TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
+   {
+      std::cout << "TAPlot addition operator" << std::endl;
+      TAPlot outputplot(plotA); //Create new from copy
+      //outputplot = this; //?? Maybe we want to copy this way
+
+      //Vectors- need concating
+      std::cout << "Are we getting here ok?" << std::endl;
+      outputplot.Ejections.insert(outputplot.Ejections.end(), plotB.Ejections.begin(), plotB.Ejections.end() );
+      std::cout << "How about here?" << std::endl;
+      outputplot.Injections.insert(outputplot.Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
+      outputplot.DumpStarts.insert(outputplot.DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
+      outputplot.DumpStops.insert(outputplot.DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
+      outputplot.TimeWindows.insert(outputplot.TimeWindows.end(), plotB.TimeWindows.begin(), plotB.TimeWindows.end() );
+      outputplot.VertexEvents.insert(outputplot.VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
+      outputplot.Runs.insert(outputplot.Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
+      outputplot.feGEM.insert(outputplot.feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
+      outputplot.feLV.insert(outputplot.feLV.end(), plotB.feLV.begin(), plotB.feLV.end() );
+
+      //Strings
+      outputplot.title+= ", ";
+      outputplot.title+=plotB.title;
+
+      //Unsure - Just keep as is, no need to be overwritten.
+      //outputplot.MVAMode                = plotB.MVAMode;
+      //outputplot.Nbin                   = plotB.Nbin;
+      //outputplot.DrawStyle              = plotB.DrawStyle;
+      //outputplot.gLegendDetail          = plotB.gLegendDetail;
+      //outputplot.fApplyCuts             = plotB.fApplyCuts;
+      //Needs help - copy from A
+      //outputplot.fClassifierCut         = plotB.fClassifierCut;
+      //outputplot.fVerbose               = plotB.fVerbose;
+   
+      //All doubles
+      outputplot.FirstTmin              = (outputplot.FirstTmin < plotB.FirstTmin)?outputplot.FirstTmin:plotB.FirstTmin;
+      outputplot.LastTmax               = (outputplot.LastTmax > plotB.LastTmax)?outputplot.LastTmax:plotB.LastTmax;
+      outputplot.BiggestTzero           = (outputplot.BiggestTzero > plotB.BiggestTzero)?outputplot.BiggestTzero:plotB.BiggestTzero;
+      outputplot.MaxDumpLength          = (outputplot.MaxDumpLength > plotB.MaxDumpLength)?outputplot.MaxDumpLength:plotB.MaxDumpLength;
+      outputplot.fTotalTime             = (outputplot.fTotalTime > plotB.fTotalTime)?outputplot.fTotalTime:plotB.fTotalTime;
+      outputplot.ObjectConstructionTime = (outputplot.ObjectConstructionTime < plotB.ObjectConstructionTime)?outputplot.ObjectConstructionTime:plotB.ObjectConstructionTime;
+      outputplot.DataLoadedTime         = (outputplot.DataLoadedTime > plotB.DataLoadedTime)?outputplot.DataLoadedTime:plotB.DataLoadedTime;
+      outputplot.tFactor                = (outputplot.tFactor < plotB.tFactor)?outputplot.tFactor:plotB.tFactor;
+
+
+      //Total vertices?
+      outputplot.fTotalVert             += plotB.fTotalVert;
+
+      //Need a new addition overload- no for loop to 
+      //outputplot.HISTOS                 = plotB.HISTOS + plotb.HISTOS;
+      std::cout << "How about down here?" << std::endl;
+      for(int i = 0; i < plotB.HISTOS.GetSize(); i++)
+      {
+         outputplot.HISTOS.Add(plotB.HISTOS.At(i));
+      }
+      std::cout << "And after this?" << std::endl;
+      
+      outputplot.HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
+
+      return outputplot;
+
+      //Updated this whole lot:
+
+   }
+
+   //Lets try again with this lot.
+   /*const TAPlot operator+(const TAPlot &other) const 
+   {
+      TAPlot result(*this);     // Make a copy of myself.  Same as MyClass result(*this);
+      result += other;            // Use += to add other to the copy.
+      return result;              // All done!
+   }*/
+
+   ClassDef(TAPlot, 1);
 };
 
 #endif

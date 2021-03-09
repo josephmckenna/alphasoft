@@ -708,49 +708,52 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 
 }*/
 
-TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& plotB)
+
+/*TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& PlotB)
    {
-      TA2Plot* outputplot = new TA2Plot(plotA);
+      std::cout << "TA2Plot addition operator" << std::endl;
+      TAPlot plotAParent = static_cast<TAPlot>(plotA);
+      TAPlot PlotBParent = static_cast<TAPlot>(PlotB);
+      TAPlot parentSum = plotAParent + PlotBParent;
+      
+      std::cout << "Is this getting hit?" << std::endl;
+      TA2Plot* outputplot = new TA2Plot(parentSum);
 
-      //TA2Plot members - note: above is seperated correctly. 
-      //std::cout << outputplot->SISEvents.size() << std::endl;
-      //std::cout << plotB.SISEvents.size() << std::endl;
-      outputplot->SISEvents.insert(outputplot->SISEvents.end(), plotB.SISEvents.begin(), plotB.SISEvents.end() );
-      //std::cout << outputplot->SISEvents.size() << std::endl;
-
-      //std::cout << outputplot->SISChannels.size() << std::endl;
-      //std::cout << plotB.SISChannels.size() << std::endl;
-      outputplot->SISChannels.insert(outputplot->SISChannels.end(), plotB.SISChannels.begin(), plotB.SISChannels.end() );
-      //std::cout << outputplot->SISChannels.size() << std::endl;
-
-      //Need help, just ints. All to become maps
-      /*outputplot.trig           = plotA.trig;
-      outputplot.trig_nobusy    = plotA.trig_nobusy;
-      outputplot.atom_or        = plotA.atom_or;
-
-      outputplot.CATStart       = plotA.CATStart;
-      outputplot.CATStop        = plotA.CATStop;
-      outputplot.RCTStart       = plotA.RCTStart;
-      outputplot.RCTStop        = plotA.RCTStop;
-      outputplot.ATMStart       = plotA.ATMStart;
-      outputplot.ATMStop        = plotA.ATMStop;
-
-      outputplot.Beam_Injection = plotA.Beam_Injection;
-      outputplot.Beam_Ejection  = plotA.Beam_Ejection;
+      std::cout << "Some TA2Plot copies done, moving on to assignment." << std::endl;
+      //Still all to become maps
+      outputplot->trig           = plotA.trig;
+      outputplot->trig_nobusy    = plotA.trig_nobusy;
+      outputplot->atom_or        = plotA.atom_or;
+      outputplot->CATStart       = plotA.CATStart;
+      outputplot->CATStop        = plotA.CATStop;
+      outputplot->RCTStart       = plotA.RCTStart;
+      outputplot->RCTStop        = plotA.RCTStop;
+      outputplot->ATMStart       = plotA.ATMStart;
+      outputplot->ATMStop        = plotA.ATMStop;
+      outputplot->Beam_Injection = plotA.Beam_Injection;
+      outputplot->Beam_Ejection  = plotA.Beam_Ejection;
 
       //Copy A is fine
-      outputplot.ZMinCut        = plotA.ZMinCut;
-      outputplot.ZMaxCut        = plotA.ZMaxCut;*/
+      outputplot->ZMinCut        = plotA.ZMinCut;
+      outputplot->ZMaxCut        = plotA.ZMaxCut;
 
+      //std::cout << outputplot->SISEvents.size() << std::endl;
+      //std::cout << PlotB.SISEvents.size() << std::endl;
+      outputplot->SISEvents.insert(outputplot->SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
+      //std::cout << outputplot->SISEvents.size() << std::endl;
+
+      //std::cout << outputplot->SISChannels.size() << std::endl;
+      //std::cout << PlotB.SISChannels.size() << std::endl;
+      outputplot->SISChannels.insert(outputplot->SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
+      //std::cout << outputplot->SISChannels.size() << std::endl;
 
       return *outputplot;
-   };
-
+   };*/
 
 TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
 {
    //Inherited TAPlot members
-
+   std::cout << "TA2Plot equals operator" << std::endl;
    //TA2Plot members - removed the this-> but still returning this.
    SISChannels    = plotA.SISChannels;
    trig           = plotA.trig;
@@ -773,6 +776,7 @@ TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
 
 TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
 {
+   std::cout << "This is TA2Plot copy constructor" << std::endl;
    SISChannels    = m_TA2Plot.SISChannels;
    trig           = m_TA2Plot.trig;
    trig_nobusy    = m_TA2Plot.trig_nobusy;
@@ -790,9 +794,16 @@ TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
    SISEvents      = m_TA2Plot.SISEvents;
 }
 
-TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& plotB)
+TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
 {
-   return plotA + plotB;
+   std::cout << "This is TA2Plot copy constructor from standard TAPlot" << std::endl;
+   ZMinCut=-99999.;
+   ZMaxCut= 99999.;
 }
+
+/*TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& PlotB)
+{
+   return plotA + PlotB;
+}*/
 
 #endif

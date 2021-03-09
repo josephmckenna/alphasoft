@@ -67,6 +67,7 @@
         "climits": "cpp",
         "testMacro.C": "cpp",
         "lukas.C": "cpp",
-        "small.C": "cpp"
+        "small.C": "cpp",
+        "rootlogon.C": "cpp"
     }
 }
