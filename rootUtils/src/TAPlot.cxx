@@ -6,12 +6,16 @@ ClassImp(TAPlot);
 TAPlot::TAPlot(bool zerotime):
    ZeroTimeAxis(zerotime)
 {
+   std::cout << "TAPlot boolean constructor" << std::endl;
   
    ObjectConstructionTime = std::chrono::high_resolution_clock::now();
    DataLoadedTime = std::chrono::high_resolution_clock::from_time_t(0);
    Nbin=100; 
    DrawStyle=0;
    gLegendDetail=1; 
+   MVAMode = 0;
+   fClassifierCut = -99;
+   fApplyCuts = -1;
 
    FirstTmin=1E99;
    LastTmax=1.;
@@ -22,6 +26,66 @@ TAPlot::TAPlot(bool zerotime):
    fTotalVert = -1.;
 
    fVerbose=false;
+}
+
+TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
+{
+   std::cout << "TAPlot copy constructor" << std::endl;
+   title                         = m_TAPlot.title ;
+   MVAMode                       = m_TAPlot.MVAMode ;
+   Nbin                          = m_TAPlot.Nbin ; 
+   DrawStyle                     = m_TAPlot.DrawStyle ;
+   gLegendDetail                 = m_TAPlot.gLegendDetail ; 
+   fApplyCuts                    = m_TAPlot.fApplyCuts ;
+   fClassifierCut                = m_TAPlot.fClassifierCut ;
+   FirstTmin                     = m_TAPlot.FirstTmin ;
+   LastTmax                      = m_TAPlot.LastTmax ;
+   BiggestTzero                  = m_TAPlot.BiggestTzero ;
+   MaxDumpLength                 = m_TAPlot.MaxDumpLength ;
+
+   fTotalTime                    = m_TAPlot.fTotalTime ;
+   fTotalVert                    = m_TAPlot.fTotalVert ;
+   fVerbose                      = m_TAPlot.fVerbose ;
+   tFactor                       = m_TAPlot.tFactor ;
+
+   for(int i=0;i<m_TAPlot.TimeWindows.size();i++)
+      TimeWindows.push_back(m_TAPlot.TimeWindows.at(i));
+      std::cout << "TimeWindows push back" << std::endl;
+
+   for(int i=0;i<m_TAPlot.Ejections.size();i++)
+      Ejections.push_back(m_TAPlot.Ejections.at(i));
+      std::cout << "Ejections push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.Injections.size();i++)
+      Injections.push_back(m_TAPlot.Injections.at(i));
+      std::cout << "Injections push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.DumpStarts.size();i++)
+      DumpStarts.push_back(m_TAPlot.DumpStarts.at(i));
+      std::cout << "DumpStarts push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.DumpStops.size();i++)
+      DumpStops.push_back(m_TAPlot.DumpStops.at(i));
+      std::cout << "DumpStops push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
+      VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
+      std::cout << "VertexEvents push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.Runs.size();i++)
+      Runs.push_back(m_TAPlot.Runs.at(i));
+      std::cout << "Runs push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.feGEM.size();i++)
+      feGEM.push_back(m_TAPlot.feGEM.at(i));
+      std::cout << "feGEM push back" << std::endl;
+   
+   for(int i=0;i<m_TAPlot.feLV.size();i++)
+      feLV.push_back(m_TAPlot.feLV.at(i));
+      std::cout << "feLV push back" << std::endl;
+
+   ObjectConstructionTime        = m_TAPlot.ObjectConstructionTime ;
+   DataLoadedTime                = m_TAPlot.DataLoadedTime ;
 }
 
 void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero)
