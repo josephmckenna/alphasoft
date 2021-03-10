@@ -11,9 +11,12 @@ if (${Python_FOUND})
 endif()
 
 if (BUILT_IN_ROOTANA)
-   include_directories(include ${CMAKE_SOURCE_DIR}/rootana/include)
+   include_directories(${CMAKE_BINARY_DIR}/rootana/include)
+   include_directories(${CMAKE_SOURCE_DIR}/rootana/manalyzer)
+   include_directories(${CMAKE_SOURCE_DIR}/rootana/midasio)
+   include_directories(${CMAKE_SOURCE_DIR}/rootana/mvodb)
 else ()
-   include_directories(include $ENV{ROOTANASYS}/include)
+   include_directories($ENV{ROOTANASYS}/include)
 endif (BUILT_IN_ROOTANA)
 include_directories(
    include 
@@ -35,12 +38,7 @@ target_include_directories( rootUtils
       ${CMAKE_SOURCE_DIR}/analib/include
       ${CMAKE_SOURCE_DIR}/a2lib/include
    )
-#if (BUILD_AG)
-#   target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
-#endif (BUILD_AG)
-#if (BUILD_A2)
-#   target_link_libraries(rootUtils ${ROOT_LIBRARIES} alpha2 analib)
-#endif (BUILD_A2)
+
 if (${Python_FOUND})
    target_link_libraries(rootUtils ${Python_LIBRARIES})
 endif()
