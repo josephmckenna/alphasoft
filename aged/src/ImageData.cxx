@@ -436,7 +436,8 @@ const char *loadGeometry(Polyhedron *poly, int geo, char*/*argv*/)
 
     for (i=0; i<4; ++i) {
 
-        fgets(buff,BUFFLEN,fp);
+        char* out=fgets(buff,BUFFLEN,fp);
+	if( !out ) continue; 
         pt = strchr(buff,'=');
         if (!pt) {
             fclose(fp);
@@ -485,7 +486,8 @@ const char *loadGeometry(Polyhedron *poly, int geo, char*/*argv*/)
 */
     for (i=0,node=poly->nodes; i<nn; ++i,++node) {
 
-        fgets(buff,BUFFLEN,fp);
+        char* out=fgets(buff,BUFFLEN,fp);
+	if( !out ) continue; 
         if (buff[0] != 'N') {
             fclose(fp);
             return(rtn_msg);
@@ -502,7 +504,8 @@ const char *loadGeometry(Polyhedron *poly, int geo, char*/*argv*/)
         node->z3 = z * r;
     }
     for (i=0,face=poly->faces; i<nf; ++i,++face) {
-        fgets(buff,BUFFLEN,fp);
+        char* out=fgets(buff,BUFFLEN,fp);
+	if( !out ) continue;
         if (buff[0] != 'F') {
             fclose(fp);
             return(rtn_msg);
@@ -548,7 +551,8 @@ const char *loadGeometry(Polyhedron *poly, int geo, char*/*argv*/)
     }
     for (i=0,edge=poly->edges; i<ne; ++i,++edge) {
     
-        fgets(buff,BUFFLEN,fp);
+        char* out=fgets(buff,BUFFLEN,fp);
+	if( !out ) continue;
         if (buff[0] != 'E') {
             fclose(fp);
             return(rtn_msg);
