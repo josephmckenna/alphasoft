@@ -694,67 +694,10 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   return cVTX;
 }
 
-/*void PrintFull()
-{
-   TAPlot::PrintFull();
-
-   std::cout << "Printing SISEvents at " << &SISEvents << std::endl;
-   std::cout << "SISEvents.size() = " << SISEvents.size() << std::endl;
-   std::cout << "First time window info:" << std::endl;
-   std::cout << "TimeWindows[0].runNumber = " << SISEvents.at(0).runNumber << std::endl;
-   std::cout << "TimeWindows[0].t = " << SISEvents.at(0).t << std::endl;
-   std::cout << "TimeWindows[0].OfficialTime = " << SISEvents.at(0).OfficialTime << std::endl;
-   std::cout << "TimeWindows[0].Counts = " << SISEvents.at(0).Counts << std::endl;
-
-}*/
-
-
-/*TA2Plot& operator+(const TA2Plot& plotA, const TA2Plot& PlotB)
-   {
-      std::cout << "TA2Plot addition operator" << std::endl;
-      TAPlot plotAParent = static_cast<TAPlot>(plotA);
-      TAPlot PlotBParent = static_cast<TAPlot>(PlotB);
-      TAPlot parentSum = plotAParent + PlotBParent;
-      
-      std::cout << "Is this getting hit?" << std::endl;
-      TA2Plot* outputplot = new TA2Plot(parentSum);
-
-      std::cout << "Some TA2Plot copies done, moving on to assignment." << std::endl;
-      //Still all to become maps
-      outputplot->trig           = plotA.trig;
-      outputplot->trig_nobusy    = plotA.trig_nobusy;
-      outputplot->atom_or        = plotA.atom_or;
-      outputplot->CATStart       = plotA.CATStart;
-      outputplot->CATStop        = plotA.CATStop;
-      outputplot->RCTStart       = plotA.RCTStart;
-      outputplot->RCTStop        = plotA.RCTStop;
-      outputplot->ATMStart       = plotA.ATMStart;
-      outputplot->ATMStop        = plotA.ATMStop;
-      outputplot->Beam_Injection = plotA.Beam_Injection;
-      outputplot->Beam_Ejection  = plotA.Beam_Ejection;
-
-      //Copy A is fine
-      outputplot->ZMinCut        = plotA.ZMinCut;
-      outputplot->ZMaxCut        = plotA.ZMaxCut;
-
-      //std::cout << outputplot->SISEvents.size() << std::endl;
-      //std::cout << PlotB.SISEvents.size() << std::endl;
-      outputplot->SISEvents.insert(outputplot->SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
-      //std::cout << outputplot->SISEvents.size() << std::endl;
-
-      //std::cout << outputplot->SISChannels.size() << std::endl;
-      //std::cout << PlotB.SISChannels.size() << std::endl;
-      outputplot->SISChannels.insert(outputplot->SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
-      //std::cout << outputplot->SISChannels.size() << std::endl;
-
-      return *outputplot;
-   };*/
-
 TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
 {
    //Inherited TAPlot members
    std::cout << "TA2Plot equals operator" << std::endl;
-   //TA2Plot members - removed the this-> but still returning this.
    SISChannels    = plotA.SISChannels;
    trig           = plotA.trig;
    trig_nobusy    = plotA.trig_nobusy;
@@ -796,9 +739,41 @@ TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
 
 TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
 {
-   std::cout << "This is TA2Plot copy constructor from standard TAPlot" << std::endl;
+   std::cout << "This is TA2Plot constructor from TAPlot" << std::endl;
    ZMinCut=-99999.;
    ZMaxCut= 99999.;
+}
+
+TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
+{
+   //In order to call the parents addition first it is important to statically cast the Plots to their parent class,
+   //add the parents together, then initialise a TA2Plot from the TAPlot and fill in the rest of the values as a constructor would.
+   TAPlot PlotACast = static_cast<TAPlot>(PlotA); //2 Static casts
+   TAPlot PlotBCast = static_cast<TAPlot>(PlotB);
+   TAPlot ParentSum = PlotACast + PlotBCast; //Add as TAPlots
+   TA2Plot BasePlot = TA2Plot(ParentSum); //Initialise a TA2Plot from the now summed TAPlots
+
+   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
+   //For all these copying A is fine.
+   BasePlot.trig           = PlotA.trig;
+   BasePlot.trig_nobusy    = PlotA.trig_nobusy;
+   BasePlot.atom_or        = PlotA.atom_or;
+   BasePlot.CATStart       = PlotA.CATStart;
+   BasePlot.CATStop        = PlotA.CATStop;
+   BasePlot.RCTStart       = PlotA.RCTStart;
+   BasePlot.RCTStop        = PlotA.RCTStop;
+   BasePlot.ATMStart       = PlotA.ATMStart;
+   BasePlot.ATMStop        = PlotA.ATMStop;
+   BasePlot.Beam_Injection = PlotA.Beam_Injection;
+   BasePlot.Beam_Ejection  = PlotA.Beam_Ejection;
+   BasePlot.ZMinCut        = PlotA.ZMinCut;
+   BasePlot.ZMaxCut        = PlotA.ZMaxCut;
+
+   //Vectors need concacting.
+   BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
+   BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
+   
+   return BasePlot;
 }
 
 /*TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& PlotB)

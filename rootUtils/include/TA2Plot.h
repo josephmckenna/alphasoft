@@ -11,9 +11,47 @@
 #include "TA2Spill.h"
 #include "TA2SpillGetters.h"
 
+class SISPlotEvent
+{
+   public:
+      int runNumber; // I don't get set yet...
+      //int clock
+      double t; //Plot time (based off offical time)
+      double OfficialTime;
+      int Counts;
+      int SIS_Channel;
+
+      //LMG - Copy and assign operators
+      SISPlotEvent()
+      {
+      }
+      ~SISPlotEvent()
+      {
+      }
+      //Basic copy constructor.
+      SISPlotEvent(const SISPlotEvent& m_SISPlotEvent)
+      {
+         runNumber      =  m_SISPlotEvent.runNumber   ;
+         t              =  m_SISPlotEvent.t           ;
+         OfficialTime   =  m_SISPlotEvent.OfficialTime;
+         Counts         =  m_SISPlotEvent.Counts      ;
+         SIS_Channel    =  m_SISPlotEvent.SIS_Channel ;
+      }
+      //Assignment operator.
+      SISPlotEvent operator=(const SISPlotEvent m_SISPlotEvent)
+      {
+         this->runNumber      =  m_SISPlotEvent.runNumber   ;
+         this->t              =  m_SISPlotEvent.t           ;
+         this->OfficialTime   =  m_SISPlotEvent.OfficialTime;
+         this->Counts         =  m_SISPlotEvent.Counts      ;
+         this->SIS_Channel    =  m_SISPlotEvent.SIS_Channel ;
+         return *this;
+      }
+};
+
 class TA2Plot: public TAPlot
 {
-private:
+protected:
    std::vector<int> SISChannels;
 
   //Detector SIS channels
@@ -39,15 +77,6 @@ private:
    double ZMaxCut;
 
 public:
-   struct SISPlotEvent {
-      int runNumber; // I don't get set yet...
-      //int clock
-      double t; //Plot time (based off offical time)
-      double OfficialTime;
-      int Counts;
-      int SIS_Channel;
-   };
-
    void SetSISChannels(int runNumber);
    std::vector<SISPlotEvent> SISEvents;
 
@@ -95,36 +124,7 @@ public:
       return *this;
    }*/
 
-   friend TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
-   {
-      TAPlot PlotACast = static_cast<TAPlot>(PlotA);
-      TAPlot PlotBCast = static_cast<TAPlot>(PlotB);
-
-      TAPlot ParentSum = PlotACast + PlotBCast;
-
-      TA2Plot BasePlot = TA2Plot(ParentSum);
-
-      BasePlot.trig           = PlotA.trig;
-      BasePlot.trig_nobusy    = PlotA.trig_nobusy;
-      BasePlot.atom_or        = PlotA.atom_or;
-      BasePlot.CATStart       = PlotA.CATStart;
-      BasePlot.CATStop        = PlotA.CATStop;
-      BasePlot.RCTStart       = PlotA.RCTStart;
-      BasePlot.RCTStop        = PlotA.RCTStop;
-      BasePlot.ATMStart       = PlotA.ATMStart;
-      BasePlot.ATMStop        = PlotA.ATMStop;
-      BasePlot.Beam_Injection = PlotA.Beam_Injection;
-      BasePlot.Beam_Ejection  = PlotA.Beam_Ejection;
-
-      //Copy A is fine
-      BasePlot.ZMinCut        = PlotA.ZMinCut;
-      BasePlot.ZMaxCut        = PlotA.ZMaxCut;
-
-      BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
-      BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
-      
-      return BasePlot;
-   }
+   friend TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB);
 
 
    /*friend TA2Plot& operator+(const TA2Plot& other)
