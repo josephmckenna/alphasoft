@@ -55,23 +55,23 @@ protected:
    std::vector<int> SISChannels;
 
   //Detector SIS channels
-   int trig;
-   int trig_nobusy;
-   int atom_or;
+   std::map<int, int> trig;
+   std::map<int, int> trig_nobusy;
+   std::map<int, int> atom_or;
    //new method
    //std::map<int, int> trig;
 
   //Dump marker SIS channels:
-   int CATStart;
-   int CATStop;
-   int RCTStart;
-   int RCTStop;
-   int ATMStart;
-   int ATMStop;
+   std::map<int, int> CATStart;
+   std::map<int, int> CATStop;
+   std::map<int, int> RCTStart;
+   std::map<int, int> RCTStop;
+   std::map<int, int> ATMStart;
+   std::map<int, int> ATMStop;
   
   //Beam injection/ ejection markers:
-   int Beam_Injection;
-   int Beam_Ejection;
+   std::map<int, int> Beam_Injection;
+   std::map<int, int> Beam_Ejection;
    
    double ZMinCut;
    double ZMaxCut;
