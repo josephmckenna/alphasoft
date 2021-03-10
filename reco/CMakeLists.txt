@@ -7,16 +7,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Include directories
 include_directories(${ROOT_INCLUDE_DIRS})
-if (BUILT_IN_ROOTANA)
-  message(STATUS "Using ROOTANA builtin")
-  include_directories(${CMAKE_SOURCE_DIR}/rootana/manalyzer)
-  include_directories(${CMAKE_SOURCE_DIR}/rootana/midasio)
-  include_directories(${CMAKE_SOURCE_DIR}/rootana/mvodb)
-  include_directories(${CMAKE_BINARY_DIR}/rootana/include)
-else()
-  include_directories(${ROOTANA_INCLUDE_DIRS})
-  message(STATUS "ROOTANA headers: ${ROOTANA_INCLUDE_DIRS}")
-endif(BUILT_IN_ROOTANA)
+include_directories(${ROOTANA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/rootUtils/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
@@ -24,12 +15,12 @@ include_directories(${CMAKE_SOURCE_DIR}/analib/include)
 include_directories(${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 include_directories(include)
 
-
+# Find source for this project
 set(sources ${PROJECT_SOURCE_DIR}/src/Histo.cc ${PROJECT_SOURCE_DIR}/src/Utils.cc)
 set(headers ${PROJECT_SOURCE_DIR}/include/Histo.hh ${PROJECT_SOURCE_DIR}/include/Utils.hh 
             ${PROJECT_SOURCE_DIR}/include/argparse.hh)
 
- 
+# Create the targets
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
 target_link_libraries(agreco.exe ${ROOT_LIBRARIES} analib agtpc)
 
@@ -38,8 +29,10 @@ add_executable( MainEventTree.exe MainEventTree.cc
                   ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
 target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES} analib agtpc alpha2 rootUtils)
     
+# Install 
 install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
+# Compile the analyzer for simulation
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
   add_executable( g4ana.exe g4ana.cc 
