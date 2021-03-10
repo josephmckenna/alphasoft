@@ -26,6 +26,8 @@ message(STATUS "ROOTANA headers for AG: ${ROOTANA_INCLUDE_DIRS} ")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
+set(AG_LINK_LIBS ${CMAKE_BINARY_DIR}/agana/libagana.a ${CMAKE_BINARY_DIR}/aged/libaged.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so)
+
 message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
@@ -67,24 +69,28 @@ foreach( LIST_FILE ${BINS} )
     #message(Modules: ${MODULES})
     if (BUILT_IN_ROOTANA)
        add_executable( ${bin} ${CMAKE_SOURCE_DIR}/rootana/manalyzer/manalyzer_main  ${MODULES} )
+      add_dependencies(${bin} rootana)
     else ()
        add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     endif (BUILT_IN_ROOTANA)
     
+    add_dependencies(${bin} agana analib agtpc aged)
     
     #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/recolib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/aged/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
     target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
    
-    target_link_libraries( ${bin} agana analib agtpc aged
-                           rootana ${ROOT_LIBRARIES}
-			   ${MIDAS_LIBRARIES} util rt) 
+    target_link_libraries( ${bin} ${AG_LINK_LIBS}
+                           ${SQLite3_LIBRARIES}
+                           rootana ${ROOT_LIBRARIES})
+			   #${MIDAS_LIBRARIES} util rt) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

@@ -134,6 +134,14 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
+# SQLITE3
+find_package(SQLite3 REQUIRED)
+if(SQLite3_FOUND)
+  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
+else()
+  message(FATAL "SQLite3 NOT FOUND")
+endif()
+
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT

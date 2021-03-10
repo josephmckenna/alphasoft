@@ -3,12 +3,6 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alpha2lib)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(SQLite3 REQUIRED)
-if(SQLite3_FOUND)
-  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
-else()
-  message(FATAL "SQLite3 NOT FOUND")
-endif()
 
 # Include directories
 include_directories(include 
@@ -19,12 +13,11 @@ add_custom_target(
     sis_database ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/main.db
     )
-
 add_custom_command(
-    OUTPUT
-        #${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_SOURCE_DIR}/main.db    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
+     OUTPUT
+    #${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.db    # real header, we write.
+    #this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
     COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/build_db.sh 
     )
 
@@ -38,7 +31,6 @@ file(GLOB C_SOURCES src/*.c)
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
 target_include_directories(alpha2 PUBLIC include)
 target_include_directories(alpha2 PUBLIC ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(alpha2 ${SQLite3_LIBRARIES})
 
 add_dependencies(alpha2 sis_database)
 if(ROOTANA_SUBMOD)
