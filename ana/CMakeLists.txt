@@ -18,7 +18,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 if (BUILT_IN_ROOTANA)
   message(STATUS "Using ROOTANA submodule")
-  set(ROOTANA_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/rootana/include)
+  set(ROOTANA_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/rootana/include)
 else()
   find_package(ROOTANA)
   include_directories(${ROOTANA_INCLUDE_DIRS})
