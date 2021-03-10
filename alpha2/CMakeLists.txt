@@ -17,12 +17,11 @@ endmacro()
 include_directories(${CMAKE_BINARY_DIR})
 
 if (BUILT_IN_ROOTANA)
-  message(STATUS "Using ROOTANA submodule")
+  message(STATUS "Using ROOTANA submodule for A2")
 else()
   find_package(ROOTANA)
-  include_directories(include ${ROOTANA_INCLUDE_DIRS})
-  message(STATUS "ROOTANA headers: ${ROOTANA_INCLUDE_DIRS}")
 endif(BUILT_IN_ROOTANA)
+message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 
 #Find all *.modules files
 file(GLOB BINS *.modules)

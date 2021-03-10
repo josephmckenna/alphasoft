@@ -11,15 +11,9 @@ else()
 endif()
 
 # Include directories
-include_directories(include ${ROOT_INCLUDE_DIRS})
-if (BUILT_IN_ROOTANA)
-   include_directories(${CMAKE_SOURCE_DIR}/rootana/manalyzer)
-   include_directories(${CMAKE_SOURCE_DIR}/rootana/midasio)
-   include_directories(${CMAKE_SOURCE_DIR}/rootana/mvodb)
-   include_directories(${CMAKE_BINARY_DIR}/rootana/include)
-else ()
-   include_directories($ENV{ROOTANASYS}/include)
-endif (BUILT_IN_ROOTANA)
+include_directories(include 
+                    ${ROOT_INCLUDE_DIRS}
+                    ${ROOTANA_INCLUDE_DIRS})
 
 add_custom_target(
     sis_database ALL

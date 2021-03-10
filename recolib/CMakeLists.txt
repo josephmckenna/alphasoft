@@ -8,16 +8,12 @@ include_directories(${CMAKE_SOURCE_DIR}/agana)
 include_directories(${CMAKE_SOURCE_DIR}/analib/include)
 include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
-if (BUILT_IN_ROOTANA)
-   include_directories(${CMAKE_SOURCE_DIR}/rootana/include)
-else ()
-   include_directories($ENV{ROOTANASYS}/include)
-endif (BUILT_IN_ROOTANA)
+
 
 if (BUILD_AG_SIM)
   include_directories(${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 endif (BUILD_AG_SIM)
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(include)
 
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.hh)
 ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)

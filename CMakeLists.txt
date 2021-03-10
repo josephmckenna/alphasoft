@@ -153,6 +153,7 @@ if (BUILT_IN_ROOTANA)
    #Universal libraries (Include some flow and TSpill stuff)
    get_submodule(rootana)
    add_subdirectory(rootana)
+   set(ROOTANA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/rootana/manalyzer;${CMAKE_SOURCE_DIR}/rootana/midasio;${CMAKE_SOURCE_DIR}/rootana/mvodb;${CMAKE_BINARY_DIR}/rootana/include")
 endif(BUILT_IN_ROOTANA)
 
 add_subdirectory(analib)
