@@ -21,32 +21,32 @@ void TA2Plot::SetSISChannels(int runNumber)
 {
 
   TSISChannels *sisch = new TSISChannels(runNumber);
-  trig =           sisch->GetChannel("IO32_TRIG");
-  trig_nobusy =    sisch->GetChannel("IO32_TRIG_NOBUSY");
-  atom_or =        sisch->GetChannel("SIS_PMT_ATOM_OR");
-  Beam_Injection = sisch->GetChannel("SIS_AD");
-  Beam_Ejection =  sisch->GetChannel("SIS_AD_2");
-  CATStart =       sisch->GetChannel("SIS_PBAR_DUMP_START");
-  CATStop =        sisch->GetChannel("SIS_PBAR_DUMP_STOP");
-  RCTStart =       sisch->GetChannel("SIS_RECATCH_DUMP_START");
-  RCTStop =        sisch->GetChannel("SIS_RECATCH_DUMP_STOP");
-  ATMStart =       sisch->GetChannel("SIS_ATOM_DUMP_START");
-  ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
+  trig.insert(             std::pair<int,int>(runNumber, (int)sisch->GetChannel("IO32_TRIG")));
+  trig_nobusy.insert(      std::pair<int,int>(runNumber, (int)sisch->GetChannel("IO32_TRIG_NOBUSY")));
+  atom_or.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PMT_ATOM_OR")));
+  Beam_Injection.insert(   std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_AD")));
+  Beam_Ejection.insert(    std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_AD_2")));
+  CATStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PBAR_DUMP_START")));
+  CATStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PBAR_DUMP_STOP")));
+  RCTStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_RECATCH_DUMP_START")));
+  RCTStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_RECATCH_DUMP_STOP")));
+  ATMStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_ATOM_DUMP_START")));
+  ATMStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_ATOM_DUMP_STOP")));
 
 
   //Add all valid SIS channels to a list for later:
   SISChannels.clear();
-  if (trig>0)           SISChannels.push_back(trig);
-  if (trig_nobusy>0)    SISChannels.push_back(trig_nobusy);
-  if (atom_or>0)        SISChannels.push_back(atom_or);
-  if (Beam_Injection>0) SISChannels.push_back(Beam_Injection);
-  if (Beam_Ejection>0)  SISChannels.push_back(Beam_Ejection);
-  if (CATStart>0)       SISChannels.push_back(CATStart);
-  if (CATStop>0)        SISChannels.push_back(CATStop);
-  if (RCTStart>0)       SISChannels.push_back(RCTStart);
-  if (RCTStop>0)        SISChannels.push_back(RCTStop);
-  if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);
+  if (trig.find(runNumber)->second>0)           SISChannels.push_back(trig.find(runNumber)->second);
+  if (trig_nobusy.find(runNumber)->second>0)    SISChannels.push_back(trig_nobusy.find(runNumber)->second);
+  if (atom_or.find(runNumber)->second>0)        SISChannels.push_back(atom_or.find(runNumber)->second);
+  if (Beam_Injection.find(runNumber)->second>0) SISChannels.push_back(Beam_Injection.find(runNumber)->second);
+  if (Beam_Ejection.find(runNumber)->second>0)  SISChannels.push_back(Beam_Ejection.find(runNumber)->second);
+  if (CATStart.find(runNumber)->second>0)       SISChannels.push_back(CATStart.find(runNumber)->second);
+  if (CATStop.find(runNumber)->second>0)        SISChannels.push_back(CATStop.find(runNumber)->second);
+  if (RCTStart.find(runNumber)->second>0)       SISChannels.push_back(RCTStart.find(runNumber)->second);
+  if (RCTStop.find(runNumber)->second>0)        SISChannels.push_back(RCTStop.find(runNumber)->second);
+  if (ATMStart.find(runNumber)->second>0)       SISChannels.push_back(ATMStart.find(runNumber)->second);
+  if (ATMStop.find(runNumber)->second>0)        SISChannels.push_back(ATMStop.find(runNumber)->second);
   //cout <<"Trig:"<<trig<<endl;
   //cout <<"TrigNoBusy:"<<trig_nobusy<<endl;
   //cout <<"Beam Injection:"<<Beam_Injection<<endl;
@@ -334,19 +334,19 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          time=time*1000.;
       int Channel         = sisevent.SIS_Channel;
       int CountsInChannel = sisevent.Counts;
-      if (Channel == trig)
+      if (Channel == trig.find(sisevent.runNumber)->second)
          FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy)
+      else if (Channel == trig_nobusy.find(sisevent.runNumber)->second)
          FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or)
+      else if (Channel == atom_or.find(sisevent.runNumber)->second)
          FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection)
+      else if (Channel == Beam_Injection.find(sisevent.runNumber)->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection)
+      else if (Channel == Beam_Ejection.find(sisevent.runNumber)->second)
          AddEjection(time);
-      else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
+      else if (Channel == CATStart.find(sisevent.runNumber)->second || Channel == RCTStart.find(sisevent.runNumber)->second || Channel == ATMStart.find(sisevent.runNumber)->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
+      else if (Channel == CATStop.find(sisevent.runNumber)->second || Channel == RCTStop.find(sisevent.runNumber)->second || Channel == ATMStop.find(sisevent.runNumber)->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -755,17 +755,19 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
 
    //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
    //For all these copying A is fine.
-   BasePlot.trig           = PlotA.trig;
-   BasePlot.trig_nobusy    = PlotA.trig_nobusy;
-   BasePlot.atom_or        = PlotA.atom_or;
-   BasePlot.CATStart       = PlotA.CATStart;
-   BasePlot.CATStop        = PlotA.CATStop;
-   BasePlot.RCTStart       = PlotA.RCTStart;
-   BasePlot.RCTStop        = PlotA.RCTStop;
-   BasePlot.ATMStart       = PlotA.ATMStart;
-   BasePlot.ATMStop        = PlotA.ATMStop;
-   BasePlot.Beam_Injection = PlotA.Beam_Injection;
-   BasePlot.Beam_Ejection  = PlotA.Beam_Ejection;
+   
+   BasePlot.trig.insert(            PlotB.trig.begin(), PlotB.trig.end() );
+   BasePlot.trig_nobusy.insert(     PlotB.trig_nobusy.begin(), PlotB.trig_nobusy.end() );
+   BasePlot.atom_or.insert(         PlotB.atom_or.begin(), PlotB.atom_or.end() );
+   BasePlot.CATStart.insert(        PlotB.CATStart.begin(), PlotB.CATStart.end() );
+   BasePlot.CATStop.insert(         PlotB.CATStop.begin(), PlotB.CATStop.end() );
+   BasePlot.RCTStart.insert(        PlotB.RCTStart.begin(), PlotB.RCTStart.end() );
+   BasePlot.RCTStop.insert(         PlotB.RCTStop.begin(), PlotB.RCTStop.end() );
+   BasePlot.ATMStart.insert(        PlotB.ATMStart.begin(), PlotB.ATMStart.end() );
+   BasePlot.ATMStop.insert(         PlotB.ATMStop.begin(), PlotB.ATMStop.end() );
+   BasePlot.Beam_Injection.insert(  PlotB.Beam_Injection.begin(), PlotB.Beam_Injection.end() );
+   BasePlot.Beam_Ejection.insert(   PlotB.Beam_Ejection.begin(), PlotB.Beam_Ejection.end() );
+   
    BasePlot.ZMinCut        = PlotA.ZMinCut;
    BasePlot.ZMaxCut        = PlotA.ZMaxCut;
 
