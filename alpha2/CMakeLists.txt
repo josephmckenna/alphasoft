@@ -26,6 +26,8 @@ message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
+set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
+
 message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
@@ -48,14 +50,17 @@ foreach( LIST_FILE ${BINS} )
 
     if (BUILT_IN_ROOTANA)
        add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
+       add_dependencies(${bin} rootana)
     else ()
        add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     endif (BUILT_IN_ROOTANA)
     
+    add_dependencies(${bin} alpha2 agtpc analib GEM)
     
     #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/a2lib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/recolib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
@@ -64,7 +69,9 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
     target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
    
-    target_link_libraries( ${bin} alpha2 agtpc analib GEM
+    #target_link_libraries( ${bin} alpha2 agtpc analib GEM
+    target_link_libraries( ${bin} ${A2_LINK_LIBS}
+                           ${SQLite3_LIBRARIES}
                            rootana ${ROOT_LIBRARIES}
 			   ${MIDAS_LIBRARIES} util rt) 
     
