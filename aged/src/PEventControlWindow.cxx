@@ -31,33 +31,33 @@
 //-----------------------------------------------------------------------------
 // callbacks
 //
-static void fwdProc(Widget w, ImageData *data, caddr_t call_data)
+static void fwdProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     aged_next(data,1);
 }
 
-static void backProc(Widget w, ImageData *data, caddr_t call_data)
+static void backProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     aged_next(data,-1);
 }
 
-static void ffwdProc(Widget w, ImageData *data, caddr_t call_data)
+static void ffwdProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     aged_next(data,10);
 }
 
-static void fbackProc(Widget w, ImageData *data, caddr_t call_data)
+static void fbackProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     aged_next(data,-10);
 }
 
-static void filterProc(Widget w, ImageData *data, caddr_t call_data)
+static void filterProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     PEventControlWindow::SetEventFilter(data);
     PEventControlWindow::UpdateTriggerText(data);
 }
 
-static void offProc(Widget w, ImageData *data, caddr_t call_data)
+static void offProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     PEventControlWindow *pe_win = (PEventControlWindow *)data->mWindow[EVT_NUM_WINDOW];
     if (pe_win->GetTriggerFlag() != TRIGGER_OFF) {
@@ -65,7 +65,7 @@ static void offProc(Widget w, ImageData *data, caddr_t call_data)
     }
 }
 
-static void singleProc(Widget w, ImageData *data, caddr_t call_data)
+static void singleProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     PEventControlWindow *pe_win = (PEventControlWindow *)data->mWindow[EVT_NUM_WINDOW];
     if (pe_win->GetTriggerFlag() != TRIGGER_SINGLE) {
@@ -74,7 +74,7 @@ static void singleProc(Widget w, ImageData *data, caddr_t call_data)
     }
 }
 
-static void contProc(Widget w, ImageData *data, caddr_t call_data)
+static void contProc(Widget /*w*/, ImageData *data, caddr_t /*call_data*/)
 {
     PEventControlWindow *pe_win = (PEventControlWindow *)data->mWindow[EVT_NUM_WINDOW];
     if (pe_win->GetTriggerFlag() != TRIGGER_CONTINUOUS) {
@@ -83,7 +83,7 @@ static void contProc(Widget w, ImageData *data, caddr_t call_data)
     }
 }
 
-static void scaleProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+static void scaleProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct *call_data)
 {
     data->time_interval = call_data->value ;
     
@@ -260,7 +260,7 @@ void PEventControlWindow::CreateTriggerRadio(int num)
     trigger_radio[num] = but;
 }
 
-void PEventControlWindow::Listen(int message, void *dataPt)
+void PEventControlWindow::Listen(int message, void */*dataPt*/)
 {
     switch (message) {
     
