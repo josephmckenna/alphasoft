@@ -2,41 +2,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(aged)
 
-# Enforce out-of-source builds 
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
-if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
-endif(_insource) 
-
-# Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
-# The parameter is based on compiler ID as it's not standardised
-if ($ENV{CLICOLOR_FORCE})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-       add_compile_options (-fdiagnostics-color=always)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
-       add_compile_options (-fcolor-diagnostics)
-    endif ()
-endif ()
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit Minuit2)
-#link_libraries(${ROOT_LIBRARIES})
-include_directories(include ${ROOT_INCLUDE_DIRS})
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-
-find_package(ROOTANA)
-include_directories(${ROOTANA_INCLUDE_DIRS})
 
 find_package(X11 REQUIRED)
 if(X11_FOUND)
@@ -98,6 +63,7 @@ endif(FREETYPE_FOUND)
 #endif(JPEG_FOUND)
 
 
+add_compile_options(-Wall -Wextra -pedantic -Werror)
 
 if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
   add_definitions(-DANTI_ALIAS)
@@ -129,7 +95,7 @@ endif()
 
 target_include_directories(aged PUBLIC include) 
 #target_link_libraries(aged ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES} ${Fontconfig_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES})
-target_link_libraries(aged ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES} ${ROOT_LIBRARIES}) # ROOT libraries actually not necessary
+target_link_libraries(aged ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES})### ${ROOT_LIBRARIES}) # ROOT libraries actually not necessary
 
 install(TARGETS aged DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)

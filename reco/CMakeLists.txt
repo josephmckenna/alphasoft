@@ -2,53 +2,38 @@
 # It creates 3 main programs 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(agreco)
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit2 MathMore Spectrum )
-include_directories(${ROOT_INCLUDE_DIRS})
-include(${ROOT_USE_FILE})
-
-# Locate ROOTANA 
-find_package(ROOTANA)
-include_directories(${ROOTANA_INCLUDE_DIRS})
-
-
 # Include directories
-include_directories(${CMAKE_SOURCE_DIR}/agana)
-
-include_directories(${CMAKE_SOURCE_DIR}/libGEM/include)
-
+include_directories(${ROOT_INCLUDE_DIRS})
+if (BUILT_IN_ROOTANA)
+  message(STATUS "Using ROOTANA builtin")
+  include_directories(${CMAKE_SOURCE_DIR}/rootana/include)
+else()
+  include_directories(${ROOTANA_INCLUDE_DIRS})
+  message(STATUS "ROOTANA headers: ${ROOTANA_INCLUDE_DIRS}")
+endif(BUILT_IN_ROOTANA)
 include_directories(${CMAKE_SOURCE_DIR}/rootUtils/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
-
-include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
-include_directories(${CMAKE_SOURCE_DIR}/analib)
 include_directories(${CMAKE_SOURCE_DIR}/analib/include)
-include_directories(${CMAKE_SOURCE_DIR}/ana/include)
-
 include_directories(${CMAKE_SOURCE_DIR}/simulation/G4out/include)
+include_directories(include)
+
 
 set(sources ${PROJECT_SOURCE_DIR}/src/Histo.cc ${PROJECT_SOURCE_DIR}/src/Utils.cc)
 set(headers ${PROJECT_SOURCE_DIR}/include/Histo.hh ${PROJECT_SOURCE_DIR}/include/Utils.hh 
             ${PROJECT_SOURCE_DIR}/include/argparse.hh)
 
-link_libraries(agana rootUtils)
-if (BUILD_AG)
-   link_libraries(agtpc analib)
-endif (BUILD_AG)
-if (BUILD_A2)
-   link_libraries(agtpc alpha2)
-endif (BUILD_A2)
-link_libraries(${ROOT_LIBRARIES})
  
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
-target_link_libraries(agreco.exe ${ROOT_LIBRARIES})
+target_link_libraries(agreco.exe ${ROOT_LIBRARIES} analib agtpc)
+
 add_executable( MainEventTree.exe MainEventTree.cc 
                   ${sources} ${PROJECT_SOURCE_DIR}/src/ReadEventTree.cc
                   ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
-target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES})
+target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES} analib agtpc alpha2 rootUtils)
     
 install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
