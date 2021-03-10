@@ -134,6 +134,21 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
+# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
+#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
+#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
+if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
+    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
+        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+    endif()
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
+find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom)
+# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
+
 if (BUILT_IN_ROOTANA)
    #Universal libraries (Include some flow and TSpill stuff)
    get_submodule(rootana)
@@ -172,19 +187,6 @@ if (BUILD_A2_SIM)
    add_subdirectory(simulation/a2mc)
 endif(BUILD_A2_SIM)
 
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED)
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
 
 message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX} ")
 
