@@ -61,11 +61,11 @@ public:
     virtual void    AfterDrawing()  { }     // called after any drawing to screen
     virtual void    Resize()        { SetDirty(); }     // called before drawing if canvas was resized
     virtual void    SetScrolls()    { }     // set scrollbars of owner window
-    virtual void    SetToHome(int n=0) { }      // set image to home position
+    virtual void    SetToHome(int n=0) { n=n; }      // set image to home position
     
-    virtual void    HandleEvents(XEvent *event) { }
+    virtual void    HandleEvents(XEvent* /*event*/) { }
     virtual void    SetCursorForPos(int x, int y);
-    virtual void    Transform(Node *node, int num_nodes) { }
+    virtual void    Transform(Node* /*node*/, int /*num_nodes*/) { }
     virtual void    TransformHits()     { sLastTransformHits = this; }
 
     void            SetDirty(int flag=kDirtyNormal);

@@ -166,7 +166,7 @@ PPrintWindow::~PPrintWindow()
     ShowLabels(mSaveLabel);
 }
 
-void PPrintWindow::Listen(int message, void *dataPt)
+void PPrintWindow::Listen(int message, void*/*dataPt*/)
 {
     ImageData   *data;
     
@@ -485,13 +485,13 @@ void PPrintWindow::ContinuePrinting(PImageWindow *aWindow)
     }
 }
 
-void PPrintWindow::CancelProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::CancelProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     // delete the print dialog
     delete printWin;
 }
 
-void PPrintWindow::ToPrinterProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::ToPrinterProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
 #ifdef NO_FORK
     agedPrintf("Sorry, Print to device not supported by this version of Aged\x07\n");
@@ -501,43 +501,43 @@ void PPrintWindow::ToPrinterProc(Widget w, PPrintWindow *printWin, caddr_t call_
 #endif
 }
 
-void PPrintWindow::ToFileProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::ToFileProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     printWin->SetTarget(1);
 }
 
-void PPrintWindow::ColoursProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::ColoursProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     ImageData *data = printWin->GetData();
     printWin->SetColours(data->image_col ^ kWhiteBkg);
 }
 
-void PPrintWindow::GreyProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::GreyProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     ImageData *data = printWin->GetData();
     printWin->SetColours(data->image_col ^ kGreyscale);
 }
 
-void PPrintWindow::PrintLabelProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::PrintLabelProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     ImageData *data = printWin->GetData();
     printWin->ShowLabels(data->show_label ^ 0x01);
 }
 
 // print image to file or printer
-void PPrintWindow::PrintProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::PrintProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     printWin->DoPrint();
 }
 
-void PPrintWindow::WarnCancelProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::WarnCancelProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     // delete the warning dialog
     XtDestroyWidget(printWin->mWarnDialog);
     printWin->mWarnDialog = NULL;
 }
 
-void PPrintWindow::WarnOKProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::WarnOKProc(Widget /*w*/, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     XtDestroyWidget(printWin->mWarnDialog);
     printWin->mWarnDialog = NULL;
@@ -546,7 +546,7 @@ void PPrintWindow::WarnOKProc(Widget w, PPrintWindow *printWin, caddr_t call_dat
 }
 
 // the warning dialog was destroyed
-void PPrintWindow::WarnDestroyProc(Widget w, PPrintWindow *printWin, caddr_t call_data)
+void PPrintWindow::WarnDestroyProc(Widget w, PPrintWindow *printWin, caddr_t /*call_data*/)
 {
     // must verify that it is the current dialog being destroyed
     // (could a delayed callback from one we destroyed ourself already)
