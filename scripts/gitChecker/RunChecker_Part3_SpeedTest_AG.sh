@@ -43,8 +43,8 @@ if [[ $(hostname -s) = *runner* ]]; then
       echo "No elog number set or invalid (ELOG_NO)... not posting anything"
       exit
    fi
-
    cd ${AGRELEASE}/${GITHASH}/AGSpeedTest
+   touch elogMessage.txt
    if [ `ls *_SPEED_*.out | wc -l` -gt 0 ]; then
       callgrind_annotate *_SPEED_*.out &> annotatedSpeed.txt
       head -50 annotatedSpeed.txt &> elogMessage.txt
