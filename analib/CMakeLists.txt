@@ -1,8 +1,7 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(analib)
-
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Include directories
 include_directories(include)
@@ -16,9 +15,28 @@ file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include
 ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
+set(LIBRARY_SOURCES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer2.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TAnalysisReport.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoChannelName.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChrono_Event.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Dump.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Event.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerState.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx)
+if(BUILD_AG)
+  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx)
+endif()
+if(BUILD_A2)
+  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TA2Spill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/sqlite3.c)
+endif()
+#message("analib src: ${LIBRARY_SOURCES}")
+#file(GLOB _LIBRARY_SOURCES src/*.c src/*.cxx)
+#message("analib src was: ${_LIBRARY_SOURCES}")
+
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
-add_dependencies(analib gitinfo)
 add_dependencies(analib rootana)
 
 install(TARGETS analib DESTINATION lib)

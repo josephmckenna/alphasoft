@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alpha2)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
     list(FIND ${LIST} ${OLD_VALUE} OLD_VALUE_INDEX)
@@ -26,7 +26,11 @@ message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
-set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
+if(BUILD_AG)
+  set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
+else()
+  set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
+endif()
 
 message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
@@ -55,9 +59,10 @@ foreach( LIST_FILE ${BINS} )
        add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     endif (BUILT_IN_ROOTANA)
     
-    add_dependencies(${bin} alpha2 agtpc analib GEM)
-    
+    #add_dependencies(${bin} alpha2 agtpc analib GEM)
+    add_dependencies(${bin} alpha2 analib GEM)
     #add_dependencies(${bin} gitinfo)
+
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/a2lib/include)
@@ -69,7 +74,6 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
     target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
    
-    #target_link_libraries( ${bin} alpha2 agtpc analib GEM
     target_link_libraries( ${bin} ${A2_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            rootana ${ROOT_LIBRARIES}

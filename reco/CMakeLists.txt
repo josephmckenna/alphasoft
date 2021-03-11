@@ -24,8 +24,11 @@ set(headers ${PROJECT_SOURCE_DIR}/include/Histo.hh ${PROJECT_SOURCE_DIR}/include
 
 # Libraries needed
 set(AGRECO_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so)
-set(AGTREE_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/rootUtils/librootUtils.so)
-
+if(BUILD_A2)
+  set(AGTREE_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/rootUtils/librootUtils.so)
+else()
+  set(AGTREE_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/rootUtils/librootUtils.so)
+endif()
 
 # Create the targets
 add_executable( agreco.exe agreco.cc ${sources} ${headers} )
@@ -33,9 +36,10 @@ add_dependencies(agreco.exe analib agtpc)
 target_link_libraries(agreco.exe ${ROOT_LIBRARIES} ${AGRECO_LINK_LIBS})
 
 add_executable( MainEventTree.exe MainEventTree.cc 
-                  ${sources} ${PROJECT_SOURCE_DIR}/src/ReadEventTree.cc
-                  ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
-add_dependencies(MainEventTree.exe analib agtpc alpha2 rootUtils)
+                ${sources} ${PROJECT_SOURCE_DIR}/src/ReadEventTree.cc
+                ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
+#add_dependencies(MainEventTree.exe analib agtpc alpha2 rootUtils)
+add_dependencies(MainEventTree.exe analib agtpc rootUtils)
 target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES} ${AGTREE_LINK_LIBS})
 
     
