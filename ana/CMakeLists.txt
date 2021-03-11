@@ -26,7 +26,7 @@ message(STATUS "ROOTANA headers for AG: ${ROOTANA_INCLUDE_DIRS} ")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
-set(AG_LINK_LIBS ${CMAKE_BINARY_DIR}/agana/libagana.a ${CMAKE_BINARY_DIR}/aged/libaged.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so)
+set(AG_LINK_LIBS agana aged agtpc analib)
 
 #message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
