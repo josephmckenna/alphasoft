@@ -30,10 +30,15 @@
 
 #include "G4VFastSimulationModel.hh"
 #include "G4ThreeVector.hh"
-#include "TPCSD.hh"
+#include "TPCSD.hh" //PW - what is this?
 
 #include "SignalsGenerator.hh"
 
+//#SolidTube.hh //Not included
+//#ComponentVoxel.hh //Not included
+//#MediumMagboltz.hh //Not included
+//#GeometrySimple.hh //Not included
+//#GasBoxSD.hh //Not included
 
 class G4VPhysicalVolume;
 class DetectorConstruction;
