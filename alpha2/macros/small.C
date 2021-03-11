@@ -46,12 +46,18 @@ void small()
 
 
     TA2Plot* basic1 = new TA2Plot();
-    basic1->AddTimeGate(45000,0,350);
+    basic1->AddTimeGate(51965,0,350);
     basic1->LoadData();
-    BasicCanvas1=basic1->DrawCanvas("Example plot of run 45000");
+    BasicCanvas1=basic1->DrawCanvas("Example plot of run 51965");
     TA2Plot* basic2 = new TA2Plot();
     basic2->AddTimeGate(57181,0,350);
     basic2->LoadData();
     BasicCanvas2=basic2->DrawCanvas("Example plot of run 57181");
-    TA2Plot basicsum = &(*basic1 + *basic2);
+    TA2Plot basicsum = (*basic1 + *basic2);
+    basicsum.DrawCanvas("addition");
+
+    basic1->PrintFull();
+    basic2->PrintFull();
+    basicsum->PrintFull();
+
 }
