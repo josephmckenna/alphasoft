@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(aged)
 
+find_package(ROOT REQUIRED)
 
 find_package(X11 REQUIRED)
 if(X11_FOUND)
@@ -52,8 +53,8 @@ if(ROOTANA_SUBMOD)
   add_dependencies(aged rootana)
 endif()
 
-target_include_directories(aged PUBLIC include) 
-target_link_libraries(aged ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES})
+target_include_directories(aged PUBLIC include ${X11_INCLUDE_DIR} ) 
+target_link_libraries(aged PUBLIC ${ROOT_LIBRARIES} ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES})
 
 install(TARGETS aged DESTINATION lib)
 file(GLOB HEADER_FILES include/*.h)
