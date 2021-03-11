@@ -28,13 +28,13 @@ file(GLOB BINS *.modules)
 
 set(AG_LINK_LIBS ${CMAKE_BINARY_DIR}/agana/libagana.a ${CMAKE_BINARY_DIR}/aged/libaged.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so)
 
-message(Binaries: ${BINS})
+#message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
-    message(Binary: ${bin})
+    message("agana binary: " ${bin})
     
-    message(List file: ${LIST_FILE})
+    #message(List file: ${LIST_FILE})
     execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
                      OUTPUT_VARIABLE MODULES )
     #Clean up any strange formatting choices
