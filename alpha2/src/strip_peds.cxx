@@ -120,7 +120,6 @@ public:
 		  {
 			  //printf("Strip_ADC has size %d \n", Strip_ADCs.size());
            Strip_ADCs.push_back(new TStripPed(fFlags->nPedBins, fFlags->pedBinWidth));
-			  
 		  }
 	  }
 	  //Strip_ADCs = &vec;
