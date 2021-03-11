@@ -39,6 +39,7 @@ option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 option(BUILD_A2_SIM "Build A2 Simulation" OFF)
 option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
+option(WARNINGS_ALL "Enable gcc warnings" OFF)
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -124,6 +125,10 @@ if (BUILD_A2_SIM)
 else()
    file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "//#define BUILD_A2_SIM\n")
 endif(BUILD_A2_SIM)
+
+if(WARNINGS_ALL)
+  add_compile_options(-Wall -Wextra -pedantic)
+endif(WARNINGS_ALL)
 
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
 #file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")

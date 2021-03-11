@@ -31,8 +31,6 @@ else()
   message(FATAL "Freetype not found")
 endif(FREETYPE_FOUND)
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)
-
 if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
   add_definitions(-DANTI_ALIAS)
 else()

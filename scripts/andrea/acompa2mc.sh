@@ -1,9 +1,14 @@
 #!/bin/bash
 
+if [ -z ${AGRELEASE+x} ]; then 
+    . agconfig.sh
+else
+    echo "main folder: $AGRELEASE"
+fi
 cd $AGRELEASE
 
-#INST_DIR=$HOME/packages
-INST_DIR=$AGRELEASE/simulation
+INST_DIR=$HOME/packages
+#INST_DIR=$AGRELEASE/simulation
 LIB=lib64  # in some systems this is required instead of LIB=lib (ubuntu?)
 
 VGM=$INST_DIR/vgm/install
@@ -78,9 +83,9 @@ cd build
 cmake --version | head -1
 echo "Configuring CMake"
 
-#cmake -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DGeant4VMC_DIR=$G4VMC/$LIB/Geant4VMC-$G4VMCVER -DMTRoot_DIR=$G4VMC/$LIB/MTRoot-$G4VMCVER -DVGM_DIR=$VGM/$LIB/VGM-$VGMVER -DVMC_DIR=$VMC/$LIB/VMC-$VMCVER -DCMAKE_INSTALL_PREFIX=../bin ..
-cmake -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DGeant4VMC_DIR=$G4VMC/$LIB/Geant4VMC-$G4VMCVER -DVGM_DIR=$VGM/$LIB/VGM-$VGMVER -DVMC_DIR=$VMC/$LIB/VMC-$VMCVER -DCMAKE_INSTALL_PREFIX=../bin ..
-#echo "cmake -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DGeant4VMC_DIR=$G4VMC/$LIB/Geant4VMC-$G4VMCVER -DVGM_DIR=$VGM/$LIB/VGM-$VGMVER -DVMC_DIR=$VMC/$LIB/VMC-$VMCVER -DCMAKE_INSTALL_PREFIX=../bin .."
+set -x
+cmake -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DGeant4VMC_DIR=$G4VMC/$LIB/Geant4VMC-$G4VMCVER -DVGM_DIR=$VGM/$LIB/VGM-$VGMVER -DVMC_DIR=$VMC/$LIB/VMC-$VMCVER -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin ..
+set +x
 
 echo "Ready to build and install?"
 echo "cmake --build . --target install -- -j`nproc --ignore=2`"
