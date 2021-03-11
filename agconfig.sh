@@ -15,7 +15,6 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
 
-
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
