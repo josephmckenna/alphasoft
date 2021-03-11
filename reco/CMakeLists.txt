@@ -23,11 +23,11 @@ set(headers ${PROJECT_SOURCE_DIR}/include/Histo.hh ${PROJECT_SOURCE_DIR}/include
             ${PROJECT_SOURCE_DIR}/include/argparse.hh)
 
 # Libraries needed
-set(AGRECO_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so)
+set(AGRECO_LINK_LIBS agtpc analib)
 if(BUILD_A2)
-  set(AGTREE_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/rootUtils/librootUtils.so)
+  set(AGTREE_LINK_LIBS analib alpha2 rootUtils)
 else()
-  set(AGTREE_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/rootUtils/librootUtils.so)
+  set(AGTREE_LINK_LIBS agtpc analib rootUtils)
 endif()
 
 # Create the targets

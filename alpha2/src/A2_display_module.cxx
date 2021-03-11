@@ -15,7 +15,6 @@
 #include "TAlphaDisplay.h"
 
 #include "TStoreEvent.hh"
-#include "X11/Intrinsic.h"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 

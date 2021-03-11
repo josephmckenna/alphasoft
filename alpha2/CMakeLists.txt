@@ -26,19 +26,17 @@ message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
-if(BUILD_AG)
-  set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
-else()
-  set(A2_LINK_LIBS ${CMAKE_BINARY_DIR}/a2lib/libalpha2.so ${CMAKE_BINARY_DIR}/analib/libanalib.so ${CMAKE_BINARY_DIR}/libGEM/libGEM.so)
+if(BUILD_A2)
+  set(A2_LINK_LIBS alpha2 analib GEM)
 endif()
 
-message(Binaries: ${BINS})
+#message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
-    message(Binary: ${bin})
+    message("alpha2 binary: " ${bin})
     
-    message(List file: ${LIST_FILE})
+    #message(List file: ${LIST_FILE})
     execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
                      OUTPUT_VARIABLE MODULES )
     #Clean up any strange formatting choices
@@ -77,7 +75,7 @@ foreach( LIST_FILE ${BINS} )
     target_link_libraries( ${bin} ${A2_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            rootana ${ROOT_LIBRARIES}
-			   ${MIDAS_LIBRARIES} util rt) 
+			   ${MIDAS_LIBRARIES} util) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

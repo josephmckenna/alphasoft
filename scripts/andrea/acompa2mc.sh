@@ -9,7 +9,8 @@ cd $AGRELEASE
 
 INST_DIR=$HOME/packages
 #INST_DIR=$AGRELEASE/simulation
-LIB=lib64  # in some systems this is required instead of LIB=lib (ubuntu?)
+#LIB=lib64  # in some systems this is required instead of
+LIB=lib
 
 VGM=$INST_DIR/vgm/install
 VGMVER=4.9.0
@@ -70,11 +71,11 @@ prereq() {
 
 #prereq
 
-#DEP_LIST=($G4VMC/$LIB/Geant4VMC-$G4VMCVER $G4VMC/$LIB/MTRoot-$G4VMCVER $VGM/$LIB/VGM-$VGMVER $VMC/$LIB/VMC-$VMCVER)
-#for DEP in ${DEP_LIST[*]}; do
-#    printf "   %s\n" $DEP
-#    ll $DEP
-#done
+DEP_LIST=($G4VMC/$LIB/Geant4VMC-$G4VMCVER $G4VMC/$LIB/MTRoot-$G4VMCVER $VGM/$LIB/VGM-$VGMVER $VMC/$LIB/VMC-$VMCVER)
+for DEP in ${DEP_LIST[*]}; do
+    printf "   %s\n" $DEP
+    ll $DEP
+done
 
 rm -rf build
 mkdir -p build
