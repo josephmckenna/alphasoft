@@ -39,6 +39,7 @@ INCS += -I../ana/include
 INCS += -I../agana
 INCS += -I../analib/include
 INCS += -I../aged/include
+INCS += -I../libGEM/include
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
 INCS += -I../alpha2/include
@@ -66,7 +67,7 @@ $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc -L../libGEM -lGEM
 #USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo

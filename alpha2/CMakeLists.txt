@@ -1,6 +1,8 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(alphasoft)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
@@ -22,21 +24,6 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for gitinfo.h file
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_custom_target(
-    a2gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
-    )
-
-add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
-    )
 
 # Directories
 add_subdirectory(src)
@@ -96,21 +83,13 @@ if(MIDAS_FOUND)
 endif()
 
 # Include directories
-include_directories(include)
 
-#Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
-#...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
 
-#AG compatability includes
-#include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/ana/include)
-include_directories(${ROOT_INCLUDE_DIRS})
-
-include_directories(include $ENV{ROOTANASYS}/include)
-
+if (BUILT_IN_ROOTANA)
+   include_directories(include ${CMAKE_SOURCE_DIR}/rootana/include)
+else ()
+   include_directories(include $ENV{ROOTANASYS}/include)
+endif (BUILT_IN_ROOTANA)
 
 message(${ROOT_INCLUDE_DIRS})
 
@@ -139,19 +118,21 @@ foreach( LIST_FILE ${BINS} )
     
     add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} a2gitinfo)
     # Make sure YourLib is linked to each app
-    target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
-    if (BUILD_AG)
-       target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
-    endif(BUILD_AG)
-    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    #link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib $ENV{AGRELEASE}/recolib)
-    link_directories($ENV{AGRELEASE}/alpha2 $ENV{AGRELEASE}/analib )
+    target_include_directories(
+        ${bin} 
+        PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/analib/include
+        ${CMAKE_SOURCE_DIR}/libGEM/include
+        ${CMAKE_SOURCE_DIR}/a2lib/include
+        ${CMAKE_SOURCE_DIR}/ana/include
+        ${ROOT_INCLUDE_DIRS}
+    )
+    
     find_library(LIBXM Xm)
     find_library(LIBXT Xt)
     find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
+    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} GEM)
     install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 endforeach( LIST_FILE ${BINS} )

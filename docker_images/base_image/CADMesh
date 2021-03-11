@@ -1,0 +1,15 @@
+FROM jmckenna/alphadocker:garfieldpp
+WORKDIR /
+RUN yum install tetgen tetgen-devel assimp-devel -y
+RUN git clone --depth 1 https://github.com/josephmckenna/CADMesh.git
+RUN mkdir build_CADMesh
+WORKDIR build_CADMesh
+RUN cmake3 -DCMAKE_INSTALL_PREFIX=/CADMesh_build  ../CADMesh
+RUN make -j4
+RUN make install
+
+ENV CMAKE_PREFIX_PATH /CADMesh_build:${CMAKE_PREFIX_PATH}
+ENV LD_LIBRARY_PATH /CADMesh_build:${LD_LIBRARY_PATH}
+
+WORKDIR /
+CMD /bin/bash

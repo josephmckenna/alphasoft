@@ -121,6 +121,7 @@ public:
          gClock[i]=0;
          NOverflows[i]=0;
          LastTime[i]=0;
+         SyncChannel[i]=-1;
          FirstSyncTime[i]=-1;
       }
 

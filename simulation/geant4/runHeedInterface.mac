@@ -30,7 +30,7 @@
 ####################################
 ############# Run Setup ############
 ####################################
-/AGTPC/setRunName HeedInterface_emstd0_driftRKF_testpar2
+/AGTPC/setRunName HeedInterface_emstd0_driftRKF
 /random/setSeeds 18061985 10081985
 /run/initialize
 ####################################
@@ -39,7 +39,7 @@
 ####################################
 ######### Primary Generator ########
 ####################################
-/AGTPC/setRunType 5
+/AGTPC/setRunType 66
 
 ####################################
 ############## FIRE! ###############

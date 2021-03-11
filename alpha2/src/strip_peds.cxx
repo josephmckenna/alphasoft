@@ -22,13 +22,14 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TTree.h"
+#include "TBranch.h"
 
 
 #include "manalyzer.h"
 #include "midasio.h"
 
 #include "TSettings.h"
-
+#include "ALPHA2SettingsDatabase.h"
 #include "SiMod.h"
 #include "UnpackVF48.h"
 #include "A2Flow.h"
@@ -127,9 +128,7 @@ public:
 	  
 
       // load the sqlite3 db
-      char dbName[255]; 
-      sprintf(dbName,"%s/a2lib/main.db",getenv("AGRELEASE"));
-      SettingsDB = new TSettings(dbName,runinfo->fRunNo);      
+      SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
       const int m=fFlags->ProcessVF48;
       {
          // extract VF48 sampling parameters from sqlite db
@@ -250,11 +249,6 @@ public:
 #endif
          return flow;
       }
-      
-#ifdef MANALYZER_PROFILER
-      START_TIMER
-#endif
-
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {

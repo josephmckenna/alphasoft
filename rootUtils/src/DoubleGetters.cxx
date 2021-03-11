@@ -4,7 +4,7 @@
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
    Double_t OfficialTime;
-   TTree* t=Get_Chrono_Tree(runNumber,Board,CHRONO_CLOCK_CHANNEL,OfficialTime);
+   TTree* t=Get_Chrono_Tree(runNumber,{Board,CHRONO_CLOCK_CHANNEL},OfficialTime);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(t->GetEntries()-1);
@@ -52,7 +52,7 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
 {
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,Board,Channel,official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,{Board,Channel},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    if (repetition+offset>t->GetEntries()) return -1;
@@ -172,6 +172,41 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
   delete store_event;
   return runtime;
 }
+#endif
+
+#if BUILD_A2
+Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
+{
+   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
+   if (!SISReader->GetTree())
+      return -1.;
+   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+   SISReader->SetEntry(SISReader->GetEntries(false) -1 );
+   double t = SISEvent->GetRunTime();
+   return t;   
+}
+Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
+{
+      //More performance is maybe available if we use DataFrames...
+   TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
+   if (!SVDReader->GetTree())
+      return -1.;
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
+   SVDReader->SetEntry(SVDReader->GetEntries(false) -1 );
+   double t = SVDEvent->t;
+   return t;
+}
+Double_t GetA2TotalRunTime(Int_t runNumber)
+{
+   double SISTime = GetTotalRunTimeFromSIS(runNumber);
+   double SVDTime = GetTotalRunTimeFromSVD(runNumber);
+   if (SISTime > SVDTime)
+      return SISTime;
+   else
+      return SVDTime;
+}
+
+
 #endif
 
 /* emacs

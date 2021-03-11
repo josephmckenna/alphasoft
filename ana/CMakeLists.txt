@@ -1,6 +1,8 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(alphasoft)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 
 # Version numbering
 set (basicApp_VERSION_MAJOR 1)
@@ -31,27 +33,12 @@ if ($ENV{CLICOLOR_FORCE})
        add_compile_options (-fcolor-diagnostics)
     endif ()
 endif ()
-#Extra path for gitinfo.h file
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_custom_target(
-    gitinfo ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__header.h
-    )
-
-add_custom_command(
-    OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/__header.h  # fake! ensure we run!
-        ${CMAKE_CURRENT_BINARY_DIR}/GitInfo.h    # real header, we write.
-    # this command must generate: ${CMAKE_CURRENT_BINARY_DIR}/header.h
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/GitInfo.sh ${CMAKE_CURRENT_BINARY_DIR}
-    )
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
 
 find_package(ROOTANA)
 include_directories(include ${ROOTANA_INCLUDE_DIRS})
-
-# Directories
-add_subdirectory(src)
+message(STATUS "ROOTANA headers: ${ROOTANA_INCLUDE_DIRS}")
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
@@ -61,12 +48,15 @@ if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
         list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
     endif()
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-message(${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
 # Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit2 XMLParser Spectrum)
+find_package(ROOT REQUIRED COMPONENTS MathMore Minuit2 XMLParser Spectrum)
+include_directories(${ROOT_INCLUDE_DIRS})
 link_libraries(${ROOT_LIBRARIES})
+# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
 
 
 
@@ -74,50 +64,34 @@ find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})
 
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
 
 # MIDAS -- live analyzer
 set(MIDASSYS "" CACHE PATH "")
 if(MIDASSYS STREQUAL "")
     set(MIDASSYS "$ENV{MIDASSYS}")
+#    message(STATUS "Midas ${MIDASSYS}")
+#else()
+#    set(MIDAS_FOUND TRUE)
+#    message(STATUS "Midas FOUND")
+#    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
+#    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
 endif()
-if(MIDASSYS STREQUAL "")
-    find_package(Midas QUIET)
-else()
-    set(MIDAS_FOUND TRUE)
-    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
-    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
-endif()
+find_package(Midas QUIET)
 if(MIDAS_FOUND)
-  message(STATUS "MIDAS found")
+  set(MIDASSYS "$ENV{MIDASSYS}")
+  message(STATUS "MIDAS found ${MIDASSYS}")
   message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
   message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
   link_libraries(${MIDAS_LIBRARIES})
-  link_directories($ENV{MIDASSYS}/lib)
+  link_directories(${MIDAS_LIBRARY_DIRS})
 endif()
 
-# Include directories
-include_directories($ENV{AGRELEASE}/agana)
-include_directories(include)
-include_directories($ENV{AGRELEASE}/recolib/include)
-include_directories($ENV{AGRELEASE}/analib/include)
-include_directories($ENV{AGRELEASE}/aged/include)
-include_directories(${ROOT_INCLUDE_DIRS})
 
-link_directories(${bin} $ENV{AGRELEASE}/analib)
+include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
+include_directories(${CMAKE_SOURCE_DIR}/alpha2/include)
+link_directories(${CMAKE_SOURCE_DIR}/analib)
 find_library(LIBXM Xm)
 find_library(LIBXT Xt)
-
-
-#Analysis Report needs A2Flow in alpha2...
-include_directories($ENV{AGRELEASE}/alpha2/include)
-#...which then needs UnpackVF48 in a2lib
-include_directories($ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{ROOTANASYS}/include)
-
-
-message(${ROOT_INCLUDE_DIRS})
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -145,32 +119,32 @@ foreach( LIST_FILE ${BINS} )
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_module.cxx" 
-        "$ENV{AGRELEASE}/agana/unpack_module.cxx"
+        "../agana/unpack_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/pwb_module.cxx" 
-        "$ENV{AGRELEASE}/agana/pwb_module.cxx"
+        "../agana/pwb_module.cxx"
     )
 
     replace_list_item(
         MODULES 
         "${CMAKE_CURRENT_SOURCE_DIR}/src/adc_module.cxx" 
-        "$ENV{AGRELEASE}/agana/adc_module.cxx"
+        "../agana/adc_module.cxx"
     )
 
     #message(Modules: ${MODULES})
+    if (BUILT_IN_ROOTANA)
+       add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
+    else ()
+       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
+    endif (BUILT_IN_ROOTANA)
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
     
-    add_dependencies(${bin} gitinfo)
+    #add_dependencies(${bin} gitinfo)
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC agana)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/recolib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/analib/include)
-    target_include_directories(${bin} PUBLIC $ENV{AGRELEASE}/aged/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
     link_directories(${bin} analib)
 
@@ -178,5 +152,5 @@ foreach( LIST_FILE ${BINS} )
     find_library(LIBXT Xt)
     target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} Minuit2 agana analib agtpc aged rootana ${ROOTANALIBS} ) 
     
-    install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

@@ -23,13 +23,6 @@ Utils::Utils(double B):fHisto(),pmap(),
                        fMagneticField(B),tmax(4500.)
 {
    BookG4Histos();
-
-   csig = new TCanvas("csig","csig",2400,2400);
-   csig->Divide(2,2);
-   
-   creco = new TCanvas("creco","creco",2400,2400);
-   creco->Divide(2,2);
-
    MakeCanvases();
    std::cout<<"Make the canvases but also BookG4Histos"<<std::endl; //PW
 }
@@ -37,11 +30,15 @@ Utils::Utils(double B):fHisto(),pmap(),
 
 Utils::Utils(std::string fname, double B):fHisto(fname),pmap(),
                                           fMagneticField(B),tmax(4500.)
-{}
+{
+   std::cout<<"Utils::Utils(std::string fname, double B)"<<std::endl;
+}
 
 
 void Utils::MakeCanvases()
 {
+   std::cout<<"Utils::MakeCanvases()"<<std::endl;
+   
    csig = new TCanvas("csig","csig",2400,2400);
    csig->Divide(2,2);
    
@@ -203,6 +200,23 @@ void Utils::FillRecoPointsHistos(const TObjArray* points)
          fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
       }
    std::cout<<"FillRecoPointsHistos"<<std::endl; //PW
+}
+
+void Utils::FillRecoPointsHistos(std::vector<TSpacePoint*>* points)
+{  
+   int row,sec;
+   for(size_t p=0; p<points->size(); ++p)
+      {
+         TSpacePoint* ap = (TSpacePoint*) points->at(p);
+         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
+         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
+         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
+         pmap.get(ap->GetPad(),sec,row);
+         fHisto.FillHisto("hOccPadpoints",row,sec);
+         
+         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
+         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
+      }
 }
 
 void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
@@ -606,6 +620,7 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
          grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
          gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
       }
+   if( Npoints==0 ) as=false;
    if( as )
       {
          c->cd(1);
@@ -859,11 +874,13 @@ TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
    std::string htitle(";t [ns];H [a.u.]");
    TH1D* h = new TH1D(hname.str().c_str(),htitle.c_str(),411,0.,16.*411.);
    h->SetStats(kFALSE);
+   if(sig) {
    for(auto s: *sig)
       {
          if( s.t < 16. ) continue;
          h->Fill(s.t,s.height);
       }
+   }
    return h;
       std::cout<<"Plot signals"<<std::endl; //PW
 }
@@ -1278,6 +1295,13 @@ void Utils::WriteSettings(TObjString* sett)
    std::cout<<"Utils::WriteSettings AnaSettings to rootfile... "<<std::endl;
    int status = fHisto.WriteObject(sett,"ana_settings");
    if( status > 0 ) std::cout<<"Utils: Write AnaSettings Success!"<<std::endl;
+}
+
+void Utils::WriteHisto()
+{
+   std::cout<<"Utils::WriteHisto histograms to rootfile... "<<std::endl;
+   int status = fHisto.Save();
+   if( status > 0 ) std::cout<<"Utils: Write Histograms ok: "<<status<<std::endl;
 }
 
 // ===============================================================================================

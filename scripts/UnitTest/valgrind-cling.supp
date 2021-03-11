@@ -1,9 +1,0 @@
-# Additional valgrind suppression file for ROOT-cling.
-#
-
-{
-    ignore_cling_leaks
-    Memcheck:Leak
-    ...
-    obj:*/lib*/libCling.so
-}
