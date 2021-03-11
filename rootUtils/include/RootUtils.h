@@ -16,6 +16,8 @@
 #include "TSpill.h"
 #include "TA2Spill.h"
 
+#include "TAnalysisReport.h"
+
 
 //Root Utils headers:
 

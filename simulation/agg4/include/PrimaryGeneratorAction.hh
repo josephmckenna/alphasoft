@@ -33,13 +33,13 @@
 
 #ifndef PrimaryGeneratorAction_h
 #define PrimaryGeneratorAction_h 1
+#include "TRandom3.h"
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
 
 #include "Randomize.hh"
 
-#include "TRandom3.h"
 
 #include <fstream>
 #include <vector>
@@ -63,7 +63,7 @@ public:
   virtual ~PrimaryGeneratorAction();
 
   inline void SetType(G4int t)       {fType=t;}
-  inline void SetGrav(G4int g)       {fGravDir=g;}
+  inline void SetGrav(G4int _g)       {fGravDir=_g;}
   inline void SetZcenter(G4double z) {fZcenter=z;}
   inline void SetZlength(G4double z) {fZlength=z;}
 

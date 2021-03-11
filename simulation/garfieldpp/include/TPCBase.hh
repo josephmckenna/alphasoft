@@ -14,8 +14,8 @@ public:
 
    TPCBase(bool proto=false);
 
-   void GetAnodePosition(int i, double &x_R, double &y_phi, bool mm=false, bool polar=false);
-   void GetWirePosition(int i, double &x_R, double &y_phi, bool mm=false, bool polar=false);
+   void GetAnodePosition(int i, double &x_R, double &y_phi, bool _mm=false, bool polar=false);
+   void GetWirePosition(int i, double &x_R, double &y_phi, bool _mm=false, bool polar=false);
    void GetPadPosition(int i, double &z); // no phi segmentation
    void GetPadPosition(int i, double &z, double &phi);
    void GetPadPosition(int i,int s, double &z, double &phi);
@@ -27,7 +27,7 @@ public:
    std::pair<int,int> Index2SectorAndPad(const int padindex);
 
    struct electrode{
-      electrode(short s, int ind, double g = 1.){ sec = s; i = ind; gain = g;};
+      electrode(short _sec, int ind, double _gain = 1.){ sec = _sec; i = ind; gain = _gain;};
       short sec;  // for anodes sec=0 for top, sec=1 for bottom
       int i;
       double gain;
@@ -53,25 +53,25 @@ public:
    void SetPhi0(const double phi0_){ phi0 = phi0_; };
    inline double GetPhi0() const { return phi0; };
 
-   inline double GetCathodeRadius(bool mm=false) const
-   { if(mm) return CathodeRadius*10.;
+   inline double GetCathodeRadius(bool _mm=false) const
+   { if(_mm) return CathodeRadius*10.;
       else return CathodeRadius; }
-   inline double GetFieldWiresRadius(bool mm=false) const
-   { if(mm) return FieldWiresR*10.;
+   inline double GetFieldWiresRadius(bool _mm=false) const
+   { if(_mm) return FieldWiresR*10.;
       else return FieldWiresR; }
-   inline double GetAnodeWiresRadius(bool mm=false) const
-   { if(mm) return AnodeWiresR*10.;
+   inline double GetAnodeWiresRadius(bool _mm=false) const
+   { if(_mm) return AnodeWiresR*10.;
       else return AnodeWiresR; }
-   inline double GetROradius(bool mm=false) const
-   { if(mm) return ROradius*10.;
+   inline double GetROradius(bool _mm=false) const
+   { if(_mm) return ROradius*10.;
       else return ROradius;}
    inline int GetNumberOfFieldWires() const { return NfieldWires; }
    inline int GetNumberOfAnodeWires() const { return NanodeWires; }
-   inline double GetHalfLengthZ(bool mm=false) const
-   { if(mm) return HalfLengthZ*10.;
+   inline double GetHalfLengthZ(bool _mm=false) const
+   { if(_mm) return HalfLengthZ*10.;
       else return HalfLengthZ; }
-   inline double GetFullLengthZ(bool mm=false) const
-   { if(mm) return FullLengthZ*10.;
+   inline double GetFullLengthZ(bool _mm=false) const
+   { if(_mm) return FullLengthZ*10.;
       else return FullLengthZ; }
 
    inline double GetAnodePitch() const { return AnodePitch; }
@@ -84,16 +84,16 @@ public:
 
    inline int GetChargeTrapRadius() const { return trap_radius; } // garfield++ use
 
-   inline double GetPadPitchZ(bool mm=false) const
-   { if(mm) return PadSideZ*10.;
+   inline double GetPadPitchZ(bool _mm=false) const
+   { if(_mm) return PadSideZ*10.;
       else return PadSideZ; }
    inline int GetNumberPadsColumn() const { return npads; }
    inline int GetNumberPadsRow() const { return npadsec; }
    inline double GetPadPitchPhi() const { return PadWidthPhi; }
    inline int GetNumberOfPads() const { return totpads; }
 
-   inline double GetTrapRadius(bool mm=false) const
-   { if(mm) return TrapR*10.;
+   inline double GetTrapRadius(bool _mm=false) const
+   { if(_mm) return TrapR*10.;
       else return TrapR; }
 
    static TPCBase* TPCBaseInstance();

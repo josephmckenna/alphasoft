@@ -11,7 +11,9 @@
 #include "TFitHelix.hh"
 #include "TFitVertex.hh"
 
+#ifdef BUILD_AG_SIM
 #include "TMChit.hh"
+#endif
 
 #include <TDirectory.h>
 
@@ -293,6 +295,7 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
+#ifdef BUILD_AG_SIM
 void Reco::AddMChits( const TClonesArray* points )
 {
    int Npoints = points->GetEntries();
@@ -326,6 +329,7 @@ void Reco::AddMChits( const TClonesArray* points )
          fPointsArray.push_back(point);
       }
 }
+#endif
 
 int Reco::FindTracks(finderChoice finder)
 {
@@ -530,6 +534,7 @@ int Reco::RecVertex(TFitVertex* Vertex)
 void Reco::Reset()
 {
    if(pattrec) delete pattrec;
+   pattrec=0;
    
    //   std::cout<<" Reco::Reset() Delete Helix"<<std::endl;
    for (size_t i=0; i<fHelixArray.size(); i++)

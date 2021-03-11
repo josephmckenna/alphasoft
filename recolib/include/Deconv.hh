@@ -244,8 +244,10 @@ public:
    void SetupADCs(TFile* fout, int run, bool norm=false, bool diag=false);
    void SetupPWBs(TFile* fout, int run, bool norm=false, bool diag=false);
 
+#ifdef BUILD_AG_SIM
    int FindAnodeTimes(TClonesArray*);
    int FindPadTimes(TClonesArray*);
+#endif
 
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);

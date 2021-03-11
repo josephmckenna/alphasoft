@@ -104,7 +104,9 @@ public:
 
    void Setup(TFile*);
 
+#ifdef BUILD_AG_SIM
    void AddMChits( const TClonesArray* mchits );
+#endif
 
    void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints );
    void AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double zcut );
@@ -121,9 +123,9 @@ public:
 
    void Reset();
 
-   inline std::vector<TSpacePoint*>* GetPoints()  { return &fPointsArray; }
-   inline std::vector<TTrack*>*  GetTracks()  { return &fTracksArray; }
-   inline std::vector<TFitLine*>* GetLines()   { return &fLinesArray; }
+   inline std::vector<TSpacePoint*>* GetPoints(){ return &fPointsArray; }
+   inline std::vector<TTrack*>*  GetTracks()    { return &fTracksArray; }
+   inline std::vector<TFitLine*>* GetLines()    { return &fLinesArray; }
    inline std::vector<TFitHelix*>* GetHelices() { return &fHelixArray; }
 
    inline void SetTrace(bool t) { fTrace = t; }
