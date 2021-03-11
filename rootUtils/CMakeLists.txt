@@ -31,6 +31,11 @@ target_include_directories( rootUtils
       ${CMAKE_SOURCE_DIR}/analib/include
       ${CMAKE_SOURCE_DIR}/a2lib/include
    )
+target_link_libraries(rootUtils ${ROOT_LIBRARIES})
+
+if(BUILD_A2)
+   target_link_libraries(rootUtils alpha2)
+endif(BUILD_A2)
 
 if (${Python_FOUND})
    target_link_libraries(rootUtils ${Python_LIBRARIES})

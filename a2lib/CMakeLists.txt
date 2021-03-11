@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alpha2lib)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 
 # Include directories
 include_directories(include 
@@ -31,7 +32,7 @@ file(GLOB C_SOURCES src/*.c)
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
 target_include_directories(alpha2 PUBLIC include)
 target_include_directories(alpha2 PUBLIC ${SQLite3_INCLUDE_DIRS})
-
+target_link_libraries(alpha2 Geom)
 add_dependencies(alpha2 sis_database)
 if(ROOTANA_SUBMOD)
   add_dependencies(alpha2 rootana)
