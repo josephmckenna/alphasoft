@@ -36,7 +36,7 @@ public:
   //  void SetWaveform(std::vector<double> wf) { fData = wf; }  
   void SetPos(G4ThreeVector xyz) { fPos = xyz; }
   void SetTime(G4double t)       { fTime = t; }
-  void SetGain(G4double g)       { fGain = g; }
+  void SetGain(G4double gain)       { fGain = gain; }
   void SetModelName(G4String n)  { fModelName = n; }
 
 private:

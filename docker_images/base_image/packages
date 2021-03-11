@@ -13,6 +13,7 @@ ftgl-devel
 gcc
 gcc-c++
 gcc-gfortran
+gdb
 gfal2-all
 gfal2-devel
 giflib-devel
@@ -91,6 +92,7 @@ root-minuit2
 root-mlp
 root-montecarlo-eg
 root-montecarlo-pythia8
+root-montecarlo-vmc
 root-multiproc
 root-net
 root-net-auth

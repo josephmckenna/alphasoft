@@ -15,13 +15,13 @@
 
 #include "TH1D.h"
 #include "TH2D.h"
-
 #include "TTree.h"
 
 #ifdef BUILD_A2
 #include "A2Flow.h"
-#include "TAnalysisReport.h"
 #endif
+
+#include "TAnalysisReport.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
@@ -156,7 +156,6 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
-   std::string binary_path_full;
 
    AnalysisReportFlags* fFlags;
 

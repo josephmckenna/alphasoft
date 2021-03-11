@@ -1,7 +1,6 @@
 #ifndef DetectorMessenger_h
 #define DetectorMessenger_h 1
 
-#include "G4SystemOfUnits.hh"
 #include "G4UImessenger.hh"
 
 class DetectorConstruction;

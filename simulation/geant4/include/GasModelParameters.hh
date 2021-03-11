@@ -1,8 +1,6 @@
 #ifndef GasModelParameters_hh
 #define GasModelParameters_hh
 
-#include "G4SystemOfUnits.hh"
-#include "G4PhysicalConstants.hh"
 #include "G4String.hh"
 #include <map>
 
@@ -26,10 +24,10 @@ public:
   /*Getters and Setters*/
 
   //Name of the Magboltz file to be used (if needed)
-  inline void SetGasFile(G4String s)         { gasFile = s; }
+  inline void SetGasFile(G4String _gasFile)         { gasFile = _gasFile; }
   inline G4String GetGasFile()               { return gasFile; }
   //Name of the Ion mobility file (if needed)
-  inline void SetIonMobilityFile(G4String s) { ionMobFile = s; }
+  inline void SetIonMobilityFile(G4String _ionMobFile) { ionMobFile = _ionMobFile; }
   inline G4String GetIonMobilityFile()       { return ionMobFile; }
 
   // Determines if the electrons are drifted, 

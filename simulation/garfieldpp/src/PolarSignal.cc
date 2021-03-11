@@ -5,8 +5,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 #include <TCanvas.h>
 #include <TROOT.h>
 #include <TApplication.h>
@@ -15,25 +13,23 @@ using namespace std;
 #include <TH1D.h>
 #include <TFile.h>
 
-#include "Plotting.hh"
+#include "Garfield/Plotting.hh"
 
-#include "ComponentAnalyticField.hh"
-#include "MediumMagboltz.hh"
-#include "SolidTube.hh"
-#include "GeometrySimple.hh"
-#include "Sensor.hh"
-#include "FundamentalConstants.hh"
-#include "ViewField.hh"
-#include "ViewCell.hh"
+#include "Garfield/ComponentAnalyticField.hh"
+#include "Garfield/MediumMagboltz.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/Sensor.hh"
+#include "Garfield/FundamentalConstants.hh"
+#include "Garfield/ViewField.hh"
+#include "Garfield/ViewCell.hh"
 
-#include "DriftLineRKF.hh"
-#include "AvalancheMC.hh"
-#include "ViewDrift.hh"
-#include "ViewSignal.hh"
+#include "Garfield/DriftLineRKF.hh"
+#include "Garfield/AvalancheMC.hh"
+#include "Garfield/ViewDrift.hh"
+#include "Garfield/ViewSignal.hh"
 
 #include "Helpers.hh"
-
-using namespace Garfield;
 
 int main(int argc, char * argv[]) 
 { 
@@ -44,7 +40,7 @@ int main(int argc, char * argv[])
     InitialRad = 17.401;
 
   //  string tracking="driftMC";
-  string tracking="driftRKF";
+  std::string tracking="driftRKF";
 
    if( argc == 2 )
     {
@@ -70,10 +66,10 @@ int main(int argc, char * argv[])
     }
 
   TApplication app("app", &argc, argv);
-  plottingEngine.SetDefaultStyle();
+  Garfield::plottingEngine.SetDefaultStyle();
  
   // Make a gas medium.
-  MediumMagboltz gas;
+  Garfield::MediumMagboltz gas;
   TString gasdata = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",getenv("AGRELEASE"));
   gas.LoadGasFile(gasdata.Data());
   TString iondata = TString::Format("%s/Data/IonMobility_Ar+_Ar.txt",
@@ -88,7 +84,7 @@ int main(int argc, char * argv[])
   constexpr double rRO = 19.0;
   //  constexpr double rRO = 18.9;
   //  constexpr double rRO = 19.1;
-  ComponentAnalyticField cmp;
+  Garfield::ComponentAnalyticField cmp;
   cmp.SetMedium(&gas);
   cmp.SetMagneticField(0.,0.,1.);
   cmp.SetPolarCoordinates(); // <-- the 'hat trick'
@@ -100,7 +96,7 @@ int main(int argc, char * argv[])
   int Nwires =  256;
   // Phi periodicity.
   const double sphi = 360. / double(Nwires);
-  cout<<"Phi periodicity: "<<sphi<<endl;
+  std::cout<<"Phi periodicity: "<<sphi<<std::endl;
 
   // Field wires.
   // Radius [cm]
@@ -123,7 +119,7 @@ int main(int argc, char * argv[])
   constexpr double pad_pitch_z = 0.4;
   //  constexpr int nrows = 576;
   constexpr int nrows = int(2.*lZ/pad_pitch_z);
-  cout<<"Number of pad rows: "<<nrows<<endl;
+  std::cout<<"Number of pad rows: "<<nrows<<std::endl;
   constexpr int nsecs= 32;
   constexpr double pad_pitch_phi = 2.*M_PI/double(nsecs);
 
@@ -186,7 +182,7 @@ int main(int argc, char * argv[])
 
   //  cmp.SetPeriodicityPhi(sphi);
   //  cmp.PrintCell();
-  if( cmp.IsPolar() ) cout<<"Hat trick"<<endl;
+  if( cmp.IsPolar() ) std::cout<<"Hat trick"<<std::endl;
 
   const double tStart = 0.;
   // real = ADC
@@ -197,7 +193,7 @@ int main(int argc, char * argv[])
   // const double tStep = 1.;
 
   // Finally assembling a Sensor object
-  Sensor sensor;
+  Garfield::Sensor sensor;
   // Calculate the electric field
   sensor.AddComponent(&cmp);
   //  sensor.AddElectrode(&cmp,"a");
@@ -219,7 +215,7 @@ int main(int argc, char * argv[])
 
   // Construct object to visualise cell
   TCanvas cDrift;
-  ViewCell cellView;
+  Garfield::ViewCell cellView;
   cellView.SetCanvas(&cDrift);
   cellView.SetComponent(&cmp);
   cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
@@ -227,7 +223,7 @@ int main(int argc, char * argv[])
   cellView.EnableWireMarkers(false);
 
   // Construct object to visualise drift lines
-  ViewDrift viewdrift;
+  Garfield::ViewDrift viewdrift;
   viewdrift.SetCanvas(&cDrift);
   viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
 		    1.1 * rRO,  1.1 * rRO,  1.);
@@ -235,7 +231,7 @@ int main(int argc, char * argv[])
   // Construct object to visualise signal
   TCanvas cSignal;
   // Plot the induced current.
-  ViewSignal* signalView = new ViewSignal();
+  Garfield::ViewSignal* signalView = new Garfield::ViewSignal();
   signalView->SetCanvas(&cSignal);
   signalView->SetSensor(&sensor);
   //  cSignal->Divide(3,3);
@@ -243,7 +239,7 @@ int main(int argc, char * argv[])
   //----------------------------------------------------
   // Transport Class for Electrons drift
   // Runge-Kutta
-  DriftLineRKF edrift;
+  Garfield::DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
   // edrift.EnableSignalCalculation();
   // const double maxStepSize=0.03;// cm
@@ -251,7 +247,7 @@ int main(int argc, char * argv[])
   edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
-  AvalancheMC eaval;
+  Garfield::AvalancheMC eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
   // eaval.EnableSignalCalculation();
@@ -261,7 +257,7 @@ int main(int argc, char * argv[])
 
   //----------------------------------------------------
   // Signal Generation
-  AvalancheMC iaval;
+  Garfield::AvalancheMC iaval;
   iaval.SetSensor(&sensor);
   iaval.EnableSignalCalculation();
   iaval.EnableMagneticField();  
@@ -277,12 +273,12 @@ int main(int argc, char * argv[])
   double ri=InitialRad, Rstep = 0.05, Rministep=0.01;
   int ie = 0, emax=1;
 
-  cout<<"\nBEGIN with "<<tracking<<endl;
+  std::cout<<"\nBEGIN with "<<tracking<<std::endl;
   TString fname = TString::Format("./PolarSignal_%s_endpoints_phi%1.4f_Z%2.1fcm.dat",
 				  tracking.c_str(),
 				  InitialPhi,InitialZed);
-  ofstream fout(fname.Data());
-  fout<<"Using "<<tracking<<endl;
+  std::ofstream fout(fname.Data());
+  fout<<"Using "<<tracking<<std::endl;
 
   // variables to identify the aw and pads
   int aw=-1, sec=-1, row=-1;
@@ -296,7 +292,7 @@ int main(int argc, char * argv[])
       ++ie;
       xi=ri*TMath::Cos(phii);
       yi=ri*TMath::Sin(phii);
-      cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm\t";
+      std::cout<<ie<<")\tstart @ ("<<xi<<","<<yi<<","<<zi<<") cm\t";
       //-----------------------------------------------------------
 
       //------------------ionization drift ------------------------
@@ -309,14 +305,14 @@ int main(int argc, char * argv[])
 	ok = eaval.AvalancheElectron(xi,yi,zi,ti);
       else
 	{
-	  cerr<<tracking<<" UNKNOWN"<<endl;
+	  std::cerr<<tracking<<" UNKNOWN"<<std::endl;
 	  //break;
 	  return 1;
 	}
       // if (!ok) return 0;
       if( !ok ) 
       	{
-      	  cerr<<tracking<<" FAILED"<<endl;
+      	  std::cerr<<tracking<<" FAILED"<<std::endl;
       	  --ie;
       	  ri+=Rministep;
       	  continue;
@@ -347,13 +343,13 @@ int main(int argc, char * argv[])
       double w = phif/AnodeWiresPitch-0.5;
       aw = (ceil(w)-w)<(w-floor(w))?int(ceil(w)):int(floor(w));
       //cout<<"hit: "<<w<<"\t"<<aw<<endl;
-      cout<<"hit wire: "<<aw;//<<<endl;
+      std::cout<<"hit wire: "<<aw;//<<<endl;
       // find pads
       sec = int( phif/(2.*M_PI)*nsecs );
       double z = zf + lZ;
       row = int( z/(2.*lZ)*nrows );
       idx = sec + nsecs * row;
-      cout<<"\thit pad: "<<idx<<" ("<<sec<<","<<row<<")"<<endl;
+      std::cout<<"\thit pad: "<<idx<<" ("<<sec<<","<<row<<")"<<std::endl;
 
       double ne, ni, t_d=-1., gain=-1., spread=-1., loss=-1.;
 
@@ -382,7 +378,7 @@ int main(int argc, char * argv[])
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
       lorentz_correction *= TMath::RadToDeg();
 
-      stringstream ss;
+      std::stringstream ss;
       ss<<ie<<")\t"<<status<<"\t"
 	<<ri<<" cm\t"<<tf<<" ns\t"<<lorentz_correction
 	<<" deg\tz: "<<zf<<" cm\tAval Param: "<<ne<<","<<ni;
@@ -390,11 +386,11 @@ int main(int argc, char * argv[])
       if( !tracking.compare("driftRKF") )
 	{
 	  ss <<"\tsigma_t: "<<spread
-	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
+	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<std::endl;
 	  if( t_d != tf ) 
 	    {
-	      cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<endl;
-	      ss<<"* tf:"<<tf<<endl;
+	      std::cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<std::endl;
+	      ss<<"* tf:"<<tf<<std::endl;
 	    }
 	}
       else
@@ -403,7 +399,7 @@ int main(int argc, char * argv[])
 
       // status and save
       fout<<ss.str();
-      cout<<ss.str();
+      std::cout<<ss.str();
 
       //------------- signal generation ---------------------------
       double xx=xf,yy=yf,rr=sqrt(xf*xf+yf*yf),zz=zf;
@@ -411,9 +407,9 @@ int main(int argc, char * argv[])
       //      int att=0;
       while(!ok)
 	{
-	  cout<<"sig gen at r="<<rr<<" cm on aw: "<<aw<<" at "<<tf<<" ns"<<endl;
+	  std::cout<<"sig gen at r="<<rr<<" cm on aw: "<<aw<<" at "<<tf<<" ns"<<std::endl;
 	  ok = iaval.DriftIon(xx,yy,zz,tf);
-	  cout<<"done"<<endl;
+	  std::cout<<"done"<<std::endl;
 	  // ++att;
 	  // if(att%2==0) xx-=0.0001;
 	  // else if(att%3==0) yy+=0.0001;
@@ -426,15 +422,15 @@ int main(int argc, char * argv[])
       ri+=Rstep;
     }
   
-  cout<<"END"<<endl;
-  cout<<"Number of Clusters: "<<ie<<endl;
-  fout<<"Number of Clusters: "<<ie<<endl;
+  std::cout<<"END"<<std::endl;
+  std::cout<<"Number of Clusters: "<<ie<<std::endl;
+  fout<<"Number of Clusters: "<<ie<<std::endl;
   
   TString cname;
   fname = TString::Format("Outsignals_R%1.3fcm_phi%1.4f_Z%2.1fcm.root",
 			  InitialRad,InitialPhi,InitialZed);
   TFile* froot = TFile::Open(fname,"RECREATE");
-  cout<<"Plot Signal"<<endl;
+  std::cout<<"Plot Signal"<<std::endl;
 
   //  // pads have different readout
   //  Sensor ROsens(sensor);
@@ -449,22 +445,22 @@ int main(int argc, char * argv[])
       
       // AWB Response Function
       sensor.SetTransferFunction(Hands);
-      if( sensor.ConvoluteSignals() ) cout<<"AW readout succcess!!"<<endl;
-      else cout<<"AW signal convolution unsuccesfull"<<endl;
+      if( sensor.ConvoluteSignals() ) std::cout<<"AW readout succcess!!"<<std::endl;
+      else std::cout<<"AW signal convolution unsuccesfull"<<std::endl;
     }
   
   TString plot_signal_name;
   if( aw >= 0 )
     {
       plot_signal_name = TString::Format("a%03d",aw);
-      cout<<"Plotting "<<plot_signal_name<<endl;
+      std::cout<<"Plotting "<<plot_signal_name<<std::endl;
       signalView->PlotSignal(plot_signal_name.Data());
       //   signalView->PlotSignal("a");
 
       cname = TString::Format("./PolarSignal_signal%d_R%1.3fcm_phi%1.4f.pdf",
 			      aw,InitialRad,InitialPhi);
       cSignal.SaveAs(cname.Data());
-      cout<<cname<<" saved"<<endl;
+      std::cout<<cname<<" saved"<<std::endl;
 
       cname = TString::Format("AWsignals_R%1.3fcm_phi%1.4f_Z%2.1fcm",
 			      InitialRad,InitialPhi,InitialZed);
@@ -475,7 +471,7 @@ int main(int argc, char * argv[])
 	{
 	  int aw_temp=aw+aws;
 	  plot_signal_name = TString::Format("a%03d",aw_temp);
-	  cout<<"Plotting "<<plot_signal_name<<endl;
+	  std::cout<<"Plotting "<<plot_signal_name<<std::endl;
 	  TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );
 	  cawsigs->cd(aws+3);
 	  h->Draw();
@@ -485,7 +481,7 @@ int main(int argc, char * argv[])
       cawsigs->SaveAs(TString::Format("./%s.pdf",cawsigs->GetName()));
    }
   else
-    cout<<"I don't know which aw signal to plot"<<endl;
+    std::cout<<"I don't know which aw signal to plot"<<std::endl;
 
   if( sec >=0 && row >=0 )
     {
@@ -502,7 +498,7 @@ int main(int argc, char * argv[])
 	      idx = sec_temp + nsecs * row_temp;
 	      plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
 	      int pos = (sc+2)+3*(rw+2);
-	      cout<<"Plotting "<<plot_signal_name<<" in "<<pos<<endl;
+	      std::cout<<"Plotting "<<plot_signal_name<<" in "<<pos<<std::endl;
 	      TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );
 	      cpadsigs->cd(pos);
 	      h->Draw();
@@ -513,15 +509,15 @@ int main(int argc, char * argv[])
       cpadsigs->SaveAs(TString::Format("./%s.pdf",cpadsigs->GetName()));
     }
   else
-    cout<<"I don't know which pad signal to plot"<<endl;
+    std::cout<<"I don't know which pad signal to plot"<<std::endl;
 
-  cout<<"Plot Driftlines"<<endl;
+  std::cout<<"Plot Driftlines"<<std::endl;
   viewdrift.Plot(true,true);
   cellView.Plot2d();
   cname = TString::Format("./PolarSignal_driftlines_R%1.3fcm_phi%1.4f_Z%2.1fcm.pdf",
 			  InitialRad,InitialPhi,InitialZed);
   cDrift.SaveAs(cname.Data());
-  cout<<cname<<" saved"<<endl;
+  std::cout<<cname<<" saved"<<std::endl;
 
   app.Run(true);
 
