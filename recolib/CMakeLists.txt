@@ -22,6 +22,7 @@ ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc)
 target_include_directories(agtpc PUBLIC include)
+target_link_libraries(agtpc ${ROOT_LIBRARIES})
 
 install(TARGETS agtpc DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm DESTINATION lib)
