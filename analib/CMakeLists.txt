@@ -34,7 +34,9 @@ if(BUILD_A2)
 endif()
 
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
-target_link_libraries(analib agtpc)
+if(BUILD_AG)
+   target_link_libraries(analib agtpc)
+endif()
 add_dependencies(analib gitinfo rootana)
 
 install(TARGETS analib DESTINATION lib)
