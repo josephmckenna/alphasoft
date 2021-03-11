@@ -38,8 +38,11 @@ target_link_libraries(agreco.exe ${ROOT_LIBRARIES} ${AGRECO_LINK_LIBS})
 add_executable( MainEventTree.exe MainEventTree.cc 
                 ${sources} ${PROJECT_SOURCE_DIR}/src/ReadEventTree.cc
                 ${headers} ${PROJECT_SOURCE_DIR}/include/ReadEventTree.hh)
-#add_dependencies(MainEventTree.exe analib agtpc alpha2 rootUtils)
-add_dependencies(MainEventTree.exe analib agtpc rootUtils)
+if(BUILD_A2)
+  add_dependencies(MainEventTree.exe analib agtpc alpha2 rootUtils)
+else()
+  add_dependencies(MainEventTree.exe analib agtpc rootUtils)
+endif()
 target_link_libraries(MainEventTree.exe ${ROOT_LIBRARIES} ${AGTREE_LINK_LIBS})
 
     
