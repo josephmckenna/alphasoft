@@ -333,7 +333,7 @@ PSettingsWindow::PSettingsWindow(ImageData *data)
     data->mSpeaker->AddListener(this);
 }
 
-void PSettingsWindow::Listen(int message, void *dataPt)
+void PSettingsWindow::Listen(int message, void*/*dataPt*/)
 {
     switch (message) {
         case kMessageShowLabelChanged:
@@ -365,25 +365,25 @@ void PSettingsWindow::SetHexID(int on)
     }
 }
 
-void PSettingsWindow::HexProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::HexProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->SetHexID(1);
 }
 
-void PSettingsWindow::DecProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::DecProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->SetHexID(0);
 }
 
 #ifdef ANTI_ALIAS
-void PSettingsWindow::SmoothTextProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::SmoothTextProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     data->smooth ^= kSmoothText;
     data->mMainWindow->LabelFormatChanged();
     sendMessage(data, kMessageSmoothTextChanged);
 }
-void PSettingsWindow::SmoothLinesProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::SmoothLinesProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     data->smooth ^= kSmoothLines;
@@ -461,7 +461,7 @@ void PSettingsWindow::SetAngle(int flag)
     }
 }
 
-void PSettingsWindow::AngleProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AngleProc(Widget w, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     for (int i=0; i<3; ++i) {
         if (w == set_win->angle_radio[i]) {
@@ -475,7 +475,7 @@ void PSettingsWindow::SetLabel(int show_label)
     setLabel(GetData(), show_label);
 }
 
-void PSettingsWindow::LabelProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::LabelProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     if (!data->show_label) {
@@ -500,7 +500,7 @@ int PSettingsWindow::SetLabelFormat()
     return(labelChanged);
 }
 
-void PSettingsWindow::LabelFormatProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::LabelFormatProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     
@@ -536,38 +536,38 @@ void PSettingsWindow::AddLabel(const char *aString)
     XtFree(str);    // must free the string
 }
 
-void PSettingsWindow::ClearProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::ClearProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     setTextString(set_win->label_text, "");
     LabelFormatProc(set_win->label_text, set_win, NULL);
 }
 
-void PSettingsWindow::AddRunProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AddRunProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->AddLabel("Run: %rn");
 }
 
-void PSettingsWindow::AddEvIDProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AddEvIDProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->AddLabel("Event: %ev");
 }
 
-void PSettingsWindow::AddTimeProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AddTimeProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->AddLabel("%da %ti");
 }
 
-void PSettingsWindow::AddNHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AddNHitProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->AddLabel("Nhit: %nh");
 }
 
-void PSettingsWindow::AddNBarHitProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::AddNBarHitProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     set_win->AddLabel("NBarhit: %bh");
 }
 
-void PSettingsWindow::OkProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::OkProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     // update label settings if changed without pressing RETURN
@@ -579,7 +579,7 @@ void PSettingsWindow::OkProc(Widget w, PSettingsWindow *set_win, caddr_t call_da
     delete set_win;
 }
 
-void PSettingsWindow::CancelProc(Widget w, PSettingsWindow *set_win, caddr_t call_data)
+void PSettingsWindow::CancelProc(Widget /*w*/, PSettingsWindow *set_win, caddr_t /*call_data*/)
 {
     ImageData *data = set_win->GetData();
     
@@ -643,7 +643,7 @@ void PSettingsWindow::SetFitSize(ImageData *data, float fit_size)
     }
 }
 
-void PSettingsWindow::ScaleMovedProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::ScaleMovedProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct *call_data)
 {
     if (data->num_disp && sUpdateTime<kMaxUpdateTime) {
         // update as slider moves if not too slow
@@ -655,13 +655,13 @@ void PSettingsWindow::ScaleMovedProc(Widget w, ImageData *data, XmScaleCallbackS
     }
 }
 
-void PSettingsWindow::ScaleChangedProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::ScaleChangedProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct *call_data)
 {
     SetHitSize(data, call_data->value / 100.0);
     sUpdateTime = 0;
 }
 
-void PSettingsWindow::FitMovedProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::FitMovedProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct *call_data)
 {
     if (sUpdateTime<kMaxUpdateTime) {
         // update as slider moves if not too slow
@@ -673,7 +673,7 @@ void PSettingsWindow::FitMovedProc(Widget w, ImageData *data, XmScaleCallbackStr
     }
 }
 
-void PSettingsWindow::FitChangedProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::FitChangedProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct *call_data)
 {
     SetFitSize(data, call_data->value / 100.0);
     sUpdateTime = 0;
@@ -688,11 +688,11 @@ void PSettingsWindow::SetHitXYZ(ImageData *data, int on)
     }
 }
 
-void PSettingsWindow::XYZProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::XYZProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct*/*call_data*/)
 {
     SetHitXYZ(data, !data->hit_xyz);
 }
-void PSettingsWindow::SaveConfigProc(Widget w, ImageData *data, XmScaleCallbackStruct *call_data)
+void PSettingsWindow::SaveConfigProc(Widget /*w*/, ImageData *data, XmScaleCallbackStruct*/*call_data*/)
 {
     data->save_config ^= 1;
 }

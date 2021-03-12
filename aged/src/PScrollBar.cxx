@@ -10,7 +10,7 @@
 const int   kScrollIncrement    = 100;
 
 // scrollBar callback
-static void scrollBarProc(Widget w, PScrollBar *aScroll, XmScrollBarCallbackStruct *call_data)
+static void scrollBarProc(Widget /*w*/, PScrollBar *aScroll, XmScrollBarCallbackStruct *call_data)
 {
     if (aScroll->GetHandler()) {
         aScroll->GetHandler()->ScrollValueChanged(aScroll->GetType(), call_data->value);

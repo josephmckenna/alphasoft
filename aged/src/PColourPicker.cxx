@@ -92,7 +92,7 @@ PColourPicker::~PColourPicker()
     delete [] mAllocFlags;
 }
 
-void PColourPicker::Listen(int message, void *dataPt)
+void PColourPicker::Listen(int message, void*/*dataPt*/)
 {
     switch (message) {
         case kMessageSmoothTextChanged:
