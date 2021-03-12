@@ -104,7 +104,7 @@ PHitInfoWindow::~PHitInfoWindow()
 {
 }
 
-void PHitInfoWindow::NextProc(Widget w, PHitInfoWindow *win, caddr_t call_data)
+void PHitInfoWindow::NextProc(Widget /*w*/, PHitInfoWindow *win, caddr_t /*call_data*/)
 {
     ImageData *data = win->GetData();
     if (data->hits.num_nodes) {
@@ -116,7 +116,7 @@ void PHitInfoWindow::NextProc(Widget w, PHitInfoWindow *win, caddr_t call_data)
     }
 }
 
-void PHitInfoWindow::PrevProc(Widget w, PHitInfoWindow *win, caddr_t call_data)
+void PHitInfoWindow::PrevProc(Widget /*w*/, PHitInfoWindow *win, caddr_t /*call_data*/)
 {
     ImageData *data = win->GetData();
     if (data->hits.num_nodes) {
@@ -226,7 +226,7 @@ void PHitInfoWindow::SetHitXYZ()
     ResizeToFit();
 }
 
-void PHitInfoWindow::Listen(int message, void *message_data)
+void PHitInfoWindow::Listen(int message, void*/*message_data*/)
 {
     switch (message) {
         case kMessageNewEvent:

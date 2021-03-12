@@ -210,7 +210,7 @@ void PDrawPostscriptFile::SetLineType(ELineType type)
     }
 }
 
-void PDrawPostscriptFile::SetForeground(int col_num, int alpha)
+void PDrawPostscriptFile::SetForeground(int col_num, int /*alpha*/)
 {
     fprintf(mFile,"%.3f %.3f %.3f setrgbcolor\n",
             mColours[col_num].red / 65535.0,
@@ -244,7 +244,7 @@ void PDrawPostscriptFile::Comment(char *str)
     fprintf(mFile,"\n%% %s\n\n",str);
 }
 
-void PDrawPostscriptFile::DrawSegments(XSegment *segments, int num, int smooth)
+void PDrawPostscriptFile::DrawSegments(XSegment *segments, int num, int /*smooth*/)
 {
     fprintf(mFile,"newpath\n");
     XSegment *curpos = NULL;

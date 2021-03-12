@@ -75,6 +75,11 @@ public:
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // ********* CREATE your display here
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      if( !fFlags->fBatch && !aged ) 
+         {
+            printf("New Aged ");
+            aged = new Aged();
+         }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -178,11 +183,6 @@ public:
 
       printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
-      if (!aged) 
-         {
-            printf("New Aged!\n");
-            aged = new Aged();
-         }
 
       analysis_flow->fEvent->Print();
       if (aged) {

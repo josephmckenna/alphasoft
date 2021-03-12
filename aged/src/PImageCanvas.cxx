@@ -65,7 +65,7 @@ PImageCanvas::~PImageCanvas()
     }
 }
 
-void PImageCanvas::Listen(int message, void *dataPt)
+void PImageCanvas::Listen(int message, void*/*dataPt*/)
 {
     switch (message) {
         case kMessageLabelChanged:
@@ -181,7 +181,7 @@ int PImageCanvas::GetCanvasSize()
     return((int)width);
 }
 
-void PImageCanvas::CanvasExposeProc(Widget w, PImageCanvas *anImage, XmDrawingAreaCallbackStruct *call_data)
+void PImageCanvas::CanvasExposeProc(Widget /*w*/, PImageCanvas *anImage, XmDrawingAreaCallbackStruct *call_data)
 {
     XExposeEvent  * event = (XExposeEvent *)call_data->event;
 
@@ -202,7 +202,7 @@ void PImageCanvas::CanvasExposeProc(Widget w, PImageCanvas *anImage, XmDrawingAr
     }
 }
 
-void PImageCanvas::CanvasResizeProc(Widget w, PImageCanvas *anImage, XmDrawingAreaCallbackStruct *call_data)
+void PImageCanvas::CanvasResizeProc(Widget /*w*/, PImageCanvas *anImage, XmDrawingAreaCallbackStruct*/*call_data*/)
 {
     int wasDrawn = (anImage->mCanvasWidth != 0);
 
@@ -214,7 +214,7 @@ void PImageCanvas::CanvasResizeProc(Widget w, PImageCanvas *anImage, XmDrawingAr
     }
 }
 
-void PImageCanvas::CanvasMotionProc(Widget w, PImageCanvas *anImage, XEvent *event)
+void PImageCanvas::CanvasMotionProc(Widget /*w*/, PImageCanvas *anImage, XEvent *event)
 {
     // are we waiting for a window to be selected?
     if (PImageWindow::IsPendingRaise()) {
@@ -361,7 +361,7 @@ void PImageCanvas::DrawSelf()
     }
 }
 
-int PImageCanvas::IsInLabel(int x, int y)
+int PImageCanvas::IsInLabel(int /*x*/, int y)
 {
     if (mAllowLabel) {
         return(mOwner->GetData()->show_label && (y > mCanvasHeight - mLabelHeight - kLabelClickMargin));
