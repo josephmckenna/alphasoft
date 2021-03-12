@@ -58,7 +58,12 @@ elif [[ "$1" == "nosim" ]]; then
 #
     ${cmd} ..
     #time ${cmd} --build . -- -j`nproc --ignore=2`
-    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
+    if [[ "$2" == "verbose" ]]; then
+	echo "verbose build without multiproc"
+	time ${cmd} --build . --target install --verbose
+    else
+	time ${cmd} --build . --target install -- -j`nproc --ignore=2`
+    fi
     cd $AGRELEASE
 
 elif [[ "$1" == "ci" ]]; then

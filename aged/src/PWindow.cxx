@@ -196,6 +196,7 @@ Widget PWindow::CreateShell(const char *name, Widget parent, Arg *wargs, int n)
     } else {
 #endif
         // create a shell widget
+        parent=parent;
         w = XtAppCreateShell(name, "Aged", topLevelShellWidgetClass,
                              PResourceManager::sResource.display, wargs, n);
 #ifdef CHILD_WINDOWS
@@ -395,7 +396,7 @@ void PWindow::SetMenuItemText(int id, char *str)
     }
 }
 
-void PWindow::DestroyWindProc(Widget w, PWindow *aWind, caddr_t call_data)
+void PWindow::DestroyWindProc(Widget /*w*/, PWindow *aWind, caddr_t /*call_data*/)
 {
     // save the window data first
     aWind->SaveWindowData();

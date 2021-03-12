@@ -11,41 +11,70 @@
 #include "TA2Spill.h"
 #include "TA2SpillGetters.h"
 
-class TA2Plot: public TAPlot
+class SISPlotEvent
 {
-private:
-   std::vector<int> SISChannels;
-
-  //Detector SIS channels
-   int trig;
-   int trig_nobusy;
-   int atom_or;
-
-  //Dump marker SIS channels:
-   int CATStart;
-   int CATStop;
-   int RCTStart;
-   int RCTStop;
-   int ATMStart;
-   int ATMStop;
-  
-  //Beam injection/ ejection markers:
-   int Beam_Injection;
-   int Beam_Ejection;
-   
-   double ZMinCut;
-   double ZMaxCut;
-
-public:
-   struct SISPlotEvent {
+   public:
       int runNumber; // I don't get set yet...
       //int clock
       double t; //Plot time (based off offical time)
       double OfficialTime;
       int Counts;
       int SIS_Channel;
-   };
 
+      //LMG - Copy and assign operators
+      SISPlotEvent()
+      {
+      }
+      ~SISPlotEvent()
+      {
+      }
+      //Basic copy constructor.
+      SISPlotEvent(const SISPlotEvent& m_SISPlotEvent)
+      {
+         runNumber      =  m_SISPlotEvent.runNumber   ;
+         t              =  m_SISPlotEvent.t           ;
+         OfficialTime   =  m_SISPlotEvent.OfficialTime;
+         Counts         =  m_SISPlotEvent.Counts      ;
+         SIS_Channel    =  m_SISPlotEvent.SIS_Channel ;
+      }
+      //Assignment operator.
+      SISPlotEvent operator=(const SISPlotEvent m_SISPlotEvent)
+      {
+         this->runNumber      =  m_SISPlotEvent.runNumber   ;
+         this->t              =  m_SISPlotEvent.t           ;
+         this->OfficialTime   =  m_SISPlotEvent.OfficialTime;
+         this->Counts         =  m_SISPlotEvent.Counts      ;
+         this->SIS_Channel    =  m_SISPlotEvent.SIS_Channel ;
+         return *this;
+      }
+};
+
+class TA2Plot: public TAPlot
+{
+protected:
+   std::vector<int> SISChannels;
+
+  //Detector SIS channels
+   std::map<int, int> trig;
+   std::map<int, int> trig_nobusy;
+   std::map<int, int> atom_or;
+
+  //Dump marker SIS channels:
+   std::map<int, int> CATStart;
+   std::map<int, int> CATStop;
+   std::map<int, int> RCTStart;
+   std::map<int, int> RCTStop;
+   std::map<int, int> ATMStart;
+   std::map<int, int> ATMStop;
+  
+  //Beam injection/ ejection markers:
+   std::map<int, int> Beam_Injection;
+   std::map<int, int> Beam_Ejection;
+   
+   double ZMinCut;
+   double ZMaxCut;
+
+public:
    void SetSISChannels(int runNumber);
    std::vector<SISPlotEvent> SISEvents;
 
@@ -63,12 +92,21 @@ public:
 
    TA2Plot(bool zerotime = true);
    TA2Plot(double zmin, double zmax,bool zerotime = true);
+   TA2Plot(const TA2Plot& m_TA2Plot);
+   TA2Plot(const TAPlot& m_TAPlot);
    virtual ~TA2Plot();
+   friend TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB);
+   TA2Plot& operator=(const TA2Plot& plotA);
    
    void SetUpHistograms();
    void FillHisto(bool ApplyCuts=true, int MVAMode=0);
    TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
    ClassDef(TA2Plot, 1)
+
+   //void PrintFull();
+
+   
 };
+
 #endif
 #endif
