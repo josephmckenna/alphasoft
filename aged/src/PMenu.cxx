@@ -615,7 +615,7 @@ void PMenu::SelectItem(MenuList *ms)
 }
 
 // MenuProc [private, static] - menu callback procedure
-void PMenu::MenuProc(Widget w, MenuList *ms, caddr_t call_data)
+void PMenu::MenuProc(Widget /*w*/, MenuList *ms, caddr_t /*call_data*/)
 {
     sCurMenuItem = ms;  // set current menu struct
     // if the user selected a toggle or radio button, Motif
@@ -631,7 +631,7 @@ void PMenu::MenuProc(Widget w, MenuList *ms, caddr_t call_data)
 
 // CascadeProc [private, static] - cascading callback procedure
 // (called prior to opening of a cascade menu)
-void PMenu::CascadeProc(Widget w, MenuList *ms, caddr_t call_data)
+void PMenu::CascadeProc(Widget /*w*/, MenuList *ms, caddr_t /*call_data*/)
 {
     // check the state of all items in the sub-menu
     for (ms=ms->sub_menu; ms!=NULL; ms=ms->next) {

@@ -83,7 +83,7 @@ PEventInfoWindow::PEventInfoWindow(ImageData *data)
     tw_vertexZ  .CreateLabel("vz",      rc2,NULL,0);
 }
 
-void PEventInfoWindow::Listen(int message, void *message_data)
+void PEventInfoWindow::Listen(int message, void*/*message_data*/)
 {
     switch (message) {
         case kMessageNewEvent:

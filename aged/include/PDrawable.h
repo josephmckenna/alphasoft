@@ -67,16 +67,17 @@ public:
     void            SetScaling(int scale)       { mScaling = scale; }
     int             GetScaling()                { return mScaling;  }
     
-    virtual int     BeginDrawing(int width, int height)         { return 0; }
+    virtual int     BeginDrawing(int /*width*/, int /*height*/)         { return 0; }
     virtual void    EndDrawing()                                { }
     
-    virtual void    SetForeground(int col_num, int alpha=0xffff){ }
-    virtual void    SetForegroundPixel(Pixel pixel, int alpha=0xffff) { }
-    virtual int     EqualColours(int col1, int col2)            { return 0; }
-    virtual void    SetLineWidth(float width)                   { }
-    virtual void    SetLineType(ELineType type)                 { }
+    virtual void    SetForeground(int /*col_num*/, int /*alpha=0xffff*/){ }
+    virtual void    SetForegroundPixel(Pixel /*pixel*/, int /*alpha=0xffff*/) { }
+    virtual void    SetForegroundPixel(Pixel pixel) { mColours=&pixel; }
+    virtual int     EqualColours(int /*col1*/, int /*col2*/)            { return 0; }
+    virtual void    SetLineWidth(float /*width*/)                   { }
+    virtual void    SetLineType(ELineType /*type*/)                 { }
     virtual void    SetFont(XFontStruct *font)                  { mFont = font; }
-    virtual int     GetTextWidth(const char *str)                     { return 0; }
+    virtual int     GetTextWidth(const char */*str*/)                     { return 0; }
 #ifdef ANTI_ALIAS
     virtual void    SetFont(XftFont *font)                      { mXftFont = font; }
     virtual void    SetSmoothText(int on)                       { mSmoothText = on; }
@@ -87,22 +88,22 @@ public:
     int             GetFontDescent() { return IsSmoothText() ? mXftFont->descent: mFont ? mFont->descent : 0; }
 #else
     int             GetFontAscent()  { return mFont? mFont->ascent : 0; }
-    int             GetFontDescent() { return mFont ? mFont->descent : 0; }
+    int             GetFontDescent() { return mFont? mFont->descent : 0; }
 #endif
-    virtual void    DrawSegments(XSegment *segments, int num, int smooth=1) { }
-    virtual void    DrawPoint(int x, int y)                     { }
-    virtual void    DrawLine(int x1,int y1,int x2,int y2)       { }
-    virtual void    DrawRectangle(int x,int y,int w,int h)      { }
-    virtual void    FillRectangle(int x,int y,int w,int h)      { }
-    virtual void    FillPolygon(XPoint *point, int num)         { }
-    virtual void    Comment(const char *str)                          { }
-    virtual void    DrawString(int x, int y, const char *str, ETextAlign_q align) { }
-    virtual void    DrawArc(int cx,int cy,int rx,int ry,float ang1,float ang2) { }
-    virtual void    FillArc(int cx,int cy,int rx,int ry,float ang1,float ang2) { }
+    virtual void    DrawSegments(XSegment* /*segments*/, int /*num*/, int /*smooth=1*/) { }
+    virtual void    DrawPoint(int /*x*/, int /*y*/)                     { }
+    virtual void    DrawLine(int /*x1*/,int /*y1*/,int /*x2*/,int /*y2*/)       { }
+    virtual void    DrawRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      { }
+    virtual void    FillRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      { }
+    virtual void    FillPolygon(XPoint */*point*/, int /*num*/)         { }
+    virtual void    Comment(const char */*str*/)                          { }
+    virtual void    DrawString(int /*x*/, int /*y*/, const char */*str*/, ETextAlign_q /*align*/) { }
+    virtual void    DrawArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) { }
+    virtual void    FillArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) { }
     
-    virtual void    PutImage(XImage *image, int dest_x, int dest_y) { }
-    virtual XImage* GetImage(int x, int y, int width, int height) { return NULL; }
-    virtual int     CopyArea(int x,int y,int w,int h,Window dest) { return 0; }
+    virtual void    PutImage(XImage */*image*/, int /*dest_x*/, int /*dest_y*/) { }
+    virtual XImage* GetImage(int /*x*/, int /*y*/, int /*width*/, int /*height*/) { return NULL; } 
+    virtual int     CopyArea(int /*x*/,int /*y*/,int /*w*/,int /*h*/,Window/* dest*/) { return 0; }
     virtual int     HasPixmap()         { return 0; }
 
     virtual EDevice GetDeviceType()     { return kDeviceUnknown; }      

@@ -963,7 +963,7 @@ void PHistImage::CheckScaleRange()
 }
 
 
-void PHistImage::ScaleFullProc(Widget w, PHistImage *hist, caddr_t call_data)
+void PHistImage::ScaleFullProc(Widget /*w*/, PHistImage *hist, caddr_t /*call_data*/)
 {
     char buff[256];
 
@@ -975,7 +975,7 @@ void PHistImage::ScaleFullProc(Widget w, PHistImage *hist, caddr_t call_data)
     setTextString(hist->sp_max,buff);
 }
 
-void PHistImage::ScaleAutoProc(Widget w, PHistImage *hist, caddr_t call_data)
+void PHistImage::ScaleAutoProc(Widget /*w*/, PHistImage *hist, caddr_t /*call_data*/)
 {
     char buff[256];
     int min, max;
@@ -989,7 +989,7 @@ void PHistImage::ScaleAutoProc(Widget w, PHistImage *hist, caddr_t call_data)
     }
 }
 
-void PHistImage::ScaleOKProc(Widget w, PHistImage *hist, caddr_t call_data)
+void PHistImage::ScaleOKProc(Widget /*w*/, PHistImage *hist, caddr_t /*call_data*/)
 {
     ImageData *data = hist->mOwner->GetData();
     
@@ -999,12 +999,12 @@ void PHistImage::ScaleOKProc(Widget w, PHistImage *hist, caddr_t call_data)
     }
 }
 
-void PHistImage::ApplyProc(Widget w, PHistImage *hist, caddr_t call_data)
+void PHistImage::ApplyProc(Widget /*w*/, PHistImage *hist, caddr_t /*call_data*/)
 {
     hist->ReadScaleValues();
 }
 
-void PHistImage::CancelProc(Widget w, Widget aShell, caddr_t call_data)
+void PHistImage::CancelProc(Widget /*w*/, Widget aShell, caddr_t /*call_data*/)
 {
     XtDestroyWidget(aShell);
 }
