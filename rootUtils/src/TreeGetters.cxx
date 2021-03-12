@@ -131,6 +131,22 @@ TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName)
    return t;
 }
 
+std::vector<TTreeReader*> Get_feGEM_File_Trees(Int_t runNumber, const std::string& CombinedName)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d = f->GetDirectory("feGEM");
+   TList* aa = d->GetListOfKeys();
+   std::vector<TTreeReader*> trees;
+   for (int i=0; i<aa->GetEntries(); i++)
+   {
+      if (strncmp(CombinedName.c_str(),aa->At(i)->GetName(),CombinedName.size())==0)
+      {
+         TTreeReader* t = new TTreeReader(aa->At(i)->GetName(), f->GetDirectory("/feGEM"));
+         trees.push_back(t);
+      }
+   }
+   return trees;
+}
 
 /* emacs
  * Local Variables:
