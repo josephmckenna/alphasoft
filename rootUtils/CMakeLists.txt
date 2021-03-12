@@ -31,7 +31,7 @@ target_include_directories( rootUtils
       ${CMAKE_SOURCE_DIR}/analib/include
       ${CMAKE_SOURCE_DIR}/a2lib/include
    )
-target_link_libraries(rootUtils analib ${ROOT_LIBRARIES})
+target_link_libraries(rootUtils analib GEM ${ROOT_LIBRARIES})
 
 if(BUILD_A2)
    target_link_libraries(rootUtils alpha2)

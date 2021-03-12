@@ -21,32 +21,32 @@ void TA2Plot::SetSISChannels(int runNumber)
 {
 
   TSISChannels *sisch = new TSISChannels(runNumber);
-  trig =           sisch->GetChannel("IO32_TRIG");
-  trig_nobusy =    sisch->GetChannel("IO32_TRIG_NOBUSY");
-  atom_or =        sisch->GetChannel("SIS_PMT_ATOM_OR");
-  Beam_Injection = sisch->GetChannel("SIS_AD");
-  Beam_Ejection =  sisch->GetChannel("SIS_AD_2");
-  CATStart =       sisch->GetChannel("SIS_PBAR_DUMP_START");
-  CATStop =        sisch->GetChannel("SIS_PBAR_DUMP_STOP");
-  RCTStart =       sisch->GetChannel("SIS_RECATCH_DUMP_START");
-  RCTStop =        sisch->GetChannel("SIS_RECATCH_DUMP_STOP");
-  ATMStart =       sisch->GetChannel("SIS_ATOM_DUMP_START");
-  ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
+  trig.insert(             std::pair<int,int>(runNumber, (int)sisch->GetChannel("IO32_TRIG")));
+  trig_nobusy.insert(      std::pair<int,int>(runNumber, (int)sisch->GetChannel("IO32_TRIG_NOBUSY")));
+  atom_or.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PMT_ATOM_OR")));
+  Beam_Injection.insert(   std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_AD")));
+  Beam_Ejection.insert(    std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_AD_2")));
+  CATStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PBAR_DUMP_START")));
+  CATStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_PBAR_DUMP_STOP")));
+  RCTStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_RECATCH_DUMP_START")));
+  RCTStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_RECATCH_DUMP_STOP")));
+  ATMStart.insert(         std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_ATOM_DUMP_START")));
+  ATMStop.insert(          std::pair<int,int>(runNumber, (int)sisch->GetChannel("SIS_ATOM_DUMP_STOP")));
 
 
   //Add all valid SIS channels to a list for later:
   SISChannels.clear();
-  if (trig>0)           SISChannels.push_back(trig);
-  if (trig_nobusy>0)    SISChannels.push_back(trig_nobusy);
-  if (atom_or>0)        SISChannels.push_back(atom_or);
-  if (Beam_Injection>0) SISChannels.push_back(Beam_Injection);
-  if (Beam_Ejection>0)  SISChannels.push_back(Beam_Ejection);
-  if (CATStart>0)       SISChannels.push_back(CATStart);
-  if (CATStop>0)        SISChannels.push_back(CATStop);
-  if (RCTStart>0)       SISChannels.push_back(RCTStart);
-  if (RCTStop>0)        SISChannels.push_back(RCTStop);
-  if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);
+  if (trig.find(runNumber)->second>0)           SISChannels.push_back(trig.find(runNumber)->second);
+  if (trig_nobusy.find(runNumber)->second>0)    SISChannels.push_back(trig_nobusy.find(runNumber)->second);
+  if (atom_or.find(runNumber)->second>0)        SISChannels.push_back(atom_or.find(runNumber)->second);
+  if (Beam_Injection.find(runNumber)->second>0) SISChannels.push_back(Beam_Injection.find(runNumber)->second);
+  if (Beam_Ejection.find(runNumber)->second>0)  SISChannels.push_back(Beam_Ejection.find(runNumber)->second);
+  if (CATStart.find(runNumber)->second>0)       SISChannels.push_back(CATStart.find(runNumber)->second);
+  if (CATStop.find(runNumber)->second>0)        SISChannels.push_back(CATStop.find(runNumber)->second);
+  if (RCTStart.find(runNumber)->second>0)       SISChannels.push_back(RCTStart.find(runNumber)->second);
+  if (RCTStop.find(runNumber)->second>0)        SISChannels.push_back(RCTStop.find(runNumber)->second);
+  if (ATMStart.find(runNumber)->second>0)       SISChannels.push_back(ATMStart.find(runNumber)->second);
+  if (ATMStop.find(runNumber)->second>0)        SISChannels.push_back(ATMStop.find(runNumber)->second);
   //cout <<"Trig:"<<trig<<endl;
   //cout <<"TrigNoBusy:"<<trig_nobusy<<endl;
   //cout <<"Beam Injection:"<<Beam_Injection<<endl;
@@ -260,79 +260,50 @@ void TA2Plot::SetUpHistograms()
 
    TH2D* hzphi = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
    AddHistogram("zphivtx",hzphi);
-
+   std::string units;
    if (GetMaxDumpLength()<SCALECUT) 
    {
-      //SIS channels:
-      TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
-      triggers->SetMarkerColor(kRed);
-      triggers->SetLineColor(kRed);
-      triggers->SetMinimum(0);
-      AddHistogram("tIO32_nobusy",triggers);
-   
-      TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), "t;t [ms];events", GetNBins(), TMin*1000, TMax*1000);
-      read_triggers->SetMarkerColor(kViolet);
-      read_triggers->SetLineColor(kViolet);
-      read_triggers->SetMinimum(0);
-      AddHistogram("tIO32",read_triggers);
-
-      TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), "t;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
-      atom_or->SetMarkerColor(kGreen);
-      atom_or->SetLineColor(kGreen);
-      atom_or->SetMinimum(0);
-      AddHistogram("tAtomOR",atom_or);
-
-      TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), "t Vertex;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
-      ht->SetLineColor(kMagenta);
-      ht->SetMarkerColor(kMagenta);
-      ht->SetMinimum(0);
-      AddHistogram("tvtx",ht);
-
-      TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), "Z-T Vertex;z [cm];t [ms]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*1000., TMax*1000.);
-      AddHistogram("ztvtx",hzt);
-
-      //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
-      //AddHistogram("phitvtx",hphit);
-
-      //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
+      tFactor = 1000;
+      units = "[ms]";
    }
    else
    {
-      //SIS channels:
-      TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
-      triggers->SetMarkerColor(kRed);
-      triggers->SetLineColor(kRed);
-      triggers->SetMinimum(0);
-      AddHistogram("tIO32_nobusy",triggers);
-   
-      TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
-      read_triggers->SetMarkerColor(kViolet);
-      read_triggers->SetLineColor(kViolet);
-      read_triggers->SetMinimum(0);
-      AddHistogram("tIO32",read_triggers);
+      tFactor = 1;
+      units = "[s]";
+   }
+   //SIS channels:
+   TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   triggers->SetMarkerColor(kRed);
+   triggers->SetLineColor(kRed);
+   triggers->SetMinimum(0);
+   AddHistogram("tIO32_nobusy",triggers);
 
-      TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), "t;t [s];events", GetNBins(), TMin, TMax);
-      atom_or->SetMarkerColor(kGreen);
-      atom_or->SetLineColor(kGreen);
-      atom_or->SetMinimum(0);
-      AddHistogram("tAtomOR",atom_or);
-   
-      TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), "t Vertex;t [s];events", GetNBins(), TMin, TMax); 
-      ht->SetLineColor(kMagenta);
-      ht->SetMarkerColor(kMagenta);
-      ht->SetMinimum(0);
-      AddHistogram("tvtx",ht);
+   TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   read_triggers->SetMarkerColor(kViolet);
+   read_triggers->SetLineColor(kViolet);
+   read_triggers->SetMinimum(0);
+   AddHistogram("tIO32",read_triggers);
 
-      TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
-      AddHistogram("ztvtx",hzt);
+   TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   atom_or->SetMarkerColor(kGreen);
+   atom_or->SetLineColor(kGreen);
+   atom_or->SetMinimum(0);
+   AddHistogram("tAtomOR",atom_or);
 
-      //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
-      //AddHistogram("phitvtx",hphit);
+   TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   ht->SetLineColor(kMagenta);
+   ht->SetMarkerColor(kMagenta);
+   ht->SetMinimum(0);
+   AddHistogram("tvtx",ht);
 
-      //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [s];Counts", GetNBins(), TMin, TMax);
-  }
+   TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*tFactor, TMax*tFactor);
+   AddHistogram("ztvtx",hzt);
+
+   //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
+   //AddHistogram("phitvtx",hphit);
+
+   //if (MVAMode)
+   //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
   return;
 }
 
@@ -363,19 +334,19 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          time=time*1000.;
       int Channel         = sisevent.SIS_Channel;
       int CountsInChannel = sisevent.Counts;
-      if (Channel == trig)
+      if (Channel == trig.find(sisevent.runNumber)->second)
          FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy)
+      else if (Channel == trig_nobusy.find(sisevent.runNumber)->second)
          FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or)
+      else if (Channel == atom_or.find(sisevent.runNumber)->second)
          FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection)
+      else if (Channel == Beam_Injection.find(sisevent.runNumber)->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection)
+      else if (Channel == Beam_Ejection.find(sisevent.runNumber)->second)
          AddEjection(time);
-      else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
+      else if (Channel == CATStart.find(sisevent.runNumber)->second || Channel == RCTStart.find(sisevent.runNumber)->second || Channel == ATMStart.find(sisevent.runNumber)->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
+      else if (Channel == CATStop.find(sisevent.runNumber)->second || Channel == RCTStop.find(sisevent.runNumber)->second || Channel == ATMStop.find(sisevent.runNumber)->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -722,5 +693,94 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
   std::cout<<run_txt<<std::endl;
   return cVTX;
 }
+
+TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
+{
+   //Inherited TAPlot members
+   std::cout << "TA2Plot equals operator" << std::endl;
+   SISChannels    = plotA.SISChannels;
+   trig           = plotA.trig;
+   trig_nobusy    = plotA.trig_nobusy;
+   atom_or        = plotA.atom_or;
+   CATStart       = plotA.CATStart;
+   CATStop        = plotA.CATStop;
+   RCTStart       = plotA.RCTStart;
+   RCTStop        = plotA.RCTStop;
+   ATMStart       = plotA.ATMStart;
+   ATMStop        = plotA.ATMStop;
+   Beam_Injection = plotA.Beam_Injection;
+   Beam_Ejection  = plotA.Beam_Ejection;
+   ZMinCut        = plotA.ZMinCut;
+   ZMaxCut        = plotA.ZMaxCut;
+   SISEvents      = plotA.SISEvents;
+
+   return *this;
+}
+
+TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
+{
+   std::cout << "This is TA2Plot copy constructor" << std::endl;
+   SISChannels    = m_TA2Plot.SISChannels;
+   trig           = m_TA2Plot.trig;
+   trig_nobusy    = m_TA2Plot.trig_nobusy;
+   atom_or        = m_TA2Plot.atom_or;
+   CATStart       = m_TA2Plot.CATStart;
+   CATStop        = m_TA2Plot.CATStop;
+   RCTStart       = m_TA2Plot.RCTStart;
+   RCTStop        = m_TA2Plot.RCTStop;
+   ATMStart       = m_TA2Plot.ATMStart;
+   ATMStop        = m_TA2Plot.ATMStop;
+   Beam_Injection = m_TA2Plot.Beam_Injection;
+   Beam_Ejection  = m_TA2Plot.Beam_Ejection;
+   ZMinCut        = m_TA2Plot.ZMinCut;
+   ZMaxCut        = m_TA2Plot.ZMaxCut;
+   SISEvents      = m_TA2Plot.SISEvents;
+}
+
+TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
+{
+   std::cout << "This is TA2Plot constructor from TAPlot" << std::endl;
+   ZMinCut=-99999.;
+   ZMaxCut= 99999.;
+}
+
+TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
+{
+   //In order to call the parents addition first it is important to statically cast the Plots to their parent class,
+   //add the parents together, then initialise a TA2Plot from the TAPlot and fill in the rest of the values as a constructor would.
+   TAPlot PlotACast = static_cast<TAPlot>(PlotA); //2 Static casts
+   TAPlot PlotBCast = static_cast<TAPlot>(PlotB);
+   TAPlot ParentSum = PlotACast + PlotBCast; //Add as TAPlots
+   TA2Plot BasePlot = TA2Plot(ParentSum); //Initialise a TA2Plot from the now summed TAPlots
+
+   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
+   //For all these copying A is fine.
+   
+   BasePlot.trig.insert(            PlotB.trig.begin(), PlotB.trig.end() );
+   BasePlot.trig_nobusy.insert(     PlotB.trig_nobusy.begin(), PlotB.trig_nobusy.end() );
+   BasePlot.atom_or.insert(         PlotB.atom_or.begin(), PlotB.atom_or.end() );
+   BasePlot.CATStart.insert(        PlotB.CATStart.begin(), PlotB.CATStart.end() );
+   BasePlot.CATStop.insert(         PlotB.CATStop.begin(), PlotB.CATStop.end() );
+   BasePlot.RCTStart.insert(        PlotB.RCTStart.begin(), PlotB.RCTStart.end() );
+   BasePlot.RCTStop.insert(         PlotB.RCTStop.begin(), PlotB.RCTStop.end() );
+   BasePlot.ATMStart.insert(        PlotB.ATMStart.begin(), PlotB.ATMStart.end() );
+   BasePlot.ATMStop.insert(         PlotB.ATMStop.begin(), PlotB.ATMStop.end() );
+   BasePlot.Beam_Injection.insert(  PlotB.Beam_Injection.begin(), PlotB.Beam_Injection.end() );
+   BasePlot.Beam_Ejection.insert(   PlotB.Beam_Ejection.begin(), PlotB.Beam_Ejection.end() );
+   
+   BasePlot.ZMinCut        = PlotA.ZMinCut;
+   BasePlot.ZMaxCut        = PlotA.ZMaxCut;
+
+   //Vectors need concacting.
+   BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
+   BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
+   
+   return BasePlot;
+}
+
+/*TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& PlotB)
+{
+   return plotA + PlotB;
+}*/
 
 #endif
