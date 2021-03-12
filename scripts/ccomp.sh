@@ -46,7 +46,7 @@ elif [[ "$1" == "noAg" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    ${cmd} -DBUILD_A2_SIM=ON -DBUILD_AG=OFF ..
+    ${cmd} -DBUILD_A2_SIM=OFF -DBUILD_AG=OFF ..
     #time ${cmd} --build . -- -j`nproc --ignore=2`
     time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
@@ -127,7 +127,7 @@ else
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    ${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON ..
+    ${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=OFF ..
     #time ${cmd} --build . -- -j`nproc --ignore=2`
     time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE

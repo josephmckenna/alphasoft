@@ -64,10 +64,12 @@ void SignalsGenerator::Initialize()
 
   // parameters that characterize
   // the noise on the electrodes
+  //PW - peak to peak noise? How are these determined
   fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
   fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
 
-  // init the wf containters
+  // init the wf containers
+  //PW - waveform
   for(uint aw=0; aw<256; ++aw)
     {
       fAnodeSignals[aw] = new std::vector<double>;
@@ -80,7 +82,7 @@ void SignalsGenerator::Initialize()
     }
 
   for(int s=0; s<32; ++s)
-    for(int c=0; c<576; ++c)
+     for(int c=0; c<576; ++c) //PW - where does 576 come from?
       {
 	std::pair<int,int> pad(s,c);
 	fPadSignals[pad] = new std::vector<double>;
