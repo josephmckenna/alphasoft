@@ -87,6 +87,7 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
    Event.Counts       =event->GetCountsInChannel(channel);
    Event.SIS_Channel  =channel;
 
+   SISEventsNew.AddSISPlotEvent(Event);
    SISEvents.push_back(Event);
 }
 //TODO: Pre sort windows (we should never have overlapping windows...)
@@ -317,7 +318,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    //Fill SIS histograms
    //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
    int runno=0;
-   for (auto& sisevent: SISEvents)
+   /*for (auto& sisevent: SISEvents)
    {
       //This is a new run number... SIS channels could have changed! update!
       if (sisevent.runNumber!=runno)
@@ -347,6 +348,41 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       else if (Channel == CATStart.find(sisevent.runNumber)->second || Channel == RCTStart.find(sisevent.runNumber)->second || Channel == ATMStart.find(sisevent.runNumber)->second)
          AddStopDumpMarker(time);
       else if (Channel == CATStop.find(sisevent.runNumber)->second || Channel == RCTStop.find(sisevent.runNumber)->second || Channel == ATMStop.find(sisevent.runNumber)->second)
+         AddStartDumpMarker(time);
+      else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
+   }*/
+
+   //New implementation
+   for (int i=0;i<SISEventsNew.t.size();i++)
+   {
+      //This is a new run number... SIS channels could have changed! update!
+      if (SISEventsNew.runNumber.at(i)!=runno)
+      {
+         runno=SISEventsNew.runNumber.at(i);
+         SetSISChannels(runno);
+      }
+      double time;
+      if (ZeroTimeAxis)
+         time = SISEventsNew.t.at(i);
+      else
+         time = SISEventsNew.OfficialTime.at(i);
+      if (max_dump_length<SCALECUT) 
+         time=time*1000.;
+      int Channel         = SISEventsNew.SIS_Channel.at(i);
+      int CountsInChannel = SISEventsNew.Counts.at(i);
+      if (Channel == trig.find(SISEventsNew.runNumber.at(i))->second)
+         FillHistogram("tIO32",time,CountsInChannel);
+      else if (Channel == trig_nobusy.find(SISEventsNew.runNumber.at(i))->second)
+         FillHistogram("tIO32_nobusy",time,CountsInChannel);
+      else if (Channel == atom_or.find(SISEventsNew.runNumber.at(i))->second)
+         FillHistogram("tAtomOR",time,CountsInChannel);
+      else if (Channel == Beam_Injection.find(SISEventsNew.runNumber.at(i))->second)
+         AddInjection(time);
+      else if (Channel == Beam_Ejection.find(SISEventsNew.runNumber.at(i))->second)
+         AddEjection(time);
+      else if (Channel == CATStart.find(SISEventsNew.runNumber.at(i))->second || Channel == RCTStart.find(SISEventsNew.runNumber.at(i))->second || Channel == ATMStart.find(SISEventsNew.runNumber.at(i))->second)
+         AddStopDumpMarker(time);
+      else if (Channel == CATStop.find(SISEventsNew.runNumber.at(i))->second || Channel == RCTStop.find(SISEventsNew.runNumber.at(i))->second || Channel == ATMStop.find(SISEventsNew.runNumber.at(i))->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -713,6 +749,7 @@ TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
    ZMinCut        = plotA.ZMinCut;
    ZMaxCut        = plotA.ZMaxCut;
    SISEvents      = plotA.SISEvents;
+   SISEventsNew   = plotA.SISEventsNew;
 
    return *this;
 }
@@ -735,6 +772,7 @@ TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
    ZMinCut        = m_TA2Plot.ZMinCut;
    ZMaxCut        = m_TA2Plot.ZMaxCut;
    SISEvents      = m_TA2Plot.SISEvents;
+   SISEventsNew   = m_TA2Plot.SISEventsNew;
 }
 
 TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
@@ -753,9 +791,7 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
    TAPlot ParentSum = PlotACast + PlotBCast; //Add as TAPlots
    TA2Plot BasePlot = TA2Plot(ParentSum); //Initialise a TA2Plot from the now summed TAPlots
 
-   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
-   //For all these copying A is fine.
-   
+   //These are maps, concacted.
    BasePlot.trig.insert(            PlotB.trig.begin(), PlotB.trig.end() );
    BasePlot.trig_nobusy.insert(     PlotB.trig_nobusy.begin(), PlotB.trig_nobusy.end() );
    BasePlot.atom_or.insert(         PlotB.atom_or.begin(), PlotB.atom_or.end() );
@@ -775,6 +811,8 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
    BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
    BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
    
+   BasePlot.SISEventsNew += PlotB.SISEventsNew;
+
    return BasePlot;
 }
 
