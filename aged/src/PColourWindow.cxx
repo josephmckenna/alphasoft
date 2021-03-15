@@ -268,7 +268,7 @@ void PColourWindow::SetIntensity(int val)
     UpdateSliderPosition();
 }
 
-void PColourWindow::IntensityProc(Widget w, PColourWindow *cwin, XmScaleCallbackStruct *call_data)
+void PColourWindow::IntensityProc(Widget /*w*/, PColourWindow *cwin, XmScaleCallbackStruct *call_data)
 {
     PColourWheel *cwheel = (PColourWheel *)cwin->mImage;
     cwheel->SetIntensity(call_data->value, 1);  // set intensity
@@ -279,7 +279,7 @@ void PColourWindow::IntensityProc(Widget w, PColourWindow *cwin, XmScaleCallback
     cwheel->AnimateDone();
 }
 
-void PColourWindow::ScaleDragProc(Widget w, PColourWindow *cwin, XmScaleCallbackStruct *call_data)
+void PColourWindow::ScaleDragProc(Widget /*w*/, PColourWindow *cwin, XmScaleCallbackStruct *call_data)
 {
     PColourWheel *cwheel = (PColourWheel *)cwin->mImage;
     // only update colour wheel for fast animation
@@ -288,28 +288,28 @@ void PColourWindow::ScaleDragProc(Widget w, PColourWindow *cwin, XmScaleCallback
     cwin->WheelColourChanging();
 }
 
-void PColourWindow::OkProc(Widget w, PColourWindow *cwin, caddr_t call_data)
+void PColourWindow::OkProc(Widget /*w*/, PColourWindow *cwin, caddr_t /*call_data*/)
 {
     TextProc(NULL, cwin, NULL); // do this in case text was changed
     cwin->mColourPicker->ApplyCurrentColours();
     delete(cwin);
 }
 
-void PColourWindow::ApplyProc(Widget w, PColourWindow *cwin, caddr_t call_data)
+void PColourWindow::ApplyProc(Widget /*w*/, PColourWindow *cwin, caddr_t /*call_data*/)
 {
     TextProc(NULL, cwin, NULL); // do this in case text was changed
     cwin->mColourPicker->ApplyCurrentColours();
 }
 
 // revert to last applied colours
-void PColourWindow::RevertProc(Widget w, PColourWindow *cwin, caddr_t call_data)
+void PColourWindow::RevertProc(Widget /*w*/, PColourWindow *cwin, caddr_t /*call_data*/)
 {
     if (cwin->mColourPicker->RevertColours()) {
         cwin->PickerColourChanged();
     }
 }
 
-void PColourWindow::CancelProc(Widget w, PColourWindow *cwin, caddr_t call_data)
+void PColourWindow::CancelProc(Widget /*w*/, PColourWindow *cwin, caddr_t /*call_data*/)
 {
     if (cwin->mColourPicker->RevertColours()) {
         cwin->PickerColourChanged();
@@ -317,7 +317,7 @@ void PColourWindow::CancelProc(Widget w, PColourWindow *cwin, caddr_t call_data)
     delete(cwin);
 }
 
-void PColourWindow::TextProc(Widget w, PColourWindow *cwin, caddr_t call_data)
+void PColourWindow::TextProc(Widget /*w*/, PColourWindow *cwin, caddr_t /*call_data*/)
 {
     int col3[3];
     int oldCol[3];

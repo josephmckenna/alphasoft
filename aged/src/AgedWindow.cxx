@@ -124,6 +124,7 @@ AgedWindow::AgedWindow(int load_settings)
     mLabelText[0].font = NULL;
 #ifdef ANTI_ALIAS
     mLabelText[0].xftFont = NULL;
+    if(load_settings) printf("AgedWindow::AgedWindow Use ANTI-ALIASing\n");
 #endif
     mLabelText[0].string = NULL;
     mWarnDialog = NULL;
@@ -310,7 +311,7 @@ void AgedWindow::SetTitle(char *str)
     PWindow::SetTitle(str);     /* set new title */
 }
 
-void AgedWindow::Listen(int message, void *dataPt)
+void AgedWindow::Listen(int message, void* /*dataPt*/)
 {
     ImageData   *data = GetData();
     
@@ -796,14 +797,14 @@ void AgedWindow::WarnQuit()
 //---------------------------------------------------------------------------------
 // Assorted callbacks
 //
-void AgedWindow::WarnCancelProc(Widget w, AgedWindow *win, caddr_t call_data)
+void AgedWindow::WarnCancelProc(Widget /*w*/, AgedWindow *win, caddr_t /*call_data*/)
 {
     // delete the warning dialog
     XtDestroyWidget(win->mWarnDialog);
     win->mWarnDialog = NULL;
 }
 
-void AgedWindow::WarnOKProc(Widget w, AgedWindow *win, caddr_t call_data)
+void AgedWindow::WarnOKProc(Widget /*w*/, AgedWindow *win, caddr_t /*call_data*/)
 {
     XtDestroyWidget(win->mWarnDialog);
     win->mWarnDialog = NULL;
@@ -812,7 +813,7 @@ void AgedWindow::WarnOKProc(Widget w, AgedWindow *win, caddr_t call_data)
 }
 
 // the warning dialog was destroyed
-void AgedWindow::WarnDestroyProc(Widget w, AgedWindow *win, caddr_t call_data)
+void AgedWindow::WarnDestroyProc(Widget w, AgedWindow *win, caddr_t /*call_data*/)
 {
     // must verify that it is the current dialog being destroyed
     // (could a delayed callback from one we destroyed ourself already)
@@ -820,13 +821,13 @@ void AgedWindow::WarnDestroyProc(Widget w, AgedWindow *win, caddr_t call_data)
         win->mWarnDialog = NULL;
     }
 }
-void AgedWindow::DestroyDialogProc(Widget w, Widget **dialogPtr, caddr_t call_data)
+void AgedWindow::DestroyDialogProc(Widget /*w*/, Widget **dialogPtr, caddr_t /*call_data*/)
 {
     /* must zero our pointer since the dialog is gone */
     *dialogPtr = NULL;
 }
 
-void AgedWindow::CancelProc(Widget w, Widget aShell, caddr_t call_data)
+void AgedWindow::CancelProc(Widget /*w*/, Widget aShell, caddr_t /*call_data*/)
 {
     XtDestroyWidget(aShell);
 }
@@ -959,7 +960,7 @@ int AgedWindow::CheckMenuCommand(int anID, int flags)
     return(flags);
 }
 
-void aged_next(ImageData *data, int direction)
+void aged_next(ImageData *data, int /*direction*/)
 {
     /* step forward in real time */
     PEventControlWindow::SetEventFilter(data);

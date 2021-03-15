@@ -20,9 +20,9 @@ class PMenuHandler {
 public:
     virtual ~PMenuHandler() { }
     // execute a menu command
-    virtual void    DoMenuCommand(int anID)                 { }
+    virtual void    DoMenuCommand(int /*anID*/)                 { }
     // check/change the state of a menu item before the menu is selected
-    virtual int     CheckMenuCommand(int anID, int flags)   { return flags; }
+    virtual int     CheckMenuCommand(int /*anID*/, int flags)   { return flags; }
 };
 
 // menu item structure -- used to define menu items when creating new menus

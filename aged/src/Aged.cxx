@@ -24,7 +24,7 @@
 
 Aged::Aged()
 {
-    Printf((char *)"Version " AGED_VERSION "\n");
+    Printf((char *)"Version " AGED_VERSION "");
 /*
 ** Create main window and menus
 */
