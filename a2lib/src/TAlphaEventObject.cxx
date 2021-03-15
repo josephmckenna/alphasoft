@@ -311,7 +311,9 @@ Double_t TAlphaEventObject::GetpPos(Int_t strip)
   assert( strip < 256 );
 
   double p_pitch = SilPPitch()*10.; // mm
-  double ASIC3_start = 28.938;
+
+//  double ASIC3_start = 28.938;
+  double ASIC3_start = 28.9425; ///< Germano (11/03/2021) => To avoid overlapping
   double ASIC4_start = -0.1135;
 
   double p = 0.;
@@ -331,8 +333,10 @@ Int_t TAlphaEventObject::ReturnPStrip( Double_t pos )
 // returns strip number [0,255]
   // in cm
   const Double_t p_pitch = SilPPitch();
-  double ASIC3_start = 2.8938;
-  double ASIC3_end   = 0.01089;
+//  double ASIC3_start = 2.8938;
+//  double ASIC3_end   = 0.01089;
+  double ASIC3_start = +2.89425; ///< Germano (11/03/2021) => To avoid overlapping (108.9+113.5 = 222.4 um < 227 um pitch)
+  double ASIC3_end   = +0.01135; ///< Germano (11/03/2021) => To avoid overlapping (108.9+113.5 = 222.4 um < 227 um pitch)
   double ASIC4_start = -0.01135;
   double ASIC4_end   = -2.89425;
   Int_t strip = P_FAIL();

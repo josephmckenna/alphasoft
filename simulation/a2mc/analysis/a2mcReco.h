@@ -24,14 +24,14 @@ public:
     virtual void            Reco(bool);
     virtual void            CreateHistos();
     virtual void            FillHistos();
-    virtual void            ShowHistos();
+    virtual void            ShowHistos(bool);
     virtual void            CreateOutputFile();
 
 private:    
 ///< Histos
-    TH1F *hMCVdx, *hMCVdy, *hMCVdz, *hMCVdr;
-    TH1F *hRecVdx, *hRecVdy, *hRecVdz, *hRecVdr;
-    TH1F *hDiffVdx, *hDiffVdy, *hDiffVdz, *hDiffVdr;
+    TH1F *hMCVdx, *hMCVdy, *hMCPhi, *hMCVdz, *hMCVdr;
+    TH1F *hRecVdx, *hRecVdy, *hRecPhi, *hRecVdz, *hRecVdr;
+    TH1F *hDiffVdx, *hDiffVdy, *hDiffPhi, *hDiffVdz, *hDiffVdr;
 
 ///< Variables
     TFile          *fRAWFile;

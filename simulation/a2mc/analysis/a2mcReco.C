@@ -69,63 +69,92 @@ Bool_t a2mcReco::GoodEvent() {
 //    
 //}
 
-void a2mcReco::ShowHistos() {
+void a2mcReco::ShowHistos(bool save_histos) {
     gROOT->cd();
-    TCanvas *cVertex = new TCanvas("cVertex", "MC/Rec/Diff vertex distributions", 1600,1200);
-    cVertex->Divide(4,3);
+    TCanvas *cVertex = new TCanvas("cVertex", "MC/Rec/Diff vertex distributions", 1200,1200);
+    cVertex->Divide(3,3);
     int i=0;
-    cVertex->cd(++i); hMCVdx->Draw();
-    cVertex->cd(++i); hMCVdy->Draw();
-    cVertex->cd(++i); hMCVdz->Draw();
+    cVertex->cd(++i); hMCPhi->Draw();
     cVertex->cd(++i); hMCVdr->Draw();
-    cVertex->cd(++i); hRecVdx->Draw();
-    cVertex->cd(++i); hRecVdy->Draw();
-    cVertex->cd(++i); hRecVdz->Draw();
-    cVertex->cd(++i); hRecVdr->Draw();
-    cVertex->cd(++i); hDiffVdx->Draw();
-    cVertex->cd(++i); hDiffVdy->Draw();
-    cVertex->cd(++i); hDiffVdz->Draw();
-    cVertex->cd(++i); hDiffVdr->Draw();
+    cVertex->cd(++i); hMCVdz->Draw();
 
+    cVertex->cd(++i); hRecPhi->Draw();
+    cVertex->cd(++i); hRecVdr->Draw();
+    cVertex->cd(++i); hRecVdz->Draw();
+
+    cVertex->cd(++i); hDiffPhi->Draw();
+    cVertex->cd(++i); hDiffVdr->Draw();
+    cVertex->cd(++i); hDiffVdz->Draw();
+
+    Double_t parPhi[6] = {2.*hDiffPhi->GetMaximum()/3.,0.,15.,hDiffPhi->GetMaximum()/3.,0.,50.};
+    TF1 *fPhi = new TF1("fPhi","gaus(0)+gaus(3)",-100.,100.);
+    fPhi->SetLineColor(2);
+    fPhi->SetParameters(parPhi);
+    hDiffPhi->Fit(fPhi,"R+");
+
+    Double_t parR[6] = {4.*hDiffVdr->GetMaximum()/5.,0.,0.8,hDiffVdr->GetMaximum()/5.,-1.2,2.2};
+    TF1 *fR = new TF1("fR","gaus(0)+gaus(3)",-5.,5.);
+    fR->SetLineColor(2);
+    fR->SetParameters(parR);
+    hDiffVdr->Fit(fR,"R+");
+    
+    Double_t parZ[6] = {2.*hDiffVdz->GetMaximum()/3.,0.,0.5,hDiffVdz->GetMaximum()/3.,0.,2.0};
+    TF1 *fZ = new TF1("fZ","gaus(0)+gaus(3)",-5.,5.);
+    fZ->SetLineColor(2);
+    fZ->SetParameters(parZ);
+    hDiffVdz->Fit(fZ,"R+");
+    
     cVertex->Modified(); cVertex->Update();
+    if(save_histos) {
+        ostringstream s; 
+        s << "cVertex_run_" << fRunNumber << ".root";
+        cVertex->Print(s.str().c_str(),".root");
+    }
 }
 void a2mcReco::FillHistos() {
     gROOT->cd();
     if(!isnan(fVdx)) {
         hMCVdx->Fill(fVdx);
         hMCVdy->Fill(fVdy);
+        hMCPhi->Fill(TMath::RadToDeg()*atan2(fVdy, fVdx));
         hMCVdz->Fill(fVdz);
         hMCVdr->Fill(sqrt(fVdx*fVdx+fVdy*fVdy));
     }
     if(isRecV) {
         hRecVdx->Fill(fRecVdx);
         hRecVdy->Fill(fRecVdy);
+        hRecPhi->Fill(TMath::RadToDeg()*atan2(fRecVdy, fRecVdx));
         hRecVdz->Fill(fRecVdz);
         hRecVdr->Fill(sqrt(fRecVdx*fRecVdx+fRecVdy*fRecVdy));
     }
     if(!isnan(fVdx)&&isRecV) {
-        hDiffVdx->Fill(fRecVdx-fVdx);
-        hDiffVdy->Fill(fRecVdy-fVdy);
-        hDiffVdz->Fill(fRecVdz-fVdz);
-        hDiffVdr->Fill(sqrt(fRecVdx*fRecVdx+fRecVdy*fRecVdy)-sqrt(fVdx*fVdx+fVdy*fVdy));
+        hDiffVdx->Fill(fVdx-fRecVdx);
+        hDiffVdy->Fill(fVdy-fRecVdy);
+        hDiffPhi->Fill(TMath::RadToDeg()*atan2(fVdy, fVdx)-TMath::RadToDeg()*atan2(fRecVdy, fRecVdx));
+        hDiffVdz->Fill(fVdz-fRecVdz);
+        hDiffVdr->Fill(sqrt(fVdx*fVdx+fVdy*fVdy)-sqrt(fRecVdx*fRecVdx+fRecVdy*fRecVdy));
     }
 }
 
 void a2mcReco::CreateHistos() {
     gROOT->cd();
     Int_t nBinsVd = 100;
-    Float_t xMin = -10., xMax = +10.;
-    Float_t zMin = -10., zMax = +10.;
+    Float_t xMin = -5., xMax = +5.;
+    Float_t zMin = -5., zMax = +5.;
+    Float_t phiMin = -100., phiMax = +100.;
     hMCVdx   = new TH1F("hMCVdx",   "MC Vdx"  , nBinsVd, xMin, xMax);
     hMCVdy   = new TH1F("hMCVdy",   "MC Vdy"  , nBinsVd, xMin, xMax);
+    hMCPhi   = new TH1F("hMCPhi",   "MC Phi"  , nBinsVd, phiMin, phiMax);
     hMCVdz   = new TH1F("hMCVdz",   "MC Vdz"  , nBinsVd, zMin, zMax);
     hMCVdr   = new TH1F("hMCVdr",   "MC Vdr"  , nBinsVd, xMin, xMax);
     hRecVdx  = new TH1F("hRecVdx",  "Rec Vdx" , nBinsVd, xMin, xMax);
     hRecVdy  = new TH1F("hRecVdy",  "Rec Vdy" , nBinsVd, xMin, xMax);
+    hRecPhi  = new TH1F("hRecPhi",  "Rec Phi" , nBinsVd, phiMin, phiMax);
     hRecVdz  = new TH1F("hRecVdz",  "Rec Vdz" , nBinsVd, zMin, zMax);
     hRecVdr  = new TH1F("hRecVdr",  "Rec Vdr" , nBinsVd, xMin, xMax);
     hDiffVdx = new TH1F("hDiffVdx", "Diff Vdx", nBinsVd, xMin, xMax);
     hDiffVdy = new TH1F("hDiffVdy", "Diff Vdy", nBinsVd, xMin, xMax);
+    hDiffPhi = new TH1F("hDiffPhi", "Diff Phi", nBinsVd, phiMin, phiMax);
     hDiffVdz = new TH1F("hDiffVdz", "Diff Vdz", nBinsVd, zMin, zMax);
     hDiffVdr = new TH1F("hDiffVdr", "Diff Vdr", nBinsVd, xMin, xMax);
 }

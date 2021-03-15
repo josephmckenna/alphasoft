@@ -452,7 +452,7 @@ static int readFile(FILE*fp)
       gMinZ = -gMaxZ;
     }
 
-  fprintf(stderr,"operafld: Field map size: x: %d..%d, y: %d..%d, z: %d..%d\n",gMinX,gMaxX,gMinY,gMaxY,gMinZ,gMaxZ);
+//  fprintf(stderr,"operafld: Field map size: x: %d..%d, y: %d..%d, z: %d..%d\n",gMinX,gMaxX,gMinY,gMaxY,gMinZ,gMaxZ);
 
   // remember the field value at x,y,z = 0
   gFieldZ0 = map[0-kXmin][0-kYmin][0-kZmin].bz;
