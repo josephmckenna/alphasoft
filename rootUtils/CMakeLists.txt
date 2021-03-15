@@ -1,43 +1,6 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
-
-# Version numbering
-set (basicApp_VERSION_MAJOR 1)
-set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-option(BUILD_AG "Build AG" ON)
-option(BUILD_A2 "Build A2" ON)
-
-# Enforce out-of-source builds 
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
-if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
-endif(_insource) 
-
-# Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
-# The parameter is based on compiler ID as it's not standardised
-if ($ENV{CLICOLOR_FORCE})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-       add_compile_options (-fdiagnostics-color=always)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
-       add_compile_options (-fcolor-diagnostics)
-    endif ()
-endif ()
-
-# Directories
-add_subdirectory(src)
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+project(rootutils)
 
 find_package (Python COMPONENTS Interpreter Development)
 if (${Python_FOUND})
@@ -47,48 +10,34 @@ if (${Python_FOUND})
    link_libraries(${Python_})
 endif()
 
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS)
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-
-find_package(ROOTANA)
-include_directories(${ROOTANA_INCLUDE_DIRS})
-
-# Include directories
-include_directories( 
-   ../ana/include
-   )
-if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
-else ()
-   include_directories(include $ENV{ROOTANASYS}/include)
-endif (BUILT_IN_ROOTANA)
-include_directories(include ${ROOT_INCLUDE_DIRS})
+include_directories(
+   include 
+   ${ROOT_INCLUDE_DIRS} 
+   ${ROOTANA_INCLUDE_DIRS}
+   ${CMAKE_SOURCE_DIR}/libGEM/include
+)
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
 ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-
-
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
 add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
 target_include_directories( rootUtils
    PUBLIC
       include 
+      ${CMAKE_SOURCE_DIR}/ana/include
+      ${CMAKE_SOURCE_DIR}/libGEM/include
+      ${CMAKE_SOURCE_DIR}/recolib/include
+      ${CMAKE_SOURCE_DIR}/analib/include
+      ${CMAKE_SOURCE_DIR}/a2lib/include
    )
-if (BUILD_AG)
-   target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
-endif (BUILD_AG)
-if (BUILD_A2)
-   target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2 analib)
-endif (BUILD_A2)
+
 if (${Python_FOUND})
    target_link_libraries(rootUtils ${Python_LIBRARIES})
 endif()
 
 install(TARGETS rootUtils 
-   LIBRARY
+  LIBRARY
       DESTINATION lib 
    PUBLIC_HEADER
       DESTINATION include

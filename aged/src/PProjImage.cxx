@@ -138,7 +138,7 @@ void PProjImage::DrawAngles(int horiz,int angleFlags)
 void PProjImage::SetToHome(int n)
 {
     matrixIdent(mProj.rot);
-    
+    n=n;
     mProj.proj_max      = 1e10;
     mProj.proj_screen   = -1.0;
     mProj.proj_min      = -0.99;

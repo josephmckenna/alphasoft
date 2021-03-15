@@ -30,7 +30,6 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH})
 
 
-
 #----------------------------------------------------------------------------
 # Setup project include directories; compile definitions; link libraries
 #
@@ -59,7 +58,7 @@ include_directories(${VMC_INCLUDE_DIRS})
 # VMC Configuration file
 # (for building MC independent code)
 #
-include(UseVMC)
+#include(UseVMC)
 
 #----------------------------------------------------------------------------
 # Hard code the path to the installation

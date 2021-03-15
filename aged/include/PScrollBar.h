@@ -25,7 +25,7 @@ public:
     PScrollHandler() { }
     virtual ~PScrollHandler() { }
     
-    virtual void        ScrollValueChanged(EScrollBar bar, int value) { }
+    virtual void        ScrollValueChanged(EScrollBar /*bar*/, int /*value*/) { }
 };
 
 

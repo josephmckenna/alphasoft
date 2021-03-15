@@ -25,16 +25,27 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+class DisplayFlags
+{
+public:
+   bool fBatch;
+   bool fForce;
+
+   DisplayFlags():fBatch(true),fForce(false)
+   {}
+   ~DisplayFlags() {}
+};
+
 class DisplayRun: public TARunObject
 {
 private:
    Aged *aged;
-   bool fBatch;
+   DisplayFlags* fFlags;
 
 public:
 
-   DisplayRun(TARunInfo* runinfo, bool mode)
-      : TARunObject(runinfo), aged(NULL), fBatch(mode)
+   DisplayRun(TARunInfo* runinfo, DisplayFlags* f)
+      : TARunObject(runinfo), aged(0), fFlags(f)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
@@ -64,6 +75,11 @@ public:
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // ********* CREATE your display here
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      if( !fFlags->fBatch && !aged ) 
+         {
+            printf("New Aged ");
+            aged = new Aged();
+         }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -97,7 +113,7 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fBatch )
+      if( fFlags->fBatch )
       {
 #ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -119,7 +135,15 @@ public:
       
       AgEvent* age = ef->fEvent;
       
-      if( !age->feam || !age->a16 )
+      if( !age->a16 )
+      {
+#ifdef MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+
+      if( !age->feam && !fFlags->fForce )
       {
 #ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -159,11 +183,6 @@ public:
 
       printf("DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
-      if (!aged) 
-         {
-            printf("New Aged!\n");
-            aged = new Aged();
-         }
 
       analysis_flow->fEvent->Print();
       if (aged) {
@@ -182,7 +201,8 @@ public:
 class DisplayModuleFactory: public TAFactory
 {
 public:
-   bool fBatch;
+   DisplayFlags fFlags;
+
 public:
    void Usage()
    {
@@ -192,14 +212,14 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("DisplayModuleFactory::Init!\n");
-      fBatch = true;
-
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
       for (unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--aged" )
-               fBatch = false;
+               fFlags.fBatch = false;
+            if( args[i] == "--forcereco" )
+               fFlags.fForce=true;
          }
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
@@ -209,14 +229,14 @@ public:
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      if( fBatch )
+      if( fFlags.fBatch )
          printf("DisplayModuleFactory::NewRunObject, run %d, file %s -- BATCH MODE\n",
                 runinfo->fRunNo, runinfo->fFileName.c_str());
       else
          printf("DisplayModuleFactory::NewRunObject, run %d, file %s\n", 
                 runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      return new DisplayRun(runinfo, fBatch);
+      return new DisplayRun(runinfo,&fFlags);
    }
 };
 

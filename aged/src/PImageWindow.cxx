@@ -98,7 +98,7 @@ void PImageWindow::WasRaised()
     }
 }
 
-void PImageWindow::CirculateWindProc(Widget w, PImageWindow *aWind, XEvent *event)
+void PImageWindow::CirculateWindProc(Widget /*w*/, PImageWindow *aWind, XEvent *event)
 {
     if (event->type == ConfigureNotify &&
         event->xconfigure.window == XtWindow(aWind->GetShell()))

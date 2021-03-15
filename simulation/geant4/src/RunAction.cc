@@ -32,6 +32,12 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+#include <TFile.h>
+#include <TH1D.h>
+#include <TTree.h>
+#include <TClonesArray.h>
+#include <TString.h>
+
 #include "RunAction.hh"
 #include "DetectorConstruction.hh"
 
@@ -40,11 +46,7 @@
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 
-#include <TFile.h>
-#include <TH1D.h>
-#include <TTree.h>
-#include <TClonesArray.h>
-#include <TString.h>
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

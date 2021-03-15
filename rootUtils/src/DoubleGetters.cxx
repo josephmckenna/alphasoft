@@ -181,7 +181,7 @@ Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
    if (!SISReader->GetTree())
       return -1.;
    TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-   SISReader->SetEntry(SISReader->GetEntries() -1 );
+   SISReader->SetEntry(SISReader->GetEntries(false) -1 );
    double t = SISEvent->GetRunTime();
    return t;   
 }
@@ -192,7 +192,7 @@ Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
    if (!SVDReader->GetTree())
       return -1.;
    TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
-   SVDReader->SetEntry(SVDReader->GetEntries() -1 );
+   SVDReader->SetEntry(SVDReader->GetEntries(false) -1 );
    double t = SVDEvent->t;
    return t;
 }

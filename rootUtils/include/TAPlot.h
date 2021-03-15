@@ -427,7 +427,7 @@ public:
 
    double GetApproximateProcessingTime()
    {
-      if ( DataLoadedTime.time_since_epoch().count() == 0 )
+      if ( DataLoadedTime == std::chrono::high_resolution_clock::from_time_t(0) )
          LoadingDataLoadingDone();
       std::chrono::duration<double> d = 
          std::chrono::duration_cast<std::chrono::seconds>( DataLoadedTime - ObjectConstructionTime );

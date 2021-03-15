@@ -1,9 +1,8 @@
-image: jmckenna/alphadocker
+image: tmidas/root6
 
 stages:
   - build
   - test
-  - test_more
 #  - pages
 
 cache:
@@ -22,6 +21,7 @@ cache:
     - scripts/UnitTest/*.log
     - scripts/UnitTest/*.log.nopid
     - bin/
+    - variables
 
 #Global before script (cc7)
 before_script:
@@ -126,7 +126,26 @@ before_script:
 #      - BuildLog.txt
 #      - ana/include/GitInfo.h
 
-build-cc7-cmake:
+
+build-cc7-cmake-full:
+  stage: build
+  image: tmidas/garfieldpp
+  script:
+    - echo "Building"
+    - cd scripts/gitChecker
+    - ./BuildAndElog.sh
+    - cat ../../variables
+  artifacts:
+    when: on_success
+    paths:
+      - public
+      - variables
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-no-sim:
   stage: build
   script:
     - echo "Building"
@@ -136,6 +155,7 @@ build-cc7-cmake:
     - cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../bin
     - cmake3 --build .  2>&1 | tee ../BuildLog.txt
     - cmake3 --build . --target install  2>&1 | tee -a ../BuildLog.txt
+  cache: {}
   artifacts:
     when: on_failure
     paths:
@@ -149,6 +169,22 @@ build-cc7-cmake-ag:
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
+    - make | tee ../BuildLog.txt
+  cache: {}
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildLog.txt
+      - ana/include/GitInfo.h
+
+build-cc7-cmake-ag-sim:
+  stage: build
+  image: tmidas/garfieldpp
+  script:
+    - echo "Building"
+    - mkdir -p build
+    - cd build
+    - cmake3 ../ -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
     - make | tee ../BuildLog.txt
   cache: {}
   artifacts:
@@ -187,122 +223,121 @@ build-cc7:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-
-build-cc7-cmake-a2-sim:
-  image: jmckenna/alphadocker:geant4_vmc
-  stage: build
+AG_Simulation:
+  stage: test
+  image: tmidas/garfieldpp
   script:
-    - echo "Building"
-    - mkdir -p build
-    - cd build
-    - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2_SIM=ON -DBUILD_A2=ON -DBUILD_AG=OFF
-    - make | tee ../BuildLog.txt
-  cache: {}
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./AGSimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   artifacts:
     when: on_failure
     paths:
+      - BuildSimLog.txt
       - BuildLog.txt
-      - ana/include/GitInfo.h
+      - simlogs/*
 
-#simulation:
-#  stage: test_more
-#  image: jmckenna/cc7_root6_geant4
-#  script:
-#    - . agconfig.sh install_sim | tee BuildSimLog.txt
-#    - cd scripts/gitChecker
-#    - ./SimChecker.sh
-#    - cd -
-#    - mkdir -p public
-#    - cp -v simlogs/* public/
-#  dependencies:
-#    - test
-#  artifacts:
-#    when: on_success
-#    paths:
-#      - public
-#      - variables
-#    when: on_failure
-#    paths:
-#      - BuildSimLog.txt
-#      - BuildLog.txt
-#      - simlogs/*
+A2_Simulation:
+  stage: test
+  image: tmidas/garfieldpp
+  script:
+    - . agconfig.sh install_sim | tee BuildSimLog.txt
+    - cd scripts/gitChecker
+    - ./A2SimChecker.sh
+    - cd -
+    - mkdir -p public
+    - cp -v simlogs/* public/
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+  artifacts:
+    when: on_failure
+    paths:
+      - BuildSimLog.txt
+      - BuildLog.txt
+      - simlogs/*
 
-test:
+AG_Leak_Test:
   stage: test
   script:
     - . agconfig.sh
-    - cd scripts/gitChecker
-    - rm -rf $AGRELEASE/ana/AutoPlots/*
-    - ls -l $AGRELEASE/bin/*.exe
-    - ./RunChecker.sh
-    - cd -
-    - mkdir -p public
-    - cp -v testlogs/* public/
-  dependencies:
-    - build-cc7-cmake
-  artifacts:
-    when: on_success
-    paths:
-    - public
-    - variables
-    when: on_failure
-    paths:
-    - BuildLog.txt
-    - testlogs/agana_run*.log
-    - testlogs/mt_agana_run*.log
-
-testleakAg:
-  stage: test_more
-  script:
-    - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part2.sh
+    - ./RunChecker_Part3_LeakTest_AG.sh
   dependencies:
-    - test
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   artifacts:
     paths:
     - leaktest.log
 
-testspeedAg:
-  stage: test_more
+AG_Speed_Test:
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part3.sh
+    - ./RunChecker_Part3_SpeedTest_AG.sh
   dependencies:
-    - test
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   artifacts:
     paths:
     - callgrind.log
 
-
-testleakA2:
-  stage: test_more
+AG_Thread_Test:
+  stage: test
   script:
     - . agconfig.sh
     - cat variables
     - cd scripts/gitChecker
-    - ./RunChecker_Part2_A2.sh
+    - ./RunChecker_Part3_ThreadTest_AG.sh
   dependencies:
-    - test
-  artifacts:
-    paths:
-    - leaktest.log
-
-testspeedA2:
-  stage: test_more
-  script:
-    - . agconfig.sh
-    - cat variables
-    - cd scripts/gitChecker
-    - ./RunChecker_Part3_A2.sh
-  dependencies:
-    - test
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
   artifacts:
     paths:
     - callgrind.log
+
+A2_Leak_Test:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_LeakTest_A2.sh
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+
+A2_Speed_Test:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_SpeedTest_A2.sh
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+
+A2_Thread_Test:
+  stage: test
+  script:
+    - . agconfig.sh
+    - cat variables
+    - cd scripts/gitChecker
+    - ./RunChecker_Part3_ThreadTest_A2.sh
+  dependencies:
+    - build-cc7-cmake-full
+  needs: ["build-cc7-cmake-full"]
+
 
 #pages:
 #  script:

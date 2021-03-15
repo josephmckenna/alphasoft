@@ -7,14 +7,13 @@
 
 #include <cmath>
 
-#include <GeometrySimple.hh>
-#include <Medium.hh>
-#include <SolidTube.hh>
+#include "Garfield/GeometrySimple.hh"
+#include "Garfield/SolidTube.hh"
+#include "Garfield/Medium.hh"
+
 #include "ComponentBmap.hh"
 
 #include "TPCBase.hh"
-
-using namespace Garfield;
 
 class TPC: public Garfield::ComponentBmap, public TPCBase
 {
@@ -25,17 +24,17 @@ public:
   std::vector<std::string> GetPadReadouts(){ return pads;};
   std::vector<std::string> GetOtherReadouts(){ return readouts;};
 
-  void SetGas(Medium *m);
+  void SetGas(Garfield::Medium *m);
   void SetVoltage(double &vc, double& vaw, double& vfw);
 
   void init();
 
   double CathodeVoltage, AnodeVoltage, FieldVoltage;
 protected:
-  vector<string> anodes, pads, readouts;
-  GeometrySimple geo;
-  Medium *medium;
-  SolidTube* chamber;
+  std::vector<std::string> anodes, pads, readouts;
+  Garfield::GeometrySimple geo;
+  Garfield::Medium *medium;
+  Garfield::SolidTube* chamber;
 };
 
 #endif

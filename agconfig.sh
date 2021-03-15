@@ -15,8 +15,6 @@ export AGRELEASE="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export AGMIDASDATA=${AGRELEASE}
 export A2DATAPATH=${AGRELEASE}/alpha2
 
-#export AG_CFM=${AGRELEASE}/ana #obsolete
-
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 export AGOUTPUT=${AGRELEASE} # this is the default location
@@ -61,8 +59,7 @@ acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
     
-    export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
-    export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
+    # export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
     export PATH="$AGRELEASE/scripts/andrea":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
@@ -72,6 +69,7 @@ acapra()
 lxplus()
 {
   export AGMIDASDATA="/eos/experiment/ALPHAg/midasdata_old"
+  export A2MIDASDATA="/eos/experiment/alpha/midasdata"
   echo "Setting (CentOS7) lxplus/batch environment variables"
   if [ -d "/cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/" ]; then
       if [[ -z "${ROOTSYS}" ]]; then
@@ -180,7 +178,12 @@ alphacpc04* | alphacpc09*  )
 *.triumf.ca )
   echo -e " \e[33m alphaXXtriumf.ca or daqXX.triumf.ca  detected...\033[0m"
   export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata"
+  export MIDASDATA="/daq/alpha_agmini/data"
   if [ `whoami` = "acapra" ] ; then
+      export DATADIR=/daq/alpha_data0/acapra/alphag
+      export MCDATA=${DATADIR}/MCdata
+      export GPPDATA=${DATADIR}/GPPdata
+      export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
       acapra
   fi
   ;;

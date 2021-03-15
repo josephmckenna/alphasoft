@@ -7,7 +7,12 @@
     }
 
 ///< Loading the a2MC library
-    TString libname="../lib/libvmc_a2MC.dylib";
+    TString arch=gSystem->GetBuildArch();
+    TString libname;
+    if( arch.Contains("linux") )
+	libname="../lib/libvmc_a2MC.so";
+    else
+    libname="../lib/libvmc_a2MC.dylib";
     libname=gSystem->FindDynamicLibrary(libname);
     cout<<"Loading: "<<libname;
     s=gSystem->Load( libname );
