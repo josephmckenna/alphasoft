@@ -64,15 +64,15 @@ class SISPlotEvents: public TObject
       ~SISPlotEvents()
       {
       }
-      SISPlotEvents(SISPlotEvents m_SISEvent)
+      SISPlotEvents(const SISPlotEvents& m_SISEvent)
       {
-         runNumber = m_SISEvent.runNumber
-         t = m_SISEvent.t
-         OfficialTime = m_SISEvent.OfficialTime
-         Counts = m_SISEvent.Counts
-         SIS_Channel = m_SISEvent.SIS_Channel  
+         runNumber = m_SISEvent.runNumber;
+         t = m_SISEvent.t;
+         OfficialTime = m_SISEvent.OfficialTime;
+         Counts = m_SISEvent.Counts;
+         SIS_Channel = m_SISEvent.SIS_Channel;
       }
-      void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel);
+      void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel)
       {
          runNumber.push_back(m_runNumber);
          t.push_back(m_ti);  
@@ -89,7 +89,7 @@ class SISPlotEvents: public TObject
          SIS_Channel.push_back(Event.SIS_Channel);
       }
       int GetEventRunNumber(int event) const { return runNumber.at(event); }
-      SISPlotEvents operator+(const SISPlotEvents& plotA, const SISPlotEvents& plotB)
+      friend SISPlotEvents operator+(const SISPlotEvents& plotA, const SISPlotEvents& plotB)
       {
          std::cout << "SISPlotEvents addition operator" << std::endl;
          SISPlotEvents outputplot(plotA); //Create new from copy
@@ -106,15 +106,15 @@ class SISPlotEvents: public TObject
       SISPlotEvents operator+=(const SISPlotEvents &plotB) 
       {
          std::cout << "SISPlotEvents += operator" << std::endl;
-         this->runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
-         this->t.insert(outputplot.t.end(), plotB.t.begin(), plotB.t.end() );
-         this->OfficialTime.insert(outputplot.OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
-         this->Counts.insert(outputplot.Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
-         this->SIS_Channel.insert(outputplot.SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
+         this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         this->t.insert(this->t.end(), plotB.t.begin(), plotB.t.end() );
+         this->OfficialTime.insert(this->OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
+         this->Counts.insert(this->Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
+         this->SIS_Channel.insert(this->SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
 
          return *this;
       }
-}
+};
 
 class TA2Plot: public TAPlot
 {
