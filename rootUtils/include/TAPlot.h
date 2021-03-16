@@ -135,6 +135,68 @@ class TimeWindow
       }
 };
 
+class TimeWindows : public TObject
+{
+   public:
+      std::vector<int> runNumber;
+      std::vector<double> tmin;
+      std::vector<double> tmax;
+      std::vector<double> tzero;
+      
+      TimeWindows()
+      {
+      }
+      ~TimeWindows()
+      {
+      }
+      void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
+      {
+         runNumber.push_back(_runNumber);
+         tmin.push_back(_tmin);
+         tmax.push_back(_tmax);
+         tzero.push_back(_tzero);
+         assert(tmax>tmin);
+         assert(tzero>=tmin);
+         assert(tzero<tmax);
+      }
+      TimeWindows(const TimeWindows& m_TimeWindows)
+      {
+         runNumber = m_TimeWindows.runNumber;
+         tmin = m_TimeWindows.tmin;
+         tmax = m_TimeWindows.tmax;
+         tzero = m_TimeWindows.tzero;
+      }
+      TimeWindows operator=(const TimeWindows m_TimeWindows)
+      {
+         this->runNumber = m_TimeWindows.runNumber;
+         this->tmin = m_TimeWindows.tmin;
+         this->tmax = m_TimeWindows.tmax;
+         this->tzero = m_TimeWindows.tzero;
+         return *this;
+      }
+      friend TimeWindows operator+(const TimeWindows& plotA, const TimeWindows& plotB)
+      {
+         std::cout << "TimeWindows addition operator" << std::endl;
+         TimeWindows outputplot(plotA); //Create new from copy
+
+         //Vectors- need concacting
+         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         outputplot.tmin.insert(outputplot.tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
+         outputplot.tmax.insert(outputplot.tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
+         outputplot.tzero.insert(outputplot.tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
+         return outputplot;
+      }
+      TimeWindows operator+=(const TimeWindows &plotB) 
+      {
+         std::cout << "TimeWindows += operator" << std::endl;
+         this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         this->tmin.insert(this->tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
+         this->tmax.insert(this->tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
+         this->tzero.insert(this->tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
+         return *this;
+      }
+};
+
 //Generic feLabVIEW / feGEM data inside a time window
 class feENVdataPlot
 {
@@ -250,21 +312,20 @@ class feGEMdata: public feENVdata
 {
    public:
       template<typename T>
-      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const std::vector<TimeWindow>& timewindows)
+      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TimeWindows& timewindows)
       {
          double time=GEMEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //for (auto& window: timewindows)
-         for (size_t i=0; i<timewindows.size(); i++)
+         for (size_t i=0; i<timewindows.tmax.size(); i++)
          {
-            auto& window = timewindows[i];
             //If inside the time window
-            if ( (time > window.tmin && time < window.tmax) ||
+            if ( (time > timewindows.tmin.at(i) && time < timewindows.tmax.at(i)) ||
             //Or if after tmin and tmax is invalid (-1)
-               (time > window.tmin && window.tmax<0) )
+               (time > timewindows.tmin.at(i) && timewindows.tmax.at(i)<0) )
             {
                feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint(time, time - window.tzero, (double)GEMEvent->GetArrayEntry(array_number));
+               plot->AddPoint(time, time - timewindows.tzero.at(i), (double)GEMEvent->GetArrayEntry(array_number));
             }
          }
          return;
@@ -279,21 +340,20 @@ class feGEMdata: public feENVdata
 class feLVdata: public feENVdata
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const std::vector<TimeWindow>& timewindows)
+      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TimeWindows& timewindows)
       {
          double time=LVEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //for (auto& window: timewindows)
-         for (size_t i=0; i<timewindows.size(); i++)
+         for (size_t i=0; i<timewindows.tmax.size(); i++)
          {
-            auto& window = timewindows[i];
             //If inside the time window
-            if ( (time > window.tmin && time < window.tmax) ||
+            if ( (time > timewindows.tmin.at(i) && time < timewindows.tmax.at(i)) ||
             //Or if after tmin and tmax is invalid (-1)
-               (time > window.tmin && window.tmax<0) )
+               (time > timewindows.tmin.at(i) && timewindows.tmax.at(i)<0) )
             {
                feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint( time, time - window.tzero, LVEvent->GetArrayEntry(array_number));
+               plot->AddPoint( time, time - timewindows.tzero.at(i), LVEvent->GetArrayEntry(array_number));
             }
          }
          return;
@@ -319,7 +379,7 @@ class TAPlot: public TObject
       double LastTmax;
       double BiggestTzero;
       double MaxDumpLength;
-      std::vector<TimeWindow> TimeWindows; //check dupes - fatal error
+      TimeWindows TimeWindowsNew;
       double fTotalTime;
       int fTotalVert;
 
@@ -361,7 +421,7 @@ class TAPlot: public TObject
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
       void AddVertexEvent(VertexEvent e)                 {  VertexEvents.push_back(e); }
-      const std::vector<TimeWindow> GetTimeWindows()     {  return TimeWindows; }
+      const TimeWindows GetTimeWindows()                 {  return TimeWindowsNew; }
       const std::vector<VertexEvent> GetVertexEvents()   {  return VertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }

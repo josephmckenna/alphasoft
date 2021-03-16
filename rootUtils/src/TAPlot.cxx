@@ -45,8 +45,7 @@ TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    fVerbose                      = m_TAPlot.fVerbose ;
    tFactor                       = m_TAPlot.tFactor ;
 
-   for(int i=0;i<m_TAPlot.TimeWindows.size();i++)
-      TimeWindows.push_back(m_TAPlot.TimeWindows.at(i));
+   TimeWindowsNew                = m_TAPlot.TimeWindowsNew;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -100,9 +99,7 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
       double length=tmax[i]-tmin[i];
       if (length>MaxDumpLength)
          MaxDumpLength=length;
-      TimeWindows.push_back(
-         TimeWindow(runNumber,tmin[i],tmax[i],tzero[i])
-         );
+      TimeWindowsNew.AddTimeWindow(runNumber,tmin[i],tmax[i],tzero[i]);
       fTotalTime+=tmax[i]-tmin[i];
       //Find the first start window
       if (tmin[i]<FirstTmin)
@@ -140,9 +137,7 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
    double length = tmax - tmin;
    if (length > MaxDumpLength)
       MaxDumpLength = length;
-   TimeWindows.push_back(
-      TimeWindow(runNumber,tmin,tmax,tzero)
-      );
+   TimeWindowsNew.AddTimeWindow(runNumber,tmin,tmax,tzero);
    fTotalTime += tmax - tmin;
    //Find the first start window
    if (tmin < FirstTmin)
@@ -264,16 +259,18 @@ void TAPlot::LoadData()
       double first_time = 1E99;
       int runNumber = Runs[i];
       //Calculate our list time... so we can stop early
-      for (auto& t: GetTimeWindows())
+      //for (auto& t: GetTimeWindows())
+      for (size_t i=0; i<GetTimeWindows().tmax.size(); i++)
       {
-         if (t.runNumber==runNumber)
+         TimeWindows t = GetTimeWindows();
+         if (t.runNumber.at(i)==runNumber)
          {
-            if (t.tmax<0) 
+            if (t.tmax.at(i)<0) 
                last_time = 1E99;
-            if (last_time < t.tmax)
-               last_time = t.tmax;
-            if (first_time > t.tmin )
-               first_time = t.tmin;
+            if (last_time < t.tmax.at(i))
+               last_time = t.tmax.at(i);
+            if (first_time > t.tmin.at(i) )
+               first_time = t.tmin.at(i);
          }
       }
       LoadfeGEMData(runNumber, first_time, last_time);
@@ -374,12 +371,12 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetGEMGraphs()
    {
       std::map<std::string,TGraph*> unique_labels;
       const std::vector<int> UniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< TimeWindows.size(); i++)
+      for (size_t i=0; i< TimeWindowsNew.tmax.size(); i++)
       {
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindows.at(i).runNumber == UniqueRuns.at(ColourID))
+            if (TimeWindowsNew.runNumber.at(i) == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -444,12 +441,12 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
       std::map<std::string,TGraph*> unique_labels;
 
       const std::vector<int> UniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< TimeWindows.size(); i++)
+      for (size_t i=0; i< TimeWindowsNew.tmax.size(); i++)
       {
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindows.at(i).runNumber == UniqueRuns.at(ColourID))
+            if (TimeWindowsNew.runNumber.at(i) == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -610,8 +607,8 @@ TString TAPlot::GetListOfRuns()
 
 void TAPlot::PrintTimeRanges()
 {
-   for (auto& w: TimeWindows)
-      w.print();
+   for (auto& w: TimeWindowsNew.tmax)
+      printf("w = %f", w);
 }
 
 void TAPlot::PrintFull()
@@ -634,13 +631,13 @@ void TAPlot::PrintFull()
    std::cout << "BiggestTzero = " << BiggestTzero << std::endl;
    std::cout << "MaxDumpLength = " << MaxDumpLength << std::endl;
 
-   std::cout << "Printing TimeWindows at " << &TimeWindows << std::endl;
-   std::cout << "TimeWindows.size() = " << TimeWindows.size() << std::endl;
+   std::cout << "Printing TimeWindows at " << &TimeWindowsNew << std::endl;
+   std::cout << "TimeWindows.size() = " << TimeWindowsNew.runNumber.size() << std::endl;
    std::cout << "First time window info:" << std::endl;
-   std::cout << "TimeWindows[0].runNumber = " << TimeWindows.at(0).runNumber << std::endl;
-   std::cout << "TimeWindows[0].tmax = " << TimeWindows.at(0).tmax << std::endl;
-   std::cout << "TimeWindows[0].tmin = " << TimeWindows.at(0).tmin << std::endl;
-   std::cout << "TimeWindows[0].tzero = " << TimeWindows.at(0).tzero << std::endl;
+   std::cout << "TimeWindows[0].runNumber = " << TimeWindowsNew.runNumber.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tmax = " << TimeWindowsNew.tmax.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tmin = " << TimeWindowsNew.tmin.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tzero = " << TimeWindowsNew.tzero.at(0) << std::endl;
 
    std::cout << "fTotalTime = " << fTotalTime << std::endl;
    std::cout << "fTotalVert = " << fTotalVert << std::endl;
@@ -746,8 +743,7 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    this->fVerbose = m_TAPlot.fVerbose ;
    this->tFactor = m_TAPlot.tFactor ;
 
-   for(int i=0;i<m_TAPlot.TimeWindows.size();i++)
-      this->TimeWindows.push_back(m_TAPlot.TimeWindows.at(i));
+   this->TimeWindowsNew = m_TAPlot.TimeWindowsNew;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       this->Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -788,7 +784,6 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    this->Injections.insert(this->Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
    this->DumpStarts.insert(this->DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
    this->DumpStops.insert(this->DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
-   this->TimeWindows.insert(this->TimeWindows.end(), plotB.TimeWindows.begin(), plotB.TimeWindows.end() );
    this->VertexEvents.insert(this->VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
    this->Runs.insert(this->Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
    this->feGEM.insert(this->feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
@@ -815,6 +810,8 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    }
    this->HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
+   this->TimeWindowsNew+=plotB.TimeWindowsNew;
+
    return *this;
 }
 
@@ -828,7 +825,6 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
    outputplot.Injections.insert(outputplot.Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
    outputplot.DumpStarts.insert(outputplot.DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
    outputplot.DumpStops.insert(outputplot.DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
-   outputplot.TimeWindows.insert(outputplot.TimeWindows.end(), plotB.TimeWindows.begin(), plotB.TimeWindows.end() );
    outputplot.VertexEvents.insert(outputplot.VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
    outputplot.Runs.insert(outputplot.Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
    outputplot.feGEM.insert(outputplot.feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
@@ -855,6 +851,8 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
       outputplot.HISTOS.Add(plotB.HISTOS.At(i));
    }
    outputplot.HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
+
+   outputplot.TimeWindowsNew+=plotB.TimeWindowsNew;
 
    return outputplot;
 }

@@ -111,7 +111,6 @@ class SISPlotEvents: public TObject
          this->OfficialTime.insert(this->OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
          this->Counts.insert(this->Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
          this->SIS_Channel.insert(this->SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
-
          return *this;
       }
 };
