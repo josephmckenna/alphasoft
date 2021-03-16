@@ -19,8 +19,8 @@
 #include <iostream>
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
-#include <chrono>
-   
+#include "TTimeStamp.h"
+
 #define SCALECUT 0.6
 
 //Basic internal containers:
@@ -344,8 +344,8 @@ class TAPlot: public TObject
 
       std::vector<feGEMdata> feGEM;
       std::vector<feLVdata> feLV;
-      std::chrono::high_resolution_clock::time_point ObjectConstructionTime;
-      std::chrono::high_resolution_clock::time_point DataLoadedTime;
+      TTimeStamp ObjectConstructionTime{0};
+      TTimeStamp DataLoadedTime{0};
    
 
    public:
@@ -356,7 +356,7 @@ class TAPlot: public TObject
       std::string GetTAPlotTitle()                       {  return title;  }
       bool HaveGEMData()                                 {  return (feGEM.size() != 0);   }
       bool HaveLVData()                                  {  return (feGEM.size() != 0);   }
-      void LoadingDataLoadingDone()                      {  DataLoadedTime = std::chrono::high_resolution_clock::now(); }
+      void LoadingDataLoadingDone()                      {  DataLoadedTime = TTimeStamp(); }
       int GetNBins() const                               {  return Nbin; }
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
