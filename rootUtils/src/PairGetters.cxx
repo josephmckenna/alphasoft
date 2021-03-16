@@ -19,6 +19,7 @@ std::pair<Int_t,Int_t> GetChronoBoardChannel(Int_t runNumber, const char* Channe
 #ifdef BUILD_A2
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
+   assert(SIS_Channel > 0 );
    std::vector<std::pair<double,int>> TimeCounts;
    if (SIS_Channel<0)
    {
@@ -69,6 +70,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
 
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, const std::vector<TA2Spill>& spills)
 {
+    assert(SIS_Channel > 0 );
     std::vector<double> tmin;
     std::vector<double> tmax;
     tmin.reserve(spills.size());
