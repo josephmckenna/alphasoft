@@ -143,8 +143,7 @@ protected:
 
 public:
    void SetSISChannels(int runNumber);
-   std::vector<SISPlotEvent> SISEvents;
-   SISPlotEvents SISEventsNew;  
+   SISPlotEvents SISEvents;  
 
    void AddSVDEvent(TSVD_QOD* SVDEvent);
    void AddSISEvent(TSISEvent* SISEvent);
