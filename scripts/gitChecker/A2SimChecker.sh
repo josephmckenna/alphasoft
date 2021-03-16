@@ -55,11 +55,9 @@ if [[ $(hostname -s) = *runner* ]]; then
 
    #Prepare files for elog command
    HOSTNAME=`hostname`
-   FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/simlogs/simulation_${GITHASH}.log"
-   FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/simlogs/analysis_of_sim_${GITHASH}.log"
-   #for file in `ls ${AGRELEASE}/${GITHASH}/SpeedTest`; do
-   #  FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/SimTest/${file}"
-   #done
+   FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/simlogs/a2_simulation_${GITHASH}.log"
+   #FILES="$FILES -f ~/gitCheckerReports/${GITHASH}/simlogs/analysis_of_sim_${GITHASH}.log"
+   
    echo "Files to attach: ${FILES}"
    scp -r $AGRELEASE/simlogs alpha@alphadaq:~/gitCheckerReports/${GITHASH}/
 

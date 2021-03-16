@@ -362,11 +362,6 @@ public:
                SVD_Filled=FILLED;
                return 1;
             }
-
-      //Lukas debug info.
-      std::cout << "DEBUG: Time of the following update event is:" << t << std::endl;
-      std::cout << IntegratedSVDCounts;
-
       IntegratedSVDCounts.AddEvent(s);
       return 0;
    }
