@@ -130,19 +130,20 @@ void TA2Plot_Filler::LoadData()
    for (auto& plot: plots)
    {
       //Calculate our list time... so we can stop early
-      for (auto& t: plot->GetTimeWindows())
+      for (int t = 0; t < plot->GetTimeWindows().tmax.size(); t++)
       {
+         TimeWindows temp = plot->GetTimeWindows();
          for (size_t i=0; i<UniqueRuns.size(); i++)
-         if (t.runNumber==runNumbers[i])
+         if (temp.runNumber.at(t)==runNumbers[i])
          {
-            if (t.tmax<0) last_times[i]=1E99;
-            if (last_times[i]<t.tmax)
+            if (temp.tmax.at(t)<0) last_times[i]=1E99;
+            if (last_times[i]<temp.tmax.at(t))
             {
-               last_times[i]=t.tmax;
+               last_times[i]=temp.tmax.at(t);
             }
-            if (first_times[i]>t.tmin)
+            if (first_times[i]>temp.tmin.at(t))
             {
-               first_times[i]=t.tmin;
+               first_times[i]=temp.tmin.at(t);
             }
          }
       }
