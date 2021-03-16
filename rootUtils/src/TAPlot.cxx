@@ -5,9 +5,9 @@ ClassImp(TAPlot);
 //TAPlot::TAPlot(Bool_t ApplyCuts)//, Int_t MVAMode)
 TAPlot::TAPlot(bool zerotime) : ZeroTimeAxis(zerotime)
 {
-   std::cout << "TAPlot boolean constructor" << std::endl;
-   ObjectConstructionTime = std::chrono::high_resolution_clock::now();
-   DataLoadedTime = std::chrono::high_resolution_clock::from_time_t(0);
+   ObjectConstructionTime = TTimeStamp();
+   //Set to zero for 'unset'
+   DataLoadedTime = TTimeStamp(0);
    Nbin=100; 
    DrawStyle=0;
    gLegendDetail=1; 
@@ -28,7 +28,6 @@ TAPlot::TAPlot(bool zerotime) : ZeroTimeAxis(zerotime)
 
 TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
 {
-   std::cout << "TAPlot copy constructor" << std::endl;
    title                         = m_TAPlot.title ;
    MVAMode                       = m_TAPlot.MVAMode ;
    Nbin                          = m_TAPlot.Nbin ; 
@@ -475,11 +474,9 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
 
 double TAPlot::GetApproximateProcessingTime()
 {
-   if ( DataLoadedTime == std::chrono::high_resolution_clock::from_time_t(0) )
+   if ( DataLoadedTime == TTimeStamp(0) )
       LoadingDataLoadingDone();
-   std::chrono::duration<double> d = 
-      std::chrono::duration_cast<std::chrono::seconds>( DataLoadedTime - ObjectConstructionTime );
-   return d.count();
+   return DataLoadedTime.AsDouble() - ObjectConstructionTime.AsDouble();
 }
 
 void TAPlot::AddRunNumber(int runNumber)
