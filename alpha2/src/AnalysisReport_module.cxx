@@ -7,7 +7,7 @@
 //
 
 #include <stdio.h>
-
+#include <iomanip>
 
 #include "manalyzer.h"
 #include "midasio.h"
