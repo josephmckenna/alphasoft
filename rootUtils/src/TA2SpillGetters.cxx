@@ -26,7 +26,9 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
    TTreeReaderValue<TA2Spill> spill(*reader, "TA2Spill");
 
    assert(description.size()==repetition.size());
-   int match_counter[description.size()]={0};
+   int match_counter[description.size()];
+   for (int i=0; i<description.size(); i++)
+      match_counter[i]=0;
 
    std::vector<TA2Spill> spills;
 
