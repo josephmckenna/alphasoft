@@ -318,40 +318,6 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    //Fill SIS histograms
    //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
    int runno=0;
-   /*for (auto& sisevent: SISEvents)
-   {
-      //This is a new run number... SIS channels could have changed! update!
-      if (sisevent.runNumber!=runno)
-      {
-         runno=sisevent.runNumber;
-         SetSISChannels(runno);
-      }
-      double time;
-      if (ZeroTimeAxis)
-         time = sisevent.t;
-      else
-         time = sisevent.OfficialTime;
-      if (max_dump_length<SCALECUT) 
-         time=time*1000.;
-      int Channel         = sisevent.SIS_Channel;
-      int CountsInChannel = sisevent.Counts;
-      if (Channel == trig.find(sisevent.runNumber)->second)
-         FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy.find(sisevent.runNumber)->second)
-         FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or.find(sisevent.runNumber)->second)
-         FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection.find(sisevent.runNumber)->second)
-         AddInjection(time);
-      else if (Channel == Beam_Ejection.find(sisevent.runNumber)->second)
-         AddEjection(time);
-      else if (Channel == CATStart.find(sisevent.runNumber)->second || Channel == RCTStart.find(sisevent.runNumber)->second || Channel == ATMStart.find(sisevent.runNumber)->second)
-         AddStopDumpMarker(time);
-      else if (Channel == CATStop.find(sisevent.runNumber)->second || Channel == RCTStop.find(sisevent.runNumber)->second || Channel == ATMStop.find(sisevent.runNumber)->second)
-         AddStartDumpMarker(time);
-      else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
-   }*/
-
    //New implementation
    for (int i=0;i<SISEventsNew.t.size();i++)
    {
