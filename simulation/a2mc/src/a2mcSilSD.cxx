@@ -323,8 +323,10 @@ Int_t a2mcSilSD::ReturnPStrip(Int_t lay, Double_t pos) {
 ///< The position here is the X coordinate of the hit
 ///< It returns -1 if the hit is outside the "active area"
 ///< In the MC, the X  of the hit (in the local r.s.) is in the range [-3.0; 3.0]
-    Double_t ASIC3_start = +2.89380;
-    Double_t ASIC3_end   = +0.01089;
+//    Double_t ASIC3_start = +2.89380;
+//    Double_t ASIC3_end   = +0.01089;
+    Double_t ASIC3_start = +2.89425; ///< Germano (11/03/2021) => To avoid overlapping (108.9+113.5 = 222.4 um < 227 um pitch)
+    Double_t ASIC3_end   = +0.01135; ///< Germano (11/03/2021) => To avoid overlapping (108.9+113.5 = 222.4 um < 227 um pitch)
     Double_t ASIC4_start = -0.01135;
     Double_t ASIC4_end   = -2.89425;
 
@@ -363,7 +365,8 @@ Double_t a2mcSilSD::GetpPos(Int_t strip)
   assert( strip >= 0  );
   assert( strip < 256 );
 
-  double ASIC3_start = 28.938;
+//  double ASIC3_start = 28.938;
+  double ASIC3_start = 28.9425; ///< Germano (11/03/2021) => To avoid overlapping
   double ASIC4_start = -0.1135;
 
   double p = 0.;

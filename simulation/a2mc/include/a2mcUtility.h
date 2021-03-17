@@ -15,6 +15,7 @@ public:
 	int GetNEvents() const {return m_numberOfEvents;}
 	int GetRun() const {return m_run;}
     string GetRunTime() const {return m_run_time;}
+    string GetIniFile() const {return m_ini_file;}
 private:
 	void synthaxError() {
  		cout << "Synthax error!" << endl;
@@ -23,4 +24,5 @@ private:
 	int m_numberOfEvents;
     string m_run_time;
 	int m_run;
+    string m_ini_file; ///< initialization file (usually ./a2MC.ini)
 };

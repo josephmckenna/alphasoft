@@ -8,7 +8,7 @@
 ClassImp(a2mcVirtualMC)
 
 //_____________________________________________________________________________
-a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, std::string& run_time, Int_t run_seed)
+a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, a2mcSettings a2mc_conf, std::string run_time, Int_t run_seed)
     : TVirtualMCApplication(name,title),
     runNumber(0),
     runSeed(0),
@@ -25,11 +25,12 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     runNumber   = run_number;
     runTime     = run_time;
     runSeed     = run_seed;
+    a2mcConf = a2mc_conf;
     // Create a user stack
     fStack = new a2mcStack(a2mcConf.GetTracksLim());
     verbose = a2mcConf.GetVerbose();
     // Create detector construction
-    fDetConstruction = new a2mcApparatus(runNumber);
+    fDetConstruction = new a2mcApparatus(runNumber, a2mcConf);
     
     if(a2mcConf.GetMagField()==1) {
         Double_t rMax = 50.;
@@ -40,7 +41,6 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     }
     if(a2mcConf.GetMagField()==2) fMagField = new a2mcFieldFromMap("input/berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag");
 
-        
     FileMode fileMode = kWrite;
     fRootManager = new a2mcRootManager(runNumber, runTime, "a2MC", fileMode);
 
@@ -48,7 +48,7 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     fRootManager->Register("Primary", "a2mcPrimary", &fPrimary);   
 
     // Create a primary generator
-    fPrimaryGenerator = new a2mcGenerator(fStack,fDetConstruction); 
+    fPrimaryGenerator = new a2mcGenerator(fStack,fDetConstruction, a2mcConf); 
 }
 
 //_____________________________________________________________________________
@@ -328,7 +328,7 @@ void a2mcVirtualMC::WriteLog() {
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat "<<INI_INSTALL_PATH<<"/a2MC.ini >> " << sf.str();; 
+    ss << "cat "<< a2mcConf.GetIniFile() << " >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
@@ -343,5 +343,6 @@ void a2mcVirtualMC::WriteLog() {
     ss << "cat "<<A2_MC_SRC_PATH<<"/src/a2mcVirtualMC.cxx >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
+    cout << "Configuration read from ====> " << a2mcConf.GetIniFile() << " <===== " << endl;
     cout << "Writing log into file " << sf.str() << endl;
 }

@@ -11,16 +11,17 @@
 
 #include "a2mcVirtualMC.h"
 #include "a2mcUtility.h"
+#include "a2mcSettings.h"
 
 int main(int argc, char** argv) {
     TThread::Initialize();
     gInterpreter->SetProcessLineLock(false);
   
     Utility utils(argc, argv);
-    int nEvents = utils.GetNEvents();
-    int runNumber = utils.GetRun();
-    string runTime = utils.GetRunTime();
-  
+    string iniFile  = utils.GetIniFile();
+    a2mcSettings a2mcConf;
+    a2mcConf.init(iniFile);
+    if(!a2mcConf.isValid()) return 0;
 // Check if the "root" and "output" folder already exist otherwise create them
     if(!utils.checkDir("./","root"))  {
         cout << "Creating root subdirectory " << endl;
@@ -39,7 +40,7 @@ int main(int argc, char** argv) {
     gRandom->SetSeed(runSeed);
 //    gRandom->SetSeed(0);
     ///< Creating the Virtual MC object
-    a2mcVirtualMC* virtualMC = new a2mcVirtualMC("a2mcVirtualMC", "The Alpha2 MC", runNumber, runTime, runSeed);
+    a2mcVirtualMC* virtualMC = new a2mcVirtualMC("a2mcVirtualMC", "The Alpha2 MC", utils.GetRun(), a2mcConf, utils.GetRunTime(), runSeed);
   
     ostringstream sgeo;
     sgeo << "geomRootToGeant4";
@@ -48,7 +49,7 @@ int main(int argc, char** argv) {
     geant4->ProcessGeantMacro("g4config.in");
   
     virtualMC->InitMC("");
-    virtualMC->RunMC(nEvents);
+    virtualMC->RunMC(utils.GetNEvents());
   
     delete virtualMC;
     return 0;
