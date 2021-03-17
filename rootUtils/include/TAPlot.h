@@ -138,6 +138,7 @@ class TimeWindow
 class TimeWindows : public TObject
 {
    public:
+      bool isSorted = false;
       std::vector<int> runNumber;
       std::vector<double> tmin;
       std::vector<double> tmax;
@@ -151,6 +152,7 @@ class TimeWindows : public TObject
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
       {
+         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << std::endl;
          runNumber.push_back(_runNumber);
          tmin.push_back(_tmin);
          tmax.push_back(_tmax);
@@ -165,6 +167,53 @@ class TimeWindows : public TObject
          tmin = m_TimeWindows.tmin;
          tmax = m_TimeWindows.tmax;
          tzero = m_TimeWindows.tzero;
+      }
+      int GetValidWindowNumber(double t)
+      {
+         if(!isSorted)
+         {
+            SortTimeWindows();
+         }
+         
+         if(std::binary_search (tmin.begin(), tmax.end(), t))
+         {
+            auto it = std::lower_bound(tmin.begin(), tmin.end(), t);
+            if (it == tmin.end() || *it != t) 
+            {
+               return -1;
+            } 
+            else 
+            {
+               std::size_t index = std::distance(tmin.begin(), it);
+               return index;
+            } 
+         }
+         else
+         {
+            return -1;
+         }
+         
+      }
+      void SortTimeWindows()
+      {
+         //Zip two vectors together
+         std::vector<std::pair<double,double>> zipped;
+         for(size_t i=0; i<tmin.size(); ++i)
+         {
+            zipped.push_back(std::make_pair(tmin[i], tmax[i]));
+         }
+         //Sort based on first (tmin) keeping tmax in the same location
+         std::sort(std::begin(zipped), std::end(zipped), 
+         [&](const std::pair<double,double>& a, const std::pair<double,double>& b)
+         {return a.second > b.second;} );
+         
+         //Unzip back into vectors.
+         for(size_t i=0; i<tmin.size(); i++)
+         {
+            tmin[i] = zipped[i].first;
+            tmax[i] = zipped[i].second;
+         }
+         isSorted = true;
       }
       TimeWindows operator=(const TimeWindows m_TimeWindows)
       {
