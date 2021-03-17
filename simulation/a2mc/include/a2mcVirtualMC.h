@@ -25,7 +25,7 @@ using namespace std;
 class a2mcVirtualMC : public TVirtualMCApplication
 {
 	public:
-		a2mcVirtualMC(const Char_t* name,  const Char_t *title, Int_t, string&, Int_t);
+		a2mcVirtualMC(const Char_t* name,  const Char_t *title, Int_t, a2mcSettings, string, Int_t);
 		a2mcVirtualMC();
 		virtual ~a2mcVirtualMC();
 
@@ -70,7 +70,7 @@ class a2mcVirtualMC : public TVirtualMCApplication
 		Bool_t verbose; // = 0 no verbose, = 1 verbose
         Int_t runNumber, runSeed;
         string runTime;
-        a2mcSettings a2mcConf{}; ///< Reading configuration file a2MC.ini
+        a2mcSettings a2mcConf; ///< Reading configuration file a2MC.ini
         a2mcMessenger mess;
         Int_t                 nEvents;            ///< Event counter
 		a2mcStack*            fStack;             ///< VMC stack

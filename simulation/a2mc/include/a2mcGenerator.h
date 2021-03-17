@@ -14,7 +14,7 @@ class a2mcApparatus;
 class a2mcGenerator : public TObject
 {
 public:
-    a2mcGenerator(TVirtualMCStack* stack,a2mcApparatus* fDetConstruction);
+    a2mcGenerator(TVirtualMCStack*,a2mcApparatus*, a2mcSettings);
     virtual ~a2mcGenerator();
     virtual void Generate();
     virtual void DumpGenInfo();
@@ -39,7 +39,7 @@ public:
     
 private:
     static a2mcGenerator* fgInstance;   ///< Singleton instance
-    a2mcSettings a2mcConf{};            ///< Configuration settings (a2MC.ini)
+    a2mcSettings a2mcConf;              ///< Configuration settings (a2MC.ini)
     TVirtualMCStack*  fStack;           ///< VMC stack
     a2mcApparatus* fDetConstruction;    ///< a2mcApparatus
     ///< Single particle variables
