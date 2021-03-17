@@ -102,7 +102,16 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 
    //Loop over all time windows
    //for (auto& window: GetTimeWindows())
-   for(int i = 0; i < GetTimeWindows().tmax.size(); i++)
+   TimeWindows window = GetTimeWindows();
+   int index = window.GetValidWindowNumber(t);
+   
+   if(index >= 0)
+   {
+      //tzero is now out of order at this stage and will be adding the wrong value.
+      AddEvent(SVDEvent, window.tzero.at(index));
+   }
+   
+   /*for(int i = 0; i < GetTimeWindows().tmax.size(); i++)
    {
       TimeWindows window = GetTimeWindows();
       //If inside the time window
@@ -115,7 +124,7 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
          //to check the other windows... break! Move to next SISEvent
          break;
       }
-   }
+   }*/
 }
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
