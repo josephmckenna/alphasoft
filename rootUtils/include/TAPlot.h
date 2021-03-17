@@ -155,9 +155,9 @@ class TimeWindows : public TObject
          tmin.push_back(_tmin);
          tmax.push_back(_tmax);
          tzero.push_back(_tzero);
-         assert(tmax>tmin);
-         assert(tzero>=tmin);
-         assert(tzero<tmax);
+         assert(_tmax>_tmin);
+         assert(_tzero>=_tmin);
+         assert(_tzero<_tmax);
       }
       TimeWindows(const TimeWindows& m_TimeWindows)
       {
