@@ -32,6 +32,8 @@ endif
 LIBS     += -L$(ROOTANASYS)/lib -lrootana
 LIBS     += -lSpectrum -lGeom -lz -lMinuit2 -lMinuit -lMathMore -lGui -lGpad -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
+LIBS     += -lsqlite3
+
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include

@@ -34,6 +34,7 @@ endif
 LIBS     += -L$(ROOTANASYS)/lib -lrootana
 LIBS     += -L$(shell root-config --libdir)
 LIBS     += -lSpectrum -lz -lMinuit2 -lMinuit -lMathMore -lGui -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP -lMultiProc -lROOTDataFrame -pthread -lm -ldl -rdynamic
+LIBS     += -lsqlite3
 
 
 INCS += -I$(INCDIR)
