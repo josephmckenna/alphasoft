@@ -356,6 +356,7 @@ void a2mcToVSD::set_pdg_codes() {
     pdgDB->AddParticle("Li","Li",       mp*6.,1.,0.,3.,"Nuclei",      1000030060);
     pdgDB->AddParticle("B11","B11",     mp*11.,1.,0.,5.,"Nuclei",     1000050110);
     pdgDB->AddParticle("C","C",         mp*12.,1.,0.,6.,"Nuclei",     1000060120);
+    pdgDB->AddParticle("N14","N14",     mp*14.,1.,0.,7.,"Nuclei",     1000070140);
     pdgDB->AddParticle("N","N",         mp*15.,1.,0.,7.,"Nuclei",     1000070150);
     pdgDB->AddParticle("O","O",         mp*16.,1.,0.,8.,"Nuclei",     1000080160);
     pdgDB->AddParticle("O15","O15",     mp*15.,1.,0.,8.,"Nuclei",     1000080150);

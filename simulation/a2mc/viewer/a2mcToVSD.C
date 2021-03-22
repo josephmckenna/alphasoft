@@ -313,8 +313,8 @@ Bool_t a2mcToVSD::FillAlphaEvent(Double_t hit_threshold = 0.) {
 
 //_____________________________________________________________________________
 TVector3 a2mcToVSD::RecTrackVo(TVector3 P0, TVector3 Dir) {
-    Double_t R = 35.; ///< limits for track visualization
-    Double_t H = 70.; ///< limits for track visualization
+    Double_t R = 34.9; ///< limits for track visualization
+    Double_t H = 69.9; ///< limits for track visualization
     ///< This method check if the generated muon "crosses" a cylinder with radius R and heigth H
     // Z coordinate is along the H
     //  (y)| 
