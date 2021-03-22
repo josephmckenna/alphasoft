@@ -25,7 +25,7 @@ set -x
 
 
 ### vertical w/ Sleeve - AW3.2kV - Trig. MLU1 -- long
-#agana.exe -O$DATADIR/test/cosmics904547.root --mt $MIDASDATA/run904547sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904547.log&
+agana.exe -O$DATADIR/test/cosmics904547.root --mt $MIDASDATA/run904547sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l2.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904547.log&
 
 
 ############################################################################################################################################################################################
@@ -39,7 +39,7 @@ set -x
 #agana.exe -O$DATADIR/test/cosmics904513.root --mt $MIDASDATA/run904513sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904513.log&
 
 ### vertical w/ Sleeve - AW3.1kV - Trig. MLU1 -- very long
-#agana.exe -O$DATADIR/test/cosmics904549.root --mt $MIDASDATA/run904549sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904549.log&
+agana.exe -O$DATADIR/test/cosmics904549.root --mt $MIDASDATA/run904549sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.json --Bfield 0 --calib --location TRIUMF &> RunLogs/R904549.log&
 
 
 
