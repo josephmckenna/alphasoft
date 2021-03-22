@@ -11,14 +11,14 @@
 class a2mcApparatus : public TObject
 {
     public:  
-        a2mcApparatus(Int_t);
+        a2mcApparatus(Int_t, a2mcSettings);
         virtual ~a2mcApparatus();
         // static access method
         static a2mcApparatus* Instance();
 
     private:
         static  a2mcApparatus* fgInstance; ///< Singleton instance
-        a2mcSettings a2mcConf{};
+        a2mcSettings a2mcConf;
         Int_t runNumber;
 
         // Setting booleans to choose what to insert into the a2mcApparatus
