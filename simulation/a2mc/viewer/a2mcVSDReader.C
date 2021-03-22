@@ -183,7 +183,7 @@ void a2mcVSDReader::LoadMCTracks() {
     auto trkProp = fTrackListMC->GetPropagator();
     // !!!! Need to store field on file !!!!
     // Can store TEveMagField ?
-//    trkProp->SetMagField(0.5);
+    // trkProp->SetMagField(0., 0., 0.5); ///< in T (???)
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
     trkProp->SetMaxR(35.);  ///< Based on the Oxford magnet dimension and generation sphere
