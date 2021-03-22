@@ -66,8 +66,9 @@ Bool_t a2mcVSDReader::GotoEvent(Int_t ev) {
     LoadSilHits(fSilHits, "Hits");
     LoadPrimaryOriginHit(fPrimOriginHit, "PrimaryOrigin");
     LoadPrimaryDecayHit(fPrimDecayHit, "PrimaryDecay");
+    LoadRecoVertexHit(fRecoVertexHit, "RecoVertex");
     LoadMCTracks();
-//    LoadRecTracks(); ///< [NOT AVAILABLE AT THE MOMENT]
+    LoadRecTracks(); 
 
     // Fill projected views.
     auto top = gEve->GetCurrentEvent();
@@ -93,7 +94,7 @@ void a2mcVSDReader::LoadSilHits(TEvePointSet*& hits, const TString& det_name) {
     if (hits == nullptr) {
         hits = new TEvePointSet(det_name);
         hits->SetMainColor((Color_t)(kRed));
-        hits->SetMarkerSize(1.5);
+        hits->SetMarkerSize(2.5);
         hits->SetMarkerStyle(20);
         hits->IncDenyDestroy();
     } else {
@@ -110,33 +111,51 @@ void a2mcVSDReader::LoadSilHits(TEvePointSet*& hits, const TString& det_name) {
 void a2mcVSDReader::LoadPrimaryOriginHit(TEvePointSet*& hits, const TString& det_name) {
     if (hits == nullptr) {
         hits = new TEvePointSet(det_name);
-        hits->SetMainColor((Color_t)(kOrange));
+        hits->SetMainColor((Color_t)(kRed));
         hits->SetMarkerSize(3.0);
         hits->SetMarkerStyle(47);
         hits->IncDenyDestroy();
     } else {
         hits->Reset();
     }
-    ///< The DetId is 999, SubdetId = 0
+    ///< The DetId is 0, SubdetId = 0
     TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0&&fSubdetId==0"));
     ss.Select();
     hits->SetTitle(TString::Format("N=%d", hits->Size()));
     gEve->AddElement(hits);
 }
 
-///< PrimaryOriginHit
+///< PrimaryDecayHit
 void a2mcVSDReader::LoadPrimaryDecayHit(TEvePointSet*& hits, const TString& det_name) {
     if (hits == nullptr) {
         hits = new TEvePointSet(det_name);
-        hits->SetMainColor((Color_t)(kRed));
+        hits->SetMainColor((Color_t)(kOrange));
         hits->SetMarkerSize(3.0);
         hits->SetMarkerStyle(kFullStar);
         hits->IncDenyDestroy();
     } else {
         hits->Reset();
     }
-    ///< The DetId is 999, SubdetId = 1
+    ///< The DetId is 0, SubdetId = 1
     TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0&&fSubdetId==1"));
+    ss.Select();
+    hits->SetTitle(TString::Format("N=%d", hits->Size()));
+    gEve->AddElement(hits);
+}
+
+///< PrimaryDecayHit
+void a2mcVSDReader::LoadRecoVertexHit(TEvePointSet*& hits, const TString& det_name) {
+    if (hits == nullptr) {
+        hits = new TEvePointSet(det_name);
+        hits->SetMainColor((Color_t)(kBlue));
+        hits->SetMarkerSize(3.0);
+        hits->SetMarkerStyle(kFullStar);
+        hits->IncDenyDestroy();
+    } else {
+        hits->Reset();
+    }
+    ///< The DetId is 0, SubdetId = 2
+    TEvePointSelector ss(fVSD->fTreeH, hits, "fV.fX:fV.fY:fV.fZ", TString::Format("fDetId==0&&fSubdetId==2"));
     ss.Select();
     hits->SetTitle(TString::Format("N=%d", hits->Size()));
     gEve->AddElement(hits);
@@ -151,10 +170,11 @@ void a2mcVSDReader::LoadMCTracks() {
 
     if (fTrackListMC == 0) {
         fTrackListMC = new TEveTrackList("MC Tracks");
-        fTrackListMC->SetMainColor(6);
-        fTrackListMC->SetMarkerColor(kOrange);
+        fTrackListMC->SetMainColor(8);
+        fTrackListMC->SetMarkerColor(32);
         fTrackListMC->SetMarkerStyle(4);
         fTrackListMC->SetMarkerSize(0.5);
+        fTrackListMC->SetLineWidth(3);
         fTrackListMC->IncDenyDestroy();
     } else {
         fTrackListMC->DestroyElements();
@@ -166,8 +186,8 @@ void a2mcVSDReader::LoadMCTracks() {
 //    trkProp->SetMagField(0.5);
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
-    trkProp->SetMaxR(50.);  ///< Based on the Oxford magnet dimension and generation sphere
-    trkProp->SetMaxZ(50.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxR(35.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxZ(35.);  ///< Based on the Oxford magnet dimension and generation sphere
     trkProp->SetFitDecay(true); ///< Is it working?
 
     Double_t naan = std::numeric_limits<double>::quiet_NaN();
@@ -192,10 +212,11 @@ void a2mcVSDReader::LoadRecTracks() {
 
     if (fTrackListRec == 0) {
         fTrackListRec = new TEveTrackList("Rec Tracks");
-        fTrackListRec->SetMainColor(6);
-        fTrackListRec->SetMarkerColor(kYellow);
-        fTrackListRec->SetMarkerStyle(4);
+        fTrackListRec->SetMainColor(9);
+        fTrackListRec->SetMarkerColor(38);
+        fTrackListRec->SetMarkerStyle(3);
         fTrackListRec->SetMarkerSize(0.5);
+        fTrackListRec->SetLineWidth(5);
         fTrackListRec->IncDenyDestroy();
     } else {
         fTrackListRec->DestroyElements();
@@ -207,6 +228,8 @@ void a2mcVSDReader::LoadRecTracks() {
 //    trkProp->SetMagField(0.5);
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
+    trkProp->SetMaxR(35.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxZ(35.);  ///< Based on the Oxford magnet dimension and generation sphere
 
     Int_t nTracks = fVSD->fTreeR->GetEntries();
     for (Int_t n = 0; n < nTracks; n++) {
@@ -250,8 +273,26 @@ void a2mcVSDReader::DumpEvent() {
     cout << "############################################# " << endl;
     cout << "                  MC Event " << setw(4) << setfill(' ') << fEventMC << endl;
     cout << "############################################# " << endl;
+    DumpVertices();
     DumpMCTracks();
+    DumpRecTracks();
     DumpSilHits();
+}
+
+void a2mcVSDReader::DumpVertices() {
+    if(fVSD->fTreeH->GetEntriesFast()==0) return;
+    for(UInt_t i=0; i<fVSD->fTreeH->GetEntriesFast(); i++) {
+        fVSD->fTreeH->GetEntry(i); ///< load a TEveHit into fVSD->fH
+        if(fVSD->fH.fDetId==0&&fVSD->fH.fSubdetId==1) { ///< MC antiproton decay vertex
+            cout << "Antiproton MC decay vertex (R | Z) [cm]: " << fixed << setprecision(2) 
+                 << "(" << fVSD->fH.fV.R() << " | " << fVSD->fH.fV.fZ << ")" << endl;
+        }
+        if(fVSD->fH.fDetId==0&&fVSD->fH.fSubdetId==2) { ///< reco vertex
+            cout << "      Reconstructed vertex (R | Z) [cm]: " << fixed << setprecision(2) 
+                 << "(" << fVSD->fH.fV.R() << " | " << fVSD->fH.fV.fZ << ")" << endl;
+        }
+    }
+
 }
 
 void a2mcVSDReader::DumpSilHits() {
@@ -290,12 +331,23 @@ void a2mcVSDReader::DumpSilHit() {
 void a2mcVSDReader::DumpMCTracks() {
     Int_t nMCTracks = fVSD->fTreeK->GetEntriesFast();
     if(nMCTracks==0) return;
-    cout << "Number of charged tracks (may be only the ones with a hit in the silicon detector)" << nMCTracks << endl;
-    cout << "\t track (id, name)" << " | " << "origin [x,y,z]-[decay if recorded]" << endl;
+    cout << "Number of charged particles " << nMCTracks << " (may be only the ones with a hit in the silicon detector)" << endl;
+    cout << "\t particle (id, name)" << " | " << "origin [x,y,z]-[decay if recorded]" << endl;
     for(UInt_t i=0; i<nMCTracks; i++) {
         fVSD->fTreeK->GetEntry(i); ///< load a TEveHit into fVSD->fH
         DumpMCTrack();
     }
+}
+
+void a2mcVSDReader::DumpRecTracks() {
+    Int_t nRecTracks = fVSD->fTreeR->GetEntriesFast();
+    if(nRecTracks==0) return;
+    cout << "Number of reconstructed tracks " << nRecTracks << endl;
+    // cout << "\t particle (id, name)" << " | " << "origin [x,y,z]-[decay if recorded]" << endl;
+    // for(UInt_t i=0; i<nRecTracks; i++) {
+    //     fVSD->fTreeR->GetEntry(i); ///< load a TEveHit into fVSD->fH
+    //     DumpRecTrack();
+    // }
 }
 
 void a2mcVSDReader::DumpMCTrack() {
