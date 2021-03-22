@@ -15,9 +15,11 @@ class a2mcSettings
 public:
     a2mcSettings();
     virtual ~a2mcSettings();
+    void init(std::string);
 
     ///< Get functions
     Bool_t  isValid()           const {return status;       };
+    std::string GetIniFile()    const {return ini_file;     };
     UInt_t  GetGenType()        const {return gen_type;     };
     UInt_t  GetGenMode()        const {return gen_mode;     };
     UInt_t  GetInnEnviro()      const {return inn_enviro;   };
@@ -29,8 +31,8 @@ public:
     UInt_t  GetVerbose()        const {return verbose;      };
     void Print();
 private:
-    void init(std::string conf_filename);
     Bool_t status;
+    std::string ini_file;
     UInt_t gen_type;
     UInt_t gen_mode;
     UInt_t inn_enviro;

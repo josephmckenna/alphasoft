@@ -20,7 +20,7 @@ a2mcApparatus* a2mcApparatus::fgInstance = 0;
 using namespace std;
 
 //_____________________________________________________________________________
-a2mcApparatus::a2mcApparatus(Int_t run_number)
+a2mcApparatus::a2mcApparatus(Int_t run_number, a2mcSettings a2mc_conf)
 : TObject(),
     fWorld_Dx(0.),fWorld_Dy(0.),fWorld_Dz(0.)
 {
@@ -31,7 +31,7 @@ a2mcApparatus::a2mcApparatus(Int_t run_number)
     }
 
     runNumber = run_number;
-
+    a2mcConf = a2mc_conf;
     if (!a2mcConf.isValid()) {
         cout << "Error reading configuration " << endl;
         return;

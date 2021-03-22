@@ -61,10 +61,8 @@ include_directories(${VMC_INCLUDE_DIRS})
 #include(UseVMC)
 
 #----------------------------------------------------------------------------
-# Hard code the path to the installation (for a2MC.ini)
+# Hard code the path to the installation
 #
-
-add_compile_options(-DINI_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}\" )
 add_compile_options(-DA2_MC_SRC_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}\" )
 
 #----------------------------------------------------------------------------
@@ -127,5 +125,3 @@ add_custom_target(${PROJECT_NAME} DEPENDS
                   g4vmc_${program_name})
 install(TARGETS g4vmc_${program_name} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-
-install(FILES ${PROJECT_SOURCE_DIR}/input/a2MC.ini DESTINATION  ${CMAKE_INSTALL_PREFIX} )
