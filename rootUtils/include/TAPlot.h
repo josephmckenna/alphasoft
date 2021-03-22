@@ -20,6 +20,7 @@
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
+#include <numeric>
 
 #define SCALECUT 0.6
 
@@ -174,35 +175,75 @@ class TimeWindows : public TObject
          {
             SortTimeWindows();
          }
-         
-         if(std::binary_search (tmin.begin(), tmax.end(), t))
+
+         if(std::binary_search (tmin.begin(), tmin.end(), t))
          {
             auto it = std::lower_bound(tmin.begin(), tmin.end(), t);
-            if (it == tmin.end() || *it != t) 
-            {
-               return -1;
-            } 
+            if (it == tmin.end() || *it != t);
             else 
             {
                std::size_t index = std::distance(tmin.begin(), it);
-               return index;
+               if(tmax[index]>t)
+               {
+                  return index;
+               }
             } 
          }
-         else
+         return -1;
+      }
+      void PrintTheBoy()
+      {
+         std::cout << "tmin size = " << tmin.size() << std::endl;
+         for(size_t i=0; i<tmin.size(); i++)
          {
-            return -1;
+            std::cout << "tmin[" << i << "] = " << tmin[i] << std::endl;
          }
-         
+
+         std::cout << "tmax size = " << tmax.size() << std::endl;
+         for(size_t i=0; i<tmax.size(); i++)
+         {
+            std::cout << "tmax[" << i << "] = " << tmax[i] << std::endl;
+         }
+
+         std::cout << "runNumber size = " << runNumber.size() << std::endl;
+         for(size_t i=0; i<runNumber.size(); i++)
+         {
+            std::cout << "runNumber[" << i << "] = " << runNumber[i] << std::endl;
+         }
+
+         std::cout << "tzero size = " << tzero.size() << std::endl;
+         for(size_t i=0; i<tzero.size(); i++)
+         {
+            std::cout << "tzero[" << i << "] = " << tzero[i] << std::endl;
+         }
+      }
+      template <class T>
+      std::vector<T> reorder(std::vector<T>& nums, std::vector<size_t>& index)
+      {
+         int n = nums.size();
+         std::vector<T> ans(n);
+         for (int i = 0; i < n; i++)
+         {
+            ans[i]=nums[i];
+         }   
+         // finally return ans
+         return ans;
       }
       void SortTimeWindows()
       {
-         //Zip two vectors together
+         //PrintTheBoy();
+         //Create vectors needed for sorting.
          std::vector<std::pair<double,double>> zipped;
+         std::vector<size_t> idx(tmin.size());
+         iota(idx.begin(),idx.end(),0);
+
+         //Zip tmin and index vector together.
          for(size_t i=0; i<tmin.size(); ++i)
          {
-            zipped.push_back(std::make_pair(tmin[i], tmax[i]));
+            zipped.push_back(std::make_pair(tmin[i], idx[i]));
          }
-         //Sort based on first (tmin) keeping tmax in the same location
+
+         //Sort based on first (tmin) keeping idx in the same location
          std::sort(std::begin(zipped), std::end(zipped), 
          [&](const std::pair<double,double>& a, const std::pair<double,double>& b)
          {return a.second > b.second;} );
@@ -211,9 +252,44 @@ class TimeWindows : public TObject
          for(size_t i=0; i<tmin.size(); i++)
          {
             tmin[i] = zipped[i].first;
-            tmax[i] = zipped[i].second;
+            idx[i] = zipped[i].second;
          }
+
+         /*//Create 3 new vectors for the reorder
+         std::vector<int> sortedrunNumber;
+         std::vector<double> sortedtmax;
+         std::vector<double> sortedtzero;
+
+         //Populate new vectors based on the new index' (keeping inital vectors intact)
+         for(size_t i=0; i<tmin.size(); i++)
+         {
+            sortedrunNumber.push_back(runNumber.at(idx[i]));
+            sortedtmax.push_back(tmax.at(idx[i]));
+            sortedtzero.push_back(tzero.at(idx[i]));
+         }*/
+
+         runNumber=reorder<int>(runNumber,idx);
+         tmin=reorder<double>(tmin,idx);
+         tmax=reorder<double>(tmax,idx);
+         tzero=reorder<double>(tzero,idx);
+
+         //Rearange member vectors as new ones.
+         /*for(size_t i=0; i<tmin.size(); i++)
+         {
+            std::cout << "old run number = " << runNumber[i];
+            runNumber[i] = sortedrunNumber[i];
+            std::cout << " New runnumber = " << runNumber[i] << std::endl;
+
+            std::cout << "tmax run number = " << tmax[i];
+            tmax[i] = sortedtmax[i];
+            std::cout << " New tmax = " << tmax[i] << std::endl;
+
+            std::cout << "tzero run number = " << tzero[i];
+            tzero[i] = sortedtzero[i];
+            std::cout << " New tzero = " << tzero[i] << std::endl;
+         }*/
          isSorted = true;
+         //PrintTheBoy();
       }
       TimeWindows operator=(const TimeWindows m_TimeWindows)
       {
