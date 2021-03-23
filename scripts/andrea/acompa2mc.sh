@@ -7,10 +7,10 @@ else
 fi
 cd $AGRELEASE
 
-INST_DIR=$HOME/packages
-#INST_DIR=$AGRELEASE/simulation
-#LIB=lib64  # in some systems this is required instead of
-LIB=lib
+#INST_DIR=$HOME/packages
+INST_DIR=$AGRELEASE/simulation
+LIB=lib64  # in some systems this is required instead of
+#LIB=lib
 
 VGM=$INST_DIR/vgm/install
 VGMVER=4.9.0
