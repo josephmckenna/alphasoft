@@ -110,7 +110,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
 # Libraries...fun part
 #
-add_library(${library_name} ${sources} ${CMAKE_SHARED_LIBRARY_PREFIX}${library_name}_dict.cxx ${headers})
+add_library(${library_name} SHARED ${sources} ${CMAKE_SHARED_LIBRARY_PREFIX}${library_name}_dict.cxx ${headers})
 target_link_libraries(${library_name} ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${VGM_LIBRARIES} ${VMC_LIBRARIES} ${Geant4VMC_LIBRARIES})
 
 install(TARGETS ${library_name} DESTINATION ${CMAKE_INSTALL_LIBDIR})
