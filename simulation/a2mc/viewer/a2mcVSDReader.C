@@ -354,9 +354,11 @@ void a2mcVSDReader::DumpMCTrack() {
     ostringstream track_particle_name;
     TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fVSD->fK.GetPdgCode());
     if(particlePDG) track_particle_name << (string)particlePDG->GetName(); else track_particle_name << fVSD->fK.GetPdgCode();
-    Double_t ptot = sqrt(fVSD->fK.Px()*fVSD->fK.Px() + fVSD->fK.Py()*fVSD->fK.Py() + fVSD->fK.Pz()*fVSD->fK.Pz());
+    Double_t px   = fVSD->fK.Px();
+    Double_t py   = fVSD->fK.Py();
     Double_t pz   = fVSD->fK.Pz();
-    Double_t pt   = sqrt(fVSD->fK.Px()*fVSD->fK.Px() + fVSD->fK.Py()*fVSD->fK.Py());
+    Double_t ptot = sqrt(px*px + py*py + pz*pz);
+    Double_t pt   = sqrt(px*px + py*py);
     cout << "\t -) " << left << setw(3) << fVSD->fK.fLabel << "| " << track_particle_name.str().c_str() << " | ";
     cout << "[" << fixed << setprecision(2) << fVSD->fK.Vx() << ", " << fVSD->fK.Vy() << ", " << fVSD->fK.Vz() << "] | ";
     // if(ptot<=0.001) {

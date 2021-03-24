@@ -354,6 +354,7 @@ void a2mcToVSD::set_pdg_codes() {
     pdgDB->AddParticle("He3","He3",     mp*3.,1.,0.,2.,"Nuclei",      1000020030);
     pdgDB->AddParticle("He4","He4",     mp*4.,1.,0.,2.,"Nuclei",      1000020040);
     pdgDB->AddParticle("Li","Li",       mp*6.,1.,0.,3.,"Nuclei",      1000030060);
+    pdgDB->AddParticle("Li7","Li7",     mp*7.,1.,0.,27.,"Nuclei",     1000030070);
     pdgDB->AddParticle("B11","B11",     mp*11.,1.,0.,5.,"Nuclei",     1000050110);
     pdgDB->AddParticle("C","C",         mp*12.,1.,0.,6.,"Nuclei",     1000060120);
     pdgDB->AddParticle("N14","N14",     mp*14.,1.,0.,7.,"Nuclei",     1000070140);
@@ -374,6 +375,22 @@ void a2mcToVSD::set_pdg_codes() {
     pdgDB->AddParticle("Si27","Si27",   mp*27.,1.,0.,14.,"Nuclei",    1000140270);
     pdgDB->AddParticle("Si","Si",       mp*28.,1.,0.,14.,"Nuclei",    1000140280);
     pdgDB->AddParticle("Si30","Si30",   mp*30.,1.,0.,14.,"Nuclei",    1000140300);
+    pdgDB->AddParticle("Ca42","Ca42",   mp*42.,1.,0.,27.,"Nuclei",    1000200420);
+    pdgDB->AddParticle("Sc43","Sc43",   mp*43.,1.,0.,27.,"Nuclei",    1000210430);
+    pdgDB->AddParticle("Ti46","Ti46",   mp*46.,1.,0.,27.,"Nuclei",    1000220460);
+    pdgDB->AddParticle("Cr50","Cr50",   mp*50.,1.,0.,27.,"Nuclei",    1000240500);
+    pdgDB->AddParticle("Co57","Co57",   mp*57.,1.,0.,27.,"Nuclei",    1000270570);
+    pdgDB->AddParticle("Ni60","Ni60",   mp*60.,1.,0.,27.,"Nuclei",    1000280600);
+    pdgDB->AddParticle("F21", "F21",    mp*21.,1.,0.,9., "Nuclei",    1000090210);
+    pdgDB->AddParticle("K40", "K40",    mp*40.,1.,0.,19.,"Nuclei",    1000190400);
+    pdgDB->AddParticle("Ti48", "Ti48",  mp*48.,1.,0.,22.,"Nuclei",    1000220480);
+    pdgDB->AddParticle("V47", "V47",    mp*47.,1.,0.,23.,"Nuclei",    1000230470);
+    pdgDB->AddParticle("Mn54", "Mn54",  mp*54.,1.,0.,25.,"Nuclei",    1000250540);
+    pdgDB->AddParticle("Fe55", "Fe55",  mp*55.,1.,0.,26.,"Nuclei",    1000260550);
+    pdgDB->AddParticle("Co59", "Co59",  mp*59.,1.,0.,27.,"Nuclei",    1000270590);
+    pdgDB->AddParticle("Ni64", "Ni64",  mp*64.,1.,0.,28.,"Nuclei",    1000280640);
+    pdgDB->AddParticle("Cu63", "Cu63",  mp*63.,1.,0.,29.,"Nuclei",    1000290630);
+    pdgDB->AddParticle("Y86", "Y86",    mp*86.,1.,0.,39.,"Nuclei",    1000390860);
 }
 
 #endif // #ifdef a2mcToVSD_cxx
