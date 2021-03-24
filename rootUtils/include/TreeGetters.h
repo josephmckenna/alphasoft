@@ -42,7 +42,7 @@ TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& CombinedName);
 
 TTreeReader* Get_feLV_Tree(Int_t runNumber, const std::string& BankName);
 
-
+std::vector<TTreeReader*> Get_feGEM_File_Trees(Int_t runNumber, const std::string& CombinedName);
 
 #endif
 

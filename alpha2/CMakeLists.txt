@@ -1,120 +1,42 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(alpha2)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Version numbering
-set (basicApp_VERSION_MAJOR 1)
-set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Enforce out-of-source builds 
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
-if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
-endif(_insource) 
-
-# Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
-# The parameter is based on compiler ID as it's not standardised
-if ($ENV{CLICOLOR_FORCE})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-       add_compile_options (-fdiagnostics-color=always)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
-       add_compile_options (-fcolor-diagnostics)
-    endif ()
-endif ()
-
-# Directories
-add_subdirectory(src)
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
+    list(FIND ${LIST} ${OLD_VALUE} OLD_VALUE_INDEX)
+    if(OLD_VALUE_INDEX GREATER_EQUAL 0)
+        list(REMOVE_AT ${LIST} ${OLD_VALUE_INDEX})
+        list(INSERT ${LIST} ${OLD_VALUE_INDEX} ${NEW_VALUE})
     endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
+endmacro()
 
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Minuit2 Spectrum)
-link_libraries(${ROOT_LIBRARIES})
 
-##Horrible horrible hack to get the libs for rootana (from rootana/include/rootana_cflags.txt )
-list(APPEND ROOTANALIBS z Gui Core Imt RIO Net Hist Graf Graf3d Gpad ROOTVecOps Tree TreePlayer Rint Postscript Matrix Physics MathCore Thread MultiProc ROOTDataFrame m dl Thread XMLParser XMLIO RHTTP XMLParser XMLIO RHTTP)
-link_libraries(${ROOTANALIBS})
-#This below is broken and needs a REGEX wizard:
-#Get the libs for rootana (from rootana/include/rootana_libs.txt )
-#file( READ $ENV{ROOTANASYS}/include/rootana_libs.txt rootana_libs) 
-#string(REPLACE "\n" "" rootana_libs "${rootana_libs}" )
-#list(APPEND ROOTANALIBS ${rootana_libs})
-#link_libraries(rootana ${ROOTANALIBS})
-
-find_package(X11 REQUIRED)
-link_libraries(${X11_LIBRARIES})
-include_directories(${X11_INCLUDE_DIR})
-
-link_directories($ENV{ROOTANASYS}/lib)
-
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-
-# MIDAS -- live analyzer
-set(MIDASSYS "" CACHE PATH "")
-if(MIDASSYS STREQUAL "")
-    set(MIDASSYS "$ENV{MIDASSYS}")
-endif()
-if(MIDASSYS STREQUAL "")
-    find_package(Midas QUIET)
-else()
-    #MIDAS pre cmake compatability
-    set(MIDAS_FOUND TRUE)
-    set(MIDAS_INCLUDE_DIRS "$ENV{MIDASSYS}/include")
-    set(MIDAS_LIBRARIES "$ENV{MIDASSYS}/lib/libmidas.a" -lutil -lrt)
-endif()
-if(MIDAS_FOUND)
-  message(STATUS "MIDAS found")
-  message(DEBUG "[${PROJECT_NAME}] MIDAS_INCLUDE_DIRS = ${MIDAS_INCLUDE_DIRS}")
-  message(DEBUG "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
-  link_libraries(${MIDAS_LIBRARIES})
-  link_directories($ENV{MIDASSYS}/lib)
-endif()
-
-# Include directories
-include_directories(include)
-
-#Analysis Report needs A2Flow in alpha2...
-include_directories(../alpha2/include)
-#...which then needs UnpackVF48 in a2lib
-include_directories(../a2lib/include)
-
-#AG compatability includes
-#include_directories(../recolib/include)
-include_directories(../analib/include)
-include_directories(../ana/include)
-include_directories(${ROOT_INCLUDE_DIRS})
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
 
 if (BUILT_IN_ROOTANA)
-   include_directories(include ../rootana/include)
-else ()
-   include_directories(include $ENV{ROOTANASYS}/include)
-endif (BUILT_IN_ROOTANA)
-
-#feGEM (labVIEW logging)
-include_directories($ENV{AGRELEASE}/feGEM)
-
-message(${ROOT_INCLUDE_DIRS})
+  message(STATUS "Using ROOTANA submodule for A2")
+else()
+  find_package(ROOTANA)
+endif(BUILT_IN_ROOTANA)
+message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
-message(Binaries: ${BINS})
+if(BUILD_A2)
+  set(A2_LINK_LIBS alpha2 analib GEM)
+endif()
+
+#message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
-    message(Binary: ${bin})
+    message("alpha2 binary: " ${bin})
     
-    message(List file: ${LIST_FILE})
+    #message(List file: ${LIST_FILE})
     execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
                      OUTPUT_VARIABLE MODULES )
     #Clean up any strange formatting choices
@@ -122,25 +44,38 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
     string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+
     #Turn string into list
     separate_arguments(MODULES)
     #Prepend path to source files
     list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
-    #message(Modules: ${MODULES})
+
+    if (BUILT_IN_ROOTANA)
+       add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
+       add_dependencies(${bin} rootana)
+    else ()
+       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
+    endif (BUILT_IN_ROOTANA)
     
-    add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
-    
+    #add_dependencies(${bin} alpha2 agtpc analib GEM)
+    add_dependencies(${bin} alpha2 analib GEM)
+    #add_dependencies(${bin} gitinfo)
+
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC ../analib/include)
-    if (BUILD_AG)
-       target_include_directories(${bin} PUBLIC ../recolib/include)
-    endif(BUILD_AG)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/a2lib/include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/recolib/include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
+    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/libGEM/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    link_directories(../alpha2 ../analib )
-    find_library(LIBXM Xm)
-    find_library(LIBXT Xt)
-    find_library(LIBSQLITE3 sqlite3)
-    target_link_libraries( ${bin} ${ROOT_LIBRARIES} ${LIBXT} ${LIBXM} ${LIBSQLITE3} alpha2 analib rootana ${ROOTANALIBS} )
-    install(TARGETS ${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
+    target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
+   
+    target_link_libraries( ${bin} ${A2_LINK_LIBS}
+                           ${SQLite3_LIBRARIES}
+                           rootana ${ROOT_LIBRARIES}
+			   ${MIDAS_LIBRARIES} util) 
+    
+    install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

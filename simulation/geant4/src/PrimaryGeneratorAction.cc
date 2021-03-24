@@ -30,7 +30,7 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
+#include "TTree.h"
 #include "PrimaryGeneratorAction.hh"
 #include "PrimaryGeneratorMessenger.hh"
 
@@ -45,7 +45,6 @@
 #include "G4Event.hh"
 #include "G4ParticleGun.hh"
 
-#include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
 
@@ -60,7 +59,7 @@
 #include "TClonesArray.h"
 #include "TVector3.h"
 #include "TLorentzVector.h"
-#include "TTree.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -194,8 +193,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
       setupString.append(" ");
     }
   CRYFile.close();
-  char datadir[80];
+  char datadir[128];
+#ifdef CRYDATAPATH
+  sprintf(datadir,"%s",CRYDATAPATH);
+#else
   sprintf(datadir,"%s",getenv("CRYDATAPATH"));
+#endif
+  G4cout << "CRY data dir: "<< datadir << G4endl;
   // setup CRY generator
   CRYSetup *setup=new CRYSetup(setupString,datadir);
   fCosmicGen = new CRYGenerator(setup);
@@ -510,7 +514,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
 	mcvtxarray.Clear();
 
-	G4double theta  = G4UniformRand()*twopi,
+	G4double theta  = G4UniformRand()*CLHEP::twopi,
 	  radius = G4UniformRand()*TrapRadius*TrapRadius;
 	vx     = sqrt(radius)*cos(theta);
 	vy     = sqrt(radius)*sin(theta);
@@ -551,8 +555,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	mcvtxarray.Clear();
 	vx = TrapRadius; 
         vy = vz = tt = pz = 0.;
-	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
@@ -584,8 +588,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	tt = 0.;
 
 	pz = 0.;
-	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
@@ -605,8 +609,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// another 300 MeV pion
 	pz = 20.;
-	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
 	vt->SetPrimary(pp2);
@@ -627,8 +631,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	tt = 0.;
 
 	pz = 0.;
-	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
@@ -648,8 +652,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// another 300 MeV pion
 	pz = 100.*MeV;
-	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
 	vt->SetPrimary(pp2);
@@ -670,8 +674,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	tt = 0.;
 
 	pz = 0.;
-	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
@@ -691,8 +695,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	// another 300 MeV pion
 	pz = 0.;
-	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*pi);
-	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*pi);
+	px = 300.*MeV*cos(45.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
+	py = 300.*MeV*sin(45.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	G4PrimaryParticle *pp2 = new G4PrimaryParticle(pdgc,px,py,pz);
 	vt->SetPrimary(pp2);
@@ -711,7 +715,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
         vx = TrapRadius; vy = vz = tt = 0.;
         TVector3 testp;
         testp.SetMagThetaPhi(300.*MeV, 10.*TMath::DegToRad(), 
-                             30.*double(anEvent->GetEventID()+1)/180.*pi);
+                             30.*double(anEvent->GetEventID()+1)/180.*CLHEP::pi);
 
 	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
 
@@ -738,7 +742,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
 	mcvtxarray.Clear();
 
-	G4double theta  = G4UniformRand()*twopi;
+	G4double theta  = G4UniformRand()*CLHEP::twopi;
 	vx     = TrapRadius*cos(theta);
 	vy     = TrapRadius*sin(theta);
 	vz     = (G4UniformRand()-0.5)*fZlength + fZcenter;

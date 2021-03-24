@@ -8,6 +8,7 @@
 
 #include "ProcessEvents.hh"
 #include <iostream>
+#include <mutex>          // std::mutex
 
 #include "TFitVertex.hh"
 
@@ -31,9 +32,14 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
    d.PrintPWBsettings();
    std::cout<<"--------------------------------------------------"<<std::endl;
 
-
+   std::mutex* Lock = new std::mutex();
    m.SetDiagnostic(true);
-   if( issim ) m.Setup(0);
+   if( issim )
+      {
+         m.Setup(0);
+         m.SetMultiThread(true);
+         m.SetGlobalLockVariable(Lock);
+      }
 
    //leaw.SetDebug();
    leaw.SetRMSBaselineCut( a->GetDouble("LEModule","ADCrms") );
@@ -56,7 +62,6 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
          u.BookG4Histos();
          u.BookAGG4Histos();
       }
-   else
       u.BookRecoHistos();
 
    TObjString sett = a->GetSettingsString();
@@ -91,11 +96,12 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    if( kVerb>=2 ) u.PrintSignals( d.GetPadSignal() );
          
    // combine pads
- 
    if(kVerb>=2) m.SetTrace(true);
    std::vector<ALPHAg::signal>* CombinedPads = m.CombinePads( d.GetPadSignal() );
    m.SetTrace(false);
-   uint npads = CombinedPads->size();
+   uint npads = 0;
+   if(CombinedPads)
+      npads = CombinedPads->size();
    std::cout<<"[proc]# "<<EventNo<<"\tCombinePads: "<<npads<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                
@@ -106,10 +112,13 @@ void ProcessEvents::ProcessWaveform_deconv(TClonesArray* awsignals, TClonesArray
    if( npads == 0 ) return;
 
    // match electrodes
-   // Andrea! Does this diff make sense? This function needed two arguments
-   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(),d.GetPadSignal() );
+   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.MatchElectrodes( d.GetAnodeSignal(), CombinedPads );
+   uint nmatch = spacepoints->size();
+   std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<nmatch<<std::endl;
+   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   ProcessPoints(spacepoints);
+   //ProcessPoints(spacepoints);
+   ProcessTracks(spacepoints);
 }
 
 void ProcessEvents::ProcessWaveform_2D(TClonesArray* awsignals)
@@ -124,23 +133,12 @@ void ProcessEvents::ProcessWaveform_2D(TClonesArray* awsignals)
 
    m.Init();
    std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = m.FakePads( d.GetAnodeSignal() );
-
-   ProcessPoints(spacepoints);
-}
-
-void ProcessEvents::ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints )
-{
    uint nmatch = spacepoints->size();
    std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<nmatch<<std::endl;
-   if( nmatch == 0 ) return;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   // combine points
-   spacepoints = m.CombPoints( spacepoints );
-   uint nsp = spacepoints->size();
-   std::cout<<"[proc]# "<<EventNo<<"\tCombinePoints: "<<nsp<<std::endl;
-   if( nsp == 0 ) return;
-   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   //   ProcessPoints(spacepoints);
+   ProcessTracks(spacepoints);
 }
 
 void ProcessEvents::ProcessWaveform_led(TClonesArray* awsignals, TClonesArray* padsignals)
@@ -164,25 +162,47 @@ void ProcessEvents::ProcessWaveform_led(TClonesArray* awsignals, TClonesArray* p
    else
       std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: No Spacepoints..."<<std::endl;
    //m.SetTrace(false);
+
+   uint nmatch = spacepoints->size();
+   std::cout<<"[proc]# "<<EventNo<<"\tMatchElectrodes: "<<nmatch<<std::endl;
+   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if( nmatch == 0 ) return;
+
+   ProcessTracks(spacepoints);
 }
 
+void ProcessEvents::ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints )
+{
+   uint nmatch = spacepoints->size();
+   std::cout<<"[proc]# "<<EventNo<<"\tSpacepoints to Process: "<<nmatch<<std::endl;
+   if( nmatch == 0 ) return;
+   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+   // combine points
+   spacepoints = m.CombPoints( spacepoints );
+   uint nsp = spacepoints->size();
+   std::cout<<"[proc]# "<<EventNo<<"\tCombinePoints: "<<nsp<<std::endl;
+   if( nsp == 0 ) return;
+   // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
 
 void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints)
 {
-   // reco points
-   //   if( kVerb>=2 ) 
-   //r.SetTrace(true);
-   if( spacepoints ) 
+   if( kVerb>=2 ) 
+      r.SetTrace(true);
+   if( spacepoints )  // reco points
       r.AddSpacePoint( spacepoints );
-   //  else return;
+   else return;
    std::cout<<"[proc]# "<<EventNo<<"\tspacepoints: "<<r.GetNumberOfPoints()<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   u.FillRecoPointsHistos( r.GetPoints() );
 
    // find tracks
    //r.SetTrace(true);
    int ntracks = r.FindTracks(kFinder);
    std::cout<<"[proc]# "<<EventNo<<"\tpattrec: "<<ntracks<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   u.FillRecoTracksHisto( r.GetTracks() );
 
    if(kFinder == neural) 
       u.DebugNeuralNet( (NeuralFinder*) r.GetTracksFinder() );
@@ -200,7 +220,13 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::
    std::cout<<"[proc]# "<<EventNo<<"\thelix: "<<nhel<<std::endl;
    u.HelixPlots( r.GetHelices() );
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-   //r.SetTrace( false );
+
+   std::vector<TTrack*>* tracks_array=0;
+   if( nhel > 0 ) 
+      tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
+   else if( nlin > 0 ) 
+      tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());      
+   if( tracks_array ) u.FillFitTracksHisto(tracks_array);
 }
 
 void ProcessEvents::ProcessVertex(TVector3* mcvtx)
@@ -221,6 +247,7 @@ void ProcessEvents::ProcessVertex(TVector3* mcvtx)
    double res = ALPHAg::kUnknown;
    if( sv > 0 ) 
       { 
+         u.FillRecoVertex(&Vertex);
          res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
          u.VertexPlots(&Vertex);
       }
@@ -284,7 +311,7 @@ void ProcessEvents::ProcessMonteCarlo(TClonesArray* aw_hits,TVector3* mcvtx)
 
 void ProcessEvents::Finish()
 {
-   std::cout<<"[proc]# "<<EventNo<<"\tProcessEvents::Finish()"<<std::endl;
+   //   std::cout<<"[proc]# "<<EventNo<<"\tProcessEvents::Finish()"<<std::endl;
    if( kDraw )
       {
          u.Display(r.GetPoints(), r.GetTracks(), r.GetHelices());
@@ -304,6 +331,11 @@ void ProcessEvents::Finish(TClonesArray* garfpp_hits, TClonesArray* aw_hits)
       }
 
    r.Reset();
+}
+
+void ProcessEvents::End()
+{
+   u.WriteHisto();
 }
 
 

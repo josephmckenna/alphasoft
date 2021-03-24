@@ -7,19 +7,15 @@
 #include <string>
 #include <set>
 
-using std::vector;
-using std::string;
-using std::set;
-
 class MagneticFieldMap
 {
 protected:
-  vector<vector<vector<vector<double> > > > BfieldMap;
+  std::vector<std::vector<std::vector<std::vector<double> > > > BfieldMap;
   double bmin, bmax;
   double dx, dy, dz;
   double xmin, xmax, ymin, ymax, zmin, zmax;
   int polar;
-  set<char> symmetries;
+  std::set<char> symmetries;
 
   // Transformation between cartesian and polar coordinates
   void Cartesian2Polar(const double x0, const double y0, 
@@ -49,13 +45,13 @@ public:
   void MagneticField(double x, double y, double z,
 		     double& bx, double& by, double& bz, int& status);
 
-  bool ReadMap(const string filename, float scale = 1);  // Read in CSV field map   
+  bool ReadMap(const std::string filename, float scale = 1);  // Read in CSV field map   
 
-  bool SetSymmetries(string sym) // string of symmetry letters, e.g. "xy" or "rz"
+  bool SetSymmetries(std::string sym) // string of symmetry letters, e.g. "xy" or "rz"
   {
     symmetries.clear();
     bool OK(true);
-    for(string::iterator it = sym.begin(); it != sym.end(); it++)
+    for(std::string::iterator it = sym.begin(); it != sym.end(); it++)
       {
 	switch(*it)
 	  {
@@ -99,7 +95,7 @@ public:
 
   inline void PrintSymmetries() const
   { 
-    for( set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++ )
+    for( std::set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++ )
       std::cout << *it << std::endl;
   }
 
@@ -107,7 +103,7 @@ public:
   {
     bool OK(true);
     bool nonzero(false);
-    for(set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++)
+    for(std::set<char>::iterator it = symmetries.begin(); it != symmetries.end(); it++)
       {
 	switch(*it)
 	  {

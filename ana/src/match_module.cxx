@@ -45,7 +45,7 @@ class MatchModule: public TARunObject
 {
 public:
    MatchFlags* fFlags = NULL;
-   bool fTrace;
+   bool fTrace = false;
    int fCounter = 0;
    bool diagnostic = false;
    
@@ -290,6 +290,15 @@ public:
    MatchFlags fFlags;
 
 public:
+   void Help()
+   {
+      printf("MatchModuleFactory::Help\n");
+      printf("\t--forcereco\t\tEnable reconstruction when no pads are associated with the event by setting z=0\n");
+   }
+   void Usage()
+   {
+      Help();
+   }
 
    void Init(const std::vector<std::string> &args)
    {
@@ -323,23 +332,22 @@ public:
                fFlags.fDiag = true;
             if( args[i] == "--trace" )
                fFlags.fTrace = true;
+            if(args[i] == "--forcereco")
+               fFlags.fForceReco=true;
             if (args[i] == "--anasettings")
                {
                   i++;
                   json=args[i];
                   i++;
                }
-            if(args[i] == "--forcereco")
-               {
-                  fFlags.fForceReco=true;
-               }
+         
+            fFlags.ana_settings=new AnaSettings(json);
+            //fFlags.ana_settings->Print();
          }
-      fFlags.ana_settings=new AnaSettings(json);
-      //fFlags.ana_settings->Print();
    }
-    MatchModuleFactory()
-    {
-    }
+   
+   MatchModuleFactory() {}
+
    void Finish()
    {
       if(fFlags.fTrace == true)

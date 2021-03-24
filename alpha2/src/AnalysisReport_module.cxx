@@ -7,7 +7,7 @@
 //
 
 #include <stdio.h>
-
+#include <iomanip>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -15,13 +15,13 @@
 
 #include "TH1D.h"
 #include "TH2D.h"
-
 #include "TTree.h"
 
 #ifdef BUILD_A2
 #include "A2Flow.h"
-#include "TAnalysisReport.h"
 #endif
+
+#include "TAnalysisReport.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
@@ -73,16 +73,26 @@ public:
       double variance = sq_sum / TotalCount - mean * mean;
       return sqrt(variance);
    }
-   void Print()
+   /*void Print()
    {
-      printf("DUMP SUMMARY:%s\t DumpCount:%d  \t VF48Events:%d (%f)\tVerticies:%d (%f)\t PassedCuts:%d (%f)\t TotalTime:%f\t\n",
+      printf("DUMP SUMMARY:%s\t DumpCount: %d  \t VF48Events: %d ( %f )\tVerticies: %d ( %f )\t PassedCuts: %d ( %f )\t TotalTime: %f\t\n",
                    DumpName.c_str(),
                    TotalCount,
                    VF48Events, calc_stdev(VF48Events_sqsum, VF48Events),
                    Verticies, calc_stdev(Verticies_sqsum, Verticies), 
                    PassedCuts, calc_stdev(PassedCuts_sqsum, PassedCuts),
                    time);
-   }
+   }*/
+   void Print()
+    {
+      std::streamsize ss = std::cout.precision();
+       std::cout<<"DUMP SUMMARY: "<< DumpName.c_str() << "\t";
+       std::cout<<"DumpCount: "   << TotalCount << "\t";
+       std::cout<<"VF48Events: "  << VF48Events << "\t";
+       std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
+       std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
+      std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
+    }
 };
 #endif
 #ifdef BUILD_A2
@@ -146,7 +156,6 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
-   std::string binary_path_full;
 
    AnalysisReportFlags* fFlags;
 

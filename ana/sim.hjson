@@ -1,10 +1,21 @@
 {
     DeconvModule: {             // Deconvolution of anodes and pads waveforms
-        ADCthr: 14
+        ADCthr:  14
         PWBthr: 100
-        AWthr: 4
-        PADthr: 2
+        AWthr:    4
+        PADthr:   2
     }
+    LEModule: {               // Leading Edge parameters (wrong here)
+        ADCrms  : 1000
+        PWBrms  :  100
+	ADCthr  :  750
+	PWBthr  :  100
+        ADCgain :    1.33333
+        PWBgain :    1
+        ADCtime : -535
+        PWBtime : -390
+        CFDfrac :    0.6
+   }
     MatchModule: {              // Match anode and pad signals to generate spacepoints
         CentreOfGravityMethod: "CentreOfGravity_blobs"
         maxPadGroups: 10

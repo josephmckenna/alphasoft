@@ -31,8 +31,8 @@ const int kMaxOverlays   = 6;
 
 class PHistCalc {
 public:
-    virtual void    DoCalc(PHistImage *hist) { };
-    virtual int     GetRange(PHistImage *hist, int noffset, int nbin, int *min, int *max) { return 0; }
+    virtual void    DoCalc(PHistImage* /*hist*/) { };
+    virtual int     GetRange(PHistImage* /*hist*/, int /*noffset*/, int /*nbin*/, int* /*min*/, int* /*max*/) { return 0; }
     
     unsigned long   GetMaxVal()     { return mMaxVal; }
 
@@ -55,7 +55,7 @@ public:
     virtual void    DoGrabY(double ymin, double ymax);
     virtual void    DoneGrab();
     
-    virtual void    ResetGrab(int do_update)    { mGrabFlag = 0; }
+    virtual void    ResetGrab(int /*do_update*/)    { mGrabFlag = 0; }
 
     virtual void    MakeHistogram()             { }
     virtual void    SetHistogramLabel()         { }

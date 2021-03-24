@@ -3,16 +3,27 @@
 ///// otherwise create separate hjson file and generate separate json,
 ///// use with "--anasettings <mysettings.json>"
 {
-    DeconvModule: {
+    DeconvModule: {         // Deconvolution parameters
         ADCthr: 1000
         PWBthr:  200
         AWthr:   10
         PADthr:  10
     }
 
+    LEModule: {              // Leading Edge reconstruction parameters
+        ADCrms  : 1000
+        PWBrms  :  100
+	ADCthr  :  750
+	PWBthr  :  100
+        ADCgain :    1.33333
+        PWBgain :    1
+        ADCtime : -535
+        PWBtime : -390
+        CFDfrac :    0.6
+   }
+
     MatchModule: {              // Match anode and pad signals to generate spacepoints
-        CentreOfGravityMethod: "CentreOfGravity"
-        // CentreOfGravityMethod: "CentreOfGravity_blobs"
+        CentreOfGravityMethod: "CentreOfGravity_blobs"
         maxPadGroups: 10
         padSigma: 7.0
         padSigmaD: 0.75

@@ -478,7 +478,7 @@ int PResourceManager::GetNumOptions()
     return(XtNumber(sResourceList));
 }
 
-void PResourceManager::Str2floatXm(XrmValue *args, Cardinal *nargs, XrmValue *fromVal, XrmValue *toVal)
+void PResourceManager::Str2floatXm(XrmValue*/*args*/, Cardinal *nargs, XrmValue *fromVal, XrmValue *toVal)
 {
     static float    result;
     if (*nargs != 0) XtWarning("String to Float conversion needs no args");
@@ -818,7 +818,7 @@ void PResourceManager::SetWindowGeometry(const char *name, SWindowGeometry *geo)
 // WriteGeoProc - enumerate database to write window geometries
 // - this routine is made extern "C" instead of a static member
 //   because of a brain-dead compiler that gives warnings otherwise - PH 05/08/00
-int WriteGeoProc(XrmDatabase *database, XrmBindingList bindings,
+int WriteGeoProc(XrmDatabase*/*database*/, XrmBindingList /*bindings*/,
                  XrmQuarkList quarks, XrmRepresentation *type,
                  XrmValue *value, XPointer theData)
 {
