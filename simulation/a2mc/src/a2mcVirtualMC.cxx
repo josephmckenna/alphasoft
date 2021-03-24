@@ -142,6 +142,7 @@ void a2mcVirtualMC::FinishRun()
 
     fRootManager->WriteAll();
     fPrimaryGenerator->EquivalentTimeMin();
+    cout << "Configuration read from ====> " << a2mcConf.GetIniFile() << " <===== " << endl;
 }
 
 //_____________________________________________________________________________
@@ -347,6 +348,5 @@ void a2mcVirtualMC::WriteLog(Int_t nEvents) {
     ss << "cat "<<A2_MC_SRC_PATH<<"/src/a2mcVirtualMC.cxx >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
-    cout << "Configuration read from ====> " << a2mcConf.GetIniFile() << " <===== " << endl;
     cout << "Writing log into file " << sf.str() << endl;
 }
