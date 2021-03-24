@@ -43,6 +43,7 @@ public :
 
     ///< Methods
     virtual void            Init(Int_t runNumber=0);
+    virtual void            ResetVariables();
     virtual Int_t           GetEntry(Long64_t entry);
     virtual Long64_t        LoadTree(Long64_t entry);
     virtual void            InitTree(TTree *tree);
@@ -342,6 +343,22 @@ void a2mcToVSD::InitTree(TTree *tree)
     } else {
         MCTracks_ = 0;
     }
+}
+
+void a2mcToVSD::ResetVariables() { ///< Resetting variables for the next events
+    fVox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fVoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fVoz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fPox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fPoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fPoz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fEo  = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin energy
+    fVdx = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    fVdy = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    fVdz = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    SilHits_    = 0;
+    SilDigi_    = 0;
+    MCTracks_   = 0;
 }
 
 void a2mcToVSD::set_pdg_codes() {

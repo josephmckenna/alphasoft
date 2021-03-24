@@ -44,6 +44,7 @@ void a2mcToVSD::WriteVSD(Double_t hit_threshold = 0., Int_t nMinHits=0) {
     cout << "Number of events " << fTotEvents << endl;
 
     for (fEvent=0; fEvent<fTotEvents; fEvent++) {
+        ResetVariables();
         if (LoadTree(fEvent) < 0) break;
         if(FillVSDEvent(fEvent, hit_threshold, nMinHits)) nOutEvents++;
         if(nOutEvents>1000) {

@@ -186,8 +186,8 @@ void a2mcVSDReader::LoadMCTracks() {
     // trkProp->SetMagField(0., 0., 0.3); ///< in T (???)
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
-    trkProp->SetMaxR(35.);  ///< Based on the Oxford magnet dimension and generation sphere
-    trkProp->SetMaxZ(35.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxR(50.);  ///< Based on the Oxford magnet dimension and generation sphere
+    trkProp->SetMaxZ(50.);  ///< Based on the Oxford magnet dimension and generation sphere
     trkProp->SetFitDecay(true); ///< Is it working?
 
     Double_t naan = std::numeric_limits<double>::quiet_NaN();
