@@ -97,8 +97,8 @@ void a2mcVirtualMC::InitMC(const char* setup)
    // the geometry media (stemax) in a2mcApparatus.cxx
    Bool_t isUserParameters = true;
    gMC->SetUserParameters(isUserParameters);
-    //gMC->SetProcess("MULS" ,0); // Turn OFF multiple scattering
-    //gMC->SetCut("CUTHAD",1.e-6); //
+    // gMC->SetProcess("MULS" ,0); // Turn OFF multiple scattering
+    // gMC->SetCut("CUTHAD",1.e-6); //
         gMC->SetCut("CUTELE",1.e-2); // GeV
         gMC->SetCut("CUTGAM",1.e-2); // GeV
     ///< These cuts could be customized according to gen_type and gen_mode
@@ -126,6 +126,7 @@ void a2mcVirtualMC::RunMC(Int_t nofEvents)
 
     if(verbose) fVerbose.RunMC(nofEvents);
 
+    WriteLog(nofEvents);
     gMC->ProcessRun(nofEvents);
 
     FinishRun();
@@ -141,7 +142,6 @@ void a2mcVirtualMC::FinishRun()
 
     fRootManager->WriteAll();
     fPrimaryGenerator->EquivalentTimeMin();
-    WriteLog();
 }
 
 //_____________________________________________________________________________
@@ -300,7 +300,7 @@ void a2mcVirtualMC::AddParticles()
   
 }
 
-void a2mcVirtualMC::WriteLog() {
+void a2mcVirtualMC::WriteLog(Int_t nEvents) {
 
     ///< SAVING INFO INTO THE LOG FILE
     ostringstream sf;
@@ -313,6 +313,10 @@ void a2mcVirtualMC::WriteLog() {
 
     ss.clear(); ss.str("");
     ss << "echo '_____________________________________________\n' >>" << sf.str();;
+    gSystem->Exec(ss.str().c_str());
+
+    ss.clear(); ss.str("");
+    ss << "echo 'Number of events: " << nEvents << " ' >> " << sf.str();
     gSystem->Exec(ss.str().c_str());
 
     ss.clear(); ss.str("");

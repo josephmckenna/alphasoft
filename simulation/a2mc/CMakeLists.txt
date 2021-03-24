@@ -7,12 +7,18 @@
 # E01 example - I. Hrivnacova                    #
 ##################################################
 
+
 # To be sure your cmake version in recent enough
-cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR)
 
 # Project name
 project(a2MC)
 
+# Fixing RPATH handling for MacOS
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    message(STATUS "OSX ARCHITECTURE DETECTED: " ${CMAKE_SYSTEM})
+#    cmake_policy(SET CMP0042 NEW)
+endif()
 
 #----------------------------------------------------------------------------
 # Define unique names of libraries and executables based on project name
@@ -110,7 +116,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #----------------------------------------------------------------------------
 # Libraries...fun part
 #
-add_library(${library_name} ${sources} ${CMAKE_SHARED_LIBRARY_PREFIX}${library_name}_dict.cxx ${headers})
+add_library(${library_name} SHARED ${sources} ${CMAKE_SHARED_LIBRARY_PREFIX}${library_name}_dict.cxx ${headers})
 target_link_libraries(${library_name} ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${VGM_LIBRARIES} ${VMC_LIBRARIES} ${Geant4VMC_LIBRARIES})
 
 install(TARGETS ${library_name} DESTINATION ${CMAKE_INSTALL_LIBDIR})

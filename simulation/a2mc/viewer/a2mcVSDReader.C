@@ -183,7 +183,7 @@ void a2mcVSDReader::LoadMCTracks() {
     auto trkProp = fTrackListMC->GetPropagator();
     // !!!! Need to store field on file !!!!
     // Can store TEveMagField ?
-    // trkProp->SetMagField(0., 0., 0.5); ///< in T (???)
+    // trkProp->SetMagField(0., 0., 0.3); ///< in T (???)
     trkProp->SetMagField(0.); ///< No magnetic field here
     trkProp->SetStepper(TEveTrackPropagator::kRungeKutta);
     trkProp->SetMaxR(35.);  ///< Based on the Oxford magnet dimension and generation sphere
@@ -355,12 +355,25 @@ void a2mcVSDReader::DumpMCTrack() {
     TParticlePDG* particlePDG = TDatabasePDG::Instance()->GetParticle(fVSD->fK.GetPdgCode());
     if(particlePDG) track_particle_name << (string)particlePDG->GetName(); else track_particle_name << fVSD->fK.GetPdgCode();
     Double_t ptot = sqrt(fVSD->fK.Px()*fVSD->fK.Px() + fVSD->fK.Py()*fVSD->fK.Py() + fVSD->fK.Pz()*fVSD->fK.Pz());
-
+    Double_t pz   = fVSD->fK.Pz();
+    Double_t pt   = sqrt(fVSD->fK.Px()*fVSD->fK.Px() + fVSD->fK.Py()*fVSD->fK.Py());
     cout << "\t -) " << left << setw(3) << fVSD->fK.fLabel << "| " << track_particle_name.str().c_str() << " | ";
     cout << "[" << fixed << setprecision(2) << fVSD->fK.Vx() << ", " << fVSD->fK.Vy() << ", " << fVSD->fK.Vz() << "] | ";
-    if(ptot<=0.001) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e6 << " KeV/c";
-    if(0.001<ptot&&ptot<=0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e3 << " MeV/c";
-    if(ptot>0.1) cout << "Ptot = " << fixed << setprecision(2) << ptot << " GeV/c";
+    // if(ptot<=0.001) {
+    //     cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e6;
+    //     cout << " (Pt = " << fixed << setprecision(2) << pt*1.e6;
+    //     cout << " Pz = "  << fixed << setprecision(2) << pz*1.e6 << ") KeV/c";
+    // }
+    // if(0.001<ptot&&ptot<=0.1) {
+        cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e3;
+        cout << " (Pt = " << fixed << setprecision(2) << pt*1.e3;
+        cout << " Pz = "  << fixed << setprecision(2) << pz*1.e3 << ") MeV/c";
+    // }
+    // if(ptot>0.1) {
+    //     cout << "Ptot = " << fixed << setprecision(2) << ptot;
+    //     cout << " (Pt = " << fixed << setprecision(2) << pt;
+    //     cout << " Pz = "  << fixed << setprecision(2) << pz << ") GeV/c";
+    // }
     if(fVSD->fK.fDecayed) {
         cout << " | [decay R=" << fixed << setprecision(2) << sqrt(fVSD->fK.fVDecay.fX*fVSD->fK.fVDecay.fX+fVSD->fK.fVDecay.fY*fVSD->fK.fVDecay.fY) << ",Z=" << fVSD->fK.fVDecay.fZ << "]";
     }
