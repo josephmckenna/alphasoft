@@ -12,9 +12,9 @@ class a2mcReco {
 ///< Methods declaration 
 public:
     a2mcReco();
-    a2mcReco(Int_t runNumber=0);
+    a2mcReco(Int_t runNumber=0, Double_t hit_threshold = 0., Int_t nMinHits=0);
     virtual ~a2mcReco();
-    virtual void            Init(Int_t runNumber=0);
+    virtual void            Init();
     virtual void            InitTree(TTree *tree);
     virtual Long64_t        LoadTree(Long64_t entry);
     virtual Int_t           GetEntry(Long64_t entry);
@@ -40,6 +40,8 @@ private:
     Int_t          fRunNumber;
     Int_t          fTotEvents;
     Long64_t       fEvent;
+    Double_t       fHitThreshold; ///< In MeV
+    Int_t          fNMinHits;
 
 ///< Variables for the reconstructed variables
     TAlphaEvent*    fAlphaEvent=nullptr;
@@ -118,8 +120,11 @@ a2mcReco::a2mcReco() : fChain(0) {
 }
 
 ///< Constructor with the run number
-a2mcReco::a2mcReco(Int_t runNumber) : fChain(0)  {
-    Init(runNumber);
+a2mcReco::a2mcReco(Int_t runNumber=0, Double_t hit_threshold = 0., Int_t nMinHits=0) : fChain(0)  {
+    fRunNumber      = runNumber;
+    fHitThreshold   = hit_threshold;
+    fNMinHits       = nMinHits;
+    Init();
     InitReco();
 }
 
@@ -133,11 +138,10 @@ a2mcReco::~a2mcReco()
 }
 
 ///< Initializer (it reads the MC output)
-void a2mcReco::Init(Int_t runNumber) {
-    fRunNumber = runNumber;
+void a2mcReco::Init() {
     TTree *tree = 0;
     std::ostringstream sdata;
-    sdata << "ls ../root/a2MC-*_" << runNumber << ".root";
+    sdata << "ls ../root/a2MC-*_" << fRunNumber << ".root";
     TString file_name(gSystem->GetFromPipe(sdata.str().c_str()));
     string sfile = file_name.Data();
     if(strcmp(sfile.c_str(),"")==0) {

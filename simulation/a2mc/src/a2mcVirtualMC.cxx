@@ -261,13 +261,25 @@ void a2mcVirtualMC::FinishEvent()
 
     ///< Fill the information about the Primary Decay Vertex
     ///< Registering the "origin vertex" of a primary daughter as the "decay/annihilaiton" vertex of the primary
+    ///< To avoid "delta-rays", checking that there are at least two daughters
+    Int_t nD = 0;
+    Double_t vdx, vdy, vdz;
     for(UInt_t i=0; i<fStack->GetNtrack(); i++) {
         if(fStack->GetParticle(i)->GetMother(0)!=0) continue; ///< Not a daughter from the primary
-        fPrimary->SetVdx(fStack->GetParticle(i)->Vx());
-        fPrimary->SetVdy(fStack->GetParticle(i)->Vy());
-        fPrimary->SetVdz(fStack->GetParticle(i)->Vz());
-        break;
+        vdx = fStack->GetParticle(i)->Vx();
+        vdy = fStack->GetParticle(i)->Vy();
+        vdz = fStack->GetParticle(i)->Vz();
+        nD++;
+        if(nD>1) {
+            break;
+        }
     }
+    if(nD>1) {
+        fPrimary->SetVdx(vdx);
+        fPrimary->SetVdy(vdy);
+        fPrimary->SetVdz(vdz);
+    }
+    
     ///< Storing the hits and the DIGI 
     if(a2mcConf.GetSilDet()) fSilSD.Digitalize();
     fRootManager->Fill();
