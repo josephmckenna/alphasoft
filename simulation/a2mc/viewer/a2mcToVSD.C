@@ -210,8 +210,8 @@ TEveHit a2mcToVSD::RecoVertexToEveHit() {
 //=====================
 TEveMCTrack a2mcToVSD::ToEveMCTrack(UInt_t it) {
     TEveMCTrack eveMCTrack;
-    eveMCTrack.fIndex = 0;
-    eveMCTrack.fLabel = it;
+    eveMCTrack.fIndex = MCTracks_fTrackID[it];
+    eveMCTrack.fLabel = MCTracks_fPdgCode[it];
     eveMCTrack.fEvaLabel = MCTracks_fPdgCode[it];
     eveMCTrack.SetPdgCode(MCTracks_fPdgCode[it]);
     eveMCTrack.SetProductionVertex(MCTracks_fVx[it],MCTracks_fVy[it],MCTracks_fVz[it],0.);
@@ -259,7 +259,7 @@ Bool_t a2mcToVSD::GoodMCTrack(UInt_t it) {
     if(MCTracks_fMother[it][0]==-1&&abs(MCTracks_fPdgCode[it])==13) return true;
     ///< Only tracks with hits in the detector
     for(UInt_t ih=0; ih<SilHits_; ih++) {
-        if(SilHits_fTrackID[ih]==it) return true; ///< Only tracks that released a hit in the detectors
+        if(SilHits_fTrackID[ih]==MCTracks_fTrackID[it]) return true; ///< Only tracks that released a hit in the detectors
     }
     return false;
 }

@@ -93,22 +93,15 @@ void a2mcVirtualMC::InitMC(const char* setup)
         if (!gMC) Fatal("InitMC", "Processing Config() has failed. (No MC is instantiated.)");
     }
 
-   // This need to be uncommented to allow the step limits set in defining
-   // the geometry media (stemax) in a2mcApparatus.cxx
-   Bool_t isUserParameters = true;
-   gMC->SetUserParameters(isUserParameters);
+    // This need to be uncommented to allow the step limits set in defining
+    // the geometry media (stemax) in a2mcApparatus.cxx
+    // Bool_t isUserParameters = true; ///< Using user step limits (see a2mcApparatus::ConstructMaterials())
+    Bool_t isUserParameters = false; ///< Using Geant4 default step limits
+    gMC->SetUserParameters(isUserParameters);
     // gMC->SetProcess("MULS" ,0); // Turn OFF multiple scattering
     // gMC->SetCut("CUTHAD",1.e-6); //
-        gMC->SetCut("CUTELE",1.e-2); // GeV
-        gMC->SetCut("CUTGAM",1.e-2); // GeV
-    ///< These cuts could be customized according to gen_type and gen_mode
-//    if(a2mcConf.GetGen_mode()==10||a2mcConf.GetGen_mode()==11) { // positrons or positrons-like pbars
-//        gMC->SetCut("CUTELE",1.e-5); // GeV
-//        gMC->SetCut("CUTGAM",1.e-5); // GeV        
-//    } else { // all the others
-//        gMC->SetCut("CUTELE",1.e-2); // GeV
-//        gMC->SetCut("CUTGAM",1.e-2); // GeV
-//    }
+    gMC->SetCut("CUTELE",1.e-2); // GeV
+    gMC->SetCut("CUTGAM",1.e-2); // GeV
 
     gMC->SetStack(fStack);
     if(a2mcConf.GetMagField()!=0) gMC->SetMagField(fMagField);
@@ -204,7 +197,6 @@ void a2mcVirtualMC::BeginEvent()
     /// Nothing to be done this example
 
     if(verbose) fVerbose.BeginEvent();
-
     nEvents++;
 
     if(a2mcConf.GetSilDet())  fSilSD.BeginOfEvent(); 

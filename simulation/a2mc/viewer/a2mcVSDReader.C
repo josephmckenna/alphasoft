@@ -359,7 +359,7 @@ void a2mcVSDReader::DumpMCTrack() {
     Double_t pz   = fVSD->fK.Pz();
     Double_t ptot = sqrt(px*px + py*py + pz*pz);
     Double_t pt   = sqrt(px*px + py*py);
-    cout << "\t -) " << left << setw(3) << fVSD->fK.fLabel << "| " << track_particle_name.str().c_str() << " | ";
+    cout << "\t -) " << left << setw(3) << fVSD->fK.fIndex << "| " << track_particle_name.str().c_str() << " | ";
     cout << "[" << fixed << setprecision(2) << fVSD->fK.Vx() << ", " << fVSD->fK.Vy() << ", " << fVSD->fK.Vz() << "] | ";
     // if(ptot<=0.001) {
     //     cout << "Ptot = " << fixed << setprecision(2) << ptot*1.e6;

@@ -111,6 +111,7 @@ public :
     Int_t           MCTracks_fPdgCode[kMaxMCTracks];    //[MCTracks_]
     Int_t           MCTracks_fMother[kMaxMCTracks][2];  //[MCTracks_]
     Int_t           MCTracks_fDaughter[kMaxMCTracks][2];//[MCTracks_]
+    Int_t           MCTracks_fTrackID[kMaxMCTracks];    //[MCTracks_]
     Double_t        MCTracks_fPx[kMaxMCTracks];         //[MCTracks_]
     Double_t        MCTracks_fPy[kMaxMCTracks];         //[MCTracks_]
     Double_t        MCTracks_fPz[kMaxMCTracks];         //[MCTracks_]
@@ -165,6 +166,7 @@ public :
     TBranch        *b_MCTracks_fPdgCode;   //!
     TBranch        *b_MCTracks_fMother;   //!
     TBranch        *b_MCTracks_fDaughter;   //!
+    TBranch        *b_MCTracks_fTrackID;   //!
     TBranch        *b_MCTracks_fPx;   //!
     TBranch        *b_MCTracks_fPy;   //!
     TBranch        *b_MCTracks_fPz;   //!
@@ -332,6 +334,7 @@ void a2mcToVSD::InitTree(TTree *tree)
         fChain->SetBranchAddress("MCTracks.fPdgCode", MCTracks_fPdgCode, &b_MCTracks_fPdgCode);
         fChain->SetBranchAddress("MCTracks.fMother[2]", MCTracks_fMother, &b_MCTracks_fMother);
         fChain->SetBranchAddress("MCTracks.fDaughter[2]", MCTracks_fDaughter, &b_MCTracks_fDaughter);
+        fChain->SetBranchAddress("MCTracks.fTrackID", MCTracks_fTrackID, &b_MCTracks_fTrackID);
         fChain->SetBranchAddress("MCTracks.fPx", MCTracks_fPx, &b_MCTracks_fPx);
         fChain->SetBranchAddress("MCTracks.fPy", MCTracks_fPy, &b_MCTracks_fPy);
         fChain->SetBranchAddress("MCTracks.fPz", MCTracks_fPz, &b_MCTracks_fPz);
