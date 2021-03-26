@@ -178,9 +178,9 @@ public:
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
 #endif
 #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
-      runinfo->fOdb->RI("/runinfo/State",&RunState);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
+      runinfo->fOdb->RI("runinfo/State",&RunState);
 #endif
 
       std::cout<<"START:"<< run_start_time<<std::endl;
@@ -210,7 +210,7 @@ public:
          //   DetectorChans[board][det]=-1;
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
-            TString OdbPath="/Equipment/cbms0";
+            TString OdbPath="Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Settings/ChannelNames";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
