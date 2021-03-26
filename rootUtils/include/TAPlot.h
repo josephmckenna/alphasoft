@@ -255,39 +255,11 @@ class TimeWindows : public TObject
             idx[i] = zipped[i].second;
          }
 
-         /*//Create 3 new vectors for the reorder
-         std::vector<int> sortedrunNumber;
-         std::vector<double> sortedtmax;
-         std::vector<double> sortedtzero;
-
-         //Populate new vectors based on the new index' (keeping inital vectors intact)
-         for(size_t i=0; i<tmin.size(); i++)
-         {
-            sortedrunNumber.push_back(runNumber.at(idx[i]));
-            sortedtmax.push_back(tmax.at(idx[i]));
-            sortedtzero.push_back(tzero.at(idx[i]));
-         }*/
-
          runNumber=reorder<int>(runNumber,idx);
          tmin=reorder<double>(tmin,idx);
          tmax=reorder<double>(tmax,idx);
          tzero=reorder<double>(tzero,idx);
-
-         //Rearange member vectors as new ones.
-         /*for(size_t i=0; i<tmin.size(); i++)
-         {
-            std::cout << "old run number = " << runNumber[i];
-            runNumber[i] = sortedrunNumber[i];
-            std::cout << " New runnumber = " << runNumber[i] << std::endl;
-
-            std::cout << "tmax run number = " << tmax[i];
-            tmax[i] = sortedtmax[i];
-            std::cout << " New tmax = " << tmax[i] << std::endl;
-
-            std::cout << "tzero run number = " << tzero[i];
-            tzero[i] = sortedtzero[i];
-            std::cout << " New tzero = " << tzero[i] << std::endl;
-         }*/
+  
          isSorted = true;
          //PrintTheBoy();
       }
