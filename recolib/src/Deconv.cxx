@@ -672,14 +672,31 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
          col+=1;
          if( col == 32 ) col = 0;
-         assert(col<32&&col>=0);
-         //std::cout<<"Deconv::FindPadTimes() col: "<<col;
+         if( col<0 || col >=32 ) 
+            {
+               std::cout<<"Deconv::FindPadTimes() col: "<<col
+                        <<" pwb column: "<<ch->pwb_column
+                        <<" pad col: "<<ch->pad_col
+                        <<" PAD SEC ERROR"<<std::endl;
+            }
          int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-         //std::cout<<" row: "<<row;
-         assert(row<576&&row>=0);
+         if( row<0 || row>576 )
+            {
+               std::cout<<"Deconv::FindPadTimes() row: "<<row
+                        <<" pwb ring: "<<ch->pwb_ring
+                        <<" pad row: "<<ch->pad_row
+                        <<" PAD ROW EROOR"<<std::endl;
+            }         
          int pad_index = pmap->index(col,row);
          assert(!std::isnan(pad_index));
-         //std::cout<<" index: "<<pad_index<<std::endl;
+         if( pad_index < 0 || pad_index >= (int)ALPHAg::_padchan )
+            {
+               std::cout<<"Deconv::FindPadTimes() index: "<<pad_index
+                        <<" col: "<<col
+                        <<" row: "<<row
+                        <<" PAD INDEX ERROR"<<std::endl;
+               continue;
+            }
          
          // CREATE electrode
          ALPHAg::electrode el(col,row);
