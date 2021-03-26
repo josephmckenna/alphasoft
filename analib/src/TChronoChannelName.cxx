@@ -13,6 +13,7 @@ TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
          TString OdbPath="/Equipment/cbms0";
          OdbPath+=b+1;
          OdbPath+="/Settings/ChannelNames";
+         //std::cout<<"VirtualODB "<<OdbPath<<" ch: "<<chan<<std::endl;
          //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
          if (Odb->odbReadString(OdbPath.Data(),chan))
             SetChannelName(Odb->odbReadString(OdbPath.Data(),chan),chan);
@@ -27,9 +28,10 @@ TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex)
    SetBoxIndex(BoxIndex);
    for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
       {
-         TString OdbPath="/Equipment/cbms0";
+         TString OdbPath="Equipment/cbms0";
          OdbPath+=b+1;
          OdbPath+="/Settings/ChannelNames";
+         //std::cout<<"MVODB "<<OdbPath<<" ch: "<<chan<<std::endl;
          //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
          //if (Odb->odbReadString(OdbPath.Data(),chan))
          std::string tmp;

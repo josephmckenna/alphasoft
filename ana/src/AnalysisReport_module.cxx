@@ -129,7 +129,7 @@ public:
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &midas_start_time);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
    }
@@ -143,7 +143,7 @@ public:
       midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
       #endif
       runinfo->fRoot->fOutputFile->cd("AnalysisReport");
       fFlags->AnalysisReport->SetStopTime(midas_stop_time);
