@@ -100,32 +100,14 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
 
-   //Loop over all time windows
-   //for (auto& window: GetTimeWindows())
    TimeWindows window = GetTimeWindows();
-   window.PrintTheBoy();
-   
    int index = window.GetValidWindowNumber(t);
    
-   /*if(index >= 0)
+   //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
+   //if not it will add the event. 
+   if(index >= 0)
    {
-      //tzero is now out of order at this stage and will be adding the wrong value.
       AddEvent(SVDEvent, window.tzero.at(index));
-   }*/
-   
-   for(int i = 0; i < GetTimeWindows().tmax.size(); i++)
-   {
-      TimeWindows window = GetTimeWindows();
-      //If inside the time window
-      if ( ( t > window.tmin.at(i) && t < window.tmax.at(i) ) ||
-      //Or if after tmin and tmax is invalid (-1)
-           ( t > window.tmin.at(i) && window.tmax.at(i) < 0 ) )
-      {
-         AddEvent(SVDEvent, window.tzero.at(i));
-         //This event has been written to the array... so I dont need
-         //to check the other windows... break! Move to next SISEvent
-         break;
-      }
    }
 }
 

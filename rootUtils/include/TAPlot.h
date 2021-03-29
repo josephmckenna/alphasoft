@@ -171,24 +171,33 @@ class TimeWindows : public TObject
       }
       int GetValidWindowNumber(double t)
       {
+         //Checks whether vector is sorted and sorts if not.
          if(!isSorted)
          {
             SortTimeWindows();
          }
 
-         if(std::binary_search (tmin.begin(), tmin.end(), t))
+         //Check where t sits in tmin.
+         for(int i = 0; i < tmax.size(); i++)
          {
-            auto it = std::lower_bound(tmin.begin(), tmin.end(), t);
-            if (it == tmin.end() || *it != t);
-            else 
+            //If inside the tmin window
+            if ( t > tmin.at(i) )
             {
-               std::size_t index = std::distance(tmin.begin(), it);
-               if(tmax[index]>t)
+               //Then check that it's within tmax or whether tmax is out of range.
+               if( t < tmax.at(i) || tmax.at(i) < 0)
                {
-                  return index;
+                  //If so return index, i, for adding the event to the vector and break (no need to keep searching)
+                  return i;
+                  break;
                }
             } 
+            //If not return -1 (error)
+            else
+            {
+               return -1;
+            }
          }
+         //If we get down here just return error.
          return -1;
       }
       void PrintTheBoy()
