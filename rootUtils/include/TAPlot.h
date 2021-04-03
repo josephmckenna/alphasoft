@@ -85,6 +85,67 @@ class VertexEvent
       }
 };
 
+
+class TAVertexEvents
+{
+   public:
+      std::vector<int> runNumbers; // I don't get set yet...
+      std::vector<int> EventNos;
+      std::vector<int> CutsResults;
+      std::vector<int> VertexStatuses;
+      std::vector<double> xs;
+      std::vector<double> ys;
+      std::vector<double> zs;
+      std::vector<double> ts; //Plot time (based off offical time)
+      std::vector<double> EventTimes; //TPC time stamp
+      std::vector<double> RunTimes; //Official Time
+      std::vector<int> nHelices; // helices used for vertexing
+      std::vector<int> nTracks; // reconstructed (good) helices
+
+      //LMG - Copy and assign operators
+      TAVertexEvents()
+      {
+      }
+      ~TAVertexEvents()
+      {
+      }
+      //Basic copy constructor.
+      TAVertexEvents(const TAVertexEvents& m_VertexEvents)
+      {
+         runNumbers           = m_VertexEvents.runNumbers;
+         EventNos             = m_VertexEvents.EventNos;
+         CutsResults          = m_VertexEvents.CutsResults;
+         VertexStatuses       = m_VertexEvents.VertexStatuses;
+         xs                   = m_VertexEvents.xs;
+         ys                   = m_VertexEvents.ys;
+         zs                   = m_VertexEvents.zs;
+         ts                   = m_VertexEvents.ts;
+         EventTimes           = m_VertexEvents.EventTimes;
+         RunTimes             = m_VertexEvents.RunTimes;
+         nHelices             = m_VertexEvents.nHelices;
+         nTracks              = m_VertexEvents.nTracks;
+      }
+      //Assignment operator.
+      TAVertexEvents operator=(const TAVertexEvents m_VertexEvents)
+      {
+         this->runNumbers           = m_VertexEvents.runNumbers;
+         this->EventNos             = m_VertexEvents.EventNos;
+         this->CutsResults          = m_VertexEvents.CutsResults;
+         this->VertexStatuses       = m_VertexEvents.VertexStatuses;
+         this->xs                   = m_VertexEvents.xs;
+         this->ys                   = m_VertexEvents.ys;
+         this->zs                   = m_VertexEvents.zs;
+         this->ts                   = m_VertexEvents.ts;
+         this->EventTimes           = m_VertexEvents.EventTimes;
+         this->RunTimes             = m_VertexEvents.RunTimes;
+         this->nHelices             = m_VertexEvents.nHelices;
+         this->nTracks              = m_VertexEvents.nTracks;
+         return *this;
+      }
+};
+
+
+
 //Any time window
 class TimeWindow
 {
@@ -181,10 +242,10 @@ class TimeWindows : public TObject
          for(int i = 0; i < tmax.size(); i++)
          {
             //If inside the tmin window
-            if ( t > tmin.at(i) )
+            if ( t > tmin[i])
             {
                //Then check that it's within tmax or whether tmax is out of range.
-               if( t < tmax.at(i) || tmax.at(i) < 0)
+               if( t < tmax[i] || tmax[i] < 0)
                {
                   //If so return index, i, for adding the event to the vector and break (no need to keep searching)
                   return i;
@@ -506,9 +567,11 @@ class TAPlot: public TObject
       std::vector<double> DumpStops;
 
       std::vector<VertexEvent> VertexEvents;
+      TAVertexEvents NewVertexEvents;
       std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
       std::vector<feGEMdata> feGEM;
+      
       std::vector<feLVdata> feLV;
       TTimeStamp ObjectConstructionTime{0};
       TTimeStamp DataLoadedTime{0};
@@ -527,14 +590,44 @@ class TAPlot: public TObject
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
       void AddVertexEvent(VertexEvent e)                 {  VertexEvents.push_back(e); }
+
+      //TODOLMG Make sure all references of above use below.
+      void AddVertexEvent(int runNumber, int EventNo, int CutsResult, 
+      int VertexStatus, double x, double y, double z, double t, 
+      double EventTime, double RunTime, int nHelices, int nTracks)                 
+      {
+         NewVertexEvents.runNumbers.push_back(runNumber);
+         NewVertexEvents.EventNos.push_back(EventNo);
+         NewVertexEvents.CutsResults.push_back(CutsResult);
+         NewVertexEvents.VertexStatuses.push_back(VertexStatus);
+         NewVertexEvents.xs.push_back(x);
+         NewVertexEvents.ys.push_back(y);
+         NewVertexEvents.zs.push_back(z);
+         NewVertexEvents.ts.push_back(t);
+         NewVertexEvents.EventTimes.push_back(EventTime);
+         NewVertexEvents.RunTimes.push_back(RunTime);
+         NewVertexEvents.nHelices.push_back(nHelices);
+         NewVertexEvents.nTracks.push_back(nTracks);
+      }
+
+      //void AddVertexEvent( // TODOLMG this is going to become a big function, 
+      //will require inputto take every member of the vertex event one by one. Dont forget to changeverywhere its used.)
+
       const TimeWindows GetTimeWindows()                 {  return TimeWindowsNew; }
+
+      //TODOLMG This should be okay as is, just make sure every time this is called the resulting object is called correctly.
       const std::vector<VertexEvent> GetVertexEvents()   {  return VertexEvents; }
+
+
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       bool GetCutsSettings() const                       {  return fApplyCuts; }
       void SetBinNumber(int bin)                         {  Nbin = bin; }
       void SetMVAMode(int Mode)                          {  MVAMode = Mode; }
+
+      //TODOLMG Change this to pick a member and use that size.
       size_t GetNVertexEvents()                          {  return VertexEvents.size(); }
+
       int GetNVerticies()                                {  return fTotalVert;   }
       double GetMaxDumpLength() const                    {  return MaxDumpLength; }
       double GetFirstTmin() const                        {  return FirstTmin;     }
