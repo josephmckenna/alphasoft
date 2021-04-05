@@ -142,6 +142,23 @@ class TAVertexEvents
          this->nTracks              = m_VertexEvents.nTracks;
          return *this;
       }
+      TAVertexEvents operator+=(const TAVertexEvents &plotB) 
+      {
+         std::cout << "TAVertexEvents += operator" << std::endl;
+         this->runNumbers       .insert(this->runNumbers.end(),      plotB.runNumbers.begin(),     plotB.runNumbers.end());
+         this->EventNos         .insert(this->EventNos.end(),        plotB.EventNos.begin(),       plotB.EventNos.end());
+         this->CutsResults      .insert(this->CutsResults.end(),     plotB.CutsResults.begin(),    plotB.CutsResults.end()); 
+         this->VertexStatuses   .insert(this->VertexStatuses.end(),  plotB.VertexStatuses.begin(), plotB.VertexStatuses.end());    
+         this->xs               .insert(this->xs.end(),              plotB.xs.begin(),             plotB.xs.end());
+         this->ys               .insert(this->ys.end(),              plotB.ys.begin(),             plotB.ys.end());
+         this->zs               .insert(this->zs.end(),              plotB.zs.begin(),             plotB.zs.end());
+         this->ts               .insert(this->ts.end(),              plotB.ts.begin(),             plotB.ts.end());
+         this->EventTimes       .insert(this->EventTimes.end(),      plotB.EventTimes.begin(),     plotB.EventTimes.end());
+         this->RunTimes         .insert(this->RunTimes.end(),        plotB.RunTimes.begin(),       plotB.RunTimes.end());
+         this->nHelices         .insert(this->nHelices.end(),        plotB.nHelices.begin(),       plotB.nHelices.end());
+         this->nTracks          .insert(this->nTracks.end(),         plotB.nTracks.begin(),        plotB.nTracks.end());
+         return *this;
+      }
 };
 
 

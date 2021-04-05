@@ -816,6 +816,7 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    this->HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
    this->TimeWindows+=plotB.TimeWindows;
+   this->NewVertexEvents+=plotB.NewVertexEvents;
 
    return *this;
 }
@@ -858,6 +859,7 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
    outputplot.HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
    outputplot.TimeWindows+=plotB.TimeWindows;
+   outputplot.NewVertexEvents+=plotB.NewVertexEvents;
 
    return outputplot;
 }
