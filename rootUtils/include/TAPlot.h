@@ -197,7 +197,7 @@ class TimeWindow
       }
 };
 
-class TimeWindows : public TObject
+class TATimeWindows : public TObject
 {
    public:
       bool isSorted = false;
@@ -206,10 +206,10 @@ class TimeWindows : public TObject
       std::vector<double> tmax;
       std::vector<double> tzero;
       
-      TimeWindows()
+      TATimeWindows()
       {
       }
-      ~TimeWindows()
+      ~TATimeWindows()
       {
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
@@ -223,7 +223,7 @@ class TimeWindows : public TObject
          assert(_tzero>=_tmin);
          assert(_tzero<_tmax);
       }
-      TimeWindows(const TimeWindows& m_TimeWindows)
+      TATimeWindows(const TATimeWindows& m_TimeWindows)
       {
          runNumber = m_TimeWindows.runNumber;
          tmin = m_TimeWindows.tmin;
@@ -333,7 +333,7 @@ class TimeWindows : public TObject
          isSorted = true;
          //PrintTheBoy();
       }
-      TimeWindows operator=(const TimeWindows m_TimeWindows)
+      TATimeWindows operator=(const TATimeWindows m_TimeWindows)
       {
          this->runNumber = m_TimeWindows.runNumber;
          this->tmin = m_TimeWindows.tmin;
@@ -341,10 +341,10 @@ class TimeWindows : public TObject
          this->tzero = m_TimeWindows.tzero;
          return *this;
       }
-      friend TimeWindows operator+(const TimeWindows& plotA, const TimeWindows& plotB)
+      friend TATimeWindows operator+(const TATimeWindows& plotA, const TATimeWindows& plotB)
       {
-         std::cout << "TimeWindows addition operator" << std::endl;
-         TimeWindows outputplot(plotA); //Create new from copy
+         std::cout << "TATimeWindows addition operator" << std::endl;
+         TATimeWindows outputplot(plotA); //Create new from copy
 
          //Vectors- need concacting
          outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
@@ -353,9 +353,9 @@ class TimeWindows : public TObject
          outputplot.tzero.insert(outputplot.tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
          return outputplot;
       }
-      TimeWindows operator+=(const TimeWindows &plotB) 
+      TATimeWindows operator+=(const TATimeWindows &plotB) 
       {
-         std::cout << "TimeWindows += operator" << std::endl;
+         std::cout << "TATimeWindows += operator" << std::endl;
          this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
          this->tmin.insert(this->tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
          this->tmax.insert(this->tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
@@ -479,7 +479,7 @@ class feGEMdata: public feENVdata
 {
    public:
       template<typename T>
-      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TimeWindows& timewindows)
+      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TATimeWindows& timewindows)
       {
          double time=GEMEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
@@ -507,7 +507,7 @@ class feGEMdata: public feENVdata
 class feLVdata: public feENVdata
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TimeWindows& timewindows)
+      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TATimeWindows& timewindows)
       {
          double time=LVEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
@@ -546,7 +546,7 @@ class TAPlot: public TObject
       double LastTmax;
       double BiggestTzero;
       double MaxDumpLength;
-      TimeWindows TimeWindowsNew;
+      TATimeWindows TimeWindows;
       double fTotalTime;
       int fTotalVert;
 
@@ -590,11 +590,7 @@ class TAPlot: public TObject
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
       void AddVertexEvent(VertexEvent e)                 {  VertexEvents.push_back(e); }
-
-      //TODOLMG Make sure all references of above use below.
-      void AddVertexEvent(int runNumber, int EventNo, int CutsResult, 
-      int VertexStatus, double x, double y, double z, double t, 
-      double EventTime, double RunTime, int nHelices, int nTracks)                 
+      void AddVertexEventByList(int runNumber, int EventNo, int CutsResult, int VertexStatus, double x, double y, double z, double t, double EventTime, double RunTime, int nHelices, int nTracks)                 
       {
          NewVertexEvents.runNumbers.push_back(runNumber);
          NewVertexEvents.EventNos.push_back(EventNo);
@@ -609,25 +605,14 @@ class TAPlot: public TObject
          NewVertexEvents.nHelices.push_back(nHelices);
          NewVertexEvents.nTracks.push_back(nTracks);
       }
-
-      //void AddVertexEvent( // TODOLMG this is going to become a big function, 
-      //will require inputto take every member of the vertex event one by one. Dont forget to changeverywhere its used.)
-
-      const TimeWindows GetTimeWindows()                 {  return TimeWindowsNew; }
-
-      //TODOLMG This should be okay as is, just make sure every time this is called the resulting object is called correctly.
-      const std::vector<VertexEvent> GetVertexEvents()   {  return VertexEvents; }
-
-
+      const TATimeWindows GetTimeWindows()                 {  return TimeWindows; }
+      const TAVertexEvents GetVertexEvents()             {  return NewVertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       bool GetCutsSettings() const                       {  return fApplyCuts; }
       void SetBinNumber(int bin)                         {  Nbin = bin; }
       void SetMVAMode(int Mode)                          {  MVAMode = Mode; }
-
-      //TODOLMG Change this to pick a member and use that size.
-      size_t GetNVertexEvents()                          {  return VertexEvents.size(); }
-
+      size_t GetNVertexEvents()                          {  return NewVertexEvents.xs.size(); }
       int GetNVerticies()                                {  return fTotalVert;   }
       double GetMaxDumpLength() const                    {  return MaxDumpLength; }
       double GetFirstTmin() const                        {  return FirstTmin;     }

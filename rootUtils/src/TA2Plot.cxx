@@ -74,6 +74,8 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
    Event.nHelices     =-1; // helices used for vertexing
    Event.nTracks      =event->NTracks; // reconstructed (good) helices
    AddVertexEvent(Event);
+   AddVertexEventByList(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, event->x, event->y, event->z, event->t, event->VF48Timestamp, event->t, -1, event->NTracks);
+
 
 }
 
@@ -100,7 +102,7 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
 
-   TimeWindows window = GetTimeWindows();
+   TATimeWindows window = GetTimeWindows();
    int index = window.GetValidWindowNumber(t);
    
    //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
@@ -119,7 +121,7 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    //for (auto& window: GetTimeWindows())
    for (int t = 0; t < GetTimeWindows().tmax.size(); t++)
    {
-      TimeWindows window = GetTimeWindows();
+      TATimeWindows window = GetTimeWindows();
       //If inside the time window
       if ( ( t > window.tmin.at(t) && t < window.tmax.at(t) ) ||
       //Or if after tmin and tmax is invalid (-1)
@@ -352,19 +354,21 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    //Fill Vertex Histograms
 
    TVector3 vtx;
-   for (auto& vtxevent: GetVertexEvents())
+   TAVertexEvents VEs = GetVertexEvents();
+   //for (auto& vtxevent: GetVertexEvents())   
+   for (int i=0; i<=VEs.xs.size(); i++)
    {
       Double_t time;
       if (ZeroTimeAxis)
-         time = vtxevent.t;
+         time = VEs.ts[i];
       else
-         time = vtxevent.RunTime;
+         time = VEs.RunTimes[i];
       if (max_dump_length<SCALECUT)
          time=time*1000.;
-      vtx=TVector3(vtxevent.x,vtxevent.y,vtxevent.z);
+      vtx=TVector3(VEs.xs[i],VEs.ys[i],VEs.zs[i]);
       FillHistogram("tSVD",time);
 
-      int CutsResult=vtxevent.CutsResult;
+      int CutsResult=VEs.CutsResults[i];
       if (MVAMode>0)
       {
          if (CutsResult & 1)//Passed cut result!
@@ -391,14 +395,14 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          }
          else
          {
-            if ( vtxevent.VertexStatus > 0) 
+            if ( VEs.VertexStatuses[i] > 0) 
             {
                FillHistogram("tvtx",time);
             }
             else 
                continue;
          }
-         if (vtxevent.VertexStatus <= 0) continue; //Don't draw invaid vertices
+         if (VEs.VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());
