@@ -166,32 +166,6 @@ class TATimeWindows : public TObject
          //If we get down here just return error.
          return -1;
       }
-      void PrintTheBoy()
-      {
-         std::cout << "tmin size = " << tmin.size() << std::endl;
-         for(size_t i=0; i<tmin.size(); i++)
-         {
-            std::cout << "tmin[" << i << "] = " << tmin[i] << std::endl;
-         }
-
-         std::cout << "tmax size = " << tmax.size() << std::endl;
-         for(size_t i=0; i<tmax.size(); i++)
-         {
-            std::cout << "tmax[" << i << "] = " << tmax[i] << std::endl;
-         }
-
-         std::cout << "runNumber size = " << runNumber.size() << std::endl;
-         for(size_t i=0; i<runNumber.size(); i++)
-         {
-            std::cout << "runNumber[" << i << "] = " << runNumber[i] << std::endl;
-         }
-
-         std::cout << "tzero size = " << tzero.size() << std::endl;
-         for(size_t i=0; i<tzero.size(); i++)
-         {
-            std::cout << "tzero[" << i << "] = " << tzero[i] << std::endl;
-         }
-      }
       template <class T>
       std::vector<T> reorder(std::vector<T>& nums, std::vector<size_t>& index)
       {
@@ -206,7 +180,6 @@ class TATimeWindows : public TObject
       }
       void SortTimeWindows()
       {
-         //PrintTheBoy();
          //Create vectors needed for sorting.
          std::vector<std::pair<double,double>> zipped;
          std::vector<size_t> idx(tmin.size());
@@ -236,7 +209,6 @@ class TATimeWindows : public TObject
          tzero=reorder<double>(tzero,idx);
   
          isSorted = true;
-         //PrintTheBoy();
       }
       TATimeWindows operator=(const TATimeWindows m_TimeWindows)
       {
