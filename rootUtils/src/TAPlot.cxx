@@ -45,7 +45,8 @@ TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    fVerbose                      = m_TAPlot.fVerbose ;
    tFactor                       = m_TAPlot.tFactor ;
 
-   TimeWindowsNew                = m_TAPlot.TimeWindowsNew;
+   TimeWindows                = m_TAPlot.TimeWindows;
+   NewVertexEvents               = m_TAPlot.NewVertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -99,7 +100,7 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
       double length=tmax[i]-tmin[i];
       if (length>MaxDumpLength)
          MaxDumpLength=length;
-      TimeWindowsNew.AddTimeWindow(runNumber,tmin[i],tmax[i],tzero[i]);
+      TimeWindows.AddTimeWindow(runNumber,tmin[i],tmax[i],tzero[i]);
       fTotalTime+=tmax[i]-tmin[i];
       //Find the first start window
       if (tmin[i]<FirstTmin)
@@ -137,7 +138,7 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
    double length = tmax - tmin;
    if (length > MaxDumpLength)
       MaxDumpLength = length;
-   TimeWindowsNew.AddTimeWindow(runNumber,tmin,tmax,tzero);
+   TimeWindows.AddTimeWindow(runNumber,tmin,tmax,tzero);
    fTotalTime += tmax - tmin;
    //Find the first start window
    if (tmin < FirstTmin)
@@ -262,7 +263,7 @@ void TAPlot::LoadData()
       //for (auto& t: GetTimeWindows())
       for (size_t i=0; i<GetTimeWindows().tmax.size(); i++)
       {
-         TimeWindows t = GetTimeWindows();
+         TATimeWindows t = GetTimeWindows();
          if (t.runNumber.at(i)==runNumber)
          {
             if (t.tmax.at(i)<0) 
@@ -313,6 +314,7 @@ void TAPlot::ClearHisto() //Destroy all histograms
 
 void TAPlot::AddToTAPlot(TAPlot *ialphaplot)
 {
+   //LMG As far as I can tell this function is unused. Can it be deleted?
   ClearHisto();
   VertexEvents.insert(VertexEvents.end(), ialphaplot->VertexEvents.begin(), ialphaplot->VertexEvents.end());
   Ejections.insert(Ejections.end(), ialphaplot->Ejections.begin(), ialphaplot->Ejections.end());
@@ -371,12 +373,12 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetGEMGraphs()
    {
       std::map<std::string,TGraph*> unique_labels;
       const std::vector<int> UniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< TimeWindowsNew.tmax.size(); i++)
+      for (size_t i=0; i< TimeWindows.tmax.size(); i++)
       {
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindowsNew.runNumber.at(i) == UniqueRuns.at(ColourID))
+            if (TimeWindows.runNumber.at(i) == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -441,12 +443,12 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
       std::map<std::string,TGraph*> unique_labels;
 
       const std::vector<int> UniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< TimeWindowsNew.tmax.size(); i++)
+      for (size_t i=0; i< TimeWindows.tmax.size(); i++)
       {
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindowsNew.runNumber.at(i) == UniqueRuns.at(ColourID))
+            if (TimeWindows.runNumber.at(i) == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -491,9 +493,11 @@ void TAPlot::AddRunNumber(int runNumber)
 int TAPlot::GetNPassedType(const int type)
 {
    int n=0;
-   for (auto& event: VertexEvents)
+   //for (auto& event: VertexEvents)
+   TAVertexEvents event = GetVertexEvents();
+   for (int i = 0; i<=NewVertexEvents.xs.size(); i++)
    {
-      if (event.CutsResult&type)
+      if (event.CutsResults[i]&type)
          n++;
    }
    return n;
@@ -607,7 +611,7 @@ TString TAPlot::GetListOfRuns()
 
 void TAPlot::PrintTimeRanges()
 {
-   for (auto& w: TimeWindowsNew.tmax)
+   for (auto& w: TimeWindows.tmax)
       printf("w = %f", w);
 }
 
@@ -631,13 +635,13 @@ void TAPlot::PrintFull()
    std::cout << "BiggestTzero = " << BiggestTzero << std::endl;
    std::cout << "MaxDumpLength = " << MaxDumpLength << std::endl;
 
-   std::cout << "Printing TimeWindows at " << &TimeWindowsNew << std::endl;
-   std::cout << "TimeWindows.size() = " << TimeWindowsNew.runNumber.size() << std::endl;
+   std::cout << "Printing TimeWindows at " << &TimeWindows << std::endl;
+   std::cout << "TimeWindows.size() = " << TimeWindows.runNumber.size() << std::endl;
    std::cout << "First time window info:" << std::endl;
-   std::cout << "TimeWindows[0].runNumber = " << TimeWindowsNew.runNumber.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tmax = " << TimeWindowsNew.tmax.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tmin = " << TimeWindowsNew.tmin.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tzero = " << TimeWindowsNew.tzero.at(0) << std::endl;
+   std::cout << "TimeWindows[0].runNumber = " << TimeWindows.runNumber.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tmax = " << TimeWindows.tmax.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tmin = " << TimeWindows.tmin.at(0) << std::endl;
+   std::cout << "TimeWindows[0].tzero = " << TimeWindows.tzero.at(0) << std::endl;
 
    std::cout << "fTotalTime = " << fTotalTime << std::endl;
    std::cout << "fTotalVert = " << fTotalVert << std::endl;
@@ -743,7 +747,8 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    this->fVerbose = m_TAPlot.fVerbose ;
    this->tFactor = m_TAPlot.tFactor ;
 
-   this->TimeWindowsNew = m_TAPlot.TimeWindowsNew;
+   this->TimeWindows = m_TAPlot.TimeWindows;
+   this->NewVertexEvents = m_TAPlot.NewVertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       this->Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -810,7 +815,7 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    }
    this->HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
-   this->TimeWindowsNew+=plotB.TimeWindowsNew;
+   this->TimeWindows+=plotB.TimeWindows;
 
    return *this;
 }
@@ -852,7 +857,7 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
    }
    outputplot.HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
-   outputplot.TimeWindowsNew+=plotB.TimeWindowsNew;
+   outputplot.TimeWindows+=plotB.TimeWindows;
 
    return outputplot;
 }
