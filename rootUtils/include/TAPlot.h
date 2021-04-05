@@ -27,66 +27,7 @@
 //Basic internal containers:
 
 //SVD / TPC vertex
-class VertexEvent
-{
-   public:
-      int runNumber; // I don't get set yet...
-      int EventNo;
-      int CutsResult;
-      int VertexStatus;
-      double x;
-      double y;
-      double z;
-      double t; //Plot time (based off offical time)
-      double EventTime; //TPC time stamp
-      double RunTime; //Official Time
-      int nHelices; // helices used for vertexing
-      int nTracks; // reconstructed (good) helices
-
-      //LMG - Copy and assign operators
-      VertexEvent()
-      {
-      }
-      ~VertexEvent()
-      {
-      }
-      //Basic copy constructor.
-      VertexEvent(const VertexEvent& m_VertexEvent)
-      {
-         runNumber        = m_VertexEvent.runNumber;
-         EventNo          = m_VertexEvent.EventNo;
-         CutsResult       = m_VertexEvent.CutsResult;
-         VertexStatus     = m_VertexEvent.VertexStatus;
-         x                = m_VertexEvent.x;
-         y                = m_VertexEvent.y;
-         z                = m_VertexEvent.z;
-         t                = m_VertexEvent.t;
-         EventTime        = m_VertexEvent.EventTime;
-         RunTime          = m_VertexEvent.RunTime;
-         nHelices         = m_VertexEvent.nHelices;
-         nTracks          = m_VertexEvent.nTracks;
-      }
-      //Assignment operator.
-      VertexEvent operator=(const VertexEvent m_VertexEvent)
-      {
-         this->runNumber        = m_VertexEvent.runNumber;
-         this->EventNo          = m_VertexEvent.EventNo;
-         this->CutsResult       = m_VertexEvent.CutsResult;
-         this->VertexStatus     = m_VertexEvent.VertexStatus;
-         this->x                = m_VertexEvent.x;
-         this->y                = m_VertexEvent.y;
-         this->z                = m_VertexEvent.z;
-         this->t                = m_VertexEvent.t;
-         this->EventTime        = m_VertexEvent.EventTime;
-         this->RunTime          = m_VertexEvent.RunTime;
-         this->nHelices         = m_VertexEvent.nHelices;
-         this->nTracks          = m_VertexEvent.nTracks;
-         return *this;
-      }
-};
-
-
-class TAVertexEvents
+class TAVertexEvents: public TObject
 {
    public:
       std::vector<int> runNumbers; // I don't get set yet...
@@ -157,59 +98,6 @@ class TAVertexEvents
          this->RunTimes         .insert(this->RunTimes.end(),        plotB.RunTimes.begin(),       plotB.RunTimes.end());
          this->nHelices         .insert(this->nHelices.end(),        plotB.nHelices.begin(),       plotB.nHelices.end());
          this->nTracks          .insert(this->nTracks.end(),         plotB.nTracks.begin(),        plotB.nTracks.end());
-         return *this;
-      }
-};
-
-
-
-//Any time window
-class TimeWindow
-{
-   public:
-      int runNumber;
-      double tmin;
-      double tmax;
-      double tzero;
-      
-      TimeWindow()
-      {
-         runNumber = -1;
-         tmin = -1;
-         tmax = -1;
-         tzero = -1;
-      }
-      
-      TimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
-      {
-         runNumber = _runNumber;
-         tmin = _tmin;
-         tmax = _tmax;
-         tzero = _tzero;
-         assert(tmax>tmin);
-         assert(tzero>=tmin);
-         assert(tzero<tmax);
-      }
-      
-      void print()
-      {
-         std::cout << "RunNo:"<<runNumber<<"\ttmin:" << tmin << "\ttmax:" << tmax << "\ttzero"<< tzero<< std::endl;
-      }
-      
-      TimeWindow(const TimeWindow& m_TimeWindow)
-      {
-         runNumber = m_TimeWindow.runNumber;
-         tmin = m_TimeWindow.tmin;
-         tmax = m_TimeWindow.tmax;
-         tzero = m_TimeWindow.tzero;
-      }
-      
-      TimeWindow operator=(const TimeWindow m_TimeWindow)
-      {
-         this->runNumber = m_TimeWindow.runNumber;
-         this->tmin = m_TimeWindow.tmin;
-         this->tmax = m_TimeWindow.tmax;
-         this->tzero = m_TimeWindow.tzero;
          return *this;
       }
 };
@@ -583,7 +471,6 @@ class TAPlot: public TObject
       std::vector<double> DumpStarts;
       std::vector<double> DumpStops;
 
-      std::vector<VertexEvent> VertexEvents;
       TAVertexEvents NewVertexEvents;
       std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
@@ -606,7 +493,6 @@ class TAPlot: public TObject
       int GetNBins() const                               {  return Nbin; }
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
-      void AddVertexEvent(VertexEvent e)                 {  VertexEvents.push_back(e); }
       void AddVertexEventByList(int runNumber, int EventNo, int CutsResult, int VertexStatus, double x, double y, double z, double t, double EventTime, double RunTime, int nHelices, int nTracks)                 
       {
          NewVertexEvents.runNumbers.push_back(runNumber);

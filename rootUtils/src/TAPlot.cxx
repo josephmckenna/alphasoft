@@ -60,9 +60,6 @@ TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    for(int i=0;i<m_TAPlot.DumpStops.size();i++)
       DumpStops.push_back(m_TAPlot.DumpStops.at(i));
    
-   for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
-      VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
-   
    for(int i=0;i<m_TAPlot.Runs.size();i++)
       Runs.push_back(m_TAPlot.Runs.at(i));
    
@@ -85,7 +82,6 @@ TAPlot::~TAPlot()
   DumpStarts.clear();
   DumpStops.clear();
   Runs.clear();
-  VertexEvents.clear();
 }
 
 void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero)
@@ -316,7 +312,6 @@ void TAPlot::AddToTAPlot(TAPlot *ialphaplot)
 {
    //LMG As far as I can tell this function is unused. Can it be deleted?
   ClearHisto();
-  VertexEvents.insert(VertexEvents.end(), ialphaplot->VertexEvents.begin(), ialphaplot->VertexEvents.end());
   Ejections.insert(Ejections.end(), ialphaplot->Ejections.begin(), ialphaplot->Ejections.end());
   Injections.insert(Injections.end(), ialphaplot->Injections.begin(), ialphaplot->Injections.end());
   Runs.insert(Runs.end(), ialphaplot->Runs.begin(), ialphaplot->Runs.end());
@@ -693,21 +688,6 @@ void TAPlot::PrintFull()
    else
       std::cout << "Empty sorry, moving on to next member." << std::endl;
 
-   std::cout << "Printing VertexEvents at " << &VertexEvents << std::endl;
-   std::cout << "VertexEvents.size() = " << VertexEvents.size() << std::endl;
-   std::cout << "First VertexEvents info:" << std::endl;
-   
-   if(VertexEvents.size() > 0)
-   {
-      std::cout << "VertexEvents[0].runNumber = " << VertexEvents.at(0).runNumber << std::endl;
-      std::cout << "VertexEvents[0].x = " << VertexEvents.at(0).x << std::endl;
-      std::cout << "VertexEvents[0].y = " << VertexEvents.at(0).y << std::endl;
-      std::cout << "VertexEvents[0].z = " << VertexEvents.at(0).z << std::endl;
-      std::cout << "VertexEvents[0].t = " << VertexEvents.at(0).t << std::endl;
-   }
-   else
-      std::cout << "Empty sorry, moving on to next member." << std::endl;
-
    std::cout << "Printing Runs at " << &Runs << std::endl;
    std::cout << "Runs.size() = " << Runs.size() << std::endl;
    std::cout << "First Runs info:" << std::endl;
@@ -762,9 +742,6 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    for(int i=0;i<m_TAPlot.DumpStops.size();i++)
       this->DumpStops.push_back(m_TAPlot.DumpStops.at(i));
    
-   for(int i=0;i<m_TAPlot.VertexEvents.size();i++)
-      this->VertexEvents.push_back(m_TAPlot.VertexEvents.at(i));
-   
    for(int i=0;i<m_TAPlot.Runs.size();i++)
       this->Runs.push_back(m_TAPlot.Runs.at(i));
    
@@ -789,7 +766,6 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    this->Injections.insert(this->Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
    this->DumpStarts.insert(this->DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
    this->DumpStops.insert(this->DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
-   this->VertexEvents.insert(this->VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
    this->Runs.insert(this->Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
    this->feGEM.insert(this->feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
    this->feLV.insert(this->feLV.end(), plotB.feLV.begin(), plotB.feLV.end() );
@@ -831,7 +807,6 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
    outputplot.Injections.insert(outputplot.Injections.end(), plotB.Injections.begin(), plotB.Injections.end() );
    outputplot.DumpStarts.insert(outputplot.DumpStarts.end(), plotB.DumpStarts.begin(), plotB.DumpStarts.end() );
    outputplot.DumpStops.insert(outputplot.DumpStops.end(), plotB.DumpStops.begin(), plotB.DumpStops.end() );
-   outputplot.VertexEvents.insert(outputplot.VertexEvents.end(), plotB.VertexEvents.begin(), plotB.VertexEvents.end() );
    outputplot.Runs.insert(outputplot.Runs.end(), plotB.Runs.begin(), plotB.Runs.end() );//check dupes - ignore copies. AddRunNumber
    outputplot.feGEM.insert(outputplot.feGEM.end(), plotB.feGEM.begin(), plotB.feGEM.end() );
    outputplot.feLV.insert(outputplot.feLV.end(), plotB.feLV.begin(), plotB.feLV.end() );
