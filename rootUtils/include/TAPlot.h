@@ -43,7 +43,7 @@ class TVertexEvents: public TObject
       std::vector<int> nHelices; // helices used for vertexing
       std::vector<int> nTracks; // reconstructed (good) helices
 
-      //LMG - Copy and assign operators
+      //Copy and assign operators
       TVertexEvents()
       {
       }
@@ -53,34 +53,42 @@ class TVertexEvents: public TObject
       //Basic copy constructor.
       TVertexEvents(const TVertexEvents& m_VertexEvents)
       {
-         runNumbers           = m_VertexEvents.runNumbers;
-         EventNos             = m_VertexEvents.EventNos;
-         CutsResults          = m_VertexEvents.CutsResults;
-         VertexStatuses       = m_VertexEvents.VertexStatuses;
-         xs                   = m_VertexEvents.xs;
-         ys                   = m_VertexEvents.ys;
-         zs                   = m_VertexEvents.zs;
-         ts                   = m_VertexEvents.ts;
-         EventTimes           = m_VertexEvents.EventTimes;
-         RunTimes             = m_VertexEvents.RunTimes;
-         nHelices             = m_VertexEvents.nHelices;
-         nTracks              = m_VertexEvents.nTracks;
+         //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
+         for(int i = 0; i <= m_VertexEvents.xs.size(); i++)
+         {
+            runNumbers.push_back(m_VertexEvents.runNumbers[i]);
+            EventNos.push_back(m_VertexEvents.EventNos[i]);
+            CutsResults.push_back(m_VertexEvents.CutsResults[i]);
+            VertexStatuses.push_back(m_VertexEvents.VertexStatuses[i]);
+            xs.push_back(m_VertexEvents.xs[i]);
+            ys.push_back(m_VertexEvents.ys[i]);
+            zs.push_back(m_VertexEvents.zs[i]);
+            ts.push_back(m_VertexEvents.ts[i]);
+            EventTimes.push_back(m_VertexEvents.EventTimes[i]);
+            RunTimes.push_back(m_VertexEvents.RunTimes[i]);
+            nHelices.push_back(m_VertexEvents.nHelices[i]);
+            nTracks.push_back(m_VertexEvents.nTracks[i]);
+         }
       }
       //Assignment operator.
       TVertexEvents operator=(const TVertexEvents m_VertexEvents)
       {
-         this->runNumbers           = m_VertexEvents.runNumbers;
-         this->EventNos             = m_VertexEvents.EventNos;
-         this->CutsResults          = m_VertexEvents.CutsResults;
-         this->VertexStatuses       = m_VertexEvents.VertexStatuses;
-         this->xs                   = m_VertexEvents.xs;
-         this->ys                   = m_VertexEvents.ys;
-         this->zs                   = m_VertexEvents.zs;
-         this->ts                   = m_VertexEvents.ts;
-         this->EventTimes           = m_VertexEvents.EventTimes;
-         this->RunTimes             = m_VertexEvents.RunTimes;
-         this->nHelices             = m_VertexEvents.nHelices;
-         this->nTracks              = m_VertexEvents.nTracks;
+         //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
+         for(int i = 0; i <= m_VertexEvents.xs.size(); i++)
+         {
+            this->runNumbers.push_back(m_VertexEvents.runNumbers[i]);
+            this->EventNos.push_back(m_VertexEvents.EventNos[i]);
+            this->CutsResults.push_back(m_VertexEvents.CutsResults[i]);
+            this->VertexStatuses.push_back(m_VertexEvents.VertexStatuses[i]);
+            this->xs.push_back(m_VertexEvents.xs[i]);
+            this->ys.push_back(m_VertexEvents.ys[i]);
+            this->zs.push_back(m_VertexEvents.zs[i]);
+            this->ts.push_back(m_VertexEvents.ts[i]);
+            this->EventTimes.push_back(m_VertexEvents.EventTimes[i]);
+            this->RunTimes.push_back(m_VertexEvents.RunTimes[i]);
+            this->nHelices.push_back(m_VertexEvents.nHelices[i]);
+            this->nTracks.push_back(m_VertexEvents.nTracks[i]);
+         }
          return *this;
       }
       TVertexEvents operator+=(const TVertexEvents &plotB) 
@@ -111,11 +119,56 @@ class TTimeWindows : public TObject
       std::vector<double> tmax;
       std::vector<double> tzero;
       
+      //Standard ctor and dtor
       TTimeWindows()
       {
       }
       ~TTimeWindows()
       {
+      }
+      //Copy ctor
+      TTimeWindows(const TTimeWindows& m_TimeWindows)
+      {
+         //Deep copy
+         for(int i = 0; i<=m_TimeWindows.tmin.size(); i++)
+         {
+            runNumber.push_back(m_TimeWindows.runNumber[i]);
+            tmin.push_back(m_TimeWindows.tmin[i]);
+            tmax.push_back(m_TimeWindows.tmax[i]);
+            tzero.push_back(m_TimeWindows.tzero[i]);
+         }
+      }
+      TTimeWindows operator=(const TTimeWindows m_TimeWindows)
+      {
+         for(int i = 0; i<=m_TimeWindows.tmin.size(); i++)
+         {
+            this->runNumber.push_back(m_TimeWindows.runNumber[i]);
+            this->tmin.push_back(m_TimeWindows.tmin[i]);
+            this->tmax.push_back(m_TimeWindows.tmax[i]);
+            this->tzero.push_back(m_TimeWindows.tzero[i]);
+         }
+         return *this;
+      }
+      friend TTimeWindows operator+(const TTimeWindows& plotA, const TTimeWindows& plotB)
+      {
+         std::cout << "TTimeWindows addition operator" << std::endl;
+         TTimeWindows outputplot(plotA); //Create new from copy
+
+         //Vectors- need concacting
+         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         outputplot.tmin.insert(outputplot.tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
+         outputplot.tmax.insert(outputplot.tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
+         outputplot.tzero.insert(outputplot.tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
+         return outputplot;
+      }
+      TTimeWindows operator+=(const TTimeWindows &plotB) 
+      {
+         std::cout << "TTimeWindows += operator" << std::endl;
+         this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         this->tmin.insert(this->tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
+         this->tmax.insert(this->tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
+         this->tzero.insert(this->tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
+         return *this;
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
       {
@@ -127,13 +180,6 @@ class TTimeWindows : public TObject
          assert(_tmax>_tmin);
          assert(_tzero>=_tmin);
          assert(_tzero<_tmax);
-      }
-      TTimeWindows(const TTimeWindows& m_TimeWindows)
-      {
-         runNumber = m_TimeWindows.runNumber;
-         tmin = m_TimeWindows.tmin;
-         tmax = m_TimeWindows.tmax;
-         tzero = m_TimeWindows.tzero;
       }
       int GetValidWindowNumber(double t)
       {
@@ -209,35 +255,6 @@ class TTimeWindows : public TObject
          tzero=reorder<double>(tzero,idx);
   
          isSorted = true;
-      }
-      TTimeWindows operator=(const TTimeWindows m_TimeWindows)
-      {
-         this->runNumber = m_TimeWindows.runNumber;
-         this->tmin = m_TimeWindows.tmin;
-         this->tmax = m_TimeWindows.tmax;
-         this->tzero = m_TimeWindows.tzero;
-         return *this;
-      }
-      friend TTimeWindows operator+(const TTimeWindows& plotA, const TTimeWindows& plotB)
-      {
-         std::cout << "TTimeWindows addition operator" << std::endl;
-         TTimeWindows outputplot(plotA); //Create new from copy
-
-         //Vectors- need concacting
-         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
-         outputplot.tmin.insert(outputplot.tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
-         outputplot.tmax.insert(outputplot.tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
-         outputplot.tzero.insert(outputplot.tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
-         return outputplot;
-      }
-      TTimeWindows operator+=(const TTimeWindows &plotB) 
-      {
-         std::cout << "TTimeWindows += operator" << std::endl;
-         this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
-         this->tmin.insert(this->tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
-         this->tmax.insert(this->tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
-         this->tzero.insert(this->tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
-         return *this;
       }
 };
 

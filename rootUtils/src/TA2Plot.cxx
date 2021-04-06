@@ -284,9 +284,8 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    //FillfeGEMHistograms();
    const double max_dump_length=GetMaxDumpLength();
    //Fill SIS histograms
-   //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
    int runno=0;
-   //for (auto& sisevent: SISEvents)
+   //TODOLMG - Remove this logging.
    for (int i = 0; i<=SISEvents.t.size(); i++)
    {
       //This is a new run number... SIS channels could have changed! update!

@@ -20,42 +20,25 @@ class TSISPlotEvents: public TObject
       std::vector<int> Counts;
       std::vector<int> SIS_Channel;
    public:
+      //Std ctor and dtor
       TSISPlotEvents()
       {
       }
       ~TSISPlotEvents()
       {
       }
+      //Copy ctor
       TSISPlotEvents(const TSISPlotEvents& m_SISEvent)
       {
-         runNumber = m_SISEvent.runNumber;
-         t = m_SISEvent.t;
-         OfficialTime = m_SISEvent.OfficialTime;
-         Counts = m_SISEvent.Counts;
-         SIS_Channel = m_SISEvent.SIS_Channel;
-      }
-      void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel)
-      {
-         runNumber.push_back(m_runNumber);
-         t.push_back(m_ti);  
-         OfficialTime.push_back(m_OfficialTime);
-         Counts.push_back(m_Counts);
-         SIS_Channel.push_back(m_SIS_Channel);
-      }
-      int GetEventRunNumber(int event) const { return runNumber.at(event); }
-      friend TSISPlotEvents operator+(const TSISPlotEvents& plotA, const TSISPlotEvents& plotB)
-      {
-         std::cout << "SISPlotEvents addition operator" << std::endl;
-         TSISPlotEvents outputplot(plotA); //Create new from copy
-
-         //Vectors- need concacting
-         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
-         outputplot.t.insert(outputplot.t.end(), plotB.t.begin(), plotB.t.end() );
-         outputplot.OfficialTime.insert(outputplot.OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
-         outputplot.Counts.insert(outputplot.Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
-         outputplot.SIS_Channel.insert(outputplot.SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
-         
-         return outputplot;
+         //Deep copy vectors.
+         for(int i = 0; i<= m_SISEvent.t.size(); i++)
+         {
+            runNumber.push_back( m_SISEvent.runNumber[i]);
+            t.push_back( m_SISEvent.t[i]);
+            OfficialTime.push_back( m_SISEvent.OfficialTime[i]);
+            Counts.push_back( m_SISEvent.Counts[i]);
+            SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
+         }
       }
       TSISPlotEvents operator+=(const TSISPlotEvents &plotB) 
       {
@@ -67,6 +50,39 @@ class TSISPlotEvents: public TObject
          this->SIS_Channel .insert(this->SIS_Channel.end(),    plotB.SIS_Channel.begin(),    plotB.SIS_Channel.end() );
          return *this;
       }
+      TSISPlotEvents operator=(const TSISPlotEvents m_SISEvent)
+      {
+         for(int i = 0; i<=m_SISEvent.t.size(); i++)
+         {
+            this->runNumber.push_back( m_SISEvent.runNumber[i]);
+            this->t.push_back( m_SISEvent.t[i]);
+            this->OfficialTime.push_back( m_SISEvent.OfficialTime[i]);
+            this->Counts.push_back( m_SISEvent.Counts[i]);
+            this->SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
+         }
+         return *this;
+      }
+      friend TSISPlotEvents operator+(const TSISPlotEvents& plotA, const TSISPlotEvents& plotB)
+      {
+         std::cout << "TSISPlotEvents addition operator" << std::endl;
+         TSISPlotEvents outputplot(plotA); //Create new from copy
+         //Vectors- need concacting
+         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
+         outputplot.t.insert(outputplot.t.end(), plotB.t.begin(), plotB.t.end() );
+         outputplot.OfficialTime.insert(outputplot.OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
+         outputplot.Counts.insert(outputplot.Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
+         outputplot.SIS_Channel.insert(outputplot.SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
+         return outputplot;
+      }
+      void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel)
+      {
+         runNumber.push_back(m_runNumber);
+         t.push_back(m_ti);  
+         OfficialTime.push_back(m_OfficialTime);
+         Counts.push_back(m_Counts);
+         SIS_Channel.push_back(m_SIS_Channel);
+      }
+      int GetEventRunNumber(int event) const { return runNumber.at(event); }
 };
 
 class TA2Plot: public TAPlot
