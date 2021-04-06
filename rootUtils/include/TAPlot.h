@@ -27,7 +27,7 @@
 //Basic internal containers:
 
 //SVD / TPC vertex
-class TAVertexEvents: public TObject
+class TVertexEvents: public TObject
 {
    public:
       std::vector<int> runNumbers; // I don't get set yet...
@@ -44,14 +44,14 @@ class TAVertexEvents: public TObject
       std::vector<int> nTracks; // reconstructed (good) helices
 
       //LMG - Copy and assign operators
-      TAVertexEvents()
+      TVertexEvents()
       {
       }
-      ~TAVertexEvents()
+      ~TVertexEvents()
       {
       }
       //Basic copy constructor.
-      TAVertexEvents(const TAVertexEvents& m_VertexEvents)
+      TVertexEvents(const TVertexEvents& m_VertexEvents)
       {
          runNumbers           = m_VertexEvents.runNumbers;
          EventNos             = m_VertexEvents.EventNos;
@@ -67,7 +67,7 @@ class TAVertexEvents: public TObject
          nTracks              = m_VertexEvents.nTracks;
       }
       //Assignment operator.
-      TAVertexEvents operator=(const TAVertexEvents m_VertexEvents)
+      TVertexEvents operator=(const TVertexEvents m_VertexEvents)
       {
          this->runNumbers           = m_VertexEvents.runNumbers;
          this->EventNos             = m_VertexEvents.EventNos;
@@ -83,7 +83,7 @@ class TAVertexEvents: public TObject
          this->nTracks              = m_VertexEvents.nTracks;
          return *this;
       }
-      TAVertexEvents operator+=(const TAVertexEvents &plotB) 
+      TVertexEvents operator+=(const TVertexEvents &plotB) 
       {
          std::cout << "TAVertexEvents += operator" << std::endl;
          this->runNumbers       .insert(this->runNumbers.end(),      plotB.runNumbers.begin(),     plotB.runNumbers.end());
@@ -102,7 +102,7 @@ class TAVertexEvents: public TObject
       }
 };
 
-class TATimeWindows : public TObject
+class TTimeWindows : public TObject
 {
    public:
       bool isSorted = false;
@@ -111,10 +111,10 @@ class TATimeWindows : public TObject
       std::vector<double> tmax;
       std::vector<double> tzero;
       
-      TATimeWindows()
+      TTimeWindows()
       {
       }
-      ~TATimeWindows()
+      ~TTimeWindows()
       {
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
@@ -128,7 +128,7 @@ class TATimeWindows : public TObject
          assert(_tzero>=_tmin);
          assert(_tzero<_tmax);
       }
-      TATimeWindows(const TATimeWindows& m_TimeWindows)
+      TTimeWindows(const TTimeWindows& m_TimeWindows)
       {
          runNumber = m_TimeWindows.runNumber;
          tmin = m_TimeWindows.tmin;
@@ -210,7 +210,7 @@ class TATimeWindows : public TObject
   
          isSorted = true;
       }
-      TATimeWindows operator=(const TATimeWindows m_TimeWindows)
+      TTimeWindows operator=(const TTimeWindows m_TimeWindows)
       {
          this->runNumber = m_TimeWindows.runNumber;
          this->tmin = m_TimeWindows.tmin;
@@ -218,10 +218,10 @@ class TATimeWindows : public TObject
          this->tzero = m_TimeWindows.tzero;
          return *this;
       }
-      friend TATimeWindows operator+(const TATimeWindows& plotA, const TATimeWindows& plotB)
+      friend TTimeWindows operator+(const TTimeWindows& plotA, const TTimeWindows& plotB)
       {
-         std::cout << "TATimeWindows addition operator" << std::endl;
-         TATimeWindows outputplot(plotA); //Create new from copy
+         std::cout << "TTimeWindows addition operator" << std::endl;
+         TTimeWindows outputplot(plotA); //Create new from copy
 
          //Vectors- need concacting
          outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
@@ -230,9 +230,9 @@ class TATimeWindows : public TObject
          outputplot.tzero.insert(outputplot.tzero.end(), plotB.tzero.begin(), plotB.tzero.end() );
          return outputplot;
       }
-      TATimeWindows operator+=(const TATimeWindows &plotB) 
+      TTimeWindows operator+=(const TTimeWindows &plotB) 
       {
-         std::cout << "TATimeWindows += operator" << std::endl;
+         std::cout << "TTimeWindows += operator" << std::endl;
          this->runNumber.insert(this->runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
          this->tmin.insert(this->tmin.end(), plotB.tmin.begin(), plotB.tmin.end() );
          this->tmax.insert(this->tmax.end(), plotB.tmax.begin(), plotB.tmax.end() );
@@ -356,7 +356,7 @@ class feGEMdata: public feENVdata
 {
    public:
       template<typename T>
-      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TATimeWindows& timewindows)
+      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TTimeWindows& timewindows)
       {
          double time=GEMEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
@@ -384,7 +384,7 @@ class feGEMdata: public feENVdata
 class feLVdata: public feENVdata
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TATimeWindows& timewindows)
+      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TTimeWindows& timewindows)
       {
          double time=LVEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
@@ -423,7 +423,7 @@ class TAPlot: public TObject
       double LastTmax;
       double BiggestTzero;
       double MaxDumpLength;
-      TATimeWindows TimeWindows;
+      TTimeWindows TimeWindows;
       double fTotalTime;
       int fTotalVert;
 
@@ -443,7 +443,7 @@ class TAPlot: public TObject
       std::vector<double> DumpStarts;
       std::vector<double> DumpStops;
 
-      TAVertexEvents NewVertexEvents;
+      TVertexEvents VertexEvents;
       std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
       std::vector<feGEMdata> feGEM;
@@ -465,29 +465,29 @@ class TAPlot: public TObject
       int GetNBins() const                               {  return Nbin; }
       void SetTimeFactor(double t)                       {  tFactor=t; }
       double GetTimeFactor() const                       {  return tFactor; }
-      void AddVertexEventByList(int runNumber, int EventNo, int CutsResult, int VertexStatus, double x, double y, double z, double t, double EventTime, double RunTime, int nHelices, int nTracks)                 
+      void AddVertexEvent(int runNumber, int EventNo, int CutsResult, int VertexStatus, double x, double y, double z, double t, double EventTime, double RunTime, int nHelices, int nTracks)                 
       {
-         NewVertexEvents.runNumbers.push_back(runNumber);
-         NewVertexEvents.EventNos.push_back(EventNo);
-         NewVertexEvents.CutsResults.push_back(CutsResult);
-         NewVertexEvents.VertexStatuses.push_back(VertexStatus);
-         NewVertexEvents.xs.push_back(x);
-         NewVertexEvents.ys.push_back(y);
-         NewVertexEvents.zs.push_back(z);
-         NewVertexEvents.ts.push_back(t);
-         NewVertexEvents.EventTimes.push_back(EventTime);
-         NewVertexEvents.RunTimes.push_back(RunTime);
-         NewVertexEvents.nHelices.push_back(nHelices);
-         NewVertexEvents.nTracks.push_back(nTracks);
+         VertexEvents.runNumbers.push_back(runNumber);
+         VertexEvents.EventNos.push_back(EventNo);
+         VertexEvents.CutsResults.push_back(CutsResult);
+         VertexEvents.VertexStatuses.push_back(VertexStatus);
+         VertexEvents.xs.push_back(x);
+         VertexEvents.ys.push_back(y);
+         VertexEvents.zs.push_back(z);
+         VertexEvents.ts.push_back(t);
+         VertexEvents.EventTimes.push_back(EventTime);
+         VertexEvents.RunTimes.push_back(RunTime);
+         VertexEvents.nHelices.push_back(nHelices);
+         VertexEvents.nTracks.push_back(nTracks);
       }
-      const TATimeWindows GetTimeWindows()                 {  return TimeWindows; }
-      const TAVertexEvents GetVertexEvents()             {  return NewVertexEvents; }
+      const TTimeWindows GetTimeWindows()                 {  return TimeWindows; }
+      const TVertexEvents GetVertexEvents()             {  return VertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       bool GetCutsSettings() const                       {  return fApplyCuts; }
       void SetBinNumber(int bin)                         {  Nbin = bin; }
       void SetMVAMode(int Mode)                          {  MVAMode = Mode; }
-      size_t GetNVertexEvents()                          {  return NewVertexEvents.xs.size(); }
+      size_t GetNVertexEvents()                          {  return VertexEvents.xs.size(); }
       int GetNVerticies()                                {  return fTotalVert;   }
       double GetMaxDumpLength() const                    {  return MaxDumpLength; }
       double GetFirstTmin() const                        {  return FirstTmin;     }
