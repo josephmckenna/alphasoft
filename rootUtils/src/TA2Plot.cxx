@@ -63,9 +63,10 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 
 void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 {
-   SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime()- time_offset, 
-   event->GetRunTime(), event->GetCountsInChannel(channel), channel);
+   NewSISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - time_offset, 
+      event->GetRunTime(), event->GetCountsInChannel(channel), channel);
 }
+
 //TODO: Pre sort windows (we should never have overlapping windows...)
 //Sort tmins... then search for first tmin < t
 //check if valid tmax > t
@@ -92,22 +93,25 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
 {
    int n_sis=SISChannels.size();
    double t=SISEvent->GetRunTime();
+
+   //TODOLMG - Copy same above window.GetValidWindowNumber(t) method.
+
    //Loop over all time windows
-   //for (auto& window: GetTimeWindows())
-   for (int t = 0; t < GetTimeWindows().tmax.size(); t++)
+   TATimeWindows window = GetTimeWindows();
+   int index = window.GetValidWindowNumber(t);
+   for (int j = 0; j < window.tmax.size(); j++)
    {
-      TATimeWindows window = GetTimeWindows();
       //If inside the time window
-      if ( ( t > window.tmin[t] && t < window.tmax[t] ) ||
+      if ( ( t > window.tmin[j] && t < window.tmax[j] ) ||
       //Or if after tmin and tmax is invalid (-1)
-           ( t > window.tmin[t] && window.tmax[t] < 0 ) )
+           ( t > window.tmin[j] && window.tmax[j] < 0 ) )
       {
          for (int i=0; i<n_sis; i++)
          {
             int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
             if (counts)
             {
-               AddEvent(SISEvent, SISChannels[i], window.tzero[t]);
+               AddEvent(SISEvent, SISChannels[i], window.tzero[j]);
             }
          }
          //This event has been written to the array... so I dont need
@@ -292,36 +296,36 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
    int runno=0;
    //for (auto& sisevent: SISEvents)
-   for (int t = 0; t < SISEvents.runNumber.size(); t++)
+   for (int i = 0; i<=NewSISEvents.t.size(); i++)
    {
       //This is a new run number... SIS channels could have changed! update!
-      if (SISEvents.runNumber[t]!=runno)
+      if (NewSISEvents.runNumber[i]!=runno)
       {
-         runno=SISEvents.runNumber[t];
+         runno=NewSISEvents.runNumber[i];
          SetSISChannels(runno);
       }
       double time;
       if (ZeroTimeAxis)
-         time = SISEvents.t[t];
+         time = NewSISEvents.t[i];
       else
-         time = SISEvents.OfficialTime[t];
+         time = NewSISEvents.OfficialTime[i];
       if (max_dump_length<SCALECUT) 
          time=time*1000.;
-      int Channel         = SISEvents.SIS_Channel[t];
-      int CountsInChannel = SISEvents.Counts[t];
-      if (Channel == trig.find(SISEvents.runNumber[t])->second)
+      int Channel         = NewSISEvents.SIS_Channel[i];
+      int CountsInChannel = NewSISEvents.Counts[i];
+      if (Channel == trig.find(NewSISEvents.runNumber[i])->second)
          FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy.find(SISEvents.runNumber[t])->second)
+      else if (Channel == trig_nobusy.find(NewSISEvents.runNumber[i])->second)
          FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or.find(SISEvents.runNumber[t])->second)
+      else if (Channel == atom_or.find(NewSISEvents.runNumber[i])->second)
          FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection.find(SISEvents.runNumber[t])->second)
+      else if (Channel == Beam_Injection.find(NewSISEvents.runNumber[i])->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection.find(SISEvents.runNumber[t])->second)
+      else if (Channel == Beam_Ejection.find(NewSISEvents.runNumber[i])->second)
          AddEjection(time);
-      else if (Channel == CATStart.find(SISEvents.runNumber[t])->second || Channel == RCTStart.find(SISEvents.runNumber[t])->second || Channel == ATMStart.find(SISEvents.runNumber[t])->second)
+      else if (Channel == CATStart.find(NewSISEvents.runNumber[i])->second || Channel == RCTStart.find(NewSISEvents.runNumber[i])->second || Channel == ATMStart.find(NewSISEvents.runNumber[i])->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop.find(SISEvents.runNumber[t])->second || Channel == RCTStop.find(SISEvents.runNumber[t])->second || Channel == ATMStop.find(SISEvents.runNumber[t])->second)
+      else if (Channel == CATStop.find(NewSISEvents.runNumber[i])->second || Channel == RCTStop.find(NewSISEvents.runNumber[i])->second || Channel == ATMStop.find(NewSISEvents.runNumber[i])->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -689,7 +693,7 @@ TA2Plot& TA2Plot::operator=(const TA2Plot& plotA)
    Beam_Ejection  = plotA.Beam_Ejection;
    ZMinCut        = plotA.ZMinCut;
    ZMaxCut        = plotA.ZMaxCut;
-   SISEvents      = plotA.SISEvents;
+   NewSISEvents   = plotA.NewSISEvents;
 
    return *this;
 }
@@ -711,7 +715,7 @@ TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
    Beam_Ejection  = m_TA2Plot.Beam_Ejection;
    ZMinCut        = m_TA2Plot.ZMinCut;
    ZMaxCut        = m_TA2Plot.ZMaxCut;
-   SISEvents      = m_TA2Plot.SISEvents;
+   NewSISEvents   = m_TA2Plot.NewSISEvents;
 }
 
 TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
@@ -751,9 +755,9 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
    //Vectors need concacting.
    //BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
    BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
-   
-   BasePlot.SISEvents += PlotB.SISEvents;
 
+   BasePlot.NewSISEvents += PlotA.NewSISEvents;
+   
    return BasePlot;
 }
 
