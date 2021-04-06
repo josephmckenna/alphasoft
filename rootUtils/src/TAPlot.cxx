@@ -46,7 +46,7 @@ TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    tFactor                       = m_TAPlot.tFactor ;
 
    TimeWindows                = m_TAPlot.TimeWindows;
-   NewVertexEvents               = m_TAPlot.NewVertexEvents;
+   VertexEvents               = m_TAPlot.VertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -259,7 +259,7 @@ void TAPlot::LoadData()
       //for (auto& t: GetTimeWindows())
       for (size_t i=0; i<GetTimeWindows().tmax.size(); i++)
       {
-         TATimeWindows t = GetTimeWindows();
+         TTimeWindows t = GetTimeWindows();
          if (t.runNumber.at(i)==runNumber)
          {
             if (t.tmax.at(i)<0) 
@@ -489,8 +489,8 @@ int TAPlot::GetNPassedType(const int type)
 {
    int n=0;
    //for (auto& event: VertexEvents)
-   TAVertexEvents event = GetVertexEvents();
-   for (int i = 0; i<=NewVertexEvents.xs.size(); i++)
+   TVertexEvents event = GetVertexEvents();
+   for (int i = 0; i<=VertexEvents.xs.size(); i++)
    {
       if (event.CutsResults[i]&type)
          n++;
@@ -728,7 +728,7 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    this->tFactor = m_TAPlot.tFactor ;
 
    this->TimeWindows = m_TAPlot.TimeWindows;
-   this->NewVertexEvents = m_TAPlot.NewVertexEvents;
+   this->VertexEvents = m_TAPlot.VertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
       this->Ejections.push_back(m_TAPlot.Ejections.at(i));
@@ -792,7 +792,7 @@ TAPlot TAPlot::operator+=(const TAPlot &plotB)
    this->HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
    this->TimeWindows+=plotB.TimeWindows;
-   this->NewVertexEvents+=plotB.NewVertexEvents;
+   this->VertexEvents+=plotB.VertexEvents;
 
    return *this;
 }
@@ -834,7 +834,7 @@ TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB)
    outputplot.HISTO_POSITION.insert( plotB.HISTO_POSITION.begin(), plotB.HISTO_POSITION.end() );
 
    outputplot.TimeWindows+=plotB.TimeWindows;
-   outputplot.NewVertexEvents+=plotB.NewVertexEvents;
+   outputplot.VertexEvents+=plotB.VertexEvents;
 
    return outputplot;
 }
