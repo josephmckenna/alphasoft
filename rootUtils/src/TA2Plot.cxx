@@ -94,8 +94,6 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    int n_sis=SISChannels.size();
    double t=SISEvent->GetRunTime();
 
-   //TODOLMG - Copy same above window.GetValidWindowNumber(t) method.
-
    //Loop over all time windows
    TTimeWindows window = GetTimeWindows();
    int index = window.GetValidWindowNumber(t);
@@ -285,17 +283,12 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    const double max_dump_length=GetMaxDumpLength();
    //Fill SIS histograms
    int runno=0;
-   //TODOLMG - Remove this logging.
    for (int i = 0; i<=SISEvents.t.size(); i++)
    {
-      //This is a new run number... SIS channels could have changed! update!
-      std::cout << "SISEvents.runNumber[i] = " << SISEvents.runNumber[i] << " outside for loop." << std::endl;
       if (SISEvents.runNumber[i]!=runno)
       {
          runno=SISEvents.runNumber[i];
          SetSISChannels(runno);
-         std::cout << "SISEvents.runNumber[i] = " << SISEvents.runNumber[i] << " insde for loop."  << std::endl;
-         std::cout << "runno = " << runno << " insde for loop."  << std::endl;
       }
       double time;
       if (ZeroTimeAxis)
@@ -305,7 +298,6 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       if (max_dump_length<SCALECUT) 
          time=time*1000.;
       int Channel         = SISEvents.SIS_Channel[i];
-      std::cout << "Channel = " << Channel << " insde for loop."  << std::endl;
       int CountsInChannel = SISEvents.Counts[i];
       if (Channel == trig.find(SISEvents.runNumber[i])->second)
          FillHistogram("tIO32",time,CountsInChannel);
@@ -325,7 +317,6 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    }
 
    //Fill Vertex Histograms
-
    TVector3 vtx;
    TVertexEvents VEs = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
@@ -709,7 +700,7 @@ TA2Plot::TA2Plot(const TA2Plot& m_TA2Plot) : TAPlot(m_TA2Plot)
    Beam_Ejection  = m_TA2Plot.Beam_Ejection;
    ZMinCut        = m_TA2Plot.ZMinCut;
    ZMaxCut        = m_TA2Plot.ZMaxCut;
-   SISEvents   = m_TA2Plot.SISEvents;
+   SISEvents      = m_TA2Plot.SISEvents;
 }
 
 TA2Plot::TA2Plot(const TAPlot& m_TAPlot) : TAPlot(m_TAPlot)
@@ -730,7 +721,6 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
 
    //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
    //For all these copying A is fine.
-   
    BasePlot.trig.insert(            PlotB.trig.begin(), PlotB.trig.end() );
    BasePlot.trig_nobusy.insert(     PlotB.trig_nobusy.begin(), PlotB.trig_nobusy.end() );
    BasePlot.atom_or.insert(         PlotB.atom_or.begin(), PlotB.atom_or.end() );
@@ -747,10 +737,10 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
    BasePlot.ZMaxCut        = PlotA.ZMaxCut;
 
    //Vectors need concacting.
-   //BasePlot.SISEvents.insert(BasePlot.SISEvents.end(), PlotB.SISEvents.begin(), PlotB.SISEvents.end() );
    BasePlot.SISChannels.insert(BasePlot.SISChannels.end(), PlotB.SISChannels.begin(), PlotB.SISChannels.end() );
 
    BasePlot.SISEvents += PlotA.SISEvents;
+   BasePlot.SISEvents += PlotB.SISEvents;
    
    return BasePlot;
 }
