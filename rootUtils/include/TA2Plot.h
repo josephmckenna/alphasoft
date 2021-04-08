@@ -83,6 +83,8 @@ class TSISPlotEvents: public TObject
          SIS_Channel.push_back(m_SIS_Channel);
       }
       int GetEventRunNumber(int event) const { return runNumber.at(event); }
+      
+      ClassDef(TSISPlotEvents,1);
 };
 
 class TA2Plot: public TAPlot
