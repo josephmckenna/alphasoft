@@ -57,8 +57,8 @@ void TA2Plot::SetSISChannels(int runNumber)
 
 void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 {
-   AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, 
-   event->NVertices, event->x, event->y, event->z, event->t, event->VF48Timestamp, event->t, -1, event->NTracks);
+   AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, 
+      event->x, event->y, event->z, event->t - time_offset, event->VF48Timestamp, event->t, -1, event->NTracks);
 }
 
 void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)

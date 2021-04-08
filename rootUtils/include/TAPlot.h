@@ -548,7 +548,6 @@ class TAPlot: public TObject
 
       int GetNPassedType(const int type);
       
-      void AddToTAPlot(TAPlot *ialphaplot);
       //virtual void AddToTAPlot(TString file);
       //virtual TAPlot* LoadTAPlot(TString file);
       void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero);

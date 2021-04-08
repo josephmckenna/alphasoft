@@ -308,16 +308,6 @@ void TAPlot::ClearHisto() //Destroy all histograms
    HISTOS.Delete();
 }
 
-void TAPlot::AddToTAPlot(TAPlot *ialphaplot)
-{
-   //LMG As far as I can tell this function is unused. Can it be deleted?
-  ClearHisto();
-  Ejections.insert(Ejections.end(), ialphaplot->Ejections.begin(), ialphaplot->Ejections.end());
-  Injections.insert(Injections.end(), ialphaplot->Injections.begin(), ialphaplot->Injections.end());
-  Runs.insert(Runs.end(), ialphaplot->Runs.begin(), ialphaplot->Runs.end());
-  //Draw();
-}
-
 void TAPlot::SetGEMChannel(const std::string& name, int ArrayEntry, std::string title)
 {
    for (auto& d: feGEM)
