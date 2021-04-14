@@ -754,9 +754,40 @@ TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB)
    return BasePlot;
 }
 
-/*TA2Plot& operator+=(const TA2Plot& plotA, const TA2Plot& PlotB)
+TA2Plot& TA2Plot::operator+=(const TA2Plot& plotB)
 {
-   return plotA + PlotB;
-}*/
+   //In order to call the parents addition first it is important to statically cast the Plots to their parent class,
+   //add the parents together, then initialise a TA2Plot from the TAPlot and fill in the rest of the values as a constructor would.
+   //TAPlot PlotACast = static_cast<TAPlot>(this); //2 Static casts
+   //TAPlot PlotBCast = static_cast<TAPlot>(plotB);
+   //TAPlot ParentSum = PlotACast + PlotBCast; //Add as TAPlots
+   //TA2Plot BasePlot = TA2Plot(ParentSum); //Initialise a TA2Plot from the now summed TAPlots
+
+   TAPlot::operator+=(plotB);
+
+   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
+   //For all these copying A is fine.
+   trig.insert(            plotB.trig.begin(), plotB.trig.end() );
+   trig_nobusy.insert(     plotB.trig_nobusy.begin(), plotB.trig_nobusy.end() );
+   atom_or.insert(         plotB.atom_or.begin(), plotB.atom_or.end() );
+   CATStart.insert(        plotB.CATStart.begin(), plotB.CATStart.end() );
+   CATStop.insert(         plotB.CATStop.begin(), plotB.CATStop.end() );
+   RCTStart.insert(        plotB.RCTStart.begin(), plotB.RCTStart.end() );
+   RCTStop.insert(         plotB.RCTStop.begin(), plotB.RCTStop.end() );
+   ATMStart.insert(        plotB.ATMStart.begin(), plotB.ATMStart.end() );
+   ATMStop.insert(         plotB.ATMStop.begin(), plotB.ATMStop.end() );
+   Beam_Injection.insert(  plotB.Beam_Injection.begin(), plotB.Beam_Injection.end() );
+   Beam_Ejection.insert(   plotB.Beam_Ejection.begin(), plotB.Beam_Ejection.end() );
+   
+   //this.ZMinCut        = plotB.ZMinCut;
+   //this.ZMaxCut        = plotB.ZMaxCut;
+
+   //Vectors need concacting.
+   SISChannels.insert(SISChannels.end(), plotB.SISChannels.begin(), plotB.SISChannels.end() );
+
+   SISEvents += plotB.SISEvents;
+   
+   return *this;
+}
 
 #endif

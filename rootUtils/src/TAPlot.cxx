@@ -747,7 +747,7 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    return *this;
 }
 
-TAPlot TAPlot::operator+=(const TAPlot &plotB) 
+TAPlot& TAPlot::operator+=(const TAPlot &plotB) 
 {
    std::cout << "TAPlot += operator" << std::endl;
 
