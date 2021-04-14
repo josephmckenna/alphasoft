@@ -479,10 +479,10 @@ int TAPlot::GetNPassedType(const int type)
 {
    int n=0;
    //for (auto& event: VertexEvents)
-   TVertexEvents event = GetVertexEvents();
-   for (int i = 0; i<=VertexEvents.xs.size(); i++)
+   //const TVertexEvents* event = GetVertexEvents();
+   for (int i = 0; i<VertexEvents.xs.size(); i++)
    {
-      if (event.CutsResults[i]&type)
+      if (VertexEvents.CutsResults[i]&type)
          n++;
    }
    return n;
