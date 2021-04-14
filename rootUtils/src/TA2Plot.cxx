@@ -57,8 +57,9 @@ void TA2Plot::SetSISChannels(int runNumber)
 
 void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 {
+   double tminusoff = (event->t - time_offset);
    AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, 
-      event->x, event->y, event->z, event->t - time_offset, event->VF48Timestamp, event->t, -1, event->NTracks);
+      event->x, event->y, event->z, tminusoff, event->VF48Timestamp, event->t, -1, event->NTracks);
 }
 
 void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
@@ -85,6 +86,7 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    //if not it will add the event. 
    if(index >= 0)
    {
+      std::cout << "Calling AddEvent with t = " << window.tzero.at(index) << std::endl;
       AddEvent(SVDEvent, window.tzero.at(index));
    }
 }
@@ -318,29 +320,32 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
    //Fill Vertex Histograms
    TVector3 vtx;
-   TVertexEvents VEs = GetVertexEvents();
+   const TVertexEvents* VEs = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
-   for (int i=0; i<=VEs.xs.size(); i++)
+   for (int i=0; i<VEs->xs.size(); i++)
    {
       Double_t time;
       if (ZeroTimeAxis)
-         time = VEs.ts[i];
+         time = VEs->ts.at(i);
       else
-         time = VEs.RunTimes[i];
+         time = VEs->RunTimes.at(i);
       if (max_dump_length<SCALECUT)
          time=time*1000.;
-      vtx=TVector3(VEs.xs[i],VEs.ys[i],VEs.zs[i]);
+      vtx=TVector3(VEs->xs.at(i),VEs->ys.at(i),VEs->zs.at(i));
       FillHistogram("tSVD",time);
 
-      int CutsResult=VEs.CutsResults[i];
+      int CutsResult=VEs->CutsResults.at(i);
       if (MVAMode>0)
       {
          if (CutsResult & 1)//Passed cut result!
          {
             FillHistogram("tvtx",time);
+            //LMG
+            std::cout << "1. Appaz a passed cut at time = " << time << std::endl;
          }
          if (CutsResult & 2)
          {
+            std::cout << "2. Appaz a passed cut at time = " << time << std::endl;
             FillHistogram("tvtx",time);
          }
          else
@@ -352,6 +357,9 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          {
             if (CutsResult & 1)//Passed cut result!
             {
+               std::cout << "The vertex that has passed: (x, y, z; t) = (" <<  VEs->xs.at(i) << ", " << VEs->ys.at(i) << ", " << VEs->zs.at(i) << "; " << VEs->ts.at(i) << ")" << std::endl;
+               std::cout << "CutsResult = " << CutsResult << ", time = " << time << ", runtime = " << VEs->RunTimes.at(i) << std::endl;
+               std::cout << "3. Appaz a passed cut at time = " << time << std::endl;
                FillHistogram("tvtx",time);
             }
             else
@@ -359,14 +367,15 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          }
          else
          {
-            if ( VEs.VertexStatuses[i] > 0) 
+            if ( VEs->VertexStatuses[i] > 0) 
             {
+               std::cout << "4. Appaz a passed cut at time = " << time << std::endl;
                FillHistogram("tvtx",time);
             }
             else 
                continue;
          }
-         if (VEs.VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+         if (VEs->VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());

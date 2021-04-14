@@ -172,7 +172,7 @@ class TTimeWindows : public TObject
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
       {
-         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << std::endl;
+         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << "tzero = " << _tzero << std::endl;
          runNumber.push_back(_runNumber);
          tmin.push_back(_tmin);
          tmax.push_back(_tmax);
@@ -496,9 +496,10 @@ class TAPlot: public TObject
          VertexEvents.RunTimes.push_back(RunTime);
          VertexEvents.nHelices.push_back(nHelices);
          VertexEvents.nTracks.push_back(nTracks);
+         std::cout << "The following vertex event has been added: (" << runNumber << ", " << EventNo << ", " << CutsResult << ", " << VertexStatus << ", " << x << ", " << y << ", " << z << ", " << t << ", " << EventTime << ", " << RunTime << ", " << nHelices << ", " << nTracks <<  ")" << std::endl; 
       }
-      const TTimeWindows GetTimeWindows()                 {  return TimeWindows; }
-      const TVertexEvents GetVertexEvents()             {  return VertexEvents; }
+      const TTimeWindows GetTimeWindows()                {  return TimeWindows; }
+      const TVertexEvents* GetVertexEvents()              {  return &VertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       bool GetCutsSettings() const                       {  return fApplyCuts; }
