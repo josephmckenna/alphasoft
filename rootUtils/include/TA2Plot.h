@@ -136,6 +136,7 @@ class TA2Plot: public TAPlot
       TA2Plot(const TAPlot& m_TAPlot);
       virtual ~TA2Plot();
       friend TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB);
+      TA2Plot& operator+=(const TA2Plot& plotB);
       TA2Plot& operator=(const TA2Plot& plotA);
       
       void SetUpHistograms();

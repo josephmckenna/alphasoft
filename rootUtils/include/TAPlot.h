@@ -619,8 +619,8 @@ class TAPlot: public TObject
       virtual void PrintFull();
 
       TAPlot& operator=(const TAPlot& m_TAPlot);
-      virtual TAPlot operator+=(const TAPlot &plotB);
       friend TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB);
+      TAPlot& operator+=(const TAPlot &plotB);
 
    ClassDef(TAPlot, 1);
 };
