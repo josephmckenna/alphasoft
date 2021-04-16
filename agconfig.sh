@@ -37,7 +37,9 @@ fi
 
 alphaBeast()
 {
-  . ~/packages/root_build/bin/thisroot.sh
+  #. ~/packages/root_build/bin/thisroot.sh
+    . /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-gcc8-opt/setup.sh
+    echo -e " \e[34m `git status | head -1`\e[m"	
 }
 
 alphaCrunch()
