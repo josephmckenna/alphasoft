@@ -96,6 +96,7 @@ void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<d
       double length=tmax[i]-tmin[i];
       if (length>MaxDumpLength)
          MaxDumpLength=length;
+      std::cout << "Adding timeWindows in place AddTimeGates." << std::endl;
       TimeWindows.AddTimeWindow(runNumber,tmin[i],tmax[i],tzero[i]);
       fTotalTime+=tmax[i]-tmin[i];
       //Find the first start window
@@ -134,6 +135,7 @@ void TAPlot::AddTimeGate(const int runNumber, const double tmin, const double tm
    double length = tmax - tmin;
    if (length > MaxDumpLength)
       MaxDumpLength = length;
+   std::cout << "Adding timeWindows in place AddTimeGate." << std::endl;
    TimeWindows.AddTimeWindow(runNumber,tmin,tmax,tzero);
    fTotalTime += tmax - tmin;
    //Find the first start window
@@ -257,9 +259,9 @@ void TAPlot::LoadData()
       int runNumber = Runs[i];
       //Calculate our list time... so we can stop early
       //for (auto& t: GetTimeWindows())
+      TTimeWindows t = GetTimeWindows();
       for (size_t i=0; i<GetTimeWindows().tmax.size(); i++)
       {
-         TTimeWindows t = GetTimeWindows();
          if (t.runNumber.at(i)==runNumber)
          {
             if (t.tmax.at(i)<0) 
