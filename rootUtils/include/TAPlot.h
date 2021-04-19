@@ -127,20 +127,22 @@ class TTimeWindows : public TObject
       {
       }
       //Copy ctor
-      TTimeWindows(const TTimeWindows& m_TimeWindows)
+      /*TTimeWindows(const TTimeWindows& m_TimeWindows)
       {
+         std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
-         for(int i = 0; i<=m_TimeWindows.tmin.size(); i++)
+         for(int i = 0; i<m_TimeWindows.tmin.size(); i++)
          {
             runNumber.push_back(m_TimeWindows.runNumber[i]);
             tmin.push_back(m_TimeWindows.tmin[i]);
             tmax.push_back(m_TimeWindows.tmax[i]);
             tzero.push_back(m_TimeWindows.tzero[i]);
          }
-      }
+      }*/
       TTimeWindows operator=(const TTimeWindows m_TimeWindows)
       {
-         for(int i = 0; i<=m_TimeWindows.tmin.size(); i++)
+         std::cout << "TTimeWindows = operator." << std::endl;
+         for(int i = 0; i<m_TimeWindows.tmin.size(); i++)
          {
             this->runNumber.push_back(m_TimeWindows.runNumber[i]);
             this->tmin.push_back(m_TimeWindows.tmin[i]);
@@ -172,7 +174,7 @@ class TTimeWindows : public TObject
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
       {
-         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << "tzero = " << _tzero << std::endl;
+         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << ", tzero = " << _tzero << std::endl;
          runNumber.push_back(_runNumber);
          tmin.push_back(_tmin);
          tmax.push_back(_tmax);
@@ -180,37 +182,48 @@ class TTimeWindows : public TObject
          assert(_tmax>_tmin);
          assert(_tzero>=_tmin);
          assert(_tzero<_tmax);
+         int sizes = tmin.size();
+         std::cout << "Just pushed back and now we have: " << sizes << ". Gives the following vector: "<< "(" << tmin.at(sizes-1) << ", " << tmax.at(sizes-1) << ", " << tzero.at(sizes-1) << ", " << runNumber.at(sizes-1) << ")" << std::endl;
+                  
+
       }
       int GetValidWindowNumber(double t)
       {
          //Checks whether vector is sorted and sorts if not.
          if(!isSorted)
          {
-            SortTimeWindows();
+            //SortTimeWindows();
+            isSorted = true;
+            assert( tmin.size() == tmax.size() );
          }
-
          //Check where t sits in tmin.
          for(int i = 0; i < tmax.size(); i++)
          {
+            //std::cout << "For i = " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
+                  
             //If inside the tmin window
-            if ( t > tmin[i])
+            if ( t > tmin.at(i))
             {
+               //std::cout << "t > tmin but not others at " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
+            
                //Then check that it's within tmax or whether tmax is out of range.
-               if( t < tmax[i] || tmax[i] < 0)
+               if( t < tmax.at(i) || tmax.at(i) < 0)
                {
                   //If so return index, i, for adding the event to the vector and break (no need to keep searching)
+                  //std::cout << "For i = " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
+                  //std::cout << "index in GetValidWindowNumber has returned: " << i << ". t = " << t << ", tmax[index] = " << tmax.at(i) << "tzero[index] = " <<  tzero.at(i) << std::endl;
                   return i;
                   break;
                }
+               //If not return -1 (error)
+               else
+               {
+                  return -1;
+               }
             } 
-            //If not return -1 (error)
-            else
-            {
-               return -1;
-            }
          }
          //If we get down here just return error.
-         return -1;
+         return -2;
       }
       template <class T>
       std::vector<T> reorder(std::vector<T>& nums, std::vector<size_t>& index)

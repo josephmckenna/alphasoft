@@ -80,14 +80,32 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if (SVDEvent->z > ZMaxCut) return;
 
    TTimeWindows window = GetTimeWindows();
-   int index = window.GetValidWindowNumber(t);
+   //int index = window.GetValidWindowNumber(t);
    
    //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
    //if not it will add the event. 
-   if(index >= 0)
+   /*if(index >= 0)
    {
+      //std::cout << "index in GetValidWindowNumber has returned: " << index << ". t = " << t << ", tmax[index] = " << window.tmax.at(index) << "tzero[index] = " <<  window.tzero.at(index) << std::endl;
       std::cout << "Calling AddEvent with t = " << window.tzero.at(index) << std::endl;
       AddEvent(SVDEvent, window.tzero.at(index));
+   }*/
+
+   for (int j = 0; j < GetTimeWindows().tmax.size(); j++)
+   {
+      //If inside the time window
+      if ( ( t > window.tmin.at(j) && t < window.tmax.at(j) ) ||
+      //Or if after tmin and tmax is invalid (-1)
+           ( t > window.tmin.at(j) && window.tmax.at(j) < 0 ) )
+      {
+         std::cout << "Calling AddEvent with t = " << window.tzero.at(j) << std::endl;
+         
+         std::cout << "index in GetValidWindowNumber has returned: " << j << ". t = " << t << ", tmax[index] = " << window.tmax.at(j) << "tzero[index] = " <<  window.tzero.at(j) << std::endl;
+         AddEvent(SVDEvent, window.tzero.at(j));
+         //This event has been written to the array... so I dont need
+         //to check the other windows... break! Move to next SISEvent
+         break;
+      }
    }
 }
 
@@ -103,10 +121,10 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    {
       for (int i=0; i<n_sis; i++)
       {
-         int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
+         int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
          if (counts)
          {
-            AddEvent(SISEvent, SISChannels[i], window.tzero[index]);
+            AddEvent(SISEvent, SISChannels.at(i), window.tzero.at(index));
          }
       }
    }
@@ -285,35 +303,35 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    const double max_dump_length=GetMaxDumpLength();
    //Fill SIS histograms
    int runno=0;
-   for (int i = 0; i<=SISEvents.t.size(); i++)
+   for (int i = 0; i<SISEvents.t.size(); i++)
    {
-      if (SISEvents.runNumber[i]!=runno)
+      if (SISEvents.runNumber.at(i)!=runno)
       {
-         runno=SISEvents.runNumber[i];
+         runno=SISEvents.runNumber.at(i);
          SetSISChannels(runno);
       }
       double time;
       if (ZeroTimeAxis)
-         time = SISEvents.t[i];
+         time = SISEvents.t.at(i);
       else
-         time = SISEvents.OfficialTime[i];
+         time = SISEvents.OfficialTime.at(i);
       if (max_dump_length<SCALECUT) 
          time=time*1000.;
-      int Channel         = SISEvents.SIS_Channel[i];
-      int CountsInChannel = SISEvents.Counts[i];
-      if (Channel == trig.find(SISEvents.runNumber[i])->second)
+      int Channel         = SISEvents.SIS_Channel.at(i);
+      int CountsInChannel = SISEvents.Counts.at(i);
+      if (Channel == trig.find(SISEvents.runNumber.at(i))->second)
          FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy.find(SISEvents.runNumber[i])->second)
+      else if (Channel == trig_nobusy.find(SISEvents.runNumber.at(i))->second)
          FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or.find(SISEvents.runNumber[i])->second)
+      else if (Channel == atom_or.find(SISEvents.runNumber.at(i))->second)
          FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection.find(SISEvents.runNumber[i])->second)
+      else if (Channel == Beam_Injection.find(SISEvents.runNumber.at(i))->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection.find(SISEvents.runNumber[i])->second)
+      else if (Channel == Beam_Ejection.find(SISEvents.runNumber.at(i))->second)
          AddEjection(time);
-      else if (Channel == CATStart.find(SISEvents.runNumber[i])->second || Channel == RCTStart.find(SISEvents.runNumber[i])->second || Channel == ATMStart.find(SISEvents.runNumber[i])->second)
+      else if (Channel == CATStart.find(SISEvents.runNumber.at(i))->second || Channel == RCTStart.find(SISEvents.runNumber.at(i))->second || Channel == ATMStart.find(SISEvents.runNumber.at(i))->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop.find(SISEvents.runNumber[i])->second || Channel == RCTStop.find(SISEvents.runNumber[i])->second || Channel == ATMStop.find(SISEvents.runNumber[i])->second)
+      else if (Channel == CATStop.find(SISEvents.runNumber.at(i))->second || Channel == RCTStop.find(SISEvents.runNumber.at(i))->second || Channel == ATMStop.find(SISEvents.runNumber.at(i))->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -367,7 +385,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          }
          else
          {
-            if ( VEs->VertexStatuses[i] > 0) 
+            if ( VEs->VertexStatuses.at(i) > 0) 
             {
                std::cout << "4. Appaz a passed cut at time = " << time << std::endl;
                FillHistogram("tvtx",time);
@@ -375,7 +393,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
             else 
                continue;
          }
-         if (VEs->VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+         if (VEs->VertexStatuses.at(i) <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());

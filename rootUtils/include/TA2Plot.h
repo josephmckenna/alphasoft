@@ -31,7 +31,7 @@ class TSISPlotEvents: public TObject
       TSISPlotEvents(const TSISPlotEvents& m_SISEvent)
       {
          //Deep copy vectors.
-         for(int i = 0; i<= m_SISEvent.t.size(); i++)
+         for(int i = 0; i<m_SISEvent.t.size(); i++)
          {
             runNumber.push_back( m_SISEvent.runNumber[i]);
             t.push_back( m_SISEvent.t[i]);
@@ -52,7 +52,7 @@ class TSISPlotEvents: public TObject
       }
       TSISPlotEvents operator=(const TSISPlotEvents m_SISEvent)
       {
-         for(int i = 0; i<=m_SISEvent.t.size(); i++)
+         for(int i = 0; i<m_SISEvent.t.size(); i++)
          {
             this->runNumber.push_back( m_SISEvent.runNumber[i]);
             this->t.push_back( m_SISEvent.t[i]);
