@@ -84,7 +84,8 @@ class TAlphaDisplay : public TNamed {
      virtual void ToggleShowAllSil();
      virtual void ToggleShowAllTracks();
      virtual void Update() { fCanvas->Update(); } 
-     
+
+     TCanvas* GetfCanvas() { return fCanvas; };
      void SetCaption(TString caption) { fCaption = caption; }
      
      void DrawHelix( TAlphaEventHelix * Helix, Bool_t debug );
