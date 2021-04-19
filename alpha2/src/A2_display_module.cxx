@@ -25,6 +25,7 @@ class A2DisplayRun: public TARunObject
 private:
    TAlphaDisplay *a2ed;
    bool fBatch;
+   bool fAutoSave = true;
 
 public:
 
@@ -128,9 +129,9 @@ public:
                text,
                "Run %d, Event %d, Trigger %d, VF48 Time %lf",
                runinfo->fRunNo,
-               -1, //FIXME
-               -1, //FIXME
-               -1. //FIXME
+               silevent->GetVF48NEvent(), //FIXME
+               silevent->GetVF48NTrigger(), //FIXME
+               silevent->GetVF48Timestamp() //FIXME
             );
             a2ed = new TAlphaDisplay(text, autosave, runinfo->fRunNo);
             
@@ -152,12 +153,13 @@ public:
          //flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          //printf("A2ed::ShowEvent is %d\n",flags);
          //alphaevent->Print();
-         /*if(fAutoSaveOnDisplay != 0)
-    {
-      char fname[256];
-      sprintf(fname,"./plots/R%d_E%d.png", fRunNo , ev->GetEventNum());
-      fCanvas->Print(fname, "png");
-    }*/
+         if(fAutoSave)
+         {
+            char fname[256];
+            sprintf(fname,"R%d_E%d.png", runinfo->fRunNo , silevent->GetVF48NEvent());
+            a2ed->GetfCanvas()->SaveSource(fname, "png");
+            a2ed->GetfCanvas()->Print(fname, "png");
+         }
 
       }
       return flow;
@@ -173,6 +175,7 @@ class A2DisplayModuleFactory: public TAFactory
 {
 public:
    bool fBatch;
+   bool fAutoSave;
 public:
    void Usage()
    {
@@ -183,6 +186,7 @@ public:
    {
       printf("A2DisplayModuleFactory::Init!\n");
       fBatch = true;
+      fAutoSave = false;
 
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
@@ -190,6 +194,9 @@ public:
          {
             if( args[i] == "--a2ed" )
                fBatch = false;
+
+            if( args[i] == "--autosave" )
+               fAutoSave = true;
          }
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
