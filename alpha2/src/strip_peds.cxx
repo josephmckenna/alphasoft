@@ -388,7 +388,7 @@ public:
 			 i++;
 			 printf("Sigma has been set at %f \n", fFlags.NSIGMATHRES);
 			 continue;
-		 }
+		   }
       }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
