@@ -64,6 +64,7 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 
 void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 {
+   std::cout << "Adding SIS event: " << "(" << event->GetRunNumber() << ", " << event->GetRunTime() - time_offset << ", " << event->GetRunTime() << ", " << event->GetCountsInChannel(channel) << ", " << channel << ")" << std::endl;
    SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - time_offset, 
       event->GetRunTime(), event->GetCountsInChannel(channel), channel);
 }
@@ -117,7 +118,7 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    //Loop over all time windows
    TTimeWindows window = GetTimeWindows();
    int index = window.GetValidWindowNumber(t);
-   if(index>=0)
+   /*if(index>=0)
    {
       for (int i=0; i<n_sis; i++)
       {
@@ -125,6 +126,24 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
          if (counts)
          {
             AddEvent(SISEvent, SISChannels.at(i), window.tzero.at(index));
+         }
+      }
+   }*/
+
+   for (int j = 0; j < GetTimeWindows().tmax.size(); j++)
+   {
+      //If inside the time window
+      if ( ( t > window.tmin.at(j) && t < window.tmax.at(j) ) ||
+      //Or if after tmin and tmax is invalid (-1)
+           ( t > window.tmin.at(j) && window.tmax.at(j) < 0 ) )
+      {
+         for (int i=0; i<n_sis; i++)
+         {
+            int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
+            if (counts)
+            {
+               AddEvent(SISEvent, SISChannels.at(i), window.tzero.at(j));
+            }
          }
       }
    }

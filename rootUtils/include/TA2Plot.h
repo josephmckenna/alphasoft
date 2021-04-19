@@ -28,7 +28,7 @@ class TSISPlotEvents: public TObject
       {
       }
       //Copy ctor
-      TSISPlotEvents(const TSISPlotEvents& m_SISEvent)
+      /*TSISPlotEvents(const TSISPlotEvents& m_SISEvent)
       {
          //Deep copy vectors.
          for(int i = 0; i<m_SISEvent.t.size(); i++)
@@ -39,7 +39,7 @@ class TSISPlotEvents: public TObject
             Counts.push_back( m_SISEvent.Counts[i]);
             SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
          }
-      }
+      }*/
       TSISPlotEvents operator+=(const TSISPlotEvents &plotB) 
       {
          std::cout << "TSISPlotEvents += operator" << std::endl;
@@ -76,6 +76,7 @@ class TSISPlotEvents: public TObject
       }
       void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel)
       {
+         std::cout << "Adding SIS event." << std::endl;
          runNumber.push_back(m_runNumber);
          t.push_back(m_ti);  
          OfficialTime.push_back(m_OfficialTime);
