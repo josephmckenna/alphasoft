@@ -118,7 +118,7 @@ void  a2mcStack::PushTrack(Int_t toBeDone, Int_t parent, Int_t pdg,
     // Adding new track, starting from "particle"
     TClonesArray& ref = *fTracks;
     Int_t size = ref.GetEntriesFast();
-    new(ref[size]) a2mcMCTrack(particle);
+    new(ref[size]) a2mcMCTrack(particle, trackId);
 
     // Updating daughters info for mother track
     if(parent>=0) { // For all particles but for the primary

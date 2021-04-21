@@ -1,0 +1,4 @@
+This directory is here to store the root file needed by the viewer.
+In particular, in this order:
+a2mcToVSD -> writes into this directory (getting the MC data and geometry from ../root)
+a2mcVSDReader -> reads from this directory

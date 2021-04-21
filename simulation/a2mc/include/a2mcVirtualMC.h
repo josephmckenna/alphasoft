@@ -63,7 +63,7 @@ class a2mcVirtualMC : public TVirtualMCApplication
 	private:
 
 		void RegisterStack(); 
-        void WriteLog();
+        void WriteLog(Int_t);
 
 		// data members
 

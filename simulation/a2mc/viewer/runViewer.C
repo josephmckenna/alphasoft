@@ -49,8 +49,12 @@ ULong_t blue,green,yellow,black,violet,red;     // Define some colors
 void    init();
 void    make_gui();
 Bool_t  make_geo(Int_t);
+///< Input to runViewer 
+///< runNumber
+///< hit_threshold (in MeV) - to skip hits below a given value of deposited energy (in MeV)
+///< nMinHits - Minimum number of hits required to show an event
 //______________________________________________________________________________
-void runViewer(Int_t runNumber=0) {
+void runViewer(Int_t runNumber=0, Double_t hit_threshold = 0., Int_t nMinHits=0) {
     
 ///< ------------------ comment from alice_vsd.C --------------------------
    // Main function, initializes the application.
@@ -104,7 +108,7 @@ void runViewer(Int_t runNumber=0) {
     ///< Creating the VSD data file (from the MC output data file to the VSD data format)
     //=====================
     gToVSD = new a2mcToVSD(runNumber);
-    gToVSD->WriteVSD();
+    gToVSD->WriteVSD(hit_threshold, nMinHits);
     nMaxEvents = gToVSD->fTotEvents;
     delete gToVSD;
     
