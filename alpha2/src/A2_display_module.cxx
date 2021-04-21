@@ -26,6 +26,7 @@ private:
    TAlphaDisplay *a2ed;
    bool fBatch;
    bool fAutoSave = true;
+   //Add flag memeber, implement its class also.
 
 public:
 

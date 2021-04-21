@@ -127,7 +127,7 @@ class TTimeWindows : public TObject
       {
       }
       //Copy ctor
-      /*TTimeWindows(const TTimeWindows& m_TimeWindows)
+      TTimeWindows(const TTimeWindows& m_TimeWindows)
       {
          std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
@@ -138,7 +138,7 @@ class TTimeWindows : public TObject
             tmax.push_back(m_TimeWindows.tmax[i]);
             tzero.push_back(m_TimeWindows.tzero[i]);
          }
-      }*/
+      }
       TTimeWindows operator=(const TTimeWindows m_TimeWindows)
       {
          std::cout << "TTimeWindows = operator." << std::endl;
@@ -174,14 +174,19 @@ class TTimeWindows : public TObject
       }
       void AddTimeWindow(int _runNumber, double _tmin, double _tmax, double _tzero)
       {
-         std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << ", tzero = " << _tzero << std::endl;
+         //LMG TODO
+         //std::cout << "Adding TimeWindow: tmin = " << _tmin << ", tmax = " << _tmax << ", tzero = " << _tzero << std::endl;
          runNumber.push_back(_runNumber);
          tmin.push_back(_tmin);
          tmax.push_back(_tmax);
          tzero.push_back(_tzero);
-         assert(_tmax>_tmin);
+         if(_tmax >= 0)
+         {
+            assert(_tmax>_tmin);
+            assert(_tzero<_tmax);
+         }
          assert(_tzero>=_tmin);
-         assert(_tzero<_tmax);
+         //LMGTODO
          int sizes = tmin.size();
          std::cout << "Just pushed back and now we have: " << sizes << ". Gives the following vector: "<< "(" << tmin.at(sizes-1) << ", " << tmax.at(sizes-1) << ", " << tzero.at(sizes-1) << ", " << runNumber.at(sizes-1) << ")" << std::endl;
                   
@@ -197,30 +202,19 @@ class TTimeWindows : public TObject
             assert( tmin.size() == tmax.size() );
          }
          //Check where t sits in tmin.
-         for(int i = 0; i < tmax.size(); i++)
+         for (int j = 0; j < tmax.size(); j++)
          {
-            //std::cout << "For i = " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
-                  
-            //If inside the tmin window
-            if ( t > tmin.at(i))
+            //If inside the time window
+            if ( ( t > tmin.at(j) && t < tmax.at(j) ) ||
+            //Or if after tmin and tmax is invalid (-1)
+               ( t > tmin.at(j) && tmax.at(j) < 0 ) )
             {
-               //std::cout << "t > tmin but not others at " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
-            
-               //Then check that it's within tmax or whether tmax is out of range.
-               if( t < tmax.at(i) || tmax.at(i) < 0)
-               {
-                  //If so return index, i, for adding the event to the vector and break (no need to keep searching)
-                  //std::cout << "For i = " << i << " we have the following vectors: "<< "(" << tmin.at(i) << ", " << tmax.at(i) << ", " << tzero.at(i) << ", " << runNumber.at(i) << "). With t = " << t << std::endl;
-                  //std::cout << "index in GetValidWindowNumber has returned: " << i << ". t = " << t << ", tmax[index] = " << tmax.at(i) << "tzero[index] = " <<  tzero.at(i) << std::endl;
-                  return i;
-                  break;
-               }
-               //If not return -1 (error)
-               else
-               {
-                  return -1;
-               }
-            } 
+               
+               return j;
+               //This event has been written to the array... so I dont need
+               //to check the other windows... break! Move to next SISEvent
+               break;
+            }
          }
          //If we get down here just return error.
          return -2;
@@ -511,8 +505,8 @@ class TAPlot: public TObject
          VertexEvents.nTracks.push_back(nTracks);
          std::cout << "The following vertex event has been added: (" << runNumber << ", " << EventNo << ", " << CutsResult << ", " << VertexStatus << ", " << x << ", " << y << ", " << z << ", " << t << ", " << EventTime << ", " << RunTime << ", " << nHelices << ", " << nTracks <<  ")" << std::endl; 
       }
-      const TTimeWindows GetTimeWindows()                {  return TimeWindows; }
-      const TVertexEvents* GetVertexEvents()              {  return &VertexEvents; }
+      TTimeWindows* GetTimeWindows()               {  return &TimeWindows; }
+      const TVertexEvents* GetVertexEvents()             {  return &VertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       bool GetCutsSettings() const                       {  return fApplyCuts; }
