@@ -80,34 +80,34 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
 
-   TTimeWindows window = GetTimeWindows();
-   //int index = window.GetValidWindowNumber(t);
+   int index = GetTimeWindows()->GetValidWindowNumber(t);
+   
    
    //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
    //if not it will add the event. 
-   /*if(index >= 0)
+   if(index >= 0)
    {
       //std::cout << "index in GetValidWindowNumber has returned: " << index << ". t = " << t << ", tmax[index] = " << window.tmax.at(index) << "tzero[index] = " <<  window.tzero.at(index) << std::endl;
-      std::cout << "Calling AddEvent with t = " << window.tzero.at(index) << std::endl;
-      AddEvent(SVDEvent, window.tzero.at(index));
-   }*/
+      std::cout << "Calling AddEvent with t = " << GetTimeWindows()->tzero.at(index) << std::endl;
+      AddEvent(SVDEvent, GetTimeWindows()->tzero.at(index));
+   }
 
-   for (int j = 0; j < GetTimeWindows().tmax.size(); j++)
+   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
    {
       //If inside the time window
-      if ( ( t > window.tmin.at(j) && t < window.tmax.at(j) ) ||
+      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
       //Or if after tmin and tmax is invalid (-1)
-           ( t > window.tmin.at(j) && window.tmax.at(j) < 0 ) )
+           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
       {
-         std::cout << "Calling AddEvent with t = " << window.tzero.at(j) << std::endl;
+         std::cout << "Calling AddEvent with t = " << GetTimeWindows()->tzero.at(j) << std::endl;
          
-         std::cout << "index in GetValidWindowNumber has returned: " << j << ". t = " << t << ", tmax[index] = " << window.tmax.at(j) << "tzero[index] = " <<  window.tzero.at(j) << std::endl;
-         AddEvent(SVDEvent, window.tzero.at(j));
+         std::cout << "index in GetValidWindowNumber has returned: " << j << ". t = " << t << ", tmax[index] = " << GetTimeWindows()->tmax.at(j) << "tzero[index] = " <<  GetTimeWindows()->tzero.at(j) << std::endl;
+         AddEvent(SVDEvent, GetTimeWindows()->tzero.at(j));
          //This event has been written to the array... so I dont need
          //to check the other windows... break! Move to next SISEvent
          break;
       }
-   }
+   }*/
 }
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
@@ -116,37 +116,37 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    double t=SISEvent->GetRunTime();
 
    //Loop over all time windows
-   TTimeWindows window = GetTimeWindows();
-   int index = window.GetValidWindowNumber(t);
-   /*if(index>=0)
+   //TTimeWindows window = GetTimeWindows();
+   int index = GetTimeWindows()->GetValidWindowNumber(t);
+   if(index>=0)
    {
       for (int i=0; i<n_sis; i++)
       {
          int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
          if (counts)
          {
-            AddEvent(SISEvent, SISChannels.at(i), window.tzero.at(index));
+            AddEvent(SISEvent, SISChannels.at(i), GetTimeWindows()->tzero.at(index));
          }
       }
-   }*/
+   }
 
-   for (int j = 0; j < GetTimeWindows().tmax.size(); j++)
+   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
    {
       //If inside the time window
-      if ( ( t > window.tmin.at(j) && t < window.tmax.at(j) ) ||
+      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
       //Or if after tmin and tmax is invalid (-1)
-           ( t > window.tmin.at(j) && window.tmax.at(j) < 0 ) )
+           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
       {
          for (int i=0; i<n_sis; i++)
          {
             int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
             if (counts)
             {
-               AddEvent(SISEvent, SISChannels.at(i), window.tzero.at(j));
+               AddEvent(SISEvent, SISChannels.at(i), GetTimeWindows()->tzero.at(j));
             }
          }
       }
-   }
+   }*/
 }
 
 void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)

@@ -129,21 +129,21 @@ void TA2Plot_Filler::LoadData()
    std::vector<double> first_times(UniqueRuns.size(),1E99);
    for (auto& plot: plots)
    {
-      TTimeWindows temp = plot->GetTimeWindows();
+      //TTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
-      for (int t = 0; t < temp.tmax.size(); t++)
+      for (int t = 0; t < plot->GetTimeWindows()->tmax.size(); t++)
       {
          for (size_t i=0; i<UniqueRuns.size(); i++)
-         if (temp.runNumber.at(t)==runNumbers[i])
+         if (plot->GetTimeWindows()->runNumber.at(t)==runNumbers[i])
          {
-            if (temp.tmax.at(t)<0) last_times[i]=1E99;
-            if (last_times[i]<temp.tmax.at(t))
+            if (plot->GetTimeWindows()->tmax.at(t)<0) last_times[i]=1E99;
+            if (last_times[i]<plot->GetTimeWindows()->tmax.at(t))
             {
-               last_times[i]=temp.tmax.at(t);
+               last_times[i]=plot->GetTimeWindows()->tmax.at(t);
             }
-            if (first_times[i]>temp.tmin.at(t))
+            if (first_times[i]>plot->GetTimeWindows()->tmin.at(t))
             {
-               first_times[i]=temp.tmin.at(t);
+               first_times[i]=plot->GetTimeWindows()->tmin.at(t);
             }
          }
       }

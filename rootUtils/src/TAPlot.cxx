@@ -178,7 +178,7 @@ void TAPlot::LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* n
          continue;
       if (t > last_time)
          break;
-      f.AddGEMEvent(&(*GEMEvent), GetTimeWindows());
+      f.AddGEMEvent(&(*GEMEvent), *GetTimeWindows());
    }
    return;
 }
@@ -226,7 +226,7 @@ void TAPlot::LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name
          continue;
       if (t > last_time)
          break;
-      f.AddLVEvent(&(*LVEvent), GetTimeWindows());
+      f.AddLVEvent(&(*LVEvent), *GetTimeWindows());
    }
    return;
 }
@@ -259,17 +259,17 @@ void TAPlot::LoadData()
       int runNumber = Runs[i];
       //Calculate our list time... so we can stop early
       //for (auto& t: GetTimeWindows())
-      TTimeWindows t = GetTimeWindows();
-      for (size_t i=0; i<GetTimeWindows().tmax.size(); i++)
+      //TTimeWindows t = GetTimeWindows();
+      for (size_t i=0; i<GetTimeWindows()->tmax.size(); i++)
       {
-         if (t.runNumber.at(i)==runNumber)
+         if (GetTimeWindows()->runNumber.at(i)==runNumber)
          {
-            if (t.tmax.at(i)<0) 
+            if (GetTimeWindows()->tmax.at(i)<0) 
                last_time = 1E99;
-            if (last_time < t.tmax.at(i))
-               last_time = t.tmax.at(i);
-            if (first_time > t.tmin.at(i) )
-               first_time = t.tmin.at(i);
+            if (last_time < GetTimeWindows()->tmax.at(i))
+               last_time = GetTimeWindows()->tmax.at(i);
+            if (first_time > GetTimeWindows()->tmin.at(i) )
+               first_time = GetTimeWindows()->tmin.at(i);
          }
       }
       LoadfeGEMData(runNumber, first_time, last_time);
