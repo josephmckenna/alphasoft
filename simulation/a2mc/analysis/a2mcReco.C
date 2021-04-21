@@ -35,21 +35,21 @@ void a2mcReco::Reco(bool verbose=false) {
 
         ///< Resetting fAlphaEvent and filling it with the hits of this event
         fAlphaEvent->DeleteEvent(); ///< Resetting fAlphaEvent
-        Bool_t ok = FillAlphaEvent(); ///< ok not used for the moment
-        if(ok) fAlphaEvent->RecEvent();
-        
-        ///< Extracting the information of the reconstructed vertex
         isRecV = false;
-        TAlphaEventVertex *vertex = fAlphaEvent->GetVertex();
-        if(vertex!=NULL&&vertex->IsGood()) {
-            isRecV = true;
-            fRecVdx = vertex->X();
-            fRecVdy = vertex->Y();
-            fRecVdz = vertex->Z();
-            fRecPhi = vertex->Phi();
-            if(verbose) {
-                cout << "MC  Vertex [" << fVdx << ", " << fVdy << ", " << fVdz << "]" << endl;
-                cout << "Rec Vertex [" << fRecVdx << ", " << fRecVdy << ", " << fRecVdz << "]" << endl;
+        if(FillAlphaEvent()) {
+            fAlphaEvent->RecEvent();
+            ///< Extracting the information of the reconstructed vertex
+            TAlphaEventVertex *vertex = fAlphaEvent->GetVertex();
+            if(vertex!=NULL&&vertex->IsGood()) {
+                isRecV = true;
+                fRecVdx = vertex->X();
+                fRecVdy = vertex->Y();
+                fRecVdz = vertex->Z();
+                fRecPhi = vertex->Phi();
+                if(verbose) {
+                    cout << "MC  Vertex [" << fVdx << ", " << fVdy << ", " << fVdz << "]" << endl;
+                    cout << "Rec Vertex [" << fRecVdx << ", " << fRecVdy << ", " << fRecVdz << "]" << endl;
+                }
             }
         }
         ///< Fill the histos
@@ -174,9 +174,9 @@ void a2mcReco::CreateOutputFile() {
 Bool_t a2mcReco::FillAlphaEvent() {
     Int_t nGoodHits = 0;
     for(UInt_t ih=0; ih<SilHits_; ih++) { ///< Loop over the silicon hits
+        if(SilHits_fEdep[ih]*1000 < fHitThreshold) continue; ///< Threshold on the energy released
         Int_t nstrp = SilHits_fnStrp[ih]; /// hit n-strip
         Int_t pstrp = SilHits_fpStrp[ih]; /// hit p-strip
-        if(SilHits_fEdep[ih]*1000 < 0.07) continue; ///< Threshold of 70 keV of energy released
         Double_t q = SilHits_fEdep[ih]*1.e4;
         Int_t hybrid_number=SilHits_fSilID[ih];
         if(hybrid_number < 0 || hybrid_number > 71)
@@ -215,7 +215,7 @@ Bool_t a2mcReco::FillAlphaEvent() {
         }
         if(nside && pside) nGoodHits++;
     } ///< End of loop over the silicon hits
-    if(nGoodHits>=3) return true;
+    if(nGoodHits>=fNMinHits) return true;
     return false;
 }
 
