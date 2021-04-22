@@ -20,18 +20,23 @@
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))
 
+class A2DisplayModuleFlags
+{
+public:
+   bool fAutoSave = false;
+};
+
 class A2DisplayRun: public TARunObject
 {
 private:
    TAlphaDisplay *a2ed;
    bool fBatch;
-   bool fAutoSave = true;
-   //Add flag memeber, implement its class also.
+   bool fAutoSave;
 
 public:
 
-   A2DisplayRun(TARunInfo* runinfo, bool mode)
-      : TARunObject(runinfo), a2ed(NULL), fBatch(mode)
+   A2DisplayRun(TARunInfo* runinfo, bool mode, A2DisplayModuleFlags* fFlags)
+      : TARunObject(runinfo), a2ed(NULL), fBatch(mode), fAutoSave(fFlags->fAutoSave)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
@@ -176,7 +181,7 @@ class A2DisplayModuleFactory: public TAFactory
 {
 public:
    bool fBatch;
-   bool fAutoSave;
+   A2DisplayModuleFlags fFlags;
 public:
    void Usage()
    {
@@ -187,7 +192,6 @@ public:
    {
       printf("A2DisplayModuleFactory::Init!\n");
       fBatch = true;
-      fAutoSave = false;
 
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
@@ -197,7 +201,7 @@ public:
                fBatch = false;
 
             if( args[i] == "--autosave" )
-               fAutoSave = true;
+               fFlags.fAutoSave = true;
          }
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
@@ -214,10 +218,9 @@ public:
          printf("A2DisplayModuleFactory::NewRunObject, run %d, file %s\n", 
                 runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      return new A2DisplayRun(runinfo, fBatch);
+      return new A2DisplayRun(runinfo, fBatch, &fFlags);
    }
 };
-
 
 static TARegister tar(new A2DisplayModuleFactory);
 
