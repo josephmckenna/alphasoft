@@ -411,6 +411,7 @@ public:
 public:
    void Usage()
    {
+      std::cout<<"SpillLogFactor::Help!"<<std::endl;
       std::cout<<"\t--elog\t\tWrite elog (not implemented)"<<std::endl;
       std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
       std::cout<<"\t--spilltxt\t\tWrite Spill log to SpillLog/reload.txt"<<std::endl;
