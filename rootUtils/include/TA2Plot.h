@@ -87,6 +87,36 @@ public:
    void LoadRun(int runNumber, double first_time, double last_time);
    void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
    void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
+   //Intercept negative tmax values and replace with total run time
+   virtual void AddTimeGate(const int runNumber, const double tmin, double tmax)
+   {
+      if (tmax<0)
+         tmax = GetA2TotalRunTime(runNumber);
+      return TAPlot::AddTimeGate(runNumber, tmin, tmax);
+   }
+   virtual void AddTimeGate(const int runNumber, const double tmin, double tmax, const double tzero)
+   {
+      if (tmax<0)
+         tmax = GetA2TotalRunTime(runNumber);
+      return TAPlot::AddTimeGate(runNumber, tmin, tmax, tzero);
+   }
+   virtual void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
+   {
+      for (size_t i=0; i<tmin.size(); i++)
+      {
+        if (tmax[i]<0) tmax[i] = GetA2TotalRunTime(runNumber);
+      }
+      return TAPlot::AddTimeGates(runNumber, tmin, tmax);
+   }
+   virtual void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero)
+   {
+      for (size_t i=0; i<tmin.size(); i++)
+      {
+        if (tmax[i]<0) tmax[i] = GetA2TotalRunTime(runNumber);
+      }
+      return TAPlot::AddTimeGates(runNumber, tmin, tmax, tzero);
+   }
+         
    //If spills are from one run, it is faster to call the function above
    void AddDumpGates(std::vector<TA2Spill> spills );
 

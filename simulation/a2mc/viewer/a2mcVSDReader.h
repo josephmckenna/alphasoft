@@ -20,6 +20,7 @@ public:
     TEvePointSet    *fSilHits       = nullptr;
     TEvePointSet    *fPrimOriginHit = nullptr;
     TEvePointSet    *fPrimDecayHit  = nullptr;
+    TEvePointSet    *fRecoVertexHit = nullptr;
 
 public:
 a2mcVSDReader(const char* file_name) :
@@ -73,6 +74,7 @@ virtual ~a2mcVSDReader() {
 void LoadSilHits(TEvePointSet*&, const TString&);
 void LoadPrimaryOriginHit(TEvePointSet*&, const TString&);
 void LoadPrimaryDecayHit(TEvePointSet*&, const TString&);
+void LoadRecoVertexHit(TEvePointSet*&, const TString&);
 void LoadMCTracks();
 void LoadRecTracks();
 //void LoadClusters(TEvePointSet*&, const TString&, Int_t);
@@ -112,11 +114,15 @@ Int_t DirNameToEventN(string& s) {
 
 ///< Dump (on screen) utilities
 void DumpEvent();
+
+void DumpVertices();
 void DumpSilHits();
 void DumpSilHit();
     
 void DumpMCTracks();
 void DumpMCTrack();
+    
+void DumpRecTracks();
     
     ClassDef(a2mcVSDReader, 0);
 };

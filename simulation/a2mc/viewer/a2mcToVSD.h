@@ -19,6 +19,11 @@
 
 class a2mcToVSD {
 public :
+    a2mcToVSD();
+    a2mcToVSD(Int_t runNumber=0);
+    virtual ~a2mcToVSD();
+
+    ///< Variables for the MC events
     TFile          *fVSDFile;
     TTree          *fChain;   //!pointer to the analyzed TTree or TChain
     Int_t          fCurrent; //!current Tree number in a TChain
@@ -26,6 +31,39 @@ public :
     Int_t          fTotEvents;
     Long64_t       fEvent;
     TDatabasePDG   *pdgDB = new TDatabasePDG();
+
+///< Variables for the reconstructed variables
+    TAlphaEvent*    fAlphaEvent=nullptr;
+    TAlphaEventMap* fAlphaEventMap=nullptr;
+    Bool_t          isRecV;
+    Double_t        fRecVdx = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecPhi = std::numeric_limits<double>::quiet_NaN();
+
+    ///< Methods
+    virtual void            Init(Int_t runNumber=0);
+    virtual void            ResetVariables();
+    virtual Int_t           GetEntry(Long64_t entry);
+    virtual Long64_t        LoadTree(Long64_t entry);
+    virtual void            InitTree(TTree *tree);
+    virtual void            CreateOutputFile();
+    virtual void            WriteVSD(Double_t, Int_t);
+    virtual Bool_t          FillVSDEvent(Int_t, Double_t, Int_t);
+    virtual void            WriteVSDEvent(vector<TEveHit>&, vector<TEveMCTrack>&, vector<TEveRecTrackF>&, Int_t);
+    virtual TEveHit         HitToEveHit(UInt_t);
+    virtual TEveHit         PrimaryOriginToEveHit();
+    virtual TEveHit         PrimaryDecayToEveHit();
+    virtual Bool_t          GoodMCTrack(UInt_t);
+    virtual TEveMCTrack     ToEveMCTrack(UInt_t);
+    virtual TEveHit         RecoVertexToEveHit();
+    virtual TEveRecTrackF   ToEveRecTrack(UInt_t);
+    virtual TVector3        RecTrackVo(TVector3, TVector3);
+    virtual Bool_t          InWard(TVector3,TVector3);
+    virtual void            set_pdg_codes();
+    ///< Reco stuff
+    virtual void            InitReco();
+    virtual Bool_t          FillAlphaEvent(Double_t);
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
     static constexpr Int_t kMaxSilHits   = 5000;
@@ -73,6 +111,7 @@ public :
     Int_t           MCTracks_fPdgCode[kMaxMCTracks];    //[MCTracks_]
     Int_t           MCTracks_fMother[kMaxMCTracks][2];  //[MCTracks_]
     Int_t           MCTracks_fDaughter[kMaxMCTracks][2];//[MCTracks_]
+    Int_t           MCTracks_fTrackID[kMaxMCTracks];    //[MCTracks_]
     Double_t        MCTracks_fPx[kMaxMCTracks];         //[MCTracks_]
     Double_t        MCTracks_fPy[kMaxMCTracks];         //[MCTracks_]
     Double_t        MCTracks_fPz[kMaxMCTracks];         //[MCTracks_]
@@ -127,6 +166,7 @@ public :
     TBranch        *b_MCTracks_fPdgCode;   //!
     TBranch        *b_MCTracks_fMother;   //!
     TBranch        *b_MCTracks_fDaughter;   //!
+    TBranch        *b_MCTracks_fTrackID;   //!
     TBranch        *b_MCTracks_fPx;   //!
     TBranch        *b_MCTracks_fPy;   //!
     TBranch        *b_MCTracks_fPz;   //!
@@ -136,23 +176,6 @@ public :
     TBranch        *b_MCTracks_fVz;   //!
     TBranch        *b_MCTracks_fVt;   //!
 
-    a2mcToVSD();
-    a2mcToVSD(Int_t runNumber=0);
-    virtual ~a2mcToVSD();
-    virtual void            Init(Int_t runNumber=0);
-    virtual Int_t           GetEntry(Long64_t entry);
-    virtual Long64_t        LoadTree(Long64_t entry);
-    virtual void            InitTree(TTree *tree);
-    virtual void            CreateOutputFile();
-    virtual void            WriteVSD();
-    virtual void            WriteEventVSD(vector<TEveHit>&, vector<TEveMCTrack>&, vector<TEveRecTrackF>&, Int_t);
-    virtual TEveHit         HitToEveHit(UInt_t);
-    virtual TEveHit         PrimaryOriginToEveHit();
-    virtual TEveHit         PrimaryDecayToEveHit();
-    virtual TEveRecTrackF   ToEveRecTrack(UInt_t);
-    virtual TEveMCTrack     ToEveMCTrack(UInt_t);
-    virtual Bool_t          GoodTrack(UInt_t);
-    virtual void            set_pdg_codes();
 };
 
 #endif
@@ -164,7 +187,10 @@ a2mcToVSD::a2mcToVSD() : fChain(0) {
 }
 ///< Constructor with the run number
 a2mcToVSD::a2mcToVSD(Int_t runNumber) : fChain(0)  {
+    set_pdg_codes();
     Init(runNumber);
+    InitReco();
+    CreateOutputFile();
 }
 
 ///< Initializer
@@ -186,7 +212,7 @@ void a2mcToVSD::Init(Int_t runNumber) {
     }
     f->GetObject("a2MC",tree);
     InitTree(tree);
-    set_pdg_codes();
+    fTotEvents = fChain->GetEntriesFast();
 }
 
 a2mcToVSD::~a2mcToVSD()
@@ -204,13 +230,43 @@ Int_t a2mcToVSD::GetEntry(Long64_t entry)
 Long64_t a2mcToVSD::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
-   if (!fChain) return -5;
-   Long64_t centry = fChain->LoadTree(entry);
-   if (centry < 0) return centry;
-   if (fChain->GetTreeNumber() != fCurrent) {
-      fCurrent = fChain->GetTreeNumber();
-   }
-   return centry;
+    if (!fChain) return -5;
+    Long64_t centry = fChain->LoadTree(entry);
+    if (centry < 0) return centry;
+    fChain->GetEntry(fEvent);
+    return centry;
+}
+
+void a2mcToVSD::InitReco() {
+    // Initialize geometry
+    new TGeoManager("TALPHAGeo", "ALPHA ROOT geometry manager");
+  
+    // load the material definitions
+    TAlphaGeoMaterialXML * materialXML = new TAlphaGeoMaterialXML();
+  
+    Char_t pathname[128];
+    //  sprintf(pathname,"geo/material.xml");
+    sprintf(pathname,"%s/a2lib/geo/material2.xml",getenv("AGRELEASE"));
+    materialXML->ParseFile(pathname);
+    delete materialXML;
+
+    TAlphaGeoEnvironmentXML * environmentXML = new TAlphaGeoEnvironmentXML();
+    //  sprintf(pathname,"geo/environment_geo.xml");
+    sprintf(pathname,"%s/a2lib/geo/environment2_geo.xml",getenv("AGRELEASE"));
+    environmentXML->ParseFile(pathname);
+    delete environmentXML;
+
+    TAlphaGeoDetectorXML * detectorXML = new TAlphaGeoDetectorXML();
+    //  sprintf(pathname,"geo/detector_geo.xml");
+    sprintf(pathname,"%s/a2lib/geo/detector2_geo.xml",getenv("AGRELEASE"));
+    detectorXML->ParseFile(pathname);
+    delete detectorXML;
+
+    // close geometry
+    gGeoManager->CloseGeometry();
+
+    fAlphaEventMap  =   new TAlphaEventMap();  
+    fAlphaEvent     =   new TAlphaEvent(fAlphaEventMap);
 }
 
 void a2mcToVSD::InitTree(TTree *tree)
@@ -278,6 +334,7 @@ void a2mcToVSD::InitTree(TTree *tree)
         fChain->SetBranchAddress("MCTracks.fPdgCode", MCTracks_fPdgCode, &b_MCTracks_fPdgCode);
         fChain->SetBranchAddress("MCTracks.fMother[2]", MCTracks_fMother, &b_MCTracks_fMother);
         fChain->SetBranchAddress("MCTracks.fDaughter[2]", MCTracks_fDaughter, &b_MCTracks_fDaughter);
+        fChain->SetBranchAddress("MCTracks.fTrackID", MCTracks_fTrackID, &b_MCTracks_fTrackID);
         fChain->SetBranchAddress("MCTracks.fPx", MCTracks_fPx, &b_MCTracks_fPx);
         fChain->SetBranchAddress("MCTracks.fPy", MCTracks_fPy, &b_MCTracks_fPy);
         fChain->SetBranchAddress("MCTracks.fPz", MCTracks_fPz, &b_MCTracks_fPz);
@@ -291,29 +348,69 @@ void a2mcToVSD::InitTree(TTree *tree)
     }
 }
 
+void a2mcToVSD::ResetVariables() { ///< Resetting variables for the next events
+    fVox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fVoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fVoz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    fPox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fPoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fPoz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin momentum
+    fEo  = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin energy
+    fVdx = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    fVdy = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    fVdz = std::numeric_limits<double>::quiet_NaN(); ///< Primary decay vertex
+    SilHits_    = 0;
+    SilDigi_    = 0;
+    MCTracks_   = 0;
+}
+
 void a2mcToVSD::set_pdg_codes() {
     double mp = 0.938272; // mass of the proton in GeV/c2
+    ///< muons          => PDGCode (mu+) 13 or (mu-) -13
+    ///< antiprotons    => PDGCode -2212
 //TParticlePDG * TDatabasePDG::AddParticle 	(name,title,mass,stable,width,charge,class,PDGcode)
-    pdgDB->AddParticle("D","Nuclei",    mp*2.,1.,0.,1.,"",      1000010020);
-    pdgDB->AddParticle("T","Nuclei",    mp*3.,1.,0.,1.,"",      1000010030);
-    pdgDB->AddParticle("He3","Nuclei",  mp*3.,1.,0.,2.,"",      1000020030);
-    pdgDB->AddParticle("He4","Nuclei",  mp*4.,1.,0.,2.,"",      1000020040);
-    pdgDB->AddParticle("Li","Nuclei",   mp*6.,1.,0.,3.,"",      1000030060);
-    pdgDB->AddParticle("C","Nuclei",    mp*20.,1.,0.,6.,"",     1000060120);
-    pdgDB->AddParticle("N","Nuclei",    mp*15.,1.,0.,7.,"",     1000070150);
-    pdgDB->AddParticle("O","Nuclei",    mp*16.,1.,0.,8.,"",     1000080160);
-    pdgDB->AddParticle("O15","Nuclei",  mp*15.,1.,0.,8.,"",     1000080150);
-    pdgDB->AddParticle("F","Nuclei",    mp*18.,1.,0.,9.,"",     1000090180);
-    pdgDB->AddParticle("Ne","Nuclei",   mp*20.,1.,0.,10.,"",    1000100200);
-    pdgDB->AddParticle("Na","Nuclei",   mp*22.,1.,0.,11.,"",    1000110220);
-    pdgDB->AddParticle("Na23","Nuclei", mp*23.,1.,0.,11.,"",    1000110230);
-    pdgDB->AddParticle("Mg","Nuclei",   mp*24.,1.,0.,12.,"",    1000120240);
-    pdgDB->AddParticle("Mg25","Nuclei", mp*25.,1.,0.,12.,"",    1000120250);
-    pdgDB->AddParticle("Mg26","Nuclei", mp*26.,1.,0.,12.,"",    1000120260);
-    pdgDB->AddParticle("Al","Nuclei",   mp*25.,1.,0.,13.,"",    1000130250);
-    pdgDB->AddParticle("Al25","Nuclei", mp*27.,1.,0.,13.,"",    1000130270);
-    pdgDB->AddParticle("Si","Nuclei",   mp*28.,1.,0.,14.,"",    1000140280);
-    pdgDB->AddParticle("Si30","Nuclei", mp*30.,1.,0.,14.,"",    1000140300);
+    pdgDB->AddParticle("D","D",         mp*2.,1.,0.,1.,"Nuclei",      1000010020);
+    pdgDB->AddParticle("T","T",         mp*3.,1.,0.,1.,"Nuclei",      1000010030);
+    pdgDB->AddParticle("He3","He3",     mp*3.,1.,0.,2.,"Nuclei",      1000020030);
+    pdgDB->AddParticle("He4","He4",     mp*4.,1.,0.,2.,"Nuclei",      1000020040);
+    pdgDB->AddParticle("Li","Li",       mp*6.,1.,0.,3.,"Nuclei",      1000030060);
+    pdgDB->AddParticle("Li7","Li7",     mp*7.,1.,0.,27.,"Nuclei",     1000030070);
+    pdgDB->AddParticle("B11","B11",     mp*11.,1.,0.,5.,"Nuclei",     1000050110);
+    pdgDB->AddParticle("C","C",         mp*12.,1.,0.,6.,"Nuclei",     1000060120);
+    pdgDB->AddParticle("N14","N14",     mp*14.,1.,0.,7.,"Nuclei",     1000070140);
+    pdgDB->AddParticle("N","N",         mp*15.,1.,0.,7.,"Nuclei",     1000070150);
+    pdgDB->AddParticle("O","O",         mp*16.,1.,0.,8.,"Nuclei",     1000080160);
+    pdgDB->AddParticle("O15","O15",     mp*15.,1.,0.,8.,"Nuclei",     1000080150);
+    pdgDB->AddParticle("F","F",         mp*18.,1.,0.,9.,"Nuclei",     1000090180);
+    pdgDB->AddParticle("Ne","Ne",       mp*20.,1.,0.,10.,"Nuclei",    1000100200);
+    pdgDB->AddParticle("Ne21","Ne21",   mp*21.,1.,0.,10.,"Nuclei",    1000100210);
+    pdgDB->AddParticle("Ne22","Ne22",   mp*22.,1.,0.,10.,"Nuclei",    1000100220);
+    pdgDB->AddParticle("Na","Na",       mp*22.,1.,0.,11.,"Nuclei",    1000110220);
+    pdgDB->AddParticle("Na23","Na23",   mp*23.,1.,0.,11.,"Nuclei",    1000110230);
+    pdgDB->AddParticle("Mg","Mg",       mp*24.,1.,0.,12.,"Nuclei",    1000120240);
+    pdgDB->AddParticle("Mg25","Mg25",   mp*25.,1.,0.,12.,"Nuclei",    1000120250);
+    pdgDB->AddParticle("Mg26","Mg26",   mp*26.,1.,0.,12.,"Nuclei",    1000120260);
+    pdgDB->AddParticle("Al","Al",       mp*25.,1.,0.,13.,"Nuclei",    1000130250);
+    pdgDB->AddParticle("Al27","Al27",   mp*27.,1.,0.,13.,"Nuclei",    1000130270);
+    pdgDB->AddParticle("Si27","Si27",   mp*27.,1.,0.,14.,"Nuclei",    1000140270);
+    pdgDB->AddParticle("Si","Si",       mp*28.,1.,0.,14.,"Nuclei",    1000140280);
+    pdgDB->AddParticle("Si30","Si30",   mp*30.,1.,0.,14.,"Nuclei",    1000140300);
+    pdgDB->AddParticle("Ca42","Ca42",   mp*42.,1.,0.,27.,"Nuclei",    1000200420);
+    pdgDB->AddParticle("Sc43","Sc43",   mp*43.,1.,0.,27.,"Nuclei",    1000210430);
+    pdgDB->AddParticle("Ti46","Ti46",   mp*46.,1.,0.,27.,"Nuclei",    1000220460);
+    pdgDB->AddParticle("Cr50","Cr50",   mp*50.,1.,0.,27.,"Nuclei",    1000240500);
+    pdgDB->AddParticle("Co57","Co57",   mp*57.,1.,0.,27.,"Nuclei",    1000270570);
+    pdgDB->AddParticle("Ni60","Ni60",   mp*60.,1.,0.,27.,"Nuclei",    1000280600);
+    pdgDB->AddParticle("F21", "F21",    mp*21.,1.,0.,9., "Nuclei",    1000090210);
+    pdgDB->AddParticle("K40", "K40",    mp*40.,1.,0.,19.,"Nuclei",    1000190400);
+    pdgDB->AddParticle("Ti48", "Ti48",  mp*48.,1.,0.,22.,"Nuclei",    1000220480);
+    pdgDB->AddParticle("V47", "V47",    mp*47.,1.,0.,23.,"Nuclei",    1000230470);
+    pdgDB->AddParticle("Mn54", "Mn54",  mp*54.,1.,0.,25.,"Nuclei",    1000250540);
+    pdgDB->AddParticle("Fe55", "Fe55",  mp*55.,1.,0.,26.,"Nuclei",    1000260550);
+    pdgDB->AddParticle("Co59", "Co59",  mp*59.,1.,0.,27.,"Nuclei",    1000270590);
+    pdgDB->AddParticle("Ni64", "Ni64",  mp*64.,1.,0.,28.,"Nuclei",    1000280640);
+    pdgDB->AddParticle("Cu63", "Cu63",  mp*63.,1.,0.,29.,"Nuclei",    1000290630);
+    pdgDB->AddParticle("Y86", "Y86",    mp*86.,1.,0.,39.,"Nuclei",    1000390860);
 }
 
 #endif // #ifdef a2mcToVSD_cxx
