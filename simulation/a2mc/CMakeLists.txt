@@ -7,12 +7,18 @@
 # E01 example - I. Hrivnacova                    #
 ##################################################
 
+
 # To be sure your cmake version in recent enough
-cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR)
 
 # Project name
 project(a2MC)
 
+# Fixing RPATH handling for MacOS
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+    message(STATUS "OSX ARCHITECTURE DETECTED: " ${CMAKE_SYSTEM})
+#    cmake_policy(SET CMP0042 NEW)
+endif()
 
 #----------------------------------------------------------------------------
 # Define unique names of libraries and executables based on project name

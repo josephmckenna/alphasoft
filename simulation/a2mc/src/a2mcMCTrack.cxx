@@ -17,6 +17,7 @@ a2mcMCTrack::a2mcMCTrack()
   fDaughter[0] = -1;  // Indices of the daughter particles
   fMother[1] = 0; 	  // Indices of the mother particles
   fDaughter[1] = -1;  // Indices of the daughter particles
+  fTrackID = -1;      // Track ID
   fPx = 0.; 		 // x component of momentum
   fPy = 0.; 		 // y component of momentum
   fPz = 0.; 		 // z component of momentum
@@ -32,13 +33,16 @@ a2mcMCTrack::a2mcMCTrack()
 
 
 // -----   Constructor from TParticle   ------------------------------------
-a2mcMCTrack::a2mcMCTrack(TParticle* part)
+a2mcMCTrack::a2mcMCTrack(TParticle* part, Int_t trkid=-1)
 {
   fPdgCode     = part->GetPdgCode();
   fMother[0]   = part->GetFirstMother();
   fMother[1]   = part->GetSecondMother();
   fDaughter[0] = part->GetFirstDaughter();
   fDaughter[1] = part->GetLastDaughter();
+
+  fTrackID     = trkid;
+
   fPx          = part->Px();
   fPy          = part->Py();
   fPz          = part->Pz();
