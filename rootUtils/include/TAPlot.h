@@ -197,7 +197,7 @@ class TTimeWindows : public TObject
          //Checks whether vector is sorted and sorts if not.
          if(!isSorted)
          {
-            //SortTimeWindows();
+            SortTimeWindows();
             isSorted = true;
             assert( tmin.size() == tmax.size() );
          }
@@ -220,16 +220,19 @@ class TTimeWindows : public TObject
          return -2;
       }
       template <class T>
-      std::vector<T> reorder(std::vector<T>& nums, std::vector<size_t>& index)
+      void reorder(std::vector<T>* nums, std::vector<size_t> index)
       {
-         int n = nums.size();
-         std::vector<T> ans(n);
+         int n = nums->size();
+         std::vector<T> newest;
          for (int i = 0; i < n; i++)
          {
-            ans[i]=nums[i];
-         }   
-         // finally return ans
-         return ans;
+            newest.push_back( nums->at( index.at(i) ) );
+         }
+         for (int i = 0; i < n; i++)
+         {
+            nums->at(i) = newest.at(i);
+            
+         }  
       }
       void SortTimeWindows()
       {
@@ -247,7 +250,7 @@ class TTimeWindows : public TObject
          //Sort based on first (tmin) keeping idx in the same location
          std::sort(std::begin(zipped), std::end(zipped), 
          [&](const std::pair<double,double>& a, const std::pair<double,double>& b)
-         {return a.second > b.second;} );
+         {return a.first < b.first;} );
          
          //Unzip back into vectors.
          for(size_t i=0; i<tmin.size(); i++)
@@ -256,10 +259,9 @@ class TTimeWindows : public TObject
             idx[i] = zipped[i].second;
          }
 
-         runNumber=reorder<int>(runNumber,idx);
-         tmin=reorder<double>(tmin,idx);
-         tmax=reorder<double>(tmax,idx);
-         tzero=reorder<double>(tzero,idx);
+         reorder<int>(&runNumber,idx);
+         reorder<double>(&tmax,idx);
+         reorder<double>(&tzero,idx);
   
          isSorted = true;
       }
@@ -471,7 +473,7 @@ class TAPlot: public TObject
       std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
       std::vector<feGEMdata> feGEM;
-      
+
       std::vector<feLVdata> feLV;
       TTimeStamp ObjectConstructionTime{0};
       TTimeStamp DataLoadedTime{0};
