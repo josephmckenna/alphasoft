@@ -23,6 +23,9 @@
 class A2DisplayModuleFlags
 {
 public:
+   //By default, run in batch mode (no event display)
+   bool fBatch = true;
+   //By default do not auto save plots (depends on above being set to false)
    bool fAutoSave = false;
 };
 
@@ -30,13 +33,12 @@ class A2DisplayRun: public TARunObject
 {
 private:
    TAlphaDisplay *a2ed;
-   bool fBatch;
-   bool fAutoSave;
+   A2DisplayModuleFlags* fFlags;
 
 public:
 
-   A2DisplayRun(TARunInfo* runinfo, bool mode, A2DisplayModuleFlags* fFlags)
-      : TARunObject(runinfo), a2ed(NULL), fBatch(mode), fAutoSave(fFlags->fAutoSave)
+   A2DisplayRun(TARunInfo* runinfo, A2DisplayModuleFlags* flags)
+      : TARunObject(runinfo), a2ed(NULL), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
@@ -99,7 +101,7 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fBatch )
+      if( fFlags->fBatch )
       {
 #ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -159,7 +161,7 @@ public:
          //flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
          //printf("A2ed::ShowEvent is %d\n",flags);
          //alphaevent->Print();
-         if(fAutoSave)
+         if(fFlags->fAutoSave)
          {
             char fname[256];
             sprintf(fname,"R%d_E%d.png", runinfo->fRunNo , silevent->GetVF48NEvent());
@@ -180,7 +182,6 @@ public:
 class A2DisplayModuleFactory: public TAFactory
 {
 public:
-   bool fBatch;
    A2DisplayModuleFlags fFlags;
 public:
    void Usage()
@@ -191,14 +192,12 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("A2DisplayModuleFactory::Init!\n");
-      fBatch = true;
-
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
       for (unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--a2ed" )
-               fBatch = false;
+               fFlags.fBatch = false;
 
             if( args[i] == "--autosave" )
                fFlags.fAutoSave = true;
@@ -211,14 +210,14 @@ public:
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      if( fBatch )
+      if( fFlags.fBatch )
          printf("A2DisplayModuleFactory::NewRunObject, run %d, file %s -- BATCH MODE\n",
                 runinfo->fRunNo, runinfo->fFileName.c_str());
       else
          printf("A2DisplayModuleFactory::NewRunObject, run %d, file %s\n", 
                 runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      return new A2DisplayRun(runinfo, fBatch, &fFlags);
+      return new A2DisplayRun(runinfo, &fFlags);
    }
 };
 
