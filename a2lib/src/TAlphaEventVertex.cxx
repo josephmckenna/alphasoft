@@ -108,7 +108,6 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
 
   minuit2MeanDCA fcn(&fHelices);
   ROOT::Minuit2::MnUserParameters upar;
-  //Oct 13 fits 1300mW sim
   upar.Add( "fX", fX, 0.1, -10, 10 );
   upar.Add( "fY", fY, 0.1, -10, 10 );
   upar.Add( "fZ", fZ, 0.1, -50, 50 );
@@ -118,7 +117,7 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  ROOT::Minuit2::FunctionMinimum min = minimdca(100);
+  ROOT::Minuit2::FunctionMinimum min = minimdca(10);
   //upar =minimdca.Parameters();
   //minimdca = new TMinuit(3);
   //minimdca->SetPrintLevel(-1);
@@ -208,7 +207,7 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  ROOT::Minuit2::FunctionMinimum min = mini(100);
+  ROOT::Minuit2::FunctionMinimum min = mini(10);
   //upar =mini.Parameters();
   
   //mini = new TMinuit(1);
