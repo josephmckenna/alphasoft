@@ -13,15 +13,9 @@ int makeGas(double CO2frac = 10, int nEF = 20, double EFmax = 200000, int nBF = 
     // Make a medium
     Garfield::MediumMagboltz* gas = new Garfield::MediumMagboltz();
     gas->SetComposition("ar", 100.-CO2frac, "co2", CO2frac);
-    //    gas->SetComposition("ar", 64., "co2", 26., "cf4", 10.);
-    // //    double o2frac = 0.2;// %
-    // double o2frac = 0.1;//
-    // double n2frac = o2frac*78./21.;
-    // double nonAirfrac = 100.-(o2frac+n2frac);
-    // gas->SetComposition("ar", nonAirfrac-(nonAirfrac*CO2frac*1.e-2), "co2", nonAirfrac*CO2frac*1.e-2, "o2", o2frac, "n2", n2frac);
     gas->SetTemperature(293.15); // K
     //    gas->SetPressure(760.); // Torr @ TRIUMF
-    gas->SetPressure(725.); // Torr @ CERN 
+    gas->SetPressure(725.); // Torr @ CERN, it may be 735 Torr = 980 hPa, altitude 432 m
 
     // Set electric field (EF) range covered by gas table.
     double EFmin =    100.; // V/cm
