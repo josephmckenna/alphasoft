@@ -12,15 +12,22 @@
 #include "Garfield/MediumMagboltz.hh"
 #include "Garfield/Sensor.hh"
 
-bool LoadGas(Garfield::MediumMagboltz *gas, const char *gasfile){
-    if(gas->LoadGasFile(gasfile)) return true;
-    else {
-        std::ostringstream oss;
-        assert(getenv("AGRELEASE"));
-        oss << getenv("AGRELEASE") << "/simulation/common/gas_files/" << gasfile;
-        std::cout << "Loading gas file '" << oss.str() << "'" << std::endl;
-        return gas->LoadGasFile(oss.str().c_str());
-    }
+bool LoadGas(Garfield::MediumMagboltz *gas, const char *gasfile)
+{
+    if(gas->LoadGasFile(gasfile))
+       {
+          std::cerr << "Loaded "<< gasfile << " from pwd." << std::endl;
+          return true;
+       }
+    else 
+       {
+          std::ostringstream oss;
+          assert(getenv("AGRELEASE"));
+          oss << getenv("AGRELEASE") << "/simulation/common/gas_files/" << gasfile;
+          std::cerr << "Loading gas file '" << oss.str() << "'" << std::endl;
+          return gas->LoadGasFile(oss.str().c_str());
+       }
+    return false;
 }
 
 // Inverse of the cumulative probability distribution for avalanche distances from the wire in Ar/CO2 90/10
