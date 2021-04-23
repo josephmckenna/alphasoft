@@ -184,7 +184,7 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "acapra" ] ; then
       export DATADIR=/daq/alpha_data0/acapra/alphag
       export MCDATA=${DATADIR}/MCdata
-      export GPPDATA=${DATADIR}/GPPdata
+      export GARFIELDPP=${DATADIR}/GPPdata
       export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
       acapra
   fi
