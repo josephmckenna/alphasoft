@@ -33,7 +33,8 @@ int main(int argc, char * argv[])
 
   double QuenchFraction=0.1;
 
-  double pressure=725.; // Torr
+  double pressure=725.; // Torr @ CERN, it may be 735 Torr = 980 hPa, altitude 432 m
+
 
   if( argc == 3 )
     {
@@ -86,17 +87,22 @@ int main(int argc, char * argv[])
   MediumMagboltz *gas = new MediumMagboltz;
   
   // Gas file created with other software
-  TString gasfile = TString::Format("ar_%2.0f_co2_%2.0f_NTP_20E200000_6B1.25.gas",
+  // TString gasfile = TString::Format("ar_%2.0f_co2_%2.0f_NTP_20E200000_6B1.25.gas",
+  //                                   (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2);
+  // if( pressure )
+  //   gasfile = TString::Format("ar_%2.0f_co2_%2.0f_%1.0fTorr_20E200000_4B1.10.gas",
+  //                             (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,pressure);
+  TString gasfile = TString::Format("%s/simulation/common/gas_files/ar_%2.0f_co2_%2.0f_NTP_25E1000000_10B2.00.gas",
+                                    getenv("AGRELEASE"),
                                     (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2);
-  if( pressure )
-    gasfile = TString::Format("ar_%2.0f_co2_%2.0f_%1.0fTorr_20E200000_4B1.10.gas",
-                              (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,pressure);
   cerr<<gasfile<<endl;
-  if( LoadGas(gas,gasfile.Data()) )
-    cerr<<"gasfile OK"<<endl;
-  else
-    return -47;
-
+  // if( LoadGas(gas,gasfile.Data()) )
+  //   cerr<<"gasfile OK"<<endl;
+  // else
+  //   return -47;
+  if(gas->LoadGasFile(gasfile.Data()))
+     std::cerr << "Gas file: "<< gasfile << " loaded" << std::endl;
+  else return -47;
   if( pressure )
     gas->SetPressure(pressure);
 
