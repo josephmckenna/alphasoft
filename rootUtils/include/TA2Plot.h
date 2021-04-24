@@ -76,7 +76,6 @@ class TSISPlotEvents: public TObject
       }
       void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel)
       {
-         std::cout << "Adding SIS event." << std::endl;
          runNumber.push_back(m_runNumber);
          t.push_back(m_ti);  
          OfficialTime.push_back(m_OfficialTime);
