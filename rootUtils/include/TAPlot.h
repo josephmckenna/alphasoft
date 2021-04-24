@@ -71,7 +71,7 @@ class TVertexEvents: public TObject
          }
       }
       //Assignment operator.
-      TVertexEvents operator=(const TVertexEvents m_VertexEvents)
+      TVertexEvents& operator=(const TVertexEvents& m_VertexEvents)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
          for(int i = 0; i <= m_VertexEvents.xs.size(); i++)
@@ -139,7 +139,7 @@ class TTimeWindows : public TObject
             tzero.push_back(m_TimeWindows.tzero[i]);
          }
       }
-      TTimeWindows operator=(const TTimeWindows m_TimeWindows)
+      TTimeWindows& operator=(const TTimeWindows& m_TimeWindows)
       {
          std::cout << "TTimeWindows = operator." << std::endl;
          for(int i = 0; i<m_TimeWindows.tmin.size(); i++)
