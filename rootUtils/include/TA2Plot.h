@@ -50,7 +50,7 @@ class TSISPlotEvents: public TObject
          this->SIS_Channel .insert(this->SIS_Channel.end(),    plotB.SIS_Channel.begin(),    plotB.SIS_Channel.end() );
          return *this;
       }
-      TSISPlotEvents operator=(const TSISPlotEvents m_SISEvent)
+      TSISPlotEvents& operator=(const TSISPlotEvents& m_SISEvent)
       {
          for(int i = 0; i<m_SISEvent.t.size(); i++)
          {
