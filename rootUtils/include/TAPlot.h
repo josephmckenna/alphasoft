@@ -186,11 +186,7 @@ class TTimeWindows : public TObject
             assert(_tzero<_tmax);
          }
          assert(_tzero>=_tmin);
-         //LMGTODO
          int sizes = tmin.size();
-         std::cout << "Just pushed back and now we have: " << sizes << ". Gives the following vector: "<< "(" << tmin.at(sizes-1) << ", " << tmax.at(sizes-1) << ", " << tzero.at(sizes-1) << ", " << runNumber.at(sizes-1) << ")" << std::endl;
-                  
-
       }
       int GetValidWindowNumber(double t)
       {
@@ -506,7 +502,6 @@ class TAPlot: public TObject
          VertexEvents.RunTimes.push_back(RunTime);
          VertexEvents.nHelices.push_back(nHelices);
          VertexEvents.nTracks.push_back(nTracks);
-         std::cout << "The following vertex event has been added: (" << runNumber << ", " << EventNo << ", " << CutsResult << ", " << VertexStatus << ", " << x << ", " << y << ", " << z << ", " << t << ", " << EventTime << ", " << RunTime << ", " << nHelices << ", " << nTracks <<  ")" << std::endl; 
       }
       TTimeWindows* GetTimeWindows()               {  return &TimeWindows; }
       const TVertexEvents* GetVertexEvents()             {  return &VertexEvents; }
