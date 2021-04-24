@@ -268,7 +268,7 @@ class TTimeWindows : public TObject
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
-class feENVdataPlot
+class feENVdataPlot: public TObject
 {
    public:
       std::vector<double> t;
@@ -311,7 +311,8 @@ class feENVdataPlot
 };
 
 //Collection of feLabVIEW / feGEM data with the same name (the same source)
-class feENVdata {
+class feENVdata: public TObject 
+{
    public:
       std::string name;
       std::string title;
