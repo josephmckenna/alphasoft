@@ -216,19 +216,17 @@ class TTimeWindows : public TObject
          return -2;
       }
       template <class T>
-      void reorder(std::vector<T>* nums, std::vector<size_t> index)
+      std::vector<T> reorder(std::vector<T> nums, std::vector<size_t> index)
       {
-         int n = nums->size();
-         std::vector<T> newest;
+         const int n = nums.size();
+         std::vector<T> newest(n);
+         newest.resize(n);
          for (int i = 0; i < n; i++)
          {
-            newest.push_back( nums->at( index.at(i) ) );
+            newest[i] = nums[ index[i] ] ;
          }
-         for (int i = 0; i < n; i++)
-         {
-            nums->at(i) = newest.at(i);
-            
-         }  
+         nums.clear();
+         return newest;  
       }
       void SortTimeWindows()
       {
@@ -255,9 +253,9 @@ class TTimeWindows : public TObject
             idx[i] = zipped[i].second;
          }
 
-         reorder<int>(&runNumber,idx);
-         reorder<double>(&tmax,idx);
-         reorder<double>(&tzero,idx);
+         runNumber = reorder<int>(runNumber,idx);
+         tmax = reorder<double>(tmax,idx);
+         tzero = reorder<double>(tzero,idx);
   
          isSorted = true;
       }
