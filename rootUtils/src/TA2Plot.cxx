@@ -119,10 +119,10 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    {
       for (int i=0; i<n_sis; i++)
       {
-         int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
+         int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
          if (counts)
          {
-            AddEvent(SISEvent, SISChannels.at(i), GetTimeWindows()->tzero.at(index));
+            AddEvent(SISEvent, SISChannels[i], GetTimeWindows()->tzero[index]);
          }
       }
    }
@@ -321,33 +321,33 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    int runno=0;
    for (int i = 0; i<SISEvents.t.size(); i++)
    {
-      if (SISEvents.runNumber.at(i)!=runno)
+      if (SISEvents.runNumber[i]!=runno)
       {
-         runno=SISEvents.runNumber.at(i);
+         runno=SISEvents.runNumber[i];
          SetSISChannels(runno);
       }
       double time;
       if (ZeroTimeAxis)
-         time = SISEvents.t.at(i);
+         time = SISEvents.t[i];
       else
-         time = SISEvents.OfficialTime.at(i);
+         time = SISEvents.OfficialTime[i];
       if (max_dump_length<SCALECUT) 
          time=time*1000.;
-      int Channel         = SISEvents.SIS_Channel.at(i);
-      int CountsInChannel = SISEvents.Counts.at(i);
-      if (Channel == trig.find(SISEvents.runNumber.at(i))->second)
+      int Channel         = SISEvents.SIS_Channel[i];
+      int CountsInChannel = SISEvents.Counts[i];
+      if (Channel == trig.find(SISEvents.runNumber[i])->second)
          FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == trig_nobusy.find(SISEvents.runNumber[i])->second)
          FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == atom_or.find(SISEvents.runNumber[i])->second)
          FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == Beam_Injection.find(SISEvents.runNumber[i])->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == Beam_Ejection.find(SISEvents.runNumber[i])->second)
          AddEjection(time);
-      else if (Channel == CATStart.find(SISEvents.runNumber.at(i))->second || Channel == RCTStart.find(SISEvents.runNumber.at(i))->second || Channel == ATMStart.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == CATStart.find(SISEvents.runNumber[i])->second || Channel == RCTStart.find(SISEvents.runNumber[i])->second || Channel == ATMStart.find(SISEvents.runNumber[i])->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop.find(SISEvents.runNumber.at(i))->second || Channel == RCTStop.find(SISEvents.runNumber.at(i))->second || Channel == ATMStop.find(SISEvents.runNumber.at(i))->second)
+      else if (Channel == CATStop.find(SISEvents.runNumber[i])->second || Channel == RCTStop.find(SISEvents.runNumber[i])->second || Channel == ATMStop.find(SISEvents.runNumber[i])->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
@@ -360,15 +360,15 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    {
       Double_t time;
       if (ZeroTimeAxis)
-         time = VEs->ts.at(i);
+         time = VEs->ts[i];
       else
-         time = VEs->RunTimes.at(i);
+         time = VEs->RunTimes[i];
       if (max_dump_length<SCALECUT)
          time=time*1000.;
-      vtx=TVector3(VEs->xs.at(i),VEs->ys.at(i),VEs->zs.at(i));
+      vtx=TVector3(VEs->xs[i],VEs->ys[i],VEs->zs[i]);
       FillHistogram("tSVD",time);
 
-      int CutsResult=VEs->CutsResults.at(i);
+      int CutsResult=VEs->CutsResults[i];
       if (MVAMode>0)
       {
          if (CutsResult & 1)//Passed cut result!
@@ -395,14 +395,14 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          }
          else
          {
-            if ( VEs->VertexStatuses.at(i) > 0) 
+            if ( VEs->VertexStatuses[i] > 0) 
             {
                FillHistogram("tvtx",time);
             }
             else 
                continue;
          }
-         if (VEs->VertexStatuses.at(i) <= 0) continue; //Don't draw invaid vertices
+         if (VEs->VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());

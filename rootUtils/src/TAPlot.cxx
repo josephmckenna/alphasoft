@@ -49,25 +49,25 @@ TAPlot::TAPlot(const TAPlot& m_TAPlot) : ZeroTimeAxis(m_TAPlot.ZeroTimeAxis)
    VertexEvents               = m_TAPlot.VertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
-      Ejections.push_back(m_TAPlot.Ejections.at(i));
+      Ejections.push_back(m_TAPlot.Ejections[i]);
    
    for(int i=0;i<m_TAPlot.Injections.size();i++)
-      Injections.push_back(m_TAPlot.Injections.at(i));
+      Injections.push_back(m_TAPlot.Injections[i]);
    
    for(int i=0;i<m_TAPlot.DumpStarts.size();i++)
-      DumpStarts.push_back(m_TAPlot.DumpStarts.at(i));
+      DumpStarts.push_back(m_TAPlot.DumpStarts[i]);
    
    for(int i=0;i<m_TAPlot.DumpStops.size();i++)
-      DumpStops.push_back(m_TAPlot.DumpStops.at(i));
+      DumpStops.push_back(m_TAPlot.DumpStops[i]);
    
    for(int i=0;i<m_TAPlot.Runs.size();i++)
-      Runs.push_back(m_TAPlot.Runs.at(i));
+      Runs.push_back(m_TAPlot.Runs[i]);
    
    for(int i=0;i<m_TAPlot.feGEM.size();i++)
-      feGEM.push_back(m_TAPlot.feGEM.at(i));
+      feGEM.push_back(m_TAPlot.feGEM[i]);
    
    for(int i=0;i<m_TAPlot.feLV.size();i++)
-      feLV.push_back(m_TAPlot.feLV.at(i));
+      feLV.push_back(m_TAPlot.feLV[i]);
 
    ObjectConstructionTime        = m_TAPlot.ObjectConstructionTime ;
    DataLoadedTime                = m_TAPlot.DataLoadedTime ;
@@ -260,14 +260,14 @@ void TAPlot::LoadData()
       //TTimeWindows t = GetTimeWindows();
       for (size_t i=0; i<GetTimeWindows()->tmax.size(); i++)
       {
-         if (GetTimeWindows()->runNumber.at(i)==runNumber)
+         if (GetTimeWindows()->runNumber[i]==runNumber)
          {
-            if (GetTimeWindows()->tmax.at(i)<0) 
+            if (GetTimeWindows()->tmax[i]<0) 
                last_time = 1E99;
-            if (last_time < GetTimeWindows()->tmax.at(i))
-               last_time = GetTimeWindows()->tmax.at(i);
-            if (first_time > GetTimeWindows()->tmin.at(i) )
-               first_time = GetTimeWindows()->tmin.at(i);
+            if (last_time < GetTimeWindows()->tmax[i])
+               last_time = GetTimeWindows()->tmax[i];
+            if (first_time > GetTimeWindows()->tmin[i] )
+               first_time = GetTimeWindows()->tmin[i];
          }
       }
       LoadfeGEMData(runNumber, first_time, last_time);
@@ -363,7 +363,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetGEMGraphs()
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindows.runNumber.at(i) == UniqueRuns.at(ColourID))
+            if (TimeWindows.runNumber[i] == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -433,7 +433,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
          size_t ColourID=0;
          for ( ; ColourID< UniqueRuns.size(); ColourID++)
          {
-            if (TimeWindows.runNumber.at(i) == UniqueRuns.at(ColourID))
+            if (TimeWindows.runNumber[i] == UniqueRuns.at(ColourID))
                break;
          }
          TGraph* graph = f.BuildGraph(i,ZeroTimeAxis);
@@ -721,25 +721,25 @@ TAPlot& TAPlot::operator=(const TAPlot& m_TAPlot)
    this->VertexEvents = m_TAPlot.VertexEvents;
 
    for(int i=0;i<m_TAPlot.Ejections.size();i++)
-      this->Ejections.push_back(m_TAPlot.Ejections.at(i));
+      this->Ejections.push_back(m_TAPlot.Ejections[i]);
    
    for(int i=0;i<m_TAPlot.Injections.size();i++)
-      this->Injections.push_back(m_TAPlot.Injections.at(i));
+      this->Injections.push_back(m_TAPlot.Injections[i]);
    
    for(int i=0;i<m_TAPlot.DumpStarts.size();i++)
-      this->DumpStarts.push_back(m_TAPlot.DumpStarts.at(i));
+      this->DumpStarts.push_back(m_TAPlot.DumpStarts[i]);
    
    for(int i=0;i<m_TAPlot.DumpStops.size();i++)
-      this->DumpStops.push_back(m_TAPlot.DumpStops.at(i));
+      this->DumpStops.push_back(m_TAPlot.DumpStops[i]);
    
    for(int i=0;i<m_TAPlot.Runs.size();i++)
-      this->Runs.push_back(m_TAPlot.Runs.at(i));
+      this->Runs.push_back(m_TAPlot.Runs[i]);
    
    for(int i=0;i<m_TAPlot.feGEM.size();i++)
-      this->feGEM.push_back(m_TAPlot.feGEM.at(i));
+      this->feGEM.push_back(m_TAPlot.feGEM[i]);
    
    for(int i=0;i<m_TAPlot.feLV.size();i++)
-      this->feLV.push_back(m_TAPlot.feLV.at(i));
+      this->feLV.push_back(m_TAPlot.feLV[i]);
 
    this->ObjectConstructionTime = m_TAPlot.ObjectConstructionTime ;
    this->DataLoadedTime = m_TAPlot.DataLoadedTime ;
