@@ -201,22 +201,22 @@ class TTimeWindows : public TObject
          for (int j = 0; j < tmax.size(); j++)
          {
             //If inside the time window
-            if ( ( t > tmin.at(j) && t < tmax.at(j) ) ||
-            //Or if after tmin and tmax is invalid (-1)
-               ( t > tmin.at(j) && tmax.at(j) < 0 ) )
+            if ( t > tmin.at(j) )
             {
-               
-               return j;
-               //This event has been written to the array... so I dont need
-               //to check the other windows... break! Move to next SISEvent
-               break;
+               if(t < tmax.at(j) || tmax.at(j) < 0)
+               {
+                  return j;
+                  //This event has been written to the array... so I dont need
+                  //to check the other windows... break! Move to next SISEvent
+                  break;
+               }
             }
          }
          //If we get down here just return error.
          return -2;
       }
       template <class T>
-      std::vector<T> reorder(std::vector<T> nums, std::vector<size_t> index)
+      static std::vector<T> reorder(std::vector<T>& nums, std::vector<size_t>& index)
       {
          const int n = nums.size();
          std::vector<T> newest(n);
@@ -385,12 +385,12 @@ class feGEMdata: public feENVdata
          for (size_t i=0; i<timewindows.tmax.size(); i++)
          {
             //If inside the time window
-            if ( (time > timewindows.tmin.at(i) && time < timewindows.tmax.at(i)) ||
+            if ( (time > timewindows.tmin[i] && time < timewindows.tmax[i]) ||
             //Or if after tmin and tmax is invalid (-1)
-               (time > timewindows.tmin.at(i) && timewindows.tmax.at(i)<0) )
+               (time > timewindows.tmin[i] && timewindows.tmax[i]<0) )
             {
                feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint(time, time - timewindows.tzero.at(i), (double)GEMEvent->GetArrayEntry(array_number));
+               plot->AddPoint(time, time - timewindows.tzero[i], (double)GEMEvent->GetArrayEntry(array_number));
             }
          }
          return;
@@ -413,12 +413,12 @@ class feLVdata: public feENVdata
          for (size_t i=0; i<timewindows.tmax.size(); i++)
          {
             //If inside the time window
-            if ( (time > timewindows.tmin.at(i) && time < timewindows.tmax.at(i)) ||
+            if ( (time > timewindows.tmin[i] && time < timewindows.tmax[i]) ||
             //Or if after tmin and tmax is invalid (-1)
-               (time > timewindows.tmin.at(i) && timewindows.tmax.at(i)<0) )
+               (time > timewindows.tmin[i] && timewindows.tmax[i]<0) )
             {
                feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint( time, time - timewindows.tzero.at(i), LVEvent->GetArrayEntry(array_number));
+               plot->AddPoint( time, time - timewindows.tzero[i], LVEvent->GetArrayEntry(array_number));
             }
          }
          return;
