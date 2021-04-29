@@ -1,4 +1,5 @@
 #include "TA2Plot.h"
+#include <fstream>
 
 
 #ifdef BUILD_A2
@@ -65,7 +66,7 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
 void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 {
    SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - time_offset, 
-      event->GetRunTime(), event->GetCountsInChannel(channel), channel);
+      event->GetRunTime(), event->GetCountsInChannel(channel), channel, event->GetMidasEventID());
 }
 
 //TODO: Pre sort windows (we should never have overlapping windows...)
@@ -427,6 +428,52 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       AddHistogram("rdens",hrdens);
    }
 }
+
+void TA2Plot::WriteEventList(std::string filename, bool append)
+{
+   //TODO - Check if file already exists and if so, append to it. If not, delete the old .list and rewrite.
+   //Make sure this is the correct eventID, not sure where it would be.
+   std::ofstream myfile;
+   std::string file = filename + ".list";
+   myfile.open (file);
+   
+   assert(VertexEvents.runNumbers.size() == SISEvents.runNumber.size());
+
+   int index = 0;
+   int currentEventNo = VertexEvents.EventNos[index];
+   int currentRunNo = SISEvents.runNumber[index];
+
+   myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
+
+   while(index < VertexEvents.runNumbers.size())
+   {
+      index++;
+      if(VertexEvents.EventNos[index] == (currentEventNo+1))
+         currentEventNo++;
+      else
+      {
+
+         if(SISEvents.runNumber[index]!=currentRunNo)
+         {
+            currentRunNo = SISEvents.runNumber[index];
+            currentEventNo = VertexEvents.EventNos[index]; 
+            myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
+         }
+         else
+         {
+            myfile << "-" << currentEventNo << std::endl;
+         }
+      }
+   }
+
+   //Old method, just does every event in a row.
+   /*for(int i=0; i<VertexEvents.runNumbers.size(); i++)
+   {
+      myfile << SISEvents.runNumber[i] << ":" << VertexEvents.EventNos[i] << std::endl;
+   }*/
+
+   myfile.close();
+} 
 
 TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 {
