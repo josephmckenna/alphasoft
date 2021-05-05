@@ -5,6 +5,8 @@
 ClassImp(TSVD_QOD);
 TSVD_QOD::TSVD_QOD(TAlphaEvent* a, TSiliconEvent* s )
 {
+   RunNumber        = s->GetRunNumber();
+   std::cout << "TSVD_QOD constr. taking run number = " << RunNumber << std::endl;
    VF48Timestamp    = s->GetVF48Timestamp();
    VF48NEvent       = s->GetVF48NEvent();
    NRawHits         = s->GetNsideNRawHits();
@@ -46,6 +48,7 @@ TSVD_QOD::TSVD_QOD(TAlphaEvent* a, TSiliconEvent* s )
 
 TSVD_QOD::TSVD_QOD()
 {
+   std::cout << "TSVD_QOD default constr. Empty." << std::endl;
 }
 TSVD_QOD::~TSVD_QOD()
 {

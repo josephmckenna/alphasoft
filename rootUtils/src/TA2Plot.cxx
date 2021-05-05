@@ -76,6 +76,7 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 // two vectors would make a better memory layout... not a struct?
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
+   std::cout << "We are now in AddSVDEvent(TSVD_QOD* SVDEvent) so I guess it's taking the input to be a TSVD_QOD" << std::endl;
    double t=SVDEvent->t;
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
@@ -88,6 +89,8 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if(index >= 0)
    {
       AddEvent(SVDEvent, GetTimeWindows()->tzero.at(index));
+      std::cout << "This actually adds the event. RunNumber = " << SVDEvent->RunNumber << std::endl;
+   
    }
 
    /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
@@ -165,6 +168,7 @@ void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
          continue;
       if (t > last_time)
          break;
+      std::cout << "SVDEvent is a TTreeReaderValue<TSVD_QOD> and we've just called AddSVDEvent(&(*SVDEvent));" << std::endl;
       AddSVDEvent(&(*SVDEvent));
    }
 
@@ -437,15 +441,17 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
    std::string file = filename + ".list";
    myfile.open (file);
    
-   assert(VertexEvents.runNumbers.size() == SISEvents.runNumber.size());
+   assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
 
    int index = 0;
    int currentEventNo = VertexEvents.EventNos[index];
+   //int currentRunNo = VertexEvents.runNumbers[index];
    int currentRunNo = SISEvents.runNumber[index];
 
-   myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
+   //myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
+   //myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
 
-   while(index < VertexEvents.runNumbers.size())
+   /*while(index < VertexEvents.runNumbers.size())
    {
       index++;
       if(VertexEvents.EventNos[index] == (currentEventNo+1))
@@ -453,24 +459,29 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
       else
       {
 
-         if(SISEvents.runNumber[index]!=currentRunNo)
+         if(VertexEvents.runNumbers[index]!=currentRunNo)
          {
             currentRunNo = SISEvents.runNumber[index];
             currentEventNo = VertexEvents.EventNos[index]; 
-            myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
+            myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
          }
          else
          {
             myfile << "-" << currentEventNo << std::endl;
+            currentRunNo = SISEvents.runNumber[index];
+            currentEventNo = VertexEvents.EventNos[index]; 
+
          }
       }
-   }
-
-   //Old method, just does every event in a row.
-   /*for(int i=0; i<VertexEvents.runNumbers.size(); i++)
-   {
-      myfile << SISEvents.runNumber[i] << ":" << VertexEvents.EventNos[i] << std::endl;
    }*/
+   
+
+   assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
+   //Old method, just does every event in a row.
+   for(int i=0; i<VertexEvents.runNumbers.size(); i++)
+   {
+      myfile << VertexEvents.runNumbers[i] << ":" << VertexEvents.EventNos[i] << std::endl;
+   }
 
    myfile.close();
 } 

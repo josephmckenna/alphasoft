@@ -54,7 +54,7 @@ class TVertexEvents: public TObject
       TVertexEvents(const TVertexEvents& m_VertexEvents)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i <= m_VertexEvents.xs.size(); i++)
+         for(int i = 0; i < m_VertexEvents.xs.size(); i++)
          {
             runNumbers.push_back(m_VertexEvents.runNumbers[i]);
             EventNos.push_back(m_VertexEvents.EventNos[i]);
@@ -74,7 +74,7 @@ class TVertexEvents: public TObject
       TVertexEvents& operator=(const TVertexEvents& m_VertexEvents)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i <= m_VertexEvents.xs.size(); i++)
+         for(int i = 0; i < m_VertexEvents.xs.size(); i++)
          {
             this->runNumbers.push_back(m_VertexEvents.runNumbers[i]);
             this->EventNos.push_back(m_VertexEvents.EventNos[i]);
@@ -427,8 +427,8 @@ class feLVdata: public feENVdata
 
 class TAPlot: public TObject
 {
-
-   protected:
+   //WARNING MAKING EVERYTHING PUBLIC TO PROBE AROUND IN ROOT BROWSER. FIX BEFORE COMMITING ANYTHING.
+   public:
       //Used to give the TCanvas a title
       std::string title;
       
