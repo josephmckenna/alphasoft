@@ -607,91 +607,14 @@ void TAPlot::PrintFull()
    std::cout << "===========================" << std::endl;
    std::cout << "Title is " << title << std::endl;
 
-   std::cout << "MVAMode = " << MVAMode << std::endl;
-   std::cout << "Nbin = " << Nbin << std::endl;
-   std::cout << "DrawStyle = " << DrawStyle << std::endl;
-
-   std::cout << "gLegendDetail = " << gLegendDetail << std::endl;
-   std::cout << "fApplyCuts = " << fApplyCuts << std::endl;
-   std::cout << "fClassifierCut = " << fClassifierCut << std::endl;
-
-   std::cout << "FirstTmin = " << FirstTmin << std::endl;
-   std::cout << "LastTmax = " << LastTmax << std::endl;
-   std::cout << "BiggestTzero = " << BiggestTzero << std::endl;
-   std::cout << "MaxDumpLength = " << MaxDumpLength << std::endl;
-
-   std::cout << "Printing TimeWindows at " << &TimeWindows << std::endl;
-   std::cout << "TimeWindows.size() = " << TimeWindows.runNumber.size() << std::endl;
-   std::cout << "First time window info:" << std::endl;
-   std::cout << "TimeWindows[0].runNumber = " << TimeWindows.runNumber.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tmax = " << TimeWindows.tmax.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tmin = " << TimeWindows.tmin.at(0) << std::endl;
-   std::cout << "TimeWindows[0].tzero = " << TimeWindows.tzero.at(0) << std::endl;
-
-   std::cout << "fTotalTime = " << fTotalTime << std::endl;
-   std::cout << "fTotalVert = " << fTotalVert << std::endl;
-
-   std::cout << "Printing HISTOS at " << &HISTOS << std::endl;
-   std::cout << "HISTOS.size() = " << HISTOS.GetSize() << std::endl;
-   std::cout << "First HISTOS info:" << std::endl;
-   std::cout << "HISTOS[0] = " << HISTOS.At(0) << std::endl;
-
-   std::cout << "Printing HISTO_POSITION at " << &HISTO_POSITION << std::endl;
-   std::cout << "HISTO_POSITION.size() = " << HISTO_POSITION.size() << std::endl;
-   std::cout << "First HISTO_POSITION info:" << std::endl;
-   std::cout << "HISTO_POSITION[0] string = " << HISTO_POSITION.begin()->first << std::endl;
-   std::cout << "HISTO_POSITION[0] int = " << HISTO_POSITION.begin()->second << std::endl;
-
-   std::cout << "Printing Ejections at " << &Ejections << std::endl;
-   std::cout << "Ejections.size() = " << Ejections.size() << std::endl;
-   std::cout << "First Ejections info:" << std::endl;
-   
-   if(Ejections.size() > 0)
-      std::cout << "Ejections[0] = " << Ejections.at(0) << std::endl;
-   else
-      std::cout << "Empty sorry, moving on to next member." << std::endl;
-   
-   std::cout << "Printing Injections at " << &Injections << std::endl;
-   std::cout << "Injections.size() = " << Injections.size() << std::endl;
-   std::cout << "First Injections info:" << std::endl;
-   
-   if(Injections.size() > 0)
-      std::cout << "Injections[0] = " << Injections.at(0) << std::endl;
-   else
-      std::cout << "Empty sorry, moving on to next member." << std::endl; 
-
-   std::cout << "Printing DumpStarts at " << &DumpStarts << std::endl;
-   std::cout << "DumpStarts.size() = " << DumpStarts.size() << std::endl;
-   std::cout << "First DumpStarts info:" << std::endl;
-   
-   if(DumpStarts.size() > 0)
-      std::cout << "DumpStarts[0] = " << DumpStarts.at(0) << std::endl;
-   else 
-      std::cout << "Empty sorry, moving on to next member." << std::endl; 
-
-   std::cout << "Printing DumpStops at " << &DumpStops << std::endl;
-   std::cout << "DumpStops.size() = " << DumpStops.size() << std::endl;
-   std::cout << "First DumpStops info:" << std::endl;
-   
-   if(DumpStops.size() > 0)
-      std::cout << "DumpStops[0] = " << DumpStops.at(0) << std::endl;
-   else
-      std::cout << "Empty sorry, moving on to next member." << std::endl;
-
-   std::cout << "Printing Runs at " << &Runs << std::endl;
-   std::cout << "Runs.size() = " << Runs.size() << std::endl;
-   std::cout << "First Runs info:" << std::endl;
-   
-   if(Runs.size() > 0)
-      std::cout << "Runs[0] = " << Runs.at(0) << std::endl;
-   else
-      std::cout << "Empty sorry, moving on to next member." << std::endl;
-   
-   //Leaving out for now, might add later.
-   //std::vector<feGEMdata> feGEM;
-   //std::vector<feLVdata> feLV;
-   //std::chrono::high_resolution_clock::time_point ObjectConstructionTime;
-   //std::chrono::high_resolution_clock::time_point DataLoadedTime;
+   for(int i=0;i<VertexEvents.runNumbers.size();i++)
+   {
+      std::cout << VertexEvents.runNumbers.at(i) << std::endl;
+   }
+   for(int i=0;i<VertexEvents.EventNos.size();i++)
+   {
+      std::cout << VertexEvents.EventNos.at(i) << std::endl;
+   }
 
    std::cout << "===========================" << std::endl;
    std::cout << std::endl << std::endl << std::endl;

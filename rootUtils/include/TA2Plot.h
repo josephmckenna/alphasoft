@@ -19,7 +19,6 @@ class TSISPlotEvents: public TObject
       std::vector<double> OfficialTime;
       std::vector<int> Counts;
       std::vector<int> SIS_Channel;
-      std::vector<long> EventIDs;
    public:
       //Std ctor and dtor
       TSISPlotEvents()
@@ -49,7 +48,6 @@ class TSISPlotEvents: public TObject
          this->OfficialTime.insert(this->OfficialTime.end(),   plotB.OfficialTime.begin(),   plotB.OfficialTime.end() );
          this->Counts      .insert(this->Counts.end(),         plotB.Counts.begin(),         plotB.Counts.end() );
          this->SIS_Channel .insert(this->SIS_Channel.end(),    plotB.SIS_Channel.begin(),    plotB.SIS_Channel.end() );
-         this->EventIDs    .insert(this->EventIDs.end(),       plotB.EventIDs.begin(),       plotB.EventIDs.end() );
          return *this;
       }
       TSISPlotEvents& operator=(const TSISPlotEvents& m_SISEvent)
@@ -61,7 +59,6 @@ class TSISPlotEvents: public TObject
             this->OfficialTime.push_back( m_SISEvent.OfficialTime[i]);
             this->Counts.push_back( m_SISEvent.Counts[i]);
             this->SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
-            this->EventIDs.push_back( m_SISEvent.EventIDs[i]);
          }
          return *this;
       }
@@ -75,7 +72,6 @@ class TSISPlotEvents: public TObject
          outputplot.OfficialTime.insert(outputplot.OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
          outputplot.Counts.insert(outputplot.Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
          outputplot.SIS_Channel.insert(outputplot.SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
-         outputplot.EventIDs.insert(outputplot.EventIDs.end(), plotB.EventIDs.begin(), plotB.EventIDs.end() );
          return outputplot;
       }
       void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel, long m_EventID)
@@ -85,7 +81,6 @@ class TSISPlotEvents: public TObject
          OfficialTime.push_back(m_OfficialTime);
          Counts.push_back(m_Counts);
          SIS_Channel.push_back(m_SIS_Channel);
-         EventIDs.push_back(m_EventID);
       }
       int GetEventRunNumber(int event) const { return runNumber.at(event); }
       
