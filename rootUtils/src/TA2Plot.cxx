@@ -480,7 +480,7 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
    //Old method, just does every event in a row.
    for(int i=0; i<VertexEvents.runNumbers.size(); i++)
    {
-      myfile << VertexEvents.runNumbers[i] << ":" << VertexEvents.EventNos[i] << std::endl;
+      myfile << VertexEvents.runNumbers.at(i) << ":" << VertexEvents.EventNos.at(i) << std::endl;
    }
 
    myfile.close();
