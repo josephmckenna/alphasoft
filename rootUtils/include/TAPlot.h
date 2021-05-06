@@ -377,21 +377,16 @@ class feGEMdata: public feENVdata
 {
    public:
       template<typename T>
-      void AddGEMEvent(TStoreGEMData<T>* GEMEvent,const TTimeWindows& timewindows)
+      void AddGEMEvent(TStoreGEMData<T>* GEMEvent, TTimeWindows& timewindows)
       {
          double time=GEMEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
-         //for (auto& window: timewindows)
-         for (size_t i=0; i<timewindows.tmax.size(); i++)
+         //Hopefully now better than On^2
+         int index = timewindows.GetValidWindowNumber(time);
+         if(index>=0)
          {
-            //If inside the time window
-            if ( (time > timewindows.tmin[i] && time < timewindows.tmax[i]) ||
-            //Or if after tmin and tmax is invalid (-1)
-               (time > timewindows.tmin[i] && timewindows.tmax[i]<0) )
-            {
-               feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint(time, time - timewindows.tzero[i], (double)GEMEvent->GetArrayEntry(array_number));
-            }
+            feENVdataPlot* plot = GetPlot(index);
+            plot->AddPoint(time, time - timewindows.tzero[index], (double)GEMEvent->GetArrayEntry(array_number));
          }
          return;
       }
@@ -405,21 +400,16 @@ class feGEMdata: public feENVdata
 class feLVdata: public feENVdata
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* LVEvent,const TTimeWindows& timewindows)
+      void AddLVEvent(TStoreLabVIEWEvent* LVEvent, TTimeWindows& timewindows)
       {
          double time=LVEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
-         //for (auto& window: timewindows)
-         for (size_t i=0; i<timewindows.tmax.size(); i++)
+         //Hopefully now better than On^2
+         int index = timewindows.GetValidWindowNumber(time);
+         if(index>=0)
          {
-            //If inside the time window
-            if ( (time > timewindows.tmin[i] && time < timewindows.tmax[i]) ||
-            //Or if after tmin and tmax is invalid (-1)
-               (time > timewindows.tmin[i] && timewindows.tmax[i]<0) )
-            {
-               feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint( time, time - timewindows.tzero[i], LVEvent->GetArrayEntry(array_number));
-            }
+            feENVdataPlot* plot = GetPlot(index);
+            plot->AddPoint( time, time - timewindows.tzero[index], LVEvent->GetArrayEntry(array_number));
          }
          return;
       }
@@ -501,7 +491,7 @@ class TAPlot: public TObject
          VertexEvents.nHelices.push_back(nHelices);
          VertexEvents.nTracks.push_back(nTracks);
       }
-      TTimeWindows* GetTimeWindows()               {  return &TimeWindows; }
+      TTimeWindows* GetTimeWindows()                     {  return &TimeWindows; }
       const TVertexEvents* GetVertexEvents()             {  return &VertexEvents; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }

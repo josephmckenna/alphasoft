@@ -48,7 +48,6 @@ TSVD_QOD::TSVD_QOD(TAlphaEvent* a, TSiliconEvent* s )
 
 TSVD_QOD::TSVD_QOD()
 {
-   std::cout << "TSVD_QOD default constr. Empty." << std::endl;
 }
 TSVD_QOD::~TSVD_QOD()
 {

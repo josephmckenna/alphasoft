@@ -76,7 +76,6 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 // two vectors would make a better memory layout... not a struct?
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
-   std::cout << "We are now in AddSVDEvent(TSVD_QOD* SVDEvent) so I guess it's taking the input to be a TSVD_QOD" << std::endl;
    double t=SVDEvent->t;
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
@@ -89,26 +88,7 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    if(index >= 0)
    {
       AddEvent(SVDEvent, GetTimeWindows()->tzero.at(index));
-      std::cout << "This actually adds the event. RunNumber = " << SVDEvent->RunNumber << std::endl;
-   
    }
-
-   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
-   {
-      //If inside the time window
-      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
-      //Or if after tmin and tmax is invalid (-1)
-           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
-      {
-         std::cout << "Calling AddEvent with t = " << GetTimeWindows()->tzero.at(j) << std::endl;
-         
-         std::cout << "index in GetValidWindowNumber has returned: " << j << ". t = " << t << ", tmax[index] = " << GetTimeWindows()->tmax.at(j) << "tzero[index] = " <<  GetTimeWindows()->tzero.at(j) << std::endl;
-         AddEvent(SVDEvent, GetTimeWindows()->tzero.at(j));
-         //This event has been written to the array... so I dont need
-         //to check the other windows... break! Move to next SISEvent
-         break;
-      }
-   }*/
 }
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
@@ -117,7 +97,6 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    double t=SISEvent->GetRunTime();
 
    //Loop over all time windows
-   //TTimeWindows window = GetTimeWindows();
    int index = GetTimeWindows()->GetValidWindowNumber(t);
    if(index>=0)
    {
@@ -130,24 +109,6 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
          }
       }
    }
-
-   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
-   {
-      //If inside the time window
-      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
-      //Or if after tmin and tmax is invalid (-1)
-           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
-      {
-         for (int i=0; i<n_sis; i++)
-         {
-            int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
-            if (counts)
-            {
-               AddEvent(SISEvent, SISChannels.at(i), GetTimeWindows()->tzero.at(j));
-            }
-         }
-      }
-   }*/
 }
 
 void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
@@ -168,7 +129,6 @@ void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
          continue;
       if (t > last_time)
          break;
-      std::cout << "SVDEvent is a TTreeReaderValue<TSVD_QOD> and we've just called AddSVDEvent(&(*SVDEvent));" << std::endl;
       AddSVDEvent(&(*SVDEvent));
    }
 
@@ -435,54 +395,51 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
 
 void TA2Plot::WriteEventList(std::string filename, bool append)
 {
-   //TODO - Check if file already exists and if so, append to it. If not, delete the old .list and rewrite.
-   //Make sure this is the correct eventID, not sure where it would be.
+   //TODO LMG - Check if file already exists and if so, append to it. If not, delete the old .list and rewrite.
+   //Change .ats to []s for speed. 
+
+   //Initiate an ofstream to write to
    std::ofstream myfile;
    std::string file = filename + ".list";
    myfile.open (file);
    
+   //Assert that the runNumbers and EventNos match up in terms of size.
    assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
 
-   int index = 0;
-   int currentEventNo = VertexEvents.EventNos[index];
-   //int currentRunNo = VertexEvents.runNumbers[index];
-   int currentRunNo = SISEvents.runNumber[index];
-
-   //myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
-   //myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
-
-   /*while(index < VertexEvents.runNumbers.size())
+   int index = 0; //Initialise at index 0
+   int currentEventNo = VertexEvents.EventNos.at(index); //Set the current run number to be the one at index (0)
+   int currentRunNo = SISEvents.runNumber.at(index); //Same for event no.
+   myfile << currentRunNo << ":" << currentEventNo; //Print an initial statement to file, will look something like "39993:2"
+   
+   //While index is in range lets do all the checks to decide what to write.
+   while(index < VertexEvents.runNumbers.size()-1)
    {
-      index++;
-      if(VertexEvents.EventNos[index] == (currentEventNo+1))
-         currentEventNo++;
+      index++; //Increment index since we're in a while loop not a for.
+      if(VertexEvents.runNumbers.at(index)!=currentRunNo)
+      {
+         //If runNumber has changed:
+         myfile << "-" << currentEventNo << std::endl; //1. Close off current range eg: "39993:2-5"
+         currentRunNo = VertexEvents.runNumbers.at(index); //Update currentrunNo and EventNo
+         currentEventNo = VertexEvents.EventNos.at(index);
+         myfile << currentRunNo << ":" << currentEventNo; //Print initial line of new run eg: "45000:3"
+      }
+      else if(VertexEvents.EventNos.at(index) == (currentEventNo+1))
+      {
+         //Else if runNumber is the same but the event is consecutive to the one after (ie 2-3)
+         currentEventNo++; //Increment currentEventNo. This is equiv to currentEventNo = VertexEvents.EventNos.at(index) just quicker since we've already checked its consecutive.
+      }
       else
       {
-
-         if(VertexEvents.runNumbers[index]!=currentRunNo)
-         {
-            currentRunNo = SISEvents.runNumber[index];
-            currentEventNo = VertexEvents.EventNos[index]; 
-            myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
-         }
-         else
-         {
-            myfile << "-" << currentEventNo << std::endl;
-            currentRunNo = SISEvents.runNumber[index];
-            currentEventNo = VertexEvents.EventNos[index]; 
-
-         }
+         //Else: Ie run number is the samer but the event number is not consecutive:
+         myfile << "-" << currentEventNo << std::endl; //Close line, eg: "39993:2-5"
+         currentRunNo = VertexEvents.runNumbers.at(index); //Update run and event no.
+         currentEventNo = VertexEvents.EventNos.at(index);
+         myfile << currentRunNo << ":" << currentEventNo; //Start new line eg: "39993:27"
       }
-   }*/
-   
-
-   assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
-   //Old method, just does every event in a row.
-   for(int i=0; i<VertexEvents.runNumbers.size(); i++)
-   {
-      myfile << VertexEvents.runNumbers[i] << ":" << VertexEvents.EventNos[i] << std::endl;
    }
-
+   //Once out of the loop close what we have.
+   myfile << "-" << currentEventNo << std::endl;
+   //Close the file.
    myfile.close();
 } 
 
