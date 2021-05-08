@@ -6,25 +6,57 @@
 #include <TFile.h>
 #include "TObject.h"
 #include "TClonesArray.h"
-
+///< ================== a2mcReco CLASS ================== 
 class a2mcReco {
-private:
-   TAlphaEvent* fAlphaEvent;
-   TAlphaEventMap* fAlphaEventMap;
-    
-public :
+
+///< Methods declaration 
+public:
+    a2mcReco();
+    a2mcReco(Int_t runNumber=0, Double_t hit_threshold = 0., Int_t nMinHits=0);
+    virtual ~a2mcReco();
+    virtual void            Init();
+    virtual void            InitTree(TTree *tree);
+    virtual Long64_t        LoadTree(Long64_t entry);
+    virtual Int_t           GetEntry(Long64_t entry);
+    virtual void            InitReco();
+    virtual Bool_t          GoodEvent();
+    virtual Bool_t          FillAlphaEvent();
+    virtual void            Reco(bool);
+    virtual void            CreateHistos();
+    virtual void            FillHistos();
+    virtual void            ShowHistos(bool);
+    virtual void            CreateOutputFile();
+
+private:    
+///< Histos
+    TH1F *hMCVdx, *hMCVdy, *hMCPhi, *hMCVdz, *hMCVdr;
+    TH1F *hRecVdx, *hRecVdy, *hRecPhi, *hRecVdz, *hRecVdr;
+    TH1F *hDiffVdx, *hDiffVdy, *hDiffPhi, *hDiffVdz, *hDiffVdr;
+
+///< Variables
     TFile          *fRAWFile;
-    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
-    Int_t          fCurrent; //!current Tree number in a TChain
+    TTree          *fChain;     //!pointer to the analyzed TTree or TChain
+    Int_t          fCurrent;    //!current Tree number in a TChain
     Int_t          fRunNumber;
     Int_t          fTotEvents;
     Long64_t       fEvent;
+    Double_t       fHitThreshold; ///< In MeV
+    Int_t          fNMinHits;
 
+///< Variables for the reconstructed variables
+    TAlphaEvent*    fAlphaEvent=nullptr;
+    TAlphaEventMap* fAlphaEventMap=nullptr;
+    Bool_t          isRecV;
+    Double_t        fRecVdx = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecVdz = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
+    Double_t        fRecPhi = std::numeric_limits<double>::quiet_NaN();
+///< Variables for the MC output
 // Fixed size dimensions of array or collections stored in the TTree if any.
     static constexpr Int_t kMaxSilHits   = 5000;
     static constexpr Int_t kMaxSilDigi   = 5000;
     static constexpr Int_t kMaxMCTracks  = 1000;
-
+    
     Int_t           fPdgCode;   ///< Primary PDG code
     Double_t        fVox = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
     Double_t        fVoy = std::numeric_limits<double>::quiet_NaN(); ///< Primary origin vertex
@@ -60,8 +92,8 @@ public :
     Int_t           SilDigi_;
     Int_t           SilDigi_fElemID[kMaxSilDigi];   //[SilDigi_]
     Double_t        SilDigi_fEnergy[kMaxSilDigi];   //[SilDigi_]
-    UInt_t          SilDigi_fUniqueID[kMaxSilDigi];   //[SilDigi_]
-    UInt_t          SilDigi_fBits[kMaxSilDigi];   //[SilDigi_]
+    UInt_t          SilDigi_fUniqueID[kMaxSilDigi]; //[SilDigi_]
+    UInt_t          SilDigi_fBits[kMaxSilDigi];     //[SilDigi_]
     Int_t           MCTracks_;
     Int_t           MCTracks_fPdgCode[kMaxMCTracks];    //[MCTracks_]
     Int_t           MCTracks_fMother[kMaxMCTracks][2];  //[MCTracks_]
@@ -76,91 +108,40 @@ public :
     Double_t        MCTracks_fVt[kMaxMCTracks];         //[MCTracks_]
     UInt_t          MCTracks_fUniqueID[kMaxMCTracks];   //[MCTracks_]
     UInt_t          MCTracks_fBits[kMaxMCTracks];       //[MCTracks_]
-    // List of branches
-    TBranch        *b_Primary_fUniqueID;   //!
-    TBranch        *b_Primary_fBits;   //!
-    TBranch        *b_Primary_fPdgCode;   //!
-    TBranch        *b_Primary_fVox;   //!
-    TBranch        *b_Primary_fVoy;   //!
-    TBranch        *b_Primary_fVoz;   //!
-    TBranch        *b_Primary_fPox;   //!
-    TBranch        *b_Primary_fPoy;   //!
-    TBranch        *b_Primary_fPoz;   //!
-    TBranch        *b_Primary_fEo;   //!
-    TBranch        *b_Primary_fVdx;   //!
-    TBranch        *b_Primary_fVdy;   //!
-    TBranch        *b_Primary_fVdz;   //!
-    TBranch        *b_SilHits_;   //!
-    TBranch        *b_SilHits_fUniqueID;   //!
-    TBranch        *b_SilHits_fBits;   //!
-    TBranch        *b_SilHits_fTrackID;   //!
-    TBranch        *b_SilHits_fPdgCode;   //!
-    TBranch        *b_SilHits_fMotherID;   //!
-    TBranch        *b_SilHits_fEvent;   //!
-    TBranch        *b_SilHits_fSilID;   //!
-    TBranch        *b_SilHits_fLayN;   //!
-    TBranch        *b_SilHits_fModN;   //!
-    TBranch        *b_SilHits_fnStrp;   //!
-    TBranch        *b_SilHits_fpStrp;   //!
-    TBranch        *b_SilHits_fEdep;   //!
-    TBranch        *b_SilHits_fPosX;   //!
-    TBranch        *b_SilHits_fPosY;   //!
-    TBranch        *b_SilHits_fPosZ;   //!
-    TBranch        *b_SilHits_fMomX;   //!
-    TBranch        *b_SilHits_fMomY;   //!
-    TBranch        *b_SilHits_fMomZ;   //!
-    TBranch        *b_SilDigi_;   //!
-    TBranch        *b_SilDigi_fUniqueID;   //!
-    TBranch        *b_SilDigi_fBits;   //!
-    TBranch        *b_SilDigi_fElemID;   //!
-    TBranch        *b_SilDigi_fEnergy;   //!
-    TBranch        *b_MCTracks_;   //!
-    TBranch        *b_MCTracks_fUniqueID;   //!
-    TBranch        *b_MCTracks_fBits;   //!
-    TBranch        *b_MCTracks_fPdgCode;   //!
-    TBranch        *b_MCTracks_fMother;   //!
-    TBranch        *b_MCTracks_fDaughter;   //!
-    TBranch        *b_MCTracks_fPx;   //!
-    TBranch        *b_MCTracks_fPy;   //!
-    TBranch        *b_MCTracks_fPz;   //!
-    TBranch        *b_MCTracks_fE;   //!
-    TBranch        *b_MCTracks_fVx;   //!
-    TBranch        *b_MCTracks_fVy;   //!
-    TBranch        *b_MCTracks_fVz;   //!
-    TBranch        *b_MCTracks_fVt;   //!
 
-    a2mcReco();
-    a2mcReco(Int_t runNumber=0);
-    virtual ~a2mcReco();
-    virtual void            Init(Int_t runNumber=0);
-    virtual void            InitReco();
-    virtual Bool_t          GoodEvent();
-    virtual Int_t           GetEntry(Long64_t entry);
-    virtual Long64_t        LoadTree(Long64_t entry);
-    virtual void            InitTree(TTree *tree);
-    virtual void            Reco();
-    virtual void            CreateOutputFile();
 };
 
-#endif
+#endif ///< #ifndef a2mcReco_h
 
 #ifdef a2mcReco_cxx
+
 ///< Default constructor
 a2mcReco::a2mcReco() : fChain(0) {
-// default constructor
 }
+
 ///< Constructor with the run number
-a2mcReco::a2mcReco(Int_t runNumber) : fChain(0)  {
-    Init(runNumber);
+a2mcReco::a2mcReco(Int_t runNumber=0, Double_t hit_threshold = 0., Int_t nMinHits=0) : fChain(0)  {
+    fRunNumber      = runNumber;
+    fHitThreshold   = hit_threshold;
+    fNMinHits       = nMinHits;
+    Init();
     InitReco();
 }
 
-///< Initializer
-void a2mcReco::Init(Int_t runNumber) {
-    fRunNumber = runNumber;
+///< Destructor
+a2mcReco::~a2mcReco()
+{
+    if (!fChain) return;
+    delete fChain->GetCurrentFile();
+    if(fAlphaEventMap!=nullptr)  delete fAlphaEventMap;
+    if(fAlphaEvent!=nullptr)     delete fAlphaEvent;
+}
+
+///< Initializer (it reads the MC output)
+void a2mcReco::Init() {
     TTree *tree = 0;
     std::ostringstream sdata;
-    sdata << "ls ../root/a2MC-*_" << runNumber << ".root";
+    sdata << "ls ../root/a2MC-*_" << fRunNumber << ".root";
     TString file_name(gSystem->GetFromPipe(sdata.str().c_str()));
     string sfile = file_name.Data();
     if(strcmp(sfile.c_str(),"")==0) {
@@ -176,15 +157,7 @@ void a2mcReco::Init(Int_t runNumber) {
     InitTree(tree);
 }
 
-a2mcReco::~a2mcReco()
-{
-    if (!fChain) return;
-    delete fChain->GetCurrentFile();
-//    if(fAlphaEventMap!=nullptr) delete fAlphaEventMap;
-//    if(fAlphaEvent!=nullptr) delete fAlphaEvent;
-
-}
-
+///< Utility methods
 Int_t a2mcReco::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
@@ -201,20 +174,13 @@ Long64_t a2mcReco::LoadTree(Long64_t entry)
     if (fChain->GetTreeNumber() != fCurrent) {
         fCurrent = fChain->GetTreeNumber();
     }
+    fChain->GetEntry(entry);
     return centry;
 }
 
 void a2mcReco::InitTree(TTree *tree)
 {
-    // The Init() function is called when the selector needs to initialize
-    // a new tree or chain. Typically here the branch addresses and branch
-    // pointers of the tree will be set.
-    // It is normally not necessary to make changes to the generated
-    // code, but the routine can be extended by the user if needed.
-    // Init() will be called many times when running on PROOF
-    // (once per file to be processed).
-
-    // Set branch addresses and branch pointers
+    // Set branch addresses
     if (!tree) return;
     fChain = tree;
     fCurrent = -1;
@@ -222,65 +188,65 @@ void a2mcReco::InitTree(TTree *tree)
 
     TLeaf *prim = fChain->FindLeaf("fUniqueID");
     if(prim) {
-        fChain->SetBranchAddress("fPdgCode", &fPdgCode, &b_Primary_fPdgCode);
-        fChain->SetBranchAddress("fVox", &fVox, &b_Primary_fVox);
-        fChain->SetBranchAddress("fVoy", &fVoy, &b_Primary_fVoy);
-        fChain->SetBranchAddress("fVoz", &fVoz, &b_Primary_fVoz);
-        fChain->SetBranchAddress("fPox", &fPox, &b_Primary_fPox);
-        fChain->SetBranchAddress("fPoy", &fPoy, &b_Primary_fPoy);
-        fChain->SetBranchAddress("fPoz", &fPoz, &b_Primary_fPoz);
-        fChain->SetBranchAddress("fEo", &fEo, &b_Primary_fEo);
-        fChain->SetBranchAddress("fVdx", &fVdx, &b_Primary_fVdx);
-        fChain->SetBranchAddress("fVdy", &fVdy, &b_Primary_fVdy);
-        fChain->SetBranchAddress("fVdz", &fVdz, &b_Primary_fVdz);
+        fChain->SetBranchAddress("fPdgCode", &fPdgCode);
+        fChain->SetBranchAddress("fVox", &fVox);
+        fChain->SetBranchAddress("fVoy", &fVoy);
+        fChain->SetBranchAddress("fVoz", &fVoz);
+        fChain->SetBranchAddress("fPox", &fPox);
+        fChain->SetBranchAddress("fPoy", &fPoy);
+        fChain->SetBranchAddress("fPoz", &fPoz);
+        fChain->SetBranchAddress("fEo" , &fEo);
+        fChain->SetBranchAddress("fVdx", &fVdx);
+        fChain->SetBranchAddress("fVdy", &fVdy);
+        fChain->SetBranchAddress("fVdz", &fVdz);
     }
     TLeaf *hits = fChain->FindLeaf("SilHits.fUniqueID");
     if(hits) {
-        fChain->SetBranchAddress("SilHits", &SilHits_, &b_SilHits_);
-        fChain->SetBranchAddress("SilHits.fTrackID", SilHits_fTrackID, &b_SilHits_fTrackID);
-        fChain->SetBranchAddress("SilHits.fPdgCode", SilHits_fPdgCode, &b_SilHits_fPdgCode);
-        fChain->SetBranchAddress("SilHits.fMotherID", SilHits_fMotherID, &b_SilHits_fMotherID);
-        fChain->SetBranchAddress("SilHits.fEvent", SilHits_fEvent, &b_SilHits_fEvent);
-        fChain->SetBranchAddress("SilHits.fSilID", SilHits_fSilID, &b_SilHits_fSilID);
-        fChain->SetBranchAddress("SilHits.fLayN", SilHits_fLayN, &b_SilHits_fLayN);
-        fChain->SetBranchAddress("SilHits.fModN", SilHits_fModN, &b_SilHits_fModN);
-        fChain->SetBranchAddress("SilHits.fnStrp", SilHits_fnStrp, &b_SilHits_fnStrp);
-        fChain->SetBranchAddress("SilHits.fpStrp", SilHits_fpStrp, &b_SilHits_fpStrp);
-        fChain->SetBranchAddress("SilHits.fEdep", SilHits_fEdep, &b_SilHits_fEdep);
-        fChain->SetBranchAddress("SilHits.fPosX", SilHits_fPosX, &b_SilHits_fPosX);
-        fChain->SetBranchAddress("SilHits.fPosY", SilHits_fPosY, &b_SilHits_fPosY);
-        fChain->SetBranchAddress("SilHits.fPosZ", SilHits_fPosZ, &b_SilHits_fPosZ);
-        fChain->SetBranchAddress("SilHits.fMomX", SilHits_fMomX, &b_SilHits_fMomX);
-        fChain->SetBranchAddress("SilHits.fMomY", SilHits_fMomY, &b_SilHits_fMomY);
-        fChain->SetBranchAddress("SilHits.fMomZ", SilHits_fMomZ, &b_SilHits_fMomZ);
+        fChain->SetBranchAddress("SilHits", &SilHits_);
+        fChain->SetBranchAddress("SilHits.fTrackID", SilHits_fTrackID);
+        fChain->SetBranchAddress("SilHits.fPdgCode", SilHits_fPdgCode);
+        fChain->SetBranchAddress("SilHits.fMotherID", SilHits_fMotherID);
+        fChain->SetBranchAddress("SilHits.fEvent", SilHits_fEvent);
+        fChain->SetBranchAddress("SilHits.fSilID", SilHits_fSilID);
+        fChain->SetBranchAddress("SilHits.fLayN", SilHits_fLayN);
+        fChain->SetBranchAddress("SilHits.fModN", SilHits_fModN);
+        fChain->SetBranchAddress("SilHits.fnStrp", SilHits_fnStrp);
+        fChain->SetBranchAddress("SilHits.fpStrp", SilHits_fpStrp);
+        fChain->SetBranchAddress("SilHits.fEdep", SilHits_fEdep);
+        fChain->SetBranchAddress("SilHits.fPosX", SilHits_fPosX);
+        fChain->SetBranchAddress("SilHits.fPosY", SilHits_fPosY);
+        fChain->SetBranchAddress("SilHits.fPosZ", SilHits_fPosZ);
+        fChain->SetBranchAddress("SilHits.fMomX", SilHits_fMomX);
+        fChain->SetBranchAddress("SilHits.fMomY", SilHits_fMomY);
+        fChain->SetBranchAddress("SilHits.fMomZ", SilHits_fMomZ);
     } else {
         SilHits_ = 0;
     }
     TLeaf *digi = fChain->FindLeaf("SilDigi.fUniqueID");
     if(digi) {
-        fChain->SetBranchAddress("SilDigi", &SilDigi_, &b_SilDigi_);
-        fChain->SetBranchAddress("SilDigi.fElemID", SilDigi_fElemID, &b_SilDigi_fElemID);
-        fChain->SetBranchAddress("SilDigi.fEnergy", SilDigi_fEnergy, &b_SilDigi_fEnergy);
+        fChain->SetBranchAddress("SilDigi", &SilDigi_);
+        fChain->SetBranchAddress("SilDigi.fElemID", SilDigi_fElemID);
+        fChain->SetBranchAddress("SilDigi.fEnergy", SilDigi_fEnergy);
     } else {
         SilDigi_ = 0;
     }
     TLeaf *trks = fChain->FindLeaf("MCTracks.fUniqueID");
     if(trks) {
-        fChain->SetBranchAddress("MCTracks", &MCTracks_, &b_MCTracks_);
-        fChain->SetBranchAddress("MCTracks.fPdgCode", MCTracks_fPdgCode, &b_MCTracks_fPdgCode);
-        fChain->SetBranchAddress("MCTracks.fMother[2]", MCTracks_fMother, &b_MCTracks_fMother);
-        fChain->SetBranchAddress("MCTracks.fDaughter[2]", MCTracks_fDaughter, &b_MCTracks_fDaughter);
-        fChain->SetBranchAddress("MCTracks.fPx", MCTracks_fPx, &b_MCTracks_fPx);
-        fChain->SetBranchAddress("MCTracks.fPy", MCTracks_fPy, &b_MCTracks_fPy);
-        fChain->SetBranchAddress("MCTracks.fPz", MCTracks_fPz, &b_MCTracks_fPz);
-        fChain->SetBranchAddress("MCTracks.fE", MCTracks_fE, &b_MCTracks_fE);
-        fChain->SetBranchAddress("MCTracks.fVx", MCTracks_fVx, &b_MCTracks_fVx);
-        fChain->SetBranchAddress("MCTracks.fVy", MCTracks_fVy, &b_MCTracks_fVy);
-        fChain->SetBranchAddress("MCTracks.fVz", MCTracks_fVz, &b_MCTracks_fVz);
-        fChain->SetBranchAddress("MCTracks.fVt", MCTracks_fVt, &b_MCTracks_fVt);
+        fChain->SetBranchAddress("MCTracks", &MCTracks_);
+        fChain->SetBranchAddress("MCTracks.fPdgCode", MCTracks_fPdgCode);
+        fChain->SetBranchAddress("MCTracks.fMother[2]", MCTracks_fMother);
+        fChain->SetBranchAddress("MCTracks.fDaughter[2]", MCTracks_fDaughter);
+        fChain->SetBranchAddress("MCTracks.fPx", MCTracks_fPx);
+        fChain->SetBranchAddress("MCTracks.fPy", MCTracks_fPy);
+        fChain->SetBranchAddress("MCTracks.fPz", MCTracks_fPz);
+        fChain->SetBranchAddress("MCTracks.fE" , MCTracks_fE );
+        fChain->SetBranchAddress("MCTracks.fVx", MCTracks_fVx);
+        fChain->SetBranchAddress("MCTracks.fVy", MCTracks_fVy);
+        fChain->SetBranchAddress("MCTracks.fVz", MCTracks_fVz);
+        fChain->SetBranchAddress("MCTracks.fVt", MCTracks_fVt);
     } else {
         MCTracks_ = 0;
     }
 }
 
-#endif // #ifdef a2mcReco_cxx
+#endif ///< #ifdef a2mcReco_cxx

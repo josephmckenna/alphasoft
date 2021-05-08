@@ -13,6 +13,7 @@
 #include <TCanvas.h>
 #include <TString.h>
 
+#include "TSiliconEvent.h"
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
 #include "TAlphaEventCosmicHelix.h"
@@ -51,23 +52,28 @@ class TAlphaDisplay : public TNamed {
      Bool_t      fViewShowAllTracks;
      Bool_t      fOGLColourScheme;
 
-    int fAutoSaveOnDisplay;
-    int fRunNo;
+     int fRunNo;
 
      TString     fCaption;
-    TAlphaEvent* fCurrentEvent;
+     TAlphaEvent* fCurrentTAlphaEvent;
+     TSiliconEvent* fCurrentTSilEvent;
      virtual void DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *title=NULL);
      
  public:
      TAlphaDisplay() {}        
-     TAlphaDisplay( TString text, Int_t autoSaveOnDisplay = 0, Int_t runNum = 0);  
-     void SetEventPointer(TAlphaEvent* ev)
+     TAlphaDisplay( Int_t runNum = 0);  
+     void SetEventPointer(TAlphaEvent* ev, TSiliconEvent* sil)
      {
-         fCurrentEvent=ev;
+         //Used for render
+         fCurrentTAlphaEvent = ev;
+         //Used for event number / VF48 time
+         fCurrentTSilEvent = sil;
      }
      virtual ~TAlphaDisplay(); 
      
+     virtual void UpdateText();
      virtual void DrawAllViews();
+     virtual void Save(std::string FileName = "");
      virtual void SetView(Float_t theta, Float_t phi, Float_t psi, Option_t *title=NULL);
      virtual void DrawViewX3D();
      virtual void DrawViewOGL();
@@ -85,7 +91,6 @@ class TAlphaDisplay : public TNamed {
      virtual void ToggleShowAllTracks();
      virtual void Update() { fCanvas->Update(); } 
 
-     TCanvas* GetfCanvas() { return fCanvas; };
      void SetCaption(TString caption) { fCaption = caption; }
      
      void DrawHelix( TAlphaEventHelix * Helix, Bool_t debug );
