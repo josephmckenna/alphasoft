@@ -1,4 +1,0 @@
-This directory is here to store the root file needed by runCastorEve.
-In particular, in this order:
-a2mcToVSD -> writes into this directory (getting the source data from ../root)
-a2mcVSDReader -> reads from this directory

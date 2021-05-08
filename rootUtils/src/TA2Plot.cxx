@@ -173,7 +173,7 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills )
          std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
       }
    }
-   return AddTimeGates(runNumber,tmin,tmax);
+   return TA2Plot::AddTimeGates(runNumber,tmin,tmax);
 }
 
 //If spills are from one run, it is faster to call the function above
