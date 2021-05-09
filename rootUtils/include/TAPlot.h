@@ -112,8 +112,9 @@ class TVertexEvents: public TObject
 
 class TTimeWindows : public TObject
 {
-   public:
+   private:
       bool isSorted = false;
+   public:
       std::vector<int> runNumber;
       std::vector<double> tmin;
       std::vector<double> tmax;
@@ -188,27 +189,25 @@ class TTimeWindows : public TObject
          assert(_tzero>=_tmin);
          int sizes = tmin.size();
       }
+
       int GetValidWindowNumber(double t)
       {
          //Checks whether vector is sorted and sorts if not.
          if(!isSorted)
          {
             SortTimeWindows();
-            isSorted = true;
-            assert( tmin.size() == tmax.size() );
          }
          //Check where t sits in tmin.
-         for (int j = 0; j < tmax.size(); j++)
+         const size_t tmax_size = tmax.size();
+         for (int j = 0; j < tmax_size; j++)
          {
             //If inside the time window
-            if ( t > tmin.at(j) )
+            if ( t > tmin[j] )
             {
-               if(t < tmax.at(j) || tmax.at(j) < 0)
+               const double this_tmax = tmax[j];
+               if(t < this_tmax || this_tmax < 0)
                {
                   return j;
-                  //This event has been written to the array... so I dont need
-                  //to check the other windows... break! Move to next SISEvent
-                  break;
                }
             }
          }
@@ -230,15 +229,19 @@ class TTimeWindows : public TObject
       }
       void SortTimeWindows()
       {
+         assert( tmin.size() == tmax.size() );
+         const int n = tmin.size();
          //Create vectors needed for sorting.
-         std::vector<std::pair<double,double>> zipped;
-         std::vector<size_t> idx(tmin.size());
+         std::vector<std::pair<double,double>> zipped(n);
+         std::vector<size_t> idx(n);
          iota(idx.begin(),idx.end(),0);
 
+
          //Zip tmin and index vector together.
-         for(size_t i=0; i<tmin.size(); ++i)
+         zipped.resize(n);
+         for(size_t i=0; i < n; ++i)
          {
-            zipped.push_back(std::make_pair(tmin[i], idx[i]));
+            zipped[i]=std::make_pair(tmin[i], idx[i]);
          }
 
          //Sort based on first (tmin) keeping idx in the same location
@@ -247,7 +250,7 @@ class TTimeWindows : public TObject
          {return a.first < b.first;} );
          
          //Unzip back into vectors.
-         for(size_t i=0; i<tmin.size(); i++)
+         for(size_t i=0; i < n; i++)
          {
             tmin[i] = zipped[i].first;
             idx[i] = zipped[i].second;
@@ -329,14 +332,17 @@ class feENVdata: public TObject
          name = m_feENVdata.name;
          title = m_feENVdata.title;
          array_number = m_feENVdata.array_number;
-         plots = m_feENVdata.plots;
+         for (feENVdataPlot* p: m_feENVdata.plots)
+            plots.push_back(new feENVdataPlot(*p));
+
       }
       feENVdata operator=(const feENVdata m_feENVdata)
       {
          this->name = m_feENVdata.name;
          this->title = m_feENVdata.title;
          this->array_number = m_feENVdata.array_number;
-         this->plots = m_feENVdata.plots;
+         for (feENVdataPlot* p: m_feENVdata.plots)
+            plots.push_back(new feENVdataPlot(*p));
          return *this;
       }
       std::pair<double,double> GetMinMax()
@@ -417,8 +423,7 @@ class feLVdata: public feENVdata
 
 class TAPlot: public TObject
 {
-   //WARNING MAKING EVERYTHING PUBLIC TO PROBE AROUND IN ROOT BROWSER. FIX BEFORE COMMITING ANYTHING.
-   public:
+   private:
       //Used to give the TCanvas a title
       std::string title;
       
@@ -565,19 +570,6 @@ class TAPlot: public TObject
          HISTOS.Add(h);
          HISTO_POSITION[keyname]=HISTOS.GetEntries()-1;
       }
-
-      /*void FillfeGEMHistograms()
-      {
-         for (auto & p: feGEM)
-         {
-            TH1D* GEM_Plot = GetTH1D(p.GetName().c_str());
-            std::pair<double,double> minmax = p.GetMinMax();
-            GEM_Plot->SetMinimum(minmax.first);
-            GEM_Plot->SetMaximum(minmax.second);
-            for (int j=0; j<p.data.size(); j++)
-               GEM_Plot->Fill(p.t[j],p.data[j]);
-         }
-      }*/
 
       void FillHistogram(const char* keyname,double x, int counts);
 
