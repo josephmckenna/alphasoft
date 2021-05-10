@@ -448,6 +448,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
          std::vector<int> data(w->GetWaveform());
          std::string wname = w->GetElectrode();
+         std::cout<<"HERE wname is: "<<wname<<std::endl;
 
          size_t pos = wname.find(delimiter);
          std::string p = wname.substr(0, pos);
@@ -458,16 +459,17 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
          pos = wname.find(delimiter);
          short col = std::stoi( wname.substr(0, pos) );
          assert(col<32&&col>=0);
-         //std::cout<<"Deconv::FindPadTimes() col: "<<col<<std::endl;
+         std::cout<<"Deconv::FindPadTimes() col: "<<col<<std::endl;
          wname = wname.erase(0, pos + delimiter.length());
 
          pos = wname.find(delimiter);
          int row = std::stoi( wname.substr(0, pos) );
-         //std::cout<<"Deconv::FindPadTimes() row: "<<row<<std::endl;
+         std::cout<<"Deconv::FindPadTimes() row: "<<row<<std::endl;
          assert(row<576&&row>=0);
 
          int coli = int(col);
          int pad_index = pmap->index(coli,row);
+         std::cout<<"Deconv::pad_index is: "<<pad_index<<std::endl;
          assert(!std::isnan(pad_index));
          // CREATE electrode
          ALPHAg::electrode el(col,row);

@@ -18,10 +18,6 @@
 /tracking/verbose 1
 ####################################
 
-######## Set Magnetic Field ######
-/AGTPC/geom/MagneticField 0. tesla
-####################################
-
 ####################################
 ########### Physics Setup ##########
 ####################################
@@ -29,14 +25,12 @@
 /AGTPC/phys/InitializePhysics emstandard_opt0
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
-######## Set Magnetic Field ########
-/AGTPC/geom/MagneticField 0
 ####################################
 
 ####################################
 ############# Run Setup ############
 ####################################
-/AGTPC/setRunName HeedInterface_emstd0_driftRKF_B0
+/AGTPC/setRunName HeedInterface_emstd0_driftRKF_testpar2
 /random/setSeeds 18061985 10081985
 /run/initialize
 ####################################
@@ -45,7 +39,11 @@
 ####################################
 ######### Primary Generator ########
 ####################################
+<<<<<<< HEAD
+/AGTPC/setRunType 5
+=======
 /AGTPC/setRunType 66
+>>>>>>> main
 
 ####################################
 ############## FIRE! ###############

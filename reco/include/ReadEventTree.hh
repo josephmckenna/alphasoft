@@ -91,6 +91,12 @@ private:
 
    // sigpoints
    TH1D* hsptawamp_px;
+
+   //phspectrum
+   TH1D* awphspect;
+   TH1D* padphspect;
+   TH1D* pwbphspect;
+   TH1D* adcphspect;
 };
 
 #endif

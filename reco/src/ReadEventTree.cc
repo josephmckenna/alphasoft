@@ -42,6 +42,9 @@ void ReadEventTree::MakeHistos()
    fHisto->Book("hspth","Pulse Height Vs Time for Spacepoints in Tracks;Time [ns];Amplitude [a.u.]",
                 300,0.,4800.,500,0.,2000.);
    fHisto->GetHisto("hspth")->SetStats(kFALSE);
+   fHisto->Book("hspthw","Pulse Height Vs Time for Spacepoints in Tracks - Average Height;Time [ns];Amplitude [a.u.]",
+                300,0.,4800.,500,0.,2000.); //PW
+   fHisto->GetHisto("hspthw")->SetStats(kFALSE);
 
    fHisto->Book("hsplen","Distance between First and Last Spacepoint;[mm]",blen,0.,maxlen);
    fHisto->Book("hsprlen","Distance between First and Last Spacepoint;r [mm]; d [mm]",
@@ -207,6 +210,13 @@ void ReadEventTree::MakeHistos()
    fHisto->GetHisto("hvphi")->SetMinimum(0.);
    fHisto->Book("hvz","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto->Book("hvxy","Vertex X-Y;x [mm];y [mm]",200,-190.,190.,200,-190.,190.);
+
+   //Ph Spectrum
+   fHisto->Book("awphspect", "AW Pulse Height Spectrum",200.,0.,200.);
+   fHisto->GetHisto("awphspect")->SetStats(kFALSE);
+   fHisto->Book("padphspect", "PAD Pulse Height Spectrum",200.,0.,200.);
+   fHisto->Book("pwbphspect", "PWB Pulse Height Spectrum",200.,0.,200.);
+   fHisto->Book("adcphspect", "ADC Pulse Height Spectrum",200.,0.,200.);
  
 }
 
@@ -310,10 +320,14 @@ void ReadEventTree::DisplayHisto()
          fHisto->GetHisto("hspth")->Rebin(2);
          fHisto->GetHisto("hspth")->Draw("colz");
          campz->cd(2);
-         fHisto->GetH2("hspth")->ProjectionX()->Draw("HIST");
+         //fHisto->GetH2("hspth")->Rebin(10); //PW
+         fHisto->GetH2("hspthw")->Draw();
+         //fHisto->GetH2("hspth")->ProjectionX()->Draw("HIST");
          campz->cd(3);
+         //hawamppc_px->Rebin(10);
          hawamppc_px->Draw("HIST");
          campz->cd(4);
+         hsptawamp_px->Rebin(10);
          hsptawamp_px->Draw("HIST");
          
          if(_save_plots) {
@@ -486,6 +500,31 @@ void ReadEventTree::DisplayHisto()
          if(_save_plots){
             czint->SaveAs(savFolder+cname+TString(".pdf"));
             czint->SaveAs(savFolder+cname+TString(".pdf"));}
+      }
+
+   // Ph Spectrum
+   std::cout<<"HERE"<<std::endl;
+   int y = 0.;
+   int x = 1.;
+   if( x>y)
+      //if( fHisto->GetHisto("awphspect")->GetEntries()) //not sure why this doesn't work
+      {
+         std::cout<<"AND HERE?"<<std::endl;
+         cname="phspectrum";
+         cname+=tag;
+         TCanvas* cph = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+         cph->Divide(2,2);
+         cph->cd(1);
+         awphspect->Draw("colz");
+         cph->cd(2);
+         padphspect->Draw("colz");
+         cph->cd(3);
+         pwbphspect->Draw("colz");
+         cph->cd(4);
+         adcphspect->Draw("colz");
+         if(_save_plots){
+            cph->SaveAs(savFolder+cname+TString(".pdf"));
+            cph->SaveAs(savFolder+cname+TString(".pdf"));}
       }
 
    // cosmic time distribution
@@ -662,6 +701,7 @@ void ReadEventTree::DisplayHisto()
             chsp->SaveAs(savFolder+cname+TString(".pdf"));
             chsp->SaveAs(savFolder+cname+TString(".pdf"));}
       }
+
 }
 
 void ReadEventTree::ProcessLine(TStoreLine* aLine)
@@ -710,7 +750,16 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
          fHisto->FillHisto("hspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("hsprp", ap->GetPhi(), ap->GetR() );
          fHisto->FillHisto("hspth",ap->GetTime(),ap->GetHeight());
+         fHisto->FillHisto("hspthw",ap->GetTime(),ap->GetHeight());
+         //TVector3 height = ap->GetHeight();
       }
+   //TVector3 mean = *(height->GetMean());
+   //for( int ip = 0; ip<sp->GetEntries(); ++ip )
+   //   {
+   //      TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
+   //      fHisto->FillHisto("hspthw",ap->GetTime(),mean);
+   //   }
+
    double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
    fHisto->FillHisto("hsplen", maxd );
    fHisto->FillHisto("hsprlen", ((TSpacePoint*)sp->Last())->GetR(), maxd );
@@ -997,8 +1046,13 @@ void ReadEventTree::GetSignalHistos()
       {
          // aw * pad
          hmatch = (TH1D*)gROOT->FindObject("hNmatch");
-         hmatch->SetLineColor(kBlue);
-         hmatch->SetLineWidth(2);
+         std::cout<<"hmatch does exist"<<std::endl;
+         if (hmatch){
+            hmatch->SetLineColor(kBlue);
+            hmatch->SetLineWidth(2);
+         } else {
+            std::cout<<"hmatch does not exist"<<std::endl;
+         }
 
          hawpadsector = (TH2D*)gROOT->FindObject("hawcol_sector_time");
 
@@ -1012,6 +1066,16 @@ void ReadEventTree::GetSignalHistos()
          if( hsptawamp )
             hsptawamp_px=hsptawamp->ProjectionX();
       }   
+
+   //PW
+   if (fin->cd("phspectrum") )
+      {
+         awphspect = (TH1D*)gROOT->FindObject("hawphspect");
+         padphspect = (TH1D*)gROOT->FindObject("hpadphspect");
+         pwbphspect = (TH1D*)gROOT->FindObject("hpwbphspect");
+         adcphspect = (TH1D*)gROOT->FindObject("hadcphspect");
+         std::cout<<"phspect does exist"<<std::endl;
+      }
 }
 
 

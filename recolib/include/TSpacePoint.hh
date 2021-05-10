@@ -29,6 +29,8 @@ private:
    double ferrr;
    double ferrphi;
 
+   //double fm;
+
    unsigned short fID;           // Geant4 track ID
    short fPDG;                   // Geant4 particle type ID
 
@@ -92,6 +94,8 @@ public:
 
    inline unsigned short GetTrackID() const { return fID; };
    inline short GetTrackPDG() const { return fPDG; };
+
+   //inline double GetMean(Int_t axis = 2) const {return fm;};
 
    inline double Distance(const TSpacePoint* aPoint) const {
       double dx = fx-aPoint->fx,

@@ -218,7 +218,7 @@ public:
    void Help()
    {
       printf("PHspectrumFactory::Help\n");
-      printf("\t--phspect [Ntracks]\tEnable extractction of Pulse Height Spectra for tracks, default number of tracks is Ntracks = %d\n",fFlags.fNtracks);
+      printf("\t--phspect [Ntracks]\tEnable extraction of Pulse Height Spectra for tracks, default number of tracks is Ntracks = %d\n",fFlags.fNtracks);
    }
    void Usage()
    {

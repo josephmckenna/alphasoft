@@ -4,7 +4,7 @@
 #include <math.h>
 #include<iostream>
 
-static const double _sq2 = 1.0/sqrt(2.0);
+static const double _sq2 = 1.0/sqrt(12.0); //should be sqrt(2.0)
 
 SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(awnl),
 							      fPadNoiseLevel(padnl),
@@ -64,12 +64,10 @@ void SignalsGenerator::Initialize()
 
   // parameters that characterize
   // the noise on the electrodes
-  //PW - peak to peak noise? How are these determined
-  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
-  fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(6.)*mV2ADC*0.5; //should be sqrt(12.)
+  fPadNoisePkPk = fPadNoiseLevel*sqrt(9.)*mV2ADC*0.5; //should be sqrt(12.)
 
   // init the wf containers
-  //PW - waveform
   for(uint aw=0; aw<256; ++aw)
     {
       fAnodeSignals[aw] = new std::vector<double>;
@@ -82,7 +80,7 @@ void SignalsGenerator::Initialize()
     }
 
   for(int s=0; s<32; ++s)
-     for(int c=0; c<576; ++c) //PW - where does 576 come from?
+     for(int c=0; c<576; ++c) 
       {
 	std::pair<int,int> pad(s,c);
 	fPadSignals[pad] = new std::vector<double>;
@@ -145,8 +143,9 @@ void SignalsGenerator::AddPadSignal(std::pair<int,int>& pad, double& t, double& 
       std::cout<<"SignalsGenerator::AddPadSignal pad("<<id.first<<","<<id.second<<") size: ";
       std::cout<<fPadSignals[id]->size()<<"\t";
 
-      double z1 = double(c) * 4. - 1152.,
-	z2 = ( double(c) + 1.0 ) * 4. - 1152.;
+      double z1 = (double(c)) * 4. - 1152., //in mm
+         //	z2 = ( double(c) + 1.0 ) * 4. - 1152.; //This is the original
+        z2 = ( double(c) + 1.0) * 4. - 1152.;
       std::cout<<c<<"\tz: "<<z<<"  z1: "<<z1<<"  z2: "<<z2<<std::endl;
 
       double scale = -gain*PadsChargeProfile(z1,z2,z);
