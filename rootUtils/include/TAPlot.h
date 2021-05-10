@@ -423,7 +423,7 @@ class feLVdata: public feENVdata
 
 class TAPlot: public TObject
 {
-   private:
+   protected:
       //Used to give the TCanvas a title
       std::string title;
       
