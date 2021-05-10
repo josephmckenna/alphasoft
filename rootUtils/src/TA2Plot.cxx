@@ -76,39 +76,17 @@ void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
 // two vectors would make a better memory layout... not a struct?
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
-   std::cout << "We are now in AddSVDEvent(TSVD_QOD* SVDEvent) so I guess it's taking the input to be a TSVD_QOD" << std::endl;
    double t=SVDEvent->t;
    if (SVDEvent->z < ZMinCut) return;
    if (SVDEvent->z > ZMaxCut) return;
 
    int index = GetTimeWindows()->GetValidWindowNumber(t);
-   
-   
    //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
    //if not it will add the event. 
    if(index >= 0)
    {
       AddEvent(SVDEvent, GetTimeWindows()->tzero.at(index));
-      std::cout << "This actually adds the event. RunNumber = " << SVDEvent->RunNumber << std::endl;
-   
    }
-
-   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
-   {
-      //If inside the time window
-      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
-      //Or if after tmin and tmax is invalid (-1)
-           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
-      {
-         std::cout << "Calling AddEvent with t = " << GetTimeWindows()->tzero.at(j) << std::endl;
-         
-         std::cout << "index in GetValidWindowNumber has returned: " << j << ". t = " << t << ", tmax[index] = " << GetTimeWindows()->tmax.at(j) << "tzero[index] = " <<  GetTimeWindows()->tzero.at(j) << std::endl;
-         AddEvent(SVDEvent, GetTimeWindows()->tzero.at(j));
-         //This event has been written to the array... so I dont need
-         //to check the other windows... break! Move to next SISEvent
-         break;
-      }
-   }*/
 }
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
@@ -130,24 +108,6 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
          }
       }
    }
-
-   /*for (int j = 0; j < GetTimeWindows()->tmax.size(); j++)
-   {
-      //If inside the time window
-      if ( ( t > GetTimeWindows()->tmin.at(j) && t < GetTimeWindows()->tmax.at(j) ) ||
-      //Or if after tmin and tmax is invalid (-1)
-           ( t > GetTimeWindows()->tmin.at(j) && GetTimeWindows()->tmax.at(j) < 0 ) )
-      {
-         for (int i=0; i<n_sis; i++)
-         {
-            int counts=SISEvent->GetCountsInChannel(SISChannels.at(i));
-            if (counts)
-            {
-               AddEvent(SISEvent, SISChannels.at(i), GetTimeWindows()->tzero.at(j));
-            }
-         }
-      }
-   }*/
 }
 
 void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
@@ -168,7 +128,6 @@ void TA2Plot::LoadRun(int runNumber, double first_time, double last_time)
          continue;
       if (t > last_time)
          break;
-      std::cout << "SVDEvent is a TTreeReaderValue<TSVD_QOD> and we've just called AddSVDEvent(&(*SVDEvent));" << std::endl;
       AddSVDEvent(&(*SVDEvent));
    }
 
@@ -444,44 +403,43 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
    assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
 
    int index = 0;
-   int currentEventNo = VertexEvents.EventNos[index];
-   //int currentRunNo = VertexEvents.runNumbers[index];
-   int currentRunNo = SISEvents.runNumber[index];
-
-   //myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
-   //myfile << SISEvents.runNumber[0] << ":" << currentEventNo;
-
-   /*while(index < VertexEvents.runNumbers.size())
+   int currentEventNo = VertexEvents.EventNos.at(index);
+   int currentRunNo = SISEvents.runNumber.at(index);
+   myfile << currentRunNo << ":" << currentEventNo;
+   while(index < VertexEvents.runNumbers.size()-1)
    {
       index++;
-      if(VertexEvents.EventNos[index] == (currentEventNo+1))
+      if(VertexEvents.runNumbers.at(index)!=currentRunNo)
+      {
+        // myfile << "runNo has changed from " << currentRunNo << " to " << VertexEvents.runNumbers.at(index) << std::endl;
+         myfile << "-" << currentEventNo << std::endl;
+         currentRunNo = VertexEvents.runNumbers.at(index);
+         currentEventNo = VertexEvents.EventNos.at(index);
+         myfile << currentRunNo << ":" << currentEventNo;
+      }
+      else if(VertexEvents.EventNos.at(index) == (currentEventNo+1))
+      {
+         //myfile << "currentEventNo =  " << currentEventNo << " is consecutive, ignore and add to give: " << VertexEvents.EventNos.at(index) << std::endl;
          currentEventNo++;
+      }
       else
       {
-
-         if(VertexEvents.runNumbers[index]!=currentRunNo)
-         {
-            currentRunNo = SISEvents.runNumber[index];
-            currentEventNo = VertexEvents.EventNos[index]; 
-            myfile << VertexEvents.runNumbers[0] << ":" << currentEventNo;
-         }
-         else
-         {
-            myfile << "-" << currentEventNo << std::endl;
-            currentRunNo = SISEvents.runNumber[index];
-            currentEventNo = VertexEvents.EventNos[index]; 
-
-         }
+         //myfile << "currentEventNo =  " << currentEventNo << " is NOT consecutive. Close the range." << std::endl;
+         myfile << "-" << currentEventNo << std::endl;
+         currentRunNo = VertexEvents.runNumbers.at(index);
+         currentEventNo = VertexEvents.EventNos.at(index);
+         myfile << currentRunNo << ":" << currentEventNo;
       }
-   }*/
+   }
+   myfile << "-" << currentEventNo << std::endl;
    
 
-   assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
+   //assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
    //Old method, just does every event in a row.
-   for(int i=0; i<VertexEvents.runNumbers.size(); i++)
+   /*for(int i=0; i<VertexEvents.runNumbers.size(); i++)
    {
       myfile << VertexEvents.runNumbers.at(i) << ":" << VertexEvents.EventNos.at(i) << std::endl;
-   }
+   }*/
 
    myfile.close();
 } 

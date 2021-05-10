@@ -25,5 +25,6 @@ handle_dumps.o
 catch_efficiency_module.o
 #cold_dump_temperaturefit.o
 spill_log_module.o
+a2dumper.o
 
 AnalysisReport_module.o
