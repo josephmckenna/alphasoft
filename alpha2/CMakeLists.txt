@@ -79,3 +79,5 @@ foreach( LIST_FILE ${BINS} )
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )
+
+add_subdirectory(macros)
