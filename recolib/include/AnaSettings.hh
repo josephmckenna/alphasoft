@@ -1,12 +1,13 @@
+#ifndef _AnaSettings_
+#define _AnaSettings_
 
 #include "json.hpp"
 #include <fstream>
 #include <string>
 #include "TString.h"
 #include "TObjString.h"
-
-#ifndef _AnaSettings_
-#define _AnaSettings_
+#include <sstream>
+#include <iostream>
 
 using json = nlohmann::json;
 class AnaSettings
