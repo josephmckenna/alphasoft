@@ -1,10 +1,11 @@
 #!/bin/bash
 
-#PHI=`deg2rad 60`
-#THETA=`deg2rad 30`
+if [ ! -d "${AGRELEASE}/RunLogs" ]; then
+    mkdir -p $AGRELEASE/RunLogs
+fi
 
 
 cd $AGRELEASE/bin/simulation
-#TrackElectronAvalanche.exe 1 0 0 0.5 |& tee $AGRELEASE/RunLogs/TrackGarf_0B.log
+time TrackElectronAvalanche.exe 1 0 0 0.5 |& tee $AGRELEASE/RunLogs/TrackGarf_0B_theta0.5.log
 
-time TrackElectronAvalanche.exe 1 0 0 -0.5 |& tee $AGRELEASE/RunLogs/TrackGarf_0B.log
+#time TrackElectronAvalanche.exe 1 0 0 -0.5 |& tee $AGRELEASE/RunLogs/TrackGarf_0B_theta-0.5.log

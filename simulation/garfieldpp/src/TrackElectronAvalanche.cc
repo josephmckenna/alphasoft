@@ -80,17 +80,17 @@ int main(int argc, char * argv[])
 
   TString fname;
   if( B >= 0. )
-    fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm.root",
+    fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initTheta%1.3frad_initZ%1.2fcm.root",
                             getenv("GARFIELDPP"),
 			    CathodeVoltage,AnodeVoltage,FieldVoltage,
 			    MagneticField,
-			    r0,phi0,z0);
+			    r0,phi0,theta0,z0);
   else
-     fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm_Bmap.root",
+     fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initTheta%1.3frad_initZ%1.2fcm_Bmap.root",
                              getenv("GARFIELDPP"),
 			    CathodeVoltage,AnodeVoltage,FieldVoltage,
 			    MagneticField,
-			    r0,phi0,z0);
+                             r0,phi0,theta0,z0);
   TFile* fout = TFile::Open(fname.Data(),"RECREATE");
 
   if(!fout->IsOpen())
@@ -424,13 +424,6 @@ int main(int argc, char * argv[])
   TH1D hro = GetROSignal(&sensor, &roname, convolute);
   hro.Write();
   std::cerr<<"READOUT complete"<<std::endl;
-
-  // std::cerr<<"Plot Driftlines"<<std::endl;
-  // viewdrift.Plot(true,true);
-  // viewCell.Plot2d();
-  // cc.SaveAs(".pdf");
-  // fout->cd();
-  // cc.Write();
 
   fout->Close();
 
