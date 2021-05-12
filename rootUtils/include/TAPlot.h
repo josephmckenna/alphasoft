@@ -118,7 +118,7 @@ class TTimeWindows : public TObject
    public:
       std::vector<int> fRunNumber;
       std::vector<double> fTMin;
-      std::vector<double> fTmax;
+      std::vector<double> fTMax;
       std::vector<double> fTZero;
       
       //Standard ctor and dtor
@@ -137,7 +137,7 @@ class TTimeWindows : public TObject
          {
             fRunNumber.push_back(kTimeWindows.fRunNumber[i]);
             fTMin.push_back(kTimeWindows.fTMin[i]);
-            fTmax.push_back(kTimeWindows.fTmax[i]);
+            fTMax.push_back(kTimeWindows.fTMax[i]);
             fTZero.push_back(kTimeWindows.fTZero[i]);
          }
       }
@@ -148,7 +148,7 @@ class TTimeWindows : public TObject
          {
             this->fRunNumber.push_back(kTimeWindows.fRunNumber[i]);
             this->fTMin.push_back(kTimeWindows.fTMin[i]);
-            this->fTmax.push_back(kTimeWindows.fTmax[i]);
+            this->fTMax.push_back(kTimeWindows.fTMax[i]);
             this->fTZero.push_back(kTimeWindows.fTZero[i]);
          }
          return *this;
@@ -161,7 +161,7 @@ class TTimeWindows : public TObject
          //Vectors- need concacting
          outputPlot.fRunNumber.insert(outputPlot.fRunNumber.end(), kTimeWindowsB.fRunNumber.begin(), kTimeWindowsB.fRunNumber.end() );
          outputPlot.fTMin.insert(outputPlot.fTMin.end(), kTimeWindowsB.fTMin.begin(), kTimeWindowsB.fTMin.end() );
-         outputPlot.fTmax.insert(outputPlot.fTmax.end(), kTimeWindowsB.fTmax.begin(), kTimeWindowsB.fTmax.end() );
+         outputPlot.fTMax.insert(outputPlot.fTMax.end(), kTimeWindowsB.fTMax.begin(), kTimeWindowsB.fTMax.end() );
          outputPlot.fTZero.insert(outputPlot.fTZero.end(), kTimeWindowsB.fTZero.begin(), kTimeWindowsB.fTZero.end() );
          return outputPlot;
       }
@@ -170,7 +170,7 @@ class TTimeWindows : public TObject
          std::cout << "TTimeWindows += operator" << std::endl;
          this->fRunNumber.insert(this->fRunNumber.end(), kTimeWindowsA.fRunNumber.begin(), kTimeWindowsA.fRunNumber.end() );
          this->fTMin.insert(this->fTMin.end(), kTimeWindowsA.fTMin.begin(), kTimeWindowsA.fTMin.end() );
-         this->fTmax.insert(this->fTmax.end(), kTimeWindowsA.fTmax.begin(), kTimeWindowsA.fTmax.end() );
+         this->fTMax.insert(this->fTMax.end(), kTimeWindowsA.fTMax.begin(), kTimeWindowsA.fTMax.end() );
          this->fTZero.insert(this->fTZero.end(), kTimeWindowsA.fTZero.begin(), kTimeWindowsA.fTZero.end() );
          return *this;
       }
@@ -178,7 +178,7 @@ class TTimeWindows : public TObject
       {
          fRunNumber.push_back(runNumber);
          fTMin.push_back(minTime);
-         fTmax.push_back(maxTime);
+         fTMax.push_back(maxTime);
          fTZero.push_back(timeZero);
          if(maxTime >= 0)
          {
@@ -196,13 +196,13 @@ class TTimeWindows : public TObject
             SortTimeWindows();
          }
          //Check where t sits in tmin.
-         const size_t kTMaxSize = fTmax.size();
+         const size_t kTMaxSize = fTMax.size();
          for (int j = 0; j < kTMaxSize; j++)
          {
             //If inside the time window
             if ( time > fTMin[j] )
             {
-               const double kCurrentTMax = fTmax[j];
+               const double kCurrentTMax = fTMax[j];
                if(time < kCurrentTMax || kCurrentTMax < 0)
                {
                   return j;
@@ -227,7 +227,7 @@ class TTimeWindows : public TObject
       }
       void SortTimeWindows()
       {
-         assert( fTMin.size() == fTmax.size() );
+         assert( fTMin.size() == fTMax.size() );
          const int kTMinSize = fTMin.size();
          //Create vectors needed for sorting.
          std::vector<std::pair<double,double>> zipped(kTMinSize);
@@ -255,7 +255,7 @@ class TTimeWindows : public TObject
          }
 
          fRunNumber = reorder<int>(fRunNumber,idx);
-         fTmax = reorder<double>(fTmax,idx);
+         fTMax = reorder<double>(fTMax,idx);
          fTZero = reorder<double>(fTZero,idx);
   
          isSorted = true;
