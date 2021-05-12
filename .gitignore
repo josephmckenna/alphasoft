@@ -69,3 +69,5 @@ output
 *.save
 *_C.d
 .vscode/settings.json
+simulation/garfieldpp/scripts/*.dat
+simulation/garfieldpp/scripts/__pycache__/
