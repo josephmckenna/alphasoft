@@ -87,7 +87,7 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    //if not it will add the event. 
    if(index >= 0)
    {
-      AddEvent(SVDEvent, GetTimeWindows()->tzero.at(index));
+      AddEvent(SVDEvent, GetTimeWindows()->fTZero.at(index));
    }
 }
 
@@ -105,7 +105,7 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
          int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
          if (counts)
          {
-            AddEvent(SISEvent, SISChannels[i], GetTimeWindows()->tzero[index]);
+            AddEvent(SISEvent, SISChannels[i], GetTimeWindows()->fTZero[index]);
          }
       }
    }
@@ -231,40 +231,40 @@ void TA2Plot::SetUpHistograms()
    std::string units;
    if (GetMaxDumpLength()<SCALECUT) 
    {
-      tFactor = 1000;
+      fTimeFactor = 1000;
       units = "[ms]";
    }
    else
    {
-      tFactor = 1;
+      fTimeFactor = 1;
       units = "[s]";
    }
    //SIS channels:
-   TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   TH1D* triggers=new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
    triggers->SetMarkerColor(kRed);
    triggers->SetLineColor(kRed);
    triggers->SetMinimum(0);
    AddHistogram("tIO32_nobusy",triggers);
 
-   TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   TH1D* read_triggers=new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
    read_triggers->SetMarkerColor(kViolet);
    read_triggers->SetLineColor(kViolet);
    read_triggers->SetMinimum(0);
    AddHistogram("tIO32",read_triggers);
 
-   TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   TH1D* atom_or=new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
    atom_or->SetMarkerColor(kGreen);
    atom_or->SetLineColor(kGreen);
    atom_or->SetMinimum(0);
    AddHistogram("tAtomOR",atom_or);
 
-   TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), TMin*tFactor, TMax*tFactor);
+   TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
    ht->SetLineColor(kMagenta);
    ht->SetMarkerColor(kMagenta);
    ht->SetMinimum(0);
    AddHistogram("tvtx",ht);
 
-   TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*tFactor, TMax*tFactor);
+   TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
    AddHistogram("ztvtx",hzt);
 
    //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
@@ -321,19 +321,19 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    TVector3 vtx;
    const TVertexEvents* VEs = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
-   for (int i=0; i<VEs->xs.size(); i++)
+   for (int i=0; i<VEs->fXVertex.size(); i++)
    {
       Double_t time;
       if (ZeroTimeAxis)
-         time = VEs->ts[i];
+         time = VEs->fTimes[i];
       else
-         time = VEs->RunTimes[i];
+         time = VEs->fRunTimes[i];
       if (max_dump_length<SCALECUT)
          time=time*1000.;
-      vtx=TVector3(VEs->xs[i],VEs->ys[i],VEs->zs[i]);
+      vtx=TVector3(VEs->fXVertex[i],VEs->fYVertex[i],VEs->fZVertex[i]);
       FillHistogram("tSVD",time);
 
-      int CutsResult=VEs->CutsResults[i];
+      int CutsResult=VEs->fCutsResults[i];
       if (MVAMode>0)
       {
          if (CutsResult & 1)//Passed cut result!
@@ -360,14 +360,14 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          }
          else
          {
-            if ( VEs->VertexStatuses[i] > 0) 
+            if ( VEs->fVertexStatuses[i] > 0) 
             {
                FillHistogram("tvtx",time);
             }
             else 
                continue;
          }
-         if (VEs->VertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+         if (VEs->fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vtx.Phi());
       FillHistogram("zphivtx",vtx.Z(), vtx.Phi());
@@ -404,26 +404,26 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
    myfile.open (file);
    
    //Assert that the runNumbers and EventNos match up in terms of size.
-   assert(VertexEvents.runNumbers.size() == VertexEvents.EventNos.size());
+   assert(fVertexEvents.fRunNumbers.size() == fVertexEvents.fEventNos.size());
 
    int index = 0; //Initialise at index 0
-   int currentEventNo = VertexEvents.EventNos.at(index); //Set the current run number to be the one at index (0)
+   int currentEventNo = fVertexEvents.fEventNos.at(index); //Set the current run number to be the one at index (0)
    int currentRunNo = SISEvents.runNumber.at(index); //Same for event no.
    myfile << currentRunNo << ":" << currentEventNo; //Print an initial statement to file, will look something like "39993:2"
    
    //While index is in range lets do all the checks to decide what to write.
-   while(index < VertexEvents.runNumbers.size()-1)
+   while(index < fVertexEvents.fRunNumbers.size()-1)
    {
       index++; //Increment index since we're in a while loop not a for.
-      if(VertexEvents.runNumbers.at(index)!=currentRunNo)
+      if(fVertexEvents.fRunNumbers.at(index)!=currentRunNo)
       {
          //If runNumber has changed:
          myfile << "-" << currentEventNo << std::endl; //1. Close off current range eg: "39993:2-5"
-         currentRunNo = VertexEvents.runNumbers.at(index); //Update currentrunNo and EventNo
-         currentEventNo = VertexEvents.EventNos.at(index);
+         currentRunNo = fVertexEvents.fRunNumbers.at(index); //Update currentrunNo and EventNo
+         currentEventNo = fVertexEvents.fEventNos.at(index);
          myfile << currentRunNo << ":" << currentEventNo; //Print initial line of new run eg: "45000:3"
       }
-      else if(VertexEvents.EventNos.at(index) == (currentEventNo+1))
+      else if(fVertexEvents.fEventNos.at(index) == (currentEventNo+1))
       {
          //Else if runNumber is the same but the event is consecutive to the one after (ie 2-3)
          currentEventNo++; //Increment currentEventNo. This is equiv to currentEventNo = VertexEvents.EventNos.at(index) just quicker since we've already checked its consecutive.
@@ -432,8 +432,8 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
       {
          //Else: Ie run number is the samer but the event number is not consecutive:
          myfile << "-" << currentEventNo << std::endl; //Close line, eg: "39993:2-5"
-         currentRunNo = VertexEvents.runNumbers.at(index); //Update run and event no.
-         currentEventNo = VertexEvents.EventNos.at(index);
+         currentRunNo = fVertexEvents.fRunNumbers.at(index); //Update run and event no.
+         currentEventNo = fVertexEvents.fEventNos.at(index);
          myfile << currentRunNo << ":" << currentEventNo; //Start new line eg: "39993:27"
       }
    }
