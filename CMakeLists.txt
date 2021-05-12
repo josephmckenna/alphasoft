@@ -117,7 +117,7 @@ if (LINTER)
       #In root 6.24.00, the TObject constructor triggers clang-tidy warnings
       -line-filter=[{"name":"TStorage.h","lines":[[9999999,9999999]]}]
       -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*,bugprone*,modernize-*';
-      -warnings-as-errors=*;
+      #-warnings-as-errors=*;
    )
 endif(LINTER)
 include_directories(SYSTEM ${ROOT_INCLUDE_DIRS})
