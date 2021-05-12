@@ -73,7 +73,7 @@ elif [[ "$1" == "ci" ]]; then
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    ${cmd} -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release ..
+    ${cmd} -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DLINTER=ON ..
     ${cmd} --build . --target install
     ls -lh $AGRELEASE/bin
     cd $AGRELEASE
