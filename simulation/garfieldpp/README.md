@@ -1,14 +1,14 @@
 # Applications Index
 
-	- `DriftGas.exe` produce gas file with MagBoltz
+ - `DriftGas.exe` produce gas file with MagBoltz
 
-	- `ChamberField.exe` display electric field 
+ - `ChamberField.exe` display electric field 
 	
-	- `PlotMedium.exe` plot properties of selected gas
+ - `PlotMedium.exe` plot properties of selected gas
 
-	- `ChamberDrift.exe` calculate STR
+ - `ChamberDrift.exe` calculate STR
  
-	- `ElectronAvalanche.exe` model electronics response to avalanche
+ - `ElectronAvalanche.exe` model electronics response to avalanche
 
 
 
