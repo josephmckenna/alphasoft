@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from os import environ, path
+from sys import exit
 
 def get_array(B=0.,Q=0.3,Vaw=3200.,Vfw=-110.,z=0.0):
     rad=np.array([])
@@ -92,6 +93,14 @@ def dumpSTR(pars31,B=0.,Q=0.3,Vaw=3200.):
         for ti,ri in zip(t,r):
             if ri<109.: break
             fout.write(f'{ti:.1f}\t{ri:1.3f}\t{phi:1.2f}\n')
+
+
+def endpointSTR(pars,r):
+    coeff=[c for c in reversed(pars[1:])]
+    coeff[-1]-=r
+    roots=np.roots(coeff)
+    return np.asscalar( np.real(roots[np.isreal(roots)]) )
+
             
 
 if __name__=='__main__':
@@ -124,12 +133,18 @@ if __name__=='__main__':
     #dumpSTR(pol_prop,pol_drift,B,Q,Vaw,tFW)
     dumpSTR(par_drift,B,Q,Vaw)
 
+    r_cath=109.25
+    td_max=endpointSTR(par_drift,r_cath)
+    print(f'Max Drift time at r={r_cath}mm is {td_max:1.1f}ns')
+    #exit(0)
+
  
     # define x-axis
     xdata0=np.linspace(0.,xmax,1000.)
     xdata1=np.linspace(0.,tFW,10.)
     xdata2=np.linspace(tFW,xmax,100.)
     
+    '''
     # plotting
     plt.subplot(211)
     #plot data
@@ -149,11 +164,16 @@ if __name__=='__main__':
 
 
     plt.subplot(212)
+    '''
     # plot data: piece-wise
-    plt.plot(td[td>tFW],rad[td>tFW],'.r',label='data')
-    plt.plot(td[td<tFW],rad[td<tFW],'.g',label='data')
+    plt.plot(td[td>tFW],rad[td>tFW],'.r',label='data drift')
+    plt.plot(td[td<tFW],rad[td<tFW],'.g',label='data pc')
     # plot fit
-    plt.plot(xdata0, _pol31(xdata0, *par_drift), '--y',label='scipy fit: m=%1.2f,a0=%1.2f,a1=%1.2f,a2=%1.5f,a3=%1.5f' % tuple(par_drift))
+    plt.plot(xdata0, _pol31(xdata0, *par_drift), '--y',label='scipy fit: m=%1.2f,a0=%1.2f,a1=%1.2e\na2=%1.2e,a3=%1.2e' % tuple(par_drift))
+
+    # plot endpoint
+    plt.vlines(td_max,r_cath,190.,label=f'Max Drift Time: {td_max:1.1f}ns')
+
     # cosmetics
     plt.xlabel('t [ns]')
     plt.ylabel('r [mm]')
@@ -166,4 +186,5 @@ if __name__=='__main__':
     fig=plt.gcf()
     fig.set_size_inches(15,8)
     fig.tight_layout()
+    fig.savefig(f"plotSTR_B{B:.2f}T_Ar{(1.-Q)*1.e2:.0f}CO2{Q*1.e2:.0f}_CERN.pdf", bbox_inches='tight')    
     plt.show()
