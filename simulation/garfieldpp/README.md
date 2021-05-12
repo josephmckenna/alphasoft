@@ -9,6 +9,8 @@
  - `ChamberDrift.exe` calculate STR
  
  - `ElectronAvalanche.exe` model electronics response to avalanche
+ 
+ - `TrackElectronAvalanche.exe` simulate the passage of a charged pion and save the rTPC response
 
 
 
@@ -23,3 +25,6 @@ Located in `$AGRELEASE/simulation/garfieldpp/scripts`
  - `FitSTR_B1.py` display and save STR for B=1T
  
  - `FitSTR_map.py` display and save STR for mapped B
+ 
+ - `runTrack.sh` sample
+ 
