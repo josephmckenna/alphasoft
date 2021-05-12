@@ -551,9 +551,9 @@ class TAPlot: public TObject
       void DrawHistogram(const char* keyname, const char* settings);
       TLegend* DrawLines(TLegend* legend, const char* keyname);
       TLegend* AddLegendIntegral(TLegend* legend, const char* message, const char* keyname);
+      void ClearHisto();
       void SetUpHistograms();
       void PrintTimeRanges();
-      void ClearHisto();
 
    ClassDef(TAPlot, 1);
 };
