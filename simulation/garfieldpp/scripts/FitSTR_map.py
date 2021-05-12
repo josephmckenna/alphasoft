@@ -2,9 +2,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from math import fabs
 
-from FitSTR import get_array, scipyfit_lorentz
-from FitSTR import scipyfit_drift
+from FitSTR_B1 import _pol30, scipyfit_lorentz
+from FitSTR import get_array, _pol31, scipyfit_drift
 
 def MapTable(par_drift,par_lor,B=-1.,Q=0.3,Vaw=3200.,z=0.0):
     t_step=8.
