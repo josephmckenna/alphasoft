@@ -53,7 +53,7 @@ public:
   MultiGaussFunction(const std::vector<double> parameters)
   {
     assert(parameters.size()%3==0);
-    Ngauss = parameters.size()/3;
+    Ngauss = int(parameters.size())/3;
     for( int i=0; i<Ngauss; ++i )
       {
 	auto it = parameters.begin()+3*i;

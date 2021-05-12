@@ -18,6 +18,7 @@
 #include "TAlphaEventHelix.h"
 #include "TAlphaEventCosmicHelix.h"
 #include "TAlphaEventVertex.h"
+#include "TLine.h"
 
 class TCanvas;
 class TPad;
