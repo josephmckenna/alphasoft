@@ -18,7 +18,7 @@ void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      p->LoadfeGEMData(runNumber,first_time, last_time);
+      p->LoadFEGEMData(runNumber,first_time, last_time);
    }
 }
 
@@ -29,7 +29,7 @@ void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      p->LoadfeLVData(runNumber, first_time, last_time);
+      p->LoadFELVData(runNumber, first_time, last_time);
    }
 }
 
