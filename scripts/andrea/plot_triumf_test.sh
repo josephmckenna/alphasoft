@@ -6,7 +6,9 @@ fi
 
 
 #FILE_LIST=($(ls -rt $DATADIR/test/*.root))
-FILE_LIST=("$DATADIR/agmini/cosmics904690.root" "$DATADIR/agmini/cosmics904648sub000.root")
+#FILE_LIST=("$DATADIR/agmini/cosmics904690.root" "$DATADIR/agmini/cosmics904648sub000.root")
+
+FILE_LIST=("/daq/alpha_data0/acapra/alphag/test/cosmics904472.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904554.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904555.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904648.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904474.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904685.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904501.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904547.root" "/daq/alpha_data0/acapra/alphag/test/cosmics904503.root")
 
 
 echo "list of file:" ${FILE_LIST[*]}
