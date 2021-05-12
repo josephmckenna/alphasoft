@@ -422,188 +422,138 @@ class TFELVData: public TFEENVData
 class TAPlot: public TObject
 {
    protected:
-      //Used to give the TCanvas a title
-      std::string fTitle;
       
+      std::string fTitle; //Used to give the TCanvas a title
       int fMVAMode; //Default 0;
       int fNumBins; // 100;
       int fDrawStyle; //Switch between colour modes
-
       int fLegendDetail; // = 1;
-      Bool_t fApplyCuts;
+      int fTotalVert;
       double fClassifierCut;
-
       double fFirstTMin;
       double fLastTMax;
       double fBiggestTZero;
       double fMaxDumpLength;
-      TTimeWindows fTimeWindows;
       double fTotalTime;
-      int fTotalVert;
-
       bool fVerbose;
-      //Time scaling factor (used to switch between seconds and milliseconds)
-      Double_t fTimeFactor=1.;
+      Bool_t fApplyCuts;
+      Double_t fTimeFactor=1.; //Time scaling factor (used to switch between seconds and milliseconds)
 
-      //Hold historams in a vector so that saved TAGPlot objects can be 
-      //backwards and forwards compatable
+      //Hold historams in a vector so that saved TAGPlot objects can be backwards and forwards compatable
       TObjArray fHistos;
       std::map<std::string,int> fHistoPositions;
    
-   
       std::vector<double> fEjections;
       std::vector<double> fInjections;
-
       std::vector<double> fDumpStarts;
       std::vector<double> fDumpStops;
+      std::vector<int> fRuns; //check dupes - ignore copies. AddRunNumber
+      std::vector<TFEGEMData> fFEGEM;
+      std::vector<TFELVData> fFELV;
 
+      TTimeWindows fTimeWindows;
       TVertexEvents fVertexEvents;
-      std::vector<int> Runs; //check dupes - ignore copies. AddRunNumber
 
-      std::vector<TFEGEMData> feGEM;
-
-      std::vector<TFELVData> feLV;
-      TTimeStamp ObjectConstructionTime{0};
-      TTimeStamp DataLoadedTime{0};
-   
+      TTimeStamp fObjectConstructionTime{0};
+      TTimeStamp fDataLoadedTime{0};
 
    public:
-      //Use a time axis that counts from Zero of a dump window (default true)
-      const bool ZeroTimeAxis;
 
-      void SetTAPlotTitle(const std::string& _title)     {  fTitle=_title;  }
-      std::string GetTAPlotTitle()                       {  return fTitle;  }
-      bool HaveGEMData()                                 {  return (feGEM.size() != 0);   }
-      bool HaveLVData()                                  {  return (feGEM.size() != 0);   }
-      void LoadingDataLoadingDone()                      {  DataLoadedTime = TTimeStamp(); }
-      int GetNBins() const                               {  return fNumBins; }
-      void SetTimeFactor(double t)                       {  fTimeFactor=t; }
-      double GetTimeFactor() const                       {  return fTimeFactor; }
-      void AddVertexEvent(int runNumber, int EventNo, int CutsResult, int VertexStatus, double x, double y, double z, double t, double EventTime, double RunTime, int nHelices, int nTracks)                 
-      {
-         fVertexEvents.fRunNumbers.push_back(runNumber);
-         fVertexEvents.fEventNos.push_back(EventNo);
-         fVertexEvents.fCutsResults.push_back(CutsResult);
-         fVertexEvents.fVertexStatuses.push_back(VertexStatus);
-         fVertexEvents.fXVertex.push_back(x);
-         fVertexEvents.fYVertex.push_back(y);
-         fVertexEvents.fZVertex.push_back(z);
-         fVertexEvents.fTimes.push_back(t);
-         fVertexEvents.fEventTimes.push_back(EventTime);
-         fVertexEvents.fRunTimes.push_back(RunTime);
-         fVertexEvents.fNumHelices.push_back(nHelices);
-         fVertexEvents.fNumTracks.push_back(nTracks);
-      }
-      TTimeWindows* GetTimeWindows()                     {  return &fTimeWindows; }
-      const TVertexEvents* GetVertexEvents()             {  return &fVertexEvents; }
+      const bool kZeroTimeAxis; //Use a time axis that counts from Zero of a dump window (default true)
+
+      //Setters.
+      void SetTAPlotTitle(const std::string& title)      {  fTitle=title;  }
+      void LoadingDataLoadingDone()                      {  fDataLoadedTime = TTimeStamp(); }
+      void SetTimeFactor(double time)                    {  fTimeFactor=time; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
-      bool GetCutsSettings() const                       {  return fApplyCuts; }
+      void SetMVAMode(int mode)                          {  fMVAMode = mode; }
       void SetBinNumber(int bin)                         {  fNumBins = bin; }
-      void SetMVAMode(int Mode)                          {  fMVAMode = Mode; }
-      size_t GetNVertexEvents()                          {  return fVertexEvents.fXVertex.size(); }
-      int GetNVerticies()                                {  return fTotalVert;   }
-      double GetMaxDumpLength() const                    {  return fMaxDumpLength; }
-      double GetFirstTmin() const                        {  return fFirstTMin;     }
-      double GetLastTmax() const                         {  return fLastTMax;      }
-      double GetBiggestTzero() const                     {  return fBiggestTZero;  }
-      int GetNPassedCuts()                               {  return GetNPassedType(1);  }
-      void AddStartDumpMarker(double t)                  {  fDumpStarts.push_back(t);}
-      void AddStopDumpMarker(double t)                   {  fDumpStops.push_back(t); }
-      void AddInjection(double t)                        {  fInjections.push_back(t);}
-      void AddEjection(double t)                         {  fEjections.push_back(t);  }
-
-      void SetGEMChannel(const std::string& name, int ArrayEntry, std::string title="");
-      
-      void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="");
-
-      std::vector<std::pair<std::string,int>> GetGEMChannels();
-
-      std::pair<TLegend*,TMultiGraph*> GetGEMGraphs();
-
+      void SetVerbose(bool verbose)                      {fVerbose=verbose;}
+      //Setters defined in .cxx
+      void SetGEMChannel(const std::string& name, int arrayEntry, std::string title="");
+      void SetGEMChannel(const std::string& category, const std::string& varName, int arrayEntry, std::string title="");
       void SetLVChannel(const std::string& name, int ArrayEntry, std::string title="");
 
+      //Getters.
+      TVertexEvents*       GetVertexEvents()        {  return &fVertexEvents; }
+      TTimeWindows*        GetTimeWindows()         {  return &fTimeWindows; }
+      std::string          GetTAPlotTitle()         {  return fTitle;  }
+      size_t               GetNVertexEvents()       {  return fVertexEvents.fXVertex.size(); }
+      double               GetTimeFactor() const    {  return fTimeFactor; }
+      double               GetMaxDumpLength() const {  return fMaxDumpLength; }
+      double               GetFirstTmin() const     {  return fFirstTMin;     }
+      double               GetLastTmax() const      {  return fLastTMax;      }
+      double               GetBiggestTzero() const  {  return fBiggestTZero;  }
+      int                  GetNBins() const         {  return fNumBins; }
+      int                  GetNVerticies()          {  return fTotalVert;   }
+      int                  GetNPassedCuts()         {  return GetNPassedType(1);  }
+      bool                 IsGEMData()              {  return (fFEGEM.size() != 0);   }
+      bool                 IsLVData()               {  return (fFEGEM.size() != 0);   }
+      bool                 GetCutsSettings() const  {  return fApplyCuts; }
+      TObjArray            GetHisto()               {  return fHistos;}
+      std::map<std::string,int> GetHistoPosition()  {  return fHistoPositions;}
+      const std::vector<int> GetArrayOfRuns()       {  return fRuns; }
+      //Getters defined in .cxx
+      std::vector<std::pair<std::string,int>> GetGEMChannels();
       std::vector<std::pair<std::string,int>> GetLVChannels();
-
+      std::pair<TLegend*,TMultiGraph*> GetGEMGraphs();
       std::pair<TLegend*,TMultiGraph*> GetLVGraphs();
-
-      template<typename T> void LoadfeGEMData(TFEGEMData& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
-      void LoadfeGEMData(int RunNumber, double first_time, double last_time);
-
-      void LoadfeLVData(TFELVData& f, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
-      void LoadfeLVData(int RunNumber, double first_time, double last_time);
-
       double GetApproximateProcessingTime();
-      
-      // default class member functions
-      TAPlot(const TAPlot& m_TAPlot);
-      TAPlot(bool zerotime = true);//, int MVAMode = 0);
-      virtual ~TAPlot();
-      void Print(Option_t *option="") const;
-
-      void AddRunNumber(int runNumber);
-
       int GetNPassedType(const int type);
-      
-      //virtual void AddToTAPlot(TString file);
-      //virtual TAPlot* LoadTAPlot(TString file);
-      void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero);
-      void AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax);
-      void AddTimeGate(const int runNumber, const double tmin, const double tmax, const double tzero);
-      void AddTimeGate(const int runNumber, const double tmin, const double tmax);
+      TString GetListOfRuns();
+
+      //Adders.
       virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) {assert(!"Child class must have this");};
-      //?virtual void AddDumpGates(int runNumber, std::vector<TA2Spill*> spills ) =0;
-      //If spills are from one run, it is faster to call the function above
-      //?virtual void AddDumpGates(std::vector<TA2Spill*> spills ) =0;
-      virtual void LoadRun(int runNumber, double first_time, double last_time) {};
+      void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
+      void AddStopDumpMarker(double time)                {  fDumpStops.push_back(time); }
+      void AddInjection(double time)                     {  fInjections.push_back(time);}
+      void AddEjection(double time)                      {  fEjections.push_back(time);  }
+      //Adders defined in .cxx
+      void AddRunNumber(int runNumber);
+      void AddTimeGates(int runNumber, std::vector<double> minTimes, std::vector<double> maxTimes, std::vector<double> timeZeros);
+      void AddTimeGates(int runNumber, std::vector<double> minTimes, std::vector<double> maxTimes);
+      void AddTimeGate(const int kRunNumber, const double kminTime, const double kmaxTime, const double kZeroTime);
+      void AddTimeGate(const int kRunNumber, const double kminTime, const double kmaxTime);
+      void AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vertexStatus, double x, double y, double z, double t, double eventTime, double eunTime, int numHelices, int numTracks);
+
+
+      //Load data functions.
+      template<typename T> void LoadFEGEMData(TFEGEMData& f, TTreeReader* feGEMReader, const char* name, double firstTime, double lastTime);
+      void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
+      void LoadFELVData(TFELVData& f, TTreeReader* feLVReader, const char* name, double firstTime, double lastTime);
+      void LoadFELVData(int runNumber, double firstTime, double lastTime);
+      virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData();
 
-      void AutoTimeRange();
+      
+      //Default members, operators, and prints.
+      TAPlot(const TAPlot& kTAPlot);
+      TAPlot(bool zeroTime = true);//, int MVAMode = 0);
+      virtual ~TAPlot();
+      TAPlot& operator=(const TAPlot& kTAPlot);
+      friend TAPlot operator+(const TAPlot& kTAPlotA, const TAPlot& kTAPlotB);
+      TAPlot& operator+=(const TAPlot &kTAPlotA);
+      void Print(Option_t* option="") const;
+      virtual void PrintFull();
    
-      //void SetTimeRange(double tmin_, double tmax_);
-
-      template <class T>
-      void AddHistogram(const char* keyname, T* h)
-      {
+      //Histogram functions
+      void AutoTimeRange();
+      template <class T> void AddHistogram(const char* keyname, T* h) //This refuses to go in the .cxx for some reason.
+      { 
          fHistos.Add(h);
          fHistoPositions[keyname]=fHistos.GetEntries()-1;
       }
-
       void FillHistogram(const char* keyname,double x, int counts);
-
       void FillHistogram(const char* keyname, double x);
-
       void FillHistogram(const char* keyname, double x, double y);
-
       TH1D* GetTH1D(const char* keyname);
-
       void DrawHistogram(const char* keyname, const char* settings);
-
       TLegend* DrawLines(TLegend* legend, const char* keyname);
-
-      TLegend* AddLegendIntegral(TLegend* legend, const char* message,const char* keyname);
-      
-      TString GetListOfRuns();
-
-      const std::vector<int> GetArrayOfRuns() { return Runs; }
+      TLegend* AddLegendIntegral(TLegend* legend, const char* message, const char* keyname);
       void SetUpHistograms();
       void PrintTimeRanges();
-
-      //virtual void FillHisto();
-      TObjArray GetHisto() {return fHistos;}
-      std::map<std::string,int> GetHistoPosition() {return fHistoPositions;}
       void ClearHisto();
-      //TCanvas *Canvas(TString Name = "cVTX");
-
-      void SetVerbose(bool v) {fVerbose=v;}
-   
-      //virtual void ExportCSV(TString filename, Bool_t PassedCutOnly=kFALSE);
-
-      virtual void PrintFull();
-
-      TAPlot& operator=(const TAPlot& m_TAPlot);
-      friend TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB);
-      TAPlot& operator+=(const TAPlot &plotB);
 
    ClassDef(TAPlot, 1);
 };

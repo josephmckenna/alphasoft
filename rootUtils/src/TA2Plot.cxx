@@ -199,7 +199,7 @@ void TA2Plot::SetUpHistograms()
 
    double TMin;
    double TMax;
-   if (ZeroTimeAxis)
+   if (kZeroTimeAxis)
    {
       TMin=GetBiggestTzero();
       TMax=GetMaxDumpLength() + TMin;
@@ -292,7 +292,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
          SetSISChannels(runno);
       }
       double time;
-      if (ZeroTimeAxis)
+      if (kZeroTimeAxis)
          time = SISEvents.t[i];
       else
          time = SISEvents.OfficialTime[i];
@@ -324,7 +324,7 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
    for (int i=0; i<VEs->fXVertex.size(); i++)
    {
       Double_t time;
-      if (ZeroTimeAxis)
+      if (kZeroTimeAxis)
          time = VEs->fTimes[i];
       else
          time = VEs->fRunTimes[i];
@@ -566,7 +566,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
 
   cVTX->cd(6);
   TVirtualPad *cVTX_2 = NULL;
-  if (HaveGEMData() && HaveLVData())
+  if (IsGEMData() && IsLVData())
   {
    cVTX_2 = cVTX->cd(6);
    gPad->Divide(1, 2);
