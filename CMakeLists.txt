@@ -40,6 +40,7 @@ option(BUILD_A2 "Build A2" ON)
 option(BUILD_A2_SIM "Build A2 Simulation" OFF)
 option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
 option(WARNINGS_ALL "Enable gcc warnings" OFF)
+option(LINTER "Enable clang-tidy to inspect C++ code" OFF)
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -107,20 +108,18 @@ if (BUILT_IN_ROOTANA)
    set(ROOTANA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/rootana/manalyzer;${CMAKE_SOURCE_DIR}/rootana/midasio;${CMAKE_SOURCE_DIR}/rootana/mvodb;${CMAKE_BINARY_DIR}/rootana/include")
 endif(BUILT_IN_ROOTANA)
 
-set(CMAKE_CXX_CLANG_TIDY
-  clang-tidy;
-  #-header-filter='.hh$'
-  #-header-filter=.*;
-  -header-filter=/home/jtkm/alphasoft/;
-  -format-style=file;
-  #-p=${CMAKE_SOURCE_DIR};
-  #-filter='analib/include/json.hpp,${ROOT_INCLUDE_DIRS}/ROOT/RConfig.hxx'
-  #-filter=${ROOT_INCLUDE_DIRS};
-  -line-filter=[{"name":"TStorage.h","lines":[[9999999,9999999]]}]
-  #-line-filter=[{"name":"TStorage.h","lines":[[9999999,9999999]]},{"name":".h"},{"name":".cpp"}]
-  -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*,bugprone*,modernize-*';
-  -warnings-as-errors=*;)
 
+if (LINTER)
+   set(CMAKE_CXX_CLANG_TIDY
+      clang-tidy;
+      -header-filter=$ENV{AGREASE}/;
+      -format-style=file;
+      #In root 6.24.00, the TObject constructor triggers clang-tidy warnings
+      -line-filter=[{"name":"TStorage.h","lines":[[9999999,9999999]]}]
+      -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*,bugprone*,modernize-*';
+      -warnings-as-errors=*;
+   )
+endif(LINTER)
 include_directories(SYSTEM ${ROOT_INCLUDE_DIRS})
 
 
