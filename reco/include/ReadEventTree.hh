@@ -6,6 +6,7 @@
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TProfile.h"
 
 #include "TLegend.h"
 #include "TPaveText.h"
@@ -88,6 +89,7 @@ private:
    TH1D* hmatch;
    TH2D* hawpadsector;
    TH1D* hawamppc_px;
+   //TProfile* hspthw;
 
    // sigpoints
    TH1D* hsptawamp_px;

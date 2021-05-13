@@ -42,8 +42,7 @@ void ReadEventTree::MakeHistos()
    fHisto->Book("hspth","Pulse Height Vs Time for Spacepoints in Tracks;Time [ns];Amplitude [a.u.]",
                 300,0.,4800.,500,0.,2000.);
    fHisto->GetHisto("hspth")->SetStats(kFALSE);
-   fHisto->Book("hspthw","Pulse Height Vs Time for Spacepoints in Tracks - Average Height;Time [ns];Amplitude [a.u.]",
-                300,0.,4800.,500,0.,2000.); //PW
+   fHisto->Book("hspthw","Pulse Height Vs Time for Spacepoints in Tracks - Average Height;Time [ns];Amplitude [a.u.]",300,0.,4800.,500,0.,2000.); //PW
    fHisto->GetHisto("hspthw")->SetStats(kFALSE);
 
    fHisto->Book("hsplen","Distance between First and Last Spacepoint;[mm]",blen,0.,maxlen);
@@ -321,7 +320,7 @@ void ReadEventTree::DisplayHisto()
          fHisto->GetHisto("hspth")->Draw("colz");
          campz->cd(2);
          //fHisto->GetH2("hspth")->Rebin(10); //PW
-         fHisto->GetH2("hspthw")->Draw();
+         fHisto->GetH2("hspthw")->ProfileX()->Draw();
          //fHisto->GetH2("hspth")->ProjectionX()->Draw("HIST");
          campz->cd(3);
          //hawamppc_px->Rebin(10);
