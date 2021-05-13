@@ -21,11 +21,10 @@ void plottrack()
   double r0=10.9251,z0=0., // cm
     phi0=1.0,theta0=0.5; // rad
 
-  TFile f( Form("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm.root",
+  TFile f( Form("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initTheta%1.3frad_initZ%1.2fcm.root",
                             getenv("GARFIELDPP"),
 			    CathodeVoltage,AnodeVoltage,FieldVoltage,
-			    MagneticField,
-			    r0,phi0,z0) );
+			    MagneticField,r0,phi0,theta0,z0) );
   auto ntuple = f.Get<TNtuple>("ntpion");
   TGraph* gxy = new TGraph();
   gxy->SetTitle("Every #pi Interaction;x [cm];y [cm]");
