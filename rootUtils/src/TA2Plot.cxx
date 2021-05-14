@@ -297,37 +297,37 @@ void TA2Plot::SetUpHistograms()
 {
    const double XMAX(4.),YMAX(4.),RMAX(4.), ZMAX(30.);
 
-   double TMin;
-   double TMax;
+   double minTime;
+   double maxTime;
    if (kZeroTimeAxis)
    {
-      TMin=GetBiggestTzero();
-      TMax=GetMaxDumpLength() + TMin;
+      minTime=GetBiggestTzero();
+      maxTime=GetMaxDumpLength() + minTime;
    }
    else
    {
-      TMin=GetFirstTmin();
-      TMax=GetLastTmax();
+      minTime=GetFirstTmin();
+      maxTime=GetLastTmax();
    }
 
    AddHistogram("zvtx",new TH1D((GetTAPlotTitle() + "_zvtx").c_str(), "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
 
-   TH1D* hr = new TH1D((GetTAPlotTitle() + "_rvtx").c_str(), "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
-   hr->SetMinimum(0);
-   AddHistogram("rvtx",hr);
+   TH1D* rHisto = new TH1D((GetTAPlotTitle() + "_rvtx").c_str(), "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
+   rHisto->SetMinimum(0);
+   AddHistogram("rvtx",rHisto);
 
-   TH1D* hphi = new TH1D((GetTAPlotTitle() + "_phivtx").c_str(), "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
-   hphi->SetMinimum(0);
-   AddHistogram("phivtx",hphi);
+   TH1D* phiHisto = new TH1D((GetTAPlotTitle() + "_phivtx").c_str(), "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
+   phiHisto->SetMinimum(0);
+   AddHistogram("phivtx",phiHisto);
 
-   TH2D* hxy = new TH2D((GetTAPlotTitle() + "_xyvtx").c_str(), "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
-   AddHistogram("xyvtx",hxy);
+   TH2D* xyHisto = new TH2D((GetTAPlotTitle() + "_xyvtx").c_str(), "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
+   AddHistogram("xyvtx",xyHisto);
 
-   TH2D* hzr = new TH2D((GetTAPlotTitle() + "_zrvtx").c_str(), "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
-   AddHistogram("zrvtx",hzr);
+   TH2D* zrHisto = new TH2D((GetTAPlotTitle() + "_zrvtx").c_str(), "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
+   AddHistogram("zrvtx",zrHisto);
 
-   TH2D* hzphi = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
-   AddHistogram("zphivtx",hzphi);
+   TH2D* zphiHisto = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
+   AddHistogram("zphivtx",phiHisto);
    std::string units;
    if (GetMaxDumpLength()<SCALECUT) 
    {
@@ -339,39 +339,34 @@ void TA2Plot::SetUpHistograms()
       fTimeFactor = 1;
       units = "[s]";
    }
+
    //SIS channels:
-   TH1D* triggers = new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
+   TH1D* triggers = new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
    triggers->SetMarkerColor(kRed);
    triggers->SetLineColor(kRed);
    triggers->SetMinimum(0);
    AddHistogram("tIO32_nobusy",triggers);
 
-   TH1D* read_triggers = new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
-   read_triggers->SetMarkerColor(kViolet);
-   read_triggers->SetLineColor(kViolet);
-   read_triggers->SetMinimum(0);
-   AddHistogram("tIO32",read_triggers);
+   TH1D* readTriggers = new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   readTriggers->SetMarkerColor(kViolet);
+   readTriggers->SetLineColor(kViolet);
+   readTriggers->SetMinimum(0);
+   AddHistogram("tIO32",readTriggers);
 
-   TH1D* atom_or = new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
-   atom_or->SetMarkerColor(kGreen);
-   atom_or->SetLineColor(kGreen);
-   atom_or->SetMinimum(0);
-   AddHistogram("tAtomOR",atom_or);
+   TH1D* atomOr = new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   atomOr->SetMarkerColor(kGreen);
+   atomOr->SetLineColor(kGreen);
+   atomOr->SetMinimum(0);
+   AddHistogram("tAtomOR",atomOr);
 
-   TH1D* ht = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
-   ht->SetLineColor(kMagenta);
-   ht->SetMarkerColor(kMagenta);
-   ht->SetMinimum(0);
-   AddHistogram("tvtx",ht);
+   TH1D* tHisto = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   tHisto->SetLineColor(kMagenta);
+   tHisto->SetMarkerColor(kMagenta);
+   tHisto->SetMinimum(0);
+   AddHistogram("tvtx",tHisto);
 
-   TH2D* hzt = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*fTimeFactor, TMax*fTimeFactor);
-   AddHistogram("ztvtx",hzt);
-
-   //TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
-   //AddHistogram("phitvtx",hphit);
-
-   //if (MVAMode)
-   //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
+   TH2D* ztHisto = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   AddHistogram("ztvtx",ztHisto);
   return;
 }
 
@@ -380,8 +375,8 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
 
    ClearHisto();
    SetUpHistograms();
-   //FillfeGEMHistograms();
    const double kMaxDumpLength = GetMaxDumpLength();
+
    //Fill SIS histograms
    int runNum = 0;
    for (int i = 0; i<SISEvents.fTime.size(); i++)
@@ -419,21 +414,21 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
 
    //Fill Vertex Histograms
    TVector3 vertex;
-   const TVertexEvents* kvertexEvents = GetVertexEvents();
+   const TVertexEvents* kVertexEvents = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
-   for (int i=0; i<kvertexEvents->fXVertex.size(); i++)
+   for (int i=0; i<kVertexEvents->fXVertex.size(); i++)
    {
       Double_t time;
       if (kZeroTimeAxis)
-         time = kvertexEvents->fTimes[i];
+         time = kVertexEvents->fTimes[i];
       else
-         time = kvertexEvents->fRunTimes[i];
+         time = kVertexEvents->fRunTimes[i];
       if (kMaxDumpLength<SCALECUT)
          time=time*1000.;
-      vertex = TVector3(kvertexEvents->fXVertex[i], kvertexEvents->fYVertex[i], kvertexEvents->fZVertex[i]);
+      vertex = TVector3(kVertexEvents->fXVertex[i], kVertexEvents->fYVertex[i], kVertexEvents->fZVertex[i]);
       FillHistogram("tSVD",time);
 
-      int cutsResult = kvertexEvents->fCutsResults[i];
+      int cutsResult = kVertexEvents->fCutsResults[i];
       if (mode>0)
       {
          if (cutsResult & 1)//Passed cut result!
@@ -460,14 +455,14 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
          }
          else
          {
-            if ( kvertexEvents->fVertexStatuses[i] > 0) 
+            if ( kVertexEvents->fVertexStatuses[i] > 0) 
             {
                FillHistogram("tvtx", time);
             }
             else 
                continue;
          }
-         if(kvertexEvents->fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+         if(kVertexEvents->fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
       FillHistogram("phivtx",vertex.Phi());
       FillHistogram("zphivtx",vertex.Z(), vertex.Phi());
