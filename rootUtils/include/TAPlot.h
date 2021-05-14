@@ -51,62 +51,62 @@ class TVertexEvents: public TObject
       {
       }
       //Basic copy constructor.
-      TVertexEvents(const TVertexEvents& kVertexEvents)
+      TVertexEvents(const TVertexEvents& vertexEvents)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i < kVertexEvents.fXVertex.size(); i++)
+         for(int i = 0; i < vertexEvents.fXVertex.size(); i++)
          {
-            fRunNumbers.push_back(kVertexEvents.fRunNumbers[i]);
-            fEventNos.push_back(kVertexEvents.fEventNos[i]);
-            fCutsResults.push_back(kVertexEvents.fCutsResults[i]);
-            fVertexStatuses.push_back(kVertexEvents.fVertexStatuses[i]);
-            fXVertex.push_back(kVertexEvents.fXVertex[i]);
-            fYVertex.push_back(kVertexEvents.fYVertex[i]);
-            fZVertex.push_back(kVertexEvents.fZVertex[i]);
-            fTimes.push_back(kVertexEvents.fTimes[i]);
-            fEventTimes.push_back(kVertexEvents.fEventTimes[i]);
-            fRunTimes.push_back(kVertexEvents.fRunTimes[i]);
-            fNumHelices.push_back(kVertexEvents.fNumHelices[i]);
-            fNumTracks.push_back(kVertexEvents.fNumTracks[i]);
+            fRunNumbers.push_back(vertexEvents.fRunNumbers[i]);
+            fEventNos.push_back(vertexEvents.fEventNos[i]);
+            fCutsResults.push_back(vertexEvents.fCutsResults[i]);
+            fVertexStatuses.push_back(vertexEvents.fVertexStatuses[i]);
+            fXVertex.push_back(vertexEvents.fXVertex[i]);
+            fYVertex.push_back(vertexEvents.fYVertex[i]);
+            fZVertex.push_back(vertexEvents.fZVertex[i]);
+            fTimes.push_back(vertexEvents.fTimes[i]);
+            fEventTimes.push_back(vertexEvents.fEventTimes[i]);
+            fRunTimes.push_back(vertexEvents.fRunTimes[i]);
+            fNumHelices.push_back(vertexEvents.fNumHelices[i]);
+            fNumTracks.push_back(vertexEvents.fNumTracks[i]);
          }
       }
       //Assignment operator.
-      TVertexEvents& operator=(const TVertexEvents& kVertexEvents)
+      TVertexEvents& operator=(const TVertexEvents& rhs)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i < kVertexEvents.fXVertex.size(); i++)
+         for(int i = 0; i < rhs.fXVertex.size(); i++)
          {
-            this->fRunNumbers.push_back(kVertexEvents.fRunNumbers[i]);
-            this->fEventNos.push_back(kVertexEvents.fEventNos[i]);
-            this->fCutsResults.push_back(kVertexEvents.fCutsResults[i]);
-            this->fVertexStatuses.push_back(kVertexEvents.fVertexStatuses[i]);
-            this->fXVertex.push_back(kVertexEvents.fXVertex[i]);
-            this->fYVertex.push_back(kVertexEvents.fYVertex[i]);
-            this->fZVertex.push_back(kVertexEvents.fZVertex[i]);
-            this->fTimes.push_back(kVertexEvents.fTimes[i]);
-            this->fEventTimes.push_back(kVertexEvents.fEventTimes[i]);
-            this->fRunTimes.push_back(kVertexEvents.fRunTimes[i]);
-            this->fNumHelices.push_back(kVertexEvents.fNumHelices[i]);
-            this->fNumTracks.push_back(kVertexEvents.fNumTracks[i]);
+            this->fRunNumbers.push_back(rhs.fRunNumbers[i]);
+            this->fEventNos.push_back(rhs.fEventNos[i]);
+            this->fCutsResults.push_back(rhs.fCutsResults[i]);
+            this->fVertexStatuses.push_back(rhs.fVertexStatuses[i]);
+            this->fXVertex.push_back(rhs.fXVertex[i]);
+            this->fYVertex.push_back(rhs.fYVertex[i]);
+            this->fZVertex.push_back(rhs.fZVertex[i]);
+            this->fTimes.push_back(rhs.fTimes[i]);
+            this->fEventTimes.push_back(rhs.fEventTimes[i]);
+            this->fRunTimes.push_back(rhs.fRunTimes[i]);
+            this->fNumHelices.push_back(rhs.fNumHelices[i]);
+            this->fNumTracks.push_back(rhs.fNumTracks[i]);
          }
          return *this;
       }
       //=+ Operator.
-      TVertexEvents operator+=(const TVertexEvents &kVertexEventsA) 
+      TVertexEvents operator+=(const TVertexEvents &rhs) 
       {
          std::cout << "TAVertexEvents += operator" << std::endl;
-         this->fRunNumbers       .insert(this->fRunNumbers.end(),      kVertexEventsA.fRunNumbers.begin(),     kVertexEventsA.fRunNumbers.end());
-         this->fEventNos         .insert(this->fEventNos.end(),        kVertexEventsA.fEventNos.begin(),       kVertexEventsA.fEventNos.end());
-         this->fCutsResults      .insert(this->fCutsResults.end(),     kVertexEventsA.fCutsResults.begin(),    kVertexEventsA.fCutsResults.end()); 
-         this->fVertexStatuses   .insert(this->fVertexStatuses.end(),  kVertexEventsA.fVertexStatuses.begin(), kVertexEventsA.fVertexStatuses.end());    
-         this->fXVertex               .insert(this->fXVertex.end(),              kVertexEventsA.fXVertex.begin(),             kVertexEventsA.fXVertex.end());
-         this->fYVertex               .insert(this->fYVertex.end(),              kVertexEventsA.fYVertex.begin(),             kVertexEventsA.fYVertex.end());
-         this->fZVertex               .insert(this->fZVertex.end(),              kVertexEventsA.fZVertex.begin(),             kVertexEventsA.fZVertex.end());
-         this->fTimes               .insert(this->fTimes.end(),              kVertexEventsA.fTimes.begin(),             kVertexEventsA.fTimes.end());
-         this->fEventTimes       .insert(this->fEventTimes.end(),      kVertexEventsA.fEventTimes.begin(),     kVertexEventsA.fEventTimes.end());
-         this->fRunTimes         .insert(this->fRunTimes.end(),        kVertexEventsA.fRunTimes.begin(),       kVertexEventsA.fRunTimes.end());
-         this->fNumHelices         .insert(this->fNumHelices.end(),        kVertexEventsA.fNumHelices.begin(),       kVertexEventsA.fNumHelices.end());
-         this->fNumTracks          .insert(this->fNumTracks.end(),         kVertexEventsA.fNumTracks.begin(),        kVertexEventsA.fNumTracks.end());
+         this->fRunNumbers       .insert(this->fRunNumbers.end(),      rhs.fRunNumbers.begin(),     rhs.fRunNumbers.end());
+         this->fEventNos         .insert(this->fEventNos.end(),        rhs.fEventNos.begin(),       rhs.fEventNos.end());
+         this->fCutsResults      .insert(this->fCutsResults.end(),     rhs.fCutsResults.begin(),    rhs.fCutsResults.end()); 
+         this->fVertexStatuses   .insert(this->fVertexStatuses.end(),  rhs.fVertexStatuses.begin(), rhs.fVertexStatuses.end());    
+         this->fXVertex               .insert(this->fXVertex.end(),              rhs.fXVertex.begin(),             rhs.fXVertex.end());
+         this->fYVertex               .insert(this->fYVertex.end(),              rhs.fYVertex.begin(),             rhs.fYVertex.end());
+         this->fZVertex               .insert(this->fZVertex.end(),              rhs.fZVertex.begin(),             rhs.fZVertex.end());
+         this->fTimes               .insert(this->fTimes.end(),              rhs.fTimes.begin(),             rhs.fTimes.end());
+         this->fEventTimes       .insert(this->fEventTimes.end(),      rhs.fEventTimes.begin(),     rhs.fEventTimes.end());
+         this->fRunTimes         .insert(this->fRunTimes.end(),        rhs.fRunTimes.begin(),       rhs.fRunTimes.end());
+         this->fNumHelices         .insert(this->fNumHelices.end(),        rhs.fNumHelices.begin(),       rhs.fNumHelices.end());
+         this->fNumTracks          .insert(this->fNumTracks.end(),         rhs.fNumTracks.begin(),        rhs.fNumTracks.end());
          return *this;
       }
 };
@@ -117,9 +117,9 @@ class TTimeWindows : public TObject
       bool isSorted = false;
    public:
       std::vector<int> fRunNumber;
-      std::vector<double> fTMin;
-      std::vector<double> fTMax;
-      std::vector<double> fTZero;
+      std::vector<double> fMinTime;
+      std::vector<double> fMaxTime;
+      std::vector<double> fZeroTime;
       
       //Standard ctor and dtor
       TTimeWindows()
@@ -129,57 +129,57 @@ class TTimeWindows : public TObject
       {
       }
       //Copy ctor
-      TTimeWindows(const TTimeWindows& kTimeWindows)
+      TTimeWindows(const TTimeWindows& timeWindows)
       {
          std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
-         for(int i = 0; i<kTimeWindows.fTMin.size(); i++)
+         for(int i = 0; i<timeWindows.fMinTime.size(); i++)
          {
-            fRunNumber.push_back(kTimeWindows.fRunNumber[i]);
-            fTMin.push_back(kTimeWindows.fTMin[i]);
-            fTMax.push_back(kTimeWindows.fTMax[i]);
-            fTZero.push_back(kTimeWindows.fTZero[i]);
+            fRunNumber.push_back(timeWindows.fRunNumber[i]);
+            fMinTime.push_back(timeWindows.fMinTime[i]);
+            fMaxTime.push_back(timeWindows.fMaxTime[i]);
+            fZeroTime.push_back(timeWindows.fZeroTime[i]);
          }
       }
-      TTimeWindows& operator=(const TTimeWindows& kTimeWindows)
+      TTimeWindows& operator=(const TTimeWindows& rhs)
       {
          std::cout << "TTimeWindows = operator." << std::endl;
-         for(int i = 0; i<kTimeWindows.fTMin.size(); i++)
+         for(int i = 0; i<rhs.fMinTime.size(); i++)
          {
-            this->fRunNumber.push_back(kTimeWindows.fRunNumber[i]);
-            this->fTMin.push_back(kTimeWindows.fTMin[i]);
-            this->fTMax.push_back(kTimeWindows.fTMax[i]);
-            this->fTZero.push_back(kTimeWindows.fTZero[i]);
+            this->fRunNumber.push_back(rhs.fRunNumber[i]);
+            this->fMinTime.push_back(rhs.fMinTime[i]);
+            this->fMaxTime.push_back(rhs.fMaxTime[i]);
+            this->fZeroTime.push_back(rhs.fZeroTime[i]);
          }
          return *this;
       }
-      friend TTimeWindows operator+(const TTimeWindows& kTimeWindowsA, const TTimeWindows& kTimeWindowsB)
+      friend TTimeWindows operator+(const TTimeWindows& lhs, const TTimeWindows& rhs)
       {
          std::cout << "TTimeWindows addition operator" << std::endl;
-         TTimeWindows outputPlot(kTimeWindowsA); //Create new from copy
+         TTimeWindows outputPlot(lhs); //Create new from copy
 
          //Vectors- need concacting
-         outputPlot.fRunNumber.insert(outputPlot.fRunNumber.end(), kTimeWindowsB.fRunNumber.begin(), kTimeWindowsB.fRunNumber.end() );
-         outputPlot.fTMin.insert(outputPlot.fTMin.end(), kTimeWindowsB.fTMin.begin(), kTimeWindowsB.fTMin.end() );
-         outputPlot.fTMax.insert(outputPlot.fTMax.end(), kTimeWindowsB.fTMax.begin(), kTimeWindowsB.fTMax.end() );
-         outputPlot.fTZero.insert(outputPlot.fTZero.end(), kTimeWindowsB.fTZero.begin(), kTimeWindowsB.fTZero.end() );
+         outputPlot.fRunNumber.insert(outputPlot.fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
+         outputPlot.fMinTime.insert(outputPlot.fMinTime.end(), rhs.fMinTime.begin(), rhs.fMinTime.end() );
+         outputPlot.fMaxTime.insert(outputPlot.fMaxTime.end(), rhs.fMaxTime.begin(), rhs.fMaxTime.end() );
+         outputPlot.fZeroTime.insert(outputPlot.fZeroTime.end(), rhs.fZeroTime.begin(), rhs.fZeroTime.end() );
          return outputPlot;
       }
-      TTimeWindows operator+=(const TTimeWindows &kTimeWindowsA) 
+      TTimeWindows operator+=(const TTimeWindows &rhs) 
       {
          std::cout << "TTimeWindows += operator" << std::endl;
-         this->fRunNumber.insert(this->fRunNumber.end(), kTimeWindowsA.fRunNumber.begin(), kTimeWindowsA.fRunNumber.end() );
-         this->fTMin.insert(this->fTMin.end(), kTimeWindowsA.fTMin.begin(), kTimeWindowsA.fTMin.end() );
-         this->fTMax.insert(this->fTMax.end(), kTimeWindowsA.fTMax.begin(), kTimeWindowsA.fTMax.end() );
-         this->fTZero.insert(this->fTZero.end(), kTimeWindowsA.fTZero.begin(), kTimeWindowsA.fTZero.end() );
+         this->fRunNumber.insert(this->fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
+         this->fMinTime.insert(this->fMinTime.end(), rhs.fMinTime.begin(), rhs.fMinTime.end() );
+         this->fMaxTime.insert(this->fMaxTime.end(), rhs.fMaxTime.begin(), rhs.fMaxTime.end() );
+         this->fZeroTime.insert(this->fZeroTime.end(), rhs.fZeroTime.begin(), rhs.fZeroTime.end() );
          return *this;
       }
       void AddTimeWindow(int runNumber, double minTime, double maxTime, double timeZero)
       {
          fRunNumber.push_back(runNumber);
-         fTMin.push_back(minTime);
-         fTMax.push_back(maxTime);
-         fTZero.push_back(timeZero);
+         fMinTime.push_back(minTime);
+         fMaxTime.push_back(maxTime);
+         fZeroTime.push_back(timeZero);
          if(maxTime >= 0)
          {
             assert(maxTime>minTime);
@@ -196,13 +196,13 @@ class TTimeWindows : public TObject
             SortTimeWindows();
          }
          //Check where t sits in tmin.
-         const size_t kTMaxSize = fTMax.size();
+         const size_t kTMaxSize = fMaxTime.size();
          for (int j = 0; j < kTMaxSize; j++)
          {
             //If inside the time window
-            if ( time > fTMin[j] )
+            if ( time > fMinTime[j] )
             {
-               const double kCurrentTMax = fTMax[j];
+               const double kCurrentTMax = fMaxTime[j];
                if(time < kCurrentTMax || kCurrentTMax < 0)
                {
                   return j;
@@ -227,8 +227,8 @@ class TTimeWindows : public TObject
       }
       void SortTimeWindows()
       {
-         assert( fTMin.size() == fTMax.size() );
-         const int kTMinSize = fTMin.size();
+         assert( fMinTime.size() == fMaxTime.size() );
+         const int kTMinSize = fMinTime.size();
          //Create vectors needed for sorting.
          std::vector<std::pair<double,double>> zipped(kTMinSize);
          std::vector<size_t> idx(kTMinSize);
@@ -239,54 +239,54 @@ class TTimeWindows : public TObject
          zipped.resize(kTMinSize);
          for(size_t i=0; i < kTMinSize; ++i)
          {
-            zipped[i]=std::make_pair(fTMin[i], idx[i]);
+            zipped[i]=std::make_pair(fMinTime[i], idx[i]);
          }
 
          //Sort based on first (tmin) keeping idx in the same location
          std::sort(std::begin(zipped), std::end(zipped), 
-         [&](const std::pair<double,double>& kPairA, const std::pair<double,double>& kPairB)
-         {return kPairA.first < kPairB.first;} );
+         [&](const std::pair<double,double>& lhs, const std::pair<double,double>& rhs)
+         {return lhs.first < rhs.first;} );
          
          //Unzip back into vectors.
          for(size_t i=0; i < kTMinSize; i++)
          {
-            fTMin[i] = zipped[i].first;
+            fMinTime[i] = zipped[i].first;
             idx[i] = zipped[i].second;
          }
 
          fRunNumber = reorder<int>(fRunNumber,idx);
-         fTMax = reorder<double>(fTMax,idx);
-         fTZero = reorder<double>(fTZero,idx);
+         fMaxTime = reorder<double>(fMaxTime,idx);
+         fZeroTime = reorder<double>(fZeroTime,idx);
   
          isSorted = true;
       }
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
-class TFEENVDataPlot: public TObject //Joe - Technically I think this is right (begins with T, followed by acronym) but I'm not actually sure what "feENV" means.
+class TEnvDataPlot: public TObject
 {
    public:
       std::vector<double> fTimes;
       std::vector<double> fRunTimes;
       std::vector<double> fData;
    public:
-      TFEENVDataPlot()
+      TEnvDataPlot()
       {
       }
-      ~TFEENVDataPlot()
+      ~TEnvDataPlot()
       {
       }
-      TFEENVDataPlot(const TFEENVDataPlot& kTFEENVDataPlot)
+      TEnvDataPlot(const TEnvDataPlot& envDataPlot)
       {
-         fTimes = kTFEENVDataPlot.fTimes;
-         fRunTimes = kTFEENVDataPlot.fRunTimes;
-         fData = kTFEENVDataPlot.fData;
+         fTimes = envDataPlot.fTimes;
+         fRunTimes = envDataPlot.fRunTimes;
+         fData = envDataPlot.fData;
       }
-      TFEENVDataPlot operator=(const TFEENVDataPlot kTFEENVDataPlot)
+      TEnvDataPlot operator=(const TEnvDataPlot rhs)
       {
-         this->fTimes = kTFEENVDataPlot.fTimes;
-         this->fRunTimes = kTFEENVDataPlot.fRunTimes;
-         this->fData = kTFEENVDataPlot.fData;
+         this->fTimes = rhs.fTimes;
+         this->fRunTimes = rhs.fRunTimes;
+         this->fData = rhs.fData;
 
          return *this;
       }
@@ -306,41 +306,41 @@ class TFEENVDataPlot: public TObject //Joe - Technically I think this is right (
 };
 
 //Collection of feLabVIEW / feGEM data with the same name (the same source)
-class TFEENVData: public TObject 
+class TEnvData: public TObject 
 {
    public:
       std::string fName;
       std::string fTitle;
       int fArrayNumber;
    private:
-      std::vector<TFEENVDataPlot*> fPlots;
+      std::vector<TEnvDataPlot*> fPlots;
    public:
       std::string GetName() { return fName + "[" + std::to_string(fArrayNumber) + "]";}
       std::string GetNameID() { return fName + "_" + std::to_string(fArrayNumber);}
       std::string GetTitle() { return fTitle; }
-      TFEENVData()
+      TEnvData()
       {
          fArrayNumber = -1;
       }
-      ~TFEENVData()
+      ~TEnvData()
       {
       }
-      TFEENVData(const TFEENVData& kTFEENVData)
+      TEnvData(const TEnvData& envData)
       {
-         fName = kTFEENVData.fName;
-         fTitle = kTFEENVData.fTitle;
-         fArrayNumber = kTFEENVData.fArrayNumber;
-         for (TFEENVDataPlot* plots: kTFEENVData.fPlots)
-            fPlots.push_back(new TFEENVDataPlot(*plots));
+         fName = envData.fName;
+         fTitle = envData.fTitle;
+         fArrayNumber = envData.fArrayNumber;
+         for (TEnvDataPlot* plots: envData.fPlots)
+            fPlots.push_back(new TEnvDataPlot(*plots));
 
       }
-      TFEENVData operator=(const TFEENVData kTFEENVData)
+      TEnvData operator=(const TEnvData rhs)
       {
-         this->fName = kTFEENVData.fName;
-         this->fTitle = kTFEENVData.fTitle;
-         this->fArrayNumber = kTFEENVData.fArrayNumber;
-         for (TFEENVDataPlot* plots: kTFEENVData.fPlots)
-            fPlots.push_back(new TFEENVDataPlot(*plots));
+         this->fName = rhs.fName;
+         this->fTitle = rhs.fTitle;
+         this->fArrayNumber = rhs.fArrayNumber;
+         for (TEnvDataPlot* plots: rhs.fPlots)
+            fPlots.push_back(new TEnvDataPlot(*plots));
          return *this;
       }
       std::pair<double,double> GetMinMax()
@@ -359,11 +359,11 @@ class TFEENVData: public TObject
          }
          return std::pair<double,double>(min,max);
       }
-      TFEENVDataPlot* GetPlot(size_t index)
+      TEnvDataPlot* GetPlot(size_t index)
       {
          while (index>=fPlots.size())
          {
-            TFEENVDataPlot* graph = new TFEENVDataPlot();
+            TEnvDataPlot* graph = new TEnvDataPlot();
             fPlots.push_back(graph);
          }
          return fPlots.at(index);
@@ -377,20 +377,20 @@ class TFEENVData: public TObject
 };
 
 //Specialise the above for feGEM
-class TFEGEMData: public TFEENVData
+class TFEGEMData: public TEnvData
 {
    public:
       template<typename T>
-      void AddGEMEvent(TStoreGEMData<T>* GEMEvent, TTimeWindows& timeWindows)
+      void AddGEMEvent(TStoreGEMData<T>* gemEvent, TTimeWindows& timeWindows)
       {
-         double time = GEMEvent->GetRunTime();
+         double time = gemEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);
          if(index>=0)
          {
-            TFEENVDataPlot* plot = GetPlot(index);
-            plot->AddPoint(time, time - timeWindows.fTZero[index], (double)GEMEvent->GetArrayEntry(fArrayNumber));
+            TEnvDataPlot* plot = GetPlot(index);
+            plot->AddPoint(time, time - timeWindows.fZeroTime[index], (double)gemEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -401,19 +401,19 @@ class TFEGEMData: public TFEENVData
 };
 
 //Specialise the above for feLabVIEW
-class TFELVData: public TFEENVData
+class TFELabVIEWData: public TEnvData
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* LVEvent, TTimeWindows& timeWindows)
+      void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
-         double time=LVEvent->GetRunTime();
+         double time=labviewEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);
          if(index>=0)
          {
-            TFEENVDataPlot* plot = GetPlot(index);
-            plot->AddPoint( time, time - timeWindows.fTZero[index], LVEvent->GetArrayEntry(fArrayNumber));
+            TEnvDataPlot* plot = GetPlot(index);
+            plot->AddPoint( time, time - timeWindows.fZeroTime[index], labviewEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -449,7 +449,7 @@ class TAPlot: public TObject
       std::vector<double> fDumpStops;
       std::vector<int> fRuns; //check dupes - ignore copies. AddRunNumber
       std::vector<TFEGEMData> fFEGEM;
-      std::vector<TFELVData> fFELV;
+      std::vector<TFELabVIEWData> fFELV;
 
       TTimeWindows fTimeWindows;
       TVertexEvents fVertexEvents;
@@ -469,7 +469,7 @@ class TAPlot: public TObject
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       void SetMVAMode(int mode)                          {  fMVAMode = mode; }
       void SetBinNumber(int bin)                         {  fNumBins = bin; }
-      void SetVerbose(bool verbose)                      {fVerbose=verbose;}
+      void SetVerbose(bool verbose)                      {  fVerbose=verbose; }
       //Setters defined in .cxx
       void SetGEMChannel(const std::string& name, int arrayEntry, std::string title="");
       void SetGEMChannel(const std::string& category, const std::string& varName, int arrayEntry, std::string title="");
@@ -513,27 +513,27 @@ class TAPlot: public TObject
       void AddRunNumber(int runNumber);
       void AddTimeGates(int runNumber, std::vector<double> minTimes, std::vector<double> maxTimes, std::vector<double> timeZeros);
       void AddTimeGates(int runNumber, std::vector<double> minTimes, std::vector<double> maxTimes);
-      void AddTimeGate(const int kRunNumber, const double kminTime, const double kmaxTime, const double kZeroTime);
-      void AddTimeGate(const int kRunNumber, const double kminTime, const double kmaxTime);
+      void AddTimeGate(const int runNumber, const double minTime, const double maxTime, const double zeroTime);
+      void AddTimeGate(const int runNumber, const double minTime, const double maxTime);
       void AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vertexStatus, double x, double y, double z, double t, double eventTime, double eunTime, int numHelices, int numTracks);
 
 
       //Load data functions.
-      template<typename T> void LoadFEGEMData(TFEGEMData& f, TTreeReader* feGEMReader, const char* name, double firstTime, double lastTime);
+      template<typename T> void LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime);
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
-      void LoadFELVData(TFELVData& f, TTreeReader* feLVReader, const char* name, double firstTime, double lastTime);
+      void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData();
 
       
       //Default members, operators, and prints.
-      TAPlot(const TAPlot& kTAPlot);
+      TAPlot(const TAPlot& object);
       TAPlot(bool zeroTime = true);//, int MVAMode = 0);
       virtual ~TAPlot();
-      TAPlot& operator=(const TAPlot& kTAPlot);
-      friend TAPlot operator+(const TAPlot& kTAPlotA, const TAPlot& kTAPlotB);
-      TAPlot& operator+=(const TAPlot &kTAPlotA);
+      TAPlot& operator=(const TAPlot& rhs);
+      friend TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs);
+      TAPlot& operator+=(const TAPlot &rhs);
       void Print(Option_t* option="") const;
       virtual void PrintFull();
    

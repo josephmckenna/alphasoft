@@ -29,51 +29,51 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
 }
 
 //Copy ctor
-TAPlot::TAPlot(const TAPlot& kTAPlot) : kZeroTimeAxis(kTAPlot.kZeroTimeAxis)
+TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
 {
-   fTitle                        = kTAPlot.fTitle ;
-   fMVAMode                      = kTAPlot.fMVAMode ;
-   fNumBins                      = kTAPlot.fNumBins ; 
-   fDrawStyle                    = kTAPlot.fDrawStyle ;
-   fLegendDetail                 = kTAPlot.fLegendDetail ; 
-   fApplyCuts                    = kTAPlot.fApplyCuts ;
-   fClassifierCut                = kTAPlot.fClassifierCut ;
-   fFirstTMin                    = kTAPlot.fFirstTMin ;
-   fLastTMax                     = kTAPlot.fLastTMax ;
-   fBiggestTZero                 = kTAPlot.fBiggestTZero ;
-   fMaxDumpLength                = kTAPlot.fMaxDumpLength ;
+   fTitle                        = object.fTitle ;
+   fMVAMode                      = object.fMVAMode ;
+   fNumBins                      = object.fNumBins ; 
+   fDrawStyle                    = object.fDrawStyle ;
+   fLegendDetail                 = object.fLegendDetail ; 
+   fApplyCuts                    = object.fApplyCuts ;
+   fClassifierCut                = object.fClassifierCut ;
+   fFirstTMin                    = object.fFirstTMin ;
+   fLastTMax                     = object.fLastTMax ;
+   fBiggestTZero                 = object.fBiggestTZero ;
+   fMaxDumpLength                = object.fMaxDumpLength ;
 
-   fTotalTime                    = kTAPlot.fTotalTime ;
-   fTotalVert                    = kTAPlot.fTotalVert ;
-   fVerbose                      = kTAPlot.fVerbose ;
-   fTimeFactor                   = kTAPlot.fTimeFactor ;
+   fTotalTime                    = object.fTotalTime ;
+   fTotalVert                    = object.fTotalVert ;
+   fVerbose                      = object.fVerbose ;
+   fTimeFactor                   = object.fTimeFactor ;
 
-   fTimeWindows                  = kTAPlot.fTimeWindows;
-   fVertexEvents                 = kTAPlot.fVertexEvents;
+   fTimeWindows                  = object.fTimeWindows;
+   fVertexEvents                 = object.fVertexEvents;
 
-   for(int i=0;i<kTAPlot.fEjections.size();i++)
-      fEjections.push_back(kTAPlot.fEjections[i]);
+   for(int i=0;i<object.fEjections.size();i++)
+      fEjections.push_back(object.fEjections[i]);
    
-   for(int i=0;i<kTAPlot.fInjections.size();i++)
-      fInjections.push_back(kTAPlot.fInjections[i]);
+   for(int i=0;i<object.fInjections.size();i++)
+      fInjections.push_back(object.fInjections[i]);
    
-   for(int i=0;i<kTAPlot.fDumpStarts.size();i++)
-      fDumpStarts.push_back(kTAPlot.fDumpStarts[i]);
+   for(int i=0;i<object.fDumpStarts.size();i++)
+      fDumpStarts.push_back(object.fDumpStarts[i]);
    
-   for(int i=0;i<kTAPlot.fDumpStops.size();i++)
-      fDumpStops.push_back(kTAPlot.fDumpStops[i]);
+   for(int i=0;i<object.fDumpStops.size();i++)
+      fDumpStops.push_back(object.fDumpStops[i]);
    
-   for(int i=0;i<kTAPlot.fRuns.size();i++)
-      fRuns.push_back(kTAPlot.fRuns[i]);
+   for(int i=0;i<object.fRuns.size();i++)
+      fRuns.push_back(object.fRuns[i]);
    
-   for(int i=0;i<kTAPlot.fFEGEM.size();i++)
-      fFEGEM.push_back(kTAPlot.fFEGEM[i]);
+   for(int i=0;i<object.fFEGEM.size();i++)
+      fFEGEM.push_back(object.fFEGEM[i]);
    
-   for(int i=0;i<kTAPlot.fFELV.size();i++)
-      fFELV.push_back(kTAPlot.fFELV[i]);
+   for(int i=0;i<object.fFELV.size();i++)
+      fFELV.push_back(object.fFELV[i]);
 
-   fObjectConstructionTime        = kTAPlot.fObjectConstructionTime ;
-   fDataLoadedTime                = kTAPlot.fDataLoadedTime ;
+   fObjectConstructionTime        = object.fObjectConstructionTime ;
+   fDataLoadedTime                = object.fDataLoadedTime ;
 }
 
 //Default Destructor
@@ -88,136 +88,136 @@ TAPlot::~TAPlot()
 }
 
 //Assignment.
-TAPlot& TAPlot::operator=(const TAPlot& kTAPlot)
+TAPlot& TAPlot::operator=(const TAPlot& rhs)
 {
    std::cout << "TAPlot = operator" << std::endl;
-   this->fTitle = kTAPlot.fTitle ;
-   this->fMVAMode = kTAPlot.fMVAMode ;
-   this->fNumBins = kTAPlot.fNumBins ; 
-   this->fDrawStyle = kTAPlot.fDrawStyle ;
-   this->fLegendDetail = kTAPlot.fLegendDetail ; 
-   this->fApplyCuts = kTAPlot.fApplyCuts ;
-   this->fClassifierCut = kTAPlot.fClassifierCut ;
-   this->fFirstTMin = kTAPlot.fFirstTMin ;
-   this->fLastTMax = kTAPlot.fLastTMax ;
-   this->fBiggestTZero = kTAPlot.fBiggestTZero ;
-   this->fMaxDumpLength = kTAPlot.fMaxDumpLength ;
+   this->fTitle = rhs.fTitle ;
+   this->fMVAMode = rhs.fMVAMode ;
+   this->fNumBins = rhs.fNumBins ; 
+   this->fDrawStyle = rhs.fDrawStyle ;
+   this->fLegendDetail = rhs.fLegendDetail ; 
+   this->fApplyCuts = rhs.fApplyCuts ;
+   this->fClassifierCut = rhs.fClassifierCut ;
+   this->fFirstTMin = rhs.fFirstTMin ;
+   this->fLastTMax = rhs.fLastTMax ;
+   this->fBiggestTZero = rhs.fBiggestTZero ;
+   this->fMaxDumpLength = rhs.fMaxDumpLength ;
    
-   this->fTotalTime = kTAPlot.fTotalTime ;
-   this->fTotalVert = kTAPlot.fTotalVert ;
-   this->fVerbose = kTAPlot.fVerbose ;
-   this->fTimeFactor = kTAPlot.fTimeFactor ;
+   this->fTotalTime = rhs.fTotalTime ;
+   this->fTotalVert = rhs.fTotalVert ;
+   this->fVerbose = rhs.fVerbose ;
+   this->fTimeFactor = rhs.fTimeFactor ;
 
-   this->fTimeWindows = kTAPlot.fTimeWindows;
-   this->fVertexEvents = kTAPlot.fVertexEvents;
+   this->fTimeWindows = rhs.fTimeWindows;
+   this->fVertexEvents = rhs.fVertexEvents;
 
-   for(int i=0;i<kTAPlot.fEjections.size();i++)
-      this->fEjections.push_back(kTAPlot.fEjections[i]);
+   for(int i=0;i<rhs.fEjections.size();i++)
+      this->fEjections.push_back(rhs.fEjections[i]);
    
-   for(int i=0;i<kTAPlot.fInjections.size();i++)
-      this->fInjections.push_back(kTAPlot.fInjections[i]);
+   for(int i=0;i<rhs.fInjections.size();i++)
+      this->fInjections.push_back(rhs.fInjections[i]);
    
-   for(int i=0;i<kTAPlot.fDumpStarts.size();i++)
-      this->fDumpStarts.push_back(kTAPlot.fDumpStarts[i]);
+   for(int i=0;i<rhs.fDumpStarts.size();i++)
+      this->fDumpStarts.push_back(rhs.fDumpStarts[i]);
    
-   for(int i=0;i<kTAPlot.fDumpStops.size();i++)
-      this->fDumpStops.push_back(kTAPlot.fDumpStops[i]);
+   for(int i=0;i<rhs.fDumpStops.size();i++)
+      this->fDumpStops.push_back(rhs.fDumpStops[i]);
    
-   for(int i=0;i<kTAPlot.fRuns.size();i++)
-      this->fRuns.push_back(kTAPlot.fRuns[i]);
+   for(int i=0;i<rhs.fRuns.size();i++)
+      this->fRuns.push_back(rhs.fRuns[i]);
    
-   for(int i=0;i<kTAPlot.fFEGEM.size();i++)
-      this->fFEGEM.push_back(kTAPlot.fFEGEM[i]);
+   for(int i=0;i<rhs.fFEGEM.size();i++)
+      this->fFEGEM.push_back(rhs.fFEGEM[i]);
    
-   for(int i=0;i<kTAPlot.fFELV.size();i++)
-      this->fFELV.push_back(kTAPlot.fFELV[i]);
+   for(int i=0;i<rhs.fFELV.size();i++)
+      this->fFELV.push_back(rhs.fFELV[i]);
 
-   this->fObjectConstructionTime = kTAPlot.fObjectConstructionTime ;
-   this->fDataLoadedTime = kTAPlot.fDataLoadedTime ;
+   this->fObjectConstructionTime = rhs.fObjectConstructionTime ;
+   this->fDataLoadedTime = rhs.fDataLoadedTime ;
 
    return *this;
 }
 
 //=+ Operator
-TAPlot& TAPlot::operator+=(const TAPlot &kTAPlotA) 
+TAPlot& TAPlot::operator+=(const TAPlot &rhs) 
 {
    std::cout << "TAPlot += operator" << std::endl;
 
    //Vectors- need concating
-   this->fEjections.insert(this->fEjections.end(), kTAPlotA.fEjections.begin(), kTAPlotA.fEjections.end() );
-   this->fInjections.insert(this->fInjections.end(), kTAPlotA.fInjections.begin(), kTAPlotA.fInjections.end() );
-   this->fDumpStarts.insert(this->fDumpStarts.end(), kTAPlotA.fDumpStarts.begin(), kTAPlotA.fDumpStarts.end() );
-   this->fDumpStops.insert(this->fDumpStops.end(), kTAPlotA.fDumpStops.begin(), kTAPlotA.fDumpStops.end() );
-   this->fRuns.insert(this->fRuns.end(), kTAPlotA.fRuns.begin(), kTAPlotA.fRuns.end() );//check dupes - ignore copies. AddRunNumber
-   this->fFEGEM.insert(this->fFEGEM.end(), kTAPlotA.fFEGEM.begin(), kTAPlotA.fFEGEM.end() );
-   this->fFELV.insert(this->fFELV.end(), kTAPlotA.fFELV.begin(), kTAPlotA.fFELV.end() );
+   this->fEjections.insert(this->fEjections.end(), rhs.fEjections.begin(), rhs.fEjections.end() );
+   this->fInjections.insert(this->fInjections.end(), rhs.fInjections.begin(), rhs.fInjections.end() );
+   this->fDumpStarts.insert(this->fDumpStarts.end(), rhs.fDumpStarts.begin(), rhs.fDumpStarts.end() );
+   this->fDumpStops.insert(this->fDumpStops.end(), rhs.fDumpStops.begin(), rhs.fDumpStops.end() );
+   this->fRuns.insert(this->fRuns.end(), rhs.fRuns.begin(), rhs.fRuns.end() );//check dupes - ignore copies. AddRunNumber
+   this->fFEGEM.insert(this->fFEGEM.end(), rhs.fFEGEM.begin(), rhs.fFEGEM.end() );
+   this->fFELV.insert(this->fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
 
    //Strings
    this->fTitle+= ", ";
-   this->fTitle+=kTAPlotA.fTitle;
+   this->fTitle+=rhs.fTitle;
 
    //All doubles
-   this->fFirstTMin              = (this->fFirstTMin < kTAPlotA.fFirstTMin)?this->fFirstTMin:kTAPlotA.fFirstTMin;
-   this->fLastTMax               = (this->fLastTMax > kTAPlotA.fLastTMax)?this->fLastTMax:kTAPlotA.fLastTMax;
-   this->fBiggestTZero           = (this->fBiggestTZero > kTAPlotA.fBiggestTZero)?this->fBiggestTZero:kTAPlotA.fBiggestTZero;
-   this->fMaxDumpLength          = (this->fMaxDumpLength > kTAPlotA.fMaxDumpLength)?this->fMaxDumpLength:kTAPlotA.fMaxDumpLength;
-   this->fTotalTime             = (this->fTotalTime > kTAPlotA.fTotalTime)?this->fTotalTime:kTAPlotA.fTotalTime;
-   this->fObjectConstructionTime = (this->fObjectConstructionTime < kTAPlotA.fObjectConstructionTime)?this->fObjectConstructionTime:kTAPlotA.fObjectConstructionTime;
-   this->fDataLoadedTime         = (this->fDataLoadedTime > kTAPlotA.fDataLoadedTime)?this->fDataLoadedTime:kTAPlotA.fDataLoadedTime;
-   this->fTimeFactor                = (this->fTimeFactor < kTAPlotA.fTimeFactor)?this->fTimeFactor:kTAPlotA.fTimeFactor;
-   this->fTotalVert             += kTAPlotA.fTotalVert;
+   this->fFirstTMin              = (this->fFirstTMin < rhs.fFirstTMin)?this->fFirstTMin:rhs.fFirstTMin;
+   this->fLastTMax               = (this->fLastTMax > rhs.fLastTMax)?this->fLastTMax:rhs.fLastTMax;
+   this->fBiggestTZero           = (this->fBiggestTZero > rhs.fBiggestTZero)?this->fBiggestTZero:rhs.fBiggestTZero;
+   this->fMaxDumpLength          = (this->fMaxDumpLength > rhs.fMaxDumpLength)?this->fMaxDumpLength:rhs.fMaxDumpLength;
+   this->fTotalTime             = (this->fTotalTime > rhs.fTotalTime)?this->fTotalTime:rhs.fTotalTime;
+   this->fObjectConstructionTime = (this->fObjectConstructionTime < rhs.fObjectConstructionTime)?this->fObjectConstructionTime:rhs.fObjectConstructionTime;
+   this->fDataLoadedTime         = (this->fDataLoadedTime > rhs.fDataLoadedTime)?this->fDataLoadedTime:rhs.fDataLoadedTime;
+   this->fTimeFactor                = (this->fTimeFactor < rhs.fTimeFactor)?this->fTimeFactor:rhs.fTimeFactor;
+   this->fTotalVert             += rhs.fTotalVert;
 
-   for(int i = 0; i < kTAPlotA.fHistos.GetSize(); i++)
+   for(int i = 0; i < rhs.fHistos.GetSize(); i++)
    {
-      this->fHistos.Add(kTAPlotA.fHistos.At(i));
+      this->fHistos.Add(rhs.fHistos.At(i));
    }
-   this->fHistoPositions.insert( kTAPlotA.fHistoPositions.begin(), kTAPlotA.fHistoPositions.end() );
+   this->fHistoPositions.insert( rhs.fHistoPositions.begin(), rhs.fHistoPositions.end() );
 
-   this->fTimeWindows+=kTAPlotA.fTimeWindows;
-   this->fVertexEvents+=kTAPlotA.fVertexEvents;
+   this->fTimeWindows+=rhs.fTimeWindows;
+   this->fVertexEvents+=rhs.fVertexEvents;
 
    return *this;
 }
 
 //Addition
-TAPlot operator+(const TAPlot& kTAPlotA, const TAPlot& kTAPlotB)
+TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
 {
    std::cout << "TAPlot addition operator" << std::endl;
-   TAPlot outputPlot(kTAPlotA); //Create new from copy
+   TAPlot outputPlot(lhs); //Create new from copy
 
    //Vectors- need concacting
-   outputPlot.fEjections.insert(outputPlot.fEjections.end(), kTAPlotB.fEjections.begin(), kTAPlotB.fEjections.end() );
-   outputPlot.fInjections.insert(outputPlot.fInjections.end(), kTAPlotB.fInjections.begin(), kTAPlotB.fInjections.end() );
-   outputPlot.fDumpStarts.insert(outputPlot.fDumpStarts.end(), kTAPlotB.fDumpStarts.begin(), kTAPlotB.fDumpStarts.end() );
-   outputPlot.fDumpStops.insert(outputPlot.fDumpStops.end(), kTAPlotB.fDumpStops.begin(), kTAPlotB.fDumpStops.end() );
-   outputPlot.fRuns.insert(outputPlot.fRuns.end(), kTAPlotB.fRuns.begin(), kTAPlotB.fRuns.end() );//check dupes - ignore copies. AddRunNumber
-   outputPlot.fFEGEM.insert(outputPlot.fFEGEM.end(), kTAPlotB.fFEGEM.begin(), kTAPlotB.fFEGEM.end() );
-   outputPlot.fFELV.insert(outputPlot.fFELV.end(), kTAPlotB.fFELV.begin(), kTAPlotB.fFELV.end() );
+   outputPlot.fEjections.insert(outputPlot.fEjections.end(), rhs.fEjections.begin(), rhs.fEjections.end() );
+   outputPlot.fInjections.insert(outputPlot.fInjections.end(), rhs.fInjections.begin(), rhs.fInjections.end() );
+   outputPlot.fDumpStarts.insert(outputPlot.fDumpStarts.end(), rhs.fDumpStarts.begin(), rhs.fDumpStarts.end() );
+   outputPlot.fDumpStops.insert(outputPlot.fDumpStops.end(), rhs.fDumpStops.begin(), rhs.fDumpStops.end() );
+   outputPlot.fRuns.insert(outputPlot.fRuns.end(), rhs.fRuns.begin(), rhs.fRuns.end() );//check dupes - ignore copies. AddRunNumber
+   outputPlot.fFEGEM.insert(outputPlot.fFEGEM.end(), rhs.fFEGEM.begin(), rhs.fFEGEM.end() );
+   outputPlot.fFELV.insert(outputPlot.fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
 
    //Strings - This title gets overridden in the DrawCanvas function anyway, but until then they are concacted. 
    outputPlot.fTitle+= ", ";
-   outputPlot.fTitle+=kTAPlotB.fTitle;
+   outputPlot.fTitle+=rhs.fTitle;
 
    //All doubles
-   outputPlot.fFirstTMin              = (outputPlot.fFirstTMin < kTAPlotB.fFirstTMin)?outputPlot.fFirstTMin:kTAPlotB.fFirstTMin;
-   outputPlot.fLastTMax               = (outputPlot.fLastTMax > kTAPlotB.fLastTMax)?outputPlot.fLastTMax:kTAPlotB.fLastTMax;
-   outputPlot.fBiggestTZero           = (outputPlot.fBiggestTZero > kTAPlotB.fBiggestTZero)?outputPlot.fBiggestTZero:kTAPlotB.fBiggestTZero;
-   outputPlot.fMaxDumpLength          = (outputPlot.fMaxDumpLength > kTAPlotB.fMaxDumpLength)?outputPlot.fMaxDumpLength:kTAPlotB.fMaxDumpLength;
-   outputPlot.fTotalTime             = (outputPlot.fTotalTime > kTAPlotB.fTotalTime)?outputPlot.fTotalTime:kTAPlotB.fTotalTime;
-   outputPlot.fObjectConstructionTime = (outputPlot.fObjectConstructionTime < kTAPlotB.fObjectConstructionTime)?outputPlot.fObjectConstructionTime:kTAPlotB.fObjectConstructionTime;
-   outputPlot.fDataLoadedTime         = (outputPlot.fDataLoadedTime > kTAPlotB.fDataLoadedTime)?outputPlot.fDataLoadedTime:kTAPlotB.fDataLoadedTime;
-   outputPlot.fTimeFactor                = (outputPlot.fTimeFactor < kTAPlotB.fTimeFactor)?outputPlot.fTimeFactor:kTAPlotB.fTimeFactor;
-   outputPlot.fTotalVert             += kTAPlotB.fTotalVert;
+   outputPlot.fFirstTMin              = (outputPlot.fFirstTMin < rhs.fFirstTMin)?outputPlot.fFirstTMin:rhs.fFirstTMin;
+   outputPlot.fLastTMax               = (outputPlot.fLastTMax > rhs.fLastTMax)?outputPlot.fLastTMax:rhs.fLastTMax;
+   outputPlot.fBiggestTZero           = (outputPlot.fBiggestTZero > rhs.fBiggestTZero)?outputPlot.fBiggestTZero:rhs.fBiggestTZero;
+   outputPlot.fMaxDumpLength          = (outputPlot.fMaxDumpLength > rhs.fMaxDumpLength)?outputPlot.fMaxDumpLength:rhs.fMaxDumpLength;
+   outputPlot.fTotalTime             = (outputPlot.fTotalTime > rhs.fTotalTime)?outputPlot.fTotalTime:rhs.fTotalTime;
+   outputPlot.fObjectConstructionTime = (outputPlot.fObjectConstructionTime < rhs.fObjectConstructionTime)?outputPlot.fObjectConstructionTime:rhs.fObjectConstructionTime;
+   outputPlot.fDataLoadedTime         = (outputPlot.fDataLoadedTime > rhs.fDataLoadedTime)?outputPlot.fDataLoadedTime:rhs.fDataLoadedTime;
+   outputPlot.fTimeFactor                = (outputPlot.fTimeFactor < rhs.fTimeFactor)?outputPlot.fTimeFactor:rhs.fTimeFactor;
+   outputPlot.fTotalVert             += rhs.fTotalVert;
 
    //Histograms and maps, very posssible that these get overridden in the DrawCanvas function anyway.
-   for(int i = 0; i < kTAPlotB.fHistos.GetSize(); i++)
+   for(int i = 0; i < rhs.fHistos.GetSize(); i++)
    {
-      outputPlot.fHistos.Add(kTAPlotB.fHistos.At(i));
+      outputPlot.fHistos.Add(rhs.fHistos.At(i));
    }
-   outputPlot.fHistoPositions.insert( kTAPlotB.fHistoPositions.begin(), kTAPlotB.fHistoPositions.end() );
+   outputPlot.fHistoPositions.insert( rhs.fHistoPositions.begin(), rhs.fHistoPositions.end() );
 
-   outputPlot.fTimeWindows+=kTAPlotB.fTimeWindows;
-   outputPlot.fVertexEvents+=kTAPlotB.fVertexEvents;
+   outputPlot.fTimeWindows+=rhs.fTimeWindows;
+   outputPlot.fVertexEvents+=rhs.fVertexEvents;
 
    return outputPlot;
 }
@@ -225,7 +225,7 @@ TAPlot operator+(const TAPlot& kTAPlotA, const TAPlot& kTAPlotB)
 //Function to print time ranges
 void TAPlot::PrintTimeRanges()
 {
-   for (auto& window: fTimeWindows.fTMax)
+   for (auto& window: fTimeWindows.fMaxTime)
       printf("w = %f", window);
 }
 
@@ -314,7 +314,7 @@ void TAPlot::SetLVChannel(const std::string& name, int arrayEntry, std::string t
          continue;
       std::cout<<"LV Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
-   TFELVData newEntry;
+   TFELabVIEWData newEntry;
    newEntry.fName = name;
    if (title.size() == 0)
       newEntry.fTitle = name;
@@ -356,7 +356,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetGEMGraphs()
    {
       std::map<std::string,TGraph*> uniqueLabels;
       const std::vector<int> kUniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< fTimeWindows.fTMax.size(); i++)
+      for (size_t i=0; i< fTimeWindows.fMaxTime.size(); i++)
       {
          size_t colourID = 0;
          for ( ; colourID< kUniqueRuns.size(); colourID++)
@@ -397,7 +397,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
       std::map<std::string,TGraph*> uniqueLabels;
 
       const std::vector<int> uniqueRuns = GetArrayOfRuns();
-      for (size_t i=0; i< fTimeWindows.fTMax.size(); i++)
+      for (size_t i=0; i< fTimeWindows.fMaxTime.size(); i++)
       {
          size_t colourID=0;
          for ( ; colourID< uniqueRuns.size(); colourID++)
@@ -472,82 +472,82 @@ void TAPlot::AddRunNumber(int runNumber)
    fRuns.push_back(runNumber);
 }
 
-void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax, std::vector<double> tzero)
+void TAPlot::AddTimeGates(int runNumber, std::vector<double> minTime, std::vector<double> maxTime, std::vector<double> zeroTime)
 {
    AddRunNumber(runNumber);
 
-   assert(tmin.size() == tmax.size());
-   assert(tmin.size() == tzero.size());
+   assert(minTime.size() == maxTime.size());
+   assert(minTime.size() == zeroTime.size());
 
-   for (size_t i=0; i<tmin.size(); i++)
+   for (size_t i=0; i<minTime.size(); i++)
    {
-      double length = tmax[i]-tmin[i];
+      double length = maxTime[i]-minTime[i];
       if (length>fMaxDumpLength)
          fMaxDumpLength=length;
-      fTimeWindows.AddTimeWindow(runNumber,tmin[i],tmax[i],tzero[i]);
-      fTotalTime+=tmax[i]-tmin[i];
+      fTimeWindows.AddTimeWindow(runNumber,minTime[i],maxTime[i],zeroTime[i]);
+      fTotalTime+=maxTime[i]-minTime[i];
       //Find the first start window
-      if (tmin[i]<fFirstTMin)
-         fFirstTMin=tmin[i];
+      if (minTime[i]<fFirstTMin)
+         fFirstTMin=minTime[i];
       //Largest time before 'zero' (-ve number)
-      if ( tmin[i] - tzero[i] < fBiggestTZero)
-         fBiggestTZero = tmin[i] - tzero[i];
+      if ( minTime[i] - zeroTime[i] < fBiggestTZero)
+         fBiggestTZero = minTime[i] - zeroTime[i];
       //Find the end of the last window (note: -ve tmax means end of run)
       //Skip early if we are looking for end of run anyway
       if (fLastTMax<0)
          continue;
       //Find the highest value
-      if (tmax[i]>fLastTMax)
-         fLastTMax=tmax[i];
+      if (maxTime[i]>fLastTMax)
+         fLastTMax=maxTime[i];
       //Set -ve of we want end of run
-      if (tmax[i]<0)
+      if (maxTime[i]<0)
          fLastTMax=-1;
    }
    return;
 }
 
-void TAPlot::AddTimeGates(int runNumber, std::vector<double> tmin, std::vector<double> tmax)
+void TAPlot::AddTimeGates(int runNumber, std::vector<double> minTime, std::vector<double> maxTime)
 {
-   std::vector<double> tzero;
-   tzero.reserve(tmin.size());
-   for (auto& times: tmin)
-      tzero.push_back(times);
-   return AddTimeGates(runNumber,tmin,tmax,tzero);
+   std::vector<double> zeroTime;
+   zeroTime.reserve(minTime.size());
+   for (auto& times: minTime)
+      zeroTime.push_back(times);
+   return AddTimeGates(runNumber,minTime,maxTime,zeroTime);
 }
 
-void TAPlot::AddTimeGate(const int kRunNumber, const double kTMin, const double kTMax, const double kTZero)
+void TAPlot::AddTimeGate(const int runNumber, const double minTime, const double maxTime, const double zeroTime)
 {
-   AddRunNumber(kRunNumber);
+   AddRunNumber(runNumber);
 
-   double length = kTMax - kTMin;
+   double length = maxTime - minTime;
    if (length > fMaxDumpLength)
       fMaxDumpLength = length;
-   fTimeWindows.AddTimeWindow(kRunNumber,kTMin,kTMax,kTZero);
-   fTotalTime += kTMax - kTMin;
+   fTimeWindows.AddTimeWindow(runNumber,minTime,maxTime,zeroTime);
+   fTotalTime += maxTime - minTime;
    //Find the first start window
-   if (kTMin < fFirstTMin)
-      fFirstTMin = kTMin;
+   if (minTime < fFirstTMin)
+      fFirstTMin = minTime;
    //Largest time before 'zero' (-ve number)
-   if ( kTMin - kTZero < fBiggestTZero)
-      fBiggestTZero = kTMin - kTZero;
+   if ( minTime - zeroTime < fBiggestTZero)
+      fBiggestTZero = minTime - zeroTime;
    //Find the end of the last window (note: -ve tmax means end of run)
    //Skip early if we are looking for end of run anyway
    if (fLastTMax < 0)
       return;
    //Find the highest value
-   if (kTMax > fLastTMax)
-      fLastTMax = kTMax;
+   if (maxTime > fLastTMax)
+      fLastTMax = maxTime;
    //Set -ve of we want end of run
-   if (kTMax < 0)
+   if (maxTime < 0)
       fLastTMax = -1;
    return;
 
 }
 
 //It is slightly faster to call AddTimeGates than this function
-void TAPlot::AddTimeGate(const int kRunNumber, const double kTMin, const double kTMax)
+void TAPlot::AddTimeGate(const int runNumber, const double minTime, const double maxTime)
 {
-   return AddTimeGate(kRunNumber,kTMin,kTMax,kTMin);
+   return AddTimeGate(runNumber,minTime,maxTime,minTime);
 }
 
 void TAPlot::AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vertexStatus, double x, double y, double z, double t, double eventTime, double runTime, int numHelices, int numTracks)                 
@@ -569,20 +569,20 @@ void TAPlot::AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vert
 
 //Load data functions
 template <typename T>
-void TAPlot::LoadFEGEMData(TFEGEMData& f, TTreeReader* feGEMReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
 {
-   TTreeReaderValue<TStoreGEMData<T>> GEMEvent(*feGEMReader, name);
+   TTreeReaderValue<TStoreGEMData<T>> gemEvent(*gemReader, name);
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
-   while (feGEMReader->Next())
+   while (gemReader->Next())
    {
-      double runTime = GEMEvent->GetRunTime();
+      double runTime = gemEvent->GetRunTime();
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
          continue;
       if (runTime > lastTime)
          break;
-      f.AddGEMEvent(&(*GEMEvent), *GetTimeWindows());
+      gemData.AddGEMEvent(&(*gemEvent), *GetTimeWindows());
    }
    return;
 }
@@ -617,20 +617,20 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadFELVData(TFELVData& f, TTreeReader* feLVReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
 {
-   TTreeReaderValue<TStoreLabVIEWEvent> LVEvent(*feLVReader, name);
+   TTreeReaderValue<TStoreLabVIEWEvent> labviewEvent(*labviewReader, name);
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
-   while (feLVReader->Next())
+   while (labviewReader->Next())
    {
-      double runTime = LVEvent->GetRunTime();
+      double runTime = labviewEvent->GetRunTime();
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
          continue;
       if (runTime > lastTime)
          break;
-      f.AddLVEvent(&(*LVEvent), *GetTimeWindows());
+      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows());
    }
    return;
 }
@@ -640,15 +640,15 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
    //For each unique variable being logged
    for (auto& obj: fFELV)
    {
-      TTreeReader* feLVReader=Get_feLV_Tree(runNumber, obj.fName);
-      TTree* tree = feLVReader->GetTree();
+      TTreeReader* labviewReader=Get_feLV_Tree(runNumber, obj.fName);
+      TTree* tree = labviewReader->GetTree();
       if  (!tree)
       {
          std::cout<<"Warning: " << obj.GetName() << " ("<<obj.fName<<") not found for run " << runNumber << std::endl;
          continue;
       }
       if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
-         LoadFELVData(obj, feLVReader, "TStoreLabVIEWEvent", firstTime, lastTime);
+         LoadFELVData(obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
       else
          std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
    }
@@ -664,16 +664,16 @@ void TAPlot::LoadData()
       //Calculate our list time... so we can stop early
       //for (auto& t: GetTimeWindows())
       //TTimeWindows t = GetTimeWindows();
-      for (size_t i=0; i<GetTimeWindows()->fTMax.size(); i++)
+      for (size_t i=0; i<GetTimeWindows()->fMaxTime.size(); i++)
       {
          if (GetTimeWindows()->fRunNumber[i]==runNumber)
          {
-            if (GetTimeWindows()->fTMax[i]<0) 
+            if (GetTimeWindows()->fMaxTime[i]<0) 
                lastTime = 1E99;
-            if (lastTime < GetTimeWindows()->fTMax[i])
-               lastTime = GetTimeWindows()->fTMax[i];
-            if (firstTime > GetTimeWindows()->fTMin[i] )
-               firstTime = GetTimeWindows()->fTMin[i];
+            if (lastTime < GetTimeWindows()->fMaxTime[i])
+               lastTime = GetTimeWindows()->fMaxTime[i];
+            if (firstTime > GetTimeWindows()->fMinTime[i] )
+               firstTime = GetTimeWindows()->fMinTime[i];
          }
       }
       LoadFEGEMData(runNumber, firstTime, lastTime);

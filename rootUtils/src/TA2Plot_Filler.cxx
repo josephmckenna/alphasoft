@@ -131,19 +131,19 @@ void TA2Plot_Filler::LoadData()
    {
       //TTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
-      for (int t = 0; t < plot->GetTimeWindows()->fTMax.size(); t++)
+      for (int t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
       {
          for (size_t i=0; i<UniqueRuns.size(); i++)
          if (plot->GetTimeWindows()->fRunNumber.at(t)==runNumbers[i])
          {
-            if (plot->GetTimeWindows()->fTMax.at(t)<0) last_times[i]=1E99;
-            if (last_times[i]<plot->GetTimeWindows()->fTMax.at(t))
+            if (plot->GetTimeWindows()->fMaxTime.at(t)<0) last_times[i]=1E99;
+            if (last_times[i]<plot->GetTimeWindows()->fMaxTime.at(t))
             {
-               last_times[i]=plot->GetTimeWindows()->fTMax.at(t);
+               last_times[i]=plot->GetTimeWindows()->fMaxTime.at(t);
             }
-            if (first_times[i]>plot->GetTimeWindows()->fTMin.at(t))
+            if (first_times[i]>plot->GetTimeWindows()->fMinTime.at(t))
             {
-               first_times[i]=plot->GetTimeWindows()->fTMin.at(t);
+               first_times[i]=plot->GetTimeWindows()->fMinTime.at(t);
             }
          }
       }
