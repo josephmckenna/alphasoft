@@ -14,11 +14,11 @@
 class TSISPlotEvents: public TObject
 {
    public:
-      std::vector<int> runNumber;
-      std::vector<double> t;  //Plot time (based off official time)
-      std::vector<double> OfficialTime;
-      std::vector<int> Counts;
-      std::vector<int> SIS_Channel;
+      std::vector<int> fRunNumber;
+      std::vector<double> fTime;  //Plot time (based off official time)
+      std::vector<double> fOfficialTime;
+      std::vector<int> fCounts;
+      std::vector<int> fSISChannel;
    public:
       //Std ctor and dtor
       TSISPlotEvents()
@@ -27,62 +27,62 @@ class TSISPlotEvents: public TObject
       ~TSISPlotEvents()
       {
       }
-      //Copy ctor
-      /*TSISPlotEvents(const TSISPlotEvents& m_SISEvent)
+      //Copy ctor - !!!
+      TSISPlotEvents(const TSISPlotEvents& object)
       {
          //Deep copy vectors.
-         for(int i = 0; i<m_SISEvent.t.size(); i++)
+         for(int i=0; i<object.fTime.size(); i++)
          {
-            runNumber.push_back( m_SISEvent.runNumber[i]);
-            t.push_back( m_SISEvent.t[i]);
-            OfficialTime.push_back( m_SISEvent.OfficialTime[i]);
-            Counts.push_back( m_SISEvent.Counts[i]);
-            SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
+            fRunNumber.push_back( object.fRunNumber[i]);
+            fTime.push_back( object.fTime[i]);
+            fOfficialTime.push_back( object.fOfficialTime[i]);
+            fCounts.push_back( object.fCounts[i]);
+            fSISChannel.push_back( object.fSISChannel[i]);
          }
-      }*/
-      TSISPlotEvents operator+=(const TSISPlotEvents &plotB) 
+      }
+      TSISPlotEvents operator+=(const TSISPlotEvents &rhs) 
       {
          std::cout << "TSISPlotEvents += operator" << std::endl;
-         this->runNumber   .insert(this->runNumber.end(),      plotB.runNumber.begin(),      plotB.runNumber.end() );
-         this->t           .insert(this->t.end(),              plotB.t.begin(),              plotB.t.end() );
-         this->OfficialTime.insert(this->OfficialTime.end(),   plotB.OfficialTime.begin(),   plotB.OfficialTime.end() );
-         this->Counts      .insert(this->Counts.end(),         plotB.Counts.begin(),         plotB.Counts.end() );
-         this->SIS_Channel .insert(this->SIS_Channel.end(),    plotB.SIS_Channel.begin(),    plotB.SIS_Channel.end() );
+         this->fRunNumber   .insert(this->fRunNumber.end(),      rhs.fRunNumber.begin(),      rhs.fRunNumber.end() );
+         this->fTime           .insert(this->fTime.end(),              rhs.fTime.begin(),              rhs.fTime.end() );
+         this->fOfficialTime.insert(this->fOfficialTime.end(),   rhs.fOfficialTime.begin(),   rhs.fOfficialTime.end() );
+         this->fCounts      .insert(this->fCounts.end(),         rhs.fCounts.begin(),         rhs.fCounts.end() );
+         this->fSISChannel .insert(this->fSISChannel.end(),    rhs.fSISChannel.begin(),    rhs.fSISChannel.end() );
          return *this;
       }
-      TSISPlotEvents& operator=(const TSISPlotEvents& m_SISEvent)
+      TSISPlotEvents& operator=(const TSISPlotEvents& object)
       {
-         for(int i = 0; i<m_SISEvent.t.size(); i++)
+         for(int i = 0; i<object.fTime.size(); i++)
          {
-            this->runNumber.push_back( m_SISEvent.runNumber[i]);
-            this->t.push_back( m_SISEvent.t[i]);
-            this->OfficialTime.push_back( m_SISEvent.OfficialTime[i]);
-            this->Counts.push_back( m_SISEvent.Counts[i]);
-            this->SIS_Channel.push_back( m_SISEvent.SIS_Channel[i]);
+            this->fRunNumber.push_back( object.fRunNumber[i]);
+            this->fTime.push_back( object.fTime[i]);
+            this->fOfficialTime.push_back( object.fOfficialTime[i]);
+            this->fCounts.push_back( object.fCounts[i]);
+            this->fSISChannel.push_back( object.fSISChannel[i]);
          }
          return *this;
       }
-      friend TSISPlotEvents operator+(const TSISPlotEvents& plotA, const TSISPlotEvents& plotB)
+      friend TSISPlotEvents operator+(const TSISPlotEvents& lhs, const TSISPlotEvents& rhs)
       {
          std::cout << "TSISPlotEvents addition operator" << std::endl;
-         TSISPlotEvents outputplot(plotA); //Create new from copy
+         TSISPlotEvents outputplot(lhs); //Create new from copy
          //Vectors- need concacting
-         outputplot.runNumber.insert(outputplot.runNumber.end(), plotB.runNumber.begin(), plotB.runNumber.end() );
-         outputplot.t.insert(outputplot.t.end(), plotB.t.begin(), plotB.t.end() );
-         outputplot.OfficialTime.insert(outputplot.OfficialTime.end(), plotB.OfficialTime.begin(), plotB.OfficialTime.end() );
-         outputplot.Counts.insert(outputplot.Counts.end(), plotB.Counts.begin(), plotB.Counts.end() );
-         outputplot.SIS_Channel.insert(outputplot.SIS_Channel.end(), plotB.SIS_Channel.begin(), plotB.SIS_Channel.end() );
+         outputplot.fRunNumber.insert(outputplot.fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
+         outputplot.fTime.insert(outputplot.fTime.end(), rhs.fTime.begin(), rhs.fTime.end() );
+         outputplot.fOfficialTime.insert(outputplot.fOfficialTime.end(), rhs.fOfficialTime.begin(), rhs.fOfficialTime.end() );
+         outputplot.fCounts.insert(outputplot.fCounts.end(), rhs.fCounts.begin(), rhs.fCounts.end() );
+         outputplot.fSISChannel.insert(outputplot.fSISChannel.end(), rhs.fSISChannel.begin(), rhs.fSISChannel.end() );
          return outputplot;
       }
-      void AddEvent(int m_runNumber, double m_ti, double m_OfficialTime, int m_Counts, int m_SIS_Channel, long m_EventID)
+      void AddEvent(int runNumber, double time, double officialTime, int counts, int channel)
       {
-         runNumber.push_back(m_runNumber);
-         t.push_back(m_ti);  
-         OfficialTime.push_back(m_OfficialTime);
-         Counts.push_back(m_Counts);
-         SIS_Channel.push_back(m_SIS_Channel);
+         fRunNumber.push_back(runNumber);
+         fTime.push_back(time);  
+         fOfficialTime.push_back(officialTime);
+         fCounts.push_back(counts);
+         fSISChannel.push_back(channel);
       }
-      int GetEventRunNumber(int event) const { return runNumber.at(event); }
+      int GetEventRunNumber(int event) const { return fRunNumber.at(event); }
       
       ClassDef(TSISPlotEvents,1);
 };
@@ -90,61 +90,64 @@ class TSISPlotEvents: public TObject
 class TA2Plot: public TAPlot
 {
    protected:
-      std::vector<int> SISChannels;
+      std::vector<int> fSISChannels;
 
       //Detector SIS channels
-      std::map<int, int> trig;
-      std::map<int, int> trig_nobusy;
-      std::map<int, int> atom_or;
+      std::map<int, int> fTrig;
+      std::map<int, int> fTrigNobusy;
+      std::map<int, int> fAtomOr;
 
       //Dump marker SIS channels:
-      std::map<int, int> CATStart;
-      std::map<int, int> CATStop;
-      std::map<int, int> RCTStart;
-      std::map<int, int> RCTStop;
-      std::map<int, int> ATMStart;
-      std::map<int, int> ATMStop;
+      std::map<int, int> fCATStart;
+      std::map<int, int> fCATStop;
+      std::map<int, int> fRCTStart;
+      std::map<int, int> fRCTStop;
+      std::map<int, int> fATMStart;
+      std::map<int, int> fATMStop;
    
       //Beam injection/ ejection markers:
-      std::map<int, int> Beam_Injection;
-      std::map<int, int> Beam_Ejection;
+      std::map<int, int> fBeamInjection;
+      std::map<int, int> fBeamEjection;
       
-      double ZMinCut;
-      double ZMaxCut;
+      double fZMinCut;
+      double fZMaxCut;
 
    public:
-      void SetSISChannels(int runNumber);
       TSISPlotEvents SISEvents;  
+      
+      //Default members, operators, and prints.
+      TA2Plot(bool zeroTime = true);
+      TA2Plot(double zMin, double zMax,bool zeroTime = true);
+      TA2Plot(const TAPlot& object);
+      TA2Plot(const TA2Plot& object);
+      virtual ~TA2Plot();
+      friend TA2Plot operator+(const TA2Plot& lhs, const TA2Plot& rhs);
+      TA2Plot& operator+=(const TA2Plot& rhs);
+      TA2Plot& operator=(const TA2Plot& rhs);
+   
+      //Setters and getters
+      void SetSISChannels(int runNumber);
 
+      //Adding events and dumps
       void AddSVDEvent(TSVD_QOD* SVDEvent);
       void AddSISEvent(TSISEvent* SISEvent);
-
-   private:
-      void AddEvent(TSISEvent* event, int channel,double time_offset=0);
-      void AddEvent(TSVD_QOD* event,double time_offset=0);
-
-   public:
-      void LoadRun(int runNumber, double first_time, double last_time);
       void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
       void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
       //If spills are from one run, it is faster to call the function above
       void AddDumpGates(std::vector<TA2Spill> spills );
 
-      TA2Plot(bool zerotime = true);
-      TA2Plot(double zmin, double zmax,bool zerotime = true);
-      TA2Plot(const TA2Plot& m_TA2Plot);
-      TA2Plot(const TAPlot& m_TAPlot);
-      virtual ~TA2Plot();
-      friend TA2Plot operator+(const TA2Plot& PlotA, const TA2Plot& PlotB);
-      TA2Plot& operator+=(const TA2Plot& plotB);
-      TA2Plot& operator=(const TA2Plot& plotA);
-      
+      //Load, fill, draw, or save the object      
+      void LoadRun(int runNumber, double firstTime, double lastTime);
       void SetUpHistograms();
-      void FillHisto(bool ApplyCuts=true, int MVAMode=0);
-      TCanvas* DrawCanvas(const char* Name="cVTX",bool ApplyCuts=true, int MVAMode=0);
-      ClassDef(TA2Plot, 1)
-
-      void WriteEventList(std::string filename, bool append=true);
+      void FillHisto(bool applyCuts=true, int mode=0);
+      TCanvas* DrawCanvas(const char* name="cVTX",bool applyCuts=true, int mode=0);
+      void WriteEventList(std::string fileName, bool append=true);
+   
+   private:
+      void AddEvent(TSISEvent* event, int channel,double timeOffset=0);
+      void AddEvent(TSVD_QOD* event,double timeOffset=0);
+   
+   ClassDef(TA2Plot, 1)
 };
 
 #endif
