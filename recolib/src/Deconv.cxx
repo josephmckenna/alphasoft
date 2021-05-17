@@ -787,7 +787,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
 {
 
    if(subtracted->size()==0) return 0;
-   int nsamples = subtracted->back()->h->size();
+   size_t nsamples = subtracted->back()->h->size();
    std::vector<ALPHAg::signal>* fSignals=new std::vector<ALPHAg::signal>;
    assert(nsamples >= theBin);
    fSignals->reserve(nsamples-theBin);
@@ -809,7 +809,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
    // if( fTrace )
    //    std::cout<<"Deconv::Deconvolution delay: "<<t_delay<<" ns"<<std::endl;
 
-   for(unsigned b = theBin; b < nsamples; ++b)// b is the current bin of interest
+   for(size_t b = theBin; b < nsamples; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first
@@ -834,7 +834,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
                         SubtractAW(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                      else
                         SubtractPAD(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
-                     if(b-theBin >= 0)
+                     if( int(b-theBin) >= 0)
                         {
                            // time in ns of the bin b centre
                            double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
@@ -855,7 +855,7 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                         std::vector<double> &fResponse,const unsigned theBin)
 {
    std::vector<double> *wf1 = hist1->h;
-   int wf1size=wf1->size();
+   size_t wf1size = wf1->size();
    unsigned int i1 = hist1->index;
    ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
@@ -876,7 +876,7 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                //Take advantage that there are 256 anode wires... use uint8_t
                //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
-               for(unsigned bb = b-theBin; bb < wf1size; ++bb)
+               for(size_t bb = b - theBin; bb < wf1size; ++bb)
                   {
                      // the bin corresponding to bb in the response
                      int respBin = int (bb-b+theBin);
@@ -891,7 +891,7 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
             }// loop over factors
       }// loop all electrodes' signals looking for neighbours
 
-   for(unsigned bb = b-theBin; bb < wf1size; ++bb)
+   for(size_t bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
          int respBin = int ( bb - b + theBin );
@@ -917,7 +917,7 @@ void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
    int respsize=fResponse.size();
      
      
-   for(unsigned bb = b-theBin; bb < wf1size; ++bb)
+   for(size_t bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
          int respBin = int(bb - b + theBin);
@@ -934,7 +934,7 @@ std::vector<ALPHAg::wfholder*>* Deconv::wforder(std::vector<ALPHAg::wfholder*>* 
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
    std::vector<ALPHAg::wfholder*>* histset=new std::vector<ALPHAg::wfholder*>;
-   unsigned int size=subtracted->size();
+   size_t size = subtracted->size();
    //   std::cout<<"Deconv::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
    histset->reserve(size);
    for(unsigned int i=0; i<size;++i)
