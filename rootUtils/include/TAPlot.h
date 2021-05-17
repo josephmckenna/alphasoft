@@ -441,8 +441,6 @@ class TAPlot: public TObject
       double fBiggestTZero;
       double fMaxDumpLength;
       double fTotalTime;
-      int fTotalVert;
-
       bool fVerbose;
       bool fApplyCuts;
       double fTimeFactor=1.; //Time scaling factor (used to switch between seconds and milliseconds)
@@ -506,19 +504,7 @@ class TAPlot: public TObject
       std::vector<std::pair<std::string,int>> GetGEMChannels();
       std::vector<std::pair<std::string,int>> GetLVChannels();
       std::pair<TLegend*,TMultiGraph*> GetGEMGraphs();
-
-      void SetLVChannel(const std::string& name, int ArrayEntry, std::string title="");
-
-      std::vector<std::pair<std::string,int>> GetLVChannels();
-
       std::pair<TLegend*,TMultiGraph*> GetLVGraphs();
-
-      template<typename T> void LoadfeGEMData(feGEMdata& f, TTreeReader* feGEMReader, const char* name, double first_time, double last_time);
-      void LoadfeGEMData(int RunNumber, double first_time, double last_time);
-
-      void LoadfeLVData(feLVdata& f, TTreeReader* feLVReader, const char* name, double first_time, double last_time);
-      void LoadfeLVData(int RunNumber, double first_time, double last_time);
-
       double GetApproximateProcessingTime();
       int GetNPassedType(const int type);
       TString GetListOfRuns();
@@ -564,51 +550,16 @@ class TAPlot: public TObject
          fHistos.Add(h);
          fHistoPositions[keyname]=fHistos.GetEntries()-1;
       }
-
-      /*void FillfeGEMHistograms()
-      {
-         for (auto & p: feGEM)
-         {
-            TH1D* GEM_Plot = GetTH1D(p.GetName().c_str());
-            std::pair<double,double> minmax = p.GetMinMax();
-            GEM_Plot->SetMinimum(minmax.first);
-            GEM_Plot->SetMaximum(minmax.second);
-            for (int j=0; j<p.data.size(); j++)
-               GEM_Plot->Fill(p.t[j],p.data[j]);
-         }
-      }*/
-
       void FillHistogram(const char* keyname,double x, int counts);
-
       void FillHistogram(const char* keyname, double x);
-
       void FillHistogram(const char* keyname, double x, double y);
-
       TH1D* GetTH1D(const char* keyname);
-
       void DrawHistogram(const char* keyname, const char* settings);
-
       TLegend* DrawLines(TLegend* legend, const char* keyname);
       TLegend* AddLegendIntegral(TLegend* legend, const char* message, const char* keyname);
       void ClearHisto();
       void SetUpHistograms();
       void PrintTimeRanges();
-
-      //virtual void FillHisto();
-      TObjArray GetHisto() {return HISTOS;}
-      std::map<std::string,int> GetHistoPosition() {return HISTO_POSITION;}
-      void ClearHisto();
-      //TCanvas *Canvas(TString Name = "cVTX");
-
-      void SetVerbose(bool v) {fVerbose=v;}
-   
-      //virtual void ExportCSV(TString filename, Bool_t PassedCutOnly=kFALSE);
-
-      virtual void PrintFull();
-
-      TAPlot& operator=(const TAPlot& m_TAPlot);
-      friend TAPlot operator+(const TAPlot& plotA, const TAPlot& plotB);
-      TAPlot& operator+=(const TAPlot &plotB);
 
    ClassDef(TAPlot, 1);
 };
