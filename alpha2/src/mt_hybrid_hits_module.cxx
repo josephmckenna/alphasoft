@@ -226,6 +226,8 @@ public:
          return flow;
       }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
+      std::cout << "AnalyzeFlowEvent taking run number = " << runinfo->fRunNo << std::endl;
+      s->SetRunNumber(runinfo->fRunNo);
       flow=new SilEventFlow(flow,s);
       return flow;
    }
