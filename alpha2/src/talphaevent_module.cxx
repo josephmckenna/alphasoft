@@ -695,7 +695,7 @@ public:
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          #endif
          runinfo->fRoot->fOutputFile->cd();
-         SiliconEvent->SetRunNumber(runinfo->fRunNo);
+         
          if (!SiliconTree)
             SiliconTree = new TTree("gSiliconTree","Silicon Tree");
          TBranch* b_variable =SiliconTree->GetBranch("SiliconEvent");
