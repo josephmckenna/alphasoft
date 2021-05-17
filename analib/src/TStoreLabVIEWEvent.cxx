@@ -15,7 +15,7 @@ TStoreLabVIEWEvent::TStoreLabVIEWEvent()
 }
 
 TStoreLabVIEWEvent::TStoreLabVIEWEvent(const TStoreLabVIEWEvent& Event):
-   m_data(Event.GetData())
+   TObject(Event), m_data(Event.GetData())
 {
 //copy constructor
     BankName = Event.GetBankName();
