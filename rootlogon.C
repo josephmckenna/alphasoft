@@ -43,12 +43,13 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-
+#ifdef BUILD_AG_SIM
   libname="libG4out.so";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
+#endif
 
   gInterpreter->ProcessLine("#include \"RootUtils.h\"");
   gStyle->SetOptStat(1011111);

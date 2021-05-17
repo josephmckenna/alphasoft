@@ -37,8 +37,14 @@ source cmake_config_install.sh
 ///< --------------------------------------------------------------------------
 Some parameters of the generation can be handled/tuned in a user card, a text
 file (a2MC.ini) that can be changed accordingly to the generation needs. 
-For example, it is possible to generate pbars or muons, to turn on and off the
-magnetic field, to insert some geometry elements (detectors, magnets) etc. 
+The "default" a2MC.ini is in the input subdirectory. You can copy it into your
+main directory, where the MC expect it to be. Otherwise you can also specify 
+the configuration file with the option -inifile "path/filename".
+
+Through the configuration file, it is possible to generate pbars or muons, to 
+turn on and off the magnetic field, to insert some geometry elements (detectors,
+magnets) etc.  
+
 Please see a2MC.ini for a "in-line" descriptions of the parameters.
 ------------------------------------ oOo --------------------------------------
 
@@ -47,6 +53,8 @@ Please see a2MC.ini for a "in-line" descriptions of the parameters.
 ///< 4. RUN
 ///< --------------------------------------------------------------------------
 ./g4vmc_a2MC -events 10000 -run 0
+In case, the user can also specify where to read the configuration file from:
+./g4vmc_a2MC -events 10000 -run 0 -inifile "path/filename.ini"
 
 This command generate 10000 events for the run number 0.
 If a generation with the same run number took previously place, the execution 

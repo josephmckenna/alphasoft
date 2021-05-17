@@ -23,20 +23,26 @@
 class A2DisplayModuleFlags
 {
 public:
-   bool fAutoSave = false;
+   //By default, run in batch mode (no event display)
+   bool fBatch = true;
+   //By default do not auto save plots
+   int fAutoSave = 0;
+   //Allow users to give a range of event numbers, default settings allow save of all events
+   int fAutoSaveStart = -1;
+   int fAutoSaveStop = 2147483647;
+   
 };
 
 class A2DisplayRun: public TARunObject
 {
 private:
    TAlphaDisplay *a2ed;
-   bool fBatch;
-   bool fAutoSave;
+   A2DisplayModuleFlags* fFlags;
 
 public:
 
-   A2DisplayRun(TARunInfo* runinfo, bool mode, A2DisplayModuleFlags* fFlags)
-      : TARunObject(runinfo), a2ed(NULL), fBatch(mode), fAutoSave(fFlags->fAutoSave)
+   A2DisplayRun(TARunInfo* runinfo, A2DisplayModuleFlags* flags)
+      : TARunObject(runinfo), a2ed(NULL), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="Display Module";
@@ -99,7 +105,7 @@ public:
    //   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fBatch )
+      if( fFlags->fBatch && fFlags->fAutoSave == 0 )
       {
 #ifdef MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -122,51 +128,34 @@ public:
       //printf("A2DisplayRun::Analyze event no %d, FlowEvent no %d, BarEvent no %d\n", age->counter,analysis_flow->fEvent->GetEventNumber(),bar_flow->BarEvent-> GetID());
 
       if (!a2ed) 
-         {
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
-            if (!TARootHelper::fgApp)
-               TARootHelper::fgApp = new TApplication("A2EventDisplay", NULL, NULL, 0, 0);
-
-            
-            printf("New A2ed!\n");
-            int autosave=0;
-            char text[256];
-            sprintf(
-               text,
-               "Run %d, Event %d, Trigger %d, VF48 Time %lf",
-               runinfo->fRunNo,
-               silevent->GetVF48NEvent(), //FIXME
-               silevent->GetVF48NTrigger(), //FIXME
-               silevent->GetVF48Timestamp() //FIXME
-            );
-            a2ed = new TAlphaDisplay(text, autosave, runinfo->fRunNo);
-            
-         }
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
+         if (!TARootHelper::fgApp)
+            TARootHelper::fgApp = new TApplication("A2EventDisplay", NULL, NULL, 0, 0);
+         printf("New A2ed!\n");
+         a2ed = new TAlphaDisplay( runinfo->fRunNo);
+      }
 
       //analysis_flow->fEvent->Print();
-      if (a2ed && alphaevent) {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
-         a2ed->SetEventPointer(alphaevent);
-         /*flags=*/a2ed->DrawAllViews(); //? Is this the best draw function to be calling?
-         /*flags=a2ed->DrawAllViews(
-            runinfo->fRunNo, 
-            silevent->GetVF48NEvent(),
-            silevent->GetVF48NTrigger(),
-            silevent->GetVF48Timestamp()
-         )*/
-         //alphaevent->Print();
-         TARootHelper::fgApp->Run(kTRUE);
-         //flags=aged->ShowEvent(age,analysis_flow,SigFlow,bar_flow,flags,runinfo);
-         //printf("A2ed::ShowEvent is %d\n",flags);
-         //alphaevent->Print();
-         if(fAutoSave)
+      if (a2ed && alphaevent && silevent) {
+         int EventNo = silevent->GetVF48NEvent();
+         // Do not save if event number is outside of requested range
+         if (fFlags->fAutoSaveStart < EventNo && EventNo <= fFlags->fAutoSaveStop )
          {
-            char fname[256];
-            sprintf(fname,"R%d_E%d.png", runinfo->fRunNo , silevent->GetVF48NEvent());
-            a2ed->GetfCanvas()->SaveSource(fname, "png");
-            a2ed->GetfCanvas()->Print(fname, "png");
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock); 
+            a2ed->SetEventPointer(alphaevent,silevent);
+            a2ed->DrawAllViews(); //? Is this the best draw function to be calling?
+            // a2ed->DrawViewX3D();
+            // a2ed->DrawViewOGL();  //Prettier draw mode :)
+            if(fFlags->fAutoSave)
+            {
+               a2ed->Save();
+            }
+            //Let the user interact if not in batch mode
+            if (!fFlags->fBatch)
+               TARootHelper::fgApp->Run(kTRUE);
+            //printf("A2ed::ShowEvent is %d\n",flags);
          }
-
       }
       return flow;
    }
@@ -180,28 +169,39 @@ public:
 class A2DisplayModuleFactory: public TAFactory
 {
 public:
-   bool fBatch;
    A2DisplayModuleFlags fFlags;
 public:
    void Usage()
    {
       printf("A2DisplayModuleFactory::Help!\n");
-      printf("\t--a2ed      Turn A2 event display on\n");
+      printf("\t--a2ed                Turn A2 event display on (interactive mode)\n");
+      printf("\t--a2edsave            Automatically save events\n");
+      printf("\t--a2edsavestart XXX   Automatically save events after event number XXX\n");
+      printf("\t--a2edsavestop XXX    Automatically save events after event number XXX\n");
    }
    void Init(const std::vector<std::string> &args)
    {
       printf("A2DisplayModuleFactory::Init!\n");
-      fBatch = true;
-
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       // READ cmd line parameters to pass to this module here
       for (unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--a2ed" )
-               fBatch = false;
+               fFlags.fBatch = false;
 
-            if( args[i] == "--autosave" )
+            if( args[i] == "--a2edsave" )
                fFlags.fAutoSave = true;
+
+            if( args[i] == "--a2edsavestart")
+            {
+               fFlags.fAutoSave = true;
+               fFlags.fAutoSaveStart = atoi(args[++i].c_str());
+            }
+            if( args[i] == "--a2edsavestop")
+            {
+               fFlags.fAutoSave = true;
+               fFlags.fAutoSaveStop = atoi(args[++i].c_str());
+            }
          }
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
@@ -211,14 +211,14 @@ public:
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      if( fBatch )
+      if( fFlags.fBatch )
          printf("A2DisplayModuleFactory::NewRunObject, run %d, file %s -- BATCH MODE\n",
                 runinfo->fRunNo, runinfo->fFileName.c_str());
       else
          printf("A2DisplayModuleFactory::NewRunObject, run %d, file %s\n", 
                 runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      return new A2DisplayRun(runinfo, fBatch, &fFlags);
+      return new A2DisplayRun(runinfo, &fFlags);
    }
 };
 

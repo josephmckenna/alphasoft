@@ -4,7 +4,7 @@
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
 #image: gcc:6.1
-image: rootproject/root-cc7
+image: tmidas/root6
 
 pipelines:
   default:
@@ -15,7 +15,6 @@ pipelines:
         script: # Modify the commands below to build your repository.
             - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
-            - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - cd ${AGRELEASE}
             - make
@@ -32,7 +31,6 @@ pipelines:
         script: # Modify the commands below to build your repository.
             - git submodule update --init --recursive
             - export ROOT_INCLUDE_PATH=/usr/include/root
-            - yum install -y lesstif-devel libXmu libXmu-devel eos-* valgrind
             - . agconfig.sh
             - cd ${AGRELEASE}
             - pwd

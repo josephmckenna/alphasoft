@@ -8,7 +8,7 @@
 ClassImp(a2mcVirtualMC)
 
 //_____________________________________________________________________________
-a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, std::string& run_time, Int_t run_seed)
+a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_number, a2mcSettings a2mc_conf, std::string run_time, Int_t run_seed)
     : TVirtualMCApplication(name,title),
     runNumber(0),
     runSeed(0),
@@ -25,11 +25,12 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     runNumber   = run_number;
     runTime     = run_time;
     runSeed     = run_seed;
+    a2mcConf = a2mc_conf;
     // Create a user stack
     fStack = new a2mcStack(a2mcConf.GetTracksLim());
     verbose = a2mcConf.GetVerbose();
     // Create detector construction
-    fDetConstruction = new a2mcApparatus(runNumber);
+    fDetConstruction = new a2mcApparatus(runNumber, a2mcConf);
     
     if(a2mcConf.GetMagField()==1) {
         Double_t rMax = 50.;
@@ -40,7 +41,6 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     }
     if(a2mcConf.GetMagField()==2) fMagField = new a2mcFieldFromMap("input/berkeley_and_octupole_and_mirrors_extended_shifted-24mm_mm.mag");
 
-        
     FileMode fileMode = kWrite;
     fRootManager = new a2mcRootManager(runNumber, runTime, "a2MC", fileMode);
 
@@ -48,7 +48,7 @@ a2mcVirtualMC::a2mcVirtualMC(const char *name, const char *title, Int_t run_numb
     fRootManager->Register("Primary", "a2mcPrimary", &fPrimary);   
 
     // Create a primary generator
-    fPrimaryGenerator = new a2mcGenerator(fStack,fDetConstruction); 
+    fPrimaryGenerator = new a2mcGenerator(fStack,fDetConstruction, a2mcConf); 
 }
 
 //_____________________________________________________________________________
@@ -93,22 +93,15 @@ void a2mcVirtualMC::InitMC(const char* setup)
         if (!gMC) Fatal("InitMC", "Processing Config() has failed. (No MC is instantiated.)");
     }
 
-   // This need to be uncommented to allow the step limits set in defining
-   // the geometry media (stemax) in a2mcApparatus.cxx
-   Bool_t isUserParameters = true;
-   gMC->SetUserParameters(isUserParameters);
-    //gMC->SetProcess("MULS" ,0); // Turn OFF multiple scattering
-    //gMC->SetCut("CUTHAD",1.e-6); //
-        gMC->SetCut("CUTELE",1.e-2); // GeV
-        gMC->SetCut("CUTGAM",1.e-2); // GeV
-    ///< These cuts could be customized according to gen_type and gen_mode
-//    if(a2mcConf.GetGen_mode()==10||a2mcConf.GetGen_mode()==11) { // positrons or positrons-like pbars
-//        gMC->SetCut("CUTELE",1.e-5); // GeV
-//        gMC->SetCut("CUTGAM",1.e-5); // GeV        
-//    } else { // all the others
-//        gMC->SetCut("CUTELE",1.e-2); // GeV
-//        gMC->SetCut("CUTGAM",1.e-2); // GeV
-//    }
+    // This need to be uncommented to allow the step limits set in defining
+    // the geometry media (stemax) in a2mcApparatus.cxx
+    // Bool_t isUserParameters = true; ///< Using user step limits (see a2mcApparatus::ConstructMaterials())
+    Bool_t isUserParameters = false; ///< Using Geant4 default step limits
+    gMC->SetUserParameters(isUserParameters);
+    // gMC->SetProcess("MULS" ,0); // Turn OFF multiple scattering
+    // gMC->SetCut("CUTHAD",1.e-6); //
+    gMC->SetCut("CUTELE",1.e-2); // GeV
+    gMC->SetCut("CUTGAM",1.e-2); // GeV
 
     gMC->SetStack(fStack);
     if(a2mcConf.GetMagField()!=0) gMC->SetMagField(fMagField);
@@ -126,6 +119,7 @@ void a2mcVirtualMC::RunMC(Int_t nofEvents)
 
     if(verbose) fVerbose.RunMC(nofEvents);
 
+    WriteLog(nofEvents);
     gMC->ProcessRun(nofEvents);
 
     FinishRun();
@@ -141,7 +135,7 @@ void a2mcVirtualMC::FinishRun()
 
     fRootManager->WriteAll();
     fPrimaryGenerator->EquivalentTimeMin();
-    WriteLog();
+    cout << "Configuration read from ====> " << a2mcConf.GetIniFile() << " <===== " << endl;
 }
 
 //_____________________________________________________________________________
@@ -203,7 +197,6 @@ void a2mcVirtualMC::BeginEvent()
     /// Nothing to be done this example
 
     if(verbose) fVerbose.BeginEvent();
-
     nEvents++;
 
     if(a2mcConf.GetSilDet())  fSilSD.BeginOfEvent(); 
@@ -260,13 +253,25 @@ void a2mcVirtualMC::FinishEvent()
 
     ///< Fill the information about the Primary Decay Vertex
     ///< Registering the "origin vertex" of a primary daughter as the "decay/annihilaiton" vertex of the primary
+    ///< To avoid "delta-rays", checking that there are at least two daughters
+    Int_t nD = 0;
+    Double_t vdx, vdy, vdz;
     for(UInt_t i=0; i<fStack->GetNtrack(); i++) {
         if(fStack->GetParticle(i)->GetMother(0)!=0) continue; ///< Not a daughter from the primary
-        fPrimary->SetVdx(fStack->GetParticle(i)->Vx());
-        fPrimary->SetVdy(fStack->GetParticle(i)->Vy());
-        fPrimary->SetVdz(fStack->GetParticle(i)->Vz());
-        break;
+        vdx = fStack->GetParticle(i)->Vx();
+        vdy = fStack->GetParticle(i)->Vy();
+        vdz = fStack->GetParticle(i)->Vz();
+        nD++;
+        if(nD>1) {
+            break;
+        }
     }
+    if(nD>1) {
+        fPrimary->SetVdx(vdx);
+        fPrimary->SetVdy(vdy);
+        fPrimary->SetVdz(vdz);
+    }
+    
     ///< Storing the hits and the DIGI 
     if(a2mcConf.GetSilDet()) fSilSD.Digitalize();
     fRootManager->Fill();
@@ -300,7 +305,7 @@ void a2mcVirtualMC::AddParticles()
   
 }
 
-void a2mcVirtualMC::WriteLog() {
+void a2mcVirtualMC::WriteLog(Int_t nEvents) {
 
     ///< SAVING INFO INTO THE LOG FILE
     ostringstream sf;
@@ -316,6 +321,10 @@ void a2mcVirtualMC::WriteLog() {
     gSystem->Exec(ss.str().c_str());
 
     ss.clear(); ss.str("");
+    ss << "echo 'Number of events: " << nEvents << " ' >> " << sf.str();
+    gSystem->Exec(ss.str().c_str());
+
+    ss.clear(); ss.str("");
     ss << "echo 'Run started: " << runTime << " ' >> " << sf.str();
     gSystem->Exec(ss.str().c_str());
     
@@ -328,7 +337,7 @@ void a2mcVirtualMC::WriteLog() {
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");
-    ss << "cat "<<INI_INSTALL_PATH<<"/a2MC.ini >> " << sf.str();; 
+    ss << "cat "<< a2mcConf.GetIniFile() << " >> " << sf.str();; 
     gSystem->Exec(ss.str().c_str());        
 
     ss.clear(); ss.str("");

@@ -8,6 +8,7 @@
 Utility::Utility(int argc, char** argv) {
 	m_numberOfEvents = 10;
 	m_run = 0;
+    m_ini_file = "./a2MC.ini"; ///< Default path for a2MC.ini
 
 	if (argc < 2) return;
     ///< Setting the time of the run start
@@ -22,17 +23,19 @@ Utility::Utility(int argc, char** argv) {
                 << std::setw(2) << std::setfill('0') << time->tm_min << "-" 
                 << std::setw(2) << std::setfill('0') << time->tm_sec;
     m_run_time = run_start.str(); // Time in which the run started
-
     ///< Setting (getting) the number of run and the number of events
     for (int i = 1; i < argc; i = i + 2) {
-	    if (strcmp(argv[i], "-events") == 0) { //Number of events                                                                             
+	    if (strcmp(argv[i], "-events") == 0) {         // Number of events
 	        if (argc > i + 1) m_numberOfEvents = atoi(argv[i+1]);
 			else synthaxError();
-	    } else if (strcmp(argv[i], "-run") == 0) { //Run number                                                        
+	    } else if (strcmp(argv[i], "-run") == 0) {     // Run number
 	        if (argc > i + 1) m_run = atof(argv[i+1]);
 			else synthaxError();
+	    } else if (strcmp(argv[i], "-inifile") == 0) { // Path to a2MC.ini 
+	        if (argc > i + 1) m_ini_file = argv[i+1];
+			else synthaxError();
 	    } else {
-	    	cout << "Unknown option!" << endl;
+	    	cout << "Unknown option " << argv[i] << endl;
         	exit(1);
 	    }
 	}

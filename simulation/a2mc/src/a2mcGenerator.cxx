@@ -14,12 +14,13 @@ a2mcGenerator* a2mcGenerator::fgInstance = 0;
 using namespace std;
 
 //-----------------------------------------------------------------------------
-a2mcGenerator::a2mcGenerator(TVirtualMCStack* stack, a2mcApparatus* detConstruction)
+a2mcGenerator::a2mcGenerator(TVirtualMCStack* stack, a2mcApparatus* detConstruction, a2mcSettings a2mc_conf)
    :TObject(),
     fStack(stack),
     fDetConstruction(detConstruction)
 {
 // Default constructor
+    a2mcConf = a2mc_conf;
     nGens = 0;
     nTrks = 0;
     if (fgInstance) {

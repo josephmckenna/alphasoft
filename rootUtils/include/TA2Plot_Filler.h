@@ -13,7 +13,7 @@ class GEMChannel
       std::string title;
    GEMChannel(const std::string& Category, const std::string& Varname, int _ArrayEntry, const std::string& _title)
    {
-      CombinedName = feGEMdata::CombinedName(Category,Varname);
+      CombinedName = TFEGEMData::CombinedName(Category,Varname);
       ArrayEntry =_ArrayEntry;
       title      =_title;
    }
@@ -107,7 +107,7 @@ public:
    }
    void SetGEMChannel(const std::string& Category, const std::string& Varname, int ArrayEntry, std::string title="")
    {
-      std::string name = feGEMdata::CombinedName(Category,Varname);
+      std::string name = TFEGEMData::CombinedName(Category,Varname);
       SetGEMChannel(name, ArrayEntry, title);
    }
 

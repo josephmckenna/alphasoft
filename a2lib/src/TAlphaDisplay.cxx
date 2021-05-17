@@ -45,11 +45,12 @@ void TAlphaDisplay::NextEvent()
 }
 
 //____________________________________________________________________________
-TAlphaDisplay::TAlphaDisplay(TString text, Int_t autoSaveOnDisplay, Int_t runNum)
+TAlphaDisplay::TAlphaDisplay( Int_t runNum)
   : TNamed("AlphaDisplay","AlphaDisplay")
 {
-  fCurrentEvent=NULL;
-  fAutoSaveOnDisplay=autoSaveOnDisplay;
+  fCurrentTAlphaEvent = NULL;
+  fCurrentTSilEvent = NULL;
+
   fRunNo=runNum;
   //
   // Create an event display of Alpha event
@@ -273,22 +274,6 @@ TAlphaDisplay::TAlphaDisplay(TString text, Int_t autoSaveOnDisplay, Int_t runNum
   lat.SetTextSize(.4);
   lat.DrawLatex(.40,.07,"#alpha");
   
-  fCanvas->cd();
-  
-  TPad * ftext = new TPad("text", "text",0.19,0.99,0.74, 0.96);
-  ftext->Draw();
-  //ftext->SetFillColor(1);
-  ftext->SetBorderSize(2);
-  ftext->SetBorderSize(0);
-  ftext->SetBorderMode(0);
-  ftext->SetFillColor(0);
-  ftext->cd();
-  
-  TText *textDisplay = new TText(0.01,0.3,text);
-  textDisplay->SetTextColor(1);
-  textDisplay->SetTextSize(0.5);
-  textDisplay->Draw();
-
   AppendPad();  
   fCanvas->cd();
   fCanvas->Update();
@@ -304,6 +289,17 @@ TAlphaDisplay::~TAlphaDisplay() {
   delete fCanvas; 
 }
 
+void TAlphaDisplay::Save(std::string FileName)
+{
+  if (FileName.size() == 0 )
+  {
+    FileName = "R" + std::to_string(fRunNo) + 
+               "_E" + fCurrentTSilEvent->GetVF48NEvent() + ".png";
+  }
+  //Assume user has set file extension for save file
+  fCanvas->SaveAs(FileName.c_str());
+}
+
 //____________________________________________________________________________
 void TAlphaDisplay::SetView(Float_t theta, Float_t phi, Float_t psi, Option_t *tit) {
   //
@@ -316,14 +312,38 @@ void TAlphaDisplay::SetView(Float_t theta, Float_t phi, Float_t psi, Option_t *t
   fPad->Modified();
   fPad->Update();
 }
-
+void TAlphaDisplay::UpdateText()
+{
+  fCanvas->cd();
+  char text[256];
+            sprintf(
+               text,
+               "Run %d, Event %d, Trigger %d, VF48 Time %lf",
+               fRunNo,
+               fCurrentTSilEvent->GetVF48NEvent(), //FIXME
+               fCurrentTSilEvent->GetVF48NTrigger(), //FIXME
+               fCurrentTSilEvent->GetVF48Timestamp() //FIXME
+            );
+  TPad * ftext = new TPad("text", "text",0.19,0.99,0.74, 0.96);
+  ftext->Draw();
+  //ftext->SetFillColor(1);
+  ftext->SetBorderSize(2);
+  ftext->SetBorderSize(0);
+  ftext->SetBorderMode(0);
+  ftext->SetFillColor(0);
+  ftext->cd();
+  
+  TText *textDisplay = new TText(0.01,0.3,text);
+  textDisplay->SetTextColor(1);
+  textDisplay->SetTextSize(0.5);
+  textDisplay->Draw();
+}
 //____________________________________________________________________________
 void TAlphaDisplay::DrawAllViews() {
-
-  
   //
   //  Draw  Front,  Side,  Top  views
   //
+  UpdateText();
   fPad->cd();
   fPad->Clear();
   fPad->Divide(2,2,0,0);
@@ -355,9 +375,7 @@ void TAlphaDisplay::DrawViewOGL() {
   fPad->Clear();
   fOGLColourScheme=kTRUE;
   fViewShowAllSil=kTRUE;
-  //DrawView(30,30,30);
-  DrawView(30,0,90);
-  fPad->GetViewer3D("ogl");  
+  DrawView(30,30,30);
 }
 
 
@@ -415,8 +433,8 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
       if(Z=='4') View = fViewTwo;
       if(Z=='5') View = fViewThree;
 
-      for (Int_t n=0; n<fCurrentEvent->GetNSil(); n++) {
-        TAlphaEventSil *sil = fCurrentEvent->GetSil(n);
+      for (Int_t n=0; n<fCurrentTAlphaEvent->GetNSil(); n++) {
+        TAlphaEventSil *sil = fCurrentTAlphaEvent->GetSil(n);
         //printf("nsil: %d sil: %s, z: %s\n",sil->ReturnSilNum(sil->GetName()),sil->GetName(),z);
         //std::cout <<z<<":"<<sil->GetName() <<std::endl;
         if (fOGLColourScheme && 
@@ -497,7 +515,7 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
   }
   gGeoManager->GetTopVolume()->Draw("same");
   	     
-  TVector3 *gV = fCurrentEvent->GetMCVertex();
+  TVector3 *gV = fCurrentTAlphaEvent->GetMCVertex();
   if(gV)
     {
       TMarker3DBox *hit = new TMarker3DBox(gV->X(),gV->Y(),gV->Z() , 0.1,0.1,0.1 ,0,0);
@@ -525,9 +543,9 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
   // ******************************************
   // Draw hits on silicon
   // ******************************************
-  for (Int_t n=0; n<fCurrentEvent->GetNSil(); n++) 
+  for (Int_t n=0; n<fCurrentTAlphaEvent->GetNSil(); n++) 
     { 
-      TAlphaEventSil *sil = fCurrentEvent->GetSil(n);
+      TAlphaEventSil *sil = fCurrentTAlphaEvent->GetSil(n);
 
       for(Int_t ihit = 0; ihit < sil->GetNHits(); ihit++)
         {
@@ -556,18 +574,18 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
   // ******************************************
   if (fViewRecData)
     {
-      for( Int_t ihelix = 0; ihelix < fCurrentEvent->GetNHelices(); ihelix++)
+      for( Int_t ihelix = 0; ihelix < fCurrentTAlphaEvent->GetNHelices(); ihelix++)
         {
-          DrawHelix( fCurrentEvent->GetHelix( ihelix ), fCurrentEvent->GetDebug() );
+          DrawHelix( fCurrentTAlphaEvent->GetHelix( ihelix ), fCurrentTAlphaEvent->GetDebug() );
         }
        
-      for( Int_t ihelix = 0; ihelix < fCurrentEvent->GetNCosmicHelices(); ihelix++)
+      for( Int_t ihelix = 0; ihelix < fCurrentTAlphaEvent->GetNCosmicHelices(); ihelix++)
         {
-          DrawHelix( fCurrentEvent->GetCosmicHelix( ihelix ), fCurrentEvent->GetDebug() );
+          DrawHelix( fCurrentTAlphaEvent->GetCosmicHelix( ihelix ), fCurrentTAlphaEvent->GetDebug() );
         }
       
       // ppbar annihilation    
-      TAlphaEventVertex *Ver = fCurrentEvent->GetVertex();
+      TAlphaEventVertex *Ver = fCurrentTAlphaEvent->GetVertex();
       if (Ver->IsGood()) 
         {
           Double_t VertexSize=0.1;
@@ -608,14 +626,14 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
 
       // Special markers for tracks
       // if( ev->GetNHits() < 100 )
-      for( Int_t itrack = 0; itrack < fCurrentEvent->GetNTracks(); itrack++)
+      for( Int_t itrack = 0; itrack < fCurrentTAlphaEvent->GetNTracks(); itrack++)
         {
-          for( Int_t ihit = 0; ihit < fCurrentEvent->GetTrack( itrack )->GetNHits(); ihit++ )
+          for( Int_t ihit = 0; ihit < fCurrentTAlphaEvent->GetTrack( itrack )->GetNHits(); ihit++ )
             {
               Double_t hit_pos[3] = { 
-                fCurrentEvent->GetTrack( itrack )->GetHit( ihit )->XMRS(),
-                fCurrentEvent->GetTrack( itrack )->GetHit( ihit )->YMRS(),
-                fCurrentEvent->GetTrack( itrack )->GetHit( ihit )->ZMRS() 
+                fCurrentTAlphaEvent->GetTrack( itrack )->GetHit( ihit )->XMRS(),
+                fCurrentTAlphaEvent->GetTrack( itrack )->GetHit( ihit )->YMRS(),
+                fCurrentTAlphaEvent->GetTrack( itrack )->GetHit( ihit )->ZMRS() 
               };
               //printf("%lf %lf %lf\n",hit_pos[0],hit_pos[1],hit_pos[2]);
               TPolyMarker3D * pm = new TPolyMarker3D( 1, hit_pos, 4 );
@@ -624,15 +642,15 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
 	          }
 	      }
       // if it's a cosmic run, display a cosmic track!	  
-      if(fCurrentEvent->IsACosmic())
+      if(fCurrentTAlphaEvent->IsACosmic())
       //	if(ev->GetNTracks()>0) DrawCosmicTrack(ev->GetTrack(0));
-      if(fCurrentEvent->GetCosmicTrack()->Getcor()!=-999.)
-        DrawCosmicTrack(fCurrentEvent->GetCosmicTrack());
+      if(fCurrentTAlphaEvent->GetCosmicTrack()->Getcor()!=-999.)
+        DrawCosmicTrack(fCurrentTAlphaEvent->GetCosmicTrack());
     }
   
-  for( Int_t i = 0; i<fCurrentEvent->GetMCNumPoint(); i++ )
+  for( Int_t i = 0; i<fCurrentTAlphaEvent->GetMCNumPoint(); i++ )
     {
-      TVector3 * p = fCurrentEvent->GetMCPoint( i );
+      TVector3 * p = fCurrentTAlphaEvent->GetMCPoint( i );
       TMarker3DBox * pmark = new TMarker3DBox( p->X(),
 					       p->Y(),
 					       p->Z(),
@@ -645,9 +663,9 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
       pmark->Draw("same");
     }
   
-  for( Int_t iline = 0; iline < fCurrentEvent->Getnxylines(); iline++ )
+  for( Int_t iline = 0; iline < fCurrentTAlphaEvent->Getnxylines(); iline++ )
     {
-      TVector3 * l = fCurrentEvent->Getxyline( iline );
+      TVector3 * l = fCurrentTAlphaEvent->Getxyline( iline );
 
       Double_t m = l->X();
       Double_t b = l->Y();
@@ -666,9 +684,9 @@ void TAlphaDisplay::DrawView(Float_t theta, Float_t phi, Float_t psi, Option_t *
       //line->Draw("same");
     }
 
-  for( Int_t iline = 0; iline < fCurrentEvent->Getnyzlines(); iline++ )
+  for( Int_t iline = 0; iline < fCurrentTAlphaEvent->Getnyzlines(); iline++ )
     {
-      TVector3 * l = fCurrentEvent->Getyzline( iline );
+      TVector3 * l = fCurrentTAlphaEvent->Getyzline( iline );
 
       Double_t m = l->X();
       Double_t b = l->Y();
