@@ -28,16 +28,16 @@ class TSISPlotEvents: public TObject
       {
       }
       //Copy ctor - !!!
-      TSISPlotEvents(const TSISPlotEvents& object)
+      TSISPlotEvents(const TSISPlotEvents& sisPlotEvents) : TObject(sisPlotEvents)
       {
          //Deep copy vectors.
-         for(int i=0; i<object.fTime.size(); i++)
+         for(size_t i=0; i<sisPlotEvents.fTime.size(); i++)
          {
-            fRunNumber.push_back( object.fRunNumber[i]);
-            fTime.push_back( object.fTime[i]);
-            fOfficialTime.push_back( object.fOfficialTime[i]);
-            fCounts.push_back( object.fCounts[i]);
-            fSISChannel.push_back( object.fSISChannel[i]);
+            fRunNumber.push_back( sisPlotEvents.fRunNumber[i]);
+            fTime.push_back( sisPlotEvents.fTime[i]);
+            fOfficialTime.push_back( sisPlotEvents.fOfficialTime[i]);
+            fCounts.push_back( sisPlotEvents.fCounts[i]);
+            fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
          }
       }
       TSISPlotEvents operator+=(const TSISPlotEvents &rhs) 
@@ -50,15 +50,15 @@ class TSISPlotEvents: public TObject
          this->fSISChannel .insert(this->fSISChannel.end(),    rhs.fSISChannel.begin(),    rhs.fSISChannel.end() );
          return *this;
       }
-      TSISPlotEvents& operator=(const TSISPlotEvents& object)
+      TSISPlotEvents& operator=(const TSISPlotEvents& sisPlotEvents)
       {
-         for(int i = 0; i<object.fTime.size(); i++)
+         for(size_t i = 0; i<sisPlotEvents.fTime.size(); i++)
          {
-            this->fRunNumber.push_back( object.fRunNumber[i]);
-            this->fTime.push_back( object.fTime[i]);
-            this->fOfficialTime.push_back( object.fOfficialTime[i]);
-            this->fCounts.push_back( object.fCounts[i]);
-            this->fSISChannel.push_back( object.fSISChannel[i]);
+            this->fRunNumber.push_back( sisPlotEvents.fRunNumber[i]);
+            this->fTime.push_back( sisPlotEvents.fTime[i]);
+            this->fOfficialTime.push_back( sisPlotEvents.fOfficialTime[i]);
+            this->fCounts.push_back( sisPlotEvents.fCounts[i]);
+            this->fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
          }
          return *this;
       }

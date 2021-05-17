@@ -2,8 +2,6 @@
 
 ClassImp(TAPlot);
 
-//DEFAULT CONTRUCTORS, OPERATERS, PRINTS:
-
 //Default Constructor
 TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
 {
@@ -31,7 +29,7 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
 //Copy ctor
 TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
 {
-   fTitle                        = object.fTitle ;
+   fCanvasTitle                  = object.fCanvasTitle ;
    fMVAMode                      = object.fMVAMode ;
    fNumBins                      = object.fNumBins ; 
    fDrawStyle                    = object.fDrawStyle ;
@@ -51,25 +49,25 @@ TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
    fTimeWindows                  = object.fTimeWindows;
    fVertexEvents                 = object.fVertexEvents;
 
-   for(int i=0;i<object.fEjections.size();i++)
+   for(size_t i=0;i<object.fEjections.size();i++)
       fEjections.push_back(object.fEjections[i]);
    
-   for(int i=0;i<object.fInjections.size();i++)
+   for(size_t i=0;i<object.fInjections.size();i++)
       fInjections.push_back(object.fInjections[i]);
    
-   for(int i=0;i<object.fDumpStarts.size();i++)
+   for(size_t i=0;i<object.fDumpStarts.size();i++)
       fDumpStarts.push_back(object.fDumpStarts[i]);
    
-   for(int i=0;i<object.fDumpStops.size();i++)
+   for(size_t i=0;i<object.fDumpStops.size();i++)
       fDumpStops.push_back(object.fDumpStops[i]);
    
-   for(int i=0;i<object.fRuns.size();i++)
+   for(size_t i=0;i<object.fRuns.size();i++)
       fRuns.push_back(object.fRuns[i]);
    
-   for(int i=0;i<object.fFEGEM.size();i++)
+   for(size_t i=0;i<object.fFEGEM.size();i++)
       fFEGEM.push_back(object.fFEGEM[i]);
    
-   for(int i=0;i<object.fFELV.size();i++)
+   for(size_t i=0;i<object.fFELV.size();i++)
       fFELV.push_back(object.fFELV[i]);
 
    fObjectConstructionTime        = object.fObjectConstructionTime ;
@@ -91,7 +89,7 @@ TAPlot::~TAPlot()
 TAPlot& TAPlot::operator=(const TAPlot& rhs)
 {
    std::cout << "TAPlot = operator" << std::endl;
-   this->fTitle = rhs.fTitle ;
+   this->fCanvasTitle = rhs.fCanvasTitle ;
    this->fMVAMode = rhs.fMVAMode ;
    this->fNumBins = rhs.fNumBins ; 
    this->fDrawStyle = rhs.fDrawStyle ;
@@ -111,25 +109,25 @@ TAPlot& TAPlot::operator=(const TAPlot& rhs)
    this->fTimeWindows = rhs.fTimeWindows;
    this->fVertexEvents = rhs.fVertexEvents;
 
-   for(int i=0;i<rhs.fEjections.size();i++)
+   for(size_t i=0;i<rhs.fEjections.size();i++)
       this->fEjections.push_back(rhs.fEjections[i]);
    
-   for(int i=0;i<rhs.fInjections.size();i++)
+   for(size_t i=0;i<rhs.fInjections.size();i++)
       this->fInjections.push_back(rhs.fInjections[i]);
    
-   for(int i=0;i<rhs.fDumpStarts.size();i++)
+   for(size_t i=0;i<rhs.fDumpStarts.size();i++)
       this->fDumpStarts.push_back(rhs.fDumpStarts[i]);
    
-   for(int i=0;i<rhs.fDumpStops.size();i++)
+   for(size_t i=0;i<rhs.fDumpStops.size();i++)
       this->fDumpStops.push_back(rhs.fDumpStops[i]);
    
-   for(int i=0;i<rhs.fRuns.size();i++)
+   for(size_t i=0;i<rhs.fRuns.size();i++)
       this->fRuns.push_back(rhs.fRuns[i]);
    
-   for(int i=0;i<rhs.fFEGEM.size();i++)
+   for(size_t i=0;i<rhs.fFEGEM.size();i++)
       this->fFEGEM.push_back(rhs.fFEGEM[i]);
    
-   for(int i=0;i<rhs.fFELV.size();i++)
+   for(size_t i=0;i<rhs.fFELV.size();i++)
       this->fFELV.push_back(rhs.fFELV[i]);
 
    this->fObjectConstructionTime = rhs.fObjectConstructionTime ;
@@ -153,8 +151,8 @@ TAPlot& TAPlot::operator+=(const TAPlot &rhs)
    this->fFELV.insert(this->fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
 
    //Strings
-   this->fTitle+= ", ";
-   this->fTitle+=rhs.fTitle;
+   this->fCanvasTitle+= ", ";
+   this->fCanvasTitle+=rhs.fCanvasTitle;
 
    //All doubles
    this->fFirstTMin              = (this->fFirstTMin < rhs.fFirstTMin)?this->fFirstTMin:rhs.fFirstTMin;
@@ -195,8 +193,8 @@ TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
    outputPlot.fFELV.insert(outputPlot.fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
 
    //Strings - This title gets overridden in the DrawCanvas function anyway, but until then they are concacted. 
-   outputPlot.fTitle+= ", ";
-   outputPlot.fTitle+=rhs.fTitle;
+   outputPlot.fCanvasTitle+= ", ";
+   outputPlot.fCanvasTitle+=rhs.fCanvasTitle;
 
    //All doubles
    outputPlot.fFirstTMin              = (outputPlot.fFirstTMin < rhs.fFirstTMin)?outputPlot.fFirstTMin:rhs.fFirstTMin;
@@ -235,7 +233,7 @@ void TAPlot::PrintFull()
    std::cout << "===========================" << std::endl;
    std::cout << "Printing TAPlot located at " << this << std::endl;
    std::cout << "===========================" << std::endl;
-   std::cout << "Title is " << fTitle << std::endl;
+   std::cout << "Title is " << fCanvasTitle << std::endl;
 
    for(int i=0;i<fVertexEvents.fRunNumbers.size();i++)
    {
@@ -276,22 +274,22 @@ void TAPlot::Print(Option_t *option) const
 
 
 //Setters
-void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string title)
+void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string label)
 {
    for (auto& obj: fFEGEM)
    {
       if (obj.fArrayNumber!= arrayEntry)
          continue;
-      if (obj.fName!=name)
+      if (obj.fVariableName!=name)
          continue;
       std::cout<<"GEM Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
    TFEGEMData newEntry;
-   newEntry.fName = name;
-   if (title.size() == 0)
-      newEntry.fTitle = name;
+   newEntry.fVariableName = name;
+   if (label.size() == 0)
+      newEntry.fLabel = name;
    else
-      newEntry.fTitle = title;
+      newEntry.fLabel = label;
    newEntry.fArrayNumber = arrayEntry;
    
    fFEGEM.push_back(newEntry);
@@ -310,16 +308,16 @@ void TAPlot::SetLVChannel(const std::string& name, int arrayEntry, std::string t
    {
       if (obj.fArrayNumber!= arrayEntry)
          continue;
-      if (obj.fName!=name)
+      if (obj.fVariableName!=name)
          continue;
       std::cout<<"LV Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
    TFELabVIEWData newEntry;
-   newEntry.fName = name;
+   newEntry.fVariableName = name;
    if (title.size() == 0)
-      newEntry.fTitle = name;
+      newEntry.fLabel = name;
    else
-      newEntry.fTitle = title;
+      newEntry.fLabel = title;
    newEntry.fArrayNumber = arrayEntry;
    
    fFELV.push_back(newEntry);
@@ -330,7 +328,7 @@ std::vector<std::pair<std::string,int>> TAPlot::GetGEMChannels()
 {
    std::vector<std::pair<std::string,int>> channels;
    for (auto& obj: fFEGEM)
-      channels.push_back( {obj.GetName(), obj.fArrayNumber} );
+      channels.push_back( {obj.GetVariable(), obj.fArrayNumber} );
    return channels;
 }
 
@@ -338,7 +336,7 @@ std::vector<std::pair<std::string,int>> TAPlot::GetLVChannels()
 {
    std::vector<std::pair<std::string,int>> channels;
    for (auto& obj: fFEGEM)
-      channels.push_back( {obj.GetName(), obj.fArrayNumber} );
+      channels.push_back( {obj.GetVariable(), obj.fArrayNumber} );
    return channels;
 }
 
@@ -367,9 +365,9 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetGEMGraphs()
          TGraph* graph = obj.BuildGraph(i,kZeroTimeAxis);
          graph->SetLineColor(GetColour(colourID + colourOffset));
          graph->SetMarkerColor(GetColour(colourID + colourOffset));
-         uniqueLabels[obj.GetName()] = graph;
+         uniqueLabels[obj.GetVariable()] = graph;
          //if (i==0)
-         //   legend->AddEntry(graph,f.GetName().c_str());
+         //   legend->AddEntry(graph,f.GetVariable().c_str());
          if (graph->GetN())
             feGEMMG->Add(graph);
       }
@@ -408,10 +406,10 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
          TGraph* graph = obj.BuildGraph(i,kZeroTimeAxis);
          graph->SetLineColor(GetColour(colourID + colourOffset));
          graph->SetMarkerColor(GetColour(colourID + colourOffset));
-         uniqueLabels[obj.GetName()] = graph;
+         uniqueLabels[obj.GetVariable()] = graph;
          
          //if (i==0)
-         //   legend->AddEntry(graph,f.GetName().c_str());
+         //   legend->AddEntry(graph,f.GetVariable().c_str());
          //Add the graph only if there is data in it
          if (graph->GetN())
             feLVMG->Add(graph);
@@ -591,11 +589,11 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
 {
    for (auto& obj: fFEGEM)
    {
-      TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber, obj.fName);
+      TTreeReader* feGEMReader=Get_feGEM_Tree(runNumber, obj.fVariableName);
       TTree* tree = feGEMReader->GetTree();
       if  (!tree)
       {
-         std::cout<<"Warning: " << obj.GetName() << " ("<<obj.fName<<") not found for run " << runNumber << std::endl;
+         std::cout<<"Warning: " << obj.GetVariable() << " ("<<obj.fVariableName<<") not found for run " << runNumber << std::endl;
          continue;
       }
       if (tree->GetBranchStatus("TStoreGEMData<double>"))
@@ -640,11 +638,11 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
    //For each unique variable being logged
    for (auto& obj: fFELV)
    {
-      TTreeReader* labviewReader=Get_feLV_Tree(runNumber, obj.fName);
+      TTreeReader* labviewReader=Get_feLV_Tree(runNumber, obj.fVariableName);
       TTree* tree = labviewReader->GetTree();
       if  (!tree)
       {
-         std::cout<<"Warning: " << obj.GetName() << " ("<<obj.fName<<") not found for run " << runNumber << std::endl;
+         std::cout<<"Warning: " << obj.GetVariable() << " ("<<obj.fVariableName<<") not found for run " << runNumber << std::endl;
          continue;
       }
       if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
