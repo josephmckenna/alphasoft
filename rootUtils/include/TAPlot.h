@@ -51,10 +51,10 @@ class TVertexEvents: public TObject
       {
       }
       //Basic copy constructor.
-      TVertexEvents(const TVertexEvents& vertexEvents)
+      TVertexEvents(const TVertexEvents& vertexEvents) : TObject(vertexEvents)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i < vertexEvents.fXVertex.size(); i++)
+         for(size_t i = 0; i < vertexEvents.fXVertex.size(); i++)
          {
             fRunNumbers.push_back(vertexEvents.fRunNumbers[i]);
             fEventNos.push_back(vertexEvents.fEventNos[i]);
@@ -74,7 +74,7 @@ class TVertexEvents: public TObject
       TVertexEvents& operator=(const TVertexEvents& rhs)
       {
          //Making deep copies of the vectors, we require loop method as the vectors are already initialised earlier.
-         for(int i = 0; i < rhs.fXVertex.size(); i++)
+         for(size_t i = 0; i < rhs.fXVertex.size(); i++)
          {
             this->fRunNumbers.push_back(rhs.fRunNumbers[i]);
             this->fEventNos.push_back(rhs.fEventNos[i]);
@@ -129,11 +129,11 @@ class TTimeWindows : public TObject
       {
       }
       //Copy ctor
-      TTimeWindows(const TTimeWindows& timeWindows)
+      TTimeWindows(const TTimeWindows& timeWindows) : TObject(timeWindows)
       {
          std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
-         for(int i = 0; i<timeWindows.fMinTime.size(); i++)
+         for(size_t i = 0; i<timeWindows.fMinTime.size(); i++)
          {
             fRunNumber.push_back(timeWindows.fRunNumber[i]);
             fMinTime.push_back(timeWindows.fMinTime[i]);
@@ -144,7 +144,7 @@ class TTimeWindows : public TObject
       TTimeWindows& operator=(const TTimeWindows& rhs)
       {
          std::cout << "TTimeWindows = operator." << std::endl;
-         for(int i = 0; i<rhs.fMinTime.size(); i++)
+         for(size_t i = 0; i<rhs.fMinTime.size(); i++)
          {
             this->fRunNumber.push_back(rhs.fRunNumber[i]);
             this->fMinTime.push_back(rhs.fMinTime[i]);
@@ -196,14 +196,14 @@ class TTimeWindows : public TObject
             SortTimeWindows();
          }
          //Check where t sits in tmin.
-         const size_t kTMaxSize = fMaxTime.size();
-         for (int j = 0; j < kTMaxSize; j++)
+         const size_t tmaxSize = fMaxTime.size();
+         for (size_t j = 0; j < tmaxSize; j++)
          {
             //If inside the time window
             if ( time > fMinTime[j] )
             {
-               const double kCurrentTMax = fMaxTime[j];
-               if(time < kCurrentTMax || kCurrentTMax < 0)
+               const double currentTMax = fMaxTime[j];
+               if(time < currentTMax || currentTMax < 0)
                {
                   return j;
                }
@@ -228,27 +228,30 @@ class TTimeWindows : public TObject
       void SortTimeWindows()
       {
          assert( fMinTime.size() == fMaxTime.size() );
-         const int kTMinSize = fMinTime.size();
+         const size_t minTimeSize = fMinTime.size();
          //Create vectors needed for sorting.
-         std::vector<std::pair<double,double>> zipped(kTMinSize);
-         std::vector<size_t> idx(kTMinSize);
+         std::vector<std::pair<double,double>> zipped(minTimeSize);
+         std::vector<size_t> idx(minTimeSize);
          iota(idx.begin(),idx.end(),0);
 
 
          //Zip tmin and index vector together.
-         zipped.resize(kTMinSize);
-         for(size_t i=0; i < kTMinSize; ++i)
+         zipped.resize(minTimeSize);
+         for(size_t i=0; i < minTimeSize; ++i)
          {
             zipped[i]=std::make_pair(fMinTime[i], idx[i]);
          }
 
          //Sort based on first (tmin) keeping idx in the same location
          std::sort(std::begin(zipped), std::end(zipped), 
-         [&](const std::pair<double,double>& lhs, const std::pair<double,double>& rhs)
-         {return lhs.first < rhs.first;} );
+                   [&](const std::pair<double,double>& lhs, const std::pair<double,double>& rhs)
+                   {
+                      return lhs.first < rhs.first;
+                   }
+         );
          
          //Unzip back into vectors.
-         for(size_t i=0; i < kTMinSize; i++)
+         for(size_t i=0; i < minTimeSize; i++)
          {
             fMinTime[i] = zipped[i].first;
             idx[i] = zipped[i].second;
@@ -276,7 +279,7 @@ class TEnvDataPlot: public TObject
       ~TEnvDataPlot()
       {
       }
-      TEnvDataPlot(const TEnvDataPlot& envDataPlot)
+      TEnvDataPlot(const TEnvDataPlot& envDataPlot) : TObject(envDataPlot)
       {
          fTimes = envDataPlot.fTimes;
          fRunTimes = envDataPlot.fRunTimes;
@@ -309,15 +312,15 @@ class TEnvDataPlot: public TObject
 class TEnvData: public TObject 
 {
    public:
-      std::string fName;
-      std::string fTitle;
+      std::string fVariableName;
+      std::string fLabel;
       int fArrayNumber;
    private:
       std::vector<TEnvDataPlot*> fPlots;
    public:
-      std::string GetName() { return fName + "[" + std::to_string(fArrayNumber) + "]";}
-      std::string GetNameID() { return fName + "_" + std::to_string(fArrayNumber);}
-      std::string GetTitle() { return fTitle; }
+      std::string GetVariable() { return fVariableName + "[" + std::to_string(fArrayNumber) + "]";}
+      std::string GetVariableID() { return fVariableName + "_" + std::to_string(fArrayNumber);}
+      std::string GetLabel() { return fLabel; }
       TEnvData()
       {
          fArrayNumber = -1;
@@ -325,10 +328,10 @@ class TEnvData: public TObject
       ~TEnvData()
       {
       }
-      TEnvData(const TEnvData& envData)
+      TEnvData(const TEnvData& envData) : TObject(envData)
       {
-         fName = envData.fName;
-         fTitle = envData.fTitle;
+         fVariableName = envData.fVariableName;
+         fLabel = envData.fLabel;
          fArrayNumber = envData.fArrayNumber;
          for (TEnvDataPlot* plots: envData.fPlots)
             fPlots.push_back(new TEnvDataPlot(*plots));
@@ -336,8 +339,8 @@ class TEnvData: public TObject
       }
       TEnvData operator=(const TEnvData rhs)
       {
-         this->fName = rhs.fName;
-         this->fTitle = rhs.fTitle;
+         this->fVariableName = rhs.fVariableName;
+         this->fLabel = rhs.fLabel;
          this->fArrayNumber = rhs.fArrayNumber;
          for (TEnvDataPlot* plots: rhs.fPlots)
             fPlots.push_back(new TEnvDataPlot(*plots));
@@ -371,7 +374,10 @@ class TEnvData: public TObject
       TGraph* BuildGraph(int index, bool zeroTime)
       {
          TGraph* graph = GetPlot(index)->GetGraph(zeroTime);
-         graph->SetNameTitle(GetName().c_str(),std::string( GetTitle() + "; t [s];").c_str());
+         graph->SetNameTitle(
+            GetVariable().c_str(),
+            std::string( GetLabel() + "; t [s];").c_str()
+            );
          return graph;
       }
 };
@@ -423,7 +429,7 @@ class TAPlot: public TObject
 {
    protected:
       
-      std::string fTitle; //Used to give the TCanvas a title
+      std::string fCanvasTitle; //Used to give the TCanvas a title
       int fMVAMode; //Default 0;
       int fNumBins; // 100;
       int fDrawStyle; //Switch between colour modes
@@ -436,8 +442,8 @@ class TAPlot: public TObject
       double fMaxDumpLength;
       double fTotalTime;
       bool fVerbose;
-      Bool_t fApplyCuts;
-      Double_t fTimeFactor=1.; //Time scaling factor (used to switch between seconds and milliseconds)
+      bool fApplyCuts;
+      double fTimeFactor=1.; //Time scaling factor (used to switch between seconds and milliseconds)
 
       //Hold historams in a vector so that saved TAGPlot objects can be backwards and forwards compatable
       TObjArray fHistos;
@@ -462,14 +468,14 @@ class TAPlot: public TObject
       const bool kZeroTimeAxis; //Use a time axis that counts from Zero of a dump window (default true)
 
       //Setters.
-      void SetTAPlotTitle(const std::string& title)      {  fTitle=title;  }
+      void SetTAPlotTitle(const std::string& title)      {  fCanvasTitle = title;  }
       void LoadingDataLoadingDone()                      {  fDataLoadedTime = TTimeStamp(); }
-      void SetTimeFactor(double time)                    {  fTimeFactor=time; }
+      void SetTimeFactor(double time)                    {  fTimeFactor = time; }
       void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
       void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       void SetMVAMode(int mode)                          {  fMVAMode = mode; }
       void SetBinNumber(int bin)                         {  fNumBins = bin; }
-      void SetVerbose(bool verbose)                      {  fVerbose=verbose; }
+      void SetVerbose(bool verbose)                      {  fVerbose = verbose; }
       //Setters defined in .cxx
       void SetGEMChannel(const std::string& name, int arrayEntry, std::string title="");
       void SetGEMChannel(const std::string& category, const std::string& varName, int arrayEntry, std::string title="");
@@ -478,7 +484,7 @@ class TAPlot: public TObject
       //Getters.
       TVertexEvents*       GetVertexEvents()        {  return &fVertexEvents; }
       TTimeWindows*        GetTimeWindows()         {  return &fTimeWindows; }
-      std::string          GetTAPlotTitle()         {  return fTitle;  }
+      std::string          GetTAPlotTitle()         {  return fCanvasTitle;  }
       size_t               GetNVertexEvents()       {  return fVertexEvents.fXVertex.size(); }
       double               GetTimeFactor() const    {  return fTimeFactor; }
       double               GetMaxDumpLength() const {  return fMaxDumpLength; }
