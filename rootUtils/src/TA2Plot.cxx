@@ -404,7 +404,7 @@ void TA2Plot::WriteEventList(std::string filename, bool append)
 
    int index = 0;
    int currentEventNo = VertexEvents.EventNos.at(index);
-   int currentRunNo = SISEvents.runNumber.at(index);
+   int currentRunNo = VertexEvents.runNumbers.at(index);
    myfile << currentRunNo << ":" << currentEventNo;
    while(index < VertexEvents.runNumbers.size()-1)
    {

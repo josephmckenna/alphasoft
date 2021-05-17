@@ -413,12 +413,12 @@ class feLVdata: public feENVdata
          for (size_t i=0; i<timewindows.tmax.size(); i++)
          {
             //If inside the time window
-            if ( (time > timewindows.tmin[i] && time < timewindows.tmax[i]) ||
+            if ( (time > timewindows.tmin.at(i) && time < timewindows.tmax.at(i)) ||
             //Or if after tmin and tmax is invalid (-1)
-               (time > timewindows.tmin[i] && timewindows.tmax[i]<0) )
+               (time > timewindows.tmin.at(i) && timewindows.tmax.at(i)<0) )
             {
                feENVdataPlot* plot = GetPlot(i);
-               plot->AddPoint( time, time - timewindows.tzero[i], LVEvent->GetArrayEntry(array_number));
+               plot->AddPoint( time, time - timewindows.tzero.at(i), LVEvent->GetArrayEntry(array_number));
             }
          }
          return;
