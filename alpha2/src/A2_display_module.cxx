@@ -203,7 +203,6 @@ public:
                fFlags.fAutoSaveStop = atoi(args[++i].c_str());
             }
          }
-         std::cout<<"START:"<<fFlags.fAutoSaveStart<<std::endl;
       // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    }
    void Finish()

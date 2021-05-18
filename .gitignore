@@ -71,3 +71,5 @@ output
 .vscode/settings.json
 simulation/garfieldpp/scripts/*.dat
 simulation/garfieldpp/scripts/__pycache__/
+*.orig
+callgrind.out.*

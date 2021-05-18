@@ -64,6 +64,7 @@ public:
 
   Int_t     GetRunNumber()     	    { return RunNumber; }
   Double_t  GetMidasUnixTime()		    { return MidasTime; }
+  unsigned long GetMidasEventID()            { return MidasEventID; }
 
   using TObject::Print;
   virtual void Print();

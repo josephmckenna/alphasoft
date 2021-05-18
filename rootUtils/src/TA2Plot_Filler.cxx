@@ -18,7 +18,7 @@ void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      p->LoadfeGEMData(runNumber,first_time, last_time);
+      p->LoadFEGEMData(runNumber,first_time, last_time);
    }
 }
 
@@ -29,7 +29,7 @@ void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_
       //If current runNumber isn't in plot... skip
       if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
          continue;
-      p->LoadfeLVData(runNumber, first_time, last_time);
+      p->LoadFELVData(runNumber, first_time, last_time);
    }
 }
 
@@ -129,20 +129,21 @@ void TA2Plot_Filler::LoadData()
    std::vector<double> first_times(UniqueRuns.size(),1E99);
    for (auto& plot: plots)
    {
+      //TTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
-      for (auto& t: plot->GetTimeWindows())
+      for (int t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
       {
          for (size_t i=0; i<UniqueRuns.size(); i++)
-         if (t.runNumber==runNumbers[i])
+         if (plot->GetTimeWindows()->fRunNumber.at(t)==runNumbers[i])
          {
-            if (t.tmax<0) last_times[i]=1E99;
-            if (last_times[i]<t.tmax)
+            if (plot->GetTimeWindows()->fMaxTime.at(t)<0) last_times[i]=1E99;
+            if (last_times[i]<plot->GetTimeWindows()->fMaxTime.at(t))
             {
-               last_times[i]=t.tmax;
+               last_times[i]=plot->GetTimeWindows()->fMaxTime.at(t);
             }
-            if (first_times[i]>t.tmin)
+            if (first_times[i]>plot->GetTimeWindows()->fMinTime.at(t))
             {
-               first_times[i]=t.tmin;
+               first_times[i]=plot->GetTimeWindows()->fMinTime.at(t);
             }
          }
       }
