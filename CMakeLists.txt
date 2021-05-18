@@ -140,11 +140,13 @@ get_submodule(libGEM)
 add_subdirectory(libGEM)
 
 # SQLITE3
-find_package(SQLite3 REQUIRED)
+find_package(SQLite3 QUIET)
 if(SQLite3_FOUND)
   message(STATUS "SQLite3 ${SQLite3_VERSION} found")
 else()
-  message(FATAL "SQLite3 NOT FOUND")
+  message(WARNING "SQLite3 NOT FOUND")
+  set(SQLite3_INCLUDE_DIRS "/usr/include")
+  set(SQLite3_LIBRARIES "/usr/lib64/libsqlite3.so")
 endif()
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
