@@ -56,7 +56,7 @@ prereq() {
     if [ ! -d "./geant4_vmc" ]; then
 	git clone http://github.com/vmc-project/geant4_vmc.git 
 	cd geant4_vmc
-	git checkout v5-3
+	#git checkout v5-3
     fi
     cd $INST_DIR/geant4_vmc
     echo "Building: `basename $PWD`"
