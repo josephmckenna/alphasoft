@@ -69,3 +69,5 @@ output
 *.save
 *_C.d
 .vscode/settings.json
+*.orig
+callgrind.out.*
