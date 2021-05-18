@@ -7,6 +7,8 @@ project(alphasim)
 #
 if(EXISTS $ENV{GARFIELD_HOME}/install/lib/cmake/Garfield/GarfieldConfig.cmake)
   list(APPEND CMAKE_PREFIX_PATH $ENV{GARFIELD_HOME}/install/lib/cmake/Garfield)
+elseif(EXISTS $ENV{GARFIELD_HOME}/lib/cmake/Garfield/GarfieldConfig.cmake)
+  list(APPEND CMAKE_PREFIX_PATH $ENV{GARFIELD_HOME}/lib/cmake/Garfield)
 endif()
 
 find_package(Garfield REQUIRED)
