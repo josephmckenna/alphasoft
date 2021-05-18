@@ -13,6 +13,7 @@
 #ifdef BUILD_A2
 #pragma link C++ class TA2Plot+;
 #pragma link C++ class TA2Plot_Filler;
+#pragma link C++ class TSISPlotEvents;
 #endif
 
 #ifdef BUILD_AG
