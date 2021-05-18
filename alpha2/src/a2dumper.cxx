@@ -12,29 +12,67 @@
 #include <fstream>
 #include <algorithm>
 #include <numeric>
+#include "A2Flow.h"
+#include "TTree.h"
+
+
 
 class TA2DumperFlags
 {
     public:
         std::string fFileName;
+        std::string fTreeName;
 };
 
 class TA2Dumper: public TARunObject
 {
 public:
-    int fRunEventCounter;
-    std::vector<std::pair<int,int>> fEventID;
-    std::string fFileName;
 
-    //Flags
+    //List of event IDs we want to save.
+    std::vector<std::pair<int,int>> fEventIDs; 
+    //The location of saving said events.
+    TTree *fTree;
+    TFile *fRootFile;
+    //The data from each event we want to save.
+    Double_t fX;
+    Double_t fY; 
+    Double_t fZ; 
+    Double_t fR;
+    Double_t fPhi;
+    Int_t fNumTracks;
+
+    //Flags & counters.
+    TA2DumperFlags* fFlags;
+    int fCurrentEventNumber;
+    int fCurrentEventIndex = 0;
     bool fEventsLoaded = false;
     bool fEventsSorted = false;
 
-    TA2Dumper(TARunInfo* runInfo, std::string flagFileName) : TARunObject(runInfo), fFileName(flagFileName)
+    TA2Dumper(TARunInfo* runInfo, TA2DumperFlags* flags) : TARunObject(runInfo)
     {
-        ModuleName="a2dumper";
         printf("ctor, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-        fRunEventCounter = 0;
+        fFlags = flags;
+        ModuleName="a2dumper";
+        
+        //Setup the filename for the root file.
+        std::string fileName = "dumperoutput";
+        fileName += std::to_string(runInfo->fRunNo);
+        fileName += ".root";
+        fRootFile = TFile::Open(fileName.c_str(),"RECREATE");
+        
+        //Set up the new tree using name as input.
+        if(fFlags->fTreeName == "mixing" || fFlags->fTreeName == "cosmic")
+            fTree = new TTree(fFlags->fTreeName.c_str(),"data from siliconEvent");
+        else
+            fTree = new TTree("UnnamedTree","data from siliconEvent");
+        
+        //Branch the tree based on our members.
+        fTree->Branch("x", &fX, "x/D");
+        fTree->Branch("y", &fY, "y/D");
+        fTree->Branch("z", &fZ, "z/D");
+        fTree->Branch("r", &fR, "r/D");
+        fTree->Branch("phi", &fPhi, "phi/D");
+        fTree->Branch("numTracks", &fNumTracks, "numTracks/I");
     }
 
     ~TA2Dumper()
@@ -45,60 +83,80 @@ public:
     void BeginRun(TARunInfo* runInfo)
     {
         printf("BeginRun, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-        fRunEventCounter = 0;
-        //TODO Take runNumber as input and filter out all but current run.
-        LoadEventIDs();
+        
+        
+        LoadEventIDs(); //Load event IDs we want to dump
+        fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second; //Initialise the current event number to the first in the list.
+        
+        
     }
 
     void EndRun(TARunInfo* runInfo)
     {
         printf("EndRun, run %d\n", runInfo->fRunNo);
-        printf("Counted %d events in run %d\n", fRunEventCounter, runInfo->fRunNo);
-    }
 
-    void NextSubrun(TARunInfo* runInfo)
-    {
-        printf("NextSubrun, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-    }
-
-    void PauseRun(TARunInfo* runInfo)
-    {
-        printf("PauseRun, run %d\n", runInfo->fRunNo);
-    }
-
-    void ResumeRun(TARunInfo* runInfo)
-    {
-        printf("ResumeRun, run %d\n", runInfo->fRunNo);
+        //Write the tree and file, then close file.
+        fTree->Write();
+        fRootFile->Write();
+        fRootFile->Close();
     }
 
     TAFlowEvent* Analyze(TARunInfo* runInfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
     {
-        //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runInfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-        //event->old_event.SetBankList();
-        //event->old_event.Print();
         START_TIMER;
-        fRunEventCounter++;
         flow = new UserProfilerFlow(flow,"custom profiling",timer_start);
+        return flow;
+    }
+
+    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
+    {
+        if(flow) 
+        {
+            //TAFlowEvent* flowEvent = flow; //Not actually needed maybe?
+            SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
+            if (siliconEventFlow)
+            {
+                //TAlphaEvent* alphaevent=siliconEventFlow->alphaevent; //Also not needed?
+                TSiliconEvent* siliconEvent=siliconEventFlow->silevent;
+                Int_t eventNumber = siliconEvent->GetVF48NEvent();
+
+                if(eventNumber == fCurrentEventNumber)
+                {
+                    std::cout << "current event Number = " << fCurrentEventNumber << ". Matched with found eventNumber " << eventNumber << std::endl;
+                    std::cout << "(x, y, z, r, phi, nT) = (" << fX << ", " << fY << ", " << fZ << ", " << fR << ", " << fPhi << ", " << fNumTracks << ")" << std::endl; 
+                                        
+                    //Update members
+                    fX = siliconEvent->GetVertexX();
+                    fY = siliconEvent->GetVertexY();
+                    fZ = siliconEvent->GetVertexZ();
+                    fR = siliconEvent->GetVertexR();
+                    fPhi = siliconEvent->GetVertexPhi();
+                    fNumTracks = siliconEvent->GetNTracks();
+
+                    //Fill tree.
+                    fTree->Fill();
+                
+                    //Update current event number to be checked against (remember everything here is in order).
+                    fCurrentEventIndex++;
+                    fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
+                }
+            }
+        }
         return flow;
     }
 
     void AnalyzeSpecialEvent(TARunInfo* runInfo, TMEvent* event)
     {
-        printf("AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runInfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+        printf("a2dump::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runInfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
     }
 
     void LoadEventIDs()
     {
         //TODO Take runNumber as input and filter out all but current run. 0 = all
-        //std::ofstream myfile (fileName);
-        //Hardcoded overwrite of the fileName!! This is obviously illegal, but a little confised how to bring an input from aa.exe into this module, or whether I should be creating a new .exe
-        fFileName = "testWithOutOfOrder.list";
-        std::ifstream myFile(fFileName);
+        std::ifstream myFile(fFlags->fFileName);
         std::string line;
-        std::cout << "LMG - A2DUMPERMODULE: " << fFileName << std::endl;
         if (myFile.is_open())
         {
-            std::cout << "LMG - A2DUMPERMODULE: FILE OPEN" << std::endl;
             while ( std::getline(myFile, line) )
             {
                 std::cout << line << std::endl;
@@ -112,23 +170,21 @@ public:
                 }
                 while(firstEvent <= lastEvent)
                 {
-                    fEventID.push_back( std::pair<int, int>(runNumber, firstEvent) );
-                    std::cout << "LMG - A2DUMPERMODULE: Pushing back: (" << runNumber << ", " << firstEvent << ")" << std::endl;
+                    fEventIDs.push_back( std::pair<int, int>(runNumber, firstEvent) );
                     firstEvent++;
                 }
             }
             myFile.close();
         }
+
         fEventsLoaded = true;
-        PrintEventIDs();
         SortEvenIDs();
-        PrintEventIDs();
     }
 
     void SortEvenIDs()
     {
         //Sort based on first (tmin) keeping idx in the same location
-        std::sort(std::begin(fEventID), std::end(fEventID), 
+        std::sort(std::begin(fEventIDs), std::end(fEventIDs), 
         [&](const std::pair<double,double>& lhs, const std::pair<double,double>& rhs)
         {
             if(lhs.first == rhs.first)
@@ -141,21 +197,10 @@ public:
 
     void PrintEventIDs()
     {
-        for(int i=0;i<fEventID.size();i++)
+        for(int i=0;i<fEventIDs.size();i++)
         {
-            std::cout << "EventID[" << i << "] = (" << fEventID[i].first << ", " << fEventID[i].second << ")" << std::endl;
+            std::cout << "EventID[" << i << "] = (" << fEventIDs[i].first << ", " << fEventIDs[i].second << ")" << std::endl;
         }
-    }
-
-    void SaveToTrees()
-    {
-        if(fEventsLoaded && fEventsSorted)
-        {
-            //Save basically the whole SVD_QOD to .root.
-            //Scan run number and eventID and then save it to a root. 
-            //I guess we want all these in the same .root and not individuals...?
-        }
-
     }
 };
 
@@ -176,6 +221,8 @@ public:
          {
             if( args[i] == "--eventlist")
                fFlags.fFileName = args[i+1];
+            if( args[i] == "--datalabel")
+               fFlags.fTreeName = args[i+1];
          }
    }
    
@@ -187,7 +234,7 @@ public:
    TARunObject* NewRunObject(TARunInfo* runInfo)
    {
       printf("NewRunObject, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-      return new TA2Dumper(runInfo, fFlags.fFileName);
+      return new TA2Dumper(runInfo, &fFlags);
    }
 };
 

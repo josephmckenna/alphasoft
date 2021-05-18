@@ -12,7 +12,7 @@
             //"program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
             "program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz"],
+            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
