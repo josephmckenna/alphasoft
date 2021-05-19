@@ -4,9 +4,6 @@ project(alphasim)
 
 #----------------------------------------------------------------------------
 # Garfield++
-if(EXISTS $ENV{GARFIELD_HOME}/install/share/Garfield/cmake/GarfieldConfig.cmake)
-  list(APPEND CMAKE_PREFIX_PATH $ENV{GARFIELD_HOME}/install/share/Garfield/cmake)
-endif()
 
 find_package(Garfield REQUIRED)
 if (GARFIELD_FOUND)
