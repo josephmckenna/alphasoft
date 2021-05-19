@@ -94,6 +94,10 @@ echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "##################################################"
 
+if [[ -z "${GARFIELD_HOME}"] ]; then
+   echo "GARFIELD_HOME set to ${GARFIELD_HOME}, configuring... "
+   source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+fi
 
 #Setup LD_LIBRARY_PATH
 for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
