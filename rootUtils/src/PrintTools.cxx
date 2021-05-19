@@ -1,7 +1,7 @@
 #include "PrintTools.h"
 
 #include <fstream> 
-
+#ifdef BUILD_AG
 void PrintSequences(int runNumber, int SeqNum)
 {
    TTree *sequencerTree = Get_Seq_Event_Tree(runNumber);
@@ -28,7 +28,7 @@ void PrintSequences(int runNumber, int SeqNum)
    delete seqEvent;
    delete sequencerTree;
 }
-#ifdef BUILD_AG
+
 void PrintChronoNames(int runNumber)
 {
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
