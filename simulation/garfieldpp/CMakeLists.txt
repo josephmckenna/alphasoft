@@ -34,6 +34,6 @@ set(BINS DriftGas.cc PlotMedium.cc ChamberField.cc CalculateGain.cc ChamberDrift
 foreach(target ${BINS})
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target} ${sources})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield )
+  target_link_libraries(${bin} ${ROOT_LIBRARIES}  Garfield::magboltz Garfield::Garfield )
   install(TARGETS ${bin} DESTINATION simulation)
 endforeach(target ${BINS})
