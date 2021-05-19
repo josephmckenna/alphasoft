@@ -166,6 +166,10 @@ build-cc7-cmake-ag:
   stage: build
   script:
     - echo "Building"
+    - echo $GARFIELD_HOME
+    - export GARFIELD_HOME=/garfieldpp
+    - export CMAKE_PREFIX_PATH=${GARFIELD_HOME}/install:${CMAKE_PREFIX_PATH}
+    - export HEED_DATABASE ${GARFIELD_HOME}/Heed/heed++/database
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF
