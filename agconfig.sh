@@ -94,7 +94,7 @@ echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "##################################################"
 
-if [ [ -z "${GARFIELD_HOME}"] ]; then
+if [[ -z "${GARFIELD_HOME}" ]]; then
    echo "GARFIELD_HOME set to ${GARFIELD_HOME}, configuring... "
    source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
 fi
