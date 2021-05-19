@@ -40,7 +40,9 @@ TFile *Get_File(Int_t run_number, Bool_t die)
 
 // ALPHA G EOS PATH NOT SETUP YET...
   TString EOS_name(getenv("EOS_MGM_URL"));
-  EOS_name += "//eos/experiment/alpha/alphaTrees";
+  
+  EOS_name += "//eos/experiment/alpha/new_analyzer_data/alphaAnalysis/";
+  //EOS_name += "//eos/experiment/alpha/alphaTrees/";
   EOS_name += "output";
   if (run_number < 10000)
     EOS_name += "0";
