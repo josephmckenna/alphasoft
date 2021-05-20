@@ -530,7 +530,7 @@ class TAPlot: public TObject
       void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
-      void LoadData();
+      void LoadData(bool verbose = false);
 
       
       //Default members, operators, and prints.
