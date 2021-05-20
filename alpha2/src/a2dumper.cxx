@@ -50,7 +50,7 @@ public:
 
     TA2Dumper(TARunInfo* runInfo, TA2DumperFlags* flags) : TARunObject(runInfo)
     {
-        printf("ctor, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
+        //printf("ctor, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
         fFlags = flags;
         ModuleName="a2dumper";
         
@@ -77,7 +77,7 @@ public:
 
     ~TA2Dumper()
     {
-        printf("dtor!\n");
+        //printf("dtor!\n");
     }
     
     void BeginRun(TARunInfo* runInfo)
@@ -101,18 +101,18 @@ public:
         fRootFile->Close();
     }
 
-    TAFlowEvent* Analyze(TARunInfo* runInfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
-    {
-        START_TIMER;
-        flow = new UserProfilerFlow(flow,"custom profiling",timer_start);
-        return flow;
-    }
+    //Presently this module doesn't need to touch TMEvent data
+    //TAFlowEvent* Analyze(TARunInfo* runInfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+    //{
+    //   START_TIMER;
+    //    flow = new UserProfilerFlow(flow,"custom profiling",timer_start);
+    //    return flow;
+    //}
 
     TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
     {
         if(flow) 
         {
-            //TAFlowEvent* flowEvent = flow; //Not actually needed maybe?
             SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
             if (siliconEventFlow)
             {
@@ -210,13 +210,13 @@ public:
     TA2DumperFlags fFlags;
    void Usage()
    {
-      printf("\tExample TAFactory Usage!\n");
-      printf("\tPrint valid arguements for this modules here!");
+      printf("TA2DumperFactory::Help!\n");
+      printf("\t--eventlist filename\tSave events from TA2Plot.WriteEventList() function\n");
+      printf("\t--datalabel label\tValid data labels currently: mixing and cosmic\n");
    }
    void Init(const std::vector<std::string> &args)
    {
       printf("Init!\n");
-      printf("Arguments:\n");
       for (unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--eventlist")
