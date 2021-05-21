@@ -92,17 +92,14 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
    return RunTime;
 }
 #endif
-
+#ifdef BUILD_AG
 Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
 {
    TSeq_Event* e=Get_Seq_Event(runNumber, description, name, repetition); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;
-
 }
-
-
 Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
 {
    TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, repetition); //Creates new TSeq_Event
@@ -111,6 +108,8 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
    return RunTime;
 
 }
+#endif
+
 #ifdef BUILD_AG
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
 {   

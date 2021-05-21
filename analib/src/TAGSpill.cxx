@@ -53,7 +53,9 @@ void TAGSpillScalerData::Print()
    std::cout<<"LOLOLOL IMPLEMENT THIS YOU FOOL"<<std::endl;
 }
 
-ClassImp(TAGSpillSequencerData);
+
+ClassImp(TAGSpillSequencerData)
+
 TAGSpillSequencerData::TAGSpillSequencerData(): TSpillSequencerData()
 {
 }
@@ -70,7 +72,7 @@ TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CH
 }
 
 
-TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a)
+TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a) : TSpillSequencerData(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -107,7 +109,9 @@ TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*C
 TAGSpill::~TAGSpill()
 {
 }
-TAGSpill::TAGSpill(TAGSpill* a)
+
+TAGSpill::TAGSpill(const TAGSpill& a):
+   TSpill(a), ScalerData(a.ScalerData), SeqData(a.SeqData)
 {
 
 }
