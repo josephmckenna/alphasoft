@@ -781,3 +781,26 @@ void TAPlot::ClearHisto() //Destroy all histograms
    fHistos.SetOwner(kTRUE);
    fHistos.Delete();
 }
+
+void TAPlot::ExportCSV(std::string filename, bool PassedCutOnly)
+{
+   std::string vertexFilename = filename + ".vertex.csv";
+   std::string timeWindowFilename = filename + ".timewindows.csv";
+   std::ofstream verts;
+   verts.open(vertexFilename);
+   verts << fVertexEvents.CSVTitleLine();
+   for (size_t i=0; i< fVertexEvents.size(); i++)
+      verts << fVertexEvents.CSVLine(i);
+   verts.close();
+   std::cout<< vertexFilename<< " saved\n";
+
+   std::ofstream times;
+   times.open(timeWindowFilename);
+   times << fTimeWindows.CSVTitleLine();
+   for (size_t i=0; i< fTimeWindows.size(); i++)
+      times << fTimeWindows.CSVLine(i);
+   times.close();
+   std::cout<< timeWindowFilename<< " saved\n";
+   
+
+}
