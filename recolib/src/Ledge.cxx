@@ -84,7 +84,7 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
       const FeamChannel* ch = channels.at(i);
       if( !(ch->sca_chan>0) ) continue;
 
-      short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+      short col = short( ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col );
       col+=1;
       if( col == 32 ) col = 0;
       if(fDebug) std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;

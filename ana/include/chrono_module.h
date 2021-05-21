@@ -29,8 +29,8 @@ struct ChronoEvent
    }
    void SetScalerModuleNo(int m)
    {
-      Channel=m%CHRONO_N_CHANNELS;
-      ChronoBoard=floor(m/CHRONO_N_CHANNELS);
+      Channel = m % CHRONO_N_CHANNELS;
+      ChronoBoard = floor( (double)m / (double)CHRONO_N_CHANNELS );
    }
    double GetRunTime()
    {

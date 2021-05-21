@@ -25,8 +25,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-ClassImp(TAlphaEvent);
-
+ClassImp(TAlphaEvent)
 
 //____________________________________________________________________
 TAlphaEvent::TAlphaEvent(TAlphaEventMap* a)

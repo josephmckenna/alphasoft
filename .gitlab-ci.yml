@@ -182,6 +182,7 @@ build-cc7-cmake-ag-sim:
   image: tmidas/garfieldpp
   script:
     - echo "Building"
+    - echo $GARFIELD_HOME
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=ON -DBUILD_A2=OFF

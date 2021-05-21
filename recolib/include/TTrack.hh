@@ -25,7 +25,7 @@ protected:
   int fStatus;
   int fParticle;
 
-  int fPointsCut;
+  unsigned fPointsCut;
 
   TVector3 fResidual;
   std::vector<double> fResiduals;
@@ -64,8 +64,8 @@ public:
   inline void SetParticleType(int pdg) {fParticle=pdg;}
   inline int GetParticleType() const   {return fParticle;}
 
-  inline void SetPointsCut(int cut) {fPointsCut=cut;}
-  inline int GetPointsCut() const   {return fPointsCut;}
+  inline void SetPointsCut(unsigned cut) {fPointsCut=cut;}
+  inline unsigned GetPointsCut() const   {return fPointsCut;}
 
   // Evaluate the function
   virtual TVector3 Evaluate( double )        {TVector3 v(0.,0.,0.); return v;}
