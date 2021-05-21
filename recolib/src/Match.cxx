@@ -37,7 +37,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
    fMT(mt),
    ana_settings(ana_set),
    fCoincTime(     ana_settings->GetDouble("MatchModule","coincTime")),
-   maxPadGroups(   ana_settings->GetDouble("MatchModule","maxPadGroups")),
+   maxPadGroups(   ana_settings->GetInt("MatchModule","maxPadGroups")),
    padsNmin(       ana_settings->GetInt("MatchModule","padsNmin")),
    padSigma(       ana_settings->GetDouble("MatchModule","padSigma")),
    padSigmaD(      ana_settings->GetDouble("MatchModule","padSigmaD")),
@@ -492,7 +492,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> &sigs,
 							 int ifirst, int ilast)
 {
-  if(ilast < 0) ilast = sigs.size()-1;
+  if(ilast < 0) ilast = int(sigs.size())-1;
   std::vector<ALPHAg::signal>::const_iterator first = std::next(sigs.begin(),ifirst);
   std::vector<ALPHAg::signal>::const_iterator last = std::next(sigs.begin(),ilast);
   std::vector<std::pair<double, double> > blobs;

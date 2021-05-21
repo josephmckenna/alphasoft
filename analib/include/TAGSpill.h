@@ -44,7 +44,7 @@ public:
    TAGSpill(int runno, uint32_t unixtime, const char* format, ...);
    TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    ~TAGSpill();
-   TAGSpill(TAGSpill* a);
+   TAGSpill(const TAGSpill& a);
    TString Content(std::vector<std::pair<int,int>>*, int& );
    ClassDef(TAGSpill,1);
 };
