@@ -2,8 +2,8 @@
 
 
 Bool_t gAnnounce = kTRUE;
-
-void RunEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax)
+#ifdef BUILD_AG
+void RunAGEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
    //Convert TMIN and TMAX from official time to TPC time
    Int_t first=GetTPCEventNoBeforeOfficialTime(runNumber,tmin);
@@ -18,13 +18,13 @@ void RunEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax)
    return;
 }
 
-void RunEventViewerInTime(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+void RunAGEventViewerInTime(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
 {
    Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
    Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-   return RunEventViewerInTime(runNumber, tmin, tmax);
+   return RunAGEventViewerInTime(runNumber, tmin, tmax);
 }
-
+#endif
 
 
 void AnnounceOnSpeaker(Int_t runNumber, TString Phrase)

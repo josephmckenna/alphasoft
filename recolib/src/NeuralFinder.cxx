@@ -23,6 +23,10 @@ NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end
 
    weight = 20.*pointWeights[start]*pointWeights[end];
 }
+NeuralFinder::Neuron::Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(nullptr), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL) // NOLINT the TVector3 doesn't explicitly call the TObject constructor so linter get upset
+{
+
+}
 
 //==============================================================================================
 NeuralFinder::NeuralFinder(std::vector<TSpacePoint*>* points):
@@ -47,7 +51,7 @@ int NeuralFinder::MakeNeurons()
    nneurons = 0;
    for(unsigned int i = 0; i < fPointsArray.size(); i++){
       for(unsigned int j = i+1; j < fPointsArray.size(); j++){
-         int startIdx(i), endIdx(j);
+         unsigned int startIdx(i), endIdx(j);
          if(fPointsArray[j]->Order(*fPointsArray[j],*fPointsArray[i])){
             startIdx = j;
             endIdx = i;

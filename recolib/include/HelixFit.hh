@@ -53,11 +53,11 @@ public:
    {}
    ~HelixFcnPos() {}
    
-   virtual double operator()(const std::vector<double>&) const;
-   virtual double Up() const                               {return fErrorDef;}
+   virtual double operator()(const std::vector<double>&) const override;
+   virtual double Up() const override                      {return fErrorDef;}
    inline std::vector<TSpacePoint*> GetSpacepoints() const {return fSpacepoints;}
 
-   inline void setErrorDef(double def) {fErrorDef = def;}
+   void SetErrorDef(double def) override {fErrorDef = def;}
 
 private:
    std::vector<TSpacePoint*> fSpacepoints;
@@ -72,11 +72,11 @@ public:
    {}
    ~HelixFcnNeg() {}
    
-   virtual double operator()(const std::vector<double>&) const;
-   virtual double Up() const                               {return fErrorDef;}
+   virtual double operator()(const std::vector<double>&) const override;
+   virtual double Up() const override                              {return fErrorDef;}
    inline std::vector<TSpacePoint*> GetSpacepoints() const {return fSpacepoints;}
 
-   inline void setErrorDef(double def) {fErrorDef = def;}
+   void SetErrorDef(double def) override {fErrorDef = def;}
 
 private:
    std::vector<TSpacePoint*> fSpacepoints;
