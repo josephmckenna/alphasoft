@@ -99,7 +99,7 @@ class TSpillScalerData: public TObject
       std::string title = "Start Time (s),Stop Time (s),Durations (s),";
       if (ChannelNames.size() == DetectorCounts.size())
       {
-         for (int i=0; i<ChannelNames.size(); i++)
+         for (size_t i=0; i<ChannelNames.size(); i++)
          {
             title += ChannelNames.at(i) + ",";
          }
@@ -107,7 +107,7 @@ class TSpillScalerData: public TObject
       else 
       {
          std::cout <<"Warning: " << __FILE__  << ":" << __LINE__ << "\tNo detector channel names given\n";
-         for (int i=0; i<DetectorCounts.size(); i++)
+         for (size_t i=0; i<DetectorCounts.size(); i++)
          {
             title += "Scaler Channel " + std::to_string(i) + ",";
          }
@@ -122,7 +122,7 @@ class TSpillScalerData: public TObject
       line += std::to_string(StartTime) + "," +
               std::to_string(StopTime) + "," +
               std::to_string(StopTime - StartTime) + ",";
-      for (int i = 0; i<DetectorCounts.size(); i++)
+      for (size_t i = 0; i<DetectorCounts.size(); i++)
       {
          if (ScalerFilled.at(i))
             line += std::to_string(DetectorCounts.at(i)) + ",";

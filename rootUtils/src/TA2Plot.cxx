@@ -3,7 +3,7 @@
 
 
 #ifdef BUILD_A2
-ClassImp(TA2Plot);
+ClassImp(TA2Plot)
 
 //Default members, operators, and prints.
 TA2Plot::TA2Plot(bool zeroTime): TAPlot(zeroTime)
@@ -191,14 +191,14 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
 {
-   int numSISChannels=fSISChannels.size();
+   size_t numSISChannels=fSISChannels.size();
    double time=SISEvent->GetRunTime();
 
    //Loop over all time windows
    int index = GetTimeWindows()->GetValidWindowNumber(time);
    if(index>=0)
    {
-      for (int i=0; i<numSISChannels; i++)
+      for (size_t i=0; i<numSISChannels; i++)
       {
          int counts = SISEvent->GetCountsInChannel(fSISChannels[i]);
          if (counts)
@@ -379,7 +379,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
 
    //Fill SIS histograms
    int runNum = 0;
-   for (int i = 0; i<SISEvents.fTime.size(); i++)
+   for (size_t i = 0; i<SISEvents.fTime.size(); i++)
    {
       if (SISEvents.fRunNumber[i] != runNum)
       {
@@ -416,7 +416,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
    TVector3 vertex;
    const TVertexEvents* kVertexEvents = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
-   for (int i=0; i<kVertexEvents->fXVertex.size(); i++)
+   for (size_t i=0; i<kVertexEvents->fXVertex.size(); i++)
    {
       Double_t time;
       if (kZeroTimeAxis)
@@ -680,7 +680,7 @@ void TA2Plot::WriteEventList(std::string fileName, bool append)
    //Assert that the runNumbers and EventNos match up in terms of size.
    assert(fVertexEvents.fRunNumbers.size() == fVertexEvents.fEventNos.size());
 
-   int index = 0; //Initialise at index 0
+   size_t index = 0; //Initialise at index 0
    int currentEventNo = fVertexEvents.fEventNos.at(index); //Set the current run number to be the one at index (0)
    int currentRunNo = SISEvents.fRunNumber.at(index); //Same for event no.
    myFile << currentRunNo << ":" << currentEventNo; //Print an initial statement to file, will look something like "39993:2"

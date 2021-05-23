@@ -593,6 +593,9 @@ class TAPlot: public TObject
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
       void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
+      // Hmm the add operators prevent this being a pure virtual function (ie
+      // the add operator can't return TAPlot if TAPlot is an abstract class...
+      // one to think about Joe)
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData();
 

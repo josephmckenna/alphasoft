@@ -1,6 +1,6 @@
 #include "TAPlot.h"
 
-ClassImp(TAPlot);
+ClassImp(TAPlot)
 
 //Default Constructor
 TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
@@ -27,7 +27,7 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
 }
 
 //Copy ctor
-TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
+TAPlot::TAPlot(const TAPlot& object) : TObject(object), kZeroTimeAxis(object.kZeroTimeAxis)
 {
    fCanvasTitle                  = object.fCanvasTitle ;
    fMVAMode                      = object.fMVAMode ;
@@ -235,11 +235,11 @@ void TAPlot::PrintFull()
    std::cout << "===========================" << std::endl;
    std::cout << "Title is " << fCanvasTitle << std::endl;
 
-   for(int i=0;i<fVertexEvents.fRunNumbers.size();i++)
+   for(size_t i=0; i<fVertexEvents.fRunNumbers.size(); i++)
    {
       std::cout << fVertexEvents.fRunNumbers.at(i) << std::endl;
    }
-   for(int i=0;i<fVertexEvents.fEventNos.size();i++)
+   for(size_t i=0; i<fVertexEvents.fEventNos.size(); i++)
    {
       std::cout << fVertexEvents.fEventNos.at(i) << std::endl;
    }
@@ -253,7 +253,7 @@ void TAPlot::Print(Option_t *option) const
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();
   std::cout <<""<<std::endl<<"Run(s): ";
-  for (UInt_t i=0; i<fRuns.size(); i++)
+  for (size_t i=0; i<fRuns.size(); i++)
   {
      if (i>1) std::cout <<", ";
      std::cout <<fRuns[i];
@@ -435,7 +435,7 @@ int TAPlot::GetNPassedType(const int kType)
    int n = 0;
    //for (auto& event: VertexEvents)
    //const TVertexEvents* event = GetVertexEvents();
-   for (int i = 0; i<fVertexEvents.fXVertex.size(); i++)
+   for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fCutsResults[i]&kType)
          n++;
