@@ -57,4 +57,9 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
    return spills;
 }
 
+std::vector<TA2Spill> Get_All_A2_Spills(int runNumber)
+{
+   return Get_A2_Spills(runNumber,{"*"},{-1});
+}
+
 #endif

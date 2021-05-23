@@ -67,7 +67,25 @@ public:
 
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
    TString Content(std::vector<int>*, int& );
-   
+   std::string ContentCSVTitle(std::vector<std::string> ChannelNames = {}) const
+   {
+      std::string title = TSpill::ContentCSVTitle();
+      if (SeqData)
+         title += SeqData->ContentCSVTitle();
+      if (ScalerData)
+         title += ScalerData->ContentCSVTitle(ChannelNames);
+      return title;
+   }
+   std::string ContentCSV() const
+   {
+      std::string line = TSpill::ContentCSV();
+      if (SeqData)
+         line += SeqData->ContentCSV();
+      if (ScalerData)
+         line += ScalerData->ContentCSV();
+      return line;
+   }
+
    bool Ready( bool have_svd);
    ~TA2Spill();
    ClassDef(TA2Spill,1);
