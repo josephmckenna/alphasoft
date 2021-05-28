@@ -100,7 +100,8 @@ void plot_drift_time_histo()
 
 void testtime()
 {
-  int runlist[]={904690, 904549, 904472, 904554, 904648, 904474, 904685, 904501, 904547, 904555, 904503, 4513,4533,4541};
+  //int runlist[]={904690, 904549, 904472, 904554, 904648, 904474, 904685, 904501, 904547, 904555, 904503, 4513,4533,4541};
+  int runlist[]={904648,4513,4533,4541,4553,4574,4576};
   vector<int> runv(runlist,runlist+sizeof(runlist)/sizeof(int));
   std::sort(runv.begin(),runv.end());
   int Nruns=runv.size();
