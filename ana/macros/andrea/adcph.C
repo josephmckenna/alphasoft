@@ -22,7 +22,7 @@ void adcph()
 {
   int// runT = 904547, 
         runT=904648, 
-runC=4553;
+runC=4576;
   TString fname=TString::Format("%s/test/cosmics%d.root",getenv("DATADIR"),runT);
   list<TString> file_list {TString::Format("%s/test/cosmics%d.root",getenv("DATADIR"),runT),
       TString::Format("%s/CERN2021/cosmics%d.root",getenv("DATADIR"),runC)};
@@ -38,7 +38,7 @@ runC=4553;
   vector<TH1D*> adcamp(Nfiles);
   vector<TProfile*> awamp(Nfiles);
 
-  TString cname=TString::Format("cadcphR%d",runT);
+  TString cname=TString::Format("cadcphR%dR%d",runT,runC);
   TCanvas* c1 = new TCanvas(cname.Data(),cname.Data(),1900,2600);
   c1->Divide(1,3);
   TLegend* leg = new TLegend(0.8,0.65,0.99,0.95); 
