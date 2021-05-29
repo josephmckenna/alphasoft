@@ -717,6 +717,23 @@ void TA2Plot::WriteEventList(std::string fileName, bool append)
    myFile.close();
 } 
 
+void TA2Plot::ExportCSV(std::string filename, bool PassedCutOnly)
+{
+   //Save Time windows and vertex data
+   TAPlot::ExportCSV(filename, PassedCutOnly);
+   
+   std::string scalerFilename = filename + ".scaler.csv";
+   
+   std::ofstream sis;
+   sis.open(scalerFilename);
+   sis << SISEvents.CSVTitleLine();
+   for (size_t i=0; i< SISEvents.size(); i++)
+      sis << SISEvents.CSVLine(i);
+   sis.close();
+   std::cout<< scalerFilename << " saved\n";
+   
+   
+}
 
 //Private members
 void TA2Plot::AddEvent(TSVD_QOD* event, double timeOffset)

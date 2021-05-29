@@ -84,6 +84,32 @@ class TSISPlotEvents: public TObject
       }
       int GetEventRunNumber(int event) const { return fRunNumber.at(event); }
       
+      std::string CSVTitleLine() const
+      {
+         return std::string("Run Number,") + 
+                "Plot Time (Time axis of TAPlot)," +
+                "OfficialTime (run time)," +
+                "SIS Channel," +
+                "Counts\n";
+      }
+
+      std::string CSVLine(size_t i) const
+      {
+         //This is a little fugly
+         std::string line;
+         line =std::string("") + fRunNumber.at(i) + "," +
+                fTime.at(i) + "," +
+                fOfficialTime.at(i) + "," +
+                fSISChannel.at(i) + "," +
+                fCounts.at(i) + "\n";
+         return line;
+      }
+
+      size_t size() const
+      {
+         return fRunNumber.size();
+      }
+
       ClassDef(TSISPlotEvents,1);
 };
 
@@ -141,8 +167,8 @@ class TA2Plot: public TAPlot
       void SetUpHistograms();
       void FillHisto(bool applyCuts=true, int mode=0);
       TCanvas* DrawCanvas(const char* name="cVTX",bool applyCuts=true, int mode=0);
-      void WriteEventList(std::string fileName, bool append=true);
-   
+      void WriteEventList(std::string fileName, bool append = true);
+      void ExportCSV(std::string filename, bool PassedCutOnly = true);
    private:
       void AddEvent(TSISEvent* event, int channel,double timeOffset=0);
       void AddEvent(TSVD_QOD* event,double timeOffset=0);

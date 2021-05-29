@@ -30,14 +30,14 @@
 class TVertexEvents: public TObject
 {
    public:
-      std::vector<int> fRunNumbers; // I don't get set yet...
+      std::vector<int> fRunNumbers; 
       std::vector<int> fEventNos;
       std::vector<int> fCutsResults;
       std::vector<int> fVertexStatuses;
       std::vector<double> fXVertex;
       std::vector<double> fYVertex;
       std::vector<double> fZVertex;
-      std::vector<double> fTimes; //Plot time (based off offical time)
+      std::vector<double> fTimes; //Plot time (based off official time)
       std::vector<double> fEventTimes; //TPC time stamp
       std::vector<double> fRunTimes; //Official Time
       std::vector<int> fNumHelices; // helices used for vertexing
@@ -108,6 +108,46 @@ class TVertexEvents: public TObject
          this->fNumHelices         .insert(this->fNumHelices.end(),        rhs.fNumHelices.begin(),       rhs.fNumHelices.end());
          this->fNumTracks          .insert(this->fNumTracks.end(),         rhs.fNumTracks.begin(),        rhs.fNumTracks.end());
          return *this;
+      }
+      std::string CSVTitleLine() const
+      {
+         return std::string("Run Number,") + 
+                "Event Number," +
+                "Plot Time (Time axis of TAPlot)," +
+                "Detector Time (detectors internal clock)," +
+                "OfficialTime (run time)," +
+                "Pass Cuts," +
+                "Pass MVA," +
+                "Vertex Status," +
+                "X," +
+                "Y," +
+                "Z," +
+                "Number of Helices," +
+                "Number of Tracks\n";
+         
+      }
+      std::string CSVLine(size_t i) const
+      {
+         //This is a little fugly
+         std::string line;
+         line =std::string("") + fRunNumbers.at(i) + "," +
+                fEventNos.at(i) + "," +
+                fTimes.at(i) + "," +
+                fEventTimes.at(i) + "," +
+                fRunTimes.at(i) + "," +
+                bool(fCutsResults.at(i)&1) + "," +
+                bool(fCutsResults.at(i)&2) + "," +
+                fVertexStatuses.at(i) + "," +
+                fXVertex.at(i) + "," +
+                fYVertex.at(i) + "," +
+                fZVertex.at(i) + "," +
+                fNumHelices.at(i) + "," +
+                fNumTracks.at(i) + "\n";
+         return line;
+      }
+      size_t size() const
+      {
+         return fRunNumbers.size();
       }
 };
 
@@ -263,6 +303,30 @@ class TTimeWindows : public TObject
   
          isSorted = true;
       }
+      
+      std::string CSVTitleLine() const
+      {
+         return std::string("Run Number,") + 
+                "Min Time," +
+                "Max Time," +
+                "Zero Time\n";
+      }
+      std::string CSVLine(size_t i) const
+      {
+         //This is a little fugly
+         std::string line;
+         line =std::string("") + fRunNumber.at(i) + 
+         fMinTime.at(i) +
+         fMaxTime.at(i) +
+         fZeroTime.at(i);
+         return line;
+      }
+
+      size_t size() const
+      {
+         return fRunNumber.size();
+      }
+
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
@@ -542,7 +606,7 @@ class TAPlot: public TObject
       TAPlot& operator+=(const TAPlot &rhs);
       void Print(Option_t* option="") const;
       virtual void PrintFull();
-   
+      
       //Histogram functions
       void AutoTimeRange();
       template <class T> void AddHistogram(const char* keyname, T* h) //This refuses to go in the .cxx for some reason.
@@ -560,6 +624,7 @@ class TAPlot: public TObject
       void ClearHisto();
       void SetUpHistograms();
       void PrintTimeRanges();
+      void ExportCSV(std::string filename, bool PassedCutOnly = true);
 
    ClassDef(TAPlot, 1);
 };
