@@ -35,7 +35,8 @@ vector<double> LoopOverRuns(vector<int> runv, string folder, TGraphErrors* g1, T
   int n=0;
   for(auto& run: runv)
     {
-      TString fname=TString::Format("%s/%s/cosmics%d.root",getenv("DATADIR"),folder.c_str(),run);
+      //TString fname=TString::Format("%s/%s/cosmics%d.root",getenv("DATADIR"),folder.c_str(),run);
+      TString fname=TString::Format("/mnt/fast_disk/andrea/cosmics%d.root",run);
       TFile* fin=TFile::Open(fname,"READ");
       if( fin->IsOpen() )
 	cout<<fin->GetName()<<endl;
@@ -95,15 +96,19 @@ void plot_drift_time_histo()
   driftline->Draw("same");
   gPad->SetGrid();
 
+
+  ct->SaveAs(".pdf");  ct->SaveAs(".pdf");
 }
 
 
 void testtime()
 {
   //int runlist[]={904690, 904549, 904472, 904554, 904648, 904474, 904685, 904501, 904547, 904555, 904503, 4513,4533,4541};
-  int runlist[]={904648,4513,4533,4541,4553,4574,4576};
+  //int runlist[]={904648,4513,4533,4541,4553,4574,4576};
+  int runlist[]={3873,3879,4513,4533,4541,4553,4574,4576,4579};
   vector<int> runv(runlist,runlist+sizeof(runlist)/sizeof(int));
   std::sort(runv.begin(),runv.end());
+  for(auto &r: runv) cout<<"R "<<r<<endl;
   int Nruns=runv.size();
 
   gta = new TGraphErrors(runv.size());
@@ -128,7 +133,7 @@ void testtime()
   driftline->SetLineWidth(2);
   
   double maxtd=*std::max_element(timeav.begin(),timeav.end());
-  cout<<maxtd<<endl;
+  cout<<"Max Drift Time: "<<maxtd<<" ns"<<endl;
   // htemp->GetYaxis()->SetRangeUser(maxtd*0.7,maxtd*1.03);
   //htemp->GetYaxis()->SetRangeUser(0.,maxtd*1.1);
   htemp->GetYaxis()->SetRangeUser(garftime-600.,garftime+600.);

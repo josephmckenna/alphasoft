@@ -129,8 +129,8 @@ void adcdelay()
   cname+=run;
   TCanvas* c1 = new TCanvas(cname,cname,1600,1400); 
   //hawpadsector->Draw("surf2");
-  //hawpadsector->Draw("col");
-  hawpadsector->Draw();
+  hawpadsector->Draw("col");
+  //hawpadsector->Draw();
   hawpadsector->GetXaxis()->SetRangeUser(0.,tmax);
   hawpadsector->GetYaxis()->SetRangeUser(0.,tmax);
   c1->SetGrid();
@@ -140,7 +140,7 @@ void adcdelay()
   cname+=run;
   TCanvas* c2 = new TCanvas(cname,cname,1600,1400);
   bool first=true;
-  TGraph2D * grx = new TGraph2D();
+  // TGraph2D * grx = new TGraph2D();
   TGraph* ggx = new TGraph();
   int N=0;
   for(int b=1; b<=hawpadsector->GetNbinsX(); ++b)
@@ -153,7 +153,7 @@ void adcdelay()
       double tpad = hpy->GetBinCenter(mb);
       //      cout<<b<<"\t"<<hpy->GetEntries()<<"\tt aw: "<<taw<<" t pad: "<<tpad<<"\tmax bin: "<<mb<<" bc: "<<bc<<endl;
       if(hpy->GetEntries()==0) continue;
-      grx->SetPoint(N,taw,tpad,bc);
+      //grx->SetPoint(N,taw,tpad,bc);
       ggx->SetPoint(N,taw,tpad);
       ++N;
       c2->cd();
@@ -168,61 +168,65 @@ void adcdelay()
   cname="adcdelay_graph_R";
   cname+=run;
   TCanvas* c3 =  new TCanvas(cname,cname,1600,1400); 
+  c3->cd();
   ggx->Draw("AP");
-  ggx->Fit("pol1","MCF","",48.,4000.);
+  ggx->Fit("pol1","MCF0","",48.,3200.);
+  TF1* fgx=ggx->GetFunction("pol1");
+  fgx->SetLineColor(kRed);
+  fgx->Draw("same");
   
-  cname="adcdelay_fit_R";
-  cname+=run;
-  TCanvas* c4 =  new TCanvas(cname,cname,1600,1400); 
-  grx->Draw();
+  // cname="adcdelay_fit_R";
+  // cname+=run;
+  // TCanvas* c4 =  new TCanvas(cname,cname,1600,1400); 
+  // grx->Draw();
 
-  ROOT::Fit::Fitter  fitter;
-  // make the functor object
-  SumDistance2 sdist(grx);
-  ROOT::Math::Functor fcn(sdist,4);
-  // set the function and the initial parameter values
-  double pStart[4] = {0.,1.,0.,1.};
-  fitter.SetFCN(fcn,pStart);
-  // set step sizes different than default ones (0.3 times parameter values)
-  for (int i = 0; i < 4; ++i) fitter.Config().ParSettings(i).SetStepSize(0.01);
+  // ROOT::Fit::Fitter  fitter;
+  // // make the functor object
+  // SumDistance2 sdist(grx);
+  // ROOT::Math::Functor fcn(sdist,4);
+  // // set the function and the initial parameter values
+  // double pStart[4] = {0.,1.,0.,1.};
+  // fitter.SetFCN(fcn,pStart);
+  // // set step sizes different than default ones (0.3 times parameter values)
+  // for (int i = 0; i < 4; ++i) fitter.Config().ParSettings(i).SetStepSize(0.01);
 
-  bool ok = fitter.FitFCN();
-  if (!ok) {
-    Error("line3Dfit","Line3D Fit failed");
-    // return 1;
-  }
+  // bool ok = fitter.FitFCN();
+  // if (!ok) {
+  //   Error("line3Dfit","Line3D Fit failed");
+  //   // return 1;
+  // }
 
-  const ROOT::Fit::FitResult & result = fitter.Result();
+  // const ROOT::Fit::FitResult & result = fitter.Result();
 
-  std::cout << "Total final distance square " << result.MinFcnValue() << std::endl;
-  result.Print(std::cout);
+  // std::cout << "Total final distance square " << result.MinFcnValue() << std::endl;
+  // result.Print(std::cout);
   
-  // get fit parameters
-  const double * parFit = result.GetParams();
+  // // get fit parameters
+  // const double * parFit = result.GetParams();
 
-  // draw the fitted line
-  int n = 1000;
-  double t0 = 0.;
-  double dt = 10.;
-  TPolyLine3D *l = new TPolyLine3D(n);
-  for (int i = 0; i <n;++i) 
-    {
-      double t = t0 + dt*i/n;
-      double x,y,z;
-      line(t,parFit,x,y,z);
-      l->SetPoint(i,x,y,z);
-      // cout<<i<<"\t"<<x<<"\t"<<y<<"\t"<<z<<endl;
-    }
-  l->SetLineColor(kRed);
-  c4->cd();
-  l->Draw("same");
+  // // draw the fitted line
+  // int n = 1000;
+  // double t0 = 0.;
+  // double dt = 10.;
+  // TPolyLine3D *l = new TPolyLine3D(n);
+  // for (int i = 0; i <n;++i) 
+  //   {
+  //     double t = t0 + dt*i/n;
+  //     double x,y,z;
+  //     line(t,parFit,x,y,z);
+  //     l->SetPoint(i,x,y,z);
+  //     // cout<<i<<"\t"<<x<<"\t"<<y<<"\t"<<z<<endl;
+  //   }
+  // l->SetLineColor(kRed);
+  // c4->cd();
+  // l->Draw("same");
 
 
   cname="adcdelay_px_R";
   cname+=run;
   TCanvas* c5 = new TCanvas(cname,cname,1600,1400);
   first=true;
-  TGraph2D * gry = new TGraph2D();
+  // TGraph2D * gry = new TGraph2D();
   TGraph* ggy = new TGraph();
   N=0;
   for(int b=1; b<=hawpadsector->GetNbinsY(); ++b)
@@ -236,7 +240,7 @@ void adcdelay()
       double taw = hpx->GetBinCenter(mb);
       //      cout<<b<<"\t"<<hpx->GetEntries()<<"\tt aw: "<<taw<<" t pad: "<<tpad<<"\tmax bin: "<<mb<<" bc: "<<bc<<endl;
       if(hpx->GetEntries()==0) continue;
-      gry->SetPoint(N,taw,tpad,bc);
+      //    gry->SetPoint(N,taw,tpad,bc);
       ggy->SetPoint(N,taw,tpad);
       ++N;
       c5->cd();
@@ -250,13 +254,16 @@ void adcdelay()
   ggy->SetTitle("AW vs. PAD time;AW [ns];PAD [ns]");
  
   c3->cd();
-  ggy->Draw("P");
-  ggy->Fit("pol1","MCF","",500.,4000.);
+  ggy->Draw("Psame");
+  ggy->Fit("pol1","MCF0","",500.,3000.);
+  TF1* fgy = ggy->GetFunction("pol1");
+  fgy->SetLineColor(kGreen);
+  fgy->Draw("same");
   c3->SetGrid();
   
 
   c1->SaveAs(".pdf");   c1->SaveAs(".pdf");
   c2->SaveAs(".pdf");   c2->SaveAs(".pdf");
   c3->SaveAs(".pdf");   c3->SaveAs(".pdf");
-  c4->SaveAs(".pdf");   c4->SaveAs(".pdf");
+  //  c4->SaveAs(".pdf");   c4->SaveAs(".pdf");
 }
