@@ -20,6 +20,7 @@
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
+#include "AnalysisReportGetters.h"
 #include <numeric>
 
 #define SCALECUT 0.6
@@ -413,6 +414,8 @@ class TFELabVIEWData: public TEnvData
       void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
+         double runStart = Get_A2Analysis_Report(57181).GetRunStartTime();
+         time = labviewEvent->GetMIDAS_TIME() - runStart;
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);

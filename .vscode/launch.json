@@ -1,3 +1,5 @@
+
+//Standard launch for debuging our made exes
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -9,10 +11,10 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            //"program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
-            "program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
-            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
+            "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
+            //"program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
+            "args": ["${workspaceFolder}/run54590sub*.mid.gz", "--mt", "--", "--summarize", "Mixing"],
+            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -30,7 +32,7 @@
             /*"sourceFileMap": {
                 "${workspaceFolder}/build/alpha2/": "${workspaceFolder}/alpha2/",
                 "${workspaceFolder}/build/analib/": "${workspaceFolder}/analib/"
-            }*/
+            }*/   
             
         }
     ]

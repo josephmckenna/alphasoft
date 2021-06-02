@@ -27,7 +27,6 @@ class TA2DumperFlags
 class TA2Dumper: public TARunObject
 {
 public:
-
     //List of event IDs we want to save.
     std::vector<std::pair<int,int>> fEventIDs; 
     //The location of saving said events.
@@ -83,12 +82,8 @@ public:
     void BeginRun(TARunInfo* runInfo)
     {
         printf("BeginRun, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-        
-        
         LoadEventIDs(); //Load event IDs we want to dump
         fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second; //Initialise the current event number to the first in the list.
-        
-        
     }
 
     void EndRun(TARunInfo* runInfo)

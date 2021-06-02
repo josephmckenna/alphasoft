@@ -188,7 +188,9 @@ public:
          }
          
          std::string BN = me->banks[0].name.c_str();
-         
+         std::string bn = "HPRO";
+         std::cout << "BN = " << BN << std::endl;
+         std::cout << "bn = " << bn << std::endl;
          double * rawmeData = (double*)me->GetBankData(&me->banks[0]);
          int N = (int)(me->banks[0].data_size / 8);
          std::vector<double> meData;
@@ -200,8 +202,8 @@ public:
          double runTime = meData[0] - (double)initialEventTime - (double)2082844800;
          felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, runTime, meData[0]);
          flow = f;
-         if (fTrace)
-         if (BN=="D243")
+         if (fTrace);
+         if (BN==bn)
          {
              
              if(meData[0]-3525550000 > 0)

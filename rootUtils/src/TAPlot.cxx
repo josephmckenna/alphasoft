@@ -623,6 +623,9 @@ void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReade
    while (labviewReader->Next())
    {
       double runTime = labviewEvent->GetRunTime();
+      double midasTime = labviewEvent->GetMIDAS_TIME();
+      double runStart = Get_A2Analysis_Report(57181).GetRunStartTime();
+      runTime = midasTime - runStart;
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
          continue;
