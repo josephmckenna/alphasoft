@@ -130,9 +130,7 @@ public:
    void SaveToTree(TARunInfo* runinfo,TA2Spill* s)
    {
          if (!s) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("A2SpillTree","A2SpillTree");

@@ -21,6 +21,7 @@
 #include "chrono_module.h"
 #include "TChrono_Event.h"
 #include "TChronoChannelName.h"
+#include "TROOT.h"
 #include "TTree.h"
 
 #include <vector>
@@ -121,9 +122,7 @@ public:
    void SaveToTree(TARunInfo* runinfo,TAGSpill* s)
    {
          if (!s) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("AGSpillTree","AGSpillTree");

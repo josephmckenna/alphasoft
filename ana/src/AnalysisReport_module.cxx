@@ -114,9 +114,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
