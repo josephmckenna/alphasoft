@@ -4,7 +4,7 @@
 #include <math.h>
 #include<iostream>
 
-static const double _sq2 = 1.0/sqrt(12.0); //should be sqrt(2.0)
+static const double _sq2 = 1.0/sqrt(2.0);
 
 SignalsGenerator::SignalsGenerator(double awnl, double padnl):fAnodeNoiseLevel(awnl),
 							      fPadNoiseLevel(padnl),
@@ -64,8 +64,8 @@ void SignalsGenerator::Initialize()
 
   // parameters that characterize
   // the noise on the electrodes
-  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(6.)*mV2ADC*0.5; //should be sqrt(12.)
-  fPadNoisePkPk = fPadNoiseLevel*sqrt(9.)*mV2ADC*0.5; //should be sqrt(12.)
+  fAnodeNoisePkPk = fAnodeNoiseLevel*sqrt(12.)*mV2ADC*0.5;
+  fPadNoisePkPk = fPadNoiseLevel*sqrt(12.)*mV2ADC*0.5;
 
   // init the wf containers
   for(uint aw=0; aw<256; ++aw)
