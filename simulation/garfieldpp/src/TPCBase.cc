@@ -161,7 +161,8 @@ void TPCBase::GetPadPosition(int i, int s, double &z, double &phi)
 
 std::pair<int,int> TPCBase::FindPad(const double zed, const double phi)
 {
-  const double z = zed + HalfLengthZ; // from -ve z to +ve -> increasing pad number
+   const double z = zed - HalfLengthZ;
+   //const double z = (zed+0.5)*PadSideZ - HalfLengthZ; // from -ve z to +ve -> increasing pad number
   double f = phi-phi0;
   if(f<0.) f+=2.*M_PI;
   //  std::cout<<"z: "<<zed<<"\tphi: "<<phi<<std::endl;

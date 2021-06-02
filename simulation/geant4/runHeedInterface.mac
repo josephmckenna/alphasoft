@@ -19,7 +19,7 @@
 ####################################
 
 ######## Set Magnetic Field ######
-/AGTPC/geom/MagneticField 0. tesla
+########/AGTPC/geom/MagneticField 1. tesla
 ####################################
 
 ####################################
@@ -29,14 +29,12 @@
 /AGTPC/phys/InitializePhysics emstandard_opt0
 /AGTPC/phys/AddParametrisation
 /process/em/AddPAIRegion all DriftRegion PAIphoton
-######## Set Magnetic Field ########
-/AGTPC/geom/MagneticField 0
 ####################################
 
 ####################################
 ############# Run Setup ############
 ####################################
-/AGTPC/setRunName HeedInterface_emstd0_driftRKF_B0
+/AGTPC/setRunName HeedInterface_emstd0_driftRKF_debug
 /random/setSeeds 18061985 10081985
 /run/initialize
 ####################################
