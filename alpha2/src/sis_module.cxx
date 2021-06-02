@@ -130,9 +130,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
    {
          if (!fFlags->fSaveSIS) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SISEventTree)
             SISEventTree = new TTree("SISEventTree","SISEventTree");

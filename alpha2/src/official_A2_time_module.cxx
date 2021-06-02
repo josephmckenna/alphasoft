@@ -34,7 +34,7 @@ private:
    //double VF48ZeroTime=0;
    
    // int SVD_channel=-1; Unused
-  
+
    std::deque<double> SISEventRunTime;
 
    std::deque<ULong64_t> SISClock;
@@ -133,9 +133,7 @@ public:
    {
       if (!SVDOfficial)
       {
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
       }
@@ -144,9 +142,7 @@ public:
          SVDOfficial->Branch("OfficialTime","TSVD_QOD",&e,32000,0);
       else
          SVDOfficial->SetBranchAddress("OfficialTime",&e);
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       SVDOfficial->Fill();
       //std::cout<<"Saving at t:"<<e->t<<std::endl;
    }
