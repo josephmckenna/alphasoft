@@ -69,7 +69,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Vertex Display";
+      fModuleName="Vertex Display";
 #endif
       if (fTrace)
          printf("VertexDisplay::ctor!\n");

@@ -45,7 +45,7 @@ public:
       : TARunObject(runinfo), a2ed(NULL), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Display Module";
+      fModuleName="Display Module";
 #endif
       printf("A2DisplayRun::ctor!\n");
    }

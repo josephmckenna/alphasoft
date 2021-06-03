@@ -53,7 +53,7 @@ public:
                                                          d( f->ana_settings )
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="DeconvAWModule";
+      fModuleName="DeconvAWModule";
 #endif
       if (fTrace)
          printf("DeconvAWModule::ctor!\n");
@@ -158,7 +158,7 @@ public:
          }
       }
 #ifdef MANALYZER_PROFILER
-      START_TIMER
+      PROFILE_FROM_HERE;
 #endif
       const Alpha16Event* aw = e->a16;
       if( !aw )
@@ -166,7 +166,7 @@ public:
             std::cout<<"DeconvAWModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
 #ifdef MANALYZER_PROFILER
-            flow = new UserProfilerFlow(flow,"deconv_aw_module (No Alpha16Event)",timer_start);
+            flow = new UserProfilerFlow(flow,"deconv_aw_module (No Alpha16Event)");
 #endif
             return flow;
          }

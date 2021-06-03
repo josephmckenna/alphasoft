@@ -49,7 +49,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Handle Dumps";
+      fModuleName="Handle Dumps";
 #endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");

@@ -92,7 +92,7 @@ public:
    matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="BC/TPC Matching Module";
+      fModuleName="BC/TPC Matching Module";
 #endif
       printf("matchingmodule::ctor!\n");
       //      MagneticField=fFlags->fMagneticField<0.?1.:fFlags->fMagneticField;

@@ -35,7 +35,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Catch Efficiency";
+      fModuleName="Catch Efficiency";
 #endif
       if (fTrace)
          printf("CatchEfficiencyModule::ctor!\n");

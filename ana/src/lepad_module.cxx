@@ -53,7 +53,7 @@ public:
       
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="LEpadModule";
+      fModuleName="LEpadModule";
 #endif
       if (fTrace) printf("LEpadModule::ctor!\n");
    }

@@ -59,7 +59,7 @@ public:
       : TARunObject(runinfo)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Match Module";
+      fModuleName="Match Module";
 #endif
       if (fTrace)
          printf("MatchModule::ctor!\n");
@@ -69,16 +69,16 @@ public:
       //First thread
 #ifdef MANALYZER_PROFILER
       if (fFlags->ThreadID < 0)
-        ModuleName="Match Module (CombPads)";
+        fModuleName="Match Module (CombPads)";
       //Multithreaded fitting
       else if ( fFlags->ThreadID < fFlags->TotalThreads ) 
-        ModuleName="Match Module (Combine " +
+        fModuleName="Match Module (Combine " +
           std::to_string(fFlags->ThreadID) + 
           "/" +
           std::to_string(fFlags->TotalThreads) +
           ")";
       else if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
-        ModuleName="Match Module (spacepoints)";
+        fModuleName="Match Module (spacepoints)";
 #endif
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
       fTrace=fFlags->fTrace; // enable verbosity

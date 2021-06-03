@@ -54,7 +54,7 @@ public:
       
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="DeconvPADModule";
+      fModuleName="DeconvPADModule";
 #endif
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");

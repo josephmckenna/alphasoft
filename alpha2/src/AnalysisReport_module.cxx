@@ -163,7 +163,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="AnalysisReport";
+      fModuleName="AnalysisReport";
 #endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");

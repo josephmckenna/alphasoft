@@ -51,7 +51,7 @@ public:
                                                       fNtracks(1),fCoincTime(20.)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="PHspectrum Module";
+      fModuleName="PHspectrum Module";
 #endif
    }
    ~PHspectrum() {}

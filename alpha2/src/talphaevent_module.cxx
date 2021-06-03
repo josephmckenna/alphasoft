@@ -83,7 +83,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Module";
+      fModuleName="TAlphaEvent Module";
 #endif
       if (fTrace)
          printf("AlphaEventModule::ctor!\n");
@@ -265,7 +265,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Cluster";
+      fModuleName="TAlphaEvent Cluster";
 #endif
       fFlags=flags;
    }
@@ -292,7 +292,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent hits";
+      fModuleName="TAlphaEvent hits";
 #endif
       fFlags=flags;
    }
@@ -325,7 +325,7 @@ public:
       offset=o;
       fFlags=flags;
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent GetTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
+      fModuleName="TAlphaEvent GetTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
 #endif
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -353,7 +353,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Make Helicies";
+      fModuleName="TAlphaEvent Make Helicies";
 #endif
       fFlags=flags;
    }
@@ -387,7 +387,7 @@ public:
       offset=o;
       fFlags=flags;
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent FitTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
+      fModuleName="TAlphaEvent FitTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
 #endif
    }
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -416,7 +416,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent PruneTracks";
+      fModuleName="TAlphaEvent PruneTracks";
 #endif
       fFlags=flags;
    }
@@ -443,7 +443,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Vertex";
+      fModuleName="TAlphaEvent Vertex";
 #endif
       fFlags=flags;
    }
@@ -474,14 +474,14 @@ public:
    {
       fFlags=flags;
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Improve Vert"+std::to_string(fFlags->ImproveVertexInteration);
+      fModuleName="TAlphaEvent Improve Vert"+std::to_string(fFlags->ImproveVertexInteration);
       if (stride)
       {
-         ModuleName+="(";
-         ModuleName+=std::to_string(offset);
-         ModuleName+="/";
-         ModuleName+=std::to_string(stride);
-         ModuleName+=")";
+         fModuleName+="(";
+         fModuleName+=std::to_string(offset);
+         fModuleName+="/";
+         fModuleName+=std::to_string(stride);
+         fModuleName+=")";
       }
 #endif
    }
@@ -529,7 +529,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent ImproveVertex More";
+      fModuleName="TAlphaEvent ImproveVertex More";
 #endif
       fFlags=flags;
    }
@@ -571,7 +571,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent RPhi";
+      fModuleName="TAlphaEvent RPhi";
 #endif
       fFlags=flags;
    }
@@ -598,7 +598,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent GoodHel";
+      fModuleName="TAlphaEvent GoodHel";
 #endif
       fFlags=flags;
    }
@@ -629,7 +629,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="TAlphaEvent Save";
+      fModuleName="TAlphaEvent Save";
 #endif
       if (fFlags->SaveTAlphaEvent)
       {
