@@ -104,7 +104,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+      fModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
 	  
 	  //New declaration in initiator. 

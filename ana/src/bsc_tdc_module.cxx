@@ -70,7 +70,7 @@ public:
       TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="bsc tdc module";
+      fModuleName="bsc tdc module";
 #endif
       printf("tdcmodule::ctor!\n");
    }

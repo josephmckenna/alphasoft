@@ -51,7 +51,7 @@ public:
                                                  fFlags( f )
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="LEawModule";
+      fModuleName="LEawModule";
 #endif
       if (fTrace)
          printf("LEawModule::ctor!\n");
@@ -105,7 +105,7 @@ public:
          return flow;
       }
 #ifdef MANALYZER_PROFILER
-      START_TIMER
+      PROFILE_FROM_HERE
 #endif
       if(fTrace)
          printf("LEawModule::Analyze, run %d, counter %d\n",
@@ -163,7 +163,7 @@ public:
             std::cout<<"LEawModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
 #ifdef MANALYZER_PROFILER
-            flow = new UserProfilerFlow(flow,"LEaw_module (No Alpha16Event)",timer_start);
+            flow = new UserProfilerFlow(flow,"LEaw_module (No Alpha16Event)");
 #endif
             return flow;
          }

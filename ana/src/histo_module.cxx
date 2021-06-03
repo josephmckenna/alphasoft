@@ -174,7 +174,7 @@ public:
 
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Histo Module";
+      fModuleName="Histo Module";
 #endif
       diagnostics=f->fDiag;
    }
@@ -183,9 +183,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       if(!diagnostics) return;
       printf("HistoModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;

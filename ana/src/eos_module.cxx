@@ -308,7 +308,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="EOS Module";
+      fModuleName="EOS Module";
 #endif
       if (!fFlags->fEOS) return;
       if (fTrace)

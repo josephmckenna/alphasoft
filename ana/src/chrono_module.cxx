@@ -63,7 +63,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="ChronoModule";
+      fModuleName="ChronoModule";
 #endif
       if (fTrace)
          printf("Chrono::ctor!\n");

@@ -61,7 +61,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="sis_module";
+      fModuleName="sis_module";
 #endif
       if (fTrace)
          printf("SIS::ctor!\n");

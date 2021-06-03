@@ -48,7 +48,7 @@ public:
    {
       fTrace=fFlags->fVerbose;
 #ifdef MANALYZER_PROFILER
-      ModuleName="WFpersistencyModule";
+      fModuleName="WFpersistencyModule";
 #endif
       if( fTrace )
          printf("WFpersistencyModule::ctor!\n");
@@ -67,9 +67,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-#ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 

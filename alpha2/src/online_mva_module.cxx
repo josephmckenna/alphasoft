@@ -43,7 +43,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Online MVA Module";
+      fModuleName="Online MVA Module";
 #endif
       if (fTrace)
          printf("OnlineMVA::ctor!\n");

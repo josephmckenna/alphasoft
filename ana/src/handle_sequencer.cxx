@@ -49,7 +49,7 @@ public:
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Handle Sequencer";
+      fModuleName="Handle Sequencer";
 #endif
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
@@ -113,7 +113,7 @@ public:
          return flow;
       }
 #ifdef MANALYZER_PROFILER
-      START_TIMER
+      PROFILE_FROM_HERE;
 #endif
       //
 
@@ -178,7 +178,7 @@ public:
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
 #ifdef MANALYZER_PROFILER
-         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
+         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)");
 #endif
          return flow;
          }  

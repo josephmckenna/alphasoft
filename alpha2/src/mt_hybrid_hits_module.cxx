@@ -143,7 +143,7 @@ public:
      : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module";
+      fModuleName="hybrid_hits_module";
 #endif
       if (fTrace)
          printf("HitModule::ctor!\n");
@@ -264,7 +264,7 @@ public:
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+      fModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
       // load the sqlite3 db
       SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);

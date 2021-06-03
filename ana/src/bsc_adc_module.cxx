@@ -59,7 +59,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="bsc adc module";
+      fModuleName="bsc adc module";
 #endif
    }
 

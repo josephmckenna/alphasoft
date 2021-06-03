@@ -97,7 +97,7 @@ public:
                                                     f->fLocation)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="RecoModule";
+      fModuleName="RecoModule";
 #endif
       printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
@@ -191,7 +191,7 @@ public:
          return flow;
       }
 #ifdef MANALYZER_PROFILER
-      START_TIMER
+      PROFILE_FROM_HERE;
 #endif
       AgEvent* age = ef->fEvent;
 
@@ -278,7 +278,7 @@ public:
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
 #ifdef MANALYZER_PROFILER
-          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
+          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)");
 #endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
@@ -286,7 +286,7 @@ public:
             std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
 #ifdef MANALYZER_PROFILER
-            flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
+            flow = new UserProfilerFlow(flow,"reco_module(too many hits)");
 #endif
          }
 

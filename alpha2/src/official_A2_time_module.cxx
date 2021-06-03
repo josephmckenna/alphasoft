@@ -55,7 +55,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="OfficialA2Time";
+      fModuleName="OfficialA2Time";
 #endif
       if (fTrace)
          printf("OfficialA2Time::ctor!\n");

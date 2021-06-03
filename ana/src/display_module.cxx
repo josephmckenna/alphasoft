@@ -48,7 +48,7 @@ public:
       : TARunObject(runinfo), aged(0), fFlags(f)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Display Module";
+      fModuleName="Display Module";
 #endif
       printf("DisplayRun::ctor!\n");
    }

@@ -60,7 +60,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Official Time";
+      fModuleName="Official Time";
 #endif
       if (fTrace)
          printf("OfficialTime::ctor!\n");

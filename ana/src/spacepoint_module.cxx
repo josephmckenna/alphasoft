@@ -54,7 +54,7 @@ public:
       : TARunObject(runinfo)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="SpacePoint Module";
+      fModuleName="SpacePoint Module";
 #endif
       if (fTrace)
          printf("SpacepointModule::ctor!\n");

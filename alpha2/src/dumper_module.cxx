@@ -37,7 +37,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Dumper Module";
+      fModuleName="Dumper Module";
 #endif
       if (fTrace)
          printf("Dumper::ctor!\n");

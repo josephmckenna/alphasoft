@@ -88,7 +88,7 @@ public:
       : TARunObject(runinfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="SpillLog";
+      fModuleName="SpillLog";
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");

@@ -77,7 +77,7 @@ public:
                                                 fTdelay(0.)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="Calib Module";
+      fModuleName="Calib Module";
 #endif
       printf("CalibRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;

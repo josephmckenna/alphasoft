@@ -91,7 +91,7 @@ public:
       : TARunObject(runinfo)
    {
 #ifdef MANALYZER_PROFILER
-      ModuleName="unpack_module_stream";
+      fModuleName="unpack_module_stream";
 #endif
       if (fTrace)
          printf("UnpackModule::ctor!\n");
