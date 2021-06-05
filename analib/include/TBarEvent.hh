@@ -125,7 +125,7 @@ public:
   double GetTDCZed() {
       return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
   }
-  ClassDef(BarHit, 2);
+  ClassDef(BarHit,3);
 };
 
 
