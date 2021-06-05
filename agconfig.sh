@@ -128,7 +128,7 @@ echo "Adding $AGRELEASE/bin/include to ROOT_INCLUDE_PATH"
 export ROOT_INCLUDE_PATH=${AGRELEASE}/bin/include:${ROOT_INCLUDE_PATH}
 
 #Add scripts to BIN path
-for AG_BIN_PATH in scripts bin; do
+for AG_BIN_PATH in scripts bin bin/simulation; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
