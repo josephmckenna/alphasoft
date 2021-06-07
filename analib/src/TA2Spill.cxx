@@ -1,7 +1,7 @@
 #include "TA2Spill.h"
 
 #ifdef BUILD_A2
-ClassImp(TA2SpillScalerData);
+ClassImp(TA2SpillScalerData)
 /*TA2SpillScalerData::TA2SpillScalerData()
 {
 
@@ -48,7 +48,8 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODUL
    VertexFilled      =true;
 }
 
-ClassImp(TA2SpillSequencerData);
+ClassImp(TA2SpillSequencerData)
+
 TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
 {
 }
@@ -86,7 +87,7 @@ void TA2SpillScalerData::Print()
 }
 
 
-TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a)
+TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a) : TSpillSequencerData(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -95,7 +96,8 @@ TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a)
    fStopState    =a.fStopState;
 }
 
-ClassImp(TA2Spill);
+ClassImp(TA2Spill)
+
 TA2Spill::TA2Spill()
 {
    SeqData    =NULL;
