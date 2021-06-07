@@ -140,12 +140,13 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
       fADCdelay = -120.;
    else if( run >= 2724 && run < 3032 ) // new FMC-32
       fADCdelay = 0.;
-   else if( run >= 3032 && run < 3870 )
-      fADCdelay = -250.;
-   else if( run >= 3870 && run < 4488 )
-      fADCdelay = -330.;
-   else if( run >= 4488 && run < 900000 )
+   else if( run >= 3032 && run < 4488 )
+      fADCdelay = -256.;
+   else if( run >= 4488 && run < 4590 )
       fADCdelay = 0.;//fADCdelay = -304.;
+   else if( run >= 4590 && run < 900000 )
+      fADCdelay = -216.;
+
 
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
@@ -217,10 +218,11 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 3870 && run < 4488 )
-      fPWBdelay = -80.;//fPWBdelay = -50.;
-   else if( run >= 4488 && run < 900000 )
-      fPWBdelay = -16.;//fPWBdelay = -320.;
+   else if( run >= 3870 && run < 4590 )
+      fPWBdelay = -16.;
+   else if( run >= 4590 && run < 900000 )
+      fPWBdelay = -40.;
+
       
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
