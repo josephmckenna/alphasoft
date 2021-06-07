@@ -1,34 +1,22 @@
 #include <iostream>
-#include <cstdio>
-#include <cassert>
-#include <fstream>
-#include <vector>
 #include <string>
-
-using namespace std;
 
 #include <TCanvas.h>
 #include <TROOT.h>
 #include <TApplication.h>
-#include <TGraph.h>
-#include <TAxis.h>
+#include <TFile.h>
 #include <TMath.h>
 
-#include "Garfield/Plotting.hh"
-
+#include "Garfield/SolidTube.hh"
 #include "Garfield/ComponentAnalyticField.hh"
 #include "Garfield/MediumMagboltz.hh"
-#include "Garfield/SolidTube.hh"
-#include "Garfield/GeometrySimple.hh"
 #include "Garfield/Sensor.hh"
-#include "Garfield/FundamentalConstants.hh"
-#include "Garfield/ViewField.hh"
-#include "Garfield/ViewCell.hh"
-
 #include "Garfield/DriftLineRKF.hh"
 #include "Garfield/AvalancheMC.hh"
-#include "Garfield/ViewDrift.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/FundamentalConstants.hh"
 
+using namespace std;
 using namespace Garfield;
 
 int main(int argc, char * argv[]) 
@@ -52,8 +40,7 @@ int main(int argc, char * argv[])
     }
 
   TApplication app("app", &argc, argv);
-  plottingEngine.SetDefaultStyle();
- 
+
   // Make a gas medium.
   MediumMagboltz gas;
   TString gasdata = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",getenv("AGRELEASE"));
@@ -62,47 +49,50 @@ int main(int argc, char * argv[])
 				     getenv("GARFIELD_HOME"));
   gas.LoadIonMobility(iondata.Data());
 
-  // Build the geometry.
+  // Define the cell layout.
+  //  constexpr double lZ = 115.2 / 16.;
   constexpr double lZ = 115.2;
-  //  constexpr double rRO = 19.03;
-  constexpr double rRO = 19.;
-  GeometrySimple geo;
-  SolidTube tube(0, 0, 0, 0, rRO, lZ);
-  geo.AddSolid(&tube, &gas);
-
   ComponentAnalyticField cmp;
-  cmp.SetGeometry(&geo);
-  cmp.SetMagneticField(0.,0.,1.);
+  Sensor sensor;
+  sensor.AddComponent(&cmp);
+
+  cmp.SetMedium(&gas);
+  cmp.SetMagneticField(0, 0, 1);
   cmp.SetPolarCoordinates();
   // Outer wall.
+  constexpr double rRO = 19.0;
   cmp.AddPlaneR(rRO, 0, "ro");
+  cmp.AddReadout("ro");
+  // sensor.AddElectrode(&cmp, "ro");
   // Inner wall.
   constexpr double rCathode = 10.925;
   cmp.AddPlaneR(rCathode, -4000., "c");
+  constexpr int nWires = 256;
   // Phi periodicity.
-  const double sphi = 360. / 256.;
-
+  const double sphi = 360. / double(nWires);
+ 
   // Field wires.
   // Radius [cm]
   constexpr double rFW = 17.4;
   // Diameter [cm]
   constexpr double dFW = 152.e-4;
   // Potential [V]
-  constexpr double vFW = -99.;
+  constexpr double vFW = -110.;
   // Tension [g]
   constexpr double tFW = 120.;
 
   // Anode wires.
   constexpr double rAW = 18.2;
   constexpr double dAW = 30.e-4;
-  constexpr double vAW = 3100.;
+  constexpr double vAW = 3200.;
   constexpr double tAW = 40.;
 
   cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
   cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
   cmp.AddReadout("a");
   cmp.SetPeriodicityPhi(sphi);
-  cmp.PrintCell();
+  //cmp.PrintCell();
+  sensor.AddElectrode(&cmp,"a");
 
   TCanvas cDrift;
 
@@ -113,12 +103,6 @@ int main(int argc, char * argv[])
                     1.1 * rRO,  1.1 * rRO,  1.);
   cellView.EnableWireMarkers(false);
 
-
-  // Finally assembling a Sensor object
-  Sensor sensor;
-  // Calculate the electric field
-  sensor.AddComponent(&cmp);
-  sensor.AddElectrode(&cmp,"a");
 
   // Construct object to visualise drift lines
   ViewDrift viewdrift;
@@ -152,11 +136,11 @@ int main(int argc, char * argv[])
   double Rstep = 0.05, Rministep = 0.01;
   int ie = 0;
   cout<<"\nBEGIN"<<endl;
-  TString fname = TString::Format("./PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",
+  TString fname = TString::Format("%s/polar_drift/drift_tables/PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",getenv("GARFIELDPP"),
 				  tracking.c_str(),
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
-  fout<<"I'M SETUP to USE "<<tracking<<endl;
+  cout<<"I'M SETUP to USE "<<tracking<<endl;
   // variables to identify the aw
   int aw=-1;
   double AnodeWiresPitch = sphi*TMath::DegToRad();
@@ -224,6 +208,7 @@ int main(int argc, char * argv[])
 	  eaval.GetAvalancheSize(une,uni);
 	  ne=double(une);
 	  ni=double(uni);
+	  gain=ni;
 	}
       else if( !tracking.compare("driftRKF") )
 	{
@@ -264,7 +249,8 @@ int main(int argc, char * argv[])
       else
 	ss << "\n";
 
-      fout<<ss.str();
+      //fout<<ss.str();
+      fout<<xi<<"\t"<<yi<<"\t"<<phif<<"\t"<<tf<<"\t"<<gain<<endl;
       cout<<ss.str();
       ri+=Rstep;
     }
@@ -281,7 +267,7 @@ int main(int argc, char * argv[])
 				      InitialPhi,InitialZed);
       cDrift.SaveAs(cname.Data());
       cout<<cname<<" saved"<<endl;
-      app.Run(true);
+      //app.Run(true);
     }
 
   return 0;
