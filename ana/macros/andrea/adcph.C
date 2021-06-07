@@ -20,15 +20,18 @@ using namespace std;
 
 void adcph()
 {
-  int// runT = 904547, 
-        runT=904648, 
-runC=4576;
+  int runT=3873, 
+     runC=4620;
+    // runT = 904547, 
+    //runT=904648, 
+    //runC=4576;
   TString fname=TString::Format("%s/test/cosmics%d.root",getenv("DATADIR"),runT);
   list<TString> file_list {TString::Format("%s/test/cosmics%d.root",getenv("DATADIR"),runT),
       TString::Format("%s/CERN2021/cosmics%d.root",getenv("DATADIR"),runC)};
   //"/daq/alpha_data0/acapra/alphag/CERN2021/cosmics4541.root"     };
   int col[]={kBlue,kRed};
-  TString lname[]={TString::Format("TRIUMF R%d",runT),TString::Format("CERN R%d",runC)};
+  //TString lname[]={TString::Format("TRIUMF R%d",runT),TString::Format("CERN R%d",runC)};
+TString lname[]={TString::Format("CERN R%d",runT),TString::Format("CERN R%d",runC)};
 
   const int Nfiles=file_list.size();
   int i=0;
