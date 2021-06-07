@@ -12,11 +12,13 @@
 #include <TNamed.h>
 #include <TCanvas.h>
 #include <TString.h>
+
 #include "TSiliconEvent.h"
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
 #include "TAlphaEventCosmicHelix.h"
 #include "TAlphaEventVertex.h"
+#include "TLine.h"
 
 class TCanvas;
 class TPad;

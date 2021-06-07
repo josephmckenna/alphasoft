@@ -64,7 +64,7 @@ public:
       using TPolyLine3D::DrawClone;
 
       Neuron(const vector<TSpacePoint*> &pts, int start, int end, const vector<double> &pointWeights);
-      Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(nullptr), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL){};
+      Neuron();
 
       inline bool SetActive(bool act=true){ active = act; return active; };
       inline void SetV(double v){ V = v; };
