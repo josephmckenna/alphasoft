@@ -62,7 +62,7 @@ acapra()
     echo -e " \e[91m Hi Andrea! \e[m"
     
     # export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
-    export PATH="$AGRELEASE/scripts/andrea":$PATH
+    export PATH="$AGRELEASE/scripts/andrea":"$AGRELEASE/simulation/garfieldpp/scripts":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
