@@ -29,7 +29,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/ComponentBmap.cc ${PROJECT_SOURCE_DIR}/src/MagneticFieldMap.cc ${PROJECT_SOURCE_DIR}/src/TPCBase.cc ${PROJECT_SOURCE_DIR}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
-set(BINS DriftGas.cc PlotMedium.cc ChamberField.cc CalculateGain.cc ChamberDrift.cc ElectronAvalanche.cc TrackElectronAvalanche.cc WireSag.cc polar.cc PolarDrift.cc PolarSignal.cc)
+set(BINS DriftGas.cc PlotMedium.cc ChamberField.cc CalculateGain.cc ChamberDrift.cc ElectronAvalanche.cc TrackElectronAvalanche.cc WireSag.cc polar.cc PolarDrift.cc PolarSignal.cc PolarDriftSignal.cc)
 
 foreach(target ${BINS})
   string( REPLACE ".cc" ".exe" bin ${target} )
