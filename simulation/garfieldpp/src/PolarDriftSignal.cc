@@ -23,8 +23,8 @@ int main(int argc, char * argv[])
 { 
   double InitialPhi = 0., // rad
     InitialZed = 0.; // cm
-
   string tracking="driftMC";
+  bool plot=false;
 
   double pressure=725.; // Torr @ CERN
 
@@ -37,11 +37,23 @@ int main(int argc, char * argv[])
     {
       InitialPhi     = atof(argv[1])*TMath::DegToRad();
       InitialZed     = atof(argv[2]);
-
-      tracking = argv[3];
+      tracking       = argv[3];
+    }
+ else if( argc == 5 )
+    {
+      InitialPhi     = atof(argv[1])*TMath::DegToRad();
+      InitialZed     = atof(argv[2]);
+      tracking       = argv[3];
+      plot           = bool(atoi(argv[4]));
     }
 
-  //  TApplication app("PolarDrift", &argc, argv);
+  cerr<<"============================="<<endl;
+  cerr<<"\t"<<argv[0]<<endl;
+  cerr<<"============================="<<endl;
+
+
+  TApplication* app;
+  if(plot) app = new TApplication("PolarDriftSignal", &argc, argv);
 
   // Make a gas medium.
   MediumMagboltz gas;
@@ -52,8 +64,8 @@ int main(int argc, char * argv[])
 				     getenv("GARFIELD_HOME"));
   gas.LoadIonMobility(iondata.Data());
 
+
   // Define the cell layout.
-  //  constexpr double lZ = 115.2 / 16.;
   constexpr double lZ = 115.2;
   ComponentAnalyticField cmp;
   Sensor sensor;
@@ -90,41 +102,71 @@ int main(int argc, char * argv[])
   constexpr double vAW = 3200.;
   constexpr double tAW = 40.;
 
-  cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
-  cmp.AddReadout("a");
-  cmp.SetPeriodicityPhi(sphi);
-  //cmp.PrintCell();
-  sensor.AddElectrode(&cmp,"a");
+  // Add the wires.
+  for (int i = 0; i < nWires; ++i) 
+    { 
+      // Field wires.
+      cmp.AddWire(rFW, i * sphi, dFW, vFW, "f", 2 * lZ);
+      // Anode wires.
+      auto ename = std::string(TString::Format("a%03d", i).Data());
+      cmp.AddWire(rAW, (i + 0.5) * sphi, dAW, vAW, ename, 2 * lZ);
+      cmp.AddReadout(ename);
+      sensor.AddElectrode(&cmp, ename);
+  }
+
+  // // Pads.
+  // constexpr double gap = rRO - rAW;
+  // constexpr int nSecs = 32;
+  // constexpr double pitchPhi = TwoPi / nSecs;
+  // constexpr double pitchZ = 0.4;
+  // constexpr int nRows = int(2 * lZ / pitchZ);
+  // std::cout << "Number of pad rows: " << nRows << std::endl;
+  // for (int j = 0; j < nRows; ++j) 
+  //   {
+  //     const double z0 = -lZ + j * pitchZ;
+  //     const double z1 = z0 + pitchZ;
+  //     std::string row = std::string(TString::Format("%03d", j).Data());
+  //     for (int i = 0; i < nSecs; ++i) 
+  // 	{
+  // 	  std::string sec = std::string(TString::Format("%02d", i).Data());
+  // 	  const double phi0 = i * pitchPhi * RadToDegree; 
+  // 	  const double phi1 = phi0 + pitchPhi * RadToDegree;
+  // 	  std::string ename = "pad" + row + "_" + sec;
+  // 	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
+  // 	  cmp.AddReadout(ename);
+  // 	  sensor.AddElectrode(&cmp, ename);
+  // 	}
+  //   }
 
   TCanvas cDrift;
-  TString cname = TString::Format("Polar_%s_Signal",tracking.c_str());
-  cDrift.SetName(cname);
-   
   ViewCell cellView;
-  cellView.SetCanvas(&cDrift);
-  cellView.SetComponent(&cmp);
-  cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
-                    1.1 * rRO,  1.1 * rRO,  1.);
-  cellView.EnableWireMarkers(false);
-
-
-  // Construct object to visualise drift lines
   ViewDrift viewdrift;
-  viewdrift.SetCanvas(&cDrift);
-  viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
-                    1.1 * rRO,  1.1 * rRO,  1.);
 
-  cout<<"I'M SETUP to USE "<<tracking<<endl;
+  if( plot ) {
+    TString cname = TString::Format("Polar_%s_Signal",tracking.c_str());
+    cDrift.SetName(cname);
+   
+    cellView.SetCanvas(&cDrift);
+    cellView.SetComponent(&cmp);
+    cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
+		     1.1 * rRO,  1.1 * rRO,  1.);
+    cellView.EnableWireMarkers(false);
+    
+    
+    // Construct object to visualise drift lines
+    viewdrift.SetCanvas(&cDrift);
+    viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
+		      1.1 * rRO,  1.1 * rRO,  1.);
+  }
 
   //----------------------------------------------------
   // Transport Class for Electrons drift
   // Runge-Kutta
   DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
-  // const double maxStepSize=0.03;// cm
-  // edrift.SetMaximumStepSize(maxStepSize);
-  edrift.EnablePlotting(&viewdrift);
+  const double maxStepSize=0.03;// cm
+  edrift.SetMaximumStepSize(maxStepSize);
+  if(plot) edrift.EnablePlotting(&viewdrift);
   //  edrift.EnableDebugging();
   //----------------------------------------------------
   // Avalanche MC
@@ -133,7 +175,7 @@ int main(int argc, char * argv[])
   eaval.EnableMagneticField();
   // const double distanceStep = 2.e-3; // cm
   // eaval.SetDistanceSteps(distanceStep);
-  eaval.EnablePlotting(&viewdrift);
+  if(plot) eaval.EnablePlotting(&viewdrift);
 
   // Electron initial point
   double ri=rCathode;
@@ -141,7 +183,7 @@ int main(int argc, char * argv[])
   double Rstep = 0.05, Rministep = 0.01;
   int ie = 0;
   cout<<"\nBEGIN"<<endl;
-  TString fname = TString::Format("%s/polar_drift/drift_tables/PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",getenv("GARFIELDPP"),
+  TString fname = TString::Format("%s/polar_driftsignal/drift_tables/PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat",getenv("GARFIELDPP"),
 				  tracking.c_str(),
 				  InitialPhi,InitialZed);
   ofstream fout(fname.Data());
@@ -176,10 +218,6 @@ int main(int argc, char * argv[])
 	  ri+=Rministep;
 	  continue;
 	}
-
-      // if( !edrift.DriftElectron(xi,yi,zi,ti) ) continue;
-      // if( !eaval.DriftElectron(xi,yi,zi,ti) ) continue;
-      // if( !eaval.AvalancheElectron(xi,yi,zi,ti) ) continue;
 
       double xf,yf,zf,tf,phif;
       int status;
@@ -254,7 +292,6 @@ int main(int argc, char * argv[])
       else
 	ss << "\n";
 
-      //fout<<ss.str();
       fout<<xi<<"\t"<<yi<<"\t"<<phif<<"\t"<<tf<<"\t"<<gain<<endl;
       cout<<ss.str();
       ri+=Rstep;
@@ -263,19 +300,16 @@ int main(int argc, char * argv[])
   cout<<"END"<<endl;
   cout<<"Number of Clusters: "<<ie<<endl;
 
-  if( tracking.compare("avalMC") )
+  if( tracking.compare("avalMC") && plot )
     {
       cout<<"Plot Driftlines"<<endl;
       viewdrift.Plot(true,true);
       cellView.Plot2d();
-      
-      TString cname = TString::Format("%s/polar_drift/drift_plots/PolarDrift_phi%1.4f_Z%2.1fcm.png",getenv("GARFIELDPP"),
-				      InitialPhi,InitialZed);
+      TString cname = TString::Format("%s/polar_driftsignal/drift_plots/PolarDrift_phi%1.4f_Z%2.1fcm.png",getenv("GARFIELDPP"),InitialPhi,InitialZed);
       cDrift.SaveAs(cname.Data());
       cout<<cname<<" saved"<<endl;
-      //app.Run(true);
+      app->Run(true);
     }
 
   return 0;
 }
-

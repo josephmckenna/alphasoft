@@ -82,7 +82,12 @@ TH1D GetROSignal(Garfield::Sensor* sensor, TString* electrode, bool conv=false)
     hs.SetBinContent(b,sensor->GetSignal(electrode->Data(),b));
 
   int mbin=hs.GetMinimumBin();
-  std::cout<<hs.GetName()<<" peak "<<hs.GetBinContent(mbin)<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
+  double bc = hs.GetBinContent(mbin);
+  if( bc == 0. ){
+     mbin=hs.GetMaximumBin();
+     bc = hs.GetBinContent(mbin);
+  }
+  std::cout<<hs.GetName()<<" peak "<<bc<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
   
   return hs;
 }
