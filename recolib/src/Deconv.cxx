@@ -145,9 +145,7 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
    else if( run >= 4488 && run < 4590 )
       fADCdelay = 0.;//fADCdelay = -304.;
    else if( run >= 4590 && run < 900000 )
-      fADCdelay = -216.;
-
-
+      fADCdelay = -232.;
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
@@ -218,10 +216,8 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 3870 && run < 4590 )
-      fPWBdelay = -16.;
-   else if( run >= 4590 && run < 900000 )
-      fPWBdelay = -40.;
+   else if( run >= 3870 && run < 900000 )
+      fPWBdelay = 0.;
 
       
 
