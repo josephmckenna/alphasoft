@@ -35,13 +35,13 @@ fi
 #nohup agana.exe -O/mnt/fast_disk/andrea/cosmics4579.root --mt run04579sub000.mid.lz4 -- --EOS --calib --diag --anasettings $AGRELEASE/ana/comm2.json --Bfield 0 &> $AGRELEASE/RunLogs/R4579.log &
 
 
-#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib &> RunLogs/R4593.log &
-#agana.exe -O$DATADIR/test/cosmics4593comm.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/comm.json --Bfield 0 --calib &> RunLogs/R4593comm.log &
-#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_0.json --Bfield 0 --calib &> RunLogs/R4593.log &
-#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib &> RunLogs/R4593.log &
+#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cyl_l1.5.json --Bfield 0 --calib &> $AGRELEASE/RunLogs/R4593.log &
+#agana.exe -O$DATADIR/test/cosmics4593comm.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/comm.json --Bfield 0 --calib &> $AGRELEASE/RunLogs/R4593comm.log &
+#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_0.json --Bfield 0 --calib &> $AGRELEASE/RunLogs/R4593.log &
+#agana.exe -O$DATADIR/test/cosmics4593.root --mt $AGMIDASDATA/run04593sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib &> $AGRELEASE/RunLogs/R4593.log &
 
 
-#agana.exe -O$DATADIR/test/cosmics4605.root --mt $AGMIDASDATA/run04605sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib |& tee RunLogs/R4605.log
+#agana.exe -O$DATADIR/test/cosmics4605.root --mt $AGMIDASDATA/run04605sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib |& tee $AGRELEASE/RunLogs/R4605.log
 
-#agana.exe -O$DATADIR/test/cosmics4620.root --mt $AGMIDASDATA/run04620sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib &> RunLogs/R4620.log&
-agana.exe -O$DATADIR/test/cosmics4620.root --mt $AGMIDASDATA/run04620sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json --Bfield 0 --calib &> RunLogs/R4620.log&
+#agana.exe -O$DATADIR/test/cosmics4620.root --mt $AGMIDASDATA/run04620sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_1.json --Bfield 0 --calib &> $AGRELEASE/RunLogs/R4620.log&
+agana.exe -O$DATADIR/test/cosmics4620.root --mt $AGMIDASDATA/run04620sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json --Bfield 0 --calib |& tee $AGRELEASE/RunLogs/R4620.log

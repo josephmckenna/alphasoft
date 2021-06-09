@@ -43,5 +43,5 @@ fi
 #MainEventTree.exe --rootfile $DATADIR/test/cosmics4593comm.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/Reco4593.log
 
 
-MainEventTree.exe --rootfile $DATADIR/test/cosmics4605.root --plot 0 --save 1 &> $AGRELEASE/RunLogs/reco4605.log&
-MainEventTree.exe --rootfile $DATADIR/test/cosmics4620.root --plot 0 --save 1 &> $AGRELEASE/RunLogs/reco4620.log&
+#MainEventTree.exe --rootfile $DATADIR/test/cosmics4605.root --plot 0 --save 1 &> $AGRELEASE/RunLogs/reco4605.log&
+MainEventTree.exe --rootfile $DATADIR/test/cosmics4620.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/reco4620.log
