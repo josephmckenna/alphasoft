@@ -18,7 +18,7 @@ void DriftTimePlot()
 
   fin->cd("/awdeconv");
   TH1D* htt = (TH1D*)gROOT->FindObject("hTimeTop");
-  //htt->SetMinimum(0);
+  htt->SetMinimum(0);
   htt->SetStats(kFALSE);
   htt->SetLineColor(kOrange);
   htt->SetLineWidth(2);
@@ -27,7 +27,7 @@ void DriftTimePlot()
    
   fin->cd("/paddeconv");
   TH1D* htpad = (TH1D*)gROOT->FindObject("hTimePad");
-  //htpad->SetMinimum(0);
+  htpad->SetMinimum(0);
   htpad->SetStats(kFALSE);
   htpad->SetLineColor(kBlack);
   htpad->SetLineWidth(2);
