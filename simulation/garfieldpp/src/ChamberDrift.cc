@@ -229,18 +229,6 @@ int main(int argc, char * argv[])
       return -51;
     }
   TNtupleD ntefin("ntefin","e- endpoint","x:y:z:t:n");
-  TH2D* hEv=new TH2D("hEv","hEv;electric field [V/cm];velocity [cm/ns]",
-                     100,100.,1.e4,
-                     100,0.,1.e-2);
-  TH2D* hrE=new TH2D("hrE","hrE;radius [cm];electric field [V/cm]",
-                     100,drift_cell.GetCathodeRadius(),drift_cell.GetROradius(),
-                     1000,100.,1.e4);
-  TH2D* hrv=new TH2D("hrv","hrv;radius [cm];velocity [cm/ns]",
-                     100,drift_cell.GetCathodeRadius(),drift_cell.GetROradius(),
-                     100,0.,1.e-2);
-  _hEv=*hEv;
-  _hrE=*hrE;
-  _hrv=*hrv;
 
   cerr<<"\nBEGIN"<<endl;
  
