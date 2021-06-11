@@ -13,11 +13,12 @@ def work(cmd):
     start_time=time.time()
     print(cmd, 'START @', time.strftime("%Y %b %d, %H:%M:%S", time.localtime()))
     try:
-        out=sp.check_output(cmd, shell=True, stderr=open(logfile,'w'))
+        out=sp.check_output(cmd, shell=True, stderr=sp.STDOUT)
         elapsed_time = time.time() - start_time
         wall_clock=str(datetime.timedelta(seconds=elapsed_time))
         print(cmd, 'DONE in', wall_clock, 's')
-        with open(logfile, "a") as f:
+        with open(logfile, "w") as f:
+            f.write(out.decode())
             f.write( '\nWall Clock: '+wall_clock+'\n' )
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
@@ -28,6 +29,7 @@ def scan(zscan):
     FieldVoltage   = -110.
     MagneticField  = 1.
     QuenchFraction = 0.3
+    track = 'driftMC'
 
     if zscan:
         z=np.array([0.0,20.0,40.0,60.0]) # cm
@@ -41,13 +43,15 @@ def scan(zscan):
     ok,bad,tot=0,0,0
     for InitialZed in z:
         for InitialPhi in phi:
-            fname = '%s/polar_drift/drift_tables/PolarDriftLine_driftMC_phi%1.4f_Z%2.1fcm.dat' % (os.environ['GARFIELDPP'],radians(InitialPhi),InitialZed)
+            fname = '%s/polar_drift/drift_tables/PolarDriftLine_%s_phi%1.4f_Z%2.1fcm.dat' % (os.environ['GARFIELDPP'],track,radians(float(InitialPhi)),InitialZed)
             if os.path.isfile(fname):
                 ok=ok+1
+                os.remove(fname)
             else:
                 bad=bad+1
                 #print 'NOT FOUND:', fname
-            cmd.append( '%s/bin/simulation/PolarDrift.exe %1.4f %1.2f' % (os.environ['AGRELEASE'],radians(InitialPhi), InitialZed) )
+            print(fname)
+            cmd.append( '%s/bin/simulation/PolarDrift.exe %1.4f %1.2f %s' % (os.environ['AGRELEASE'],InitialPhi, InitialZed, track) )
 
     print('ok: ', ok, 'bad: ', bad, 'tot: ', tot)
     return cmd

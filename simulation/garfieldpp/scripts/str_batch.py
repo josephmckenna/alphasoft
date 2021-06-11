@@ -9,7 +9,8 @@ import datetime
 import os
 
 def work(cmd):
-    logfile=os.environ['GARFIELDPP']+'/chamber_drift/drift_logs/'+cmd[len(os.environ['GARFIELDPP']):].replace(' ','_')+'.log'
+    ss=len(os.environ['AGRELEASE']+'bin/simulation')+1
+    logfile=os.environ['GARFIELDPP']+'/chamber_drift/drift_logs/'+cmd[ss:].replace(' ','_')+'.log'
     start_time=time.time()
     print(cmd, 'START @', time.strftime("%Y %b %d, %H:%M:%S", time.localtime()))
     try:
@@ -28,7 +29,7 @@ def scan(zscan):
     #AnodeVoltage   = 3100.
     #FieldVoltage   = -99.
     FieldVoltage   = -110.
-    MagneticField  = -1.
+    MagneticField  = 1.
     #MagneticField  = -0.26
     #MagneticField  = 1.
     QuenchFraction = 0.3
@@ -48,6 +49,7 @@ def scan(zscan):
             fname = '%s/chamber_drift/drift_tables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.dat' % (os.environ['GARFIELDPP'],radians(InitialPhi),InitialZed,(1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,CathodeVoltage,AnodeVoltage,FieldVoltage,MagneticField)
             if os.path.isfile(fname):
                 ok=ok+1
+                os.remove(fname)
             else:
                 bad=bad+1
                 #print 'NOT FOUND:', fname
@@ -59,7 +61,7 @@ def scan(zscan):
 
 if __name__ == '__main__':
 
-    commands=scan(True)
+    commands=scan(False)
     '''
     for x in commands:
         print x
