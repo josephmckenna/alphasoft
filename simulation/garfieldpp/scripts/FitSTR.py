@@ -15,10 +15,19 @@ def get_array(B=0.,Q=0.3,Vaw=3200.,Vfw=-110.,z=0.0):
     for angle in range(1,360,3):
         if angle % 90 == 0: continue
         phi=radians(float(angle))
-        fname='%s/chamber_drift/drift_tables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode-4000V_Anode%.0fV_Field%.0fV_B%1.2fT.dat' % (environ['GARFIELDPP'],phi,z,(1.-Q)*1.e2,Q*1.e2,Vaw,Vfw,B)
+        #fname = '%s/chamber_drift/drift_tables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode-4000V_Anode%.0fV_Field%.0fV_B%1.2fT.dat' % (environ['GARFIELDPP'],phi,z,(1.-Q)*1.e2,Q*1.e2,Vaw,Vfw,B)
+        
+        #fname = '%s/polar_drift/drift_tables/PolarDriftLine_driftRKF_phi%1.4f_Z%2.1fcm.dat' % (environ['GARFIELDPP'],phi,z)
+        fname = '%s/polar_drift/drift_tables/PolarDriftLine_driftMC_phi%1.4f_Z%2.1fcm.dat' % (environ['GARFIELDPP'],phi,z)        
+
+        #fname = '%s/polar_driftsignal/drift_tables/PolarDriftLine_driftRKF_phi%1.4f_Z%2.1fcm.dat' % (environ['GARFIELDPP'],phi,z)
+        #fname = '%s/polar_driftsignal/drift_tables/PolarDriftLine_driftMC_phi%1.4f_Z%2.1fcm.dat' % (environ['GARFIELDPP'],phi,z)
+
         if not path.isfile(fname): 
-            print(fname)
+            print('BAD',fname)
             continue
+        else:
+            print('OK',angle,fname)
         x,y,w,time,gain = np.loadtxt(fname,delimiter='\t', skiprows=0, unpack=True)
         r=np.sqrt(np.square(x)+np.square(y))
         r*=10. # cm -> mm
@@ -99,7 +108,11 @@ def endpointSTR(pars,r):
     coeff=[c for c in reversed(pars[1:])]
     coeff[-1]-=r
     roots=np.roots(coeff)
-    return np.asscalar( np.real(roots[np.isreal(roots)]) )
+    #return np.asscalar( np.real(roots[np.isreal(roots)]) )
+    #real_roots = np.real( roots[np.isreal(roots)] ).item()
+    #print(f'zeros: {real_roots}')
+    #return real_roots
+    return np.real( roots[np.isreal(roots)] ).item()
 
             
 
