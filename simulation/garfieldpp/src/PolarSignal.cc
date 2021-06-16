@@ -27,8 +27,8 @@ int main(int argc, char * argv[])
     //InitialRad = 10.925;
     InitialRad = 17.401;
 
-  //  string tracking="driftMC";
-  std::string tracking="driftRKF";
+  std::string tracking="driftMC";
+  //std::string tracking="driftRKF";
 
    if( argc == 2 )
     {
@@ -64,7 +64,7 @@ int main(int argc, char * argv[])
   gas.LoadIonMobility(iondata.Data());
 
   // Define the cell layout.
-  constexpr double lZ = 115.2 / 16.;
+  constexpr double lZ = 115.2;
   ComponentAnalyticField cmp;
   Sensor sensor;
   sensor.AddComponent(&cmp);
@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
   cmp.SetPolarCoordinates();
   // Outer wall.
   constexpr double rRO = 19.0;
-  cmp.AddPlaneR(rRO, 0, "ro");
+  cmp.AddPlaneR(rRO, 0.0, "ro");
   cmp.AddReadout("ro");
   // sensor.AddElectrode(&cmp, "ro");
   // Inner wall.
@@ -240,9 +240,11 @@ int main(int argc, char * argv[])
 	  return 1;
 	}
       // if (!ok) return 0;
-      if( !ok ) 
+      if( ok ) 
+	std::cout<<"OK"<<std::endl;
+      else
       	{
-      	  std::cerr<<tracking<<" FAILED"<<std::endl;
+      	  std::cout<<tracking<<" FAILED"<<std::endl;
       	  --ie;
       	  ri+=Rministep;
       	  continue;
@@ -262,6 +264,8 @@ int main(int argc, char * argv[])
       else if( !tracking.compare("driftRKF") )
 	edrift.GetEndPoint(xf,yf,zf,tf,status);
       else return 1; //break;
+
+      std::cout<<ie<<")\tend @ ("<<xf<<","<<yf<<","<<zf<<") cm @ "<<tf<<" ns"<<std::endl;
 	
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
@@ -426,7 +430,9 @@ int main(int argc, char * argv[])
 	    {
 	      int row_temp = row+rw;
 	      idx = sec_temp + nSecs * row_temp;
-	      plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
+	      std::cout<<"pad: "<<idx<<" sec: "<<sec_temp<<" row: "<<row_temp<<std::endl;
+	      //plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
+	      plot_signal_name = TString::Format("pad%03d_%02d",row_temp,sec_temp);
 	      int pos = (sc+2)+3*(rw+2);
 	      std::cout<<"Plotting "<<plot_signal_name<<" in "<<pos<<std::endl;
 	      TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );
