@@ -187,7 +187,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
 
   // Read the cry input file
   std::ifstream CRYFile;
-  CRYFile.open("./cry.file",std::ios::in);
+  char CRYname[128];
+  sprintf(CRYname,"%s/simulation/geant4/cry.file",getenv("AGRELEASE"));
+  CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
   std::string setupString("");
   while ( !CRYFile.getline(buffer,1000).eof())
