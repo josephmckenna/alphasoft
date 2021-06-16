@@ -114,29 +114,29 @@ int main(int argc, char * argv[])
       sensor.AddElectrode(&cmp, ename);
   }
 
-  // // Pads.
-  // constexpr double gap = rRO - rAW;
-  // constexpr int nSecs = 32;
-  // constexpr double pitchPhi = TwoPi / nSecs;
-  // constexpr double pitchZ = 0.4;
-  // constexpr int nRows = int(2 * lZ / pitchZ);
-  // std::cout << "Number of pad rows: " << nRows << std::endl;
-  // for (int j = 0; j < nRows; ++j) 
-  //   {
-  //     const double z0 = -lZ + j * pitchZ;
-  //     const double z1 = z0 + pitchZ;
-  //     std::string row = std::string(TString::Format("%03d", j).Data());
-  //     for (int i = 0; i < nSecs; ++i) 
-  // 	{
-  // 	  std::string sec = std::string(TString::Format("%02d", i).Data());
-  // 	  const double phi0 = i * pitchPhi * RadToDegree; 
-  // 	  const double phi1 = phi0 + pitchPhi * RadToDegree;
-  // 	  std::string ename = "pad" + row + "_" + sec;
-  // 	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
-  // 	  cmp.AddReadout(ename);
-  // 	  sensor.AddElectrode(&cmp, ename);
-  // 	}
-  //   }
+  // Pads.
+  constexpr double gap = rRO - rAW;
+  constexpr int nSecs = 32;
+  constexpr double pitchPhi = TwoPi / nSecs;
+  constexpr double pitchZ = 0.4;
+  constexpr int nRows = int(2 * lZ / pitchZ);
+  std::cout << "Number of pad rows: " << nRows << std::endl;
+  for (int j = 0; j < nRows; ++j) 
+    {
+      const double z0 = -lZ + j * pitchZ;
+      const double z1 = z0 + pitchZ;
+      std::string row = std::string(TString::Format("%03d", j).Data());
+      for (int i = 0; i < nSecs; ++i) 
+  	{
+  	  std::string sec = std::string(TString::Format("%02d", i).Data());
+  	  const double phi0 = i * pitchPhi * RadToDegree; 
+  	  const double phi1 = phi0 + pitchPhi * RadToDegree;
+  	  std::string ename = "pad" + row + "_" + sec;
+  	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
+  	  cmp.AddReadout(ename);
+  	  sensor.AddElectrode(&cmp, ename);
+  	}
+    }
 
   TCanvas cDrift;
   ViewCell cellView;
