@@ -57,8 +57,15 @@ int main(int argc, char** argv)
    TClonesArray* aw_hits = new TClonesArray("TMChit");
    if( tGarf ) 
       {
+         std::cout<<tGarf->GetTitle()<<" entries: "<<tGarf->GetEntriesFast()<<std::endl;
          tGarf->SetBranchAddress("GarfHits",&garfpp_hits);   
          tGarf->SetBranchAddress("AnodeHits",&aw_hits);
+      }
+   else
+      {
+         tGarf = (TTree*) fin->Get("TPCMCdata");
+         std::cout<<tGarf->GetTitle()<<" entries: "<<tGarf->GetEntriesFast()<<std::endl;
+         tGarf->SetBranchAddress("TPCMCHits",&garfpp_hits);
       }
 
    TTree* tSig =  (TTree*) fin->Get("Signals");
