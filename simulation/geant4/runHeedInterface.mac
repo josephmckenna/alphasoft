@@ -34,7 +34,7 @@
 ####################################
 ############# Run Setup ############
 ####################################
-/AGTPC/setRunName HeedInterface_emstd0_driftRKF_debug
+/AGTPC/setRunName HeedInterface_emstd0_driftRKF_sigma
 /random/setSeeds 18061985 10081985
 /run/initialize
 ####################################

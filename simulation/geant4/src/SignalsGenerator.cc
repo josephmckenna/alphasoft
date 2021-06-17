@@ -60,7 +60,7 @@ void SignalsGenerator::Initialize()
 
   // parameter that characterizes
   // the charge induced on the pads (taken from Sauli)
-  fPadsChargeSigma = 2. * (190.-182.) / 2.34;
+  fPadsChargeSigma = 2. * (19.0-18.2) / 2.34;
 
   // parameters that characterize
   // the noise on the electrodes
