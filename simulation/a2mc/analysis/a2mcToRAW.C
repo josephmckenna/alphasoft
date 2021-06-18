@@ -34,6 +34,15 @@ void a2mcToRAW::WriteRAW() {
             ///< Loop on the hits
 //            SilHits_fnStrp[ih] ///< e.g. hit n-strip
         }
+        for(UInt_t it=0; it<MCTracks_; it++) {
+            if(verbose) {
+                // cout << it << endl;
+                // cout << "\t trackID (" << MCTracks_fTrackID[it] << ")" << endl;
+                // cout << "\t Vo (" << MCTracks_fVx[it] << ", " << MCTracks_fVy[it] << ", " << MCTracks_fVz[it] << ")" << endl;
+                // cout << "\t Po (" << MCTracks_fPx[it] << ", " << MCTracks_fPy[it] << ", " << MCTracks_fPz[it] << ")" << endl;
+                // cout << "\t Pt (" << sqrt(MCTracks_fPx[it]*MCTracks_fPx[it]+MCTracks_fPy[it]*MCTracks_fPy[it]) <<  ")" << endl;
+            }
+        }
         nOutEvents++;
     }
     cout << "Writing " << nOutEvents << " \'good\' events in the RAW output file" << endl;

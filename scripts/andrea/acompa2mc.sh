@@ -1,16 +1,18 @@
 #!/bin/bash
 
 if [ -z ${AGRELEASE+x} ]; then 
+    echo "config"
     . agconfig.sh
 else
     echo "main folder: $AGRELEASE"
+    echo "ROOT: `root-config --version`"
 fi
 cd $AGRELEASE
 
-INST_DIR=$HOME/packages
-#INST_DIR=$AGRELEASE/simulation
-#LIB=lib64  # in some systems this is required instead of
-LIB=lib
+#INST_DIR=$HOME/packages
+INST_DIR=$AGRELEASE/simulation
+LIB=lib64  # in some systems this is required instead of
+#LIB=lib
 
 VGM=$INST_DIR/vgm/install
 VGMVER=4.9.0
@@ -56,7 +58,7 @@ prereq() {
     if [ ! -d "./geant4_vmc" ]; then
 	git clone http://github.com/vmc-project/geant4_vmc.git 
 	cd geant4_vmc
-	git checkout v5-3
+	#git checkout v5-3
     fi
     cd $INST_DIR/geant4_vmc
     echo "Building: `basename $PWD`"
@@ -69,7 +71,7 @@ prereq() {
     cd $AGRELEASE
 }
 
-#prereq
+prereq
 
 DEP_LIST=($G4VMC/$LIB/Geant4VMC-$G4VMCVER $G4VMC/$LIB/MTRoot-$G4VMCVER $VGM/$LIB/VGM-$VGMVER $VMC/$LIB/VMC-$VMCVER)
 for DEP in ${DEP_LIST[*]}; do

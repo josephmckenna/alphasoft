@@ -17,7 +17,9 @@ export A2DATAPATH=${AGRELEASE}/alpha2
 
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
-export AGOUTPUT=${AGRELEASE} # this is the default location
+if [[ -z ${AGOUTPUT} ]]; then
+    export AGOUTPUT=${AGRELEASE} # this is the default location
+fi
 
 #Use EOS PUBLIC if not already set
 if [ -e ${EOS_MGM_URL} ]; then
@@ -35,7 +37,9 @@ fi
 
 alphaBeast()
 {
-  . ~/packages/root_build/bin/thisroot.sh
+  #. ~/packages/root_build/bin/thisroot.sh
+    . /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-gcc8-opt/setup.sh
+    echo -e " \e[34m `git status | head -1`\e[m"	
 }
 
 alphaCrunch()
@@ -49,10 +53,8 @@ alphaCrunch()
 
 agana()
 {
-  . ~/packages/root_v6.16.00_el74_64/bin/thisroot.sh
-#  . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.14.04/x86_64-centos7-gcc48-opt/root/bin/thisroot.sh
-#  . ~/packages/rootana/thisrootana.sh
-  echo -e " \e[34m `git status | head -1`\e[m"
+    . /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-gcc8-opt/setup.sh
+    echo -e " \e[34m `git status | head -1`\e[m"
 }
 
 acapra()
@@ -92,6 +94,13 @@ echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "##################################################"
 
+if [ `echo "${GARFIELD_HOME}" | wc -c` -gt 1 ]; then
+   echo "GARFIELD_HOME set to ${GARFIELD_HOME}, configuring... "
+   cat ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+   source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+else
+   echo "GARFIELD_HOME not set"
+fi
 
 #Setup LD_LIBRARY_PATH
 for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
@@ -172,7 +181,7 @@ alphacpc04* | alphacpc09*  )
   export AGMIDASDATA="/alpha/agdaq/data"
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
-      agana
+      #agana
   fi
   ;;
 *.triumf.ca )

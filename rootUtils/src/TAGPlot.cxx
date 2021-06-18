@@ -203,6 +203,8 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   }
   Event.CutsResult=CutsResult;
   VertexEvents.push_back(Event);
+  //AddVertexEvent(Event.RunNumber, Event.EventNo, Event.CutsResult, Event.VertexStatus, 
+      //Event.x, Event.y, Event.z, Event.t, Event.EventTime, Event.RunTime, Event.nHelices, Event.nTracks);
 
   if( Event.VertexStatus >= 1 && Event.CutsResult > 0 )
     {

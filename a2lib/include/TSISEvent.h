@@ -48,14 +48,22 @@ public:
   Int_t GetCountsInChannel( int i)
   {
      if ( SISModule==1)
+     {
         i=i-32;
-     if (i<0) return 0;
-     else  if (i>=NUM_SIS_CHANNELS) return 0;
+     }
+     if (i<0)
+     {
+        return 0;
+     } 
+     else if (i>=NUM_SIS_CHANNELS)
+     {
+        return 0;
+     }
      else 
-     //assert(i>=0);
-     //assert(i<NUM_SIS_CHANNELS);
-     return Counts[i];
-   }
+     {
+        return Counts[i];
+     }
+  }
   int    GetSISModule()          { return SISModule; }
   int    GetScalerModule()          { return SISModule; }
   ULong64_t GetClock()				{ return Clock; }
@@ -64,6 +72,7 @@ public:
 
   Int_t     GetRunNumber()     	    { return RunNumber; }
   Double_t  GetMidasUnixTime()		    { return MidasTime; }
+  unsigned long GetMidasEventID()            { return MidasEventID; }
 
   using TObject::Print;
   virtual void Print();
