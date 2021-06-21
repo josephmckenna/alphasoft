@@ -28,79 +28,80 @@ public:
 class felabViewModuleWriter
 {
    private:
-      std::vector<TTree*> trees;
-      std::vector<TBranch*> dataBranchVec;
-      std::vector<TBranch*> MIDAS_TIMEBranchVec;
-      std::vector<TBranch*> run_timeBranchVec;
-      int runNumber;
+      std::vector<TTree*> fTrees;
+      std::vector<TBranch*> fDataBranches;
+      std::vector<TBranch*> fMIDASTimeBranches;
+      std::vector<TBranch*> fRunTimeBranches;
+      int fRunNo;
    private:
-      void BranchTreeFromData(TTree* t, TStoreLabVIEWEvent* LVEvent)
+      void BranchTreeFromData(TTree* tree, TStoreLabVIEWEvent* labviewEvent)
       {
-         TBranch* TAObj_b = t->GetBranch("TStoreLabVIEWEvent");
-         if (!TAObj_b)
-            t->Branch("TStoreLabVIEWEvent",&LVEvent);
+         TBranch* branch = tree->GetBranch("TStoreLabVIEWEvent");
+         if (!branch)
+            tree->Branch("TStoreLabVIEWEvent",&labviewEvent);
          {
-            t->SetBranchAddress("TStoreLabVIEWEvent",&LVEvent);
+            tree->SetBranchAddress("TStoreLabVIEWEvent",&labviewEvent);
          }
-         
-         t->Fill();
+         tree->Fill();
       }
-      TTree* FindOrCreateTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
+      TTree* FindOrCreateTree(TARunInfo* runInfo, felabviewFlowEvent* flowEvent)
       {
-         std::string name = mf->GetBankName();
-         int numberoftrees = trees.size();
+         std::string name = flowEvent->GetBankName();
+         int numberOfTrees = fTrees.size();
          bool treeAlreadyExists = false;
          TTree* currentTree;
 
-         for(int i=0; i<numberoftrees; i++)
+         for(int i=0; i<numberOfTrees; i++)
          {
-            std::string treename = trees[i]->GetName();
-            std::string currenteventname = name.c_str();
-            if(treename == currenteventname)
+            std::string treeName = fTrees[i]->GetName();
+            std::string currentEventName = name.c_str();
+            if(treeName == currentEventName)
             {
                treeAlreadyExists = true;
-               currentTree = trees[i]->GetTree();
+               currentTree = fTrees[i]->GetTree();
             }
          }
          if(!treeAlreadyExists)
          {
-            runinfo->fRoot->fOutputFile->cd("felabview");
-            currentTree = new TTree(name.c_str(),"Tree with vectors");
-            trees.push_back(currentTree);
+            runInfo->fRoot->fOutputFile->cd("felabview");
+            currentTree = new TTree(name.c_str(), "Tree with vectors");
+            fTrees.push_back(currentTree);
          }
          return currentTree;
       }
-      TStoreLabVIEWEvent CreateTAObjectFromFlow(TARunInfo* runinfo, felabviewFlowEvent* mf)
+      TStoreLabVIEWEvent CreateTAObjectFromFlow(TARunInfo* runInfo, felabviewFlowEvent* flowEvent)
       {
-         std::string t_BankName = mf->GetBankName();
-         std::vector<double> t_data = *mf->GetData();
-         uint32_t t_MIDAS_TIME = mf->GetMIDAS_TIME();
-         double t_run_time = mf->GetRunTime();
-         double t_labview_time = mf->GetLabviewTime();
-         return TStoreLabVIEWEvent(t_BankName, t_data, t_MIDAS_TIME, t_run_time, t_labview_time, runNumber);
+         std::string bankName = flowEvent->GetBankName();
+         std::vector<double> data = *flowEvent->GetData();
+         uint32_t midasTime = flowEvent->GetMIDAS_TIME();
+         double runTime = flowEvent->GetRunTime();
+         double labviewTime = flowEvent->GetLabviewTime();
+         return TStoreLabVIEWEvent(bankName, data, midasTime, runTime, labviewTime, fRunNo);
       }
       public:
-      void WriteTrees(TARunInfo* runinfo)
+      void WriteTrees(TARunInfo* runInfo)
       {
          #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          #endif
-         runinfo->fRoot->fOutputFile->cd("felabview");
-         for (TTree* t: trees)
-            t->Write();
+
+         runInfo->fRoot->fOutputFile->cd("felabview");
+         for (TTree* tree: fTrees)
+            tree->Write();
       }
-      void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
+      void SaveToTree(TARunInfo* runInfo, felabviewFlowEvent* flowEvent)
       {
          #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          #endif
-         TTree* t = FindOrCreateTree(runinfo, mf);
-         TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
-         BranchTreeFromData(t, &m_LabViewEvent);  
+
+         TTree* tree = FindOrCreateTree(runInfo, flowEvent);
+         TStoreLabVIEWEvent labviewEvent = CreateTAObjectFromFlow(runInfo, flowEvent);
+         BranchTreeFromData(tree, &labviewEvent);  
       }
-      void SetRunNumber(int RunNumber)
+      void SetRunNumber(int runNumber)
       {
-         runNumber = RunNumber;
+         fRunNo = runNumber;
       }
 
 };
@@ -108,18 +109,18 @@ class felabViewModuleWriter
 class felabviewModule: public TARunObject
 {
 private:
-   TTree* felabEventTree   = NULL;
-   uint32_t initialEventTime;
-   felabViewModuleWriter treeWriter;
+   TTree* fFELabEventTree   = NULL;
+   uint32_t fInitialEventTime;
+   felabViewModuleWriter fTreeWriter;
    bool fInitTimeSaved = false;
 
 public:
    felabModuleFlags* fFlags;
    bool fTrace = false;
-   std::vector<TTree*> trees;
+   std::vector<TTree*> fTrees;
    
-   felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
-      : TARunObject(runinfo), fFlags(flags)
+   felabviewModule(TARunInfo* runInfo, felabModuleFlags* flags)
+      : TARunObject(runInfo), fFlags(flags)
    {
 #ifdef MANALYZER_PROFILER
       ModuleName="felabview Module";
@@ -134,27 +135,27 @@ public:
          printf("felabviewFlow::dtor!\n");
    }
 
-   void BeginRun(TARunInfo* runinfo)
+   void BeginRun(TARunInfo* runInfo)
    {
-      runinfo->fRoot->fOutputFile->cd();
-      treeWriter.SetRunNumber(runinfo->fRunNo);
+      runInfo->fRoot->fOutputFile->cd();
+      fTreeWriter.SetRunNumber(runInfo->fRunNo);
       gDirectory->mkdir("felabview")->cd();
       if (fTrace)
-         printf("felabviewFlow::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+         printf("felabviewFlow::BeginRun, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
     }
 
-   void EndRun(TARunInfo* runinfo)
+   void EndRun(TARunInfo* runInfo)
    {
       if (fTrace)
-         printf("felabviewModule::EndRun, run %d\n", runinfo->fRunNo);
-      treeWriter.WriteTrees(runinfo);
+         printf("felabviewModule::EndRun, run %d\n", runInfo->fRunNo);
+      fTreeWriter.WriteTrees(runInfo);
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
   {
      {
-         felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
-         if(mf == 0x0)
+         felabviewFlowEvent* flowEvent = flow->Find<felabviewFlowEvent>();
+         if(flowEvent == 0x0)
          {
 #ifdef MANALYZER_PROFILER
             *flags |= TAFlag_SKIP_PROFILE;
@@ -162,55 +163,70 @@ public:
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
-         treeWriter.SaveToTree(runinfo, mf);
+         fTreeWriter.SaveToTree(runInfo, flowEvent);
       }
       return flow; 
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze(TARunInfo* runInfo, TMEvent* midasEvent, TAFlags* flags, TAFlowEvent* flow)
    {
-     if(me->event_id == 6)
+     if(midasEvent->event_id == 6)
       {
          if(!fInitTimeSaved)
          {
-            initialEventTime = me->time_stamp;
+            fInitialEventTime = midasEvent->time_stamp;
             fInitTimeSaved = true;
          }
          
-         u32 time_stamp = me->time_stamp;
-         u32 dataoff = me->data_offset;
+         u32 timeStamp = midasEvent->time_stamp;
+         u32 dataOffset = midasEvent->data_offset;
 
-         me->FindAllBanks();
-         if(me->banks.size()>1)
+         midasEvent->FindAllBanks();
+         if(midasEvent->banks.size()>1)
          {
             //printf("\n \n \n DEBUG: felabviewModule::Analyze. Has multiple banks. Exit with error code 11. This should never be hit. \n \n \n");
             exit(11);
          }
          
-         std::string BN = me->banks[0].name.c_str();
-         std::string bn = "HPRO";
-         std::cout << "BN = " << BN << std::endl;
-         std::cout << "bn = " << bn << std::endl;
-         double * rawmeData = (double*)me->GetBankData(&me->banks[0]);
-         int N = (int)(me->banks[0].data_size / 8);
-         std::vector<double> meData;
-         for (int i=0; i<N; i++)
+
+         std::string currentBankName = midasEvent->banks[0].name.c_str();
+         double * rawMIDASData = (double*)midasEvent->GetBankData(&midasEvent->banks[0]);
+         int dataSize = (int)(midasEvent->banks[0].data_size / 8);
+         std::vector<double> midasEventData;
+         for (int i=0; i<dataSize; i++)
          {
-            meData.push_back(rawmeData[i]);
+            midasEventData.push_back(rawMIDASData[i]);
          }
-         // I need a range check to assure meData[0] is the right format
-         double runTime = meData[0] - (double)initialEventTime - (double)2082844800;
-         felabviewFlowEvent* f = new felabviewFlowEvent(flow, BN, meData, me->time_stamp, runTime, meData[0]);
-         flow = f;
-         if (fTrace);
+
+         double runTime;
+         // I need a range check to assure meData[0] is the right format if not use MIDAS time.
+         if( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) > 5)
+         {
+            runTime = midasEvent->time_stamp;
+         }
+         felabviewFlowEvent* flowEvent = new felabviewFlowEvent(flow, currentBankName, midasEventData, midasEvent->time_stamp, runTime, midasEventData[0]);
+         flow = flowEvent;
+         
+
+         //=== Debug Logging ===
+         /*if( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) > 5)
+         {
+            printf("Timestamp clash: (lv time) %f - %d (midas time) = %f for bank: %s \n", midasEventData[0]-2082844800, midasEvent->time_stamp, midasEventData[0] - 2082844800 - midasEvent->time_stamp, currentBankName.c_str());
+         }
+         std::string bankName = "HPRO";
          if (BN==bn)
          {
              
              if(meData[0]-3525550000 > 0)
-                printf("Timestamp of this event is = %f \n", meData[0]-3525550000);
-                for (int i=0; i<meData.size(); i++)
-                   std::cout<<meData[i]<<std::endl;
-			}
+                printf("\n\n   LV Timestamp of this event is = %f \n", meData[0]-2082844800);
+                printf("   MI Timestamp of this event is = %d \n\n", me->time_stamp);
+
+                //for (int i=0; i<meData.size(); i++)
+                   //std::cout<<meData[i]<<std::endl;
+			}*/
+         //=== End of Logging ===
+
+
       }
       else
       {  //No work done... skip profiler
@@ -221,11 +237,11 @@ public:
       return flow;
    }
 
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
+   void AnalyzeSpecialEvent(TARunInfo* runInfo, TMEvent* event)
    {
        if (fTrace)
           printf("felabviewModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+                 runInfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
@@ -253,10 +269,10 @@ public:
          printf("FelabViewFactory::Finish!\n");
    }
    
-   TARunObject* NewRunObject(TARunInfo* runinfo)
+   TARunObject* NewRunObject(TARunInfo* runInfo)
    {
-      printf("FelabViewFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new felabviewModule(runinfo, &fFlags);
+      printf("FelabViewFactory::NewRunObject, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
+      return new felabviewModule(runInfo, &fFlags);
    }
 };
 
