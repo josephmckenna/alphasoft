@@ -846,6 +846,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     case 67: // test: single track at fixed location
@@ -875,6 +877,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
    case 68: // test: single track at fixed location
@@ -904,6 +908,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     default:
