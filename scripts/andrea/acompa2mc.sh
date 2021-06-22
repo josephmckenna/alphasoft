@@ -73,7 +73,7 @@ prereq() {
     ${cmd} -DCMAKE_INSTALL_PREFIX=$G4VMC -DGeant4VMC_USE_VGM=ON -DVGM_DIR="$VGM/$LIB/VGM-$VGMVER" -DVMC_DIR="$VMC/$LIB/VMC-$VMCVER" -DGeant4VMC_BUILD_MTRoot=ON -DGarfield_INCLUDE_DIR="$GARFIELD_HOME/install/include/Garfield" ..
     ${cmd} --build . --target install -- -j`nproc --ignore=2`
 
-    #########################################################################
+#########################################################################
     cd $AGRELEASE
 }
 
@@ -132,5 +132,4 @@ else
     echo "cmake --build . --verbose"
 fi
 
-#
-##echo "cmake --build . --target clean --verbose"
+#echo "cmake --build . --target clean --verbose"
