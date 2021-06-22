@@ -201,6 +201,8 @@ int main(int argc, char** argv)
 
          tMC->GetEntry(i);
          TVector3* mcvtx = (TVector3*) vtx->ConstructedAt(i);
+         std::cout<<"[main]# "<<i<<"\tMCvertex: "; 
+         mcvtx->Print();
 
          proc.ProcessVertex(mcvtx);
          
