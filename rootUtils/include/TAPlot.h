@@ -414,7 +414,7 @@ class TFELabVIEWData: public TEnvData
       void AddLVEvent(int runNumber, TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
-         double runStart = Get_A2Analysis_Report(57181).GetRunStartTime();
+         double runStart = Get_A2Analysis_Report(runNumber).GetRunStartTime();
          time = labviewEvent->GetMIDAS_TIME() - runStart;
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2

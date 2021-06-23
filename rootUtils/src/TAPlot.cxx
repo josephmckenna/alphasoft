@@ -625,7 +625,7 @@ void TAPlot::LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReade
       double runTime = labviewEvent->GetRunTime();
       double midasTime = labviewEvent->GetMIDAS_TIME();
       //GodDamn this is hard coded - is it needed?
-      double runStart = Get_A2Analysis_Report(57181).GetRunStartTime();
+      double runStart = Get_A2Analysis_Report(runNumber).GetRunStartTime();
       runTime = midasTime - runStart;
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
