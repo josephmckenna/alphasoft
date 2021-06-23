@@ -17,7 +17,7 @@
             //"program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
             //"args": ["${workspaceFolder}/run54590sub*.mid.gz", "--mt", "--", "--summarize", "Mixing"],
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
-            "args": ["${workspaceFolder}/runs/run45000sub00000.mid.gz", "--", "--dumplist", "eventlist45000.list", "--datalabel", "mixing"],
+            "args": ["${workspaceFolder}/runs/run45000sub00000.mid.gz", "--", "--eventlist", "eventlist45000.list", "--datalabel", "mixing"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

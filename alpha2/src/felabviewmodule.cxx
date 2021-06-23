@@ -17,6 +17,7 @@
 #include "TStoreLabVIEWEvent.h"
 
 #include <iostream>
+#include <map>
 
 class felabModuleFlags
 {
@@ -113,6 +114,7 @@ private:
    uint32_t fInitialEventTime;
    felabViewModuleWriter fTreeWriter;
    bool fInitTimeSaved = false;
+   std::map<std::string, std::tuple<double, double, int>> fTimeErrors;
 
 public:
    felabModuleFlags* fFlags;
@@ -148,7 +150,34 @@ public:
    {
       if (fTrace)
          printf("felabviewModule::EndRun, run %d\n", runInfo->fRunNo);
+      
+      //Writes all the trees.
       fTreeWriter.WriteTrees(runInfo);
+      
+      //End run calculations on the felabview banks. This will update the mean, and stddev of the banks.
+      for(auto& map : fTimeErrors)
+      {
+         auto& tuple = map.second;
+         int count = std::get<2>(tuple);
+         std::get<0>(tuple) /= count;
+         std::get<1>(tuple) /= (count*std::get<0>(tuple)); //This is not std dev. I'm not sure exactly what it is but it will be closer to 1 the closer to each other the errors are. eg all errors 600s out implies this value will end as 1.
+         std::get<2>(tuple) += 1;
+      }
+      //Prints each bankname that contained an error, its mean, stddev, and count.
+      PrintTimeErrors(fTimeErrors);
+   }
+
+   void PrintTimeErrors(const std::map<std::string, std::tuple<double, double, int>>& m)
+   {  
+      //Prints the fTimeErrors object. The method is specific to the structure of fTimeErrors.
+      std::cout << "\n \n \n";
+      std::cout << "TimeWindowErrors: \n";
+      for (const auto& map : m) 
+      {
+         std::cout << map.first << " = (" << std::get<0>(map.second) << ", " 
+         << std::get<1>(map.second) << ", " << std::get<2>(map.second) << "); ";
+      }
+      std::cout << "\n \n \n";
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
@@ -203,6 +232,10 @@ public:
          if( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) > 5)
          {
             runTime = midasEvent->time_stamp;
+            auto& tup = fTimeErrors[currentBankName];
+            std::get<0>(tup) += (midasEventData[0]-2082844800) - (midasEvent->time_stamp);
+            std::get<1>(tup) += (midasEventData[0]-2082844800) - (midasEvent->time_stamp);
+            std::get<2>(tup) += 1;
          }
          felabviewFlowEvent* flowEvent = new felabviewFlowEvent(flow, currentBankName, midasEventData, midasEvent->time_stamp, runTime, midasEventData[0]);
          flow = flowEvent;
