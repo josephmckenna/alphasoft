@@ -411,7 +411,7 @@ class TFEGEMData: public TEnvData
 class TFELabVIEWData: public TEnvData
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
+      void AddLVEvent(int runNumber, TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
          double runStart = Get_A2Analysis_Report(57181).GetRunStartTime();
@@ -530,7 +530,7 @@ class TAPlot: public TObject
       //Load data functions.
       template<typename T> void LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime);
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
-      void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
+      void LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData();
