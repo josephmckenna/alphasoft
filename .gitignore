@@ -73,3 +73,6 @@ simulation/garfieldpp/scripts/*.dat
 simulation/garfieldpp/scripts/__pycache__/
 *.orig
 callgrind.out.*
+simulation/geant4_vmc/
+simulation/vgm/
+simulation/vmc/
