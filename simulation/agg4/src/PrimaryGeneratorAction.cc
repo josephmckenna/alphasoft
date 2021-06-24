@@ -84,11 +84,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   fHbarAnnihilation = new SecondaryProducer();
 
   // get annihilation position
-  // char fname[80];
-  // sprintf(fname,"%s/annihilation.dat",getenv("RUN_TPC"));
-  // fin.open(fname,std::ios::in);
-  fin.open("./annihilation.dat",std::ios::in);
-  //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
+  char fname[80];
+  sprintf(fname,"%s/simulation/agg4/annihilation.dat",getenv("AGRELEASE"));
+  fin.open(fname,std::ios::in);
+    //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
 
   // define a particle gun
   fParticleGun = new G4ParticleGun();
@@ -188,7 +187,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   // Read the cry input file
   std::ifstream CRYFile;
   char CRYname[128];
-  sprintf(CRYname,"%s/simulation/geant4/cry.file",getenv("AGRELEASE"));
+  sprintf(CRYname,"%s/simulation/agg4/cry.file",getenv("AGRELEASE"));
   CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
   std::string setupString("");
