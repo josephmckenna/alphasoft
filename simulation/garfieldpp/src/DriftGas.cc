@@ -4,7 +4,6 @@
 #include <TMath.h>
 #include <TString.h>
 
-#include "Garfield/ComponentAnalyticField.hh"
 #include "Garfield/MediumMagboltz.hh"
 
 
