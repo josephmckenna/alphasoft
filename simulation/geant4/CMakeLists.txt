@@ -72,8 +72,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 add_executable(rTPCsim rTPCsim.cc ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
 add_compile_definitions(CRYDATAPATH="${CRY_DATA_PATH}")
-#target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} Garfield::Garfield  Garfield::magboltz  ${CRY_LIBRARIES} cry cadmesh G4out)
-target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} Garfield ${CRY_LIBRARIES} cry cadmesh G4out)
+target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
