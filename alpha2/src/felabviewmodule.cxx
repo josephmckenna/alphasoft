@@ -168,16 +168,16 @@ public:
    }
 
    void PrintTimeErrors(const std::map<std::string, std::tuple<double, double, int>>& m)
-   {  
-      //Prints the fTimeErrors object. The method is specific to the structure of fTimeErrors.
-      std::cout << "\n \n \n";
-      std::cout << "felabviewmodule banknames and time error in format BANK = (mean, stddev, count): \n";
+   {
+      int width = 20;
+      std::cout << "felabviewmodule banknames and time errors.\n";
+      std::cout << std::left;
+      std::cout << std::setw(width) << "Bankname" << std::setw(width) << "Mean Error" << std::setw(width) << "StdDev" << std::setw(width) << "Count" << '\n';
+
       for (const auto& map : m) 
-      {
-         std::cout << map.first << " = (" << std::get<0>(map.second) << ", " 
-         << std::get<1>(map.second) << ", " << std::get<2>(map.second) << "); ";
-      }
-      std::cout << "\n \n \n";
+         std::cout << std::setw(width) << map.first << std::setw(width) << std::get<0>(map.second) << std::setw(width) << std::get<1>(map.second) << std::setw(width) << std::get<2>(map.second) << '\n';
+
+      std::cout << std::endl;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
