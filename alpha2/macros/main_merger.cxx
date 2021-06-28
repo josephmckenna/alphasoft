@@ -57,10 +57,12 @@ int main(int argc, char* argv[])
     TChain* chain;
     switch(runType)
     {
-        case(kMixing):
+        case kMixing:
             chain = new TChain("mixing");
-        case(kCosmic):
+            break;
+        case kCosmic:
             chain = new TChain("cosmic");
+            break;
     }
 
     for(int i = 0; i<runNumbers.size(); i++)
@@ -82,23 +84,21 @@ int main(int argc, char* argv[])
     switch(runType)
     {
         case(kMixing):
-        {
             trainFile = new TFile("trainMixing.root", "RECREATE");
             trainTree = chain->CloneTree(0);
             validFile = new TFile("validationMixing.root", "RECREATE");
             validTree = chain->CloneTree(0);
             testFile = new TFile("testMixing.root", "RECREATE");
             testTree = chain->CloneTree(0);
-        }
+            break;
         case(kCosmic):
-        {
             trainFile = new TFile("trainCosmic.root", "RECREATE");
             trainTree = chain->CloneTree(0);
             validFile = new TFile("validationCosmic.root", "RECREATE");
             validTree = chain->CloneTree(0);
             testFile = new TFile("testCosmic.root", "RECREATE");
             testTree = chain->CloneTree(0);
-        }
+            break;
     }
 
     for (int i = 0; i < nEntries; i++) 
