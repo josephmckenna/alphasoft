@@ -5,7 +5,7 @@ do
 	macro_main_eventlist_generator.exe -- --runnumber ${run}
 	a2dumper.exe run${run}sub00000.mid.gz -- --eventlist "eventlist${run}.list" --datalabel cosmic
 done
-macro_main_merger.exe -- --listfile cosmicList.list --cosmic
+macro_main_merger.exe -- --listfile cosmicList --cosmic
 
 
 for run in `cat mixingList`
