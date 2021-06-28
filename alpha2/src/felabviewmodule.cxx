@@ -161,7 +161,7 @@ public:
          int count = std::get<2>(tuple);
          std::get<0>(tuple) /= count;
          std::get<1>(tuple) /= count;
-         std::get<1>(tuple) -= (std::get<0>(tuple)*std::get<0>(tuple)); //This is not std dev. I'm not sure exactly what it is but it will be closer to 1 the closer to each other the errors are. eg all errors 600s out implies this value will end as 1.
+         std::get<1>(tuple) -= (std::get<0>(tuple)*std::get<0>(tuple));
       }
       //Prints each bankname that contained an error, its mean, stddev, and count.
       PrintTimeErrors(fTimeErrors);
@@ -229,12 +229,12 @@ public:
 
          double runTime;
          // I need a range check to assure meData[0] is the right format if not use MIDAS time.
-         double difference = abs(midasEventData[0]-2082844800) - (midasEvent->time_stamp);
+         double difference = fabs( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) );
          if( difference > 5)
          {
             runTime = midasEvent->time_stamp;
-            auto& tup = fTimeErrors[currentBankName];
             
+            auto& tup = fTimeErrors[currentBankName];
             std::get<0>(tup) += difference;
             std::get<1>(tup) += difference*difference;
             std::get<2>(tup) += 1;
