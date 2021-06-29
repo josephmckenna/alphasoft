@@ -1,7 +1,7 @@
 #include "PrintTools.h"
 
 #include <fstream> 
-
+#ifdef BUILD_AG
 void PrintSequences(int runNumber, int SeqNum)
 {
    TTree *sequencerTree = Get_Seq_Event_Tree(runNumber);
@@ -28,7 +28,7 @@ void PrintSequences(int runNumber, int SeqNum)
    delete seqEvent;
    delete sequencerTree;
 }
-#ifdef BUILD_AG
+
 void PrintChronoNames(int runNumber)
 {
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
@@ -257,7 +257,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
       double ot;
-      TTree* trigger_tree =  Get_Chrono_Tree( runNumber, CHRONO_FLAG_NAME, ot );
+      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,GetChronoBoardChannel(runNumber, CHRONO_FLAG_NAME), ot );
 
       if( trigger_tree == NULL )
          continue; //Error state?

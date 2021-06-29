@@ -5,8 +5,10 @@
 #include <TDirectory.h>
 
 #include "Deconv.hh"
-#include "TWaveform.hh"
 
+#ifdef BUILD_AG_SIM
+#include "TWaveform.hh"
+#endif
 
 TH2D* Deconv::hADCped=0;
 TProfile* Deconv::hADCped_prox=0;
@@ -140,8 +142,10 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
       fADCdelay = 0.;
    else if( run >= 3032 && run < 3870 )
       fADCdelay = -250.;
-   else if( run >= 3870 && run < 900000 )
+   else if( run >= 3870 && run < 4488 )
       fADCdelay = -330.;
+   else if( run >= 4488 && run < 900000 )
+      fADCdelay = -304.;
 
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
@@ -152,8 +156,10 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
          fADCdelay = -400.;
 
    if( run > 903837 && run < 904100 ) fADCdelay = -120.;
-   else if( run > 904100 && run <= 904400 ) fADCdelay = -80.;
-   else if( run > 904400 ) fADCdelay = -32.;
+   else if( run > 904100 ) fADCdelay = 0.;
+   //   else if( run > 904100 && run <= 904400 ) fADCdelay = -80.;
+   // else if( run > 904400 && run <= 904500 ) fADCdelay = -32.;
+   // else if( run > 904500 ) fADCdelay = 0.;
 }
 
 void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
@@ -211,8 +217,10 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 3870 && run < 900000 )
+   else if( run >= 3870 && run < 4488 )
       fPWBdelay = -80.;//fPWBdelay = -50.;
+   else if( run >= 4488 && run < 900000 )
+      fPWBdelay = -320.;
       
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
@@ -333,11 +341,12 @@ void Deconv::Reset()
          if( feamwaveforms )
             {
                feamwaveforms->clear();
-               delete wirewaveforms;
+               delete feamwaveforms;
             }
       }
 }
 
+#ifdef BUILD_AG_SIM
 int Deconv::FindAnodeTimes(TClonesArray* AWsignals)
 {
    int Nentries = AWsignals->GetEntries();
@@ -520,6 +529,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
   
    return nsig;
 }
+#endif
 
 int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
@@ -663,7 +673,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
       {
          FeamChannel* ch = channels.at(i);
          if( !(ch->sca_chan>0) ) continue;
-         short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+         short col = (short) (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col);
          col+=1;
          if( col == 32 ) col = 0;
          assert(col<32&&col>=0);
@@ -773,12 +783,13 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
 
 std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
                                             std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                                            std::vector<double> &fResponse, int theBin, bool isanode)
+                                            std::vector<double> &fResponse, unsigned theBin, bool isanode)
 {
 
    if(subtracted->size()==0) return 0;
-   int nsamples = subtracted->back()->h->size();
+   size_t nsamples = subtracted->back()->h->size();
    std::vector<ALPHAg::signal>* fSignals=new std::vector<ALPHAg::signal>;
+   assert(nsamples >= theBin);
    fSignals->reserve(nsamples-theBin);
    assert(nsamples < 1000);
    if( fTrace )
@@ -798,7 +809,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
    // if( fTrace )
    //    std::cout<<"Deconv::Deconvolution delay: "<<t_delay<<" ns"<<std::endl;
 
-   for(int b = theBin; b < int(nsamples); ++b)// b is the current bin of interest
+   for(size_t b = theBin; b < nsamples; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first
@@ -823,7 +834,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
                         SubtractAW(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                      else
                         SubtractPAD(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
-                     if(b-theBin >= 0)
+                     if( int(b-theBin) >= 0)
                         {
                            // time in ns of the bin b centre
                            double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
@@ -839,12 +850,12 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
 
 void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                         std::vector<ALPHAg::wfholder*>* wfmap,
-                        const int b,
+                        const unsigned b,
                         const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                        std::vector<double> &fResponse, int theBin)
+                        std::vector<double> &fResponse,const unsigned theBin)
 {
    std::vector<double> *wf1 = hist1->h;
-   int wf1size=wf1->size();
+   size_t wf1size = wf1->size();
    unsigned int i1 = hist1->index;
    ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
@@ -865,10 +876,10 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                //Take advantage that there are 256 anode wires... use uint8_t
                //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
-               for(int bb = b-theBin; bb < wf1size; ++bb)
+               for(size_t bb = b - theBin; bb < wf1size; ++bb)
                   {
                      // the bin corresponding to bb in the response
-                     int respBin = bb-b+theBin;
+                     int respBin = int (bb-b+theBin);
                      if (respBin<0) continue;
                      if (respBin >= AnodeResponseSize) continue;
                      if(respBin < AnodeResponseSize && respBin >= 0)
@@ -880,10 +891,10 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
             }// loop over factors
       }// loop all electrodes' signals looking for neighbours
 
-   for(int bb = b-theBin; bb < wf1size; ++bb)
+   for(size_t bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
-         int respBin = bb-b+theBin;
+         int respBin = int ( bb - b + theBin );
          if( respBin < respsize && respBin >= 0 )
             {
                // Remove signal tail for waveform we're currently working on
@@ -894,9 +905,9 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
 
 void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
                          std::vector<ALPHAg::wfholder*>* wfmap,
-                         const int b,
+                         const unsigned b,
                          const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                         std::vector<double> &fResponse, int theBin)
+                         std::vector<double> &fResponse, const unsigned theBin)
 {
    std::vector<double> *wf1 = hist1->h;
    int wf1size=wf1->size();
@@ -906,10 +917,10 @@ void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
    int respsize=fResponse.size();
      
      
-   for(int bb = b-theBin; bb < wf1size; ++bb)
+   for(size_t bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
-         int respBin = bb-b+theBin;
+         int respBin = int(bb - b + theBin);
          if( respBin < respsize && respBin >= 0 )
             {
                // Remove signal tail for waveform we're currently working on
@@ -918,12 +929,12 @@ void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
       }// bin loop: subtraction
 }
 
-std::vector<ALPHAg::wfholder*>* Deconv::wforder(std::vector<ALPHAg::wfholder*>* subtracted, const int b)
+std::vector<ALPHAg::wfholder*>* Deconv::wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b)
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
    std::vector<ALPHAg::wfholder*>* histset=new std::vector<ALPHAg::wfholder*>;
-   unsigned int size=subtracted->size();
+   size_t size = subtracted->size();
    //   std::cout<<"Deconv::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
    histset->reserve(size);
    for(unsigned int i=0; i<size;++i)
@@ -958,12 +969,12 @@ std::map<int,ALPHAg::wfholder*>* Deconv::wfordermap(std::vector<ALPHAg::wfholder
    return wfmap;
 }
 
-int Deconv::ReadResponseFile(const double awbin, const double padbin)
+int Deconv::ReadResponseFile(const int awbin, const int padbin)
 {
    return ReadAWResponseFile(awbin) && ReadPADResponseFile( padbin );
 }
 
-int Deconv::ReadAWResponseFile( const double awbin )
+int Deconv::ReadAWResponseFile( const int awbin )
 {
    std::string filename(getenv("AGRELEASE"));
    filename+="/ana/anodeResponse.dat";
@@ -995,7 +1006,7 @@ int Deconv::ReadAWResponseFile( const double awbin )
    return int(fAnodeResponse.size());
 }
 
-int Deconv::ReadPADResponseFile( const double padbin )
+int Deconv::ReadPADResponseFile( const int padbin )
 {
    std::string filename(getenv("AGRELEASE"));
    filename+="/ana/padResponse_deconv.dat";

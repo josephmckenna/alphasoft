@@ -121,6 +121,7 @@ public:
          gClock[i]=0;
          NOverflows[i]=0;
          LastTime[i]=0;
+         SyncChannel[i]=-1;
          FirstSyncTime[i]=-1;
       }
 
@@ -473,7 +474,11 @@ struct ChronoChannelEvent {
       }
       //Chronoflow->PrintChronoFlow();
 
-      if (ChronoEventsFlow->size()==0) return flow;
+      if (ChronoEventsFlow->size()==0)
+         {
+            delete ChronoEventsFlow;
+            return flow;
+         }
       flow=new AgChronoFlow(flow,ChronoEventsFlow);
       //std::cout<<"FLOW SIZE:"<<ChronoEventsFlow->size()<<std::endl;
       return flow;

@@ -32,6 +32,8 @@ endif
 LIBS     += -L$(ROOTANASYS)/lib -lrootana
 LIBS     += -lSpectrum -lGeom -lz -lMinuit2 -lMinuit -lMathMore -lGui -lGpad -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lTree  -lPhysics -lMathCore -lThread -lXMLParser -lXMLIO -lRHTTP
 LIBS     += -L$(shell root-config --libdir)
+LIBS     += -lsqlite3
+
 
 INCS += -I$(INCDIR)
 INCS += -I../recolib/include
@@ -39,12 +41,18 @@ INCS += -I../ana/include
 INCS += -I../agana
 INCS += -I../analib/include
 INCS += -I../aged/include
+INCS += -I../libGEM/include
 INCS += -I$(shell root-config --incdir)
 #ALPHA 2 headers...
 INCS += -I../alpha2/include
 INCS += -I../a2lib/include
 INCS += -I../a2lib/legacy
 INCS += -I$(ROOTANASYS)/include $(shell cat $(ROOTANASYS)/include/rootana_cflags.txt)
+
+ifdef MIDASSYS
+LIBS     += -L$(MIDASSYS)/lib -lmidas -lutil -lrt
+INCS     += -I$(MIDASSYS)/include
+endif
 
 # select the main program - local custom main()
 #MAIN := manalyzer_main.o
@@ -61,7 +69,7 @@ $(info Building binaries: [${BINS}])
 $(info All dependancies: ${ALL_DEPS})
 
 
-RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc
+RLIBS = -L../a2lib -L../recolib -L../analib -lalpha2 -lanalib -lagtpc -L../libGEM -lGEM
 #USER_LIBS = libanalib.so libagtpc.so libaged.so
 
 ALL += linkdirs gitinfo

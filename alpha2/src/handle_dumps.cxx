@@ -20,7 +20,6 @@ class DumpMakerModuleFlags
 public:
    bool fPrint = false;
 };
-TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
 
 TString StartNames[NUMSEQ]={"SIS_PBAR_DUMP_START","SIS_RECATCH_DUMP_START","SIS_ATOM_DUMP_START","SIS_POS_DUMP_START","NA","NA","NA","NA","NA"};
 TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
@@ -146,7 +145,7 @@ public:
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
-      dumplist[iSeq].setup();
+      dumplist[iSeq].setup(me->time_stamp);
       
       for(auto dump: DumpsFlow->DumpMarkers)
       {
@@ -236,9 +235,10 @@ public:
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
          std::vector<TA2Spill*> finished=dumplist[a].flushComplete();
-         for (size_t i=0; i<finished.size(); i++)
+         for (TA2Spill* spill: finished)
          {
-            f->spill_events.push_back(finished.at(i));
+            //spill->Print();
+            f->spill_events.push_back(spill);
          }
       }
 

@@ -2,9 +2,12 @@
 # Master Makefile for the ALPHA-g analyzer
 #
 
+# compilation and version info
+DEPS = gitinfo fetchfeGEM fetchagana
+
 #If rootana is within this folder, build it...
 ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
-DEPS = buildrootana
+DEPS += fetchrootana buildrootana
 endif
 
 AGLIBS = libanalib.so libagtpc.so libaged.so
@@ -14,26 +17,28 @@ A2LIBS = libanalib.so libagtpc.so alpha2libs
 A2BIN  = alpha2
 
 
-AG= $(DEPS) $(AGLIBS) $(AGBIN)
+AG = $(AGLIBS) $(AGBIN)
 #ALPHA 2 depends on some AG libs
-A2= $(DEPS) $(A2LIBS) $(A2BIN)
+A2 = $(A2LIBS) $(A2BIN)
 
-ALL= $(AG) $(A2) rootUtils.so
+ALL += $(DEPS)
+ALL += $(AG) $(A2) rootUtils.so
 #Normal build of all libs and binaries
-all: $(ALL) FIN
+all: $(DEPS) $(ALL) FIN
 all: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 #Fast build for just AG libs and binaries
-ag: $(AG) rootUtils.so
+ag: $(DEPS) $(AG) rootUtils.so
 ag: export BUILD_FLAGS:=-DBUILD_AG
 ag: @echo -e "\033[32mAG ONLY Success!\033[m"
 #Fast build for just A2 libs and binaries
-a2: $(A2) rootUtils.so
+a2: $(DEPS) $(A2) rootUtils.so
 a2: export BUILD_FLAGS:=-DBUILD_A2
 a2: @echo -e "\033[32mA2 ONLY Success!\033[m"
 
 debug: MFLAGS += debug
 debug: $(ALL) FIN
+debug: export BUILD_FLAGS:=-DBUILD_AG -DBUILD_A2
 
 O2: MFLAGS += O2
 O2: $(ALL) FIN
@@ -64,38 +69,53 @@ cclean:
 FIN: $(ALL)
 	@echo -e "\033[32mSuccess!\033[m"
 
+gitinfo:
+	./ana/GitInfo.sh ./ana/include
+
 libagtpc.so: $(DEPS)
-	make -C recolib $(MFLAGS)
+	$(MAKE) -C recolib $(MFLAGS)
 
 libaged.so: $(DEPS)
-	make -C aged $(MFLAGS)
+	$(MAKE) -C aged $(MFLAGS)
 
 libanalib.so: $(DEPS)
-	make -C analib $(MFLAGS)
+	$(MAKE) -C analib $(MFLAGS)
 
-agana: $(AGLIBS)
+agana: $(AGLIBS) $(DEPS)
 	cd ana/ && $(MAKE) $(MFLAGS)
 
 alpha2libs: $(DEPS)
-	make -C a2lib $(MFLAGS)
+	$(MAKE) -C a2lib $(MFLAGS)
 
 reco: $(LIBS)
 	cd reco/ && $(MAKE) $(MFLAGS)
 
-alpha2: $(A2LIBS)
-	make -C alpha2 $(MFLAGS)
+alpha2: $(A2LIBS) $(DEPS)
+	$(MAKE) -C alpha2 $(MFLAGS)
 
-rootUtils.so:
-	make -C rootUtils $(MFLAGS)
+rootUtils.so: $(DEPS)
+	$(MAKE) -C rootUtils $(MFLAGS)
 
 buildrootana:
-	cd rootana && make obj/manalyzer_main.o
-	make -C rootana
+	@echo "Building rootana submodule"
+	cd rootana && $(MAKE) $(MFLAGS)
 
-cleanrootana:
-	ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
-	cd rootana/ && $(MAKE) clean
-	endif
+fetchrootana:
+	@echo "Fetching rootana submodule"
+	git submodule update --init rootana
+
+fetchfeGEM:
+	@echo "Fetching libGEM submodule"
+	git submodule update --init libGEM
+	$(MAKE) -C libGEM $(MFLAGS)
+
+fetchagana:
+	@echo "Fetching agana submodule"
+	git submodule update --init agana
+
+#$(MAKE) -C rootana $(MFLAGS)
+#cd rootana && $(MAKE) obj/manalyzer_main.o
+#$(MAKE) -C rootana
 
 html/index.html:
 	-mkdir html
@@ -106,7 +126,6 @@ dox:
 	doxygen Doxyfile
 
 clean::
-	$(cleanrootana)
 	cd recolib/ && $(MAKE) clean
 	cd analib/ && $(MAKE) clean
 	cd aged/ && $(MAKE) clean
@@ -115,3 +134,11 @@ clean::
 	cd a2lib/ && $(MAKE) clean
 	cd alpha2/ && $(MAKE) clean
 	cd rootUtils/ && $(MAKE) clean
+
+ifeq (${ROOTANASYS},${AGRELEASE}/rootana)
+ifneq (,$(wildcard rootana/Makefile))
+clean::
+	cd rootana/ && $(MAKE) clean
+	rm -f obj/manalyzer_main.o
+endif
+endif

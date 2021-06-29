@@ -1,5 +1,5 @@
 //
-// Module to generate friend trees with 'Offical' cross calibrated 
+// Module to generate friend trees with 'Official' cross calibrated 
 // time between all modules (EVB and chronoboxes)
 // I.E Convert 'RunTime' to 'Official Time'
 // JTK McKENNA
@@ -36,11 +36,12 @@ private:
    // int SVD_channel=-1; Unused
   
    std::deque<double> SISEventRunTime;
-   
-   std::mutex SVDEventsLock;
+
    std::deque<ULong64_t> SISClock;
    std::deque<ULong64_t> VF48Clock;
    std::deque<TSVD_QOD*> SVDEvents;
+
+   int VF48Events = 0;
 
 public:
    OfficialA2TimeFlags* fFlags;
@@ -92,6 +93,7 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
+      std::cout<<"Total VF48 events given an official time:"<<VF48Events<<std::endl;
       if (SVDOfficial)
          SVDOfficial->Write();
    }
@@ -113,6 +115,7 @@ public:
        int n=SISEventRunTime.size();
        for ( int i=0; i<n ; i++)
        {
+           
            if (t>SISEventRunTime.front())
            {
              //std::cout<<"Clean if "<< t <<" > " << SISEventRunTime.front() <<std::endl;
@@ -136,11 +139,14 @@ public:
          runinfo->fRoot->fOutputFile->cd();
          SVDOfficial=new TTree("SVDOfficialA2Time","SVDOfficialA2Time");
       }
-      TBranch* b_variable = SVDOfficial->GetBranch("OfficalTime");
+      TBranch* b_variable = SVDOfficial->GetBranch("OfficialTime");
       if (!b_variable)
-         SVDOfficial->Branch("OfficalTime","TSVD_QOD",&e,32000,0);
+         SVDOfficial->Branch("OfficialTime","TSVD_QOD",&e,32000,0);
       else
-         SVDOfficial->SetBranchAddress("OfficalTime",&e);
+         SVDOfficial->SetBranchAddress("OfficialTime",&e);
+      #ifdef HAVE_CXX11_THREADS
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      #endif
       SVDOfficial->Fill();
       //std::cout<<"Saving at t:"<<e->t<<std::endl;
    }
@@ -182,9 +188,8 @@ public:
       }*/
       return;
    }
-   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   std::vector<TSVD_QOD*> GetFinishedEvents(TARunInfo* runinfo)
    {
-       std::lock_guard<std::mutex> lock(SVDEventsLock);
        int nSVD=SVDEvents.size();
        std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
@@ -200,12 +205,7 @@ public:
              
              //std::cout<<"R:"<<r-2.<<std::endl;
              double t=2.*QOD->VF48Timestamp/r;
-             //if (t > SISEventRunTime.back() ) 
-             //{
-             //    std::cout<<"Time saved"<<std::endl;
-             //    return;
-            // }
-            // std::cout <<"SIL: "<<t <<" < " << SISEventRunTime[i] << "\t radio:"<<r <<std::endl;
+
              if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
@@ -214,6 +214,7 @@ public:
                 CleanSISEventsBefore(t-0.1);
                 finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
+                VF48Events++;
                 break;
              }
              else
@@ -224,7 +225,11 @@ public:
        }
        //Free memory when timestamps are not aligning nicely (VF48 corruption?)
        CleanOldTimestamps(10.);
-       
+       return finished_QOD_events;
+   }
+   TAFlowEvent* SVDMatchTime(TARunInfo* runinfo,TAFlowEvent* flow)
+   {
+       std::vector<TSVD_QOD*>finished_QOD_events = GetFinishedEvents(runinfo);
        int nFinished=finished_QOD_events.size();
        if (nFinished)
        {
@@ -261,27 +266,21 @@ public:
       }
 
       SilEventFlow* fe=flow->Find<SilEventFlow>();
-      if (!fe)
+      if (fe)
       {
-#ifdef MANALYZER_PROFILER
-         *flags|=TAFlag_SKIP_PROFILE;
-#endif
-         return flow;
-      }
-      TAlphaEvent* AlphaEvent=fe->alphaevent;
-      TSiliconEvent* SiliconEvent=fe->silevent;
+         TAlphaEvent* AlphaEvent=fe->alphaevent;
+         TSiliconEvent* SiliconEvent=fe->silevent;
 
-      TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
-      A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
-      if (mva)
-         SVD->MVA=(int)mva->pass_online_mva;
-      else
-         SVD->MVA=-1;
-      {
-         std::lock_guard<std::mutex> lock(SVDEventsLock);
+         TSVD_QOD* SVD=new TSVD_QOD(AlphaEvent,SiliconEvent);
+         A2OnlineMVAFlow* mva=flow->Find<A2OnlineMVAFlow>();
+         if (mva)
+            SVD->MVA=(int)mva->pass_online_mva;
+         else
+            SVD->MVA=-1;
+
          SVDEvents.push_back(SVD);
       }
-      if (SiliconEvent->GetVF48NEvent()%10==0)
+      //if (SiliconEvent->GetVF48NEvent()%10==0)
       flow=SVDMatchTime(runinfo,flow);
       return flow;
    }

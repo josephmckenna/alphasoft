@@ -203,6 +203,8 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Doub
   }
   Event.CutsResult=CutsResult;
   VertexEvents.push_back(Event);
+  //AddVertexEvent(Event.RunNumber, Event.EventNo, Event.CutsResult, Event.VertexStatus, 
+      //Event.x, Event.y, Event.z, Event.t, Event.EventTime, Event.RunTime, Event.nHelices, Event.nTracks);
 
   if( Event.VertexStatus >= 1 && Event.CutsResult > 0 )
     {
@@ -367,7 +369,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
   {
     //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
     double official_time;
-    TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].Board, ChronoChannels[j].Channel,official_time);
+    TTree *t = Get_Chrono_Tree(runNumber, {ChronoChannels[j].Board, ChronoChannels[j].Channel},official_time);
     TChrono_Event* e=new TChrono_Event();
 
     t->SetBranchAddress("ChronoEvent", &e);

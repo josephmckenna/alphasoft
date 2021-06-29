@@ -9,7 +9,9 @@
 #include "Ledge.hh"
 #include "TPCconstants.hh"
 
+#ifdef BUILD_AG_SIM
 #include "TWaveform.hh"
+#endif
 
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
@@ -82,7 +84,7 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
       const FeamChannel* ch = channels.at(i);
       if( !(ch->sca_chan>0) ) continue;
 
-      short col = ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col;
+      short col = short( ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col );
       col+=1;
       if( col == 32 ) col = 0;
       if(fDebug) std::cout<<"Ledge::Analyze(FeamChannel) col: "<<col;
@@ -110,6 +112,7 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
   return spads;
 }
 
+#ifdef BUILD_AG_SIM
 int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 {
   int Nentries = AWsignals->GetEntries();
@@ -205,7 +208,7 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
   fSignals=spads;
   return int(spads->size());
 }
-
+#endif
 
 
 /* emacs

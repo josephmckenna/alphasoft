@@ -1,14 +1,15 @@
 [submodule "rootana"]
 	path = rootana
 	url = https://bitbucket.org/tmidas/rootana.git
-[submodule "simulation/submodules/CADMesh"]
-	path = simulation/submodules/CADMesh
-	url = https://github.com/christopherpoole/CADMesh.git
-	branch = master
-[submodule "simulation/submodules/garfieldpp"]
-	path = simulation/submodules/garfieldpp
-	url = https://gitlab.cern.ch/garfield/garfieldpp.git
-	branch = master
 [submodule "agana"]
 	path = agana
 	url = https://bitbucket.org/expalpha/agana.git
+[submodule "simulation/CADMesh"]
+	path = simulation/CADMesh
+	url = https://github.com/a-capra/CADMesh.git
+[submodule "simulation/cry"]
+	path = simulation/cry
+	url = https://bitbucket.org/a-capra/cry.git
+[submodule "libGEM"]
+	path = libGEM
+	url = https://bitbucket.org/expalpha/libgem.git

@@ -1,171 +1,276 @@
 #include "TA2Plot.h"
+#include <fstream>
 
 
 #ifdef BUILD_A2
 ClassImp(TA2Plot);
 
-TA2Plot::TA2Plot(): TAPlot()
+//Default members, operators, and prints.
+TA2Plot::TA2Plot(bool zeroTime): TAPlot(zeroTime)
 {
-   ZMinCut=-99999.;
-   ZMaxCut= 99999.;
+   fZMinCut=-99999.;
+   fZMaxCut= 99999.;
 }
-TA2Plot::TA2Plot(double zmin, double zmax): TAPlot()
+
+TA2Plot::TA2Plot(double zMin, double zMax, bool zeroTime): TAPlot(zeroTime)
 {
-   ZMinCut = zmin;
-   ZMaxCut = zmax;
+   fZMinCut = zMin;
+   fZMaxCut = zMax;
 }
+
+//Construct TA2Plot from TAPlot.
+TA2Plot::TA2Plot(const TAPlot& object) : TAPlot(object)
+{
+   std::cout << "This is TA2Plot constructor from TAPlot" << std::endl;
+   fZMinCut=-99999.;
+   fZMaxCut= 99999.;
+}
+
+//Copy ctor.
+TA2Plot::TA2Plot(const TA2Plot& object) : TAPlot(object)
+{
+   std::cout << "This is TA2Plot copy constructor" << std::endl;
+   fSISChannels    = object.fSISChannels;
+   fTrig           = object.fTrig;
+   fTrigNobusy    = object.fTrigNobusy;
+   fAtomOr        = object.fAtomOr;
+   fCATStart       = object.fCATStart;
+   fCATStop        = object.fCATStop;
+   fRCTStart       = object.fRCTStart;
+   fRCTStop        = object.fRCTStop;
+   fATMStart       = object.fATMStart;
+   fATMStop        = object.fATMStop;
+   fBeamInjection = object.fBeamInjection;
+   fBeamEjection  = object.fBeamEjection;
+   fZMinCut        = object.fZMinCut;
+   fZMaxCut        = object.fZMaxCut;
+   SISEvents      = object.SISEvents;
+}
+
 TA2Plot::~TA2Plot()
 {
 }
+
+//Assignment operator
+TA2Plot& TA2Plot::operator=(const TA2Plot& rhs)
+{
+   //Inherited TAPlot members
+   std::cout << "TA2Plot equals operator" << std::endl;
+   fSISChannels      = rhs.fSISChannels;
+   fTrig             = rhs.fTrig;
+   fTrigNobusy       = rhs.fTrigNobusy;
+   fAtomOr           = rhs.fAtomOr;
+   fCATStart         = rhs.fCATStart;
+   fCATStop          = rhs.fCATStop;
+   fRCTStart         = rhs.fRCTStart;
+   fRCTStop          = rhs.fRCTStop;
+   fATMStart         = rhs.fATMStart;
+   fATMStop          = rhs.fATMStop;
+   fBeamInjection    = rhs.fBeamInjection;
+   fBeamEjection     = rhs.fBeamEjection;
+   fZMinCut          = rhs.fZMinCut;
+   fZMaxCut          = rhs.fZMaxCut;
+   SISEvents         = rhs.SISEvents;
+
+   return *this;
+}
+
+//Addition
+TA2Plot operator+(const TA2Plot& lhs, const TA2Plot& rhs)
+{
+   //In order to call the parents addition first it is important to statically cast the Plots to their parent class,
+   //add the parents together, then initialise a TA2Plot from the TAPlot and fill in the rest of the values as a constructor would.
+   TAPlot lhsCast = static_cast<TAPlot>(lhs); //2 Static casts
+   TAPlot rhsCast = static_cast<TAPlot>(rhs);
+   TAPlot parentSum = lhsCast + rhsCast; //Add as TAPlots
+   TA2Plot basePlot = TA2Plot(parentSum); //Initialise a TA2Plot from the now summed TAPlots
+
+   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
+   //For all these copying A is fine.
+   basePlot.fTrig.insert(              rhs.fTrig.begin(), rhs.fTrig.end() );
+   basePlot.fTrigNobusy.insert(        rhs.fTrigNobusy.begin(), rhs.fTrigNobusy.end() );
+   basePlot.fAtomOr.insert(            rhs.fAtomOr.begin(), rhs.fAtomOr.end() );
+   basePlot.fCATStart.insert(          rhs.fCATStart.begin(), rhs.fCATStart.end() );
+   basePlot.fCATStop.insert(           rhs.fCATStop.begin(), rhs.fCATStop.end() );
+   basePlot.fRCTStart.insert(          rhs.fRCTStart.begin(), rhs.fRCTStart.end() );
+   basePlot.fRCTStop.insert(           rhs.fRCTStop.begin(), rhs.fRCTStop.end() );
+   basePlot.fATMStart.insert(          rhs.fATMStart.begin(), rhs.fATMStart.end() );
+   basePlot.fATMStop.insert(           rhs.fATMStop.begin(), rhs.fATMStop.end() );
+   basePlot.fBeamInjection.insert(     rhs.fBeamInjection.begin(), rhs.fBeamInjection.end() );
+   basePlot.fBeamEjection.insert(      rhs.fBeamEjection.begin(), rhs.fBeamEjection.end() );
+   
+   basePlot.fZMinCut        = lhs.fZMinCut;
+   basePlot.fZMaxCut        = lhs.fZMaxCut;
+
+   //Vectors need concacting.
+   basePlot.fSISChannels.insert(basePlot.fSISChannels.end(), rhs.fSISChannels.begin(), rhs.fSISChannels.end() );
+
+   basePlot.SISEvents += lhs.SISEvents;
+   basePlot.SISEvents += rhs.SISEvents;
+   
+   return basePlot;
+}
+
+TA2Plot& TA2Plot::operator+=(const TA2Plot& rhs)
+{
+   //This calls the parent += operator first.
+   TAPlot::operator+=(rhs);
+
+   //For all these copying A is fine.
+   fTrig.insert(            rhs.fTrig.begin(), rhs.fTrig.end() );
+   fTrigNobusy.insert(     rhs.fTrigNobusy.begin(), rhs.fTrigNobusy.end() );
+   fAtomOr.insert(         rhs.fAtomOr.begin(), rhs.fAtomOr.end() );
+   fCATStart.insert(        rhs.fCATStart.begin(), rhs.fCATStart.end() );
+   fCATStop.insert(         rhs.fCATStop.begin(), rhs.fCATStop.end() );
+   fRCTStart.insert(        rhs.fRCTStart.begin(), rhs.fRCTStart.end() );
+   fRCTStop.insert(         rhs.fRCTStop.begin(), rhs.fRCTStop.end() );
+   fATMStart.insert(        rhs.fATMStart.begin(), rhs.fATMStart.end() );
+   fATMStop.insert(         rhs.fATMStop.begin(), rhs.fATMStop.end() );
+   fBeamInjection.insert(  rhs.fBeamInjection.begin(), rhs.fBeamInjection.end() );
+   fBeamEjection.insert(   rhs.fBeamEjection.begin(), rhs.fBeamEjection.end() );
+
+   //Vectors need concacting.
+   fSISChannels.insert(fSISChannels.end(), rhs.fSISChannels.begin(), rhs.fSISChannels.end() );
+
+   //Object addition.
+   SISEvents += rhs.SISEvents;
+   
+   return *this;
+}
+
+
+//Setters and getters
 void TA2Plot::SetSISChannels(int runNumber)
 {
-
-  TSISChannels *sisch = new TSISChannels(runNumber);
-  trig =           sisch->GetChannel("IO32_TRIG");
-  trig_nobusy =    sisch->GetChannel("IO32_TRIG_NOBUSY");
-  atom_or =        sisch->GetChannel("SIS_PMT_ATOM_OR");
-  Beam_Injection = sisch->GetChannel("SIS_AD");
-  Beam_Ejection =  sisch->GetChannel("SIS_AD_2");
-  CATStart =       sisch->GetChannel("SIS_PBAR_DUMP_START");
-  CATStop =        sisch->GetChannel("SIS_PBAR_DUMP_STOP");
-  RCTStart =       sisch->GetChannel("SIS_RECATCH_DUMP_START");
-  RCTStop =        sisch->GetChannel("SIS_RECATCH_DUMP_STOP");
-  ATMStart =       sisch->GetChannel("SIS_ATOM_DUMP_START");
-  ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
-
+  TSISChannels *sisChannels = new TSISChannels(runNumber);
+  fTrig.insert(             std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("IO32_TRIG")));
+  fTrigNobusy.insert(       std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("IO32_TRIG_NOBUSY")));
+  fAtomOr.insert(           std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PMT_ATOM_OR")));
+  fBeamInjection.insert(    std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_AD")));
+  fBeamEjection.insert(     std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_AD_2")));
+  fCATStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PBAR_DUMP_START")));
+  fCATStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PBAR_DUMP_STOP")));
+  fRCTStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_RECATCH_DUMP_START")));
+  fRCTStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_RECATCH_DUMP_STOP")));
+  fATMStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_ATOM_DUMP_START")));
+  fATMStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_ATOM_DUMP_STOP")));
 
   //Add all valid SIS channels to a list for later:
-  SISChannels.clear();
-  if (trig>0)           SISChannels.push_back(trig);
-  if (trig_nobusy>0)    SISChannels.push_back(trig_nobusy);
-  if (atom_or>0)        SISChannels.push_back(atom_or);
-  if (Beam_Injection>0) SISChannels.push_back(Beam_Injection);
-  if (Beam_Ejection>0)  SISChannels.push_back(Beam_Ejection);
-  if (CATStart>0)       SISChannels.push_back(CATStart);
-  if (CATStop>0)        SISChannels.push_back(CATStop);
-  if (RCTStart>0)       SISChannels.push_back(RCTStart);
-  if (RCTStop>0)        SISChannels.push_back(RCTStop);
-  if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);
-  //cout <<"Trig:"<<trig<<endl;
-  //cout <<"TrigNoBusy:"<<trig_nobusy<<endl;
-  //cout <<"Beam Injection:"<<Beam_Injection<<endl;
-  //cout <<"Beam Ejection:"<<Beam_Ejection<<endl;
-  delete sisch;
+  fSISChannels.clear();
+  if (fTrig.find(runNumber)->second>0)           fSISChannels.push_back(fTrig.find(runNumber)->second);
+  if (fTrigNobusy.find(runNumber)->second>0)     fSISChannels.push_back(fTrigNobusy.find(runNumber)->second);
+  if (fAtomOr.find(runNumber)->second>0)         fSISChannels.push_back(fAtomOr.find(runNumber)->second);
+  if (fBeamInjection.find(runNumber)->second>0)  fSISChannels.push_back(fBeamInjection.find(runNumber)->second);
+  if (fBeamEjection.find(runNumber)->second>0)   fSISChannels.push_back(fBeamEjection.find(runNumber)->second);
+  if (fCATStart.find(runNumber)->second>0)       fSISChannels.push_back(fCATStart.find(runNumber)->second);
+  if (fCATStop.find(runNumber)->second>0)        fSISChannels.push_back(fCATStop.find(runNumber)->second);
+  if (fRCTStart.find(runNumber)->second>0)       fSISChannels.push_back(fRCTStart.find(runNumber)->second);
+  if (fRCTStop.find(runNumber)->second>0)        fSISChannels.push_back(fRCTStop.find(runNumber)->second);
+  if (fATMStart.find(runNumber)->second>0)       fSISChannels.push_back(fATMStart.find(runNumber)->second);
+  if (fATMStop.find(runNumber)->second>0)        fSISChannels.push_back(fATMStop.find(runNumber)->second);
+  delete sisChannels;
   return;
-}
-void TA2Plot::AddEvent(TSVD_QOD* event, double time_offset)
-{
-   VertexEvent Event;
-   Event.runNumber    =event->RunNumber;
-   Event.EventNo      =event->VF48NEvent;
-   // Encode Passed cuts and online MVA (CutsResult&1 is passed cuts, 
-   // CutsResult&2 is online MVA)
-   Event.CutsResult   =event->NPassedCuts;
-   Event.CutsResult  +=event->MVA*2;
-   Event.VertexStatus =event->NVertices;
-   Event.x            =event->x;
-   Event.y            =event->y;
-   Event.z            =event->z;
-   Event.t            =event->t-time_offset; //Plot time (based off offical time)
-   Event.EventTime    =event->VF48Timestamp; //TPC time stamp
-   Event.RunTime      =event->t; //Official Time
-   Event.nHelices     =-1; // helices used for vertexing
-   Event.nTracks      =event->NTracks; // reconstructed (good) helices
-   AddVertexEvent(Event);
-
-}
-
-void TA2Plot::AddEvent(TSISEvent* event, int channel, double time_offset)
-{
-   SISPlotEvent Event;
-   Event.runNumber    =event->GetRunNumber(); // I don't get set yet...
-   //int clock
-   Event.t            =event->GetRunTime()-time_offset; //Plot time (based off offical time)
-   Event.OfficialTime =event->GetRunTime();
-   Event.Counts       =event->GetCountsInChannel(channel);
-   Event.SIS_Channel  =channel;
-
-   SISEvents.push_back(Event);
 }
 
 void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
 {
-   double t=SVDEvent->t;
-   if (SVDEvent->z < ZMinCut) return;
-   if (SVDEvent->z > ZMaxCut) return;
+   double time=SVDEvent->t;
+   if (SVDEvent->z < fZMinCut) return;
+   if (SVDEvent->z > fZMaxCut) return;
 
-   //Loop over all time windows
-   for (auto& window: GetTimeWindows())
+   int index = GetTimeWindows()->GetValidWindowNumber(time);
+   
+   
+   //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
+   //if not it will add the event. 
+   if(index >= 0)
    {
-      //If inside the time window
-      if ( (t>window.tmin && t< window.tmax) ||
-      //Or if after tmin and tmax is invalid (-1)
-           (t>window.tmin && window.tmax<0) )
-      {
-         AddEvent(SVDEvent,window.tmin);
-         //This event has been written to the array... so I dont need
-         //to check the other winodws... break! Move to next SISEvent
-         break;
-      }
+      AddEvent(SVDEvent, GetTimeWindows()->fZeroTime.at(index));
    }
 }
 
 void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
 {
-   int n_sis=SISChannels.size();
-   double t=SISEvent->GetRunTime();
+   int numSISChannels=fSISChannels.size();
+   double time=SISEvent->GetRunTime();
+
    //Loop over all time windows
-   for (auto& window: GetTimeWindows())
+   int index = GetTimeWindows()->GetValidWindowNumber(time);
+   if(index>=0)
    {
-      //If inside the time window
-      if ( (t>window.tmin && t< window.tmax) ||
-      //Or if after tmin and tmax is invalid (-1)
-           (t>window.tmin && window.tmax<0) )
+      for (int i=0; i<numSISChannels; i++)
       {
-         for (int i=0; i<n_sis; i++)
+         int counts = SISEvent->GetCountsInChannel(fSISChannels[i]);
+         if (counts)
          {
-            int counts=SISEvent->GetCountsInChannel(SISChannels[i]);
-            if (counts)
-            {
-               AddEvent(SISEvent,SISChannels[i],window.tmin);
-            }
+            AddEvent(SISEvent, fSISChannels[i], GetTimeWindows()->fZeroTime[index]);
          }
-         //This event has been written to the array... so I dont need
-         //to check the other winodws... break! Move to next SISEvent
-         break;
       }
    }
 }
 
-void TA2Plot::LoadRun(int runNumber)
+void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition )
 {
-   double last_time=0;
-   //Calculate our list time... so we can stop early
-   for (auto& t: GetTimeWindows())
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
+   return AddDumpGates(runNumber, spills);
+}
+
+void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills)
+{
+   std::vector<double> minTime;
+   std::vector<double> maxTime;
+   
+   for (auto & spill: spills)
    {
-      if (t.runNumber==runNumber)
+      if (spill.ScalerData)
       {
-         if (t.tmax<0) last_time=1E99;
-         if (last_time<t.tmax)
-         {
-            last_time=t.tmax;
-         }
+         minTime.push_back(spill.ScalerData->StartTime);
+         maxTime.push_back(spill.ScalerData->StopTime);
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
       }
    }
+   return TA2Plot::AddTimeGates(runNumber, minTime, maxTime);
+}
 
+//If spills are from one run, it is faster to call the function above
+void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills)
+{
+   for (TA2Spill& spill: spills)
+   {
+      if (spill.ScalerData)
+      {
+         AddTimeGate(spill.RunNumber, spill.GetStartTime(), spill.GetStopTime());
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return;
+}
+
+
+//Load, fill, draw, or save the object  
+void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
+{
    //Something smarter for the future?
    //TSVDQODIntegrator SVDCounts(TA2RunQOD* q,tmin[0], tmax[0]);
    
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
-   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficalTime");
+   TTreeReader* SVDReader = Get_A2_SVD_Tree(runNumber);
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
    while (SVDReader->Next())
    {
-      if (SVDEvent->t>last_time)
+      double t = SVDEvent->t;
+      if (t < firstTime)
+         continue;
+      if (t > lastTime)
          break;
       AddSVDEvent(&(*SVDEvent));
    }
@@ -179,187 +284,158 @@ void TA2Plot::LoadRun(int runNumber)
    // so get multiple channels and multiple time windows in one pass
    while (SISReader->Next())
    {
-      if (SISEvent->GetRunTime()>last_time)
+      double t = SISEvent->GetRunTime();
+      if (t < firstTime)
+         continue;
+      if (t > lastTime)
          break;
       AddSISEvent(&(*SISEvent));
    }
 }
 
-void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition )
+void TA2Plot::SetUpHistograms()
 {
-   std::vector<TA2Spill*> spills=Get_A2_Spills(runNumber,description,repetition);
-   std::vector<double> tmin;
-   std::vector<double> tmax;
-   
-   for (auto & spill: spills)
-   {
-      if (spill->ScalerData)
-      {
-         tmin.push_back(spill->ScalerData->StartTime);
-         tmax.push_back(spill->ScalerData->StopTime);
-      }
-      else
-      {
-         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
-      }
-   }
-   return AddTimeGates(runNumber,tmin,tmax);
-}
-
-void TA2Plot::SetUpHistograms(bool zeroTime)
-{
-
    const double XMAX(4.),YMAX(4.),RMAX(4.), ZMAX(30.);
 
-   double TMin;
-   double TMax;
-   if (zeroTime)
+   double minTime;
+   double maxTime;
+   if (kZeroTimeAxis)
    {
-      TMin=0;
-      TMax=GetMaxDumpLength();
+      minTime=GetBiggestTzero();
+      maxTime=GetMaxDumpLength() + minTime;
    }
    else
    {
-      TMin=GetFirstTmin();
-      TMax=GetLastTmax();
+      minTime=GetFirstTmin();
+      maxTime=GetLastTmax();
+   }
+
+   AddHistogram("zvtx",new TH1D((GetTAPlotTitle() + "_zvtx").c_str(), "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
+
+   TH1D* rHisto = new TH1D((GetTAPlotTitle() + "_rvtx").c_str(), "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
+   rHisto->SetMinimum(0);
+   AddHistogram("rvtx",rHisto);
+
+   TH1D* phiHisto = new TH1D((GetTAPlotTitle() + "_phivtx").c_str(), "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
+   phiHisto->SetMinimum(0);
+   AddHistogram("phivtx",phiHisto);
+
+   TH2D* xyHisto = new TH2D((GetTAPlotTitle() + "_xyvtx").c_str(), "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
+   AddHistogram("xyvtx",xyHisto);
+
+   TH2D* zrHisto = new TH2D((GetTAPlotTitle() + "_zrvtx").c_str(), "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
+   AddHistogram("zrvtx",zrHisto);
+
+   TH2D* zphiHisto = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
+   AddHistogram("zphivtx",phiHisto);
+   std::string units;
+   if (GetMaxDumpLength()<SCALECUT) 
+   {
+      fTimeFactor = 1000;
+      units = "[ms]";
+   }
+   else
+   {
+      fTimeFactor = 1;
+      units = "[s]";
    }
 
    //SIS channels:
-   TH1D* triggers=new TH1D("tIO32_nobusy", "t;t [s];events", GetNBins(), TMin, TMax);
+   TH1D* triggers = new TH1D((GetTAPlotTitle() + "_tIO32_nobusy").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
    triggers->SetMarkerColor(kRed);
    triggers->SetLineColor(kRed);
    triggers->SetMinimum(0);
    AddHistogram("tIO32_nobusy",triggers);
-   
-   TH1D* read_triggers=new TH1D("tIO32", "t;t [s];events", GetNBins(), TMin, TMax);
-   read_triggers->SetMarkerColor(kViolet);
-   read_triggers->SetLineColor(kViolet);
-   read_triggers->SetMinimum(0);
-   AddHistogram("tIO32",read_triggers);
-   
-   
-   TH1D* atom_or=new TH1D("tAtomOR", "t;t [s];events", GetNBins(), TMin, TMax);
-   atom_or->SetMarkerColor(kGreen);
-   atom_or->SetLineColor(kGreen);
-   atom_or->SetMinimum(0);
-   AddHistogram("tAtomOR",atom_or);
 
-   AddHistogram("zvtx",new TH1D("zvtx", "Z Vertex;z [cm];events", GetNBins(), -ZMAX, ZMAX));
+   TH1D* readTriggers = new TH1D((GetTAPlotTitle() + "_tIO32").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   readTriggers->SetMarkerColor(kViolet);
+   readTriggers->SetLineColor(kViolet);
+   readTriggers->SetMinimum(0);
+   AddHistogram("tIO32",readTriggers);
 
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [cm];events", GetNBins(), 0., RMAX);
-   hr->SetMinimum(0);
-   AddHistogram("rvtx",hr);
+   TH1D* atomOr = new TH1D((GetTAPlotTitle() + "_tAtomOR").c_str(), (std::string("t;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   atomOr->SetMarkerColor(kGreen);
+   atomOr->SetLineColor(kGreen);
+   atomOr->SetMinimum(0);
+   AddHistogram("tAtomOR",atomOr);
 
-   TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
-   hphi->SetMinimum(0);
-   AddHistogram("phivtx",hphi);
+   TH1D* tHisto = new TH1D((GetTAPlotTitle() + "_tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   tHisto->SetLineColor(kMagenta);
+   tHisto->SetMarkerColor(kMagenta);
+   tHisto->SetMinimum(0);
+   AddHistogram("tvtx",tHisto);
 
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [cm];y [cm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
-   AddHistogram("xyvtx",hxy);
-
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [cm];r [cm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
-   AddHistogram("zrvtx",hzr);
-
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
-   AddHistogram("zphivtx",hzphi);
-
-   if (GetMaxDumpLength()<SCALECUT) 
-   {
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", GetNBins(), TMin*1000., TMax*1000.);
-      ht->SetLineColor(kMagenta);
-      ht->SetMarkerColor(kMagenta);
-      ht->SetMinimum(0);
-      AddHistogram("tvtx",ht);
-
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin*1000., TMax*1000.);
-      AddHistogram("ztvtx",hzt);
-
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin*1000., TMax*1000);
-      AddHistogram("phitvtx",hphit);
-
-      //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
-   }
-   else
-   {
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", GetNBins(), TMin, TMax); 
-      ht->SetLineColor(kMagenta);
-      ht->SetMarkerColor(kMagenta);
-      ht->SetMinimum(0);
-      AddHistogram("tvtx",ht);
-
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [s]", GetNBins(), -ZMAX, ZMAX, GetNBins(), TMin, TMax);
-      AddHistogram("ztvtx",hzt);
-
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),TMin, TMax);
-      AddHistogram("phitvtx",hphit);
-
-      //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [s];Counts", GetNBins(), TMin, TMax);
-  }
+   TH2D* ztHisto = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   AddHistogram("ztvtx",ztHisto);
   return;
 }
 
-void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
+void TA2Plot::FillHisto(bool applyCuts, int mode)
 {
 
    ClearHisto();
    SetUpHistograms();
-   
-   const double max_dump_length=GetMaxDumpLength();
+   const double kMaxDumpLength = GetMaxDumpLength();
+
    //Fill SIS histograms
-   //for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
-   int runno=0;
-   for (auto& sisevent: SISEvents)
+   int runNum = 0;
+   for (int i = 0; i<SISEvents.fTime.size(); i++)
    {
-      //This is a new run number... SIS channels could have changed! update!
-      if (sisevent.runNumber!=runno)
+      if (SISEvents.fRunNumber[i] != runNum)
       {
-         runno=sisevent.runNumber;
-         SetSISChannels(runno);
+         runNum = SISEvents.fRunNumber[i];
+         SetSISChannels(runNum);
       }
-      double time = sisevent.t;
-      if (max_dump_length<SCALECUT) 
+      double time;
+      if (kZeroTimeAxis)
+         time = SISEvents.fTime[i];
+      else
+         time = SISEvents.fOfficialTime[i];
+      if (kMaxDumpLength<SCALECUT) 
          time=time*1000.;
-      int Channel         = sisevent.SIS_Channel;
-      int CountsInChannel = sisevent.Counts;
- 
-      if (Channel == trig)
-         FillHistogram("tIO32",time,CountsInChannel);
-      else if (Channel == trig_nobusy)
-         FillHistogram("tIO32_nobusy",time,CountsInChannel);
-      else if (Channel == atom_or)
-         FillHistogram("tAtomOR",time,CountsInChannel);
-      else if (Channel == Beam_Injection)
+      int channel         = SISEvents.fSISChannel[i];
+      int countsInChannel = SISEvents.fCounts[i];
+      if (channel == fTrig.find(SISEvents.fRunNumber[i])->second)
+         FillHistogram("tIO32",time,countsInChannel);
+      else if (channel == fTrigNobusy.find(SISEvents.fRunNumber[i])->second)
+         FillHistogram("tIO32_nobusy",time,countsInChannel);
+      else if (channel == fAtomOr.find(SISEvents.fRunNumber[i])->second)
+         FillHistogram("tAtomOR",time,countsInChannel);
+      else if (channel == fBeamInjection.find(SISEvents.fRunNumber[i])->second)
          AddInjection(time);
-      else if (Channel == Beam_Ejection)
+      else if (channel == fBeamEjection.find(SISEvents.fRunNumber[i])->second)
          AddEjection(time);
-      else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
+      else if (channel == fCATStart.find(SISEvents.fRunNumber[i])->second || channel == fRCTStart.find(SISEvents.fRunNumber[i])->second || channel == fATMStart.find(SISEvents.fRunNumber[i])->second)
          AddStopDumpMarker(time);
-      else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
+      else if (channel == fCATStop.find(SISEvents.fRunNumber[i])->second || channel == fRCTStop.find(SISEvents.fRunNumber[i])->second || channel == fATMStop.find(SISEvents.fRunNumber[i])->second)
          AddStartDumpMarker(time);
       else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
    }
 
    //Fill Vertex Histograms
-
-   TVector3 vtx;
-   for (auto& vtxevent: GetVertexEvents())
+   TVector3 vertex;
+   const TVertexEvents* kVertexEvents = GetVertexEvents();
+   //for (auto& vtxevent: GetVertexEvents())   
+   for (int i=0; i<kVertexEvents->fXVertex.size(); i++)
    {
-      Double_t time = vtxevent.t;
-      if (max_dump_length<SCALECUT)
+      Double_t time;
+      if (kZeroTimeAxis)
+         time = kVertexEvents->fTimes[i];
+      else
+         time = kVertexEvents->fRunTimes[i];
+      if (kMaxDumpLength<SCALECUT)
          time=time*1000.;
-      vtx=TVector3(vtxevent.x,vtxevent.y,vtxevent.z);
+      vertex = TVector3(kVertexEvents->fXVertex[i], kVertexEvents->fYVertex[i], kVertexEvents->fZVertex[i]);
       FillHistogram("tSVD",time);
 
-      int CutsResult=vtxevent.CutsResult;
-      if (MVAMode>0)
+      int cutsResult = kVertexEvents->fCutsResults[i];
+      if (mode>0)
       {
-         if (CutsResult & 1)//Passed cut result!
+         if (cutsResult & 1)//Passed cut result!
          {
             FillHistogram("tvtx",time);
          }
-         if (CutsResult & 2)
+         if (cutsResult & 2)
          {
             FillHistogram("tvtx",time);
          }
@@ -368,132 +444,98 @@ void TA2Plot::FillHisto(bool ApplyCuts, int MVAMode)
       }
       else
       {
-         if (ApplyCuts)
+         if (applyCuts)
          {
-            if (CutsResult & 1)//Passed cut result!
+            if (cutsResult & 1)//Passed cut result!
             {
-               FillHistogram("tvtx",time);
+               FillHistogram("tvtx", time);
             }
             else
                continue;
          }
          else
          {
-            if ( vtxevent.VertexStatus > 0) 
+            if ( kVertexEvents->fVertexStatuses[i] > 0) 
             {
-               FillHistogram("tvtx",time);
+               FillHistogram("tvtx", time);
             }
             else 
                continue;
          }
-         if (vtxevent.VertexStatus <= 0) continue; //Don't draw invaid vertices
+         if(kVertexEvents->fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
       }
-      FillHistogram("phivtx",vtx.Phi());
-      FillHistogram("zphivtx",vtx.Z(), vtx.Phi());
-      FillHistogram("phitvtx",vtx.Phi(),time);
-      FillHistogram("xyvtx",vtx.X(), vtx.Y());
-      FillHistogram("zvtx",vtx.Z());
-      FillHistogram("rvtx",vtx.Perp());
-      FillHistogram("zrvtx",vtx.Z(), vtx.Perp());
-      FillHistogram("ztvtx",vtx.Z(), time);
+      FillHistogram("phivtx",vertex.Phi());
+      FillHistogram("zphivtx",vertex.Z(), vertex.Phi());
+      //FillHistogram("phitvtx",vtx.Phi(),time);
+      FillHistogram("xyvtx",vertex.X(), vertex.Y());
+      FillHistogram("zvtx",vertex.Z());
+      FillHistogram("rvtx",vertex.Perp());
+      FillHistogram("zrvtx",vertex.Z(), vertex.Perp());
+      FillHistogram("ztvtx",vertex.Z(), time);
    }
-   TH1D* hr=GetTH1D("rvtx");
-   if (hr)
+   TH1D* rHisto = GetTH1D("rvtx");
+   if (rHisto)
    {
-      TH1D *hrdens = (TH1D *)hr->Clone("radial density");
-      hrdens->Sumw2();
-      TF1 *fr = new TF1("fr", "x", -100, 100);
-      hrdens->Divide(fr);
-      hrdens->Scale(hr->GetBinContent(hr->GetMaximumBin()) / hrdens->GetBinContent(hrdens->GetMaximumBin()));
-      hrdens->SetMarkerColor(kRed);
-      hrdens->SetLineColor(kRed);
-      delete fr;
-      AddHistogram("rdens",hrdens);
+      TH1D *rDensityHisto = (TH1D *)rHisto->Clone("radial density");
+      rDensityHisto->Sumw2();
+      TF1 *function = new TF1("fr", "x", -100, 100);
+      rDensityHisto->Divide(function);
+      rDensityHisto->Scale(rHisto->GetBinContent(rHisto->GetMaximumBin()) / rDensityHisto->GetBinContent(rDensityHisto->GetMaximumBin()));
+      rDensityHisto->SetMarkerColor(kRed);
+      rDensityHisto->SetLineColor(kRed);
+      delete function;
+      AddHistogram("rdens",rDensityHisto);
    }
-
 }
 
-TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
+TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 {
+   
+   SetTAPlotTitle(name);
+   std::cout<<"TAPlot Processing time : ~" << GetApproximateProcessingTime() <<"s"<<std::endl;
+   TCanvas *canvas = new TCanvas(name, name, 1800, 1000);
+   FillHisto(applyCuts, mode);
 
-   FillHisto(ApplyCuts,MVAMode);
-
-   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
    //Scale factor to scale down to ms:
    if (GetMaxDumpLength()<SCALECUT) SetTimeFactor(1000.);
-   cVTX->Divide(4, 2);
-/*
-   if (gLegendDetail >= 1)
-   {
-      gStyle->SetOptStat(11111);
-   }
-   else
-   {
-      gStyle->SetOptStat("ni");	//just like the knights of the same name
-   }*/
+   canvas->Divide(4, 2);
 
-   cVTX->cd(1);
+   //Canvas 1
+   canvas->cd(1);
    DrawHistogram("zvtx","HIST E1");
 
-   cVTX->cd(2); // Z-counts (with electrodes?)4
-   TVirtualPad *cVTX_1 = cVTX->cd(2);
-   gPad->Divide(1, 2);
-   cVTX_1->cd(1);
-   //cVTX->cd(2)->SetFillStyle(4000 );
-      //cVTX->cd(1)->SetFillStyle(4000 );
-   // R-counts
-   DrawHistogram("rvtx","HIST E1");
+   //Canvas 2
+   canvas->cd(2); // Z-counts (with electrodes?)4
+      TVirtualPad *subPadCD2 = canvas->cd(2);
+      gPad->Divide(1, 2);
+      //Canvas 2 - Pad 1
+      subPadCD2->cd(1);
+         DrawHistogram("rvtx","HIST E1");
+         DrawHistogram("rdens","HIST E1 SAME");
+         TPaveText *radialDensityLabel = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
+         radialDensityLabel->AddText("radial density [arbs]");
+         radialDensityLabel->SetTextColor(kRed);
+         radialDensityLabel->SetFillStyle(0);
+         radialDensityLabel->SetLineStyle(0);
+         radialDensityLabel->Draw();
+      //Canvas 2 - Pad 2
+      subPadCD2->cd(2);
+         DrawHistogram("phivtx","HIST E1");
 
-   DrawHistogram("rdens","HIST E1 SAME");
-
-   TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
-   rdens_label->AddText("radial density [arbs]");
-   rdens_label->SetTextColor(kRed);
-   rdens_label->SetFillStyle(0);
-   rdens_label->SetLineStyle(0);
-   rdens_label->Draw();
-   cVTX_1->cd(2);
-   
-   DrawHistogram("phivtx","HIST E1");
-
-   cVTX->cd(3); // T-counts
-   //cVTX->cd(3)->SetFillStyle(4000 );
+   //Canvas 3
+   canvas->cd(3); // T-counts
    TLegend* legend = NULL;
    DrawHistogram("tIO32_nobusy","HIST");
    legend=AddLegendIntegral(legend,"Triggers: %5.0lf","tIO32_nobusy");
    DrawHistogram("tIO32","HIST SAME");
    legend=AddLegendIntegral(legend,"Reads: %5.0lf","tIO32");
    DrawHistogram("tAtomOR","HIST SAME");
-   //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
-   //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
-   //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
-
-    
-   //DrawHistogram("SVD_TRIG","HIST");
-
    DrawHistogram("tvtx","HIST SAME");
-
-   
-   //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
-   if (MVAMode)
+   if (mode)
       DrawHistogram("tmva","HIST SAME");
-
-
-   //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
-   //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
-   /*auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
-   char line[201];
-   TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
-   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
-   //   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
-   legend->AddEntry(TPC, line, "f");*/
-   
-   //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-   //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
-   if (MVAMode)
+   if (mode)
    {
       DrawHistogram("tvtx","HIST SAME");
-      
 #if 0
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
@@ -507,42 +549,51 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
          legend=AddLegendIntegral(legend,"Pass Cuts: %5.0lf","tvtx");
       else
          legend=AddLegendIntegral(legend,"Vertices: %5.0lf","tvtx");
-      //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-    //std::cout <<"Drawing lines"<<std::endl;
     legend=DrawLines(legend,"tIO32_nobusy");
-   /*
-
-    }*/
   }
 
-  // legend->AddEntry("f1","Function abs(#frac{sin(x)}{x})","l");
-  // legend->AddEntry("gr","Graph with error bars","lep");
-  // legend->Draw();
-  cVTX->cd(4);
-  // X-Y-counts
-  //cVTX->cd(4)->SetFillStyle(4000 );
-  DrawHistogram("xyvtx","colz");
+   //Canvas 4
+   canvas->cd(4);
+   DrawHistogram("xyvtx","colz");
 
-  cVTX->cd(5);
-  // Z-R-counts
-  //cVTX->cd(5)->SetFillStyle(4000 );
-  DrawHistogram("phitvtx","colz");
+   //Canvas 5
+   canvas->cd(5);
+   DrawHistogram("ztvtx","colz");
 
-  cVTX->cd(6);
-  // Z-T-counts
-  //cVTX->cd(6)->SetFillStyle(4000 );
-  DrawHistogram("ztvtx","colz");
+   //Canvas 6
+   canvas->cd(6);
+   TVirtualPad *subPadCD6 = NULL;
+   if (IsGEMData() && IsLVData())
+   {
+      subPadCD6 = canvas->cd(6);
+      gPad->Divide(1, 2);
+   }
+   if (subPadCD6) 
+      subPadCD6->cd(1);
+      std::pair<TLegend*,TMultiGraph*> gemDataMG = GetGEMGraphs();
+      if (gemDataMG.first)
+      {
+         //Draw TMultigraph
+         gemDataMG.second->Draw("AL*");
+         //Draw legend
+         gemDataMG.first->Draw();
+      }
 
-  cVTX->cd(7);
-  // phi counts
-  //cVTX->cd(7)->SetFillStyle(4000 );
-  /*((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
-  ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative()->Draw("HIST");
-  ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");*/
-  DrawHistogram("tvtx","HIST SAME");
-  
-  //((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
-#if 0
+      if (subPadCD6) 
+         subPadCD6->cd(2);
+      std::pair<TLegend*,TMultiGraph*> labviewDataMG=GetLVGraphs();
+      if (labviewDataMG.first)
+      {
+         //Draw TMultigraph
+         labviewDataMG.second->Draw("AL*");
+         //Draw legend
+         labviewDataMG.first->Draw();
+      }
+
+   //Canvas 7
+   canvas->cd(7);
+   DrawHistogram("tvtx","HIST SAME");
+#if 0 //Why are these blocks here? They also haven't been regestered as active code when using the F2 rename variable so they are still with old names...
   if (MVAMode) && HISTO_POSITION.count("tvtx"))
   {
     ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
@@ -584,67 +635,118 @@ TCanvas* TA2Plot::DrawCanvas(const char* Name, bool ApplyCuts, int MVAMode)
      }
   }
   #endif
-  //IO32_NOTBUSY Halfway point
-  /*
-  TH1 *h2 = ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative();
-  //Draw line at halfway point
-  Double_t Max = h2->GetBinContent(h2->GetMaximumBin());
-  Double_t Tmax = h2->GetXaxis()->GetXmax();
-  for (Int_t i = 0; i < h2->GetMaximumBin(); i++)
-  {
-    if (h2->GetBinContent(i) > Max / 2.)
-    {
-      TLine *half = new TLine(TMax *tFactor* (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-      half->SetLineColor(kRed);
-      half->Draw();
-      break;
-    }
-  }
-*/
-  cVTX->cd(8);
-  // Z-PHI-counts
-  //cVTX->cd(8)->SetFillStyle(4000 );
-  DrawHistogram("zphivtx","colz");
-  if (ApplyCuts)
-  {
-    cVTX->cd(1);
-    TPaveText *applycuts_label = new TPaveText(0., 0.95, 0.20, 1.0, "NDC NB");
-    if (MVAMode>0)
-      applycuts_label->AddText("RF cut applied");
-    else
-      applycuts_label->AddText("Cuts applied");
-    applycuts_label->SetTextColor(kRed);
-    applycuts_label->SetFillColor(kWhite);
-    applycuts_label->Draw();
-  };
-  //TLatex* runs_label = new  TLatex(-32.5,-.0625, 32.5, 5.6, "NDC NB");
-  //
-  cVTX->cd(0);
-  TString run_txt = "Run(s): ";
-  run_txt += GetListOfRuns();
-  run_txt += " ";
-  run_txt += GetNBins();
-  run_txt += " bins";
-  /*if (gZcutMin > -998.)
-    {
-      run_txt += " gZcutMin=";
-      run_txt += gZcutMin;
-    }
-    if (gZcutMax < 998.)
-    {
-      run_txt += " gZcutMax=";
-      run_txt += gZcutMax;
-    }*/
-  //runs_label->AddText(run_txt);
-  TLatex *runs_label = new TLatex(0., 0., run_txt);
-  runs_label->SetTextSize(0.016);
-  //runs_label->SetTextColor(kRed);
-  //runs_label->SetFillColor(kWhite);
-  //runs_label->SetFillStyle(1001);
-  runs_label->Draw();
 
-  std::cout<<run_txt<<std::endl;
-  return cVTX;
+   //Canvas 8
+   canvas->cd(8);
+   DrawHistogram("zphivtx","colz");
+   if (applyCuts)
+   {
+     canvas->cd(1);
+     TPaveText *applyCutsLabel = new TPaveText(0., 0.95, 0.20, 1.0, "NDC NB");
+     if (mode>0)
+       applyCutsLabel->AddText("RF cut applied");
+     else
+       applyCutsLabel->AddText("Cuts applied");
+     applyCutsLabel->SetTextColor(kRed);
+     applyCutsLabel->SetFillColor(kWhite);
+     applyCutsLabel->Draw();
+   };
+
+   //Canvas 0 - Global
+   canvas->cd(0);
+   TString runText = "Run(s): ";
+   runText += GetListOfRuns();
+   runText += " ";
+   runText += GetNBins();
+   runText += " bins";
+   TLatex *runsLabel = new TLatex(0., 0., runText);
+   runsLabel->SetTextSize(0.016);
+   runsLabel->Draw();
+ 
+   std::cout<<runText<<std::endl;
+   return canvas;
+}
+
+void TA2Plot::WriteEventList(std::string fileName, bool append)
+{
+   //TODO LMG - Check if file already exists and if so, append to it. If not, delete the old .list and rewrite.
+   //Change .ats to []s for speed. 
+
+   //Initiate an ofstream to write to
+   std::ofstream myFile;
+   std::string file = fileName + ".list";
+   myFile.open(file);
+   
+   //Assert that the runNumbers and EventNos match up in terms of size.
+   assert(fVertexEvents.fRunNumbers.size() == fVertexEvents.fEventNos.size());
+
+   int index = 0; //Initialise at index 0
+   int currentEventNo = fVertexEvents.fEventNos.at(index); //Set the current run number to be the one at index (0)
+   int currentRunNo = SISEvents.fRunNumber.at(index); //Same for event no.
+   myFile << currentRunNo << ":" << currentEventNo; //Print an initial statement to file, will look something like "39993:2"
+   
+   //While index is in range lets do all the checks to decide what to write.
+   while(index < fVertexEvents.fRunNumbers.size()-1)
+   {
+      index++; //Increment index since we're in a while loop not a for.
+      if(fVertexEvents.fRunNumbers.at(index)!=currentRunNo)
+      {
+         //If runNumber has changed:
+         myFile << "-" << currentEventNo << std::endl; //1. Close off current range eg: "39993:2-5"
+         currentRunNo = fVertexEvents.fRunNumbers.at(index); //Update currentrunNo and EventNo
+         currentEventNo = fVertexEvents.fEventNos.at(index);
+         myFile << currentRunNo << ":" << currentEventNo; //Print initial line of new run eg: "45000:3"
+      }
+      else if(fVertexEvents.fEventNos.at(index) == (currentEventNo+1))
+      {
+         //Else if runNumber is the same but the event is consecutive to the one after (ie 2-3)
+         currentEventNo++; //Increment currentEventNo. This is equiv to currentEventNo = VertexEvents.EventNos.at(index) just quicker since we've already checked its consecutive.
+      }
+      else
+      {
+         //Else: Ie run number is the samer but the event number is not consecutive:
+         myFile << "-" << currentEventNo << std::endl; //Close line, eg: "39993:2-5"
+         currentRunNo = fVertexEvents.fRunNumbers.at(index); //Update run and event no.
+         currentEventNo = fVertexEvents.fEventNos.at(index);
+         myFile << currentRunNo << ":" << currentEventNo; //Start new line eg: "39993:27"
+      }
+   }
+   //Once out of the loop close what we have.
+   myFile << "-" << currentEventNo << std::endl;
+   //Close the file.
+   myFile.close();
+} 
+
+void TA2Plot::ExportCSV(std::string filename, bool PassedCutOnly)
+{
+   //Save Time windows and vertex data
+   TAPlot::ExportCSV(filename, PassedCutOnly);
+   
+   std::string scalerFilename = filename + ".scaler.csv";
+   
+   std::ofstream sis;
+   sis.open(scalerFilename);
+   sis << SISEvents.CSVTitleLine();
+   for (size_t i=0; i< SISEvents.size(); i++)
+      sis << SISEvents.CSVLine(i);
+   sis.close();
+   std::cout<< scalerFilename << " saved\n";
+   
+   
+}
+
+//Private members
+void TA2Plot::AddEvent(TSVD_QOD* event, double timeOffset)
+{
+   double tMinusOffset = (event->t - timeOffset);
+   AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, 
+      event->x, event->y, event->z, tMinusOffset, event->VF48Timestamp, event->t, -1, event->NTracks);
+}
+
+void TA2Plot::AddEvent(TSISEvent* event, int channel, double timeOffset)
+{
+   SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - timeOffset, 
+      event->GetRunTime(), event->GetCountsInChannel(channel), channel);
 }
 
 #endif

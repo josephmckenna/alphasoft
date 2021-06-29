@@ -17,6 +17,7 @@ class Match
 private:
    bool fTrace;
    bool fDebug;
+   bool fMT;
    bool diagnostic;
 
    std::mutex* manalzer_global_mtx;
@@ -103,7 +104,7 @@ private:
    ALPHAg::padmap pmap;
 
 public:
-   Match(const AnaSettings* ana_settings);
+   Match(const AnaSettings* ana_settings, bool mt=false);
    Match(std::string json): Match(new AnaSettings(json.c_str()))  {}
    ~Match();
    void SetGlobalLockVariable(std::mutex* _manalyzerLock)
@@ -128,6 +129,7 @@ public:
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }
    void SetDiagnostic(bool d) { diagnostic=d; }
+   void SetMultiThread(bool m) { fMT=m; }
 };
 
 

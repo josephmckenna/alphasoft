@@ -60,8 +60,8 @@ private:
    int pedestal_length;
    double fScale;
 
-   int theAnodeBin;
-   int thePadBin;
+   unsigned theAnodeBin;
+   unsigned thePadBin;
 
    double fADCThres;
    double fPWBThres;
@@ -84,9 +84,9 @@ private:
    // std::vector<double> resRMS_p;
 
 
-   int ReadResponseFile(const double awbin, const double padbin);
-   int ReadAWResponseFile( const double awbin );
-   int ReadPADResponseFile( const double padbin );
+   int ReadResponseFile(const int awbin, const int padbin);
+   int ReadAWResponseFile( const int awbin );
+   int ReadPADResponseFile( const int padbin );
    std::vector<double> Rebin(const std::vector<double> &in, int binsize, double ped = 0.);
    int ReadRescaleFile();
    int ReadADCRescaleFile();
@@ -94,22 +94,22 @@ private:
 
    std::vector<ALPHAg::signal>* Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                                       std::vector<double> &fResponse, int theBin, bool isanode);
+                                       std::vector<double> &fResponse, unsigned theBin, bool isanode);
 
    void SubtractAW(ALPHAg::wfholder* hist1,
                    std::vector<ALPHAg::wfholder*>* wfmap,
-                   const int b,
+                   const unsigned b,
                    const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                   std::vector<double> &fResponse, int theBin);
+                   std::vector<double> &fResponse, const unsigned theBin);
    
    void SubtractPAD(ALPHAg::wfholder* hist1,
                     std::vector<ALPHAg::wfholder*>* wfmap,
-                    const int b,
+                    const unsigned b,
                     const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                    std::vector<double> &fResponse, int theBin);
+                    std::vector<double> &fResponse, const unsigned theBin);
    
    ALPHAg::comp_hist_t wf_comparator;
-   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const int b);
+   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b);
    
    std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex);
@@ -244,8 +244,10 @@ public:
    void SetupADCs(TFile* fout, int run, bool norm=false, bool diag=false);
    void SetupPWBs(TFile* fout, int run, bool norm=false, bool diag=false);
 
+#ifdef BUILD_AG_SIM
    int FindAnodeTimes(TClonesArray*);
    int FindPadTimes(TClonesArray*);
+#endif
 
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);
@@ -281,7 +283,7 @@ public:
 
    inline int GetPedestalLength() const { return pedestal_length; }
    inline void SetPedestalLength(int l) { pedestal_length=l; }
-   inline int GetScale() const { return fScale; }
+   inline double GetScale() const { return fScale; }
    inline void SetScale(double s) { fScale=s; }
 
    void AWdiagnostic();

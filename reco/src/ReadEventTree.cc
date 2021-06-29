@@ -228,8 +228,7 @@ void ReadEventTree::DisplayHisto()
       if( hhpad->GetEntries() > 0. )
          {
             hhpad->Draw("same");
-            //hht->GetXaxis()->SetRangeUser(0.,2100.);
-            hht->GetXaxis()->SetRangeUser(0.,1500.);
+            hht->GetXaxis()->SetRangeUser(0.,1000.);
             hht->GetYaxis()->SetRangeUser(0.,
                                           hht->GetBinContent(hht->GetMaximumBin()) > hhpad->GetBinContent(hhpad->GetMaximumBin()) ?
                                           hht->GetBinContent(hht->GetMaximumBin())*1.1 : hhpad->GetBinContent(hhpad->GetMaximumBin())*1.1
@@ -253,7 +252,6 @@ void ReadEventTree::DisplayHisto()
 
       cdec->cd(2);
       hot->Scale(1./hot->Integral());
-      //  hot->Draw("HIST");
       if( hocol->GetEntries() > 0 )
          {
             hot->Draw("HIST");
@@ -273,19 +271,22 @@ void ReadEventTree::DisplayHisto()
          }
 
       cdec->cd(3);
-      htt->GetXaxis()->SetRangeUser(0.,4200.);
+      htt->GetXaxis()->SetRangeUser(-32.,4200.);
       htt->Draw();
       if( htpad->GetEntries() > 0 )
          {
             htpad->Draw("same");
+            //htt->GetYaxis()->SetRangeUser(0.,htpad->GetBinContent(htpad->GetMaximumBin())*1.1);
+            int btemp=htt->FindBin(1000.);
+            htt->GetYaxis()->SetRangeUser(0.,htt->GetBinContent(btemp)*1.2);
+            htt->GetXaxis()->SetTitle("Drift Time [ns]");
 
             cdec->cd(5);
             hawpadsector->SetStats(kFALSE);
-            //  hawpadsector->RebinX();
-            // hawpadsector->GetXaxis()->SetRangeUser(300.,4200.);
-            // hawpadsector->GetYaxis()->SetRangeUser(300.,4200.);
-            hawpadsector->GetXaxis()->SetRangeUser(10.,3200.);
-            hawpadsector->GetYaxis()->SetRangeUser(10.,3200.);
+            hawpadsector->RebinX(8);
+            hawpadsector->RebinY(8);
+            hawpadsector->GetXaxis()->SetRangeUser(-32.,4200.);
+            hawpadsector->GetYaxis()->SetRangeUser(-32.,4200.);
             hawpadsector->Draw("colz");
 
             cdec->cd(6);
@@ -938,7 +939,7 @@ void ReadEventTree::GetSignalHistos()
             htt->SetLineColor(kOrange);
             htt->SetLineWidth(2);
             htt->SetTitle("Drift Time Spectrum after Deconvolution");
-            htt->Rebin(2);
+            htt->Rebin(32);
          }
       }
    else
@@ -985,7 +986,7 @@ void ReadEventTree::GetSignalHistos()
             htpad->SetStats(kFALSE);
             htpad->SetLineColor(kBlack);
             htpad->SetLineWidth(2);
-            htpad->Rebin(2);
+            htpad->Rebin(32);
 
             hopad = (TH2D*)gROOT->FindObject("hOccPad");
             hopad->SetTitle("Pad channels Occupancy");

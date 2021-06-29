@@ -1,9 +1,17 @@
 #!/bin/bash
 #
+
+cmd=cmake
+ver=$($cmd --version | grep 3.[0-9].)
+if [[ -z "${ver}" ]]; then
+    cmd=cmake3
+fi
+
+
 if [[ "$1" == "clean" ]]; then
-    echo "Erasing agdaq build"
+    echo "Erasing alphasoft build"
     cd $AGRELEASE/build
-    cmake3 --build . --target clean
+    ${cmd} --build . --target clean
     cd $AGRELEASE
     if [[ "$2" == "all" ]]; then
 	echo "removing build and bin folders"
@@ -12,85 +20,99 @@ if [[ "$1" == "clean" ]]; then
     fi
 
 elif [[ "$1" == "update" ]]; then
-    echo "Recompiling agdaq"
+    echo "Recompiling alphasoft"
     cd $AGRELEASE/build
-    time cmake3 --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "install" ]]; then
-    echo "Install agdaq"
+    echo "Installing alphasoft"
     cd $AGRELEASE/build
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "noA2" ]]; then
-    echo "Building agdaq and alphaAnalysis"
+    echo "Building agana and sim only"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
-    time cmake3 --build . -- -j`nproc --ignore=2`
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2=OFF ..
+    #time ${cmd} --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
+    cd $AGRELEASE
+
+elif [[ "$1" == "noAg" ]]; then
+    echo "Building alphaAnalysis and sim only"
+    mkdir -p $AGRELEASE/build
+    cd $AGRELEASE/build
+#
+    ${cmd} -DBUILD_A2_SIM=ON -DBUILD_AG=OFF ..
+    #time ${cmd} --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "nosim" ]]; then
-    echo "Building agdaq without Simulation components"
+    echo "Building alphasoft without Simulation components"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF 
-    time cmake3 --build . -- -j`nproc --ignore=2`
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${cmd} ..
+    #time ${cmd} --build . -- -j`nproc --ignore=2`
+    if [[ "$2" == "verbose" ]]; then
+	echo "verbose build without multiproc"
+	time ${cmd} --build . --target install --verbose
+    else
+	time ${cmd} --build . --target install -- -j`nproc --ignore=2`
+    fi
     cd $AGRELEASE
 
 elif [[ "$1" == "ci" ]]; then
-    echo "Building agdaq for CI"
+    echo "Building agsoft for CI"
     #Quit on error (so CI reports failure properly)
     set -e
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
-    cmake3 --build . 
-    cmake3 --build . --target install
+    ${cmd} -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release ..
+    ${cmd} --build . --target install
     ls -lh $AGRELEASE/bin
     cd $AGRELEASE
 
 elif [[ "$1" == "debug" ]]; then
-    echo "Building agdaq with Debug symbols"
+    echo "Building agsoft with Debug symbols"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=OFF -DCMAKE_BUILD_TYPE=Debug
-    time cmake3 --build . -- -j`nproc --ignore=2`
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${cmd} -DCMAKE_BUILD_TYPE=Debug ..
+    #time ${cmd} --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "build" ]]; then
-    echo "Building agdaq optimized"
+    echo "Building alphasoft optimized"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
     if [[ "$2" == "nosim" ]]; then
 	echo "without Simulation components"
-	cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+	${cmd} -DCMAKE_BUILD_TYPE=Release ..
     else
 	echo "with Simulation components"
-	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release
+	#${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
+	${cmd} -DBUILD_AG_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
     fi
 
-    time cmake3 --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
 
     cd $AGRELEASE
 
 elif [[ "$1" == "verbose" ]]; then
-    echo "Building agdaq verbosily"
+    echo "Building agsoft verbosily"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE
-    cmake3 --build  . --verbose
-    cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${cmd} -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=TRUE -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin ..
+    ${cmd} --build . --target install --verbose -- -j`nproc --ignore=2`
     cd $AGRELEASE
 
 elif [[ "$1" == "help" ]]; then
@@ -98,7 +120,6 @@ elif [[ "$1" == "help" ]]; then
     echo "- clean [all]"
     echo "- update (build only)"
     echo "- install"
-    echo "- wA2"
     echo "- nosim (build and install)"
     echo "- debug (build with debug symbols and install)"
     echo "- build [nosim] (build optimized code)"
@@ -107,13 +128,13 @@ elif [[ "$1" == "help" ]]; then
     echo "Default: build and install"
 
 else
-    echo "Building agdaq"
+    echo "Building alphasoft"
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
 #
-    cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=ON
-    time cmake3 --build . -- -j`nproc --ignore=2`
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${cmd} -DBUILD_AG_SIM=ON -DBUILD_A2_SIM=ON ..
+    #time ${cmd} --build . -- -j`nproc --ignore=2`
+    time ${cmd} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
 fi
 

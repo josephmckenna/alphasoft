@@ -10,6 +10,65 @@
 #ifndef A2Flow_H
 #define A2Flow_H
 #include "UnpackVF48.h"
+#include "SiMod.h"
+
+class VF48data
+{
+  public:
+     int       size32[nVF48];
+     uint32_t *data32[nVF48];
+    //char* data[NUM_VF48_MODULES];
+    //int size[NUM_VF48_MODULES];
+  VF48data()
+  {
+    for (int i=0; i<nVF48; i++)
+    {
+      size32[i]=0;
+      data32[i]=NULL;
+    }
+  }
+  void AddVF48data(int unit, const void* _data, int _size)
+  {
+
+    //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
+    //int       size32 = size;
+  //32const uint32_t *data32 = (const uint32_t*)data;
+    if (!_size) return;
+    size32[unit]=_size;
+    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
+    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
+    return;
+  }
+  ~VF48data()
+  {
+     for (int i=0; i<nVF48; i++)
+     {
+       // if (data32[i])
+           free( data32[i] );
+     }
+  }
+};
+
+class VF48DataFlow: public TAFlowEvent
+{
+   public:
+   std::deque<VF48data*> VF48dataQueue;
+     public:
+  VF48DataFlow(TAFlowEvent* flow)
+       : TAFlowEvent(flow)
+  {
+  }
+  void AddData(VF48data* e)
+  {
+     VF48dataQueue.push_back(e);
+  }
+  //Do not delete the pointers... we don't own them
+  ~VF48DataFlow()
+  {
+     VF48dataQueue.clear();
+  }
+};
+
 
 class VF48EventFlow: public TAFlowEvent
 {
@@ -135,7 +194,7 @@ class SISEventFlow: public TAFlowEvent
   }
 };
 
-#include "TSpill.h"
+#include "TA2Spill.h"
 
 class A2SpillFlow: public TAFlowEvent
 {
@@ -170,6 +229,45 @@ class SVDQODFlow: public TAFlowEvent
   }
 };
 
+class felabviewFlowEvent: public TAFlowEvent
+{
+private:
+    std::string BankName;
+    std::vector<double> m_data;
+    uint32_t MIDAS_TIME;
+    double run_time;
+    double labview_time;
+public:
+   //Setters and Getters
+   virtual std::string            GetBankName()                           { return BankName; }
+   virtual std::vector<double>*   GetData()                               { return &m_data; }
+   virtual uint32_t               GetMIDAS_TIME()                         { return MIDAS_TIME; }
+   virtual double                 GetRunTime()                            { return run_time; }
+   virtual double                 GetLabviewTime()                        { return labview_time; }
+   
+   felabviewFlowEvent(TAFlowEvent* flowevent)
+      : TAFlowEvent(flowevent)
+   {
+   }
+
+    felabviewFlowEvent(TAFlowEvent* flowevent, std::string m_BankName, std::vector<double> m_pdata, 
+       uint32_t m_MIDAS_TIME, double m_run_time, double m_labview_time)
+      : TAFlowEvent(flowevent), BankName(m_BankName), m_data(m_pdata), 
+      MIDAS_TIME(m_MIDAS_TIME), run_time(m_run_time), labview_time(m_labview_time)
+   {
+      
+   }
+
+      felabviewFlowEvent(TAFlowEvent* flowevent, felabviewFlowEvent* flow)
+      : TAFlowEvent(flowevent), BankName(flow->BankName), m_data(flow->m_data), 
+      MIDAS_TIME(flow->MIDAS_TIME), run_time(flow->run_time), labview_time(flow->labview_time)
+   {
+   }
+
+   ~felabviewFlowEvent()
+   {
+   }
+};
 
 
 #endif

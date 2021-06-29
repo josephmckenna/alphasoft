@@ -52,7 +52,7 @@ public:
 
     virtual void    Resize();
     virtual void    HandleEvents(XEvent *event);
-    virtual void    Transform(Node *node, int num_nodes) { }
+    virtual void    Transform(Node* /*node*/, int /*num_nodes*/) { }
     virtual void    TransformHits();
     virtual void    SetScrolls();
     virtual void    ScrollValueChanged(EScrollBar bar, int value);

@@ -7,13 +7,69 @@ TA2Plot_Filler::TA2Plot_Filler()
 TA2Plot_Filler::~TA2Plot_Filler()
 {
 }
+
+void TA2Plot_Filler::LoadfeGEMData(int runNumber, double first_time, double last_time)
+{ 
+   //feGEM isn't grouped... we could gain speed by reading only once and filling groups of feGEM
+   //Fill the plot, a fine time cut is done inside
+
+   for (TA2Plot* p: plots)
+   {
+      //If current runNumber isn't in plot... skip
+      if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
+         continue;
+      p->LoadFEGEMData(runNumber,first_time, last_time);
+   }
+}
+
+void TA2Plot_Filler::LoadfeLVData(int runNumber, double first_time, double last_time)
+{
+   for (TA2Plot* p: plots)
+   {
+      //If current runNumber isn't in plot... skip
+      if ( std::find(p->GetArrayOfRuns().begin(), p->GetArrayOfRuns().end(), runNumber) == p->GetArrayOfRuns().end())
+         continue;
+      p->LoadFELVData(runNumber, first_time, last_time);
+   }
+}
+
 void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time)
 {
+   std::cout<<"TA2Plot_Filler Loading run data:"<<runNumber <<" over the range between "<< first_time << "s to "<< last_time << "s"<< std::endl;
+   AlphaColourWheel colours;
+   /*for (TA2Plot* p: plots)
+   {
+      for (size_t i=0; i<p->GetTimeWindows().size(); i++)
+      {
+         for (auto& f: p->feGEM)
+         {
+            for (auto& g: f.plots)
+            {
+               TGraph* graph = g->GetGraph();
+               graph->SetLineColor(colours.GetNewColour());
+               graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+               feGEMmg->Add(graph);
+            }
+         } 
+         for (auto& f: p->feLV)
+         {
+            for (auto& g: f.plots)
+            {
+               TGraph* graph = g->GetGraph();
+               graph->SetLineColor(colours.GetNewColour());
+               graph->SetNameTitle(f.GetName().c_str(),std::string( f.GetTitle() + "; t [s];").c_str());
+               feLVmg->Add(graph);
+            }
+         }
+      }
+   }*/
+   LoadfeGEMData(runNumber, first_time, last_time);
+   LoadfeLVData(runNumber, first_time, last_time);
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
    TTreeReader* SVDReader=Get_A2_SVD_Tree(runNumber);
-   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficalTime");
+   TTreeReaderValue<TSVD_QOD> SVDEvent(*SVDReader, "OfficialTime");
    // I assume that file IO is the slowest part of this function... 
    // so get multiple channels and multiple time windows in one pass
    while (SVDReader->Next())
@@ -52,32 +108,55 @@ void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time
 }
 void TA2Plot_Filler::LoadData()
 {
-   std::vector<double> last_times(plots.size(),0.);
-   std::vector<double> first_times(plots.size(),1E99);
-   for (size_t i=0; i<plots.size(); i++)
+   std::set<int> Runs;
+   for (auto &plot: plots)
+      for (auto& run : plot->GetArrayOfRuns())
+         Runs.insert(run);
+   std::vector<int> UniqueRuns(Runs.begin(),Runs.end());
+   Runs.clear();
+   for (auto &plot: plots)
    {
-      //Calculate our list time... so we can stop early
-      for (auto& t: plots[i]->GetTimeWindows())
+      for (auto& c: GEMChannels)
       {
-         if (t.runNumber==runNumbers[i])
+         plot->SetGEMChannel(c.CombinedName,c.ArrayEntry,c.title);
+      }
+      for (auto& c: LVChannels)
+      {
+         plot->SetLVChannel(c.BankName,c.ArrayEntry,c.title);
+      }
+   }
+   std::vector<double> last_times(UniqueRuns.size(),0.);
+   std::vector<double> first_times(UniqueRuns.size(),1E99);
+   for (auto& plot: plots)
+   {
+      //TTimeWindows* temp = plot->GetTimeWindows();
+      //Calculate our list time... so we can stop early
+      for (int t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
+      {
+         for (size_t i=0; i<UniqueRuns.size(); i++)
+         if (plot->GetTimeWindows()->fRunNumber.at(t)==runNumbers[i])
          {
-            if (t.tmax<0) last_times[i]=1E99;
-            if (last_times[i]<t.tmax)
+            if (plot->GetTimeWindows()->fMaxTime.at(t)<0) last_times[i]=1E99;
+            if (last_times[i]<plot->GetTimeWindows()->fMaxTime.at(t))
             {
-               last_times[i]=t.tmax;
+               last_times[i]=plot->GetTimeWindows()->fMaxTime.at(t);
             }
-            if (first_times[i]>t.tmin)
+            if (first_times[i]>plot->GetTimeWindows()->fMinTime.at(t))
             {
-               first_times[i]=t.tmin;
+               first_times[i]=plot->GetTimeWindows()->fMinTime.at(t);
             }
          }
       }
    }
 
-
    for (size_t i=0; i<runNumbers.size(); i++)
    {
       LoadData(runNumbers[i],first_times[i],last_times[i]);
+   }
+   //Give the TAPlots a timestamp so we can track how long processing has taken
+   for (auto& plot: plots)
+   {
+      plot->LoadingDataLoadingDone();
    }
 }
 

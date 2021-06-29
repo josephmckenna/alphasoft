@@ -55,7 +55,7 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
-  ClassDef(EndHit, 1);
+  ClassDef(EndHit, 2);
 };
 
 class BarHit: public TObject

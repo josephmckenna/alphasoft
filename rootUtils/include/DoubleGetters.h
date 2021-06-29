@@ -12,8 +12,8 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
 Double_t GetAGTotalRunTime(Int_t runNumber);
 Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset=0);
 Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition=1, Int_t offset=0);
-#endif
 Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset=0);
+#endif
 
 Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition=1, Int_t offset=0);//, Bool_t ExactMatch=true);
 Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition=1, Int_t offset=0);//, Bool_t ExactMatch)
@@ -23,6 +23,13 @@ Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStar
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime);
 Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime);
 #endif
+
+#ifdef BUILD_A2
+Double_t GetTotalRunTimeFromSIS(Int_t runNumber);
+Double_t GetTotalRunTimeFromSVD(Int_t runNumber);
+Double_t GetA2TotalRunTime(Int_t runNumber);
+#endif
+
 #endif
 
 /* emacs

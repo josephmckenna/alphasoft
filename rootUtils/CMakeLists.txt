@@ -1,79 +1,53 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(agdaq)
+project(rootutils)
 
-# Version numbering
-set (basicApp_VERSION_MAJOR 1)
-set (basicApp_VERSION_MAJOR 0)
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-option(BUILD_AG "Build AG" ON)
-option(BUILD_A2 "Build A2" ON)
-
-# Enforce out-of-source builds 
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
-if(_insource)
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory!")
-endif(_insource) 
-
-# Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
-# The parameter is based on compiler ID as it's not standardised
-if ($ENV{CLICOLOR_FORCE})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-       add_compile_options (-fdiagnostics-color=always)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Clang|AppleClang)$")
-       add_compile_options (-fcolor-diagnostics)
-    endif ()
-endif ()
-
-# Directories
-add_subdirectory(src)
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
+find_package (Python COMPONENTS Interpreter Development)
+if (${Python_FOUND})
+   message("Python found! Enabling python interface")
+   add_definitions(-DHAVE_PYTHON)
+   include_directories(${Python_INCLUDE_DIRS})
+   link_libraries(${Python_})
 endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/etc/cmake")
 
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS)
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-
-find_package(ROOTANA)
-include_directories(${ROOTANA_INCLUDE_DIRS})
-
-# Include directories
-include_directories(include include)
-include_directories(include $ENV{AGRELEASE}/recolib/include)
-include_directories(include $ENV{AGRELEASE}/ana/include)
-include_directories(include $ENV{AGRELEASE}/analib/include)
-include_directories(include $ENV{AGRELEASE}/a2lib/include)
-include_directories(include $ENV{AGRELEASE}/alpha2/include)
-include_directories(include $ENV{ROOTANASYS}/include)
-include_directories(include ${ROOT_INCLUDE_DIRS})
-ROOT_GENERATE_DICTIONARY(G__rootUtils include/*.h LINKDEF LibLinkDef.hh)
+include_directories(
+   include 
+   ${ROOT_INCLUDE_DIRS} 
+   ${ROOTANA_INCLUDE_DIRS}
+   ${CMAKE_SOURCE_DIR}/libGEM/include
+)
+file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
+ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-
-
 file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
-add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx)
-if (BUILD_AG)
-   target_link_libraries(rootUtils ${ROOT_LIBRARIES} agtpc analib)
-endif (BUILD_AG)
-if (BUILD_A2)
-   target_link_libraries(rootUtils ${ROOT_LIBRARIES}  alpha2)
-endif (BUILD_A2)
+add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
+target_include_directories( rootUtils
+   PUBLIC
+      include 
+      ${CMAKE_SOURCE_DIR}/ana/include
+      ${CMAKE_SOURCE_DIR}/libGEM/include
+      ${CMAKE_SOURCE_DIR}/recolib/include
+      ${CMAKE_SOURCE_DIR}/analib/include
+      ${CMAKE_SOURCE_DIR}/a2lib/include
+   )
+target_link_libraries(rootUtils analib GEM ${ROOT_LIBRARIES})
 
-install(TARGETS rootUtils DESTINATION lib)
+if(BUILD_A2)
+   target_link_libraries(rootUtils alpha2)
+endif(BUILD_A2)
 
-add_custom_command( TARGET rootUtils POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm ${CMAKE_INSTALL_PREFIX}/lib/
-                    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/librootUtils.rootmap ${CMAKE_INSTALL_PREFIX}/lib/
-                  )
+if (${Python_FOUND})
+   target_link_libraries(rootUtils ${Python_LIBRARIES})
+endif()
+
+install(TARGETS rootUtils 
+  LIBRARY
+      DESTINATION lib 
+   PUBLIC_HEADER
+      DESTINATION include
+   )
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
+file(GLOB HEADER_FILES include/*.h)
+install(FILES ${HEADER_FILES} DESTINATION include)

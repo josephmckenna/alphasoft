@@ -2,12 +2,23 @@
 TFile *Get_File(Int_t run_number, Bool_t die)
 {
   TFile *f = NULL;
+#ifdef ALPHASOFT_DB_INSTALL_PATH
+//Local data path unknown... use current path... then AGOUTPUT to find files
+   char buf[200];
+   char* status = getcwd(buf,200);
+   TString file_name;
+   if (!status)
+      file_name=buf;
+   //get_current_dir_name is not supported in MacOS
+   //TString file_name(get_current_dir_name());
+#else
   TString file_name(getenv("AGRELEASE"));
   if (file_name.Length()<10)
   {
      std::cout <<"$AGRELEASE not set... please source agconfig.sh"<<std::endl;
      exit(0123);
   }
+#endif
   //  file_name += "/ana/output";
   TString file_path(getenv("AGOUTPUT"));
   if( file_path.Length()>1 )
@@ -29,7 +40,9 @@ TFile *Get_File(Int_t run_number, Bool_t die)
 
 // ALPHA G EOS PATH NOT SETUP YET...
   TString EOS_name(getenv("EOS_MGM_URL"));
-  EOS_name += "//eos/experiment/alpha/alphaTrees";
+  
+  EOS_name += "//eos/experiment/alpha/new_analyzer_data/alphaAnalysis/";
+  //EOS_name += "//eos/experiment/alpha/alphaTrees/";
   EOS_name += "output";
   if (run_number < 10000)
     EOS_name += "0";
@@ -61,8 +74,8 @@ TFile *Get_File(Int_t run_number, Bool_t die)
     //If the file isnt found locally... find it remotely on EOS
     f = TFile::Open(EOS_name);
   }
-  if (!f->IsOpen())
-  //if(f==NULL)
+  //if (!f->IsOpen())
+  if(f==NULL)
   {
     if (die)
     {

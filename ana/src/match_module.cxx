@@ -45,7 +45,7 @@ class MatchModule: public TARunObject
 {
 public:
    MatchFlags* fFlags = NULL;
-   bool fTrace;
+   bool fTrace = false;
    int fCounter = 0;
    bool diagnostic = false;
    
@@ -93,9 +93,14 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       if(fTrace)
-         printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+         printf("MatchModule::BeginRun, run %d, file %s\n", 
+                runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-      match=new Match(fFlags->ana_settings);
+      bool MTing = runinfo->fMtInfo;
+      if(fTrace)
+         printf("MatchModule::BeginRun Are we MTing? %d\n",MTing);
+                
+      match=new Match(fFlags->ana_settings, MTing);
       //Global lock from manalzer (needed if your using roots basic fitting methods)
       match->SetGlobalLockVariable(&TAMultithreadHelper::gfLock);
       match->SetTrace(fTrace);
@@ -271,6 +276,7 @@ public:
          else
             printf("MatchModule::Analyze Spacepoints should exists at this point\n");
 
+         delete spacepoints;
          return flow;
       }
       return flow;
@@ -284,11 +290,20 @@ public:
    MatchFlags fFlags;
 
 public:
+   void Help()
+   {
+      printf("MatchModuleFactory::Help\n");
+      printf("\t--forcereco\t\tEnable reconstruction when no pads are associated with the event by setting z=0\n");
+   }
+   void Usage()
+   {
+      Help();
+   }
 
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
-      printf("MatchModuleFactory::Init!\n");
+      //printf("MatchModuleFactory::Init!\n");
       for(unsigned i=0; i<args.size(); i++)
          {
             if( args[i] == "--usetimerange" )
@@ -317,31 +332,33 @@ public:
                fFlags.fDiag = true;
             if( args[i] == "--trace" )
                fFlags.fTrace = true;
+            if(args[i] == "--forcereco")
+               fFlags.fForceReco=true;
             if (args[i] == "--anasettings")
                {
                   i++;
                   json=args[i];
                   i++;
                }
-            if(args[i] == "--forcereco")
-               {
-                  fFlags.fForceReco=true;
-               }
+         
+            fFlags.ana_settings=new AnaSettings(json);
+            //fFlags.ana_settings->Print();
          }
-      fFlags.ana_settings=new AnaSettings(json);
-      //fFlags.ana_settings->Print();
    }
-    MatchModuleFactory()
-    {
-    }
+   
+   MatchModuleFactory() {}
+
    void Finish()
    {
-      printf("MatchModuleFactory::Finish!\n");
+      if(fFlags.fTrace == true)
+         printf("MatchModuleFactory::Finish!\n");
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("MatchModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if(fFlags.fTrace == true)
+         printf("MatchModuleFactory::NewRunObject, run %d, file %s\n", 
+                runinfo->fRunNo, runinfo->fFileName.c_str());
       return new MatchModule(runinfo, &fFlags);
    }
 };
@@ -381,7 +398,7 @@ public:
 
 static TARegister tar(new MatchModuleFactory);
 //Choose how many threads you want here (2,4,8,16, 32 or 64)... more threads need more ram
-#define MAX_THREADS 64
+#define MAX_THREADS 32
 static TARegister tar1(new MatchModuleFactory_CombineAPad(0,MAX_THREADS));
 static TARegister tar2(new MatchModuleFactory_CombineAPad(1,MAX_THREADS));
 #if MAX_THREADS>2

@@ -24,7 +24,7 @@
 namespace{G4Mutex aMutex = G4MUTEX_INITIALIZER;}
 
 const static G4double torr = 1. / 760. * atmosphere;
-const static double rad_to_deg = 180./pi;
+const static double rad_to_deg = 180./CLHEP::pi;
 
 HeedModel::HeedModel(G4String modelName, G4Region* envelope, 
 		     DetectorConstruction* dc, TPCSD* sd): G4VFastSimulationModel(modelName, envelope), 
@@ -132,7 +132,7 @@ void HeedModel::TestSensor()
   G4double x=110.*mm, y=110.*mm, z=0.;
   double Ex,Ey,Ez, Bx,By,Bz;
   int status;
-  Medium* med;
+  Garfield::Medium* med;
   fSensor->ElectricField(x/cm,y/cm,z/cm,Ex,Ey,Ez,med,status);
   if( status == 0 )
     G4cout << "HeedModel::TestSensor() Electric Field @ ("<<x/cm<<","<<y/cm<<","<<z/cm
@@ -201,7 +201,7 @@ void HeedModel::SetTracking()
   
 void HeedModel::CreateChamberView()
 {
-  char str[30];
+  char str[200];
   strcpy(str,fName);
   strcat(str,"_chamber");
   fChamber = new TCanvas(str, "Chamber View", 700, 700);
@@ -210,7 +210,7 @@ void HeedModel::CreateChamberView()
   cellView->SetCanvas(fChamber);
   cellView->Plot2d();
   fChamber->Update();
-  char str2[30];
+  char str2[200];
   strcpy(str2,fName);
   strcat(str2,"_chamber.pdf");
   fChamber->Print(str2);
@@ -544,19 +544,19 @@ void HeedModel::PlotTrack(G4String fileName)
     }
 }
 
-void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, double& g)
+void HeedModel::GenerateSignal(double &x, double &y, double &z, double &t, double& gg)
 {
   double radmm = sqrt(x*x+y*y)*10.;
   if( fabs( radmm - 182.) > 0.1 ) return;
 
   double phi = atan2(y,x);
   uint aw = fDet->GetTPC()->FindAnode(phi);
-  fsg->AddAnodeSignal(aw,t,g);
+  fsg->AddAnodeSignal(aw,t,gg);
 
   std::pair<int,int> pad = fDet->GetTPC()->FindPad( z, phi );
   double zmm = z*10.;
   //  std::pair<int,int> pad = fDet->GetTPC()->FindPad( zmm, phi );
-  fsg->AddPadSignal(pad,t,g,zmm);
+  fsg->AddPadSignal(pad,t,gg,zmm);
   //fsg->AddPadSignal(pad,t,g,z);
   
   if( fVerboseLevel > 1 )
