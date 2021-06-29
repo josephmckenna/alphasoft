@@ -47,8 +47,17 @@ int main(int argc, char* argv[])
     std::string filename = "eventlist";
     filename += std::to_string(runNumber);
 
+    //LMG - Switch/case only taking Mixing if Mixing.
     TA2Plot* plot = new TA2Plot();
-    plot->AddTimeGate(runNumber,startTime,endTime);
+    switch(runType)
+    {
+        case kMixing:
+            plot->AddDumpGates(runNumber, {"Mixing"}, {-1});
+            break;
+        case kCosmic:
+            plot->AddTimeGate(runNumber,startTime,endTime);
+            break;
+    }
     plot->LoadData();
     //TCanvas* canvas = plot->DrawCanvas("Not Needed");
     plot->WriteEventList(filename);
