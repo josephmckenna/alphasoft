@@ -1,7 +1,7 @@
 date 10-1-2017
 latitude 46.2
 altitude 0
-subboxLength 1
+subboxLength 10
 returnNeutrons 0
 returnProtons 0
 returnGammas 0
