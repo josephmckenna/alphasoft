@@ -30,6 +30,13 @@ git submodule update --init # to sync them
 git clone https://gitlab.cern.ch/garfield/garfieldpp.git
 ```
 
+More recent versions don't work: extensively and successfully tested up to version below:
+
+```
+cd garfieldpp
+git checkout 96c4e68903ecc145dd6d2d00ac5ad2316cd88d3a
+```
+
 Follow [this][gppinstall] instructions to install Garfield++
 
 [gppinstall]: http://garfieldpp.web.cern.ch/garfieldpp/getting-started/
