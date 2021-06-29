@@ -9,7 +9,8 @@ import datetime
 import os
 
 def work(cmd):
-    logfile=os.environ['GARFIELDPP']+'/chamber_drift/drift_logs'+cmd[len(os.environ['GARFIELDPP']):].replace(' ','_')+'.log'
+    ss=len(os.environ['AGRELEASE']+'bin/simulation')+1
+    logfile=os.environ['GARFIELDPP']+'/chamber_drift/drift_logs/'+cmd[ss:].replace(' ','_')+'.log'
     start_time=time.time()
     print(cmd, 'START @', time.strftime("%Y %b %d, %H:%M:%S", time.localtime()))
     try:
@@ -22,21 +23,24 @@ def work(cmd):
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
 
-def scan():
+def scan(zscan):
     CathodeVoltage = -4000.
     AnodeVoltage   = 3200.
     #AnodeVoltage   = 3100.
-    FieldVoltage   = -99.
-    #MagneticField  = -1.
+    #FieldVoltage   = -99.
+    FieldVoltage   = -110.
+    MagneticField  = 1.
     #MagneticField  = -0.26
-    MagneticField  = 0.
+    #MagneticField  = 1.
     QuenchFraction = 0.3
 
-    z=np.array([0.0,20.0,40.0,60.0])
-    z=np.append(z, np.arange(80.,117.,0.5))
-    #z=np.array([0.0])
+    if zscan:
+        z=np.array([0.0,20.0,40.0,60.0]) # cm
+        z=np.append(z, np.arange(80.,117.,0.5))
+    else:
+        z=np.array([0.0])
 
-    phi=np.arange(0.,360.,6.)
+    phi=np.arange(1.,360.,3.)
 
     cmd=[]
     ok,bad,tot=0,0,0
@@ -45,10 +49,11 @@ def scan():
             fname = '%s/chamber_drift/drift_tables/Drift_phi%1.4f_Z%2.1fcm_Ar%2.0f-CO2%2.0f_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT.dat' % (os.environ['GARFIELDPP'],radians(InitialPhi),InitialZed,(1.-QuenchFraction)*1.e2,QuenchFraction*1.e2,CathodeVoltage,AnodeVoltage,FieldVoltage,MagneticField)
             if os.path.isfile(fname):
                 ok=ok+1
+                os.remove(fname)
             else:
                 bad=bad+1
                 #print 'NOT FOUND:', fname
-            cmd.append( '%s/ChamberDrift.exe %1.4f %1.2f %1.f %1.f %1.f %1.1f %1.2f' % (os.environ['GARFIELDPP'],radians(InitialPhi), InitialZed, CathodeVoltage, AnodeVoltage, FieldVoltage, QuenchFraction, MagneticField) )
+            cmd.append( '%s/bin/simulation/ChamberDrift.exe %1.4f %1.2f %1.f %1.f %1.f %1.1f %1.2f' % (os.environ['AGRELEASE'],radians(InitialPhi), InitialZed, CathodeVoltage, AnodeVoltage, FieldVoltage, QuenchFraction, MagneticField) )
 
     print('ok: ', ok, 'bad: ', bad, 'tot: ', tot)
     return cmd
@@ -56,12 +61,12 @@ def scan():
 
 if __name__ == '__main__':
 
-    commands=scan()
+    commands=scan(False)
     '''
     for x in commands:
         print x
     '''
 
-    count=7
+    count=mp.cpu_count()-2
     pool=mp.Pool(processes=count)
     pool.map(work, commands)

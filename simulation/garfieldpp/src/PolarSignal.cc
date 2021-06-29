@@ -1,33 +1,21 @@
 #include <iostream>
-#include <cstdio>
-#include <cassert>
-#include <fstream>
-#include <vector>
 #include <string>
 
 #include <TCanvas.h>
 #include <TROOT.h>
 #include <TApplication.h>
-#include <TGraph.h>
-#include <TAxis.h>
-#include <TH1D.h>
 #include <TFile.h>
-
-#include "Garfield/Plotting.hh"
 
 #include "Garfield/ComponentAnalyticField.hh"
 #include "Garfield/MediumMagboltz.hh"
-#include "Garfield/SolidTube.hh"
-#include "Garfield/GeometrySimple.hh"
 #include "Garfield/Sensor.hh"
-#include "Garfield/FundamentalConstants.hh"
-#include "Garfield/ViewField.hh"
-#include "Garfield/ViewCell.hh"
-
 #include "Garfield/DriftLineRKF.hh"
 #include "Garfield/AvalancheMC.hh"
-#include "Garfield/ViewDrift.hh"
 #include "Garfield/ViewSignal.hh"
+#include "Garfield/ViewCell.hh"
+#include "Garfield/FundamentalConstants.hh"
+
+using namespace Garfield;
 
 #include "Helpers.hh"
 
@@ -39,8 +27,8 @@ int main(int argc, char * argv[])
     //InitialRad = 10.925;
     InitialRad = 17.401;
 
-  //  string tracking="driftMC";
-  std::string tracking="driftRKF";
+  std::string tracking="driftMC";
+  //std::string tracking="driftRKF";
 
    if( argc == 2 )
     {
@@ -66,37 +54,36 @@ int main(int argc, char * argv[])
     }
 
   TApplication app("app", &argc, argv);
-  Garfield::plottingEngine.SetDefaultStyle();
- 
+
   // Make a gas medium.
-  Garfield::MediumMagboltz gas;
+  MediumMagboltz gas;
   TString gasdata = TString::Format("%s/simulation/common/gas_files/ar_70_co2_30_725Torr_20E200000_4B1.10.gas",getenv("AGRELEASE"));
   gas.LoadGasFile(gasdata.Data());
   TString iondata = TString::Format("%s/Data/IonMobility_Ar+_Ar.txt",
 				     getenv("GARFIELD_HOME"));
   gas.LoadIonMobility(iondata.Data());
 
-  // Build the geometry.
-  //  constexpr double lZ = 115.2;
-  constexpr double lZ = 115.2/16.;
-  //  constexpr double lZ = 230.4/16.;
-  //  constexpr double rRO = 19.03; <-- ???
-  constexpr double rRO = 19.0;
-  //  constexpr double rRO = 18.9;
-  //  constexpr double rRO = 19.1;
-  Garfield::ComponentAnalyticField cmp;
+  // Define the cell layout.
+  constexpr double lZ = 115.2;
+  ComponentAnalyticField cmp;
+  Sensor sensor;
+  sensor.AddComponent(&cmp);
+
   cmp.SetMedium(&gas);
-  cmp.SetMagneticField(0.,0.,1.);
-  cmp.SetPolarCoordinates(); // <-- the 'hat trick'
+  cmp.SetMagneticField(0, 0, 1);
+  cmp.SetPolarCoordinates();
   // Outer wall.
-  cmp.AddPlaneR(rRO, 0, "ro");
+  constexpr double rRO = 19.0;
+  cmp.AddPlaneR(rRO, 0.0, "ro");
+  cmp.AddReadout("ro");
+  // sensor.AddElectrode(&cmp, "ro");
   // Inner wall.
   constexpr double rCathode = 10.925;
   cmp.AddPlaneR(rCathode, -4000., "c");
-  int Nwires =  256;
+  constexpr int nWires = 256;
   // Phi periodicity.
-  const double sphi = 360. / double(Nwires);
-  std::cout<<"Phi periodicity: "<<sphi<<std::endl;
+  const double sphi = 360. / double(nWires);
+  std::cout << "Phi periodicity: " << sphi << std::endl;
 
   // Field wires.
   // Radius [cm]
@@ -104,113 +91,58 @@ int main(int argc, char * argv[])
   // Diameter [cm]
   constexpr double dFW = 152.e-4;
   // Potential [V]
-  constexpr double vFW = -99.;
+  constexpr double vFW = -110.;
   // Tension [g]
   constexpr double tFW = 120.;
 
   // Anode wires.
   constexpr double rAW = 18.2;
   constexpr double dAW = 30.e-4;
-  constexpr double vAW = 3100.;
+  constexpr double vAW = 3200.;
   constexpr double tAW = 40.;
 
-  // Pads
-  constexpr double gap = rRO - rAW;
-  constexpr double pad_pitch_z = 0.4;
-  //  constexpr int nrows = 576;
-  constexpr int nrows = int(2.*lZ/pad_pitch_z);
-  std::cout<<"Number of pad rows: "<<nrows<<std::endl;
-  constexpr int nsecs= 32;
-  constexpr double pad_pitch_phi = 2.*M_PI/double(nsecs);
-
-  // cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  // cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
-  // cmp.AddReadout("a");
-
-  TString ename;
-  // Field wires.
-  for( int i = 0; i < Nwires; ++i )
+  // Add the wires.
+  for (int i = 0; i < nWires; ++i) 
     { 
-      const double phi = i * sphi;
-      ename = TString::Format("f%03d",i);
-      //cout<<ename<<"\t"<<phi<<endl;
-      cmp.AddWire(rFW, phi, dFW, 
- 		  vFW, ename.Data(), 
- 		  2 * lZ, tFW);
-    }
-  // Anode wires.
-  for( int i = 0; i < Nwires; ++i )
+      // Field wires.
+      cmp.AddWire(rFW, i * sphi, dFW, vFW, "f", 2 * lZ);
+      // Anode wires.
+      auto ename = std::string(TString::Format("a%03d", i).Data());
+      cmp.AddWire(rAW, (i + 0.5) * sphi, dAW, vAW, ename, 2 * lZ);
+      // if (i < nWires / 4) {
+	cmp.AddReadout(ename);
+	sensor.AddElectrode(&cmp, ename);
+	// }
+  }
+
+  // Pads.
+  constexpr double gap = rRO - rAW;
+  constexpr int nSecs = 32;
+  constexpr double pitchPhi = TwoPi / nSecs;
+  constexpr double pitchZ = 0.4;
+  constexpr int nRows = int(2 * lZ / pitchZ);
+  std::cout << "Number of pad rows: " << nRows << std::endl;
+  for (int j = 0; j < nRows; ++j) 
     {
-      const double phi = i * sphi + 0.5 * sphi;
-      ename = TString::Format("a%03d",i);
-      cmp.AddWire(rAW, phi , dAW, 
- 		  vAW, ename.Data(), 
- 		  2 * lZ, tAW, 
- 		  19.25); 
-      // cmp.AddReadout(ename.Data());
+      const double z0 = -lZ + j * pitchZ;
+      const double z1 = z0 + pitchZ;
+      std::string row = std::string(TString::Format("%03d", j).Data());
+      for (int i = 0; i < nSecs; ++i) 
+	{
+	  std::string sec = std::string(TString::Format("%02d", i).Data());
+	  const double phi0 = i * pitchPhi * RadToDegree; 
+	  const double phi1 = phi0 + pitchPhi * RadToDegree;
+	  std::string ename = "pad" + row + "_" + sec;
+	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
+	  cmp.AddReadout(ename);
+	  sensor.AddElectrode(&cmp, ename);
+	}
     }
-
-  for( int i = 0; i < Nwires/4; ++i )
-    {
-      ename = TString::Format("a%03d",i);
-      cmp.AddReadout(ename.Data());
-    }
-
-  // cathodic pads.
-  int idx=-1;
-  double PadPosZmin = -0.5 * nrows * pad_pitch_z;
-  double PadPosZmax = PadPosZmin + pad_pitch_z;
-  for(int row = 0; row<nrows; ++row)
-    {
-      double PadPosPhiMin = 0., PadPosPhiMax = pad_pitch_phi;
-      for(int sec = 0; sec<nsecs; ++sec)
-  	{
-  	  idx = sec + nsecs * row;
-  	  ename = TString::Format("pad%05dsec%02drow%03d",idx,sec,row);
-
-  	  cmp.AddPixelOnPlaneR(rRO,
-  			       PadPosPhiMin,PadPosPhiMax,
-  			       PadPosZmin,PadPosZmax,
-  			       ename.Data(),gap);
-  	  PadPosPhiMin += pad_pitch_phi;
-  	  PadPosPhiMax += pad_pitch_phi;
-	  cmp.AddReadout(ename.Data());
-  	}
-      PadPosZmax += pad_pitch_z;
-      PadPosZmin += pad_pitch_z;
-    }
-
-  //  cmp.SetPeriodicityPhi(sphi);
-  //  cmp.PrintCell();
-  if( cmp.IsPolar() ) std::cout<<"Hat trick"<<std::endl;
 
   const double tStart = 0.;
-  // real = ADC
   const int nSteps = 411;
   const double tStep = 16.;
-  // fake = zoom/debug
-  // const int nSteps = 301;
-  // const double tStep = 1.;
 
-  // Finally assembling a Sensor object
-  Garfield::Sensor sensor;
-  // Calculate the electric field
-  sensor.AddComponent(&cmp);
-  //  sensor.AddElectrode(&cmp,"a");
-
-  for( int i = 0; i < Nwires/4; ++i )
-    { 
-      ename = TString::Format("a%03d",i);
-      sensor.AddElectrode(&cmp,ename.Data());
-    }
-
-  for(int row = 0; row<nrows; ++row)
-    for(int sec = 0; sec<nsecs; ++sec)
-      {
-  	idx = sec + nsecs * row;
-  	ename = TString::Format("pad%05dsec%02drow%03d",idx,sec,row);
-	sensor.AddElectrode(&cmp,ename.Data());
-      }
   sensor.SetTimeWindow(tStart, tStep, nSteps);
 
   // Construct object to visualise cell
@@ -241,16 +173,14 @@ int main(int argc, char * argv[])
   // Runge-Kutta
   Garfield::DriftLineRKF edrift;
   edrift.SetSensor(&sensor);
-  // edrift.EnableSignalCalculation();
-  // const double maxStepSize=0.03;// cm
-  // edrift.SetMaximumStepSize(maxStepSize);
+  const double maxStepSize=0.03;// cm
+  edrift.SetMaximumStepSize(maxStepSize);
   edrift.EnablePlotting(&viewdrift);
   //----------------------------------------------------
   // Avalanche MC
   Garfield::AvalancheMC eaval;
   eaval.SetSensor(&sensor);
   eaval.EnableMagneticField();
-  // eaval.EnableSignalCalculation();
   //  const double distanceStep = 2.e-3; // cm
   //  eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
@@ -281,7 +211,7 @@ int main(int argc, char * argv[])
   fout<<"Using "<<tracking<<std::endl;
 
   // variables to identify the aw and pads
-  int aw=-1, sec=-1, row=-1;
+  int aw=-1, sec=-1, row=-1, idx=-1;
   double AnodeWiresPitch = sphi*TMath::DegToRad();
 
   // loop over all radii
@@ -310,9 +240,11 @@ int main(int argc, char * argv[])
 	  return 1;
 	}
       // if (!ok) return 0;
-      if( !ok ) 
+      if( ok ) 
+	std::cout<<"OK"<<std::endl;
+      else
       	{
-      	  std::cerr<<tracking<<" FAILED"<<std::endl;
+      	  std::cout<<tracking<<" FAILED"<<std::endl;
       	  --ie;
       	  ri+=Rministep;
       	  continue;
@@ -332,6 +264,8 @@ int main(int argc, char * argv[])
       else if( !tracking.compare("driftRKF") )
 	edrift.GetEndPoint(xf,yf,zf,tf,status);
       else return 1; //break;
+
+      std::cout<<ie<<")\tend @ ("<<xf<<","<<yf<<","<<zf<<") cm @ "<<tf<<" ns"<<std::endl;
 	
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
@@ -345,10 +279,10 @@ int main(int argc, char * argv[])
       //cout<<"hit: "<<w<<"\t"<<aw<<endl;
       std::cout<<"hit wire: "<<aw;//<<<endl;
       // find pads
-      sec = int( phif/(2.*M_PI)*nsecs );
+      sec = int( phif/(2.*M_PI)*nSecs );
       double z = zf + lZ;
-      row = int( z/(2.*lZ)*nrows );
-      idx = sec + nsecs * row;
+      row = int( z/(2.*lZ)*nRows );
+      idx = sec + nSecs * row;
       std::cout<<"\thit pad: "<<idx<<" ("<<sec<<","<<row<<")"<<std::endl;
 
       double ne, ni, t_d=-1., gain=-1., spread=-1., loss=-1.;
@@ -495,8 +429,10 @@ int main(int argc, char * argv[])
 	  for(int rw=-2; rw<=2; ++rw)
 	    {
 	      int row_temp = row+rw;
-	      idx = sec_temp + nsecs * row_temp;
-	      plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
+	      idx = sec_temp + nSecs * row_temp;
+	      std::cout<<"pad: "<<idx<<" sec: "<<sec_temp<<" row: "<<row_temp<<std::endl;
+	      //plot_signal_name = TString::Format("pad%05dsec%02drow%03d",idx,sec_temp,row_temp);
+	      plot_signal_name = TString::Format("pad%03d_%02d",row_temp,sec_temp);
 	      int pos = (sc+2)+3*(rw+2);
 	      std::cout<<"Plotting "<<plot_signal_name<<" in "<<pos<<std::endl;
 	      TH1D* h = new TH1D( GetROSignal(&sensor,&plot_signal_name,doconv) );

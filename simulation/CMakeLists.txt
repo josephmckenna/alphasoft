@@ -4,16 +4,14 @@ project(alphasim)
 
 #----------------------------------------------------------------------------
 # Garfield++
-
 find_package(Garfield REQUIRED)
-
-#Garfield broke their cmake file and didnt update the documentation... IN THE CMAKE FILE!
-#if (GARFIELD_FOUND)
-#  message(STATUS "Garfield found...")
-#  message(STATUS "Garfield headers: ${GARFIELD_INCLUDE_DIR}")
-#else()
-#  message(FATAL_ERROR "GARFILED NOT FOUND")
-#endif()
+if (GARFIELD_FOUND)
+  message(STATUS "Garfield found...")
+  message(STATUS "Garfield headers: ${GARFIELD_INCLUDE_DIR}")
+  message(STATUS "Garfield libs: ${GARFIELD_LIBRARIES}")
+else()
+  message(FATAL_ERROR "GARFIELD NOT FOUND")
+endif()
 
 
 #----------------------------------------------------------------------------

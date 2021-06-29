@@ -18,7 +18,7 @@ def ReadIn(pathto,Zed=0.0,Vaw=3200.0,Vfw=-99,B=-1.0):
     lor=np.array([])
     rrr=np.array([])
     Nfiles=0
-    for angle in range(0,360,6):
+    for angle in range(1,360,6):
         if (angle%90)==0: continue
         phi=radians(float(angle))
 
@@ -193,7 +193,7 @@ def discreet(td,phi,tmax=4300.):
   
 
 def save(t_d,rad,lor,z,B):
-    f=open(f'garfppSTR_B{B:.2f}Tmap_z{z:.0f}mm_Ar70CO230.dat','w')
+    f=open(f'garfppSTR_B{B:.2f}Tmap_z{z:.0f}mm_Ar70CO230_1.dat','w')
     f.write(f'# B = {B:.2f} T, garfield++ simulation CERN\n')
     f.write('# t\tr\tphi\n')
     for x,y,p in sorted(zip(t_d,rad,lor)):
