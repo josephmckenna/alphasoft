@@ -11,7 +11,8 @@
  - `ElectronAvalanche.exe` model electronics response to avalanche
  
  - `TrackElectronAvalanche.exe` simulate the passage of a charged pion and save the rTPC response
-
+ 
+ - `PolarDrift.exe` calculate STR using polar coordinates
 
 
 # Scripts Index
@@ -28,3 +29,4 @@ Located in `$AGRELEASE/simulation/garfieldpp/scripts`
  
  - `runTrack.sh` sample
  
+ - `str_batch_polar.py` parallel execution of PolarDrift.exe
