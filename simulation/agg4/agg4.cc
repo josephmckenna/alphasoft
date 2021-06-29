@@ -87,7 +87,9 @@ int main(int argc,char** argv)
   // Choose the Random engine
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine);
 
-  std::ifstream fset("./settings.dat");
+  std::string setname(getenv("AGRELEASE"));
+  setname+="/simulation/agg4/settings.dat";
+  std::ifstream fset(setname);
   fset>>gPadTime; //ns
   fset>>gAnodeTime; //ns
   fset>>gMagneticField; //T

@@ -12,15 +12,22 @@
 #include "Garfield/MediumMagboltz.hh"
 #include "Garfield/Sensor.hh"
 
-bool LoadGas(Garfield::MediumMagboltz *gas, const char *gasfile){
-    if(gas->LoadGasFile(gasfile)) return true;
-    else {
-        std::ostringstream oss;
-        assert(getenv("AGRELEASE"));
-        oss << getenv("AGRELEASE") << "/simulation/common/gas_files/" << gasfile;
-        std::cout << "Loading gas file '" << oss.str() << "'" << std::endl;
-        return gas->LoadGasFile(oss.str().c_str());
-    }
+bool LoadGas(Garfield::MediumMagboltz *gas, const char *gasfile)
+{
+    if(gas->LoadGasFile(gasfile))
+       {
+          std::cerr << "Loaded "<< gasfile << " from pwd." << std::endl;
+          return true;
+       }
+    else 
+       {
+          std::ostringstream oss;
+          assert(getenv("AGRELEASE"));
+          oss << getenv("AGRELEASE") << "/simulation/common/gas_files/" << gasfile;
+          std::cerr << "Loading gas file '" << oss.str() << "'" << std::endl;
+          return gas->LoadGasFile(oss.str().c_str());
+       }
+    return false;
 }
 
 // Inverse of the cumulative probability distribution for avalanche distances from the wire in Ar/CO2 90/10
@@ -75,7 +82,12 @@ TH1D GetROSignal(Garfield::Sensor* sensor, TString* electrode, bool conv=false)
     hs.SetBinContent(b,sensor->GetSignal(electrode->Data(),b));
 
   int mbin=hs.GetMinimumBin();
-  std::cout<<hs.GetName()<<" peak "<<hs.GetBinContent(mbin)<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
+  double bc = hs.GetBinContent(mbin);
+  if( bc == 0. ){
+     mbin=hs.GetMaximumBin();
+     bc = hs.GetBinContent(mbin);
+  }
+  std::cout<<hs.GetName()<<" peak "<<bc<<" @ "<<mbin*BinWidth<<" s"<<std::endl;
   
   return hs;
 }
@@ -160,9 +172,15 @@ void Polar2Cartesian(const double r, const double theta,
 }
 
 
-TH2D _hEv;
-TH2D _hrE;
-TH2D _hrv;
+TH2D _hEv("hEv","hEv;electric field [V/cm];velocity [cm/ns]",
+          100,100.,1.e4,
+          100,0.,1.e-2);
+TH2D _hrE("hrE","hrE;radius [cm];electric field [V/cm]",
+          100,10.9,19.0,
+          1000,100.,1.e4);
+TH2D _hrv("hrv","hrv;radius [cm];velocity [cm/ns]",
+          100,10.9,19.0,
+          100,0.,1.e-2);
 double ElectricFieldHisto(double x, double y, double z, Garfield::Sensor* sensor)
 {
   // Electric and Magnetic Fields
@@ -171,18 +189,34 @@ double ElectricFieldHisto(double x, double y, double z, Garfield::Sensor* sensor
   // Drift Velocity
   Garfield::Medium* medium;
   double Vx,Vy,Vz;
-  sensor->ElectricField(x,y,z,Ex,Ey,Ez,VV,medium,dummy);
-  sensor->MagneticField(x,y,z,Bx,By,Bz,dummy);
-  medium->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  if( sensor ) 
+     {
+        sensor->ElectricField(x,y,z,Ex,Ey,Ez,VV,medium,dummy);
+        sensor->MagneticField(x,y,z,Bx,By,Bz,dummy);
+     }
+  else
+     {
+        std::cerr<<"ElectricFieldHisto no Sensor"<<std::endl;
+        return -9.e9;
+     }
+  if( medium )
+     medium->ElectronVelocity(Ex,Ey,Ez,Bx,By,Bz,Vx,Vy,Vz);
+  else
+     {
+        std::cerr<<"ElectricFieldHisto no Medium"<<std::endl;
+        return -9.e9;
+     }
   // Lorentz Angle
   TVector3 V(Vx,Vy,Vz);
   TVector3 E(Ex,Ey,Ez);
 
   double Emag=E.Mag(),Vmag=V.Mag(),r=TMath::Sqrt(x*x+y*y);
+  double lorentz_angle=TMath::Pi()-V.Angle(E);
+  std::cout<<"@ r="<<r<<"cm\t|E|="<<Emag<<"V/cm\t|v|="<<Vmag<<"cm/ns\tLorentz angle: "<<lorentz_angle*TMath::RadToDeg()<<" deg"<<std::endl;
   _hEv.Fill(Emag,Vmag);
   _hrE.Fill(r,Emag);
   _hrv.Fill(r,Vmag);
-  return TMath::Pi()-V.Angle(E);
+  return lorentz_angle;
 }
 
 /* emacs

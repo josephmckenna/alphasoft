@@ -11,6 +11,7 @@ namespace ALPHAg {
 
    static const double _padcol=32.;
    static const double _padrow=576.;
+   static const double _padchan=18432.;
    static const double _padpitch=4.; // mm
 
    static const double _timebin=16.; // ns
