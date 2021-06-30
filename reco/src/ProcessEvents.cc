@@ -234,24 +234,23 @@ void ProcessEvents::ProcessVertex(TVector3* mcvtx)
    TFitVertex Vertex(EventNo);
    int sv = r.RecVertex(&Vertex);
    std::cout<<"[proc]# "<<EventNo<<"\t";
-   if( sv > 0 ) Vertex.Print();
-   else 
-      {
-         std::cout<<"No Vertex"<<std::endl;
-         return;
-      }
-
-   std::cout<<"[proc]# "<<EventNo<<"\tMCvertex: "; 
-   mcvtx->Print();
-
    double res = ALPHAg::kUnknown;
-   if( sv > 0 ) 
-      { 
+   if( sv > 0 )
+      {
+         Vertex.Print();
          u.FillRecoVertex(&Vertex);
          res = u.VertexResolution(Vertex.GetVertex(),mcvtx);
          u.VertexPlots(&Vertex);
       }
-   else res = u.PointResolution(r.GetHelices(),mcvtx);
+   else 
+      {
+         std::cout<<"No Vertex"<<std::endl;
+         res = u.PointResolution(r.GetHelices(),mcvtx);
+         //  return;
+      }
+
+   // std::cout<<"[proc]# "<<EventNo<<"\tMCvertex: "; 
+   // mcvtx->Print();
 
    std::cout<<"[proc]# "<<EventNo<<"\tResolution: ";        
    auto prec = std::cout.precision();

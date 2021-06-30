@@ -140,13 +140,12 @@ void Deconv::SetupADCs(TFile* fout, int run, bool norm, bool diag)
       fADCdelay = -120.;
    else if( run >= 2724 && run < 3032 ) // new FMC-32
       fADCdelay = 0.;
-   else if( run >= 3032 && run < 3870 )
-      fADCdelay = -250.;
-   else if( run >= 3870 && run < 4488 )
-      fADCdelay = -330.;
-   else if( run >= 4488 && run < 900000 )
-      fADCdelay = -304.;
-
+   else if( run >= 3032 && run < 4488 )
+      fADCdelay = -256.;
+   else if( run >= 4488 && run < 4590 )
+      fADCdelay = 0.;//fADCdelay = -304.;
+   else if( run >= 4590 && run < 900000 )
+      fADCdelay = -232.;
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
        run == 3249 || run == 3250 || run == 3251 ||
@@ -217,10 +216,9 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
       fPWBdelay = -50.;
    else if( run == 2272 || run ==  2273 || run == 2274 )
       fPWBdelay = 136.;
-   else if( run >= 3870 && run < 4488 )
-      fPWBdelay = -80.;//fPWBdelay = -50.;
-   else if( run >= 4488 && run < 900000 )
-      fPWBdelay = -320.;
+   else if( run >= 3870 && run < 900000 )
+      fPWBdelay = 0.;
+
       
 
    if( run == 3169 || run == 3209 || run == 3226 || run == 3241 ||
@@ -676,14 +674,31 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
          short col = (short) (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col);
          col+=1;
          if( col == 32 ) col = 0;
-         assert(col<32&&col>=0);
-         //std::cout<<"Deconv::FindPadTimes() col: "<<col;
+         if( col<0 || col >=32 ) 
+            {
+               std::cout<<"Deconv::FindPadTimes() col: "<<col
+                        <<" pwb column: "<<ch->pwb_column
+                        <<" pad col: "<<ch->pad_col
+                        <<" PAD SEC ERROR"<<std::endl;
+            }
          int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
-         //std::cout<<" row: "<<row;
-         assert(row<576&&row>=0);
+         if( row<0 || row>576 )
+            {
+               std::cout<<"Deconv::FindPadTimes() row: "<<row
+                        <<" pwb ring: "<<ch->pwb_ring
+                        <<" pad row: "<<ch->pad_row
+                        <<" PAD ROW EROOR"<<std::endl;
+            }         
          int pad_index = pmap->index(col,row);
          assert(!std::isnan(pad_index));
-         //std::cout<<" index: "<<pad_index<<std::endl;
+         if( pad_index < 0 || pad_index >= (int)ALPHAg::_padchan )
+            {
+               std::cout<<"Deconv::FindPadTimes() index: "<<pad_index
+                        <<" col: "<<col
+                        <<" row: "<<row
+                        <<" PAD INDEX ERROR"<<std::endl;
+               continue;
+            }
          
          // CREATE electrode
          ALPHAg::electrode el(col,row);

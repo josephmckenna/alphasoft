@@ -180,14 +180,14 @@ void HeedModel::SetTracking()
       fAvalanche = new Garfield::AvalancheMicroscopic();
       fAvalanche->SetSensor(fSensor);
       fAvalanche->EnableMagneticField();
-      fAvalanche->EnableSignalCalculation();
+      //fAvalanche->EnableSignalCalculation();
     }
   else
     {  
       fDrift = new Garfield::AvalancheMC();
       fDrift->SetSensor(fSensor);
       fDrift->EnableMagneticField();
-      fDrift->EnableSignalCalculation();
+      //fDrift->EnableSignalCalculation();
       fDrift->SetDistanceSteps(2.e-3);
       if(createAval) fDrift->EnableAttachment();
       else fDrift->DisableAttachment();

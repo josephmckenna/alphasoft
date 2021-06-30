@@ -33,7 +33,8 @@ TH1D* hsppad_px=0;
 #include "SignalsType.hh"
 ALPHAg::padmap pm;
 
-TString lab[]={"CERN AW @3.1kV","TRIUMF AW @3.2kV","TRIUMF AW @3.1kV"};
+//TString lab[]={"CERN AW @3.1kV","TRIUMF AW @3.2kV","TRIUMF AW @3.1kV"};
+TString lab[]={"CERN 2018","TRIUMF 2020"};
 TString tag[]={"_CERN_AW_3100V","_TRIUMF_AW_3200V","_TRIUMF_AW_3100kV"};
 TString hlist[]={"hsppad_px","hspzp_px","hOccPad_px"};
 
@@ -216,8 +217,8 @@ void plot_fold()
 void compare_pwb_amp()
 {
   int col[]={kBlack,kRed,kBlue};
-  int run[]={38739,904502,904512};
-
+  // int run[]={38739,904502,904512};
+  int run[]={38739,904502};
 
   int Nfiles=sizeof(run)/sizeof(int);
   cout<<"Number of files: "<<Nfiles<<endl;
@@ -259,8 +260,8 @@ void compare_pwb_amp()
       TString hname=pspp[i]->GetName();
       hname+=tag[i];
       pspp[i]->SetName(hname);
-      fout->cd();
-      pspp[i]->Clone()->Write();
+      //fout->cd();
+      //pspp[i]->Clone()->Write();
       
       pspp[i]->Scale(1./pspp[i]->Integral());
       pspp[i]->SetStats(kFALSE);
@@ -268,8 +269,8 @@ void compare_pwb_amp()
       pspp[i]->SetLineColor(col[i]);
       pspp[i]->SetMarkerColor(col[i]);
       c3->cd();
-      if(i) pspp[i]->Draw("same");
-      else  pspp[i]->Draw();
+      if(i) pspp[i]->Draw("HISTCsame");
+      else  pspp[i]->Draw("HISTC");
       max3=max3>pspp[i]->GetBinContent(pspp[i]->GetMaximumBin())?max3:pspp[i]->GetBinContent(pspp[i]->GetMaximumBin());
   
 
@@ -279,8 +280,8 @@ void compare_pwb_amp()
       hname=pspt[i]->GetName();
       hname+=tag[i];
       pspt[i]->SetName(hname);
-      fout->cd();
-      pspt[i]->Clone()->Write();
+      //fout->cd();
+      //pspt[i]->Clone()->Write();
 
       pspt[i]->Scale(1.e2/pspt[i]->Integral());
       pspt[i]->SetStats(kFALSE);
@@ -288,8 +289,8 @@ void compare_pwb_amp()
       pspt[i]->SetLineColor(col[i]);
       pspt[i]->SetMarkerColor(col[i]);
       c4->cd();
-      if(i) pspt[i]->Draw("same");
-      else  pspt[i]->Draw();
+      if(i) pspt[i]->Draw("HISTCsame");
+      else  pspt[i]->Draw("HISTC");
       max4=max4>pspt[i]->GetBinContent(pspt[i]->GetMaximumBin())?max4:pspt[i]->GetBinContent(pspt[i]->GetMaximumBin());
 
      
@@ -305,8 +306,8 @@ void compare_pwb_amp()
       hname=pocc[i]->GetName();
       hname+=tag[i];
       pocc[i]->SetName(hname);
-      fout->cd();
-      pocc[i]->Clone()->Write();
+      //fout->cd();
+      //pocc[i]->Clone()->Write();
 
       pocc[i]->Scale(1.e2/pocc[i]->Integral());
       pocc[i]->SetStats(kFALSE);
@@ -314,11 +315,10 @@ void compare_pwb_amp()
       pocc[i]->SetLineColor(col[i]);
       pocc[i]->SetMarkerColor(col[i]);
       c2->cd();
-      if(i) pocc[i]->Draw("same");
-      else  pocc[i]->Draw();
+      if(i) pocc[i]->Draw("HISTCsame");
+      else  pocc[i]->Draw("HISTC");
       max2=max2>pocc[i]->GetBinContent(pocc[i]->GetMaximumBin())?max2:pocc[i]->GetBinContent(pocc[i]->GetMaximumBin());
-
- 
+      
 
 
       fin->cd();
@@ -339,12 +339,13 @@ void compare_pwb_amp()
       c1->cd();
       if(i) pamp[i]->Draw("same");
       else  pamp[i]->Draw();
-
-
+     
       TString lname(lab[i]);
       leg->AddEntry(pamp[i],lname,"pl");
       leg2->AddEntry(pamp[i],lname,"pl");
-    }
+      //   }
+
+      if(i==0){
   c1->cd();
   leg->Draw("same");
 
@@ -370,13 +371,25 @@ void compare_pwb_amp()
   pspt[0]->SetTitle(htitle);
   pspt[0]->GetYaxis()->SetTitle("Fraction [%] over dataset");
   pspt[0]->GetYaxis()->SetRangeUser(0.,max4*1.1);
-  leg2->Draw("same");
+  leg2->Draw("same");}
 
-  c1->SaveAs(".pdf"); c1->SaveAs(".pdf");
-  c2->SaveAs(".pdf"); c2->SaveAs(".pdf");
-  c3->SaveAs(".pdf"); c3->SaveAs(".pdf");
-  c4->SaveAs(".pdf"); c4->SaveAs(".pdf");
+  TString sname=TString::Format("%s_%d.pdf",c1->GetName(),i+Nfiles);
+  c1->SaveAs(sname); c1->SaveAs(sname);
+  sname=TString::Format("%s_%d.pdf",c2->GetName(),i+Nfiles);
+  c2->SaveAs(sname); c2->SaveAs(sname);
+  sname=TString::Format("%s_%d.pdf",c3->GetName(),i+Nfiles);
+  c3->SaveAs(sname); c3->SaveAs(sname);
+  sname=TString::Format("%s_%d.pdf",c4->GetName(),i+Nfiles);
+  c4->SaveAs(sname); c4->SaveAs(sname);
+  // c1->SaveAs(".pdf"); c1->SaveAs(".pdf");
+  // c2->SaveAs(".pdf"); c2->SaveAs(".pdf");
+  // c3->SaveAs(".pdf"); c3->SaveAs(".pdf");
+  // c4->SaveAs(".pdf"); c4->SaveAs(".pdf");
 
   //  fout->Write();
- 
+    }
+  c1->Modified(); c1->Update();
+  c2->Modified(); c2->Update();
+  c3->Modified(); c3->Update();
+  c4->Modified(); c4->Update();
 }

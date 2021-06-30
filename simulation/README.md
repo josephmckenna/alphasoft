@@ -1,40 +1,26 @@
 
-# Basic Requirements:
+# Submodules
+
+The following simulation components are part of the `alphasoft` project via the git submodule utility
+
+```
+# from the root folder
+git submodule status # to verify their commit hash
+git submodule update --init # to sync them
+```
+
 
 ## CRY
 
 [CRY](https://nuclear.llnl.gov/simulation/main.html "CRY at LLNL website")
 
-```
-wget https://nuclear.llnl.gov/simulation/cry_v1.7.tar.gz
-```
-
-Unpack and follow instructions contained in the README to install
-
-For clarity and simplicity: put the following instruction into your configuration script (e.g. .bashrc)
-
-```
-. $HOME/packages/cry_v1.7/setup
-```
 
 ## CADMesh
 
 [CADMesh](https://github.com/christopherpoole/CADMesh "CADMesh on GitHub")
 
-```
-git clone https://github.com/christopherpoole/CADMesh.git  
-cd CADMesh  
-git checkout v1.1
-```
-Follow instructions contained in the README to install
 
-For clarity and simplicity: put the following instructions into your configuration script (e.g. .bashrc)
-
-```
-export CADMESH_HOME=$HOME/packages/CADMesh  
-export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$CADMESH_HOME  
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
-```
+# Basic Requirements:
 
 ## Garfield++
 
@@ -42,6 +28,13 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CADMESE_HOME/lib
 
 ```
 git clone https://gitlab.cern.ch/garfield/garfieldpp.git
+```
+
+More recent versions don't work: extensively and successfully tested up to version below:
+
+```
+cd garfieldpp
+git checkout 96c4e68903ecc145dd6d2d00ac5ad2316cd88d3a
 ```
 
 Follow [this][gppinstall] instructions to install Garfield++
