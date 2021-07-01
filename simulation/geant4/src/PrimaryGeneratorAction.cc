@@ -182,8 +182,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(DetectorConstruction* det):fType(
 
   // Read the cry input file
   std::ifstream CRYFile;
-  char CRYname[] = "./cry.file";
-  //  sprintf(CRYname,"%s/simulation/run/cry.file",getenv("AGRELEASE"));
+  //  char CRYname[] = "./cry.file";
+  char CRYname[128];
+  sprintf(CRYname,"%s/simulation/geant4/cry.file",getenv("AGRELEASE"));
   CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
   G4String setupString("");
