@@ -3,6 +3,22 @@
 #include "ResolutionFunctions.C"
 #endif
 
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+#include "TString.h"
+#include "TFile.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TF1.h"
+#include "TLegend.h"
+#include "TCanvas.h"
+#include "TLine.h"
+#include "TMath.h"
+#include "TROOT.h"
+#include "TStyle.h"
+
 ofstream fout;
 TString tag;
 
@@ -54,7 +70,7 @@ void ShowResolutions(TFile* fin)
   hvrRC->SetTitle("Vertex X-Y;x [mm];y [mm]");
   TH2D* hvrMC= (TH2D*) fin->Get("hvrMC");
 
-  TString cvtxname("plots/cVtx");
+  TString cvtxname("cVtx");
   cvtxname.Append(tag);
   TCanvas* cvtx = new TCanvas(cvtxname.Data(),cvtxname.Data(),2500,1600);
   cvtx->Divide(3,2);
@@ -359,7 +375,7 @@ void ShowRadialDensity(TFile* fin)
   //===================================================================================
 
   //===================================================================================
-  TString c2name("plots/radprof");
+  TString c2name("radprof");
   c2name.Append(tag);
   TCanvas* c2 = new TCanvas(c2name.Data(),c2name.Data(),1500,1200);
   c2->Divide(2,1);
@@ -397,7 +413,7 @@ void RecAnalysis()
   Ssiz_t strip = datadir.Length()+1;
   TString temp(fname(strip,fname.Length()));
   tag = temp(0,temp.Length()-5);
-  TString sname("logs/stat");
+  TString sname("stat");
   sname.Append(tag);
   sname.Append(".txt");
   fout.open(sname.Data());

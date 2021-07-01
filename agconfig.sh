@@ -62,7 +62,7 @@ acapra()
     echo -e " \e[91m Hi Andrea! \e[m"
     
     # export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
-    export PATH="$AGRELEASE/scripts/andrea":$PATH
+    export PATH="$AGRELEASE/scripts/andrea":"$AGRELEASE/simulation/garfieldpp/scripts":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
@@ -128,7 +128,7 @@ echo "Adding $AGRELEASE/bin/include to ROOT_INCLUDE_PATH"
 export ROOT_INCLUDE_PATH=${AGRELEASE}/bin/include:${ROOT_INCLUDE_PATH}
 
 #Add scripts to BIN path
-for AG_BIN_PATH in scripts bin; do
+for AG_BIN_PATH in scripts bin bin/simulation; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -191,7 +191,7 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "acapra" ] ; then
       export DATADIR=/daq/alpha_data0/acapra/alphag
       export MCDATA=${DATADIR}/MCdata
-      export GPPDATA=${DATADIR}/GPPdata
+      export GARFIELDPP=${DATADIR}/GPPdata
       export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
       acapra
   fi

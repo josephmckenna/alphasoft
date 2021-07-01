@@ -70,8 +70,8 @@ int main(int argc, char * argv[])
     }
 
   double CathodeVoltage = -4000.,// V
-    AnodeVoltage = 3100.,
-     FieldVoltage = -99.;
+    AnodeVoltage = 3200.,
+     FieldVoltage = -110.;
 
   double MagneticField=abs(B); // T
 
@@ -80,15 +80,17 @@ int main(int argc, char * argv[])
 
   TString fname;
   if( B >= 0. )
-    fname = TString::Format("TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm.root",
+    fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initTheta%1.3frad_initZ%1.2fcm.root",
+                            getenv("GARFIELDPP"),
 			    CathodeVoltage,AnodeVoltage,FieldVoltage,
 			    MagneticField,
-			    r0,phi0,z0);
+			    r0,phi0,theta0,z0);
   else
-    fname = TString::Format("TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initZ%1.2fcm_Bmap.root",
+     fname = TString::Format("%s/TrackAvalanche_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_B%1.2fT_initR%1.2fcm_initPhi%1.3frad_initTheta%1.3frad_initZ%1.2fcm_Bmap.root",
+                             getenv("GARFIELDPP"),
 			    CathodeVoltage,AnodeVoltage,FieldVoltage,
 			    MagneticField,
-			    r0,phi0,z0);
+                             r0,phi0,theta0,z0);
   TFile* fout = TFile::Open(fname.Data(),"RECREATE");
 
   if(!fout->IsOpen())
@@ -97,10 +99,10 @@ int main(int argc, char * argv[])
       return -1;
     }
 
-  TNtuple ntefin("ntefin","e- endpoint","x:y:z:t");
+  TNtuple ntefin("ntefin","e- endpoint","x:y:z:t:n");
   TNtuple ntionpos("ntionpos","ion position","x:y:z:t");
   TNtuple ntfionpos("ntfionpos","ion final position","x:y:z:t");
-  TNtuple ntpion("ntpion","MCpion","x:y:z");
+  TNtuple ntpion("ntpion","MCpion","x:y:z:n");
 
   // Create the medium
   Garfield::MediumMagboltz *gas = new Garfield::MediumMagboltz;
@@ -205,30 +207,32 @@ int main(int argc, char * argv[])
   track.SetSensor(&sensor);
   track.SetParticle("pi");
   track.SetMomentum(momentum);
-  track.EnableMagneticField();
-  track.EnableElectricField();
+  if( MagneticField > 0. )
+     track.EnableMagneticField();
+  //  track.EnableElectricField();
   track.EnablePlotting(&viewdrift);
   //----------------------------------------------------
 
   //----------------------------------------------------
   //----------------------------------------------------
   // Transport Class for Electrons
-  // // MC Avalanche
-  // AvalancheMC eaval;
+  // MC Avalanche
+  Garfield::AvalancheMC eaval;
+  eaval.SetSensor(&sensor);
+  if( MagneticField > 0. )
+     eaval.EnableMagneticField();
+  // eaval.EnableSignalCalculation();
+  const double step = 1.e-4;// cm = 1 um
+  //  const double step = 0.03;// cm = 300 um
+  eaval.SetDistanceSteps(step);
+  eaval.EnablePlotting(&viewdrift);
+  // //----------------------------------------------------
+  // // Microscopic Avalanche
+  // Garfield::AvalancheMicroscopic eaval;
   // eaval.SetSensor(&sensor);
   // eaval.EnableMagneticField();
-  // eaval.EnableSignalCalculation();
-  // const double step = 1.e-4;// cm = 1 um
-  // //  const double step = 0.03;// cm = 300 um
-  // eaval.SetDistanceSteps(step);
+  // //  eaval.DisableSignalCalculation();
   // eaval.EnablePlotting(&viewdrift);
-  // //----------------------------------------------------
-  // Microscopic Avalanche
-  Garfield::AvalancheMicroscopic eaval;
-  eaval.SetSensor(&sensor);
-  eaval.EnableMagneticField();
-  //  eaval.DisableSignalCalculation();
-  eaval.EnablePlotting(&viewdrift);
   //----------------------------------------------------
 
   //----------------------------------------------------
@@ -297,7 +301,7 @@ int main(int argc, char * argv[])
       std::cerr<<"Cluster # "<<Nclusters<<" @ ("<<xcl<<", "<<ycl<<", "<<zcl
 	  <<") cm\ttime = "<<tcl<<" ns"<<std::endl;
 
-      ntpion.Fill(xcl,ycl,zcl);
+      ntpion.Fill(xcl,ycl,zcl,ncl);
       ++Nclusters;
       
       std::cerr<<"Number of e- in the cluster: "<<ncl<<std::endl;
@@ -309,75 +313,69 @@ int main(int argc, char * argv[])
       double ee,dxe,dye,dze;
       for(int ie = 0; ie < ncl; ++ie)
 	{
-	  track.GetElectron(ie,xe,ye,ze,te,ee,dxe,dye,dze);   
-	  eaval.AvalancheElectron(xe,ye,ze,te,ee);
+	  track.GetElectron(ie,xe,ye,ze,te,ee,dxe,dye,dze);
 
-	  re = TMath::Sqrt(xe*xe+ye*ye);
-	  //phie = TMath::ATan2(ye,xe);
+          re = TMath::Sqrt(xe*xe+ye*ye);
+          //phie = TMath::ATan2(ye,xe);
+          std::cerr<<"\te- "<<ie<<") pos: ("<<xe<<","<<ye<<","<<ze<<") r="<<re<<" at: "<<te<<std::endl;
+	  //eaval.AvalancheElectron(xe,ye,ze,te,ee);
+          eaval.DriftElectron(xe,ye,ze,te);
 
-	  int ne,ni;
+          //          int ne,ni;
+	  unsigned int ne,ni;
 	  ne=ni=0;
 	  eaval.GetAvalancheSize(ne,ni);
 	  std::cerr<<"\tAvalanche Size: #ions = "<<ni<<"; #e- "<<ne<<std::endl;
 
 	  double exf,eyf,ezf,etf,eef;
-	  exf=eyf=ezf=etf=eef=-1.;
+          exf=eyf=ezf=etf=eef=-1.;
     
-	  iaval.SetIonSignalScalingFactor(double(ni)/Nions);
-
-	  std::cerr<<"\tTracking "<<Nions
-	      <<" ions out of "<<eaval.GetNumberOfElectronEndpoints()<<std::endl;
-	  for(uint i=0; i<eaval.GetNumberOfElectronEndpoints(); ++i)
-	    {
-	      double xi,yi,zi,ti,ei,
-		xf,yf,zf,tf,ef;
+	  iaval.SetIonSignalScalingFactor(double(ni));
+	  // std::cerr<<"\tTracking "<<Nions
+	  //     <<" ions out of "<<eaval.GetNumberOfElectronEndpoints()<<std::endl;
+          //std::cerr<<"\tTracking "<<eaval.GetNumberOfElectronEndpoints()<<" e-"<<std::endl;
+          for(uint i=0; i<eaval.GetNumberOfElectronEndpoints(); ++i)
+	     {
+                double xi,yi,zi,ti,ei,
+                   xf,yf,zf,tf,ef;
 	      int status;
 	      eaval.GetElectronEndpoint(i, 
-					xi, yi, zi, ti, ei,
-					xf, yf, zf, tf, ef,
-					status);
+	        			xi, yi, zi, ti,// ei,
+	        			xf, yf, zf, tf,// ef,
+	        			status);
 	      
-	      //	      if( status == -3 ) continue;
-	      double ri = TMath::Sqrt(xi*xi+yi*yi);
-	      //	      if( ri == re )
-	      if( TMath::Abs(ri-re) < 1.e-3 )
-		{
-		  exf=xf;
-		  eyf=yf;
-		  ezf=zf;
-		  etf=tf;
-		  eef=ef;
-		  std::cerr<<"\t\tEEP test: ri = "<<ri
-		      <<" cm; phii = "<<TMath::ATan2(yi,xi)*TMath::RadToDeg()<<" deg"<<std::endl;
-		}
+              double ri = TMath::Sqrt(xi*xi+yi*yi);
+              if( TMath::Abs(ri-re) < 1.e-3 )
+	        {
+	          exf=xf;
+	          eyf=yf;
+	          ezf=zf;
+	          etf=tf;
+	          eef=ef;
+                }
 	      ntionpos.Fill(xi,yi,zi,ti);
-	  
-#if DEBUG>0
-	  
-	      std::cerr<<i<<"\n\tinit: "
-		  <<xi<<"\t"<<yi<<"\t"<<zi<<"\t"<<ti<<"\t"<<ei<<"\n\tfinal: "
-		  <<xf<<"\t"<<yf<<"\t"<<zf<<"\t"<<tf<<"\t"<<ef<<std::endl;
-	  
-#endif
-	      if( i >= Nions ) continue;
-	      iaval.DriftIon(xi,yi,zi,ti);
+
+	      std::cerr<<"\t init: ("<<xi<<","<<yi<<","<<zi<<")\tr = "<<ri
+                       <<" cm; phi = "<<TMath::ATan2(yi,xi)*TMath::RadToDeg()<<" deg\tt ="<<ti<<" ns"<<std::endl;
+              std::cerr<<"\tfinal: ("<<xf<<","<<yf<<","<<zf<<")\tr = "<<TMath::Sqrt(xf*xf+yf*yf)
+                       <<" cm; phi = "<<TMath::ATan2(yf,xf)*TMath::RadToDeg()<<" deg\tt ="<<tf<<" ns"<<std::endl;
+
+              if( i >= Nions ) continue;
+              iaval.DriftIon(xi,yi,zi,ti);
 	  
 	      unsigned int NN = iaval.GetNumberOfDriftLinePoints();
 	      double xf_ion,yf_ion,zf_ion,tf_ion;
 	      iaval.GetDriftLinePoint(NN-1, xf_ion, yf_ion, zf_ion, tf_ion);
-#if DEBUG>0
-	      std::cerr<<"\t\tion endpoint: "<<xf_ion<<"\t"<<yf_ion<<"\t"<<zf_ion<<"\t"<<tf_ion<<std::endl;
-#endif
-
-	      ntfionpos.Fill(xf_ion, yf_ion, zf_ion, tf_ion);
-	    }
-	  ntefin.Fill(exf,eyf,ezf,etf);
-	  std::cerr<<"\n\tEEP e- endpoint: "<<exf<<"\t"<<eyf<<"\t"<<ezf<<"\t"<<etf<<"\t"<<eef<<"\n"<<std::endl;
-	}
+              std::cerr<<"\tion endpoint: "<<xf_ion<<"\t"<<yf_ion<<"\t"<<zf_ion<<"\t"<<tf_ion<<"\trad: "<<TMath::Sqrt(xf_ion*xf_ion+yf_ion*yf_ion)<<" cm"<<std::endl;
+              ntfionpos.Fill(xf_ion, yf_ion, zf_ion, tf_ion);
+             }
+          
+	  ntefin.Fill(exf,eyf,ezf,etf,double(ni));
+	  std::cerr<<"\te- endpoint: "<<exf<<"\t"<<eyf<<"\t"<<ezf<<"\t"<<etf<<"\t"<<eef<<"\n"<<std::endl;
+	} // loop over e- in cluster
       std::cerr<<"========================================================\n"<<std::endl;
-    }
+    }// loop over clusters
   std::cerr<<"END"<<std::endl;
-  //  std::cerr << '.' << flush;
 
   fout->cd();
   ntefin.Write();
@@ -385,12 +383,15 @@ int main(int argc, char * argv[])
   ntfionpos.Write();
   ntpion.Write();
 
-  // std::cerr<<"Plot Driftlines"<<std::endl;
-  // viewdrift.Plot(true,true);
-  // viewCell.Plot2d();
-  // cc.SaveAs(".pdf");
-  // fout->cd();
-  // cc.Write();
+  std::cerr<<"Plot Driftlines"<<std::endl;
+  viewdrift.Plot(true,true);
+  viewCell.Plot2d();
+  //cc.SaveAs(".pdf");
+  TString sname(getenv("GARFIELDPP"));
+  sname+="/";  sname+=ccname; sname+=".pdf";
+  cc.SaveAs(sname);
+  fout->cd();
+  cc.Write();
 
   std::cerr<<"READOUT!"<<std::endl;
   //  Sensor ROsens(sensor);
@@ -423,13 +424,6 @@ int main(int argc, char * argv[])
   TH1D hro = GetROSignal(&sensor, &roname, convolute);
   hro.Write();
   std::cerr<<"READOUT complete"<<std::endl;
-
-  // std::cerr<<"Plot Driftlines"<<std::endl;
-  // viewdrift.Plot(true,true);
-  // viewCell.Plot2d();
-  // cc.SaveAs(".pdf");
-  // fout->cd();
-  // cc.Write();
 
   fout->Close();
 

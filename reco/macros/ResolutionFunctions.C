@@ -1,5 +1,10 @@
 #define GAUSNORM 0
 
+#include <cmath>
+#include "TF1.h"
+#include "TMath.h"
+
+
 Double_t BiGaus(Double_t *x, Double_t *k)
 {
   Double_t t1 = (x[0]-k[1])/k[2], t2 = (x[0]-k[4])/k[5];

@@ -84,11 +84,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   fHbarAnnihilation = new SecondaryProducer();
 
   // get annihilation position
-  // char fname[80];
-  // sprintf(fname,"%s/annihilation.dat",getenv("RUN_TPC"));
-  // fin.open(fname,std::ios::in);
-  fin.open("./annihilation.dat",std::ios::in);
-  //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
+  char fname[80];
+  sprintf(fname,"%s/simulation/agg4/annihilation.dat",getenv("AGRELEASE"));
+  fin.open(fname,std::ios::in);
+    //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
 
   // define a particle gun
   fParticleGun = new G4ParticleGun();
@@ -187,7 +186,9 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
 
   // Read the cry input file
   std::ifstream CRYFile;
-  CRYFile.open("./cry.file",std::ios::in);
+  char CRYname[128];
+  sprintf(CRYname,"%s/simulation/agg4/cry.file",getenv("AGRELEASE"));
+  CRYFile.open(CRYname,std::ios::in);
   char buffer[1000];
   std::string setupString("");
   while ( !CRYFile.getline(buffer,1000).eof())
@@ -844,6 +845,70 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	E = pp->GetTotalEnergy();
 	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 67: // test: single track at fixed location
+      {
+	// MC vertex
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
+        vy = TrapRadius; vx = vz = tt = 0.;
+        TVector3 testp;
+        testp.SetMagThetaPhi(300.*MeV, 10.*TMath::DegToRad(), 
+                             30.*double(anEvent->GetEventID()+1)/180.*pi);
+
+	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+
+	G4int pdgc=22;
+	if( (anEvent->GetEventID()%2) == 0 )
+	  pdgc = 211;
+	else
+	  pdgc = -211;
+
+	// a 300 MeV pion
+	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,testp.X(),testp.Y(),testp.Z());
+	vt->SetPrimary(pp);
+	anEvent->AddPrimaryVertex(vt);
+
+	E = pp->GetTotalEnergy();
+	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+   case 68: // test: single track at fixed location
+      {
+	// MC vertex
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
+        vx = TrapRadius; vy = vz = tt = 0.;
+        TVector3 testp;
+        testp.SetMagThetaPhi(300.*MeV, 10.*TMath::DegToRad(), 
+                             30.*double(anEvent->GetEventID()+4)/180.*pi);
+
+	new(mcvtxarray[anEvent->GetEventID()]) TVector3(vx/mm,vy/mm,vz/mm);
+
+	G4PrimaryVertex *vt = new G4PrimaryVertex(vx, vy, vz, tt);
+
+	G4int pdgc=22;
+	if( (anEvent->GetEventID()%2) == 0 )
+	  pdgc = 211;
+	else
+	  pdgc = -211;
+
+	// a 300 MeV pion
+	G4PrimaryParticle *pp = new G4PrimaryParticle(pdgc,testp.X(),testp.Y(),testp.Z());
+	vt->SetPrimary(pp);
+	anEvent->AddPrimaryVertex(vt);
+
+	E = pp->GetTotalEnergy();
+	new( mcpicarray[0] ) TLorentzVector(testp.X()/MeV,testp.Y()/MeV,testp.Z()/MeV,E/MeV);
+
+	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     default:
