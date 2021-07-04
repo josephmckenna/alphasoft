@@ -615,7 +615,7 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreLabVIEWEvent> labviewEvent(*labviewReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -623,12 +623,16 @@ void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReade
    while (labviewReader->Next())
    {
       double runTime = labviewEvent->GetRunTime();
+      double midasTime = labviewEvent->GetMIDAS_TIME();
+      //GodDamn this is hard coded - is it needed?
+      double runStart = Get_A2Analysis_Report(runNumber).GetRunStartTime();
+      runTime = midasTime - runStart;
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
          continue;
       if (runTime > lastTime)
          break;
-      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows());
+      labviewData.AddLVEvent(runNumber, &(*labviewEvent), *GetTimeWindows());
    }
    return;
 }
@@ -646,7 +650,7 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
          continue;
       }
       if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
-         LoadFELVData(obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
+         LoadFELVData(runNumber, obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
       else
          std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
    }
