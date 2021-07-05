@@ -27,6 +27,8 @@ if(BUILD_MANALYZER)
   set(manalyzer_objs
     ${CMAKE_SOURCE_DIR}/midasio/midasio.cxx
     ${CMAKE_SOURCE_DIR}/midasio/lz4frame.c
+    ${CMAKE_SOURCE_DIR}/midasio/lz4.c
+    ${CMAKE_SOURCE_DIR}/midasio/lz4hc.c
     ${CMAKE_SOURCE_DIR}/midasio/xxhash.c
     ${CMAKE_SOURCE_DIR}/mvodb/mvodb.cxx
     ${CMAKE_SOURCE_DIR}/mvodb/nullodb.cxx
