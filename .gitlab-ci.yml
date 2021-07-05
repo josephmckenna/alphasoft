@@ -209,21 +209,6 @@ build-cc7-cmake-a2:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-build-cc7:
-  stage: build
-  script: 
-    - git submodule update --init --recursive
-    - echo "Building"
-    - make clean
-    - make 2>&1 | tee BuildLog.txt
-    - cd ..
-  cache: {}
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
-
 AG_Simulation:
   stage: test
   image: tmidas/garfieldpp
