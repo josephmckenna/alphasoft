@@ -82,7 +82,7 @@ public:
    AlphaEventModule(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Module";
 #endif
       if (fTrace)
@@ -175,7 +175,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -264,7 +264,7 @@ public:
    AlphaEventModule_cluster(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Cluster";
 #endif
       fFlags=flags;
@@ -274,7 +274,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -291,7 +291,7 @@ public:
    AlphaEventModule_hits(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent hits";
 #endif
       fFlags=flags;
@@ -301,7 +301,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -324,7 +324,7 @@ public:
       stride=s;
       offset=o;
       fFlags=flags;
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent GetTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
 #endif
    }
@@ -333,7 +333,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -352,7 +352,7 @@ public:
    AlphaEventModule_tracks(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Make Helicies";
 #endif
       fFlags=flags;
@@ -362,7 +362,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -386,7 +386,7 @@ public:
       stride=s;
       offset=o;
       fFlags=flags;
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent FitTracks("+std::to_string(offset)+"/"+std::to_string(stride)+")";
 #endif
    }
@@ -395,7 +395,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -415,7 +415,7 @@ public:
    AlphaEventModule_prunetracks(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent PruneTracks";
 #endif
       fFlags=flags;
@@ -425,7 +425,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -442,7 +442,7 @@ public:
    AlphaEventModule_vertex(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Vertex";
 #endif
       fFlags=flags;
@@ -452,7 +452,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -473,7 +473,7 @@ public:
      : TARunObject(runinfo), fFlags(flags), stride(s), offset(o)
    {
       fFlags=flags;
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Improve Vert"+std::to_string(fFlags->ImproveVertexInteration);
       if (stride)
       {
@@ -490,7 +490,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -499,7 +499,7 @@ public:
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (AlphaEvent->HasVertexStoppedImproving())
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -507,7 +507,7 @@ public:
       
       if (AlphaEvent->GetVertex()->GetNHelices()<3) 
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -528,7 +528,7 @@ public:
    AlphaEventModule_improvevertex(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent ImproveVertex More";
 #endif
       fFlags=flags;
@@ -538,7 +538,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -547,14 +547,14 @@ public:
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (AlphaEvent->HasVertexStoppedImproving())
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
       if (AlphaEvent->GetVertex()->GetNHelices()<3)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -570,7 +570,7 @@ public:
    AlphaEventModule_Rphi(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent RPhi";
 #endif
       fFlags=flags;
@@ -580,7 +580,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -597,7 +597,7 @@ public:
    AlphaEventModule_GoodHel(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent GoodHel";
 #endif
       fFlags=flags;
@@ -607,7 +607,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -628,7 +628,7 @@ public:
    AlphaEventModule_save(TARunInfo* runinfo, AlphaEventFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="TAlphaEvent Save";
 #endif
       if (fFlags->SaveTAlphaEvent)
@@ -643,7 +643,7 @@ public:
       SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

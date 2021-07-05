@@ -54,7 +54,7 @@ public:
    OfficialA2Time(TARunInfo* runinfo, OfficialA2TimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="OfficialA2Time";
 #endif
       if (fTrace)
@@ -241,7 +241,7 @@ public:
    {
       if (fFlags->fNoSync)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
