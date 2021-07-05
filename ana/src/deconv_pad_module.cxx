@@ -53,7 +53,7 @@ public:
                                                            d( f->ana_settings )
       
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="DeconvPADModule";
 #endif
       if (fTrace)
@@ -106,7 +106,7 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -118,7 +118,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -129,14 +129,14 @@ public:
       {
          if (e->time<fFlags->start_time)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
          }
          if (e->time>fFlags->stop_time)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
@@ -147,7 +147,7 @@ public:
       {
          if (e->counter<fFlags->start_event)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
@@ -155,7 +155,7 @@ public:
       
          if (e->counter>fFlags->stop_event)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;

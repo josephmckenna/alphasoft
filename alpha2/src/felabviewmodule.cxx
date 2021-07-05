@@ -117,7 +117,7 @@ public:
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="felabview Module";
 #endif
       if (fTrace)
@@ -152,7 +152,7 @@ public:
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags |= TAFlag_SKIP_PROFILE;
 #endif
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
@@ -207,7 +207,7 @@ public:
       }
       else
       {  //No work done... skip profiler
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
       }
