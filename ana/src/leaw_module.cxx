@@ -50,7 +50,7 @@ public:
    LEawModule(TARunInfo* runinfo, LEawFlags* f): TARunObject(runinfo),
                                                  fFlags( f )
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="LEawModule";
 #endif
       if (fTrace)
@@ -99,13 +99,13 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      PROFILE_FROM_HERE
+#ifdef HAVE_MANALYZER_PROFILER
+      TAClock start_time = TAClockNow();
 #endif
       if(fTrace)
          printf("LEawModule::Analyze, run %d, counter %d\n",
@@ -114,7 +114,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -125,14 +125,14 @@ public:
       {
          if (e->time<fFlags->start_time)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
            *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
          }
          if (e->time>fFlags->stop_time)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
@@ -143,14 +143,14 @@ public:
       {
          if (e->counter<fFlags->start_event)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
          }
          if (e->counter>fFlags->stop_event)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
@@ -162,8 +162,8 @@ public:
          {
             std::cout<<"LEawModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
-#ifdef MANALYZER_PROFILER
-            flow = new UserProfilerFlow(flow,"LEaw_module (No Alpha16Event)");
+#ifdef HAVE_MANALYZER_PROFILER
+            flow = new TAUserProfilerFlow(flow,"LEaw_module (No Alpha16Event)",start_time);
 #endif
             return flow;
          }

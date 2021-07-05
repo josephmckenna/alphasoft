@@ -42,7 +42,7 @@ public:
    OnlineMVA(TARunInfo* runinfo, OnlineMVAFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="Online MVA Module";
 #endif
       if (fTrace)
@@ -98,7 +98,7 @@ public:
       A2OnlineMVAFlow* dumper_flow=flow->Find<A2OnlineMVAFlow>();
       if (!dumper_flow)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

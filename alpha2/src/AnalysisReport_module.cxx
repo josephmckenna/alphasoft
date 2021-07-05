@@ -162,12 +162,12 @@ public:
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="AnalysisReport";
 #endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
-         
+      fFlags->AnalysisReport = NULL;
       if (!getenv("AGRELEASE"))
       {
          std::cerr<<"AGRELEASE not set! Did you mean to 'source agconfig.sh'?"<<std::endl;
@@ -329,7 +329,8 @@ public:
 #ifdef BUILD_A2
       fFlags.DumpLogs.Print();
 #endif
-      fFlags.AnalysisReport->Print();
+      if (fFlags.AnalysisReport)
+         fFlags.AnalysisReport->Print();
       //delete fFlags.AnalysisReport;
    }
 
