@@ -94,8 +94,9 @@ echo "##################################################"
 
 if [ `echo "${GARFIELD_HOME}" | wc -c` -gt 1 ]; then
    echo "GARFIELD_HOME set to ${GARFIELD_HOME}, configuring... "
+   echo "No I am not... we now use an old verion of garfield that doesnt have this file :s"
    #cat ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
-   source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+   #source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
 else
    echo "GARFIELD_HOME not set"
 fi
