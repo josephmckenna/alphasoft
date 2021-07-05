@@ -60,6 +60,10 @@ if(BUILD_MANALYZER)
 
   target_include_directories(manalyzer      PUBLIC ${ROOT_INCLUDE_DIRS})
   target_include_directories(manalyzer_main PUBLIC ${ROOT_INCLUDE_DIRS})
+if(ZLIB_FOUND)
+     target_link_libraries(manalyzer PUBLIC ${ZLIB_LIBRARIES})
+     target_link_libraries(manalyzer_main PUBLIC ${ZLIB_LIBRARIES})
+endif()
   target_compile_definitions(manalyzer      PUBLIC ${ROOT_CCX_FLAGS} -DHAVE_ROOT)
   target_compile_definitions(manalyzer_main PUBLIC ${ROOT_CCX_FLAGS} -DHAVE_ROOT)
   target_compile_definitions(manalyzer      PUBLIC -DHAVE_ROOT_HTTP -DHAVE_THTTP_SERVER)
@@ -131,6 +135,7 @@ foreach( LIST_FILE ${BINS} )
     target_link_libraries( ${bin} ${AG_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            ${ROOT_LIBRARIES}
+                           ${ZLIB_LIBRARIES}
 			   manalyzer manalyzer_main
 			   ${MIDAS_LIBRARIES}) 
     

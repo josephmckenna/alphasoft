@@ -82,6 +82,19 @@ else()
   message(FATAL "SQLite3 NOT FOUND")
 endif()
 
+# Zlib
+set(HAVE_LIBZ 0)
+find_package(ZLIB)
+if(ZLIB_FOUND)
+    # TODO: rename HAVE_LIBZ to HAVE_ZLIB
+    # (original rename was introduced in midasio commit f185f999
+    # for compatibility with autotools which is not used)
+    set(HAVE_LIBZ 1)
+    set(HAVE_ZLIB 1)
+    add_compile_definitions(HAVE_LIBZ HAVE_ZLIB)
+endif()
+
+
 # Find ROOT
 if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
     if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
