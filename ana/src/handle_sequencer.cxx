@@ -48,7 +48,7 @@ public:
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="Handle Sequencer";
 #endif
       if (fTrace)
@@ -107,13 +107,13 @@ public:
 
       if( me->event_id != 8 ) // sequencer event id
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      PROFILE_FROM_HERE;
+#ifdef HAVE_MANALYZER_PROFILER
+      TAClock start_time = TAClockNow();
 #endif
       //
 
@@ -177,8 +177,8 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
-#ifdef MANALYZER_PROFILER
-         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)");
+#ifdef HAVE_MANALYZER_PROFILER
+         flow = new TAUserProfilerFlow(flow,"handle_sequencer(no parse)",start_time);
 #endif
          return flow;
          }  

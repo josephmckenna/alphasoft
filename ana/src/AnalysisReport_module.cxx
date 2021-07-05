@@ -93,7 +93,7 @@ public:
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="AnalysisReport";
 #endif
       if (fTrace)

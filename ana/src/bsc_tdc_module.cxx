@@ -69,7 +69,7 @@ public:
    tdcmodule(TARunInfo* runinfo, TdcFlags* flags): 
       TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="bsc tdc module";
 #endif
       printf("tdcmodule::ctor!\n");
@@ -161,7 +161,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -170,7 +170,7 @@ public:
       AgEvent* age = ef->fEvent;
       if(!age)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

@@ -58,7 +58,7 @@ public:
    BscModule(TARunInfo* runinfo, BscFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       fModuleName="bsc adc module";
 #endif
    }
@@ -129,7 +129,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
