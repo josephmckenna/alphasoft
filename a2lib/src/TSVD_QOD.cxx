@@ -6,7 +6,6 @@ ClassImp(TSVD_QOD);
 TSVD_QOD::TSVD_QOD(TAlphaEvent* a, TSiliconEvent* s )
 {
    RunNumber        = s->GetRunNumber();
-   std::cout << "TSVD_QOD constr. taking run number = " << RunNumber << std::endl;
    VF48Timestamp    = s->GetVF48Timestamp();
    VF48NEvent       = s->GetVF48NEvent();
    NRawHits         = s->GetNsideNRawHits();
