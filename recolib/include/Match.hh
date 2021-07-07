@@ -38,6 +38,8 @@ private:
    const double grassCut;       // don't consider peaks smaller than grassCut factor of a
    const double goodDist;       // neighbouring peak, if that peak is closer than goodDist
 
+   const int fNpadsCut; // if the number of reconstructed pads is too large quit
+
    const double charge_dist_scale;  // set to zero to not use, other value gets multiplied by padThr
    const double padThr;               // needed for wire-dependent pad threshold
 
