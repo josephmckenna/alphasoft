@@ -280,9 +280,11 @@ public:
       // Only write root file with 0th VF48 module thread
       if (fFlags->ProcessVF48!=0) return;
       // create extra root file
-      char filename[80]; 
-      sprintf(filename,"%s/alphaStrips%05doffline.root",  getenv("A2DATAPATH"), runinfo->fRunNo);
-      TFile* file = new TFile(filename,"RECREATE");
+      //char filename[80]; 
+      std::ostringstream filename;
+      filename << getenv("A2DATAPATH") << "/alphaStrips" << std::setw(5) << std::setfill('0') << runinfo->fRunNo << "offline.root" ;
+      //sprintf(filename,"%s/alphaStrips%05doffline.root",  getenv("A2DATAPATH"), runinfo->fRunNo);
+      TFile* file = new TFile(filename.str().c_str(),"RECREATE");
 
       Int_t stripNumber=0;
       Float_t stripMean;
@@ -295,10 +297,10 @@ public:
       TBranch* stripMeanBranch       = alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
       TBranch* stripRMSBranch        = alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
       TBranch* stripMeanSubRMSBranch = alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
-      stripNumberBranch->SetFile(filename);
-      stripMeanBranch->SetFile(filename);
-      stripRMSBranch->SetFile(filename);
-      stripMeanSubRMSBranch->SetFile(filename);
+      stripNumberBranch->SetFile(filename.str().c_str());
+      stripMeanBranch->SetFile(filename.str().c_str());
+      stripRMSBranch->SetFile(filename.str().c_str());
+      stripMeanSubRMSBranch->SetFile(filename.str().c_str());
 
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {
