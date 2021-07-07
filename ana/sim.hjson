@@ -33,6 +33,7 @@
         pad_charge_dist_scale: 0    // use AW dependent pad threshold in matching. Scale by this factor. (~30)
         grassCut: 0.1
         goodDist: 40.0
+        NpadsCut: 9999
     }
     RecoModule: {               // reconstruct tracks from spacepoints
         NhitsCut: 5000

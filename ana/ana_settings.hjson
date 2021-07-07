@@ -38,6 +38,7 @@
         coincTime: 20.0
         grassCut: 0.1
         goodDist: 40.0
+        NpadsCut: 9999
     }
     RecoModule: {               // reconstruct tracks from spacepoints
         NhitsCut: 5000
