@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <sstream>
 
 struct field3
 {
@@ -475,21 +476,23 @@ extern "C" int operainit_(char*filename)
 	if (filename[i]!=0) filename[i] = 0;
 	break;
       }
-  char fname[120];
-  sprintf(fname,"%s%s%s",getenv("AGRELEASE"),"/",filename);
-  FILE* fp = fopen(fname,"r");
+  //  char fname[120];
+  std::ostringstream fname;
+  fname << getenv("AGRELEASE") << "/" << filename;
+  //sprintf(fname,"%s%s%s",getenv("AGRELEASE"),"/",filename);
+  FILE* fp = fopen(fname.str().c_str(),"r");
   if (fp == 0)
     {
       fprintf(stderr,"operafld: Cannot open field map file [%s], errno %d (%s). Exiting.\n",
-	      fname,errno,strerror(errno));
+	      fname.str().c_str(),errno,strerror(errno));
       return 1;
     }
   
-  fprintf(stderr,"operafld: Reading field map from %s\n",fname);
+  fprintf(stderr,"operafld: Reading field map from %s\n",fname.str().c_str());
   
   if (readFile(fp) != 0)
     {
-      fprintf(stderr,"operafld: Cannot read field map from %s. Exiting.\n",fname);
+      fprintf(stderr,"operafld: Cannot read field map from %s. Exiting.\n",fname.str().c_str());
       return 1;
     }
   
