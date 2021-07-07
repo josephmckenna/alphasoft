@@ -91,6 +91,9 @@ elif [[ "$1" == "build" ]]; then
     if [[ "$2" == "nosim" ]]; then
 	echo "without Simulation components"
 	${cmd} -DCMAKE_BUILD_TYPE=Release ..
+    elif [[ "$2" == "subm" ]]; then
+	echo "with local manalyzer"
+	${cmd} -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release ..
     else
 	echo "with ALPHA-g Simulation components"
 	${cmd} -DBUILD_AG_SIM=ON -DCMAKE_BUILD_TYPE=Release ..
