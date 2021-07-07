@@ -251,6 +251,7 @@ std::vector<ALPHAg::signal>* Match::CombineAPad(std::vector< std::vector<ALPHAg:
       break;
     }
   }
+  std::cout<<"Match::CombineAPad "<<CombinedPads->size()<<" found"<<std::endl;
   return CombinedPads;
 }
 
@@ -756,8 +757,9 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::MatchElectrodes(
 	    }
 	}
     }
-  if( fTrace )
-    std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  //  if( fTrace )
+  //std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   return spacepoints;
@@ -1006,5 +1008,6 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
     std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
   }
+  std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
   return spacepoints;
 }
