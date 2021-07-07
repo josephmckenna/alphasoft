@@ -48,6 +48,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
    spectrum_width_min(ana_settings->GetDouble("MatchModule","spectrum_width_min")),
    grassCut(       ana_settings->GetDouble("MatchModule","grassCut")),
    goodDist(       ana_settings->GetDouble("MatchModule","goodDist")),
+   fNpadsCut(ana_settings->GetInt("MatchModule","NpadsCut")),
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
@@ -185,6 +186,14 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   if( fTrace )
     std::cout<<"Match::CombPads!"<<std::endl;
 
+  std::vector< std::vector<ALPHAg::signal> > comb;
+  if( int(padsignals->size()) > fNpadsCut )
+    {
+      std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()<<" exceeds its limit "<<fNpadsCut<<std::endl;
+      comb.resize(0);
+      return comb;
+    }
+
   // combine pads in the same column only
   std::vector< std::vector<ALPHAg::signal> > pad_bysec;
   std::set<short> secs;
@@ -193,7 +202,6 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   if( fTrace )
     std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
 
-  std::vector< std::vector<ALPHAg::signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
