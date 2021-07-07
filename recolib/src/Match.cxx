@@ -251,7 +251,6 @@ std::vector<ALPHAg::signal>* Match::CombineAPad(std::vector< std::vector<ALPHAg:
       break;
     }
   }
-  std::cout<<"Match::CombineAPad "<<CombinedPads->size()<<" found"<<std::endl;
   return CombinedPads;
 }
 
