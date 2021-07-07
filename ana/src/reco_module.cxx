@@ -249,7 +249,7 @@ public:
                   return flow;
                }
          }
-      std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
+      //     std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
