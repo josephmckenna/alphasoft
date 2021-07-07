@@ -87,8 +87,8 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="SpillLog";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="SpillLog";
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
@@ -130,9 +130,7 @@ public:
    void SaveToTree(TARunInfo* runinfo,TA2Spill* s)
    {
          if (!s) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("A2SpillTree","A2SpillTree");
@@ -383,7 +381,7 @@ public:
       }
       else
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
       }

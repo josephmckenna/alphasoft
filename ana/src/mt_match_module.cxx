@@ -236,7 +236,7 @@ public:
    bool diagnostic = false;
    int DoThis=-1;
    int stride=-1;
-   char ModuleName[50];
+
 public:
 
    MatchModulePart(TARunInfo* runinfo, MatchFlags* f, int part, int _stride)
@@ -246,7 +246,7 @@ public:
          printf("MatchModule::ctor!\n");
       DoThis=part;
       stride=_stride;
-      sprintf(ModuleName,"match_module (part %d/%d)",DoThis,stride);
+      fModuleName = std::string("match_module (part )") + std::to_string(DoThis) + "/" + stride +")");
       fFlags = f;
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
    }

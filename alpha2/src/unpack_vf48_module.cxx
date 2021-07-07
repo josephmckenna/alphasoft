@@ -90,8 +90,8 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="unpack_module_stream";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="unpack_module_stream";
 #endif
       if (fTrace)
          printf("UnpackModule::ctor!\n");
@@ -264,7 +264,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -272,7 +272,7 @@ public:
 
       if (event->event_id != 11)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -308,7 +308,7 @@ public:
       }
       if (!data_added)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
       }
@@ -323,7 +323,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -342,7 +342,7 @@ public:
 
       if (!flow_queued)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;   

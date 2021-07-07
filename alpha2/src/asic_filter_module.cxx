@@ -67,17 +67,17 @@ class ASICModule: public TARunObject
 public:
    ASICFlags* fFlags = NULL;
    bool fTrace = false;
-   TString modulename;
+   TString fModuleName;
    const double nVASigma;
    const double pVASigma;
    ASICModule(TARunInfo* runinfo, ASICFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
-      modulename="ASICModule(";
-      modulename+=fFlags->ProcessSilMod;
-      modulename+="-";
-      modulename+=fFlags->ProcessSilMod+fFlags->ProcessStride;
-      modulename+=")";
+      fModuleName="ASICModule(";
+      fModuleName+=fFlags->ProcessSilMod;
+      fModuleName+="-";
+      fModuleName+=fFlags->ProcessSilMod+fFlags->ProcessStride;
+      fModuleName+=")";
    }
    ~ASICModule()
    {

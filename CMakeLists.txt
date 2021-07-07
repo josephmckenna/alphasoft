@@ -2,9 +2,17 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alphasoft)
 
+# Enforce out-of-source builds 
+string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
+if(_insource)
+   # execute_process(COMMAND rm -vf $ENV{AGRELEASE}/CMakeCache.txt) This doesn't work... CMakeCache.txt gets updated after delete
+   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory! And please delete: $ENV{AGRELEASE}/CMakeCache.txt")
+   
+endif(_insource) 
+
 # Version numbering
-set (basicApp_VERSION_MAJOR 1)
-set (basicApp_VERSION_MAJOR 0)
+set(${PROJECT_NAME}_VERSION_MAJOR 1)
+set(${PROJECT_NAME}_VERSION_MAJOR 0)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
             "Default build type: RelWithDebInfo" FORCE)
@@ -28,27 +36,74 @@ string(TOLOWER ${OS_TYPE} OS_TYPE)
 add_compile_definitions(OSTYPE="${OS_TYPE}")
 message(STATUS "OS: ${CMAKE_SYSTEM} : ${OS_TYPE}")
 
-find_package(Git REQUIRED)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-   option(GIT_SUBMODULE "Check submodules during build" ON)
-endif()
-
+# Project specific option
 set(PRE_CONFIG "" CACHE STRING "Pre-config script, used to build setup.{sh,py,C} (useful for external environment config scripts)")
 option(BUILD_AG "Build AG" ON)
 option(BUILD_AG_SIM "Build AG Simulation" OFF)
 option(BUILD_A2 "Build A2" ON)
 option(BUILD_A2_SIM "Build A2 Simulation" OFF)
-option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
+option(BUILD_MANALYZER "Build MIDAS analyzer (manalyzer)" OFF)
 option(WARNINGS_ALL "Enable gcc warnings" OFF)
 option(LINTER "Enable clang-tidy to inspect C++ code" OFF)
 
-# Enforce out-of-source builds 
-string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
-if(_insource)
-   # execute_process(COMMAND rm -vf $ENV{AGRELEASE}/CMakeCache.txt) This doesn't work... CMakeCache.txt gets updated after delete
-   message(FATAL_ERROR "Error: In-source build detected! Please create a build directory! And please delete: $ENV{AGRELEASE}/CMakeCache.txt")
-   
-endif(_insource) 
+
+# Find Git
+find_package(Git REQUIRED)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+   option(GIT_SUBMODULE "Check submodules during build" ON)
+endif()
+
+# Find MIDAS
+if(DEFINED ENV{MIDASSYS})
+   include($ENV{MIDASSYS}/lib/midas-targets.cmake)
+   message(STATUS "${PROJECT_NAME}: Building with MIDAS from $ENV{MIDASSYS}/lib/midas-targets.cmake")
+   set(MIDAS_FOUND TRUE)
+   set(MIDASSYS "$ENV{MIDASSYS}")
+   set(MIDAS_LIBRARIES midas)
+   message(STATUS "MIDAS found ${MIDASSYS}")
+   set(MIDAS_LIBRARY_DIRS "${MIDASSYS}/lib")
+   message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
+   message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARY_DIRS = ${MIDAS_LIBRARY_DIRS}")
+else()
+   message(STATUS "${PROJECT_NAME}: Building without MIDAS")
+   set(BUILD_MANALYZER ON)
+   unset(MIDAS_FOUND)
+endif()
+
+
+# SQLITE3
+find_package(SQLite3 REQUIRED)
+if(SQLite3_FOUND)
+  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
+else()
+  message(FATAL "SQLite3 NOT FOUND")
+endif()
+
+# Zlib
+set(HAVE_LIBZ 0)
+find_package(ZLIB)
+if(ZLIB_FOUND)
+    # TODO: rename HAVE_LIBZ to HAVE_ZLIB
+    # (original rename was introduced in midasio commit f185f999
+    # for compatibility with autotools which is not used)
+    set(HAVE_LIBZ 1)
+    set(HAVE_ZLIB 1)
+    add_compile_definitions(HAVE_LIBZ HAVE_ZLIB)
+endif()
+
+
+# Find ROOT
+if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
+    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
+        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+    endif()
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
+find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom RHTTP)
+# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
 # The parameter is based on compiler ID as it's not standardised
@@ -76,37 +131,6 @@ function(get_submodule MODULE_NAME)
       endif()
     endif()
 endfunction()
-
-
-# SQLITE3
-find_package(SQLite3 REQUIRED)
-if(SQLite3_FOUND)
-  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
-else()
-  message(FATAL "SQLite3 NOT FOUND")
-endif()
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom)
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
-
-if (BUILT_IN_ROOTANA)
-   #Universal libraries (Include some flow and TSpill stuff)
-   get_submodule(rootana)
-   add_subdirectory(rootana)
-   set(ROOTANA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/rootana/manalyzer;${CMAKE_SOURCE_DIR}/rootana/midasio;${CMAKE_SOURCE_DIR}/rootana/mvodb;${CMAKE_BINARY_DIR}/rootana/include")
-endif(BUILT_IN_ROOTANA)
 
 
 if (LINTER)
@@ -178,7 +202,6 @@ if(WARNINGS_ALL)
 endif(WARNINGS_ALL)
 
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
-#file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
 install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
 add_subdirectory(cmake_extras)
@@ -190,6 +213,17 @@ add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
+
+if(BUILD_MANALYZER)
+  message(STATUS "Cloning submoduels")
+  # get midas-analyzer submodules
+  get_submodule(midasio)
+  get_submodule(mvodb)
+  get_submodule(mjson)
+  get_submodule(mxml)
+  get_submodule(manalyzer)
+  message(STATUS "Ready to build manalyzer")
+endif()
 
 #AG libraries
 if (BUILD_AG)

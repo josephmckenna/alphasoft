@@ -103,8 +103,8 @@ public:
    PedModule_vf48(TARunInfo* runinfo, PedFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="ped_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
 	  
 	  //New declaration in initiator. 
@@ -243,7 +243,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -252,14 +252,14 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
       if (!fe->vf48event)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -280,9 +280,11 @@ public:
       // Only write root file with 0th VF48 module thread
       if (fFlags->ProcessVF48!=0) return;
       // create extra root file
-      char filename[80]; 
-      sprintf(filename,"%s/alphaStrips%05doffline.root",  getenv("A2DATAPATH"), runinfo->fRunNo);
-      TFile* file = new TFile(filename,"RECREATE");
+      //char filename[80]; 
+      std::ostringstream filename;
+      filename << getenv("A2DATAPATH") << "/alphaStrips" << std::setw(5) << std::setfill('0') << runinfo->fRunNo << "offline.root" ;
+      //sprintf(filename,"%s/alphaStrips%05doffline.root",  getenv("A2DATAPATH"), runinfo->fRunNo);
+      TFile* file = new TFile(filename.str().c_str(),"RECREATE");
 
       Int_t stripNumber=0;
       Float_t stripMean;
@@ -295,10 +297,10 @@ public:
       TBranch* stripMeanBranch       = alphaStripTree->Branch("stripMean",&stripMean, "stripMean/F");
       TBranch* stripRMSBranch        = alphaStripTree->Branch("stripRMS",&stripRMS, "stripRMS/F");
       TBranch* stripMeanSubRMSBranch = alphaStripTree->Branch("stripMeanSubRMS",&stripRMSAfterFilter, "stripMeanSubRMS/F");
-      stripNumberBranch->SetFile(filename);
-      stripMeanBranch->SetFile(filename);
-      stripRMSBranch->SetFile(filename);
-      stripMeanSubRMSBranch->SetFile(filename);
+      stripNumberBranch->SetFile(filename.str().c_str());
+      stripMeanBranch->SetFile(filename.str().c_str());
+      stripRMSBranch->SetFile(filename.str().c_str());
+      stripMeanSubRMSBranch->SetFile(filename.str().c_str());
 
       for (int i=0; i<NUM_SI_MODULES*4*128; i++)
       {

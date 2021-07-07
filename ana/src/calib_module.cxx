@@ -76,8 +76,8 @@ public:
                                                 //fTdelay(gMinTime)//,
                                                 fTdelay(0.)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Calib Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Calib Module";
 #endif
       printf("CalibRun::ctor!\n");
       MagneticField = fFlags->fMagneticField;
@@ -204,7 +204,7 @@ public:
    {
       if( !fFlags->fCalibOn )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -217,7 +217,7 @@ public:
 
       if( !ef || !ef->fEvent || !ef->fEvent->a16)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -226,7 +226,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -234,7 +234,7 @@ public:
 
       if( !SigFlow->awSig )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

@@ -142,8 +142,8 @@ public:
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="hybrid_hits_module";
 #endif
       if (fTrace)
          printf("HitModule::ctor!\n");
@@ -205,7 +205,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -213,20 +213,19 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
       if (!fe->vf48event)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
       TSiliconEvent* s=BuildTSiliconEvent(fe->vf48event);
-      std::cout << "AnalyzeFlowEvent taking run number = " << runinfo->fRunNo << std::endl;
       s->SetRunNumber(runinfo->fRunNo);
       flow=new SilEventFlow(flow,s);
       return flow;
@@ -264,8 +263,8 @@ public:
    HitModule_vf48(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
       // load the sqlite3 db
       SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
@@ -448,7 +447,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -456,7 +455,7 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -465,7 +464,7 @@ public:
       SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -473,7 +472,7 @@ public:
       TSiliconEvent* SiliconEvent=sf->silevent;
       if (!SiliconEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
