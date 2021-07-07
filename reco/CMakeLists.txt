@@ -7,7 +7,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Include directories
 include_directories(${ROOT_INCLUDE_DIRS})
-include_directories(${ROOTANA_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/rootUtils/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
 include_directories(${CMAKE_SOURCE_DIR}/libGEM/include)

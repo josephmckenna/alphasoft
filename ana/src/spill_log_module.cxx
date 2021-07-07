@@ -21,6 +21,7 @@
 #include "chrono_module.h"
 #include "TChrono_Event.h"
 #include "TChronoChannelName.h"
+#include "TROOT.h"
 #include "TTree.h"
 
 #include <vector>
@@ -106,8 +107,8 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Spill Log Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Spill Log Module";
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
@@ -121,9 +122,7 @@ public:
    void SaveToTree(TARunInfo* runinfo,TAGSpill* s)
    {
          if (!s) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("AGSpillTree","AGSpillTree");
@@ -424,7 +423,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (!gIsOnline)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

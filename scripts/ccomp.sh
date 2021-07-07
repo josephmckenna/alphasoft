@@ -16,7 +16,6 @@ if [[ "$1" == "clean" ]]; then
     if [[ "$2" == "all" ]]; then
 	echo "removing build and bin folders"
 	rm -rf $AGRELEASE/build $AGRELEASE/bin
-	rm -rf $AGRELEASE/rootana/include $AGRELEASE/rootana/lib
     fi
 
 elif [[ "$1" == "update" ]]; then
@@ -92,6 +91,9 @@ elif [[ "$1" == "build" ]]; then
     if [[ "$2" == "nosim" ]]; then
 	echo "without Simulation components"
 	${cmd} -DCMAKE_BUILD_TYPE=Release ..
+    elif [[ "$2" == "subm" ]]; then
+	echo "with local manalyzer"
+	${cmd} -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release ..
     else
 	echo "with ALPHA-g Simulation components"
 	${cmd} -DBUILD_AG_SIM=ON -DCMAKE_BUILD_TYPE=Release ..

@@ -62,8 +62,8 @@ public:
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="ChronoModule";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="ChronoModule";
 #endif
       if (fTrace)
          printf("Chrono::ctor!\n");
@@ -81,9 +81,7 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
       
       //Save chronobox channel names
@@ -278,9 +276,7 @@ struct ChronoChannelEvent {
    }
    void SaveChronoScaler(ChronoChannelEvent* e, int b, uint32_t MidasTime)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
       
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
@@ -322,9 +318,7 @@ struct ChronoChannelEvent {
    }
    void SaveChronoTimeStamp(ChronoChannelEvent* e, int b)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
 
       Int_t Chan=(Int_t)e->Channel-100;
@@ -359,7 +353,7 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
