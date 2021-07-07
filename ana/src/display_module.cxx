@@ -47,8 +47,8 @@ public:
    DisplayRun(TARunInfo* runinfo, DisplayFlags* f)
       : TARunObject(runinfo), aged(0), fFlags(f)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Display Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Display Module";
 #endif
       printf("DisplayRun::ctor!\n");
    }
@@ -115,7 +115,7 @@ public:
    {
       if( fFlags->fBatch )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -127,7 +127,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -137,7 +137,7 @@ public:
       
       if( !age->a16 )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -145,7 +145,7 @@ public:
 
       if( !age->feam && !fFlags->fForce )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -155,7 +155,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -165,7 +165,7 @@ public:
       AgAnalysisFlow* analysis_flow = flow->Find<AgAnalysisFlow>();
       if( !analysis_flow || !analysis_flow->fEvent )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -175,7 +175,7 @@ public:
       AgBarEventFlow* bar_flow = flow->Find<AgBarEventFlow>();
       if( !bar_flow || !bar_flow->BarEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

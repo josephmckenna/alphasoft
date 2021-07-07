@@ -173,8 +173,8 @@ public:
                                                   fCoincTime(20.),fpc_timecut(300.) // ns
 
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Histo Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Histo Module";
 #endif
       diagnostics=f->fDiag;
    }
@@ -183,9 +183,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       if(!diagnostics) return;
       printf("HistoModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
@@ -458,7 +456,7 @@ public:
    {      
       if(!diagnostics)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -468,7 +466,7 @@ public:
      
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -477,7 +475,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

@@ -48,8 +48,8 @@ public:
       : TARunObject(runinfo), fFlags(flags),
         fSeqEvent(0), fSeqState(0), SequencerTree(0)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Handle Sequencer";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Handle Sequencer";
 #endif
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
@@ -107,13 +107,13 @@ public:
 
       if( me->event_id != 8 ) // sequencer event id
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
+#ifdef HAVE_MANALYZER_PROFILER
+      TAClock start_time = TAClockNow();
 #endif
       //
 
@@ -177,8 +177,8 @@ public:
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
-#ifdef MANALYZER_PROFILER
-         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
+#ifdef HAVE_MANALYZER_PROFILER
+         flow = new TAUserProfilerFlow(flow,"handle_sequencer(no parse)",start_time);
 #endif
          return flow;
          }  
@@ -218,9 +218,7 @@ public:
       s+=" loaded";
       ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd();
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);

@@ -1,11 +1,11 @@
-#Typically the subdirectory should contain its own project() command invocation so that a full build system will be generated in the subdirectory
+#Typically the subdirectory should contain its own project() command invocation so that a full build system will be generyted in the subdirectory
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(alphasim)
 
 #----------------------------------------------------------------------------
 # Garfield++
 find_package(Garfield REQUIRED)
-if (GARFIELD_FOUND)
+if (Garfield_FOUND)
   message(STATUS "Garfield found...")
   message(STATUS "Garfield headers: ${GARFIELD_INCLUDE_DIR}")
   message(STATUS "Garfield libs: ${GARFIELD_LIBRARIES}")
