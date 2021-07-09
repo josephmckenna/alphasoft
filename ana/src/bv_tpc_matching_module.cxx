@@ -4,6 +4,9 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
+#include "AnaSettings.hh"
+#include "json.hpp"
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -23,6 +26,7 @@ class MatchingModuleFlags
 public:
    double fMagneticField = -1.;
    bool fPrint = false;
+   AnaSettings* ana_settings=0;
 
    MatchingModuleFlags() // ctor
    { }
@@ -39,19 +43,19 @@ private:
    bool fTrace=false;
 
    // BV geometry
-   double inner_diameter = 446.0; // mm
-   double outer_diameter = 486.0; // mm
+   const double inner_diameter = 446.0; // mm
+   const double outer_diameter = 486.0; // mm
    //double radius = (inner_diameter+outer_diameter)/4.; // Use centre of BV
-   double radius = inner_diameter/2; // Use inner edge of BV
-   double length = 2604; // mm
-   double speed = 120.8686; // mm/ns, speed of light in bar, fitted from data
+   const double radius = inner_diameter*0.5; // Use inner edge of BV
+   const double length = 2604.; // mm
+   const double speed = 120.8686; // mm/ns, speed of light in bar, fitted from data
 
    // Matching parameters
-   double max_dz = 300; // mm
-   double max_dphi = 0.3; // 0.3 rad, within 3 bars
+   double max_dz; // mm
+   double max_dphi; // rad
 
    // TOF parameters
-   double min_dphi = TMath::Pi()*105/180; // 105 degrees seperation between two hits ("back to back")
+   double min_dphi;
 
    //Histogramm declaration
    TH2D* hdPhiMatch = NULL;
@@ -90,7 +94,10 @@ public:
 
 public:
 
-   matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f)
+   matchingmodule(TARunInfo* runinfo, MatchingModuleFlags* f): TARunObject(runinfo), fFlags(f),
+                 max_dz(f->ana_settings->GetDouble("BscModule","max_dz")),
+                 max_dphi(f->ana_settings->GetDouble("BscModule","max_dphi")),
+                 min_dphi(f->ana_settings->GetDouble("BscModule","min_dphi"))
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="BC/TPC Matching Module";
@@ -562,17 +569,22 @@ public:
    MatchingModuleFlags fFlags;
 public:
    void Help()
-   {   }
+   { 
+      printf("MatchingModuleFactory::Help\n");
+      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+   }
    void Usage()
    {
       Help();
    }
    void Init(const std::vector<std::string> &args)
    {
+      TString json="default";
       printf("matchingModuleFactory::Init!\n");
-
       for (unsigned i=0; i<args.size(); i++)
          {
+         if( args[i]=="-h" || args[i]=="--help" )
+            Help();
          if( args[i] == "--Bfield" )
             {
                fFlags.fMagneticField = atof(args[++i].c_str());
@@ -580,7 +592,10 @@ public:
             }
          if( args[i] == "--bscprint")
             fFlags.fPrint = true;
+         if( args[i] == "--anasettings" ) 
+            json=args[i+1];
          }
+      fFlags.ana_settings=new AnaSettings(json.Data());
    }
 
    void Finish()
