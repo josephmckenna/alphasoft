@@ -81,7 +81,7 @@
        ADCamplitude: 1000 // Minimum ADC value for peak height
        max_adc_tdc_diff: 4.0e-8 // s, maximum allowed time between ADC time and matched TDC time
        max_top_bot_diff: 1.0e-6 // s, maximum allowed time between top TDC time and matched bot TDC time
-       max_dz: 300.  // mm, tpc-bsc matching
+       max_dz: 300.0  // mm, tpc-bsc matching
        max_dphi: 0.3 // rad, tpc-bsc matching, within 3 bars
        min_dphi: 1.8325957 // rad, 105 degrees seperation between two hits ("back to back")
    }
