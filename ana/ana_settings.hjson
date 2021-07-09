@@ -74,4 +74,12 @@
         MaxIt_NN: 20            // number of iterations for minimization
         ItThres_NN: 0.0005      // stop iterating if change from previous step < this
     }
+   BscModule: {
+       //pulse_threshold: 800 // Minimum ADC value to define start and end of pulse
+       pulse_threshold: 1400 // Minimum ADC value to define start and end of pulse
+       //ADCamplitude: 5000 // Minimum ADC value for peak height
+       ADCamplitude: 1000 // Minimum ADC value for peak height
+       max_adc_tdc_diff: 4.0e-8 // s, maximum allowed time between ADC time and matched TDC time
+       max_top_bot_diff: 1.0e-6 // s, maximum allowed time between top TDC time and matched bot TDC time
+   }
 }

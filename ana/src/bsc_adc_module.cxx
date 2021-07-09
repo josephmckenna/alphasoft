@@ -4,6 +4,9 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
+#include "AnaSettings.hh"
+#include "json.hpp"
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -24,6 +27,7 @@ public:
    bool fPrint = false;
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
+   AnaSettings* ana_settings=0;
 };
 
 class BscModule: public TARunObject
@@ -32,8 +36,8 @@ private:
 
    // Set parameters
    int pedestal_length = 100;
-   int threshold = 1400; // Minimum ADC value to define start and end of pulse // Old = 800
-   double amplitude_cut = 5000; // Minimum ADC value for peak height
+   int threshold; // Minimum ADC value to define start and end of pulse
+   double amplitude_cut; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
    const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
@@ -64,11 +68,14 @@ private:
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
-      : TARunObject(runinfo), fFlags(flags)
+      : TARunObject(runinfo), fFlags(flags),
+        threshold(flags->ana_settings->GetInt("BscModule","pulse_threshold")),
+        amplitude_cut(flags->ana_settings->GetDouble("BscModule","ADCamplitude"))
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="bsc adc module";
 #endif
+      
    }
 
    ~BscModule()
@@ -369,23 +376,31 @@ public:
    BscFlags fFlags;
 public:
    void Help()
-   {   }
+   {   
+      printf("BscModuleFactory::Help\n");
+      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+   }
    void Usage()
    {
       Help();
    }
    void Init(const std::vector<std::string> &args)
    {
+      TString json="default";
       printf("BscModuleFactory::Init!\n");
-
       for (unsigned i=0; i<args.size(); i++) {
+         if( args[i]=="-h" || args[i]=="--help" )
+            Help();
          if (args[i] == "--bscprint")
             fFlags.fPrint = true;
          if( args[i] == "--bscpulser")
             fFlags.fPulser = true;
          if (args[i] == "--bscProtoTOF")
             fFlags.fProtoTOF = true;
+         if( args[i] == "--anasettings" ) 
+            json=args[i+1];
       }
+      fFlags.ana_settings=new AnaSettings(json.Data());
    }
 
    void Finish()
