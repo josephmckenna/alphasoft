@@ -12,7 +12,6 @@ cache:
     - run*.mid.lz4
     - run*.mid.gz
     - alphaStrips*offline.root
-    - rootana
     - agana
     - agana/agcfmdb
     - BuildLog.txt
