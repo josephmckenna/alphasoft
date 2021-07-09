@@ -151,7 +151,7 @@ public:
          hDiffTdc = new TH2D("hDiffTdc","TDC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-50e-9,50e-9);
          hTOFADC = new TH1D("hTOFADC","Time of flight calculated using ADC;Time of flight [s]",200,-1000e-9,1000e-9);
          hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC;Time of flight [s]",200,-20e-9,20e-9);
-      hTDCbar = new TH1D("hTdcBar","Hits on each bar;tdc bar",128,-0.5,127.5);
+         hTDCbar = new TH1D("hTdcBar","Hits on each bar;tdc bar",128,-0.5,127.5);
       }
 
       // Load Bscint tdc map
@@ -440,12 +440,12 @@ public:
                   // Skip negative channels
                   if (int(tdchit->chan)<=0) continue;
 
+                  // Gets bar number
+                  int tdc_bar = fpga2barID(int(tdchit->fpga),int(tdchit->chan));
+
                   // Checks channel number
-                  int tdc_bar = 0;
                   bool correct_channel = false;
                   if ( !(fFlags->fProtoTOF)) {
-                     // Gets bar number
-                     int tdc_bar = fpga2barID(int(tdchit->fpga),int(tdchit->chan));
                      correct_channel = (tdc_bar==bar);
                   }
                   if (fFlags->fProtoTOF) {
@@ -470,6 +470,8 @@ public:
                      matched_tdc_hit = tdchit;
                   }
 
+                  //std::cout<<"::AddTDCdata fpga: "<<int(tdchit->fpga)<<" ch: "<<int(tdchit->chan)
+                  //<<" bar: "<<tdc_bar<<std::endl;
                   // Fills histograms
                   hTdcAdcTime->Fill(endhit->GetADCTime(),tdc_time);
                   hTDCbar->Fill(tdc_bar);
