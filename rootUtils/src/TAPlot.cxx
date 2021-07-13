@@ -403,7 +403,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
             if (fTimeWindows.fRunNumber[i] == uniqueRuns.at(colourID))
                break;
          }
-         TGraph* graph = obj.BuildGraph(i,kZeroTimeAxis);
+         TGraph* graph = obj.BuildGraph(i, kZeroTimeAxis);
          graph->SetLineColor(GetColour(colourID + colourOffset));
          graph->SetMarkerColor(GetColour(colourID + colourOffset));
          uniqueLabels[obj.GetVariable()] = graph;

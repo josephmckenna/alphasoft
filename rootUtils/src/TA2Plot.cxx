@@ -581,7 +581,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 
       if (subPadCD6) 
          subPadCD6->cd(2);
-      std::pair<TLegend*,TMultiGraph*> labviewDataMG=GetLVGraphs();
+      std::pair<TLegend*,TMultiGraph*> labviewDataMG = GetLVGraphs();
       if (labviewDataMG.first)
       {
          //Draw TMultigraph

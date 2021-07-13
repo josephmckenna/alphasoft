@@ -120,6 +120,7 @@ public:
    felabModuleFlags* fFlags;
    bool fTrace = false;
    std::vector<TTree*> fTrees;
+   const double kUnixTimeOffset = 2082844800;
    
    felabviewModule(TARunInfo* runInfo, felabModuleFlags* flags)
       : TARunObject(runInfo), fFlags(flags)
@@ -227,13 +228,21 @@ public:
             midasEventData.push_back(rawMIDASData[i]);
          }
 
-         double runTime;
-         // I need a range check to assure meData[0] is the right format if not use MIDAS time.
-         double difference = fabs( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) );
-         if( difference > 5)
+         //Set runTime as that in the Midas data, minus the unix time offset to set the runtime to unix time.
+         double runTime = midasEventData[0]-kUnixTimeOffset;
+         
+         //If runtime is now less than 0 it was already in unix time so we can undo that offset.
+         if(runTime<0)
+            runTime+=kUnixTimeOffset;
+
+         //Calc the difference between this runtime and the midas timestamp
+         double difference = fabs( runTime - (midasEvent->time_stamp) );
+         //If the difference is greater than 5 we want to use the midas time instead of the LV time as there is clearly some error.
+         if( difference > 5 || fTimeErrors.count(currentBankName) ) //The or statement makes sure once we've done it for a bank we continue too. Usually when one time of a bank is out the rest are but just in case.
          {
             runTime = midasEvent->time_stamp;
             
+            //Update the time errors.
             auto& tup = fTimeErrors[currentBankName];
             std::get<0>(tup) += difference;
             std::get<1>(tup) += difference*difference;
@@ -249,12 +258,12 @@ public:
             printf("Timestamp clash: (lv time) %f - %d (midas time) = %f for bank: %s \n", midasEventData[0]-2082844800, midasEvent->time_stamp, midasEventData[0] - 2082844800 - midasEvent->time_stamp, currentBankName.c_str());
          }
          std::string bankName = "HPRO";
-         if (BN==bn)
+         if (currentBankName==bankName)
          {
              
-             if(meData[0]-3525550000 > 0)
-                printf("\n\n   LV Timestamp of this event is = %f \n", meData[0]-2082844800);
-                printf("   MI Timestamp of this event is = %d \n\n", me->time_stamp);
+             if(midasEventData[0]-3525550000 > 0)
+                printf("\n\n   LV Timestamp of this event is = %f \n", midasEventData[0]-2082844800);
+                printf("   MI Timestamp of this event is = %d \n\n", midasEvent->time_stamp);
 
                 //for (int i=0; i<meData.size(); i++)
                    //std::cout<<meData[i]<<std::endl;
