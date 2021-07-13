@@ -253,7 +253,7 @@ public:
          
 
          //=== Debug Logging ===
-         /*if( (midasEventData[0]-2082844800) - (midasEvent->time_stamp) > 5)
+         /*if( (midasEventData[0]-kUnixTimeOffset) - (midasEvent->time_stamp) > 5)
          {
             printf("Timestamp clash: (lv time) %f - %d (midas time) = %f for bank: %s \n", midasEventData[0]-2082844800, midasEvent->time_stamp, midasEventData[0] - 2082844800 - midasEvent->time_stamp, currentBankName.c_str());
          }
@@ -262,7 +262,7 @@ public:
          {
              
              if(midasEventData[0]-3525550000 > 0)
-                printf("\n\n   LV Timestamp of this event is = %f \n", midasEventData[0]-2082844800);
+                printf("\n\n   LV Timestamp of this event is = %f \n", midasEventData[0]-kUnixTimeOffset);
                 printf("   MI Timestamp of this event is = %d \n\n", midasEvent->time_stamp);
 
                 //for (int i=0; i<meData.size(); i++)
