@@ -11,6 +11,7 @@
 class DeconvPadFlags
 {
 public:
+   int fThreadNo;
    bool fRecOff = false; //Turn reconstruction off
    bool fDiag=false;
    bool fTimeCut = false;
@@ -114,6 +115,7 @@ public:
       if(fTrace)
          printf("DeconvPADModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
+      
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -178,18 +180,35 @@ public:
          }
       else
          {
-             int stat = d.FindPadTimes(pwb);
-             if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
+             if (fFlags->fThreadNo < 0)
+             {
+                //TODO: Create containers (ie lines 649-688 in Deconv.cxx) ie, the first bit of FindPadTimes(pwb)
+                // Return containers to flow
+             }
+             else
+             {
+                //TODO:
+                // Get containers from flow
+                // Deconvolute if (stripNo + fFlags->fThreadNo % 6 == 0)
+                // return containers to flow 
 
-             if( fFlags->fDiag )
-               {
-                  //d.PADdiagnostic();
-                  flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
-                  //                  flow_sig->pwbRange = d.GetPwbRange();
-               }
+                // WARNING... 6 is harded and stupid... we should pass two numbers into constructor of factory... 
+                // 1. The thread number
+                // 2. The total number of threads
+                
+                int stat = d.FindPadTimes(pwb);
+                if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
+                if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
 
-             if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+                if( fFlags->fDiag )
+                  {
+                     //d.PADdiagnostic();
+                     flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
+                     //                  flow_sig->pwbRange = d.GetPwbRange();
+                  }
+   
+                if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+                }
          }
       ++fCounter;
       //d.Reset();
@@ -220,6 +239,11 @@ public:
    {
       Help();
    }
+   DeconvPADModuleFactory(int thread_no)
+   {
+      fFlags.fThreadNo = thread_no;
+   }
+
    void Init(const std::vector<std::string> &args)
    {    
       TString json="default";
@@ -279,8 +303,15 @@ public:
       return new DeconvPADModule(runinfo, &fFlags);
    }
 };
-
-static TARegister tar(new DeconvPADModuleFactory);
+//Thread for creating output containers
+static TARegister tar(new DeconvPADModuleFactory(-1));
+//Threads for processing PADs
+static TARegister tar(new DeconvPADModuleFactory(0));
+static TARegister tar(new DeconvPADModuleFactory(1));
+static TARegister tar(new DeconvPADModuleFactory(2));
+static TARegister tar(new DeconvPADModuleFactory(3));
+static TARegister tar(new DeconvPADModuleFactory(4));
+static TARegister tar(new DeconvPADModuleFactory(5));
 
 /* emacs
  * Local Variables:

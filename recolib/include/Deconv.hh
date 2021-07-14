@@ -21,6 +21,11 @@
 #include "Alpha16.h"
 #include "Feam.h"
 
+// TODO: Make parent Deconv class
+
+// TODO: Make AW_Deconv child class
+// TODO: Make PAD_Deconv child class
+
 class Deconv
 {
 private:
@@ -31,8 +36,12 @@ private:
    AnaSettings* ana_settings;
 
    // input
+ 
+   // TODO: We should const most of this?
+
    std::vector<double> fAnodeFactors;
 
+   // TODO: We only need one of each of these
    std::vector<double> fAnodeResponse;
    std::vector<double> fPadResponse;
 
@@ -72,10 +81,15 @@ private:
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
+   
    // output
+
+   // TODO: Maybe const these?
    std::vector<ALPHAg::electrode> fAnodeIndex;
    std::vector<ALPHAg::electrode> fPadIndex;
 
+   // TODO: Do we need containers for the output? Should we / Can we return them to the flow
+   // or is this neccessary intermediate containers
    std::vector<ALPHAg::signal>* sanode;
    std::vector<ALPHAg::signal>* spad;
 
@@ -92,16 +106,19 @@ private:
    int ReadADCRescaleFile();
    int ReadPWBRescaleFile();
 
+   // TODO: Investigate how well this can be striped.. 
    std::vector<ALPHAg::signal>* Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                        std::vector<double> &fResponse, unsigned theBin, bool isanode);
 
+   // TODO: Investigate how well this can be striped.. (almost definitely not)
    void SubtractAW(ALPHAg::wfholder* hist1,
                    std::vector<ALPHAg::wfholder*>* wfmap,
                    const unsigned b,
                    const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
                    std::vector<double> &fResponse, const unsigned theBin);
-   
+
+   // TODO: Investigate how well this can be striped.. (almost definitely yes)
    void SubtractPAD(ALPHAg::wfholder* hist1,
                     std::vector<ALPHAg::wfholder*>* wfmap,
                     const unsigned b,
