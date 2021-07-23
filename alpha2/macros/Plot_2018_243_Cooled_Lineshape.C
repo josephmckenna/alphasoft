@@ -17,6 +17,8 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
    {
       VertexPlot[i][0]=new TA2Plot(-zcut,zcut,ZeroTime);
       VertexPlot[i][1]=new TA2Plot(-zcut,zcut,ZeroTime);
+      //      VertexPlot[i][0]->SetMVAMode(2);
+      //      VertexPlot[i][1]->SetMVAMode(2);
       std::cout<<"Populating frequency "<<i<<std::endl;
       for (int k=0; k<4; k++)
       {
@@ -83,7 +85,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
             {
                continue;
             }
-            TCanvas* c1 = VertexPlot[i][j]->DrawCanvas(title);
+            TCanvas* c1 = VertexPlot[i][j]->DrawCanvas(title, true,2);
             TString save_as = "R";
             save_as += runNumber;
             save_as += title;
@@ -107,8 +109,10 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
    std::vector<double> CStateCounts;
    for (int i=0; i<9; i++)
    {
-      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedCuts());
-      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedCuts());
+     //     DStateCounts.push_back(VertexPlot[i][0]->GetNPassedCuts());
+     //      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedCuts());
+      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
+      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
       //hDState->Fill(i,VertexPlot[i][0]->GetNPassedCuts());
       //hCState->Fill(i,VertexPlot[i][1]->GetNPassedCuts());
    }
