@@ -460,7 +460,7 @@ class TFEGEMData: public TEnvData
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint(time, time - timeWindows.fZeroTime[index], (double)gemEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint(time - timeWindows.fZeroTime[index], time, (double)gemEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -483,7 +483,7 @@ class TFELabVIEWData: public TEnvData
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint( time, time - timeWindows.fZeroTime[index], labviewEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint( time - timeWindows.fZeroTime[index], time, labviewEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
