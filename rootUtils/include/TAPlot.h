@@ -110,6 +110,7 @@ class TVertexEvents: public TObject
          this->fNumTracks          .insert(this->fNumTracks.end(),         rhs.fNumTracks.begin(),        rhs.fNumTracks.end());
          return *this;
       }
+      ClassDef(TVertexEvents, 1);
 };
 
 class TTimeWindows : public TObject
@@ -264,6 +265,7 @@ class TTimeWindows : public TObject
   
          isSorted = true;
       }
+      ClassDef(TTimeWindows, 1);
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
@@ -307,6 +309,7 @@ class TEnvDataPlot: public TObject
          else
             return new TGraph(fData.size(),fRunTimes.data(),fData.data());
       }
+      ClassDef(TEnvDataPlot, 1);
 };
 
 //Collection of feLabVIEW / feGEM data with the same name (the same source)
@@ -381,6 +384,7 @@ class TEnvData: public TObject
             );
          return graph;
       }
+      ClassDef(TEnvData, 1);
 };
 
 //Specialise the above for feGEM
@@ -405,6 +409,7 @@ class TFEGEMData: public TEnvData
       {
          return std::string(category + "\\" + varName);
       }
+      ClassDef(TFEGEMData, 1);
 };
 
 //Specialise the above for feLabVIEW
@@ -426,6 +431,7 @@ class TFELabVIEWData: public TEnvData
          }
          return;
       }
+      ClassDef(TFELabVIEWData, 1);
 };
 
 class TAPlot: public TObject
