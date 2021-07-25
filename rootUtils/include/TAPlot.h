@@ -20,6 +20,7 @@
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
+#include "AnalysisReportGetters.h"
 #include <numeric>
 
 #define SCALECUT 0.6
@@ -396,7 +397,7 @@ class TFEGEMData: public TEnvData
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint(time, time - timeWindows.fZeroTime[index], (double)gemEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint(time - timeWindows.fZeroTime[index], time, (double)gemEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -410,16 +411,18 @@ class TFEGEMData: public TEnvData
 class TFELabVIEWData: public TEnvData
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
+      void AddLVEvent(int runNumber, TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
+         double runStart = Get_A2Analysis_Report(runNumber).GetRunStartTime();
+         time = labviewEvent->GetMIDAS_TIME() - runStart;
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint( time, time - timeWindows.fZeroTime[index], labviewEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint(time - timeWindows.fZeroTime[index], time, labviewEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -527,7 +530,7 @@ class TAPlot: public TObject
       //Load data functions.
       template<typename T> void LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime);
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
-      void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
+      void LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData(bool verbose = false);

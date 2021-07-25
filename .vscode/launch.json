@@ -1,3 +1,5 @@
+
+//Standard launch for debuging our made exes
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -9,10 +11,26 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            //"program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
-            "program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
-            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
+
+            "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
+            "args": ["run54330sub0000*"],
+
+            //"program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
+            //"args": ["${workspaceFolder}/run45000sub00000.mid.gz", "--", "--eventlist", "eventlist45000.list", "--datalabel", "mixing"],
+            //"args": ["--", "--eventlist", "eventlist45000.list", "--datalabel", "mixing"],
+            
+            //"program": "${workspaceFolder}/bin/macro_main_merger.exe",
+            //"args": ["--", "--listfile", "mixingList.list", "--mixing"],
+            
+            //"program": "${workspaceFolder}/bin/macro_main_mva_classification.exe",
+
+            //"program": "${workspaceFolder}/bin/macro_main_eventlist_generator.exe",
+            //"args": ["--", "--runnumber", "37495"],
+
+
+            //"program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
+            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
+            
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -30,7 +48,7 @@
             /*"sourceFileMap": {
                 "${workspaceFolder}/build/alpha2/": "${workspaceFolder}/alpha2/",
                 "${workspaceFolder}/build/analib/": "${workspaceFolder}/analib/"
-            }*/
+            }*/   
             
         }
     ]
