@@ -29,7 +29,7 @@ TA2Plot::TA2Plot(const TAPlot& object) : TAPlot(object)
 //Copy ctor.
 TA2Plot::TA2Plot(const TA2Plot& object) : TAPlot(object)
 {
-   std::cout << "This is TA2Plot copy constructor" << std::endl;
+   //std::cout << "This is TA2Plot copy constructor" << std::endl;
    fSISChannels    = object.fSISChannels;
    fTrig           = object.fTrig;
    fTrigNobusy    = object.fTrigNobusy;
@@ -55,7 +55,7 @@ TA2Plot::~TA2Plot()
 TA2Plot& TA2Plot::operator=(const TA2Plot& rhs)
 {
    //Inherited TAPlot members
-   std::cout << "TA2Plot equals operator" << std::endl;
+   //std::cout << "TA2Plot equals operator" << std::endl;
    fSISChannels      = rhs.fSISChannels;
    fTrig             = rhs.fTrig;
    fTrigNobusy       = rhs.fTrigNobusy;
