@@ -82,7 +82,7 @@ target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES
 # relies on these scripts being in the current working directory.
 #
 set(AGG4_SCRIPTS
-  settings.dat annihilation.dat cry.file cosmics.mac pionly.mac run.mac test.mac vis.mac)
+  cosmics.mac pionly.mac run.mac test.mac)
 
 #----------------------------------------------------------------------------
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX

@@ -21,6 +21,7 @@
 #include "chrono_module.h"
 #include "TChrono_Event.h"
 #include "TChronoChannelName.h"
+#include "TROOT.h"
 #include "TTree.h"
 
 #include <vector>
@@ -106,8 +107,8 @@ public:
    SpillLog(TARunInfo* runinfo, SpillLogFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Spill Log Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Spill Log Module";
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
@@ -121,9 +122,7 @@ public:
    void SaveToTree(TARunInfo* runinfo,TAGSpill* s)
    {
          if (!s) return;
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd();
          if (!SpillTree)
             SpillTree = new TTree("AGSpillTree","AGSpillTree");
@@ -178,9 +177,9 @@ public:
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
 #endif
 #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
-      runinfo->fOdb->RI("/runinfo/State",&RunState);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
+      runinfo->fOdb->RI("runinfo/State",&RunState);
 #endif
 
       std::cout<<"START:"<< run_start_time<<std::endl;
@@ -210,7 +209,7 @@ public:
          //   DetectorChans[board][det]=-1;
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
-            TString OdbPath="/Equipment/cbms0";
+            TString OdbPath="Equipment/cbms0";
             OdbPath+=board+1;
             OdbPath+="/Settings/ChannelNames";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
@@ -424,7 +423,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (!gIsOnline)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

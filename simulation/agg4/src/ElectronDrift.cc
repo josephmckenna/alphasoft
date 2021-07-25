@@ -111,7 +111,7 @@ double ElectronDrift::GetTime(double r)
   // parameter in mm
   // returns ns 
    if( r < fMinRad || r > fMaxRad ) 
-      std::cout<<"Warning in ElectronDrift::GetTime() r = "<<r<<" mm"<<std::endl;
+      std::cerr<<"Warning in ElectronDrift::GetTime() r = "<<r<<" mm"<<std::endl;
    return finterpol_rtime->Eval(r*0.1);
 }
 

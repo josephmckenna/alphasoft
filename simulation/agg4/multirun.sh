@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! -d "./RunLogs" ]; then
-    mkdir -p ./RunLogs
+if [ ! -d "$AGRELEASE/RunLogs" ]; then
+    mkdir -p $AGRELEASE/RunLogs
 fi
 
 # DEFAULT SETTINGS
@@ -30,13 +30,13 @@ for SEED in 10081985 18061985 3092016 26092019 28091956 18031956 20051985 230619
     echo "/random/setSeeds ${SEED} ${ySEED}" >> run${RUNNO}_${SEED}.mac
     echo "/run/beamOn 1000" >> run${RUNNO}_${SEED}.mac
 
-    echo "@@@ SEED   ${SEED}   ${ySEED}" > RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
-    echo "@@@ Run # ${RUNNO}" >> RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
-    echo `hostname` >> RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
-    echo `pwd` >> RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
-    { time agg4 run${RUNNO}_${SEED}.mac ; } >> RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log 2>&1 &
+    echo "@@@ SEED   ${SEED}   ${ySEED}" > $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
+    echo "@@@ Run # ${RUNNO}" >> $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
+    echo `hostname` >> $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
+    echo `pwd` >> $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log
+    { time agg4 run${RUNNO}_${SEED}.mac ; } >> $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log 2>&1 &
 
-    gedit RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log &> /dev/null &
+    gedit $AGRELEASE/RunLogs/multiAGTPCrun${RUNNO}_${SEED}.log &> /dev/null &
     RUNNO=$((RUNNO+1))
 done
 

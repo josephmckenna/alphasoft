@@ -162,12 +162,12 @@ public:
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="AnalysisReport";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="AnalysisReport";
 #endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
-         
+      fFlags->AnalysisReport = NULL;
       if (!getenv("AGRELEASE"))
       {
          std::cerr<<"AGRELEASE not set! Did you mean to 'source agconfig.sh'?"<<std::endl;
@@ -183,9 +183,7 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -331,7 +329,8 @@ public:
 #ifdef BUILD_A2
       fFlags.DumpLogs.Print();
 #endif
-      fFlags.AnalysisReport->Print();
+      if (fFlags.AnalysisReport)
+         fFlags.AnalysisReport->Print();
       //delete fFlags.AnalysisReport;
    }
 

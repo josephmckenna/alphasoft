@@ -82,18 +82,14 @@ class felabViewModuleWriter
       public:
       void WriteTrees(TARunInfo* runinfo)
       {
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          runinfo->fRoot->fOutputFile->cd("felabview");
          for (TTree* t: trees)
             t->Write();
       }
       void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
          TTree* t = FindOrCreateTree(runinfo, mf);
          TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
          BranchTreeFromData(t, &m_LabViewEvent);  
@@ -121,8 +117,8 @@ public:
    felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="felabview Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="felabview Module";
 #endif
       if (fTrace)
          printf("felabviewFlow::ctor!\n");
@@ -156,7 +152,7 @@ public:
          felabviewFlowEvent* mf = flow->Find<felabviewFlowEvent>();
          if(mf == 0x0)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags |= TAFlag_SKIP_PROFILE;
 #endif
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
@@ -177,9 +173,8 @@ public:
             fInitTimeSaved = true;
          }
          
-         u32 time_stamp = me->time_stamp;
-         u32 dataoff = me->data_offset;
-
+         uint32_t time_stamp = me->time_stamp;
+         
          me->FindAllBanks();
          if(me->banks.size()>1)
          {
@@ -212,7 +207,7 @@ public:
       }
       else
       {  //No work done... skip profiler
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
       }

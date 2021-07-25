@@ -59,8 +59,8 @@ public:
    OfficialTime(TARunInfo* runinfo, OfficialTimeFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Official Time";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Official Time";
 #endif
       if (fTrace)
          printf("OfficialTime::ctor!\n");
@@ -276,7 +276,7 @@ public:
    {
       if (fFlags->fNoSync)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

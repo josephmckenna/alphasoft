@@ -7,8 +7,19 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 
 # Include directories
 include_directories(include 
-                    ${ROOT_INCLUDE_DIRS}
-                    ${ROOTANA_INCLUDE_DIRS})
+                    ${ROOT_INCLUDE_DIRS})
+
+if(BUILD_MANALYZER)
+  include_directories(${CMAKE_SOURCE_DIR}/manalyzer)
+  include_directories(${CMAKE_SOURCE_DIR}/midasio)
+  include_directories(${CMAKE_SOURCE_DIR}/mvodb)
+elseif(MIDAS_FOUND)
+  include_directories(${MIDASSYS}/manalyzer)
+  include_directories(${MIDASSYS}/midasio)
+  include_directories(${MIDASSYS}/mvodb)
+else()
+  message(FATAL_ERROR "a2lib: Include directories failed!")
+endif()
 
 add_custom_target(
     sis_database ALL
@@ -30,13 +41,17 @@ file(GLOB LIBRARY_SOURCES src/*.cxx)
 file(GLOB C_SOURCES src/*.c)
 
 add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
+if(BUILD_MANALYZER)
+  target_include_directories(analib PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer)
+elseif(MIDAS_FOUND)
+  target_include_directories(analib PUBLIC ${MIDAS_INCLUDE_DIRS} $ENV{MIDASSYS}/manalyzer)
+else()
+  message(FATAL_ERROR "Configuration failed for target a2lib")
+endif()
 target_include_directories(alpha2 PUBLIC include)
 target_include_directories(alpha2 PUBLIC ${SQLite3_INCLUDE_DIRS})
 target_link_libraries(alpha2 ${ROOT_LIBRARIES} Minuit2 Geom ${SQLite3_LIBRARIES})
 add_dependencies(alpha2 sis_database)
-if(ROOTANA_SUBMOD)
-  add_dependencies(alpha2 rootana)
-endif(ROOTANA_SUBMOD)
 
 install(TARGETS alpha2 DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libalpha2_rdict.pcm DESTINATION lib)

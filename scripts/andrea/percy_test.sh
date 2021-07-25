@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! -d "RunLogs" ]; then
-    mkdir -p RunLogs
+if [ ! -d "${AGRELEASE}/RunLogs" ]; then
+    mkdir -p $AGRELEASE/RunLogs
 fi
 
 set -x
@@ -47,5 +47,12 @@ set -x
 #agana.exe -O$DATADIR/test/pulser904596.root --mt $MIDASDATA/run904596sub00*.mid.lz4 -- --diag --persistency 0 &> RunLogs/R904596.log 
 #root -q -b $DATADIR/test/pulser904596.root ana/macros/andrea/persistency_plot.C+
 
-agana.exe -O$DATADIR/test/pulser904618.root --mt $MIDASDATA/run904618sub00*.mid.lz4 -- --diag --persistency 0 &> RunLogs/R904618.log 
-root -q -b $DATADIR/test/pulser904618.root ana/macros/andrea/persistency_plot.C+
+#agana.exe -O$DATADIR/test/pulser904618.root --mt $MIDASDATA/run904618sub00*.mid.lz4 -- --diag --persistency 0 &> RunLogs/R904618.log 
+#root -q -b $DATADIR/test/pulser904618.root ana/macros/andrea/persistency_plot.C+
+
+
+agana.exe -O$AGOUTPUT/pulser4505.root --mt $AGMIDASDATA/run04505sub*.mid.lz4 -- --persistency 102 &> $AGRELEASE/RunLogs/R4505.log&
+agana.exe -O$AGOUTPUT/pulser4508.root --mt $AGMIDASDATA/run04508sub*.mid.lz4 -- --persistency 102 &> $AGRELEASE/RunLogs/R4508.log&
+agana.exe -O$AGOUTPUT/pulser4500.root --mt $AGMIDASDATA/run04500sub*.mid.lz4 -- --persistency 102 &> $AGRELEASE/RunLogs/R4500.log&
+agana.exe -O$AGOUTPUT/pulser4491.root --mt $AGMIDASDATA/run04491sub*.mid.lz4 -- --persistency 102 &> $AGRELEASE/RunLogs/R4491.log&
+agana.exe -O$AGOUTPUT/pulser4488.root --mt $AGMIDASDATA/run04488sub*.mid.lz4 -- --persistency 102 &> $AGRELEASE/RunLogs/R4488.log&

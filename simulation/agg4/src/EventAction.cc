@@ -210,8 +210,7 @@ void EventAction::AddTPCHits(TPCHitsCollection* THC)
       z    = aHit->GetPosition().z()/mm;
       phi  = aHit->GetPosition().phi();
 
-      if( r < TPCBase::TPCBaseInstance()->GetCathodeRadius(true) || 
-	  r > TPCBase::TPCBaseInstance()->GetROradius(true) ) // failsafe mode
+      if( r < 109. || r > 190. ) // outside rTPC
 	continue;
 
       if( phi < 0. )

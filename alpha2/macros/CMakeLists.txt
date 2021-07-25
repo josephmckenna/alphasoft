@@ -15,7 +15,7 @@ foreach( MainMacro ${MainMacros} )
 
   target_link_libraries( macro_${bin} ${A2_LINK_LIBS} rootUtils
      ${SQLite3_LIBRARIES}
-     rootana ${ROOT_LIBRARIES}
+     ${ROOT_LIBRARIES}
      ${MIDAS_LIBRARIES} util) 
 
   install(TARGETS macro_${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
