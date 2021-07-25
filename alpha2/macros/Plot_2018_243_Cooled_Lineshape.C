@@ -2,7 +2,7 @@
 
 #include "TA2Plot.h"
 
-void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
+std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
 {
    double zcut=10.;
    
@@ -45,20 +45,23 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
          
          VertexPlot[i][IsCState]->AddDumpGates(spills);
          
+         //Find all dark times between the above light times
          std::vector<std::pair<double,double>> DarkTimes;
          double last_tmin = -1;
          double last_tmax = -1;
 
-         //Find all dark times between the above light times
+         //Note the user of the wild card to get all dumps!
          std::vector<TA2Spill> AllSpills = Get_A2_Spills(runNumber,{"*"},{-1});
+         //Loop over our light windows
          for (const TA2Spill& s: spills)
          {
             double tmin = s.GetStartTime();
             double tmax = s.GetStopTime();
             //std::cout<<"Window:\t"<<tmin<<"\t"<<tmax<<std::endl;
+
+            // The loop over all windows to find the first start dump after our light (to calculate the dark)
             for (const TA2Spill& all: AllSpills)
             {
-               
                if (all.GetStartTime() > tmax && all.GetStartTime() > tmin)
                {
                   // Basic check for something wild going wrong
@@ -84,19 +87,9 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
    }
 
    std::cout<<"Loading data..."<<std::endl;
-   // Note, at time of writing, TTreeReader is only using 1 thread... 
+   // Note, at time of writing, TTreeReader is only using 1 thread... but hey,
+   // it only makes one pass over all files so its pretty quick
    // so this is slower than it could be
-   /*for (int i=0; i<9; i++)
-   {
-      for (int j=0; j<2; j++) //IsCState?
-      {
-         // Load Data only makes one pass over each tree... 
-         // so its reasonably fast... 
-         VertexPlot[i][j]->LoadData();
-         std::cout<<i*2+1+j<<"/"<<2*9<<" loaded..."<<std::endl;
-      }
-   }*/
-
    TA2Plot_Filler DataLoader;
    for (int i=0; i<9; i++)
    {
@@ -119,7 +112,7 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
          {
             TString title="Freq";
             title+=i;
-            title+="_State:";
+            title+="_State";
             if (j==0)
                title+="D";
             if (j==1)
@@ -133,11 +126,12 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
             save_as += runNumber;
             save_as += title;
             save_as += ".png";
-            c1->SaveAs(save_as);
+            c1->SaveAs(save_as.Data());
 
             TCanvas* c2 = DarkVertexPlot[i][j]->DrawCanvas(TString("Dark") + title);
             save_as = "R";
             save_as += runNumber;
+            save_as += "Dark";
             save_as += title;
             save_as += ".png";
             c2->SaveAs(save_as);
@@ -212,7 +206,19 @@ void Plot_243_Light_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
    //hCState->Draw("HIST");
    c->Update();
    c->SaveAs(title + ".png");
-   return;
+
+
+   // Return all plots in case anyone wants do do post-post processing
+   std::vector<TA2Plot*> plots;
+   for (int i=0; i<9; i++)
+   {
+      for (int j=0; j<1; j++)
+      {
+         plots.push_back(VertexPlot[i][j]);
+         plots.push_back(DarkVertexPlot[i][j]);
+      }
+   }
+   return plots;
 }
 
 
@@ -220,19 +226,38 @@ int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs, bool zeroTime)
 {
    
    
-   Plot_243_Light_Lineshape(57181,DrawVerticecs, zeroTime);
-   Plot_243_Light_Lineshape(57195,DrawVerticecs, zeroTime);
-   Plot_243_Light_Lineshape(57208,DrawVerticecs, zeroTime);
+   std::vector<TA2Plot*> R57181plots = Plot_243_Light_And_Dark_Lineshape(57181,DrawVerticecs, zeroTime);
+   std::vector<TA2Plot*> R57195plots = Plot_243_Light_And_Dark_Lineshape(57195,DrawVerticecs, zeroTime);
+   std::vector<TA2Plot*> R57208plots = Plot_243_Light_And_Dark_Lineshape(57208,DrawVerticecs, zeroTime);
    
+   //Example of summing all plots together (not sure why you might want to do it... but its possible)
+   TA2Plot Light(zeroTime);
+   TA2Plot Dark(zeroTime);
+   for ( size_t i = 0; i< R57181plots.size(); i++)
+   {
+      if ( i % 2 == 0)
+         // Operator overloads dont expect a pointer, de-reference the TA2Plot with *
+         Light += *R57181plots.at(i);
+      else
+         Dark += *R57181plots.at(i);
+   }
+   
+   //Re-bin new histograms to desired granularity
+   Light.SetBinNumber(40);
+   Dark.SetBinNumber(40);
+
+   TCanvas* c1 = Light.DrawCanvas("All Light Vertex for R57181");
+   c1->SaveAs("All_Light_Vertex_for_R57181.png");
+
+   TCanvas* c2 = Dark.DrawCanvas("All Dark Vertex for R57181");
+   c2->SaveAs("All_Dark_Vertex_for_R57181.png");
+   
+
    //Note: Missing in this macro:
-   // 1. Dark Periods
    // 2. Any kind of MVA
    
    //Missing in TA2Plot:
-   //Multithreaded TTreeReader
-   //Proper plotting of SIS data (although it is in the object)
-   //Saving TA2Plot to file (as an object, it contains the full detail,
-   // all time stamps etc)
+   //Multithreaded TTreeReader?
    
    return 0;
 }
