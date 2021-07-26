@@ -51,9 +51,9 @@ public:
       input_vars={ "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "r", "nCT", "nGT" };
       r=new ReadBDTF(input_vars);
       //~4mHz Background (42% efficiency)
-      grfcut=0.398139;
+      // grfcut=0.398139;
       //45mHz Background (72% efficiency)
-      //grfcut=0.230254;
+      grfcut=0.230254;
       //100mHz Background (78% efficiency)
       //grfcut=0.163; 
    }

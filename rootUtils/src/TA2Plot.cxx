@@ -447,7 +447,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
             FillHistogram("tmva",time);
          }
          else
-            continue; //Don't draw vertex if it tails MVA cut
+            continue; //Don't draw vertex if it fails  cuts
       }
       else
       {
