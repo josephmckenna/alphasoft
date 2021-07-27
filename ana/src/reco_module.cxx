@@ -15,17 +15,6 @@
 
 #include <TTree.h>
 
-#include "TPCconstants.hh"
-#include "LookUpTable.hh"
-#include "TSpacePoint.hh"
-#include "TracksFinder.hh"
-#include "AdaptiveFinder.hh"
-#include "NeuralFinder.hh"
-#include "TTrack.hh"
-#include "TFitLine.hh"
-#include "TFitHelix.hh"
-#include "TFitVertex.hh"
-
 #include "TStoreEvent.hh"
 
 #include "AnaSettings.hh"
