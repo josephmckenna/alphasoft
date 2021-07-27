@@ -25,8 +25,11 @@
 #include <vector>
 #include <map>
 
+#include "SignalsType.hh"
 #include "TStoreEvent.hh"
 #include "TSpacePoint.hh"
+#include "CosmicFinder.hh"
+#include "TCosmic.hh"
 
 #include "TStringGetters.h"
 
@@ -55,6 +58,8 @@ public:
 
    double LineDistance(TStoreLine* l0, TStoreLine* l1);
 
+   void FillCosmicsHisto();
+
    inline void SetSavePlots(bool s) {_save_plots=s;}
 
 private:
@@ -72,6 +77,7 @@ private:
    TTree* tin;
 
    Histo* fHisto;
+   CosmicFinder* fCosmicFinder;
 
    // aw deconv histos
    TH1D* hht;
@@ -91,6 +97,8 @@ private:
 
    // sigpoints
    TH1D* hsptawamp_px;
+
+   ALPHAg::padmap* pmap;
 };
 
 #endif

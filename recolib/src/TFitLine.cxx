@@ -239,7 +239,7 @@ void TFitLine::Fit()
 
 TVector3 TFitLine::GetPosition(double t, 
 			       double ux, double uy, double uz, 
-			       double x0, double y0, double z0)
+			       double x0, double y0, double z0) const
 {
   TVector3 pos(ux*t+x0,
 	       uy*t+y0,
@@ -247,7 +247,7 @@ TVector3 TFitLine::GetPosition(double t,
   return pos;
 }
 
-TVector3 TFitLine::GetPosition(double t)
+TVector3 TFitLine::GetPosition(double t) const
 {
   return GetPosition(t, fux, fuy, fuz, fx0, fy0, fz0);
 }
@@ -458,7 +458,7 @@ double TFitLine::PointDistance2(double* par, double* point)
   return (u.Cross(p-h)).Mag2()/u.Mag2();
 }
 
-double TFitLine::MinRad()
+double TFitLine::MinRad() const
 {
   double D = fr0, 
     den = TMath::Sqrt( fux*fux + fuy*fuy );
@@ -469,7 +469,7 @@ double TFitLine::MinRad()
   return D;
 }
 
-TVector3 TFitLine::Zintersection()
+TVector3 TFitLine::Zintersection() const
 {
    TVector3 zaxis(0.,0.,1.);
    double num = zaxis.Cross(Get0()) * GetU().Cross(zaxis);
