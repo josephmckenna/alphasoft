@@ -1,7 +1,7 @@
 #include "TA2RunQOD.h"
 
 
-ClassImp(TA2RunQOD);
+ClassImp(TA2RunQOD)
 TA2RunQOD::TA2RunQOD(TARunInfo* runinfo)
 {
    RunNumber= runinfo->fRunNo;

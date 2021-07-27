@@ -42,7 +42,7 @@ class TSISPlotEvents: public TObject
       }
       TSISPlotEvents operator+=(const TSISPlotEvents &rhs) 
       {
-         std::cout << "TSISPlotEvents += operator" << std::endl;
+         //std::cout << "TSISPlotEvents += operator" << std::endl;
          this->fRunNumber   .insert(this->fRunNumber.end(),      rhs.fRunNumber.begin(),      rhs.fRunNumber.end() );
          this->fTime           .insert(this->fTime.end(),              rhs.fTime.begin(),              rhs.fTime.end() );
          this->fOfficialTime.insert(this->fOfficialTime.end(),   rhs.fOfficialTime.begin(),   rhs.fOfficialTime.end() );
@@ -64,7 +64,7 @@ class TSISPlotEvents: public TObject
       }
       friend TSISPlotEvents operator+(const TSISPlotEvents& lhs, const TSISPlotEvents& rhs)
       {
-         std::cout << "TSISPlotEvents addition operator" << std::endl;
+         //std::cout << "TSISPlotEvents addition operator" << std::endl;
          TSISPlotEvents outputplot(lhs); //Create new from copy
          //Vectors- need concacting
          outputplot.fRunNumber.insert(outputplot.fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );

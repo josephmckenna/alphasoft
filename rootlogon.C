@@ -1,5 +1,10 @@
 {
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
+  if (!getenv("AGRELEASE"))
+  {
+     std::cout <<"$AGRELEASE not set... Please source agconfig.sh"<<std::endl;
+     exit(1);
+  }
   TString basedir(getenv("AGRELEASE"));
   if (basedir.Sizeof()<3)
   {
