@@ -8,15 +8,14 @@
 #include "midasio.h"
 
 #include "RecoFlow.h"
+#include "TChronoChannelName.h"
 
 #include "TTree.h"
 #include "TMath.h"
-#include "TChrono_Event.h"
-#include <iostream>
-#include "chrono_module.h"
-#include "TChronoChannelName.h"
-
 #include <TBufferJSON.h>
+#include "TChrono_Event.h"
+
+#include <iostream>
 #include <fstream>
 
 class ChronoFlags

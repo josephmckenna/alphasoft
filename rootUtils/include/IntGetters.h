@@ -1,6 +1,7 @@
 #ifndef _IntGetters_
 #define _IntGetters_
 #include "TChrono_Event.h"
+#include "TChronoChannelName.h"
 #include "TStoreEvent.hh"
 #include "TreeGetters.h"
 #include "DoubleGetters.h"

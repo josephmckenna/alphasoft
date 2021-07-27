@@ -1,9 +1,22 @@
-#include <cstddef>
-#include "mvodb.h"
+// 
+// chronobox 
+// 
+// A. Capra
+// JTK McKenna
+
+
+
 #ifndef _TChronoChannelName_
 #define _TChronoChannelName_
 
+#include "mvodb.h"
+
+#include <fstream>
 #include <iostream>
+
+#include "ChronoUtil.h"
+
+
 #ifndef ROOT_TObject
 #include "TObject.h"
 #endif
@@ -12,10 +25,8 @@
 #include "TString.h"
 #endif
 
+#include "TBufferJSON.h"
 
-#include <TBufferJSON.h>
-#include <fstream>
-#include "chrono_module.h"
 
 class TChronoChannelName : public TObject
 {
