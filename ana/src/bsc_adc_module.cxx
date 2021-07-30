@@ -24,6 +24,7 @@ public:
    bool fPrint = false;
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
+   
 };
 
 class BscModule: public TARunObject
@@ -36,7 +37,7 @@ private:
    double amplitude_cut = 5000; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
+   const static int sample_waveforms_to_plot = 100; // Saves a number of raw pulses for inspection
    int hit_num=0;
 
 public:
@@ -52,6 +53,7 @@ private:
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
    TH2D *hBsc_AmplitudeVsChannel = NULL;
+   TH1D *hBsc_MedianAmplitudeVsChannel = NULL;
    TH2D *hBsc_SaturatedVsBar = NULL;
    TH2D *hBsc_TimeVsChannel = NULL;
    TH1D* hWave = NULL;
@@ -97,16 +99,16 @@ public:
             hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
             hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
             hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
-            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,35000.);
-            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude", 15, -0.5, 15.5, 2000,0.,35000.);
+            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,4.);
+            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude", 15, -0.5, 15.5, 2000,0.,4.);
          }
       }
       if ( !(fFlags->fProtoTOF) ) {
          hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
          hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
          hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,50000.);
-         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,50000.);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,4.);
+         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,4.);
          hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
          hWave = new TH1D("hWave","ADC Waveform",700,0,700);
          hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
@@ -133,6 +135,7 @@ public:
       delete hBsc_AmplitudeVsBar;
       delete hBsc_SaturatedVsBar;
       delete hBsc_AmplitudeVsChannel;
+      delete hBsc_MedianAmplitudeVsChannel;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
@@ -280,7 +283,7 @@ public:
 
                   // Converts amplitude to volts
                   double amp_volts = fit_amp*adc_conversion;
-      
+
                   // Fills histograms
                   hFitAmp->Fill(amp,fit_amp);
                   hFitStartTime->Fill(start_time*10,fit_start_time*10);
@@ -295,7 +298,12 @@ public:
       
                   // Fills bar event
                   int bar = ch->bsc_bar;
-                  BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
+                  if (fFlags->fProtoTOF) {
+                     BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
+                  }
+                  if ( !(fFlags->fProtoTOF) ) {
+                     BarEvent->AddADCHit(bar,amp_volts,fit_start_time*10);
+                  }
 
                }
 

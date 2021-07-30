@@ -19,8 +19,7 @@ def getlogname(cmd):
 
 def work(cmd):
     run_number,sub_run,logfile=getlogname(cmd)
-    agana=environ['AGRELEASE']+'/agana.exe'
-    agananr=environ['AGRELEASE']+'/agana_noreco.exe'
+    agana=environ['AGRELEASE']+'/bin/agana.exe'
 
     newdir=workdir+'/R'+str(run_number)
     print('new dir:',newdir)
@@ -31,7 +30,6 @@ def work(cmd):
     makedirs(newsubdir, exist_ok=True)
 
     copy(agana,newsubdir)
-    copy(agananr,newsubdir)
     chdir(newsubdir)
     print(getcwd())
 
@@ -46,10 +44,8 @@ def work(cmd):
     except sp.CalledProcessError as err:
         print('Command:', err.cmd, 'returned:',err.output)
 
-def parse_agana_args(subfile,aarg,nrec):
+def parse_agana_args(subfile,aarg):
     cmd='agana.exe ' + subfile
-    if nrec:
-        cmd='agana_noreco.exe ' + subfile
     if len(aarg) > 0:
         cmd+=' -- '
     else:
@@ -66,13 +62,13 @@ def parse_agana_args(subfile,aarg,nrec):
         cmd+=' '
     return cmd
 
-def assemble(run,limit,argx,nrec):
+def assemble(run,limit,argx):
     cmdlist=[]
     sub=0
     subrun='%s/run%05dsub%03d.mid.lz4'%(environ['AGMIDASDATA'],run,sub)
     subfile=Path(subrun)
     while subfile.is_file():
-        cmd=parse_agana_args(subrun,argx,nrec)
+        cmd=parse_agana_args(subrun,argx)
         cmdlist.append(cmd)
         print(cmd)
         sub+=1
@@ -166,12 +162,9 @@ if __name__=='__main__':
                         default=environ['AGRELEASE'],
                         help='working/output directory')
 
-    parser.add_argument('-n', '--noreco', action='store_true',
-                        help='invoke basic analyzer, i.e., no tracking')
-
     args = parser.parse_args()
 
-    commands=assemble(args.run,args.limit,args.opt,args.noreco)
+    commands=assemble(args.run,args.limit,args.opt)
     print(commands)
 
     workdir = path.abspath(args.workdir)

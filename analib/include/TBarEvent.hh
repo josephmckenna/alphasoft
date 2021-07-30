@@ -17,8 +17,9 @@ class EndHit: public TObject
 private:
   int fBarID=-1;
   //TDC data
-  double fTDCTime=-1;
-  double fTDCTimeRaw=-1;
+  double fTDCTime=-1; // Fully calibrated time
+  double fTDCTimePartCalib=-1; // Applied channel by channel correction, not time-walk correction
+  double fTDCTimeRaw=-1; // No calibrations or corrections applied
   //ADC data'
   double fADCTime=-1;
   double fAmp=-1;
@@ -36,9 +37,10 @@ public:
      fAmp=_fAmp;
      fADCTime=_fADCTime;
   }
-  void SetTDCHit(double _fTDCTime, double _fTDCTimeRaw)
+  void SetTDCHit(double _fTDCTime, double _fTDCTimePartCalib, double _fTDCTimeRaw)
   {
      fTDCTime=_fTDCTime;
+     fTDCTimePartCalib=_fTDCTimePartCalib;
      fTDCTimeRaw=_fTDCTimeRaw;
      fTDCMatched=true;
   } 
@@ -48,6 +50,7 @@ public:
   double GetAmp() const {return fAmp;}
   double GetADCTime() const {return fADCTime;}
   double GetTDCTime() const {return fTDCTime; }
+  double GetTDCTimePartCalib() const {return fTDCTimePartCalib; }
   double GetTDCTimeRaw() const {return fTDCTimeRaw; }
   void GetXY(double &x, double &y)
   {

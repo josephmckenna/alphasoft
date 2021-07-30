@@ -161,6 +161,11 @@ agana()
   echo -e " \e[34m `git status | head -1`\e[m"
 }
 
+alphag()
+{
+   . ~/packages/root-6.18.00-install/bin/thisroot.sh
+}
+
 acapra()
 {
     echo -e " \e[91m Hi Andrea! \e[m"
@@ -300,6 +305,9 @@ alphacpc04* | alphacpc09*  )
   export AGMIDASDATA="/daq/alpha_data0/acapra/alphag/midasdata/"
   if [ `whoami` = "acapra" ] ; then
       acapra
+  fi
+  if [ `whoami` = "alphag" ] ; then
+      alphag
   fi
   ;;
 alphabeast* )
