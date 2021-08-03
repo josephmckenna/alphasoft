@@ -14,3 +14,4 @@
 int Plot_2018_243_Cooled_Lineshape(bool DrawVertices = false, bool zeroTime = true);
 std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool DrawVertices, bool zeroTime = true);
 
+double GetRep(double time, TTimeWindows* timeWindows, int& lastRep); 
