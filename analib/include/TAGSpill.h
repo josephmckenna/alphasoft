@@ -7,7 +7,8 @@
 #ifdef BUILD_AG
 #include "TStoreEvent.hh"
 #include "TChrono_Event.h"
-#include "chrono_module.h"
+#include "TChronoChannelName.h"
+
 //Class to inegrate AG scaler and data counts
 class TAGSpillScalerData: public TSpillScalerData
 {

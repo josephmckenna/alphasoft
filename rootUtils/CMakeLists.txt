@@ -37,7 +37,6 @@ add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
 target_include_directories( rootUtils
                             PUBLIC
 			    include 
-			    ${CMAKE_SOURCE_DIR}/ana/include
 			    ${CMAKE_SOURCE_DIR}/libGEM/include
 			    ${CMAKE_SOURCE_DIR}/recolib/include
 			    ${CMAKE_SOURCE_DIR}/analib/include
