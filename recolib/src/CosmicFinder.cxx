@@ -16,8 +16,8 @@ CosmicFinder::CosmicFinder(double b):fMagneticField(b),nTracks(-1),
                                      fIdx(-1),fRes2(9.e99),fStatus(-1)
 {
    std::cout<<"CosmicFinder::CosmicFinder( B = "<<fMagneticField<<" T )"<<std::endl;
-   pmap = new ALPHAg::padmap;
-   MakeOccupancyHisto();
+   //pmap = new ALPHAg::padmap;
+   //   MakeOccupancyHisto();
 }
 
 CosmicFinder::CosmicFinder(double b,int pointscut,double chi2cut,double chi2min):
@@ -27,8 +27,8 @@ CosmicFinder::CosmicFinder(double b,int pointscut,double chi2cut,double chi2min)
    fIdx(-1),fRes2(9.e99),fStatus(-1)
 {
    std::cout<<"CosmicFinder::CosmicFinder( B = "<<fMagneticField<<" T )"<<std::endl;
-   pmap = new ALPHAg::padmap;
-   MakeOccupancyHisto();
+   //pmap = new ALPHAg::padmap;
+   //   MakeOccupancyHisto();
 }
 
 int CosmicFinder::Create(std::vector<TTrack*>* tracks)
@@ -138,7 +138,7 @@ int CosmicFinder::Create(TStoreEvent* e)
 CosmicFinder::~CosmicFinder()
 {
    Reset();
-   delete pmap;
+   //delete pmap;
 }
 
 void CosmicFinder::Reset()
@@ -185,114 +185,114 @@ int CosmicFinder::Residuals()
    if( fIdx < 0 )
       return 3;
 
-   hRes2min->Fill(fRes2);
-   FillOccupancyHisto();
+   // hRes2min->Fill(fRes2);
+   //   FillOccupancyHisto();
    fStatus = 0;
    return 0;
 }
 
-void CosmicFinder::MakeOccupancyHisto()
-{
-   hDCAeq2 = new TH1D("hDCAeq2","Distance of Closest Approach between Helices in =2-tracks Events;DCA [mm]",
-                      500,0.,50.);
-   hDCAgr2 = new TH1D("hDCAgr2","Distance of Closest Approach between Helices in >2-tracks Events;DCA [mm]",
-                      500,0.,50.);
+// void CosmicFinder::MakeOccupancyHisto()
+// {
+//    hDCAeq2 = new TH1D("hDCAeq2","Distance of Closest Approach between Helices in =2-tracks Events;DCA [mm]",
+//                       500,0.,50.);
+//    hDCAgr2 = new TH1D("hDCAgr2","Distance of Closest Approach between Helices in >2-tracks Events;DCA [mm]",
+//                       500,0.,50.);
 	 
-   hAngeq2 = new TH1D("hAngeq2","Cosine of the Angle formed by Two Helices in =2-tracks Events;cos(angle)",
-                      1000,-1.,1.);
-   hAnggr2 = new TH1D("hAnggr2","Cosine of the Angle formed by Two Helices in >2-tracks Events;cos(angle)",
-                      1000,-1.,1.);
+//    hAngeq2 = new TH1D("hAngeq2","Cosine of the Angle formed by Two Helices in =2-tracks Events;cos(angle)",
+//                       1000,-1.,1.);
+//    hAnggr2 = new TH1D("hAnggr2","Cosine of the Angle formed by Two Helices in >2-tracks Events;cos(angle)",
+//                       1000,-1.,1.);
 
-   hAngDCAeq2 = new TH2D("hAngDCAeq2","DCA and Cosine of Angle between Helices in =2-tracks Events;cos(angle);DCA [mm]",
-                         100,-1.,1.,100,0.,50.);
-   hAngDCAgr2 = new TH2D("hAngDCAgr2","DCA and Cosine of Angle between Helices in >2-tracks Events;cos(angle);DCA [mm]",
-                         100,-1.,1.,100,0.,50.);
+//    hAngDCAeq2 = new TH2D("hAngDCAeq2","DCA and Cosine of Angle between Helices in =2-tracks Events;cos(angle);DCA [mm]",
+//                          100,-1.,1.,100,0.,50.);
+//    hAngDCAgr2 = new TH2D("hAngDCAgr2","DCA and Cosine of Angle between Helices in >2-tracks Events;cos(angle);DCA [mm]",
+//                          100,-1.,1.,100,0.,50.);
 
-   hcosaw = new TH1D("hcosaw","Occupancy per AW due to cosmics",256,-0.5,255.5);
-   hcosaw->SetMinimum(0.);
-   hcospad = new TH2D("hcospad","Occupancy per PAD due to cosmics;Pads Row;Pads Sector",
-                      576,-0.5,575.5,32,-0.5,31.5);
-   hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,1000.);
+//    hcosaw = new TH1D("hcosaw","Occupancy per AW due to cosmics",256,-0.5,255.5);
+//    hcosaw->SetMinimum(0.);
+//    hcospad = new TH2D("hcospad","Occupancy per PAD due to cosmics;Pads Row;Pads Sector",
+//                       576,-0.5,575.5,32,-0.5,31.5);
+//    hRes2min = new TH1D("hRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,1000.);
 
-   // // cosmic time distribution
-   // hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",300,0.,300.);
-   // temp = 0.;            
+//    // // cosmic time distribution
+//    // hpois = new TH1D("hpois","Delta t between cosmics;#Delta t [ms]",300,0.,300.);
+//    // temp = 0.;            
 
-   hcosphi = new TH1D("hcosphi","Direction #phi;#phi [deg]",200,-180.,180.);
-   hcosphi->SetMinimum(0.);
-   hcostheta = new TH1D("hcostheta","Direction #theta;#theta [deg]",200,0.,180.);
-   hcostheta->SetMinimum(0.);
+//    hcosphi = new TH1D("hcosphi","Direction #phi;#phi [deg]",200,-180.,180.);
+//    hcosphi->SetMinimum(0.);
+//    hcostheta = new TH1D("hcostheta","Direction #theta;#theta [deg]",200,0.,180.);
+//    hcostheta->SetMinimum(0.);
 
-   hcosthetaphi = new TH2D("hcosthetaphi","Direction #theta Vs #phi;#theta [deg];#phi [deg]",
-                           200,0.,180.,200,-180.,180.);
+//    hcosthetaphi = new TH2D("hcosthetaphi","Direction #theta Vs #phi;#theta [deg];#phi [deg]",
+//                            200,0.,180.,200,-180.,180.);
 
-  // z axis intersection
-  hlr = new TH1D("hlr","Minimum Radius;r [mm]",200,0.,190.);
-  hlz = new TH1D("hlz","Z intersection with min rad;z [mm]",300,-1200.,1200.);
-  hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,0.,360.);
-  hlp->SetMinimum(0.);
-  hlzp = new TH2D("hlzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
-		  100,-1200.,1200.,90,0.,360.);
-  hlzp->SetStats(kFALSE);
-  hlzr = new TH2D("hlzr","Z-R intersection with min rad;z [mm];r [mm]",
-		  100,-1200.,1200.,100,0.,190.);
-  hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
-		  100,0.,190.,90,0.,360.);
-  hlxy = new TH2D("hlxy","X-Y intersection with min rad;x [mm];y [mm]",
-		  100,-190.,190.,100,-190.,190.);
-}
+//   // z axis intersection
+//   hlr = new TH1D("hlr","Minimum Radius;r [mm]",200,0.,190.);
+//   hlz = new TH1D("hlz","Z intersection with min rad;z [mm]",300,-1200.,1200.);
+//   hlp = new TH1D("hlp","#phi intersection with min rad;#phi [deg]",100,0.,360.);
+//   hlp->SetMinimum(0.);
+//   hlzp = new TH2D("hlzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
+// 		  100,-1200.,1200.,90,0.,360.);
+//   hlzp->SetStats(kFALSE);
+//   hlzr = new TH2D("hlzr","Z-R intersection with min rad;z [mm];r [mm]",
+// 		  100,-1200.,1200.,100,0.,190.);
+//   hlrp = new TH2D("hlrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
+// 		  100,0.,190.,90,0.,360.);
+//   hlxy = new TH2D("hlxy","X-Y intersection with min rad;x [mm];y [mm]",
+// 		  100,-190.,190.,100,-190.,190.);
+// }
 
-void CosmicFinder::FillOccupancyHisto()
-{
-   TCosmic* cosmic = fLines.at( fIdx );
+// void CosmicFinder::FillOccupancyHisto()
+// {
+//    TCosmic* cosmic = fLines.at( fIdx );
 
-   double dca = cosmic->GetDCA(), cosangle = cosmic->GetCosAngle();
-   if( nTracks == 2 )
-      {
-         hDCAeq2->Fill( dca );
-         hAngeq2->Fill( cosangle );
-         hAngDCAeq2->Fill( cosangle, dca );
-      }
-   else if( nTracks > 2 )
-      {
-         hDCAgr2->Fill( dca );
-         hAnggr2->Fill( cosangle );
-         hAngDCAgr2->Fill( cosangle, dca );
-      }
-   else return;
+//    double dca = cosmic->GetDCA(), cosangle = cosmic->GetCosAngle();
+//    if( nTracks == 2 )
+//       {
+//          hDCAeq2->Fill( dca );
+//          hAngeq2->Fill( cosangle );
+//          hAngDCAeq2->Fill( cosangle, dca );
+//       }
+//    else if( nTracks > 2 )
+//       {
+//          hDCAgr2->Fill( dca );
+//          hAnggr2->Fill( cosangle );
+//          hAngDCAgr2->Fill( cosangle, dca );
+//       }
+//    else return;
          
-   for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
-      {
-         TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
-         int aw = p->GetWire(), sec,row;
-         pmap->get( p->GetPad(), sec,row );
-         if( 0 )
-            {
-               double time = p->GetTime(),
-                  height = p->GetHeight();
-               std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
-            }
-         hcosaw->Fill( double(aw) );
-         hcospad->Fill( double(row), double(sec) );
-      }
+//    for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
+//       {
+//          TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
+//          int aw = p->GetWire(), sec,row;
+//          pmap->get( p->GetPad(), sec,row );
+//          if( 0 )
+//             {
+//                double time = p->GetTime(),
+//                   height = p->GetHeight();
+//                std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
+//             }
+//          hcosaw->Fill( double(aw) );
+//          hcospad->Fill( double(row), double(sec) );
+//       }
       
-   TVector3 u = cosmic->GetU();
-   hcosphi->Fill(u.Phi()*TMath::RadToDeg());
-   hcostheta->Fill(u.Theta()*TMath::RadToDeg());
-   hcosthetaphi->Fill(u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
+//    TVector3 u = cosmic->GetU();
+//    hcosphi->Fill(u.Phi()*TMath::RadToDeg());
+//    hcostheta->Fill(u.Theta()*TMath::RadToDeg());
+//    hcosthetaphi->Fill(u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
 
-   TVector3 zint = cosmic->Zintersection();
-   double zint_phi = zint.Phi();
-   if( zint_phi < 0. ) zint_phi+=TMath::TwoPi();
-   zint_phi*=TMath::RadToDeg();
-   hlr->Fill( zint.Perp() );
-   hlz->Fill( zint.Z() );
-   hlp->Fill( zint_phi );
-   hlzp->Fill( zint.Z(), zint_phi );
-   hlzr->Fill( zint.Z(), zint.Perp() );
-   hlrp->Fill( zint.Perp(), zint_phi);
-   hlxy->Fill( zint.X(), zint.Y() );
-}
+//    TVector3 zint = cosmic->Zintersection();
+//    double zint_phi = zint.Phi();
+//    if( zint_phi < 0. ) zint_phi+=TMath::TwoPi();
+//    zint_phi*=TMath::RadToDeg();
+//    hlr->Fill( zint.Perp() );
+//    hlz->Fill( zint.Z() );
+//    hlp->Fill( zint_phi );
+//    hlzp->Fill( zint.Z(), zint_phi );
+//    hlzr->Fill( zint.Z(), zint.Perp() );
+//    hlrp->Fill( zint.Perp(), zint_phi);
+//    hlxy->Fill( zint.X(), zint.Y() );
+// }
 
 void CosmicFinder::Status()
 {
