@@ -85,20 +85,21 @@ for i in `seq 1 100000`; do
       fi
    done
    if [ ${READYTOGO} -eq 1 ]; then
+      j=$(( ${i} - 1))
       VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.out"
-      LAST_VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${i}_${BRANCH}.out"
+      LAST_VALGRINDTEST="$DIR/${PROG}_${TEST_TYPE}_${j}_${BRANCH}.out"
 
       ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
-      LAST_ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${i}_${BRANCH}.log"
+      LAST_ALPHATEST="$DIR/${PROG}_${TEST_TYPE}_AnalysisOut_${j}_${BRANCH}.log"
 
       MACROTEST="$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log"
-      LAST_MACROTEST="$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log"
+      LAST_MACROTEST="$DIR/${PROG}_${TEST_TYPE}_MacroOut_${j}_${BRANCH}.log"
 
       GITDIFF="$DIR/${PROG}_${TEST_TYPE}_git_diff_${i}_${BRANCH}.log"
-      LAST_GITDIFF="$DIR/${PROG}_${TEST_TYPE}_git_diff_${i}_${BRANCH}.log"
+      LAST_GITDIFF="$DIR/${PROG}_${TEST_TYPE}_git_diff_${j}_${BRANCH}.log"
 
       BUILDLOG="$DIR/${PROG}_${TEST_TYPE}_Build_${i}_${BRANCH}.log"
-      LAST_BUILDLOG="$DIR/${PROG}_${TEST_TYPE}_Build_${i}_${BRANCH}.log"
+      LAST_BUILDLOG="$DIR/${PROG}_${TEST_TYPE}_Build_${j}_${BRANCH}.log"
       TESTID=${i}
       break
    fi
@@ -160,9 +161,9 @@ fi
 cd $AGRELEASE
 set +x
 
- 
-cat ${VALGRINDTEST} | cut -f2- -d' ' > ${VALGRINDTEST}.nopid
-
+if [ ${TEST_TYPE} == "LEAK" ]; then
+   cat ${VALGRINDTEST} | cut -f2- -d' ' > ${VALGRINDTEST}.nopid
+fi
 #echo ".L macros/ReadEventTree.C 
 #ReadEventTree()
 #.q
@@ -170,16 +171,17 @@ cat ${VALGRINDTEST} | cut -f2- -d' ' > ${VALGRINDTEST}.nopid
 
 cat ${VALGRINDTEST}.nopid | tail -n 16
 
-if [ -f ${VALGRINDTEST} ] && [ -f ${LAST_VALGRINDTEST} ]; then
-   diff -u ${VALGRINDTEST} ${LAST_VALGRINDTEST} > $AGRELEASE/scripts/A2UnitTest/LeakDiff.log
-else
-   echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/LeakDiff.log
+if [ ${TEST_TYPE} == "LEAK" ]; then
+   if [ -f ${VALGRINDTEST} ] && [ -f ${LAST_VALGRINDTEST} ]; then
+      diff -u ${VALGRINDTEST} ${LAST_VALGRINDTEST} > $AGRELEASE/scripts/A2UnitTest/${TEST_TYPE}Diff.log
+   else
+      echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/${TEST_TYPE}Diff.log
+   fi
 fi
-
 if [ -f ${ALPHATEST} ] && [ -f ${LAST_ALPHATEST} ]; then
-   diff -u ${ALPHATEST} ${LAST_ALPHATEST} > $AGRELEASE/scripts/A2UnitTest/AnalysisDiff.log
+   diff -u ${ALPHATEST} ${LAST_ALPHATEST} > $AGRELEASE/scripts/A2UnitTest/${TEST_TYPE}_ProgramOutputDiff.log
 else
-   echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/AnalysisDiff.log
+   echo "No previous log to diff" > $AGRELEASE/scripts/A2UnitTest/${TEST_TYPE}_ProgramOutputDiff.log
 fi
 
 #   diff -u "$DIR/${PROG}_${TEST_TYPE}_MacroOut_${BEFORE}_${BRANCH}.log" "$DIR/${PROG}_${TEST_TYPE}_MacroOut_${i}_${BRANCH}.log" > $AGRELEASE/scripts/UnitTest/MacroDiff.log
