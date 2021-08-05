@@ -1,5 +1,13 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+
+# Stop CMAKE as soon as possible if AGRELEASE is not set
+if(DEFINED ENV{AGRELEASE})
+   message("AGRELEASE set to " $ENV{AGRELEASE}) 
+else()
+   message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
+endif()
+
 project(alphasoft)
 
 # Enforce out-of-source builds 
@@ -24,11 +32,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
 endif()
 
-if(DEFINED ENV{AGRELEASE})
-   message("AGRELEASE set to " $ENV{AGRELEASE}) 
-else()
-   message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
-endif()
+
 
 # IDentify OS (linux, windows, etc.)
 string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})

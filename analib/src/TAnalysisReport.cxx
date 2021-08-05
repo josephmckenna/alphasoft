@@ -3,8 +3,9 @@
 ClassImp(TAnalysisReport)
 TAnalysisReport::TAnalysisReport():
    runNumber(-1),
-   GitBranch(GIT_BRANCH), 
    CompilationDate(COMPILATION_DATE), 
+   GitBranch(GIT_BRANCH), 
+   
    GitDate(GIT_DATE), 
    GitHash(GIT_REVISION),
    GitHashLong(GIT_REVISION_FULL),
@@ -14,9 +15,10 @@ TAnalysisReport::TAnalysisReport():
 }
 
 TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
+   TObject(r),
    runNumber(r.runNumber),
-   GitBranch(r.GitBranch), 
    CompilationDate(r.CompilationDate), 
+   GitBranch(r.GitBranch), 
    GitDate(r.GitDate), 
    GitHash(r.GitHash),
    GitHashLong(r.GitHashLong),
@@ -26,11 +28,12 @@ TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
    DoubleValue(r.DoubleValue),
    StringValue(r.StringValue)
 {
-    StartRunUnixTime = r.StartRunUnixTime;
-    StopRunUnixTime = r.StopRunUnixTime;
     ProgramName = r.ProgramName;
     ProgramPath = r.ProgramPath;
     ProgramPathFull = r.ProgramPathFull;
+
+    StartRunUnixTime = r.StartRunUnixTime;
+    StopRunUnixTime = r.StopRunUnixTime;
     Duration = r.Duration;
     AnalysisHost = r.AnalysisHost;
 }
@@ -43,8 +46,8 @@ TAnalysisReport TAnalysisReport::operator=(const TAnalysisReport& r)
 
 TAnalysisReport::TAnalysisReport(int runno):
     runNumber(runno), 
-    GitBranch(GIT_BRANCH), 
     CompilationDate(COMPILATION_DATE), 
+    GitBranch(GIT_BRANCH), 
     GitDate(GIT_DATE), 
     GitHash(GIT_REVISION),
     GitHashLong(GIT_REVISION_FULL),

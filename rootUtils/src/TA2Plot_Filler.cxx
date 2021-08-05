@@ -131,7 +131,7 @@ void TA2Plot_Filler::LoadData()
    {
       //TTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
-      for (int t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
+      for (size_t t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
       {
          for (size_t i=0; i<UniqueRuns.size(); i++)
          if (plot->GetTimeWindows()->fRunNumber.at(t)==runNumbers[i])

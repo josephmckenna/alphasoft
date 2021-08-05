@@ -2,14 +2,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(rootutils)
 
-find_package (Python COMPONENTS Interpreter Development)
-if (${Python_FOUND})
-   message("Python found! Enabling python interface")
-   add_definitions(-DHAVE_PYTHON)
-   include_directories(${Python_INCLUDE_DIRS})
-   link_libraries(${Python_})
-endif()
-
 include_directories(
    include 
    ${ROOT_INCLUDE_DIRS} 
