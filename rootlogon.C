@@ -24,32 +24,32 @@
 
 
 
-  TString libname("libagtpc.so");
+  TString libname("libagtpc");
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   int s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libanalib.so";
+  libname="libanalib";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libalpha2.so";
+  libname="libalpha2";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
  
-  libname="librootUtils.so";
+  libname="librootUtils";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
 #ifdef BUILD_AG_SIM
-  libname="libG4out.so";
+  libname="libG4out";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
