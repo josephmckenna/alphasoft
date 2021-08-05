@@ -17,8 +17,10 @@ cache:
     - BuildLog.txt
     - BuildSimLog.txt
     - LastBuildLog.txt
-    - scripts/UnitTest/*.log
-    - scripts/UnitTest/*.log.nopid
+    - scripts/A2UnitTest/*.log
+    - scripts/A2UnitTest/*.log.nopid
+    - scripts/AGUnitTest/*.log
+    - scripts/AGUnitTest/*.log.nopid
     - bin/
     - variables
 
