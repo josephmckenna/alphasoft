@@ -1,9 +1,3 @@
-// 
-// chronobox 
-// 
-// A. Capra
-// JTK McKenna
-#include "TChronoChannelName.h"
 #define CHRONO_CLOCK_FREQ 100000000
 #define CHRONO_CLOCK_CHANNEL 59
 #define CHRONO_SYNC_CHANNEL 1
@@ -12,9 +6,14 @@
 #define CHRONO_N_CHANNELS 60
 #define CHRONO_N_TS_CHANNELS 4
 
-#ifndef _CHRONOMODULE_
-#define _CHRONOMODULE_
-#include <algorithm>    // std::sort
+#ifndef _CHRONOUTIL_
+#define _CHRONOUTIL_
+
+#include <cstdint>
+#include <cassert>
+#include <cmath>
+
+#include "TObject.h"
 
 struct ChronoEvent
 {
@@ -36,13 +35,8 @@ struct ChronoEvent
    {
       return RunTime;
    }
-   //operator+=
-//   TSISEvent* TSISEvent::operator+=( TSISEvent* b)
    ChronoEvent* operator+=( ChronoEvent* b)
    {
-      //Events from differnt SIS modules cannot be added!
-      //this->Print();
-      //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
       assert(this->GetScalerModule()==b->GetScalerModule());
       Counts     +=b->Counts;
       return this;
@@ -54,5 +48,12 @@ struct ChronoEvent
       return (i->RunTime < j->RunTime); 
    }
 };
-
 #endif
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */
