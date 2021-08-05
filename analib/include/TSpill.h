@@ -223,6 +223,7 @@ public:
                             line +="0,";
       return line;
    }
+   ClassDef(TSpill,1);
 };
 
 #endif
