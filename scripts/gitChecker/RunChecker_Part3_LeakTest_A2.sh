@@ -32,7 +32,7 @@ mkdir -p ${AGRELEASE}/${GITHASH}/A2LeakTest/
 cd $AGRELEASE/scripts/A2UnitTest
 ./CheckProgram.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t LEAK
 #Copy alphaStrips result
-cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+cp -v $( ls -tr  *LEAK*.log *LEAK*.nopid | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 #Force alphaStrips to run again, since the above is crashing
 #cd $AGRELEASE/bin
@@ -41,7 +41,7 @@ cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
 #Now test alphaAnalysis
 cd $AGRELEASE/scripts/A2UnitTest
 ./CheckProgram.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t LEAK
-cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/A2LeakTest
+cp -v $( ls -tr  *LEAK*.log *LEAK*.nopid | tail -n 4 )  ${AGRELEASE}/${GITHASH}/A2LeakTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 

@@ -30,11 +30,11 @@ mkdir -p ${AGRELEASE}/${GITHASH}/A2SpeedTest/
 
 cd $AGRELEASE/scripts/A2UnitTest
 ./CheckProgram.sh -p alphaStrips.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
-cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
+cp -v $( ls -tr *SPEED_*.out *SPEED_*.log | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
 cd $AGRELEASE/scripts/A2UnitTest
 ./CheckProgram.sh -p alphaAnalysis.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
-cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
+cp -v $( ls -tr *SPEED_*.out *SPEED_*.log | tail -n 3 ) ${AGRELEASE}/${GITHASH}/A2SpeedTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 
