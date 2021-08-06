@@ -33,7 +33,7 @@ mkdir -p ${AGRELEASE}/${GITHASH}/AGSpeedTest/
 rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/AGUnitTest/
 ./CheckProgram.sh -p agana.exe -r ${RUNNO} -b NOBUILD -t SPEED -l 1500
-cp -v $( ls -tr | tail -n 3 ) ${AGRELEASE}/${GITHASH}/AGSpeedTest
+cp -v $( ls -tr *SPEED_*.out *SPEED_*.log | tail -n 3 ) ${AGRELEASE}/${GITHASH}/AGSpeedTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 

@@ -33,7 +33,7 @@ mkdir -p ${AGRELEASE}/${GITHASH}/AGLeakTest/
 rm -vf $AGRELEASE/LookUp*.dat
 cd $AGRELEASE/scripts/AGUnitTest/
 ./CheckProgram.sh -p agana.exe -r ${RUNNO} -b NOBUILD -t LEAK -l 1500
-cp -v $( ls -tr | tail -n 4 ) ${AGRELEASE}/${GITHASH}/AGLeakTest
+cp -v $( ls -tr  *LEAK*.log *LEAK*.nopid | tail -n 4  ) ${AGRELEASE}/${GITHASH}/AGLeakTest
 
 if [[ $(hostname -s) = *runner* ]]; then
 
