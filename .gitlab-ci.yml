@@ -1,4 +1,4 @@
-image: projectroot/root:6.22.08-centos7
+image: projectroot/6.22.08-centos7
 
 stages:
   - build
