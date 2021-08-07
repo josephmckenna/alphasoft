@@ -58,7 +58,7 @@ build-ubuntu:
     - . agconfig.sh
     - apt update
     - apt install -y git libmotif-dev libxmu-dev sqlite3 valgrind
-    - apt install sudo nano curl lsb-release gnupg
+    - apt install -y nano curl lsb-release gnupg
     # config xrootd and eos repos
     - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/xrootd/ $(lsb_release -cs) release" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
     - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/eos/citrine/ $(lsb_release -cs) tag" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
@@ -67,7 +67,7 @@ build-ubuntu:
     - echo -e "Pin"':'" version 4.12.8" >> /etc/apt/preferences.d/xrootd.pref
     - echo -e "Pin-Priority"':'" 1000" >> /etc/apt/preferences.d/xrootd.pref
     - apt update
-    - apt install eos-client eos-fusex
+    - apt install -y eos-client eos-fusex
   script:
     - echo "Building"
     - mkdir -p build
