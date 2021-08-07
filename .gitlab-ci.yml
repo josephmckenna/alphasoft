@@ -58,13 +58,17 @@ build-ubuntu:
     - . agconfig.sh
     - apt update
     - apt install -y git libmotif-dev libxmu-dev sqlite3
-#    - echo 'deb [trusted=yes] http://mirrors.kernel.org/ubuntu bionic main universe' | sudo tee /etc/apt/sources.list > /dev/null
-#    - sudo apt update
-#    - sudo apt-get install -y x11proto-print-dev x11proto-fonts-dev x11proto-gl-dev x11proto-composite-dev x11proto-input-dev x11proto-core-dev libx11-6 libxau-dev libxpm-dev libmotif-dev libxt6 libxm4 libx11-dev libxext-dev libxmuu-dev
-#    - echo 'deb [trusted=yes] http://security.ubuntu.com/ubuntu precise-security main' | sudo tee /etc/apt/sources.list > /dev/null
-#    - sudo apt update
-#    - sudo apt install -y libxp6 libxp-dev
   script:
+    - apt install sudo nano curl lsb-release gnupg
+    # config xrootd and eos repos
+    - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/xrootd/ $(lsb_release -cs) release" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
+    - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/eos/citrine/ $(lsb_release -cs) tag" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
+    - curl -sL http://storage-ci.web.cern.ch/storage-ci/storageci.key | sudo apt-key add -
+    # Pin xrootd version
+    - echo -e "Package: xrootd* libxrd* libxrootd*\nPin: version 4.12.8\nPin-Priority: 1000" > /etc/apt/preferences.d/xrootd.pref
+    # install the eos client
+    - apt update
+    - apt install eos-client eos-fusex
     - echo "Building"
     - mkdir -p build
     - cd build
@@ -261,8 +265,8 @@ AG_Leak_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_AG.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
   artifacts:
     paths:
     - leaktest.log
@@ -275,8 +279,8 @@ AG_Speed_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_AG.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
   artifacts:
     paths:
     - callgrind.log
@@ -289,8 +293,8 @@ AG_Thread_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_AG.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
   artifacts:
     paths:
     - callgrind.log
@@ -303,8 +307,8 @@ A2_Leak_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_LeakTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
 
 A2_Speed_Test:
   stage: test
@@ -314,8 +318,8 @@ A2_Speed_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_SpeedTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
 
 A2_Thread_Test:
   stage: test
@@ -325,8 +329,8 @@ A2_Thread_Test:
     - cd scripts/gitChecker
     - ./RunChecker_Part3_ThreadTest_A2.sh
   dependencies:
-    - build-cc7-cmake-full
-  needs: ["build-cc7-cmake-full"]
+    - build-ubuntu
+  needs: ["build-ubuntu"]
 
 
 #pages:
