@@ -50,7 +50,7 @@ before_script:
 
 build-ubuntu:
   #Overwrite global image
-  image: rootproject/latest
+  image: rootproject/root:latest
   stage: build
   #Overwrite global before script
   before_script:
