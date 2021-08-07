@@ -63,9 +63,9 @@ build-ubuntu:
     - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/xrootd/ $(lsb_release -cs) release" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
     - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/eos/citrine/ $(lsb_release -cs) tag" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
     - curl -sL http://storage-ci.web.cern.ch/storage-ci/storageci.key | sudo apt-key add -
-    # Pin xrootd version
-    - echo -e "Package: xrootd* libxrd* libxrootd*\nPin: version 4.12.8\nPin-Priority: 1000" > /etc/apt/preferences.d/xrootd.pref
-    # install the eos client
+    - echo -e "Package"':'" xrootd* libxrd* libxrootd*" > /etc/apt/preferences.d/xrootd.pref
+    - echo -e "Pin"':'" version 4.12.8" >> /etc/apt/preferences.d/xrootd.pref
+    - echo -e "Pin-Priority"':'" 1000" >> /etc/apt/preferences.d/xrootd.pref
     - apt update
     - apt install eos-client eos-fusex
   script:
