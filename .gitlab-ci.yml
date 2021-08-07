@@ -57,8 +57,7 @@ build-ubuntu:
     #Set up agana environment variables
     - . agconfig.sh
     - apt update
-    - apt install -y git libmotif-dev libxmu-dev sqlite3
-  script:
+    - apt install -y git libmotif-dev libxmu-dev sqlite3 valgrind
     - apt install sudo nano curl lsb-release gnupg
     # config xrootd and eos repos
     - echo "deb [arch=$(dpkg --print-architecture)] http://storage-ci.web.cern.ch/storage-ci/debian/xrootd/ $(lsb_release -cs) release" | sudo tee -a /etc/apt/sources.list.d/cerneos-client.list > /dev/null
@@ -69,6 +68,7 @@ build-ubuntu:
     # install the eos client
     - apt update
     - apt install eos-client eos-fusex
+  script:
     - echo "Building"
     - mkdir -p build
     - cd build
