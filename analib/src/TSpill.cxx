@@ -212,6 +212,7 @@ TSpill::TSpill(const TSpill& a) : TObject(a)
    RunNumber    =a.RunNumber;
    Name         =a.Name;
    IsDumpType   =a.IsDumpType;
+   IsInfoType   =a.IsInfoType;
    Unixtime     =a.Unixtime;
 }
 
@@ -222,6 +223,7 @@ TSpill& TSpill::operator=(const TSpill& rhs)
    RunNumber    =rhs.RunNumber;
    Name         =rhs.Name;
    IsDumpType   =rhs.IsDumpType;
+   IsInfoType   =rhs.IsInfoType;
    Unixtime     =rhs.Unixtime;
    return *this;
 }
