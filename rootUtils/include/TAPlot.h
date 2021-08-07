@@ -17,6 +17,7 @@
 #include "TStoreLabVIEWEvent.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
