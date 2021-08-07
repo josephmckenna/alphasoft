@@ -1,4 +1,4 @@
-image: tmidas/root
+image: tmidas/root6
 
 stages:
   - build
