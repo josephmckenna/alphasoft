@@ -237,6 +237,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   hTitle="Time vs Dark_CStateR";
   hTitle+=runNumber;
   TH2D* hDarkTimeC = new TH2D("hFTCD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH1D* hLongDumps=new TH1D("hLong","243LaserDumpTimes", 500,0.,10.4);
   TTimeWindows* timeWindows = new TTimeWindows();
   // We need separate loops over 4 kvertexevents loops, 
   for (int ifreq=0;ifreq<9;ifreq++)
@@ -252,6 +253,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           if (cutsResult &2) {
             //              hFreqTimeD->Fill( double(ifreq),time);
             hFreqTimeD->Fill(double(ifreq),GetRep(time,timeWindows,lastRep) );
+            hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastrep "<<lastRep<<std::endl;
           }
         }
@@ -264,7 +266,8 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
             hFreqTimeC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
-          }
+            hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
+         }
         }
       lastRep=0;
       kVertexEvents =DarkVertexPlot[ifreq][0]->GetVertexEvents(); 
@@ -275,6 +278,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
             hDarkTimeD->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
+            hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<std::endl;
           }
         }
@@ -287,7 +291,8 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
             hDarkTimeC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
-            //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<std::endl;
+            hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
+           //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<std::endl;
           }
         }
       
@@ -309,7 +314,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   gkoutcdark->SetName("gkoutcdark");
   gkoutcdark->GetXaxis()->SetTitle("Repetition");
   gkoutcdark->Write();
-  
+  hLongDumps->Write();
 
   canvasTitle="FTR";
   canvasTitle+=runNumber;
