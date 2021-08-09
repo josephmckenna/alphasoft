@@ -193,13 +193,13 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   c->Divide(2, 2);
   c->cd(1);
   TGraph* DState=new TGraph(9,ActualFreq.data(),DStateCounts.data());
-  DState->SetNameTitle(canvasTitle+" D_State",canvasTitle+" D_State");
+  DState->SetNameTitle("gfreqdd",canvasTitle+" D_State");
   DState->Draw("AP*");
   DState->Write();
 
   c->cd(2);
   TGraph* DarkDState=new TGraph(9,ActualFreq.data(),DarkDStateCounts.data());
-  DarkDState->SetNameTitle(canvasTitle+" Dark D_State",canvasTitle+" Dark D_State");
+  DarkDState->SetNameTitle("gdarkdd",canvasTitle+" Dark D_State");
   DarkDState->Draw("AP*");
   DarkDState->Write();
   //c->cd(2);
@@ -207,12 +207,12 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
  
   c->cd(3);
   TGraph* CState=new TGraph(9,ActualFreq.data(),CStateCounts.data());
-  CState->SetNameTitle(canvasTitle+" C_State",canvasTitle+" C_State");
+  CState->SetNameTitle("gfreqcc",canvasTitle+" C_State");
   CState->Draw("AP*");
   CState->Write();   
   c->cd(4);
   TGraph* DarkCState=new TGraph(9,ActualFreq.data(),DarkCStateCounts.data());
-  DarkCState->SetNameTitle(canvasTitle+" Dark C_State",canvasTitle+" Dark C_State");
+  DarkCState->SetNameTitle("gdarkcc",canvasTitle+" Dark C_State");
   DarkCState->Draw("AP*");
   DarkCState->Write();
   c->Update();
@@ -292,7 +292,25 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
         }
       
     }
-  //   FreqTimeD->SetTitle(canvasTitle+" D_State");
+  // create the cycle number Tgraphs here from the 2d projection.
+  TGraph* gkoutdd = new TGraph(hFreqTimeD->ProjectionY());
+  gkoutdd->SetName("gkoutdd");
+  gkoutdd->GetXaxis()->SetTitle("Repetition");
+  gkoutdd->Write();
+   TGraph* gkoutcc = new TGraph(hFreqTimeC->ProjectionY());
+  gkoutcc->SetName("gkoutcc");
+  gkoutcc->GetXaxis()->SetTitle("Repetition");
+  gkoutcc->Write();
+  TGraph* gkoutddark = new TGraph(hDarkTimeD->ProjectionY());
+  gkoutddark->SetName("gkoutddark");
+  gkoutddark->GetXaxis()->SetTitle("Repetition");
+  gkoutddark->Write();
+  TGraph* gkoutcdark = new TGraph(hDarkTimeC->ProjectionY());
+  gkoutcdark->SetName("gkoutcdark");
+  gkoutcdark->GetXaxis()->SetTitle("Repetition");
+  gkoutcdark->Write();
+  
+
   canvasTitle="FTR";
   canvasTitle+=runNumber;
   TCanvas* c3=new TCanvas(canvasTitle);
