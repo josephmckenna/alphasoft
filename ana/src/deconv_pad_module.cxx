@@ -44,14 +44,13 @@ public:
    int fCounter = 0;
 
 private:
-   Deconv d;
+   DeconvPad d;
   
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvPadFlags* f): TARunObject(runinfo),
-                                                           fFlags(f),
-                                                           d( f->ana_settings )
-      
+	fFlags( f ),
+	d( f->ana_settings,runinfo->fRoot->fOutputFile,runinfo->fRunNo,f->fPWBnorm,f->fDiag )
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="DeconvPADModule";
@@ -72,13 +71,7 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
 
-      d.SetupPWBs( runinfo->fRoot->fOutputFile,
-                   runinfo->fRunNo, 
-                   fFlags->fPWBnorm,   // dis/en-able normalization of WF
-                   fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch ); // dis/en-able wf storage for aged
-
-      d.PrintPWBsettings();
 
       d.SetTrace(fFlags->fTrace);
    }
@@ -178,21 +171,19 @@ public:
          }
       else
          {
-             int stat = d.FindPadTimes(pwb);
+             int stat = d.FindTimes(pwb);
              if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
+             if( stat > 0 ) flow_sig->AddPadSignals(d.GetSignal());
 
              if( fFlags->fDiag )
                {
-                  //d.PADdiagnostic();
-                  flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
+                  flow_sig->AddPwbPeaks( d.GetPeaks() );
                   //                  flow_sig->pwbRange = d.GetPwbRange();
                }
 
-             if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+             if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetWaveForms() );
          }
       ++fCounter;
-      //d.Reset();
       return flow;
    }
 

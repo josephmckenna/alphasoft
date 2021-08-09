@@ -44,13 +44,13 @@ public:
    int fCounter = 0;
 
 private:
-   Deconv d;
+   DeconvWire d;
     
 public:
 
    DeconvAWModule(TARunInfo* runinfo, DeconvAwFlags* f): TARunObject(runinfo),
-                                                         fFlags( f ),
-                                                         d( f->ana_settings )
+	fFlags( f ),
+	d( f->ana_settings,runinfo->fRoot->fOutputFile,runinfo->fRunNo,f->fADCnorm,f->fDiag )
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="DeconvAWModule";
@@ -71,13 +71,7 @@ public:
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       
-      d.SetupADCs( runinfo->fRoot->fOutputFile,
-                   runinfo->fRunNo, 
-                   fFlags->fADCnorm,   // dis/en-able normalization of WF
-                   fFlags->fDiag );    // dis/en-able histogramming
       d.SetDisplay( !fFlags->fBatch || fFlags->fPersEnabled ); // dis/en-able wf storage for aged
-
-      d.PrintADCsettings();
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -172,25 +166,23 @@ public:
          }
       else
          {
-            int stat = d.FindAnodeTimes( aw );
+            int stat = d.FindTimes( aw );
             if(fTrace) printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
 
-            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetAnodeSignal());
+            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetSignal());
              
             if( fFlags->fDiag )
                {
-                  //d.AWdiagnostic();
-                  flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
+                  flow_sig->AddAdcPeaks( d.GetPeaks() );
                   //               flow_sig->adc32range = d.GetAdcRange();
                }
             
             if( !fFlags->fBatch || fFlags->fPersEnabled ) 
-               flow_sig->AddAWWaveforms( d.GetAWwaveforms() );
+               flow_sig->AddAWWaveforms( d.GetWaveForms() );
 
             flow = flow_sig;
          }
       ++fCounter;
-      //d.Reset();
       return flow;
    }
 
