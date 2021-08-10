@@ -17,6 +17,7 @@
 #include "TStoreLabVIEWEvent.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
@@ -94,7 +95,7 @@ class TVertexEvents: public TObject
       //=+ Operator.
       TVertexEvents operator+=(const TVertexEvents &rhs) 
       {
-         std::cout << "TAVertexEvents += operator" << std::endl;
+         //std::cout << "TAVertexEvents += operator" << std::endl;
          this->fRunNumbers       .insert(this->fRunNumbers.end(),      rhs.fRunNumbers.begin(),     rhs.fRunNumbers.end());
          this->fEventNos         .insert(this->fEventNos.end(),        rhs.fEventNos.begin(),       rhs.fEventNos.end());
          this->fCutsResults      .insert(this->fCutsResults.end(),     rhs.fCutsResults.begin(),    rhs.fCutsResults.end()); 
@@ -171,7 +172,7 @@ class TTimeWindows : public TObject
       //Copy ctor
       TTimeWindows(const TTimeWindows& timeWindows) : TObject(timeWindows)
       {
-         std::cout << "TTimeWindows copy ctor." << std::endl;
+         //std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
          for(size_t i = 0; i<timeWindows.fMinTime.size(); i++)
          {
@@ -183,7 +184,7 @@ class TTimeWindows : public TObject
       }
       TTimeWindows& operator=(const TTimeWindows& rhs)
       {
-         std::cout << "TTimeWindows = operator." << std::endl;
+         //std::cout << "TTimeWindows = operator." << std::endl;
          for(size_t i = 0; i<rhs.fMinTime.size(); i++)
          {
             this->fRunNumber.push_back(rhs.fRunNumber[i]);
@@ -195,7 +196,7 @@ class TTimeWindows : public TObject
       }
       friend TTimeWindows operator+(const TTimeWindows& lhs, const TTimeWindows& rhs)
       {
-         std::cout << "TTimeWindows addition operator" << std::endl;
+         //std::cout << "TTimeWindows addition operator" << std::endl;
          TTimeWindows outputPlot(lhs); //Create new from copy
 
          //Vectors- need concacting
@@ -207,7 +208,7 @@ class TTimeWindows : public TObject
       }
       TTimeWindows operator+=(const TTimeWindows &rhs) 
       {
-         std::cout << "TTimeWindows += operator" << std::endl;
+         //std::cout << "TTimeWindows += operator" << std::endl;
          this->fRunNumber.insert(this->fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
          this->fMinTime.insert(this->fMinTime.end(), rhs.fMinTime.begin(), rhs.fMinTime.end() );
          this->fMaxTime.insert(this->fMaxTime.end(), rhs.fMaxTime.begin(), rhs.fMaxTime.end() );
@@ -460,7 +461,7 @@ class TFEGEMData: public TEnvData
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint(time, time - timeWindows.fZeroTime[index], (double)gemEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint(time - timeWindows.fZeroTime[index], time, (double)gemEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -483,7 +484,7 @@ class TFELabVIEWData: public TEnvData
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint( time, time - timeWindows.fZeroTime[index], labviewEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint( time - timeWindows.fZeroTime[index], time, labviewEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -498,7 +499,6 @@ class TAPlot: public TObject
       int fNumBins; // 100;
       int fDrawStyle; //Switch between colour modes
       int fLegendDetail; // = 1;
-      int fTotalVert;
       double fClassifierCut;
       double fFirstTMin;
       double fLastTMax;
@@ -556,7 +556,7 @@ class TAPlot: public TObject
       double               GetLastTmax() const      {  return fLastTMax;      }
       double               GetBiggestTzero() const  {  return fBiggestTZero;  }
       int                  GetNBins() const         {  return fNumBins; }
-      int                  GetNVerticies()          {  return fTotalVert;   }
+      int                  GetNVerticies()          {  return GetNVertexType(1);  }
       int                  GetNPassedCuts()         {  return GetNPassedType(1);  }
       bool                 IsGEMData()              {  return (fFEGEM.size() != 0);   }
       bool                 IsLVData()               {  return (fFEGEM.size() != 0);   }
@@ -571,6 +571,7 @@ class TAPlot: public TObject
       std::pair<TLegend*,TMultiGraph*> GetLVGraphs();
       double GetApproximateProcessingTime();
       int GetNPassedType(const int type);
+      int GetNVertexType(const int type);
       TString GetListOfRuns();
 
       //Adders.
@@ -593,6 +594,9 @@ class TAPlot: public TObject
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
       void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
+      // Hmm the add operators prevent this being a pure virtual function (ie
+      // the add operator can't return TAPlot if TAPlot is an abstract class...
+      // one to think about Joe)
       virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
       void LoadData();
 

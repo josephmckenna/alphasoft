@@ -10,7 +10,6 @@
 #include "TMath.h"
 #include "TChrono_Event.h"
 #include <iostream>
-#include "chrono_module.h"
 #include "TChronoChannelName.h"
 
 #include <TBufferJSON.h>
