@@ -54,7 +54,7 @@ Deconv::Deconv(AnaSettings* s, bool diagn) : fTrace(false), fAged(false), ana_se
 	isalpha16(false) {
 }
 
-void Deconv::ReadResponseFile(const int bin, const std::string f_name) {
+void Deconv::ReadResponseFile(const int bin, const int scale, const std::string f_name) {
 	std::string filename(std::string(getenv("AGRELEASE")) + "/ana/" + f_name);
 
 	std::ifstream respFile(filename);
@@ -67,7 +67,7 @@ void Deconv::ReadResponseFile(const int bin, const std::string f_name) {
 			if(!respFile.good()) {
 				break;
 			}
-			resp.push_back(fScale * val);
+			resp.push_back(scale * val);
 		}
 		fResponse = Rebin(resp, bin);
 
@@ -197,7 +197,7 @@ DeconvPad::DeconvPad(AnaSettings* s, TFile* fout, int run, bool norm, bool diag)
 		fMax = pow(2.,12.);
 		fRange = fMax * 0.5 - 1;
 
-		ReadResponseFile(fBinSize, "padResponse_deconv.dat"); 
+		ReadResponseFile(fBinSize, 1, "padResponse_deconv.dat"); 
 		assert(fResponse.size() > 0);
 
 		if(norm) {
@@ -495,7 +495,7 @@ DeconvWire::DeconvWire(AnaSettings* s, TFile* fout, int run, bool norm, bool dia
 		fMax = pow(2.,14.);
 		fRange = fMax * 0.5 - 1;
 
-		ReadResponseFile(fBinSize, "anodeResponse.dat"); 
+		ReadResponseFile(fBinSize, fScale, "anodeResponse.dat"); 
 		assert(fResponse.size() > 0);
 
 		if(norm) {

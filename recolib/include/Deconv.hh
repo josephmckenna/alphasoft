@@ -59,7 +59,7 @@ class Deconv {
 		ALPHAg::comp_hist_t wf_comparator;
 		std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b);
 
-		void ReadResponseFile(const int bin, const std::string f_name);
+		void ReadResponseFile(const int bin, const int scale, const std::string f_name);
 		void ReadRescaleFile(const std::string f_name);
 		double CalculatePedestal(std::vector<int>& adc_samples);
 		double GetPeakHeight(std::vector<int>& adc_samples, int& i, double& ped);
