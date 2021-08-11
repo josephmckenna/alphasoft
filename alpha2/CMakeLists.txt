@@ -27,7 +27,7 @@ message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
 file(GLOB BINS *.modules)
 
 if(BUILD_A2)
-  set(A2_LINK_LIBS alpha2 analib GEM)
+  set(A2_LINK_LIBS alpha2 analib GEM TMVA)
 endif()
 
 #message(Binaries: ${BINS})

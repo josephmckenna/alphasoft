@@ -503,6 +503,7 @@ class TAPlot: public TObject
       TObjArray            GetHisto()               {  return fHistos;}
       std::map<std::string,int> GetHistoPosition()  {  return fHistoPositions;}
       const std::vector<int> GetArrayOfRuns()       {  return fRuns; }
+      std::vector<TFELabVIEWData> GetLVData()       {  return fFELV; }
       //Getters defined in .cxx
       std::vector<std::pair<std::string,int>> GetGEMChannels();
       std::vector<std::pair<std::string,int>> GetLVChannels();

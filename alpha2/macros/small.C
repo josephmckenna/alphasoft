@@ -4,10 +4,17 @@ TCanvas* BasicCanvas2;
 void small()
 {
     TA2Plot* basic1 = new TA2Plot();
-    basic1->AddTimeGate(57181,0,-1);
+    basic1->AddTimeGate(53704,0,300);
     basic1->LoadData();
     BasicCanvas1=basic1->DrawCanvas("Example plot of run 57181");
     basic1->PrintFull();
+
+
+          TA2Plot* temp = new TA2Plot();
+        temp->AddDumpGates(53704, {"Ramp up Sol A"}, {2});
+        temp->SetLVChannel("DCTA",4);
+        temp->LoadData();
+        temp->DrawCanvas();
 
     TA2Plot* basic2 = new TA2Plot();
     basic2->AddTimeGate(57181,0,350);

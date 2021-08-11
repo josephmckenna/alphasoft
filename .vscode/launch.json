@@ -12,8 +12,11 @@
             "type": "cppdbg",
             "request": "launch",
 
-            "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
-            "args": ["run54330sub0000*"],
+            //"program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
+            //"args": ["run54330sub0000*"],
+
+            "program": "${workspaceFolder}/bin/macro_main_adiabatic_heating.exe",
+            //"args": ["--", "--listfile", "mixingList.list", "--mixing"],
 
             //"program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
             //"args": ["${workspaceFolder}/run45000sub00000.mid.gz", "--", "--eventlist", "eventlist45000.list", "--datalabel", "mixing"],

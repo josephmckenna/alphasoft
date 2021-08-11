@@ -14,6 +14,8 @@
 #pragma link C++ class TA2Plot+;
 #pragma link C++ class TA2Plot_Filler;
 #pragma link C++ class TSISPlotEvents;
+#pragma link C++ class TFEGEMData;
+#pragma link C++ class TFELabVIEWData;
 #endif
 
 #ifdef BUILD_AG
