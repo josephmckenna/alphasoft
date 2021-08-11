@@ -656,7 +656,7 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadData()
+void TAPlot::LoadData(bool verbose)
 {
    for (size_t i=0; i<fRuns.size(); i++)
    {
@@ -677,6 +677,10 @@ void TAPlot::LoadData()
             if (firstTime > GetTimeWindows()->fMinTime[i] )
                firstTime = GetTimeWindows()->fMinTime[i];
          }
+      }
+      if (verbose)
+      {
+         std::cout<<"Loading data from run " << runNumber << " from t="<< firstTime <<" to t="<<lastTime<<"\n";
       }
       LoadFEGEMData(runNumber, firstTime, lastTime);
       LoadFELVData(runNumber, firstTime, lastTime);
