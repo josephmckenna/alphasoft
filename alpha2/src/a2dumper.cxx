@@ -32,14 +32,8 @@ public:
     //The location of saving said events.
     TTree *fTree;
     TFile *fRootFile;
-    //The data from each event we want to save.
-    Double_t fX;
-    Double_t fY; 
-    Double_t fZ; 
-    Double_t fR;
-    Double_t fPhi;
-    Int_t fNumTracks;
 
+    //The data we want to save is all in this object.
     MVAFlowEvent fMVAFlow;
 
     //Flags & counters.
@@ -68,12 +62,7 @@ public:
             fTree = new TTree("UnnamedTree","data from siliconEvent");
         
         //Branch the tree based on our members.
-        fTree->Branch("x", &fX, "x/D");
-        fTree->Branch("y", &fY, "y/D");
-        fTree->Branch("z", &fZ, "z/D");
-        fTree->Branch("r", &fR, "r/D");
-        fTree->Branch("phi", &fPhi, "phi/D");
-        fTree->Branch("numTracks", &fNumTracks, "numTracks/I");
+        fMVAFlow.LinkTree(fTree);
     }
 
     ~TA2Dumper()
@@ -110,33 +99,17 @@ public:
     {
         if(flow) 
         {
-            SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
-            if (siliconEventFlow)
+            //Update variables of the MVA class. This will check whether the eventnumbers match.
+            //If they match this function will return true, if not: false. This allows us to know
+            //whether to fill the tree and increment the EventIndex and EventNumber.
+            if(fMVAFlow.UpdateVariables(flow, fCurrentEventNumber))
             {
-                //TAlphaEvent* alphaevent=siliconEventFlow->alphaevent; //Also not needed?
-                TSiliconEvent* siliconEvent=siliconEventFlow->silevent;
-                Int_t eventNumber = siliconEvent->GetVF48NEvent();
-
-                if(eventNumber == fCurrentEventNumber)
-                {
-                    std::cout << "current event Number = " << fCurrentEventNumber << ". Matched with found eventNumber " << eventNumber << std::endl;
-                    std::cout << "(x, y, z, r, phi, nT) = (" << fX << ", " << fY << ", " << fZ << ", " << fR << ", " << fPhi << ", " << fNumTracks << ")" << std::endl; 
-                                        
-                    //Update members
-                    fX = siliconEvent->GetVertexX();
-                    fY = siliconEvent->GetVertexY();
-                    fZ = siliconEvent->GetVertexZ();
-                    fR = siliconEvent->GetVertexR();
-                    fPhi = siliconEvent->GetVertexPhi();
-                    fNumTracks = siliconEvent->GetNTracks();
-
-                    //Fill tree.
-                    fTree->Fill();
-                
-                    //Update current event number to be checked against (remember everything here is in order).
-                    fCurrentEventIndex++;
-                    fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
-                }
+                //Fill tree.
+                fTree->Fill();
+            
+                //Update current event number to be checked against (remember everything here is in order).
+                fCurrentEventIndex++;
+                fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
             }
         }
         return flow;

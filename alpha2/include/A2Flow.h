@@ -11,6 +11,7 @@
 #define A2Flow_H
 #include "UnpackVF48.h"
 #include "SiMod.h"
+#include "TTree.h"
 
 class VF48data
 {
@@ -282,7 +283,7 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
 
   //We then need a way for these to be populated.
 
-  void PopulateVariables(TAFlowEvent* flow, int currentEventNumber)
+  bool UpdateVariables(TAFlowEvent* flow, int currentEventNumber)
   {
     SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
     if (siliconEventFlow)
@@ -293,12 +294,14 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
       if(eventNumber == currentEventNumber)
       {
         std::cout << "current event Number = " << currentEventNumber << ". Matched with found eventNumber " << eventNumber << std::endl;
-        std::cout << "(x, y, z, r, phi, nT) = (" << fX << ", " << fY << ", " << fZ << ", " << ")" << std::endl; 
+        std::cout << "(x, y, z) = (" << fX << ", " << fY << ", " << fZ << ", " << ")" << std::endl; 
               
         //Update members
         fX = siliconEvent->GetVertexX();
         fY = siliconEvent->GetVertexY();
         fZ = siliconEvent->GetVertexZ();
+
+        return true;
 
 
         //Fill tree.
@@ -309,9 +312,15 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
         //fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
       }
     }
+    return false;
   };
 
-  void LinkTree();
+  void LinkTree(TTree *tree)
+  {
+    tree->Branch("x", &fX, "x/D");
+    tree->Branch("y", &fY, "y/D");
+    tree->Branch("z", &fZ, "z/D");
+  };
 
   void WriteToTree();
 
