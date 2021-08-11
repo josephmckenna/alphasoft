@@ -40,6 +40,8 @@ public:
     Double_t fPhi;
     Int_t fNumTracks;
 
+    MVAFlowEvent fMVAFlow;
+
     //Flags & counters.
     TA2DumperFlags* fFlags;
     int fCurrentEventNumber;

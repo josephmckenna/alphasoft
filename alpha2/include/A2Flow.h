@@ -269,6 +269,60 @@ public:
    }
 };
 
+class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow event off, this may be an error but it can't be initialised outside of the flow otherwise. Which is what we want I think. Dont forget to change LINE-LMG01 when changing this back.
+{
+  public:
+  //Needs some data here, and the methods to populate the thing. 
+  //THen we need a way for this to interact with the offline MVA analysis. 
+  //For now lets assume we are interested in 3 variables. x, y, z.
+
+  double fX;
+  double fY;
+  double fZ;
+
+  //We then need a way for these to be populated.
+
+  void PopulateVariables(TAFlowEvent* flow, int currentEventNumber)
+  {
+    SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
+    if (siliconEventFlow)
+    {
+      TSiliconEvent* siliconEvent=siliconEventFlow->silevent;
+      Int_t eventNumber = siliconEvent->GetVF48NEvent();
+
+      if(eventNumber == currentEventNumber)
+      {
+        std::cout << "current event Number = " << currentEventNumber << ". Matched with found eventNumber " << eventNumber << std::endl;
+        std::cout << "(x, y, z, r, phi, nT) = (" << fX << ", " << fY << ", " << fZ << ", " << ")" << std::endl; 
+              
+        //Update members
+        fX = siliconEvent->GetVertexX();
+        fY = siliconEvent->GetVertexY();
+        fZ = siliconEvent->GetVertexZ();
+
+
+        //Fill tree.
+        //fTree->Fill();
+
+        //Update current event number to be checked against (remember everything here is in order).
+        //fCurrentEventIndex++;
+        //fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
+      }
+    }
+  };
+
+  void LinkTree();
+
+  void WriteToTree();
+
+  MVAFlowEvent()/*: TAFlowEvent(flow)*/ //LINE-LMG01 
+  {
+  }
+  ~MVAFlowEvent()
+  {
+  }
+};
+
 
 #endif
 
