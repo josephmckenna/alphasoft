@@ -227,16 +227,16 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   int nwindows=(runNumber==57208)?200:100;
   TString hTitle="Rep vs Freq_DStateR";
   hTitle+=runNumber;
-  TH2D* hFreqTimeD = new TH2D("hFTDL",hTitle,9,-0.5,8.5,nwindows,0.5, nwindows+.5);
+  TH2D* hFreqRepD = new TH2D("hFTDL",hTitle,9,-0.5,8.5,nwindows,0.5, nwindows+.5);
   hTitle="Time vs Freq_CStateR";
   hTitle+=runNumber;
-  TH2D* hFreqTimeC = new TH2D("hFTCL",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hFreqRepC = new TH2D("hFTCL",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
   hTitle="Time vs Dark_DStateR";
   hTitle+=runNumber;
-  TH2D* hDarkTimeD = new TH2D("hFTDD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hDarkRepD = new TH2D("hFTDD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
   hTitle="Time vs Dark_CStateR";
   hTitle+=runNumber;
-  TH2D* hDarkTimeC = new TH2D("hFTCD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hDarkRepC = new TH2D("hFTCD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
   TH1D* hLongDumps=new TH1D("hLong","243LaserDumpTimes", 500,0.,10.4);
   TTimeWindows* timeWindows = new TTimeWindows();
   // We need separate loops over 4 kvertexevents loops, 
@@ -249,10 +249,10 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
         {
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
-          //hFreqTimeD->Fill( double(ifreq),time);
+          //hFreqRepD->Fill( double(ifreq),time);
           if (cutsResult &2) {
-            //              hFreqTimeD->Fill( double(ifreq),time);
-            hFreqTimeD->Fill(double(ifreq),GetRep(time,timeWindows,lastRep) );
+            //              hFreqRepD->Fill( double(ifreq),time);
+            hFreqRepD->Fill(double(ifreq),GetRep(time,timeWindows,lastRep) );
             hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastrep "<<lastRep<<std::endl;
           }
@@ -265,7 +265,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
-            hFreqTimeC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
+            hFreqRepC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
             hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
          }
         }
@@ -277,7 +277,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
-            hDarkTimeD->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
+            hDarkRepD->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
             hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<std::endl;
           }
@@ -290,7 +290,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
-            hDarkTimeC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
+            hDarkRepC->Fill( double(ifreq),GetRep(time,timeWindows,lastRep));
             hLongDumps->Fill(time-timeWindows->fMinTime[lastRep]);
            //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<std::endl;
           }
@@ -298,19 +298,19 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
       
     }
   // create the cycle number Tgraphs here from the 2d projection.
-  TGraph* gkoutdd = new TGraph(hFreqTimeD->ProjectionY());
+  TGraph* gkoutdd = new TGraph(hFreqRepD->ProjectionY());
   gkoutdd->SetName("gkoutdd");
   gkoutdd->GetXaxis()->SetTitle("Repetition");
   gkoutdd->Write();
-   TGraph* gkoutcc = new TGraph(hFreqTimeC->ProjectionY());
+   TGraph* gkoutcc = new TGraph(hFreqRepC->ProjectionY());
   gkoutcc->SetName("gkoutcc");
   gkoutcc->GetXaxis()->SetTitle("Repetition");
   gkoutcc->Write();
-  TGraph* gkoutddark = new TGraph(hDarkTimeD->ProjectionY());
+  TGraph* gkoutddark = new TGraph(hDarkRepD->ProjectionY());
   gkoutddark->SetName("gkoutddark");
   gkoutddark->GetXaxis()->SetTitle("Repetition");
   gkoutddark->Write();
-  TGraph* gkoutcdark = new TGraph(hDarkTimeC->ProjectionY());
+  TGraph* gkoutcdark = new TGraph(hDarkRepC->ProjectionY());
   gkoutcdark->SetName("gkoutcdark");
   gkoutcdark->GetXaxis()->SetTitle("Repetition");
   gkoutcdark->Write();
@@ -321,17 +321,17 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   TCanvas* c3=new TCanvas(canvasTitle);
   c3->Divide(2, 2);
   c3->cd(1);
-  hFreqTimeD->Draw("BOX");
-  hFreqTimeD->Write();
+  hFreqRepD->Draw("BOX");
+  hFreqRepD->Write();
   c3->cd(2);
-  hFreqTimeC->Draw("BOX");
-  hFreqTimeC->Write();
+  hFreqRepC->Draw("BOX");
+  hFreqRepC->Write();
   c3->cd(3);
-  hDarkTimeD->Draw("BOX");
-  hDarkTimeD->Write();
+  hDarkRepD->Draw("BOX");
+  hDarkRepD->Write();
   c3->cd(4);
-  hDarkTimeC->Draw("BOX");
-  hDarkTimeC->Write();
+  hDarkRepC->Draw("BOX");
+  hDarkRepC->Write();
   c3->Update();
   c3->SaveAs(canvasTitle+".png");
    
