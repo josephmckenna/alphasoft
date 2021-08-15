@@ -4,18 +4,18 @@
 
 std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool DrawVertices, bool ZeroTime)
 {
-  double zcut=10.;
-   
-  TA2Plot* VertexPlot[9][2];
-  TA2Plot* DarkVertexPlot[9][2];
+  const double zcut=10.;
+  const Int_t nfreq(9), ncyc(200);   
+  TA2Plot* VertexPlot[nfreq][2];
+  TA2Plot* DarkVertexPlot[nfreq][2];
   std::vector<double> ActualFreq;
   if ( runNumber==57181 || runNumber==57195 )
     ActualFreq={-200,-100,   -50, -25,   0., 25,   50,100, 200};
   if ( runNumber==57208 )
     ActualFreq={-100, -25, -12.5, -0., 12.5, 25, 37.5, 50, 100};
   std::vector<TA2Spill> spills;
-  std::vector<std::pair<double,double>> DarkTimes[9];       
-  for (int i=0; i<9; i++)
+  std::vector<std::pair<double,double>> DarkTimes[nfreq];       
+  const std::vector<TA2Spill>& LaserSpills = Get_A2_Spills(runNumber,{"243 List*"},{-1});  for (int i=0; i<nfreq; i++)
     {
       VertexPlot[i][0]=new TA2Plot(-zcut,zcut,ZeroTime);
       VertexPlot[i][1]=new TA2Plot(-zcut,zcut,ZeroTime);
@@ -51,8 +51,8 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double last_tmax = -1;
 
           //Note the user of the wild card to get all dumps!
-          const std::vector<TA2Spill>& AllSpills = Get_A2_Spills(runNumber,{"*"},{-1});
-          //Loop over our light windows
+
+         //Loop over our light windows
           for (const TA2Spill& s: spills)
             {
               double tmin = s.GetStartTime();
@@ -60,7 +60,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
               //std::cout<<"Window:\t"<<tmin<<"\t"<<tmax<<std::endl;
 
               // The loop over all windows to find the first start dump after our light (to calculate the dark)
-              for (const TA2Spill& all: AllSpills)
+              for (const TA2Spill& all: LaserSpills)
                 {
                   if (all.GetStartTime() > tmax && all.GetStartTime() > tmin)
                     {
@@ -94,7 +94,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   // it only makes one pass over all files so its pretty quick
   // so this is slower than it could be
   TA2Plot_Filler DataLoader;
-  for (int i=0; i<9; i++)
+  for (int i=0; i<nfreq; i++)
     {
       for (int j=0; j<2; j++) //IsCState?
         {
@@ -109,7 +109,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   // Optional 'Draw' command to show full vertex plots
   if (DrawVertices)
     {
-      for (int i=0; i<9; i++)
+      for (int i=0; i<nfreq; i++)
         {
           for (int j=0; j<2; j++)
             {
@@ -157,7 +157,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
 
   std::vector<double> DarkDStateCounts;
   std::vector<double> DarkCStateCounts;
-  for (int i=0; i<9; i++)
+  for (int i=0; i<nfreq; i++)
     {
       DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
       CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
@@ -172,7 +172,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   int sumdd(0);
   int sumcl(0);
   int sumcd(0);
-  for (int i=0; i<9; i++)
+  for (int i=0; i<nfreq; i++)
     {  
       sumdl +=DStateCounts[i];
       sumdd+=DarkDStateCounts[i];
@@ -192,13 +192,13 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   TCanvas* c=new TCanvas(canvasTitle);
   c->Divide(2, 2);
   c->cd(1);
-  TGraph* DState=new TGraph(9,ActualFreq.data(),DStateCounts.data());
+  TGraph* DState=new TGraph(nfreq,ActualFreq.data(),DStateCounts.data());
   DState->SetNameTitle("gfreqdd",canvasTitle+" D_State");
   DState->Draw("AP*");
   DState->Write();
 
   c->cd(2);
-  TGraph* DarkDState=new TGraph(9,ActualFreq.data(),DarkDStateCounts.data());
+  TGraph* DarkDState=new TGraph(nfreq,ActualFreq.data(),DarkDStateCounts.data());
   DarkDState->SetNameTitle("gdarkdd",canvasTitle+" Dark D_State");
   DarkDState->Draw("AP*");
   DarkDState->Write();
@@ -206,12 +206,12 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   //hDState->Draw("HIST");
  
   c->cd(3);
-  TGraph* CState=new TGraph(9,ActualFreq.data(),CStateCounts.data());
+  TGraph* CState=new TGraph(nfreq,ActualFreq.data(),CStateCounts.data());
   CState->SetNameTitle("gfreqcc",canvasTitle+" C_State");
   CState->Draw("AP*");
   CState->Write();   
   c->cd(4);
-  TGraph* DarkCState=new TGraph(9,ActualFreq.data(),DarkCStateCounts.data());
+  TGraph* DarkCState=new TGraph(nfreq,ActualFreq.data(),DarkCStateCounts.data());
   DarkCState->SetNameTitle("gdarkcc",canvasTitle+" Dark C_State");
   DarkCState->Draw("AP*");
   DarkCState->Write();
@@ -227,20 +227,25 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   int nwindows=(runNumber==57208)?200:100;
   TString hTitle="Rep vs Freq_DStateR";
   hTitle+=runNumber;
-  TH2D* hFreqRepD = new TH2D("hFTDL",hTitle,9,-0.5,8.5,nwindows,0.5, nwindows+.5);
+  TH2D* hFreqRepD = new TH2D("hFTDL",hTitle,nfreq,-0.5,nfreq-0.5,nwindows,0.5, nwindows+.5);
   hTitle="Time vs Freq_CStateR";
   hTitle+=runNumber;
-  TH2D* hFreqRepC = new TH2D("hFTCL",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hFreqRepC = new TH2D("hFTCL",hTitle,nfreq,-0.5,nfreq-0.5,nwindows,0.5,nwindows+0.5);
   hTitle="Time vs Dark_DStateR";
   hTitle+=runNumber;
-  TH2D* hDarkRepD = new TH2D("hFTDD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hDarkRepD = new TH2D("hFTDD",hTitle,nfreq,-0.5,nfreq-0.5,nwindows,0.5,nwindows+0.5);
   hTitle="Time vs Dark_CStateR";
   hTitle+=runNumber;
-  TH2D* hDarkRepC = new TH2D("hFTCD",hTitle,9,-0.5,8.5,nwindows,0.5,nwindows+0.5);
+  TH2D* hDarkRepC = new TH2D("hFTCD",hTitle,nfreq,-0.5,nfreq-0.5,nwindows,0.5,nwindows+0.5);
   TH1D* hLongDumps=new TH1D("hLong","243LaserDumpTimes", 500,0.,10.4);
+  //Dark time durations histo
+  TH2D* hDarkTimes= new TH2D("hDarkTimes","Dark Times vs freq vs cycle",nfreq,-.5, nfreq-.5,ncyc, .5,ncyc+.5);
+  for (int i=0;i<LaserSpills.size()-1;i++)
+    hDarkTimes->Fill( double(((i/nfreq)%2)?nfreq-1-i%nfreq:i%nfreq),double(i/nfreq+1), LaserSpills[i+1].GetStartTime()-LaserSpills[i].GetStopTime());
+  
   TTimeWindows* timeWindows = new TTimeWindows();
   // We need separate loops over 4 kvertexevents loops, 
-  for (int ifreq=0;ifreq<9;ifreq++)
+  for (int ifreq=0;ifreq<nfreq;ifreq++)
     {
       kVertexEvents =VertexPlot[ifreq][0]->GetVertexEvents();
       timeWindows =VertexPlot[ifreq][0]->GetTimeWindows();
@@ -257,6 +262,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastrep "<<lastRep<<std::endl;
           }
         }
+     
       lastRep=0;
       kVertexEvents =VertexPlot[ifreq][1]->GetVertexEvents(); 
       timeWindows =VertexPlot[ifreq][1]->GetTimeWindows();
@@ -315,6 +321,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   gkoutcdark->GetXaxis()->SetTitle("Repetition");
   gkoutcdark->Write();
   hLongDumps->Write();
+  hDarkTimes->Write();
 
   canvasTitle="FTR";
   canvasTitle+=runNumber;
@@ -334,15 +341,12 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   hDarkRepC->Write();
   c3->Update();
   c3->SaveAs(canvasTitle+".png");
-   
-  // Open a root file and write >HF2D's to it;
-  //  f->Write();  
   f->Close();
  
 
   // Return all plots in case anyone wants do do post-post processing
   std::vector<TA2Plot*> plots;
-  for (int i=0; i<9; i++)
+  for (int i=0; i<nfreq; i++)
     {
       for (int j=0; j<1; j++)
         {
