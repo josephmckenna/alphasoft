@@ -16,7 +16,7 @@
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
-  #include "BuildConfig.h"
+  #include "build/BuildConfig.h"
   
   
   gSystem->Load("libMinuit2");
@@ -42,7 +42,7 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="librootUtils.so";
+  libname="librootUtils";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
