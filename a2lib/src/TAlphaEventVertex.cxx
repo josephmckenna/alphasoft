@@ -1,5 +1,5 @@
 //TAlphaEventVertex
-#include <TMinuit.h>
+//#include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventVertex.h"
@@ -119,7 +119,8 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  minimdca(10);
+  ROOT::Minuit2::FunctionMinimum min = minimdca(10);
+  // minimdca(10);
   upar =minimdca.Parameters();
   //minimdca = new TMinuit(3);
   //minimdca->SetPrintLevel(-1);

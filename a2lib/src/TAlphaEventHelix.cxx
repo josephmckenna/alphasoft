@@ -5,7 +5,7 @@
 #include <Riostream.h>
 #include <TGeoManager.h>
 #include <TVirtualGeoTrack.h>
-#include <TMinuit.h>
+// #include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
@@ -358,7 +358,7 @@ Int_t TAlphaEventHelix::FitLineParameters()
 
   // create Minimizer (default is Migrad)
   mini(40);
-  upar =mini.Parameters();
+  upar = mini.Parameters();
   /*
   
   
