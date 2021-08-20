@@ -27,6 +27,16 @@ TString Get_Chrono_Name(TSeq_Event* e)
          
 }
 #endif
+
+#ifdef BUILD_A2
+TString Get_SIS_Name(Int_t runNumber, Int_t SIS_Channel)
+{
+   TSISChannels ch(runNumber);
+   TString name(ch.GetDescription(SIS_Channel, runNumber));
+   return name;
+}
+#endif
+
 #ifdef BUILD_AG
 TString SequenceAGQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
 {
