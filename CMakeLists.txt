@@ -59,7 +59,7 @@ endif()
 
 # Find MIDAS
 if(DEFINED ENV{MIDASSYS})
-   include($ENV{MIDASSYS}/lib/midas-targets.cmake)
+   include($ENV{MIDASSYS}/MidasConfig.cmake)
    message(STATUS "${PROJECT_NAME}: Building with MIDAS from $ENV{MIDASSYS}/lib/midas-targets.cmake")
    set(MIDAS_FOUND TRUE)
    set(MIDASSYS "$ENV{MIDASSYS}")
@@ -76,12 +76,12 @@ endif()
 
 
 # SQLITE3
-find_package(SQLite3 REQUIRED)
-if(SQLite3_FOUND)
-  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
-else()
-  message(FATAL "SQLite3 NOT FOUND")
-endif()
+#find_package(SQLite3 REQUIRED)
+#if(SQLite3_FOUND)
+#  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
+#else()
+#  message(FATAL "SQLite3 NOT FOUND")
+#endif()
 
 # Zlib
 set(HAVE_LIBZ 0)
@@ -208,7 +208,11 @@ endif(WARNINGS_ALL)
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
 install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
+add_subdirectory(rootana)
+
 add_subdirectory(cmake_extras)
+
+
 
 get_submodule(libGEM)
 add_subdirectory(libGEM)

@@ -9,6 +9,10 @@ find_package(ROOT REQUIRED COMPONENTS Minuit2 Geom)
 include_directories(include 
                     ${ROOT_INCLUDE_DIRS})
 
+include_directories(${CMAKE_SOURCE_DIR}/rootana/manalyzer)
+include_directories(${CMAKE_SOURCE_DIR}/rootana/midasio)
+include_directories(${CMAKE_SOURCE_DIR}/rootana/mvodb)
+
 if(BUILD_MANALYZER)
   include_directories(${CMAKE_SOURCE_DIR}/manalyzer)
   include_directories(${CMAKE_SOURCE_DIR}/midasio)
