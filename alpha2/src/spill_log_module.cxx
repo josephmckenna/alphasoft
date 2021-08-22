@@ -166,7 +166,9 @@ public:
       if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       {
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "Begin run");
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", SpillLogTitle.Data());
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+         
       }
       if (!fFlags->fNoSpillSummary)
       {
@@ -251,36 +253,34 @@ public:
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "End run");
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s","=====================================================================================================================================================================");
       }
-      if (!fFlags->fNoSpillSummary)
+
+      InMemorySpillTable.push_back("End run");
+      InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+      size_t lines=InMemorySpillTable.size();
+      unsigned long byte_size=0;
+      for (size_t i=0; i<lines; i++)
+         byte_size+=InMemorySpillTable[i].size()*sizeof(char);
+      std::string unit;
+      double factor=1;
+      if (byte_size>(unsigned long)factor*1024)
       {
-         InMemorySpillTable.push_back("End run");
-         InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-         size_t lines=InMemorySpillTable.size();
-         unsigned long byte_size=0;
-         for (size_t i=0; i<lines; i++)
-            byte_size+=InMemorySpillTable[i].size()*sizeof(char);
-         std::string unit;
-         double factor=1;
-         if (byte_size>(unsigned long)factor*1024)
-         {
-            unit="kb";
-            factor*=1024.;
-         }
-         if (byte_size>(unsigned long)factor*1024)
-         {
-            unit="mb";
-            factor*=1024.;
-         }
-         if (byte_size>(unsigned long)factor*1024)
-         {
-            unit="gb";
-            factor*=1024.;
-         }
-         std::cout<<"Spill log in memory size: "<<(double)byte_size/factor<<unit.c_str()<<std::endl;
+         unit="kb";
+         factor*=1024.;
+      }
+      if (byte_size>(unsigned long)factor*1024)
+      {
+         unit="mb";
+         factor*=1024.;
+      }
+      if (byte_size>(unsigned long)factor*1024)
+      {
+         unit="gb";
+         factor*=1024.;
+      }
+      std::cout<<"Spill log in memory size: "<<(double)byte_size/factor<<unit.c_str()<<std::endl;
+      if (!fFlags->fNoSpillSummary)
          for (size_t i=0; i<lines; i++)
             std::cout<<InMemorySpillTable[i].c_str()<<std::endl;
-
-      }
 
       if (fFlags->fWriteSpillDB)
          sqlite3_close(ppDb);
@@ -299,10 +299,8 @@ public:
       
       if (!gIsOnline) return;
 
-     #if 0
-
-      char cmd[1024000];
       //if (fileCache)
+      if (runinfo->fRunNo)
       {
          //TString DataLoaderPath=outfileName(0,outfileName.Length()-5);
          TString spillLogName="R";
@@ -310,14 +308,18 @@ public:
          spillLogName+=".log";
          std::cout <<"Log file: "<<spillLogName<<std::endl;
          std::ofstream spillLog (spillLogName);
-         spillLog<<"[code]"<<log.Data()<<"[/code]"<<std::endl;
+         spillLog<<"[code]";
+         for (size_t i=0; i<lines; i++)
+            spillLog<<InMemorySpillTable[i].c_str()<<std::endl;
+         spillLog<<"[/code]"<<std::endl;
          spillLog.close();
-         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=ALPHAgdumps &",spillLogName.Data(),gRunNumber);
+         char cmd[200]={0};
+         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
          printf("--- Command: \n%s\n", cmd);
          if ( fFlags->fWriteElog )
             system(cmd);
       }
-
+#if 0
       for (int i=0; i<MAXDET; i++)
       {
          for (int j=0; j<CHRONO_N_BOARDS; j++)
