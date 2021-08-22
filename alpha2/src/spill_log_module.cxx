@@ -103,12 +103,13 @@ public:
       {
          {"SIS_PMT_CATCH_OR","Catch OR"},
          {"SIS_PMT_CATCH_AND","Catch AND"},
-         {"SIS_PMT_ATOM_OR","Atom OR"},
-         {"SIS_PMT_ATOM_AND","Atom AND"},
-         {"PMT_12_AND_13","CT Stick"},
+         {"CT_SiPM1","CT SiPM1"},
+         {"CT_SiPM2","CT SiPM2"},
+         {"CT_SiPM_OR","CT SiPM OR"},
+         {"CT_SiPM_AND","CT SiPM AND"},
          {"IO32_TRIG_NOBUSY","IO32_TRIG"},
-         {"PMT_10","PMT 10"},
-         {"ATOMSTICK","Atom Stick"}
+         //{"PMT_10","PMT 10"},
+         //{"ATOMSTICK","Atom Stick"}
       };
   
       for (size_t i=0; i<channels.size(); i++)
