@@ -186,8 +186,6 @@ public:
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
       fFlags->AnalysisReport=new TA2AnalysisReport(runinfo->fRunNo);
@@ -196,7 +194,7 @@ public:
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &midas_start_time);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
    }
@@ -210,7 +208,7 @@ public:
       midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
       #endif
       runinfo->fRoot->fOutputFile->cd("AnalysisReport");
       fFlags->AnalysisReport->SetStopTime(midas_stop_time);

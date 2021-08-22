@@ -191,7 +191,6 @@ public:
             LiveSequenceLog[i].open(name.c_str());
          }
       }
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       //Is running, RunState==3
       //Is idle, RunState==1
@@ -205,9 +204,9 @@ public:
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
 #endif
 #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
-      runinfo->fOdb->RI("/runinfo/State",&RunState);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &run_stop_time);
+      runinfo->fOdb->RI("runinfo/State",&RunState);
 #endif
 
       std::cout<<"START:"<< run_start_time<<std::endl;
