@@ -21,6 +21,9 @@
 
 #include <vector>
 
+#include "midas.h"
+#include "msystem.h"
+#include "mrpc.h"
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -51,6 +54,7 @@ public:
    bool fWriteSpillDB = false;
    bool fWriteSpillTxt = false;
    bool fNoSpillSummary = false;
+   bool fOnlineSpillLog = false;
 };
 
 
@@ -159,6 +163,11 @@ public:
             exit(555);
          }
       }
+      if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
+      {
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "Begin run");
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+      }
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
@@ -228,9 +237,7 @@ public:
       if (gIsOnline)
       {
       }
-
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -238,11 +245,14 @@ public:
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
-
+      if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
+      {
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "End run");
+         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s","=====================================================================================================================================================================");
+      }
       if (!fFlags->fNoSpillSummary)
       {
-
-
          InMemorySpillTable.push_back("End run");
          InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
          size_t lines=InMemorySpillTable.size();
@@ -358,13 +368,15 @@ public:
             if (!s->IsDumpType && !s->IsInfoType)
             {
                 InMemorySpillTable.push_back(s->Name.c_str());
-                //continue;
+                cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", s->Name.c_str());
+                 //continue;
             }
             //Add spills that have analysis data in (eg Catching efficiency: Cold Dump / Hot Dump)
             if (s->IsInfoType)
             {
                 //s->Print();
                 InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+                cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
                 continue;
             }
             if (!s->SeqData) continue;
@@ -375,6 +387,7 @@ public:
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+            cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
             SaveToTree(runinfo,s);
          }
       }
@@ -413,6 +426,7 @@ public:
       std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
       std::cout<<"\t--spilltxt\t\tWrite Spill log to SpillLog/reload.txt"<<std::endl;
       std::cout<<"\t--nospillsummary\t\tTurn off spill log table printed at end of run"<<std::endl;
+      std::cout<<"\t--onlinespills\t\tWrite spills live to SpillLog in midas"<<std::endl;
    }
    void Init(const std::vector<std::string> &args)
    {
@@ -430,6 +444,8 @@ public:
             fFlags.fWriteSpillTxt = true;
          if (args[i] == "--nospillsummary")
             fFlags.fNoSpillSummary = true;
+         if (args[i] == "--onlinespills")
+            fFlags.fOnlineSpillLog = true;
       }
  
    }
