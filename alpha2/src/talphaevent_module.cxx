@@ -87,9 +87,27 @@ public:
 #endif
       if (fTrace)
          printf("AlphaEventModule::ctor!\n");
-      
+      fAlphaEventMap = NULL;
+      gVF48SiMap = NULL;
+   }
+
+   ~AlphaEventModule()
+   {
+      if (fTrace)
+         printf("AlphaEventModule::dtor!\n");
+
+   }
+
+   void BeginRun(TARunInfo* runinfo)
+   {
+
+      if (fTrace)
+         printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+
       // load the sqlite3 db
       TSettings *SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
+      if (!runinfo->fRunNo)
+         return;
 
       char name[200];
       sprintf(name,"%s%s%s",
@@ -124,31 +142,19 @@ public:
        delete detectorXML;
 
        delete SettingsDB;
-   }
 
-   ~AlphaEventModule()
-   {
-      if (fTrace)
-         printf("AlphaEventModule::dtor!\n");
-      delete gVF48SiMap;
-      delete fAlphaEventMap;
-   }
 
-   void BeginRun(TARunInfo* runinfo)
-   {
-      if (fTrace)
-         printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       fAlphaEventMap=new TAlphaEventMap();
+
+
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
    void PreEndRun(TARunInfo* runinfo)
    {
       if (fTrace)
          printf("HitModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
 
@@ -156,6 +162,16 @@ public:
    {
       if (fTrace)
          printf("HitModule::EndRun, run %d\n", runinfo->fRunNo);
+      if (gVF48SiMap)
+      {
+         delete gVF48SiMap;
+         gVF48SiMap = NULL;
+      }
+      if (fAlphaEventMap)
+      {
+         delete fAlphaEventMap;
+         fAlphaEventMap = NULL;
+      }
    }
 
    void PauseRun(TARunInfo* runinfo)
