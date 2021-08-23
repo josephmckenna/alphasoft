@@ -66,7 +66,7 @@ public:
   TVector3 GetError2(double ) { TVector3 v(0.,0.,0.); return v; }
   TVector3 Evaluate(double r2, 
 		    double ux, double uy, double uz, 
-		    double x0, double y0, double z0);
+		    double x0, double y0, double z0) const;
   TVector3 Evaluate(double r2);
   TVector3 EvaluateErrors2(double ) { TVector3 v(0.,0.,0.); return v; }
 
