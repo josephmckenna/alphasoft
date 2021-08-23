@@ -21,9 +21,11 @@
 
 #include <vector>
 
+#ifdef HAVE_MIDAS
 #include "midas.h"
 #include "msystem.h"
 #include "mrpc.h"
+#endif
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
@@ -164,12 +166,16 @@ public:
             exit(555);
          }
       }
+
       if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       {
+#ifdef HAVE_MIDAS
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "Begin run");
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", SpillLogTitle.Data());
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-         
+#else
+         std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
+#endif
       }
       if (!fFlags->fNoSpillSummary)
       {
@@ -250,9 +256,14 @@ public:
       //runinfo->State
       if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       {
+#ifdef HAVE_MIDAS
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "End run");
          cm_msg1(MINFO, "SpillLog", "alpha2online", "%s","=====================================================================================================================================================================");
+#else
+         std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
+#endif
+
       }
 
       InMemorySpillTable.push_back("End run");
@@ -371,7 +382,9 @@ public:
             if (!s->IsDumpType && !s->IsInfoType)
             {
                 InMemorySpillTable.push_back(s->Name.c_str());
+#ifdef HAVE_MIDAS
                 cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", s->Name.c_str());
+#endif
                  //continue;
             }
             //Add spills that have analysis data in (eg Catching efficiency: Cold Dump / Hot Dump)
@@ -379,7 +392,9 @@ public:
             {
                 //s->Print();
                 InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+#ifdef HAVE_MIDAS
                 cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
+#endif
                 continue;
             }
             if (!s->SeqData) continue;
@@ -390,7 +405,9 @@ public:
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+#ifdef HAVE_MIDAS
             cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
+#endif
             SaveToTree(runinfo,s);
          }
       }
