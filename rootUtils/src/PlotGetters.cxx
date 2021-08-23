@@ -625,6 +625,18 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, s
    return Plot_SIS(runNumber, chans, tmin, tmax);
 }
 
+TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::pair<double,int>> SIS_Counts,double tstart, double tstop)
+{
+   std::vector<double> tmin;
+   std::vector<double> tmax;
+   for (auto& a: SIS_Counts)
+   {
+     tmin.push_back(a.first + tstart);
+     tmax.push_back(a.first + tstop);
+   }
+   return Plot_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
+}
+
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
