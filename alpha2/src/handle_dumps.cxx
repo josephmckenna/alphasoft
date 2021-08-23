@@ -14,6 +14,7 @@
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "DumpHandling.h"
+#include "GEM_BANK_flow.h"
 #include <iostream>
 class DumpMakerModuleFlags
 {
@@ -210,8 +211,70 @@ public:
             dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
          }
       }
-      
+
       A2SpillFlow* f=new A2SpillFlow(flow);
+
+      GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
+      double LNE0 = -1.;
+      double LNE5 = -1.;
+      uint32_t unixtime = -1;
+      if (GEMFlow)
+      {
+         GEMBANK<float> *bank = (GEMBANK<float>*) GEMFlow->data;
+         unixtime = GEMFlow->MIDAS_TIME;
+         if (bank->GetCategoryName() == "ADandELENA" && bank->GetSizeOfDataArray())
+         {
+            //LNE0
+            if (bank->GetVariableName() == "LNEAPULB0030")
+               LNE0 = *bank->GetFirstDataEntry()->DATA(0);
+            //LNE5
+            if (bank->GetVariableName() == "LNEAPULB5030")
+               LNE5 = *bank->GetFirstDataEntry()->DATA(0);
+         }
+      }
+      GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+      if (GEMArrayFlow)
+      {
+         GEMBANKARRAY *array = GEMArrayFlow->data;
+         unixtime = GEMArrayFlow->MIDAS_TIME;
+         int bank_no = 0;
+         GEMBANK<float>* bank = (GEMBANK<float>*) array->GetGEMBANK(bank_no);
+         while(bank)
+         {
+
+            if (bank->GetCategoryName() == "ADandELENA")// && bank->GetSizeOfDataArray())
+            {
+               //LNE0
+               if (bank->GetVariableName() == "LNEAPULB0030")
+               {
+                  LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
+               }
+               //LNE5
+               if (bank->GetVariableName() == "LNEAPULB5030")
+               {
+                  LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
+               }
+            }
+            bank = (GEMBANK<float>*) array->GetGEMBANK(++bank_no);
+         }
+      }
+      if (LNE0 > 0 || LNE5 > 0)
+      {
+         
+         std::string ELENA_STRING = std::string("LNE0: ") + std::to_string(LNE0) + std::string("\tLNE5: ") + std::to_string(LNE5);
+         TA2Spill* elena = NULL;
+         if (LNE0 > 0 && LNE5 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E \t LNE5: %.2E	",LNE0 * 1E6,LNE5 * 1E6);
+         else if (LNE0 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E ",LNE0 * 1E6);
+         else if (LNE5 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> \t\t\tLNE5: %.2E ",LNE5 * 1E6);
+         if (elena)
+            f->spill_events.push_back(elena);
+         //std::cout << "DATA" << LNE0 << "\t" << LNE5 << std::endl;
+      }
+
+
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)
       {
