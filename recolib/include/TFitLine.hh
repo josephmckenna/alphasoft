@@ -95,7 +95,7 @@ public:
 
   inline int GetStat()    const { return fStat; }
   inline double GetChi2() const { return fchi2; }
-  inline int GetDoF()     const { return fNpoints - fNpar; }
+  inline int GetDoF()     const { return 3.*fNpoints - fNpar; }
 
   inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
   inline double GetChi2Cut() const   {return fChi2Cut;}    

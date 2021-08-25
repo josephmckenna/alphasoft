@@ -888,11 +888,19 @@ void TFitHelix::Initialization(double* Ipar)
 
   //  p0 = phi0>=0.?phi0:phi0+TMath::TwoPi(); // very good 19036
 
+#ifdef __MINUIT2FIT__
+  Ipar[0]=p0;
+  Ipar[1]=D;
+  Ipar[2]=0.5/rc;
+  Ipar[3]=l;
+  Ipar[4]=z0;
+#else
   Ipar[0]=rc;
   Ipar[1]=p0;
   Ipar[2]=D;
   Ipar[3]=l;
   Ipar[4]=z0;
+#endif
 }
 
 //==============================================================================================
@@ -1534,6 +1542,7 @@ bool TFitHelix::IsGoodChiSquare()
 }
 void TFitHelix::Reason()
 {
+  std::cout<<"--------------------------------------------"<<std::endl;
   std::cout<<"  TFitHelix::Reason() Status: "<<GetStatus()<<"\t";
   double chi2R = fchi2R/(double) GetRDoF(), chi2Z = fchi2Z/(double) GetZDoF();
   switch( fStatus )
@@ -1576,6 +1585,7 @@ void TFitHelix::Reason()
    default:
      std::cout<<"\n";
    }
+  std::cout<<"--------------------------------------------"<<std::endl;
 }
 
 //==============================================================================================

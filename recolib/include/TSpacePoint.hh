@@ -129,6 +129,11 @@ public:
 
    virtual void Print(Option_t *opt="xy") const;
 
+   //The following 2 methods are used to make it easier to loop through
+   //coordinates (used in Line fitting, looping through projections).
+   double GetCoord(int index) const;
+   double GetErr(int index) const;
+
    ClassDef(TSpacePoint,2)
 };
 

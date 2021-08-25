@@ -31,6 +31,8 @@ namespace ALPHAg {
    static const double _RadiationLength = 32.0871; // mm : averaged over ALPHA-2 material
 
    static const double _co2frac = 0.3;
+
+   static const double _null[3]={ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown};
 }
 
 

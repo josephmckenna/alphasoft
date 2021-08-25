@@ -11,6 +11,8 @@
 #include "TFitHelix.hh"
 #include "TFitVertex.hh"
 
+#include "HelixFit.hh"
+
 #ifdef BUILD_AG_SIM
 #include "TMChit.hh"
 #endif
@@ -468,7 +470,52 @@ int Reco::FitHelix()
          helix->SetChi2RMin( fHelChi2RMin );
          helix->SetChi2ZMin( fHelChi2ZMin );
          helix->SetDCut( fHelDcut );
+#ifdef __MINUIT2FIT__
+         double* istart = new double[5];
+         helix->Initialization(istart);
+         HelixFit hf(*at->GetPointsArray());
+         hf.SetStart(istart);
+         delete istart;
+         hf.Fit();
+         printf("Reco::FitHelix() using Minuit2!\n");
+         hf.Print();
+
+         helix->SetC(hf.GetC());
+         helix->SetRc(hf.GetRc());
+         helix->SetPhi0(hf.GetPhi0());
+         helix->SetD(hf.GetD());
+         helix->SetLambda(hf.GetLambda());
+         helix->SetZ0(hf.GetZ0());
+
+         helix->SetX0(hf.GetX0());
+         helix->SetY0(hf.GetY0());
+         //helix->SetXY0();
+         helix->SetBranch(hf.GetBranch());
+         helix->SetA();
+
+         helix->SetErrC(hf.GetErrC());
+         helix->SetErrRc(hf.GetErrRc());
+         helix->SetErrPhi0(hf.GetErrPhi0());
+         helix->SetErrD(hf.GetErrD());
+         helix->SetErrLambda(hf.GetErrLambda());
+         helix->SetErrZ0(hf.GetErrZ0());
+
+         // helix->SetRchi2(hf.GetRChi2());
+         // helix->SetZchi2(hf.GetZChi2());
+
+         // helix->SetStatR(hf.GetRStat());
+         // helix->SetStatZ(hf.GetZStat());
+
+         helix->SetRchi2(hf.GetChi2());
+         helix->SetZchi2(double(helix->GetZDoF()));
+
+         helix->SetStatR(hf.GetStat());
+         helix->SetStatZ(hf.GetStat());
+         
+#else
+         printf("Reco::FitHelix() using Minuit1\n");
          helix->Fit();
+#endif
 
          if( helix-> GetStatR() > 0 &&
              helix-> GetStatZ() > 0 )
@@ -478,20 +525,20 @@ int Reco::FitHelix()
             {
                // calculate momumentum
                double pt = helix->Momentum();
-               if( fTrace )
-                  {
+               // if( fTrace )
+               //    {
                      helix->Print();
                      std::cout<<"Reco::FitHelix()  hel # "<<n
                               <<" p_T = "<<pt
                               <<" MeV/c in B = "<<helix->GetMagneticField()
                               <<" T"<<std::endl;
-                  }
+                     //   }
                fHelixArray.push_back(helix);
                ++n;
             }
          else
             {
-               if( fTrace )
+               //if( fTrace )
                   helix->Reason();
                helix->Clear();
                delete helix;

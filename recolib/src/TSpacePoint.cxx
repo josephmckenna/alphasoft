@@ -286,4 +286,30 @@ void TSpacePoint::Print(Option_t* opt) const
   else std::cout<<"Unknown coordinate system"<<std::endl;
 }
 
+double TSpacePoint::GetCoord(int index) const{
+  if(index == 0){
+    return fx;
+  }
+  if(index == 1){
+    return fy;
+  }
+  if(index == 2){
+    return fz;
+  }
+  return 9999;
+}
+
+double TSpacePoint::GetErr(int index) const{
+  if(index == 0){
+    return ferrx;
+  }
+  if(index == 1){
+    return ferry;
+  }
+  if(index == 2){
+    return ferrz;
+  }
+  return 9999;
+}
+
 ClassImp(TSpacePoint)

@@ -71,6 +71,8 @@ private:
   double fDCut;
   double fpCut;
 
+   friend class Reco; 
+
   // parameters initialization
   void Initialization(double* Ipar);
 
@@ -122,6 +124,7 @@ public:
 
   inline double GetA() const       {return fa;}
   inline void SetA(double a)       {fa=a;}
+  inline void SetA() { fa=-0.299792458*TMath::Sign(1.,fc)*fB;}
 
   inline double GetErrC() const       {return ferr2c;}
   inline void SetErrC(double c)       {ferr2c=c;}
@@ -140,11 +143,13 @@ public:
   inline double GetRchi2() const {return fchi2R;}
   inline void SetRchi2(double rchi2) {fchi2R = rchi2;}
   inline int GetRDoF() const     {return 2*GetNumberOfPoints() - fRNpar;}
+  inline void SetStatR(int s)    {fStatR=s;}
   inline int GetStatR() const    {return fStatR;}
 
   inline double GetZchi2() const {return fchi2Z;}
   inline void SetZchi2(double zchi2) {fchi2Z = zchi2;}
   inline int GetZDoF() const     {return GetNumberOfPoints() - fZNpar;}
+  inline void SetStatZ(int s)    {fStatZ=s;}
   inline int GetStatZ() const    {return fStatZ;}
 
   inline void SetXY0()

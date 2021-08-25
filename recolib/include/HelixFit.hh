@@ -5,86 +5,72 @@
 #include <vector>
 #include "Minuit2/FCNBase.h"
 #include "TSpacePoint.hh"
-#include <TVector3.h>
+#include "TPCconstants.hh"
+
 #include <iostream>
 #include <iomanip>
 
 class HelixFunction {
 public:
    HelixFunction(double f, double d, double c, 
-                 double l, double z, double eps=1.);
+                 double l, double z, double eps=1.): fphi0(f), fDistance(d),
+                                                     fCurvature(c),
+                                                     flambda(l), fz0(z),
+                                                     feps(eps)
+   {
+      fRadiusCurv=1./2.*fCurvature;
+   }
 
-   ~HelixFunction() {}
+   virtual ~HelixFunction() {}
 
    double phi0() const { return fphi0;      }
    double D()    const { return fDistance;  }
    double c()    const { return fCurvature; }
+   double Rc()   const { return fRadiusCurv; }
    double l()    const { return flambda;    }
    double z0()   const { return fz0;        }
+   const double Branch() const { return feps; }
 
-   // double a()    const { return fa;  }
-   // double x0()   const { return fx0; }
-   // double y0()   const { return fy0; }
-
-   std::vector<double> operator()(double r) const;
+   virtual std::vector<double> operator()(double r) const;
+   double arclength(double&r) const;
 
 private:
    double fphi0;
    double fDistance;
    double fCurvature;
+   double fRadiusCurv;
 
    double flambda;
    double fz0;
 
-   double feps;
-
-   // double fa;
-   // double fx0;
-   // double fy0;
-
+   const double feps;
    double beta(double& r) const;
 };
 
-class HelixFcnPos : public ROOT::Minuit2::FCNBase 
+class HelixFcn : public ROOT::Minuit2::FCNBase 
 {
 public:
-   HelixFcnPos(const std::vector<TSpacePoint*>& points) : 
-      fSpacepoints(points),fErrorDef(1.)
+   HelixFcn(const std::vector<TSpacePoint*>& points, double eps=1.) : 
+      fSpacepoints(points),fErrorDef(1.),fEpsilon(eps)
    {}
-   ~HelixFcnPos() {}
+   ~HelixFcn() {}
    
-   virtual double operator()(const std::vector<double>&) const override;
-   virtual double Up() const override                      {return fErrorDef;}
-   inline std::vector<TSpacePoint*> GetSpacepoints() const {return fSpacepoints;}
+   virtual double operator()(const std::vector<double>&)    const;
+   virtual double Up()                                      const {return fErrorDef;}
+   inline const std::vector<TSpacePoint*>* GetSpacepoints() const {return &fSpacepoints;}
 
-   void SetErrorDef(double def) override {fErrorDef = def;}
+   inline void setErrorDef(double def) { fErrorDef = def; }
+   //inline void SetBranch(double eps)   { fEpsilon = eps;  }
 
 private:
-   std::vector<TSpacePoint*> fSpacepoints;
+   const std::vector<TSpacePoint*> fSpacepoints;
    double fErrorDef;
-};
-
-class HelixFcnNeg : public ROOT::Minuit2::FCNBase 
-{
-public:
-   HelixFcnNeg(const std::vector<TSpacePoint*>& points) : 
-      fSpacepoints(points),fErrorDef(1.)
-   {}
-   ~HelixFcnNeg() {}
-   
-   virtual double operator()(const std::vector<double>&) const override;
-   virtual double Up() const override                              {return fErrorDef;}
-   inline std::vector<TSpacePoint*> GetSpacepoints() const {return fSpacepoints;}
-
-   void SetErrorDef(double def) override {fErrorDef = def;}
-
-private:
-   std::vector<TSpacePoint*> fSpacepoints;
-   double fErrorDef;
+   const double fEpsilon;
 };
 
 
-class HelixFit{
+class HelixFit
+{
 public:
    HelixFit(std::vector<TSpacePoint*>);
    ~HelixFit() {}
@@ -97,13 +83,14 @@ public:
    inline const std::vector<double> GetStep() const { return fStep; }  
 
    void Fit();
+   std::vector<double> Evaluate(double r) const;
 
    inline double GetChi2() const { return fchi2; }
    inline int GetStat()    const { return fStat; }
    inline int GetDoF()     const { return fDoF; }
 
    inline double GetC() const         {return fc;}
-   //   inline double GetRc() const      {return fRc;}
+   inline double GetRc() const        {return fRc;}
    inline double GetPhi0() const      {return fphi0;}
    inline double GetD() const         {return fD;}
    inline double GetLambda() const    {return flambda;}
@@ -124,8 +111,8 @@ public:
    void Print() const;
 
 private:
-   HelixFcnPos theFCNpos;
-   HelixFcnNeg theFCNneg;
+   HelixFcn theFCNpos;
+   HelixFcn theFCNneg;
 
    uint fNpar;
   
@@ -157,9 +144,6 @@ private:
    int fStat;
    int fDoF;
    double fchi2;
-
-   TVector3 fMomentum;  // MeV/c
-   TVector3 fMomentumError;
 
    int print_level;
 };
