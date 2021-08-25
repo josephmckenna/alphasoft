@@ -28,7 +28,7 @@ TStoreLine::TStoreLine(TFitLine* line,
    fResiduals2( line->GetResidualsSquared() )
 						
 {
-   fchi2=line->GetChi2()/double(line->GetDoF())/3.;
+   fchi2=line->GetChi2()/double(line->GetDoF());
 
   //fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
   for( uint i=0; i<points->size(); ++i )
@@ -51,7 +51,7 @@ TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
   fDirectionError.SetXYZ( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() );
   fPointError.SetXYZ( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() );
 
-  fchi2 = line->GetChi2()/double(line->GetDoF())/3.;
+  fchi2 = line->GetChi2()/double(line->GetDoF());
  
   fStatus = line->GetStatus();
 }
