@@ -685,6 +685,172 @@ void TFitHelix::Fit()
   double* vstart = new double[fNpar];
   Initialization(vstart);
 
+  char parName[fNpar][7] = {"Rc   ","phi0","D   ","lambda","z0  "};
+  if( 0 )
+    {
+      for(int i=0; i<fNpar; ++i)
+	printf("-- i%s\t%lf\n",parName[i],vstart[i]);
+    }
+
+#if BETA>0 // new functions
+
+  RadialFit(vstart);
+  AxialFit(vstart+3);
+
+#else  
+  // Set step sizes for parameters
+  //  static double step[fNpar] = {0.00001 , 0.001 , 0.001, 0.001 , 0.01};
+  static double step[fNpar] = {0.001 , 0.001 , 0.001, 0.001 , 0.01};
+
+  // ================ R FIT 1 ================
+
+  rfitter = new TMinuit(fRNpar);
+  rfitter->SetObjectFit(this);
+  rfitter->SetFCN( RadFunc );
+
+  double arglist[10];
+  int ierflg = 0;
+
+  rfitter->SetPrintLevel(-1);
+
+  arglist[0] = 1.0;
+  rfitter->mnexcm("SET ERR", arglist , 1, ierflg);
+
+  rfitter->mnparm(0, "Rc",   vstart[0], step[0], 0,0,ierflg);
+  rfitter->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitter->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  arglist[0] = 6.0;
+  rfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
+
+  // // Now ready for minimization step
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
+  rfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  double nused0,nused1,chi2;
+  int npar, stat;
+  // status integer indicating how good is the covariance
+  //   0= not calculated at all
+  //   1= approximation only, not accurate
+  //   2= full matrix, but forced positive-definite
+  //   3= full accurate covariance matrix
+  rfitter->mnstat(chi2,nused0,nused1,npar,npar,stat);
+
+  // ================ R FIT 2 ================
+
+  rfitter_ = new TMinuit(fRNpar);
+  rfitter_->SetObjectFit(this);
+  rfitter_->SetFCN( RadFunc_ );
+
+  rfitter_->SetPrintLevel(-1);
+
+  arglist[0] = 1.0;
+  rfitter_->mnexcm("SET ERR", arglist , 1, ierflg);
+
+  rfitter_->mnparm(0, "Rc",   vstart[0], step[0], 0,0,ierflg);
+  rfitter_->mnparm(1, "phi0", vstart[1], step[1], 0,0,ierflg);
+  rfitter_->mnparm(2, "D",    vstart[2], step[2], 0,0,ierflg);
+
+  arglist[0] = 6.0;
+  rfitter_->mnexcm("CALL FCN", arglist, 1, ierflg);
+
+  // Now ready for minimization step
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
+  rfitter_->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  double chi2_;
+  int stat_;
+  rfitter_->mnstat(chi2_,nused0,nused1,npar,npar,stat_);
+
+  //  double errc,errphi0,errD;
+  double errR,errphi0,errD;
+
+  // ======== R FIT 1 or 2 ? ========
+  if(chi2<chi2_)
+    {
+      rfitter->GetParameter(0,fRc,     errR);
+      rfitter->GetParameter(1,fphi0, errphi0);
+      rfitter->GetParameter(2,fD,     errD);
+      fStatR = stat;
+      fchi2R = chi2;
+      fBranch = 1;
+      //      std::cout<<"RFIT1"<<std::endl;
+    }
+  else
+    {
+      rfitter_->GetParameter(0,fRc,     errR);
+      rfitter_->GetParameter(1,fphi0, errphi0);
+      rfitter_->GetParameter(2,fD,     errD);      
+      fStatR = stat_;
+      fchi2R = chi2_;
+      fBranch = -1;
+      //     std::cout<<"RFIT2"<<std::endl;
+    }
+
+  delete rfitter;
+  delete rfitter_;
+
+  fc = 0.5/fRc;
+  ferr2Rc = errR*errR;
+  ferr2c = 4.*TMath::Power(fc,4.)*ferr2Rc;
+  //  ferr2c = errc*errc;  
+  ferr2phi0 = errphi0*errphi0;
+  ferr2D = errD*errD;
+  //  if(fphi0>=TMath::TwoPi())
+  //    fphi0=TMath::TwoPi()-fphi0;
+  fx0=-fD*TMath::Sin(fphi0);
+  fy0=fD*TMath::Cos(fphi0);
+
+  fa=-0.299792458*TMath::Sign(1.,fc)*fB;
+
+  // ================ Z FIT  ================
+
+  zfitter = new TMinuit(fZNpar);
+  zfitter->SetObjectFit(this);
+  zfitter->SetFCN( ZedFunc );
+
+  zfitter->SetPrintLevel(-1);
+
+  arglist[0] = 1.0;
+  zfitter->mnexcm("SET ERR", arglist , 1, ierflg);
+
+  zfitter->mnparm(0, "lambda", vstart[3], step[3], 0,0,ierflg);
+  zfitter->mnparm(1, "z0",     vstart[4], step[4], 0,0,ierflg);
+
+  arglist[0] = 6.0;
+  zfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
+
+  // Now ready for minimization step
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
+  zfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  zfitter->mnstat(chi2,nused0,nused1,npar,npar,stat);
+  
+  double errlambda,errz0;
+  zfitter->GetParameter(0,flambda, errlambda);
+  zfitter->GetParameter(1,fz0,     errz0);
+  fStatZ = stat;
+  fchi2Z = chi2;
+  delete zfitter;
+
+  ferr2lambda = errlambda*errlambda;
+  ferr2z0 = errz0*errz0;
+#endif
+  delete[] vstart;
+}
+
+void TFitHelix::FitM2()
+{
+  if(fNpoints<=fNpar) return;
+  fStatus=0;
+
+  // Set starting values for parameters
+  double* vstart = new double[fNpar];
+  Initialization(vstart);
+
   //Minuit2 fitting for R FIT 1
   std::vector<double> init_rfit = {vstart[0], vstart[1], vstart[2]};
   std::vector<double> init_rerr(3, 0.001);

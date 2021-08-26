@@ -191,6 +191,7 @@ public:
 
   // LS fit to helix canonical form
   virtual void Fit();
+  virtual void FitM2();
   void RadialFit(double* Ipar);
   void AxialFit(double* Ipar);
 
