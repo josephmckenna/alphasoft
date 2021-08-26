@@ -40,7 +40,7 @@ private:
    double amplitude_cut; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
+   const static int sample_waveforms_to_plot = 100; // Saves a number of raw pulses for inspection
    int hit_num=0;
 
 public:
@@ -56,6 +56,7 @@ private:
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
    TH2D *hBsc_AmplitudeVsChannel = NULL;
+   TH1D *hBsc_MedianAmplitudeVsChannel = NULL;
    TH2D *hBsc_SaturatedVsBar = NULL;
    TH2D *hBsc_TimeVsChannel = NULL;
    TH1D* hWave = NULL;
@@ -140,6 +141,7 @@ public:
       delete hBsc_AmplitudeVsBar;
       delete hBsc_SaturatedVsBar;
       delete hBsc_AmplitudeVsChannel;
+      delete hBsc_MedianAmplitudeVsChannel;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
@@ -273,7 +275,7 @@ public:
                   sgfit->SetParLimits(1,0,500);
                   sgfit->SetParLimits(2,0,100);
                   sgfit->SetParLimits(3,0,2);
-                  hWave->Fit("sgfit","RQ");
+                  hWave->Fit("sgfit","RQ0");
       
                   // Extrapolates amplitude and interpolates start and end times
                   double fit_amp = sgfit->GetParameter(0) - baseline;
