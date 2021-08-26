@@ -162,6 +162,93 @@ void TFitLine::Fit()
   static double vstart[fNpar*3];
   Initialization(vstart);
 
+  // Set step sizes for parameters
+  static double step[fNpar*3] = {0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001};
+
+  lfitter = new TMinuit(fNpar*3);
+  lfitter->SetObjectFit(this);
+  lfitter->SetFCN( FitFunc ); // chi^2-like
+  //  lfitter->SetFCN( PointDistFunc ); // distance^2
+
+  double arglist[10];
+  int ierflg = 0;
+
+  lfitter->SetPrintLevel(-1);
+
+  arglist[0] = 1.0;
+  lfitter->mnexcm("SET ERR", arglist , 1, ierflg);
+  
+  lfitter->mnparm(0, "ux", vstart[0], step[0], 0,0,ierflg);
+  lfitter->mnparm(1, "uy", vstart[1], step[1], 0,0,ierflg);
+  lfitter->mnparm(2, "uz", vstart[2], step[2], 0,0,ierflg); 
+  lfitter->mnparm(3, "x0", vstart[3], step[3], 0,0,ierflg);
+  lfitter->mnparm(4, "y0", vstart[4], step[4], 0,0,ierflg);
+  lfitter->mnparm(5, "z0", vstart[5], step[5], 0,0,ierflg);
+
+  arglist[0] = 6.0;
+  lfitter->mnexcm("CALL FCN", arglist, 1, ierflg);
+
+  // Now ready for minimization step
+  arglist[0] = 500.;
+  arglist[1] = 0.1;
+  lfitter->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  double nused0,nused1;
+  int npar;
+  // status integer indicating how good is the covariance
+  //   0= not calculated at all
+  //   1= approximation only, not accurate
+  //   2= full matrix, but forced positive-definite
+  //   3= full accurate covariance matrix
+  lfitter->mnstat(fchi2,nused0,nused1,npar,npar,fStat);
+  
+  double errux,erruy,erruz,errx0,erry0,errz0;
+  lfitter->GetParameter(0,fux, errux);
+  lfitter->GetParameter(1,fuy, erruy);
+  lfitter->GetParameter(2,fuz, erruz);
+  lfitter->GetParameter(3,fx0, errx0);
+  lfitter->GetParameter(4,fy0, erry0);
+  lfitter->GetParameter(5,fz0, errz0);
+
+  delete lfitter;
+
+  double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
+  if( mod == 0.)
+     {
+        std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+        return;
+     }
+  else if( mod == 1. )
+     {
+        //  std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
+     }
+  else
+    {
+      fux/=mod;
+      fuy/=mod;
+      fuz/=mod;
+    }
+
+  fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+  //  std::cout<<"TFitLine::Fit() |v|="<<mod<<" ur="<<fr0<<std::endl;
+
+  ferr2ux = errux*errux;  
+  ferr2uy = erruy*erruy;
+  ferr2uz = erruz*erruz;  
+  ferr2x0 = errx0*errx0;  
+  ferr2y0 = erry0*erry0;
+  ferr2z0 = errz0*errz0;
+}
+
+void TFitLine::FitM2()
+{
+  if(fNpoints<=fNpar) return;
+  fStatus=0;
+
+  // Set starting values for parameters
+  static double vstart[fNpar*3];
+  Initialization(vstart);
+
   std::vector<double> init_params = {vstart[0],vstart[1],vstart[2],vstart[3],vstart[4],vstart[5]};
   std::vector<double> init_errors(6,0.0001);
   
