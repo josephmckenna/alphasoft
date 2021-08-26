@@ -1,9 +1,4 @@
-
-
 //Turning this whole mother off
-
-
-
 #include <stdio.h>
 
 #include "manalyzer.h"
@@ -43,6 +38,7 @@ private:
 
    TMVA::Reader *reader;
    Float_t phi_S0axisraw, S0axisrawZ, S0rawPerp, residual, nhits, phi, r, nCT, nGT;
+   MVAFlowEvent fMVAFlow;
    //vector ;
    
    std::vector<std::string> input_vars;
@@ -87,6 +83,8 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       TMVA::Reader *reader = new TMVA::Reader();
+
+      fMVAFlow->LoadVariablesToReader(reader);
 
       reader->AddVariable( "phi_S0axisraw", &phi_S0axisraw );
       reader->AddVariable( "S0axisrawZ", &S0axisrawZ );

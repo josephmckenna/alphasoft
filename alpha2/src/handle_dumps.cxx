@@ -177,16 +177,20 @@ public:
               {
                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
+                 {
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
                     for (int nstarts=0; nstarts<e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
                        dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
                     }
+                 }
                  if (DumpStopChannels[a]>0)
+                 {
                     for (int nstops=0; nstops<e->GetCountsInChannel(DumpStopChannels[a]); nstops++)
                     {
                        dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
                     }
+                 }
                }
             }
          }

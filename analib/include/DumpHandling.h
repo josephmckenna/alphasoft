@@ -339,7 +339,7 @@ public:
                SIS_Filled[ScalerModule]=FILLED;
                return 1;
             }
-      //std::cout<<"POOP"<<std::endl;
+      //std::cout<<"POOP"<<std::endl; //lolwut, was this me? remember to git blame
       //s->Print();
       *(IntegratedSISCounts[ScalerModule])+=s;
       return 0;
@@ -422,6 +422,7 @@ public:
       //Construct a new dump at the back of dumps
       dumps.push_back(new DumpPair<VertexType,ScalerType,NumScalers>(d));
       ordered_starts.push_back(dumps.back()->StartDumpMarker);
+      std::cout << "Adding start dump to ordered_starts. Seq: " << SequencerID << ", dumpname: " << dumps.back()->StartDumpMarker->Description << "." << std::endl;
       //For now no error checking...
       return true;
    }
@@ -437,6 +438,8 @@ public:
          if (dumps.at(i)->AddStopDump(d))
          {
             ordered_stops.push_back(dumps.at(i)->StopDumpMarker);
+            std::cout << "Adding stop dump to ordered_stops. Seq: " << SequencerID << ", dumpname: " << dumps.at(i)->StopDumpMarker->Description << "." << std::endl;
+      
             return true;
          }
       }
@@ -578,6 +581,7 @@ public:
       if (!ordered_starts.front())
       {
          ordered_starts.pop_front();
+         std::cout << "Popping front of ordered_starts. Description: empty." << std::endl; 
          return AddStartTime(midas_time,t);
       }
       // Find sequence start time stamp that closes matches this start 
@@ -601,6 +605,8 @@ public:
       {
          RemoveAndCleanAbortedSequence(best_i);
          return AddStartTime(midas_time,t);
+
+         //LMG Add comment here about adding start time. Do same for stop time. Compare.
       }
       if (ordered_starts.front()->MidasTime > midas_time)
       {
@@ -610,8 +616,10 @@ public:
          ordered_starts.front()->Print();
          std::cout<<ordered_starts.front()->MidasTime <<" > "<< midas_time <<std::endl;
          ordered_starts.pop_front();
+         std::cout << "Popping front of ordered_starts. Description: " << ordered_starts.front()->Description << std::endl;
          return AddStartTime(midas_time,t);
       }
+      std::cout << "Popping front of ordered_starts. Description: " << ordered_starts.front()->Description << std::endl;
       ordered_starts.front()->fRunTime=t;
       ordered_starts.pop_front();
       return;
@@ -629,6 +637,7 @@ public:
       if (!ordered_stops.front())
       {
           ordered_stops.pop_front();
+          std::cout << "Popping front of ordered_stops. Description: empty." << std::endl; 
           return AddStopTime(midas_time,t);
       }
       // Find sequence start time stamp that closes matches this start 
@@ -660,6 +669,7 @@ public:
 
          std::cout<<ordered_stops.front()->MidasTime <<" > "<< midas_time <<std::endl;
          ordered_stops.pop_front();
+         std::cout << "Popping front of ordered_stops. Description: " << ordered_stops.front()->Description << std::endl;
          return AddStopTime(midas_time,t);
       }
       DumpPair<VertexType,ScalerType,NumScalers>* pair=GetPairOfStop(ordered_stops.front());
@@ -669,39 +679,57 @@ public:
          {
             if (pair->StartDumpMarker->fRunTime>t)
             {
-               error_queue.push_back(new SpillType(fRunNo,
-                                                   pair->StartDumpMarker->MidasTime,
-                                                   "XXXX Error... stop dump (%s) happened before start?",
-                                                   ordered_stops.front()->Description.c_str()));
+               error_queue.push_back(new SpillType(fRunNo, pair->StartDumpMarker->MidasTime, 
+                  "XXXX Error... stop dump (%s) happened before start?", ordered_stops.front()->Description.c_str()));
+               
                int BadSeq=ordered_starts.front()->fSequenceCount;
-              std::cout<<"Deleteing bad sequence:"<<BadSeq;
-         for (size_t i=0; i<ordered_starts.size(); i++)
-         {
-            if (ordered_starts.at(i))
-            if (ordered_starts.at(i)->fSequenceCount == BadSeq)
-            {
-               std::cout<<"REMOVING START:"<<ordered_starts.at(i)->Description.c_str()<<std::endl;
-               DumpPair<VertexType,ScalerType,NumScalers>* bad_pair=GetPairOfStart(ordered_starts.at(i));
-               //JOE DO SOME PROPER DELETING!!!
-               bad_pair->StartDumpMarker=NULL;
-               bad_pair->StopDumpMarker=NULL;
-               ordered_starts.at(i)=NULL;
-            }
-         }
-         for (size_t i=0; i<ordered_stops.size(); i++)
-         {
-            if (ordered_stops.at(i))
-            if (ordered_stops.at(i)->fSequenceCount == BadSeq)
-            {
-               std::cout<<"REMOVING STOP:"<<ordered_stops.at(i)->Description.c_str()<<std::endl;
-               DumpPair<VertexType,ScalerType,NumScalers>* bad_pair=GetPairOfStop(ordered_stops.at(i));
-               //JOE DO SOME PROPER DELETING!!!
-               bad_pair->StartDumpMarker=NULL;
-               bad_pair->StopDumpMarker=NULL;
-               ordered_stops.at(i)=NULL;
-            }
-         }
-         return;
+               std::cout<<"Deleteing bad sequence:"<<BadSeq;
+               std::cout << "Actually we're not deleting the sequence, just the extra stop marker." << std::endl;
+
+               ordered_stops.pop_front();
+
+               bool discardFullSeq = false;
+               if(discardFullSeq)
+               {
+                  //Removing all starts in the sequence.
+                  for (size_t i=0; i<ordered_starts.size(); i++)
+                  {
+                     if (ordered_starts.at(i))
+                     if (ordered_starts.at(i)->fSequenceCount == BadSeq)
+                     {
+                        std::cout<<"REMOVING START:"<<ordered_starts.at(i)->Description.c_str()<<std::endl;
+                        DumpPair<VertexType,ScalerType,NumScalers>* bad_pair=GetPairOfStart(ordered_starts.at(i));
+                        //JOE DO SOME PROPER DELETING!!!
+                        if(bad_pair)
+                        {
+                           bad_pair->StartDumpMarker=NULL;
+                           bad_pair->StopDumpMarker=NULL;
+                        }
+                        ordered_starts.at(i)=NULL;
+                     }
+                  }
+                  
+                  //Removing all stops in the sequence.
+                  for (size_t i=0; i<ordered_stops.size(); i++)
+               {
+                  if (ordered_stops.at(i))
+                  {
+                     if (ordered_stops.at(i)->fSequenceCount == BadSeq)
+                     {
+                        std::cout<<"REMOVING STOP:"<<ordered_stops.at(i)->Description.c_str()<<std::endl;
+                        DumpPair<VertexType,ScalerType,NumScalers>* bad_pair=GetPairOfStop(ordered_stops.at(i));
+                        //JOE DO SOME PROPER DELETING!!!
+                        if(bad_pair)
+                        {
+                           bad_pair->StartDumpMarker=NULL;
+                           bad_pair->StopDumpMarker=NULL;
+                        }
+                     ordered_stops.at(i)=NULL;
+                     }
+                  }
+               }
+               }
+               return;
             }
             if (pair->StartDumpMarker->fRunTime<0)
             {
@@ -723,6 +751,7 @@ public:
             }
          }
       }
+      std::cout << "Popping front of ordered_stops. Description: " << ordered_stops.front()->Description << std::endl;
       ordered_stops.front()->fRunTime=t;
       ordered_stops.pop_front();
       //pair->Print();

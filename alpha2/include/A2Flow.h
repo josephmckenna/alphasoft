@@ -12,6 +12,7 @@
 #include "UnpackVF48.h"
 #include "SiMod.h"
 #include "TTree.h"
+#include "TMVA/Reader.h"
 
 class VF48data
 {
@@ -277,9 +278,9 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
   //THen we need a way for this to interact with the offline MVA analysis. 
   //For now lets assume we are interested in 3 variables. x, y, z.
 
-  double fX;
-  double fY;
-  double fZ;
+  Float_t fX;
+  Float_t fY;
+  Float_t fZ;
 
   //We then need a way for these to be populated.
 
@@ -302,14 +303,6 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
         fZ = siliconEvent->GetVertexZ();
 
         return true;
-
-
-        //Fill tree.
-        //fTree->Fill();
-
-        //Update current event number to be checked against (remember everything here is in order).
-        //fCurrentEventIndex++;
-        //fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
       }
     }
     return false;
@@ -321,6 +314,13 @@ class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow eve
     tree->Branch("y", &fY, "y/D");
     tree->Branch("z", &fZ, "z/D");
   };
+
+  void LoadVariablesToReader(TMVA::Reader* reader)
+  {
+    reader->AddVariable( "x", &fX );
+    reader->AddVariable( "y", &fY );
+    reader->AddVariable( "z", &fZ );
+  }
 
   void WriteToTree();
 
