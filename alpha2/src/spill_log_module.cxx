@@ -59,6 +59,57 @@ public:
    bool fOnlineSpillLog = false;
 };
 
+#ifdef HAVE_MIDAS
+class SpillLogPrinter
+{
+   private:
+      TString fSpillLogTitle;
+      int fSpillLogLineNumber;
+      const int fPrintInterval;
+   public:
+   SpillLogPrinter(): fPrintInterval(25)
+   {
+     fSpillLogLineNumber = 0;
+   }
+   void Reset()
+   {
+     fSpillLogLineNumber = 0;
+   }
+   void BeginRun(TString SpillLogTitle)
+   {
+      Reset();
+      fSpillLogTitle = SpillLogTitle;
+      int width = fSpillLogTitle.Length();
+      char *line = new char(width);
+      for (int i = 0; i < width; i++)
+         line[i] = '-';
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line);
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line);
+      fSpillLogLineNumber++;
+   }
+   void EndRun()
+   {
+      cm_msg1(MINFO, "SpillLog", "alpha2online","%s","End run");
+      int width = fSpillLogTitle.Length();
+      char *line = new char(width);
+      for (int i = 0; i < width; i++)
+         line[i] = '=';
+      cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line);  
+   }
+   
+   void PrintLine(const char *string)
+   {
+      fSpillLogLineNumber++;
+      if ( (fSpillLogLineNumber % fPrintInterval ) == 0 )
+      {
+        cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
+      }
+      cm_msg1(MINFO, "SpillLog", "alpha2online", string);
+   }
+   
+};
+#endif
 
 class SpillLog: public TARunObject
 {
@@ -70,6 +121,8 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
+   
+   SpillLogPrinter fSpillLogPrinter;
 
    std::vector<std::string> InMemorySpillTable;
    TTree* SpillTree = NULL;
@@ -109,14 +162,15 @@ public:
          {"CT_SiPM2","CT SiPM2"},
          {"CT_SiPM_OR","CT SiPM OR"},
          {"CT_SiPM_AND","CT SiPM AND"},
-         {"IO32_TRIG_NOBUSY","IO32_TRIG"},
+         {"PMT_12_AND_13","CT Stick"},
+         //{"IO32_TRIG_NOBUSY","IO32_TRIG"},
          //{"PMT_10","PMT 10"},
          //{"ATOMSTICK","Atom Stick"}
       };
   
       for (size_t i=0; i<channels.size(); i++)
          sis_channels.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
-      SpillLogTitle="             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        |";
+      SpillLogTitle="            Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        |";
       char buf[200];
       for (size_t i=0; i<channels.size(); i++)
       {
@@ -154,7 +208,8 @@ public:
    {
       if (fTrace)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-     
+      //if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
+      fSpillLogPrinter.BeginRun(SpillLogTitle);
       if (fFlags->fWriteSpillDB)
       {
          if (sqlite3_open("SpillLog/A2SpillLog.db",&ppDb) == SQLITE_OK)
@@ -167,16 +222,6 @@ public:
          }
       }
 
-      if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
-      {
-#ifdef HAVE_MIDAS
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "Begin run");
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", SpillLogTitle.Data());
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-#else
-         std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
-#endif
-      }
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
@@ -257,9 +302,7 @@ public:
       if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       {
 #ifdef HAVE_MIDAS
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", "End run");
-         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s","=====================================================================================================================================================================");
+         fSpillLogPrinter.EndRun();
 #else
          std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
 #endif
@@ -385,7 +428,7 @@ public:
             {
                 InMemorySpillTable.push_back(s->Name.c_str());
 #ifdef HAVE_MIDAS
-                cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", s->Name.c_str());
+                fSpillLogPrinter.PrintLine(s->Name.c_str());
 #endif
                  //continue;
             }
@@ -395,7 +438,7 @@ public:
                 //s->Print();
                 InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
 #ifdef HAVE_MIDAS
-                cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
+                fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
 #endif
                 continue;
             }
@@ -408,7 +451,7 @@ public:
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
 #ifdef HAVE_MIDAS
-            cm_msg1(MINFO, "SpillLog", "alpha2online", "%s",s->Content(&sis_channels,n_sis_channels).Data());
+            fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
 #endif
             SaveToTree(runinfo,s);
          }
