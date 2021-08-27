@@ -26,6 +26,11 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
       std::cout<<"Unkown SIS channel!"<<std::endl;
       return TimeCounts;
    }
+  
+   for (double &max: tmax)
+      if (max < 0 )
+         max = GetTotalRunTimeFromSIS(runNumber);
+   
    
    //TimeCounts.reserve(1000000); //Ready for 1M results
    assert(tmin.size() == tmax.size());
