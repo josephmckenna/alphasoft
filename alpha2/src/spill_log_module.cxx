@@ -80,22 +80,22 @@ class SpillLogPrinter
       Reset();
       fSpillLogTitle = SpillLogTitle;
       int width = fSpillLogTitle.Length();
-      char *line = new char(width);
+      std::string line;
       for (int i = 0; i < width; i++)
-         line[i] = '-';
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line);
+         line += '-';
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line);
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       fSpillLogLineNumber++;
    }
    void EndRun()
    {
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s","End run");
       int width = fSpillLogTitle.Length();
-      char *line = new char(width);
+      std::string line;
       for (int i = 0; i < width; i++)
-         line[i] = '=';
-      cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line);  
+         line += '=';
+      cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
    }
    
    void PrintLine(const char *string)
