@@ -816,7 +816,7 @@ public:
          complete.push_back(
             new SpillType(fRunNo,
                0,
-               "Sequencer %d: Sequenece %d finished",
+               "Sequencer %d: Sequence %d dumps completed",
                SequencerID, 
                seqcount
             )
