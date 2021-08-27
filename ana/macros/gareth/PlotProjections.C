@@ -8,16 +8,24 @@ void PlotProjections()
    cout<<fname<<" FOUND"<<endl;
 
    // Makes histos
-   TH3D* h;
+   TH2D* h;
 
    // Loads zed histogram
-   fin->GetObject("/bsc_tdc_module/hAmpVIntVChan",h);
+   fin->GetObject("/bsc/hBsc_AmplitudeVsChannel",h);
 
-   for (int ii=0;ii<128;ii++)
+   TH1 *hbins[16];
+   int color = 0;
+   for (int ii=0;ii<16;ii++)
       {
-         h->GetZaxis()->SetRange(ii+1,ii+1);
-         TH2D* h2 = (TH2D*)h->Project3D("yx");
-         h2->SetName(Form("hAmpVInt-Chan%d",ii));
+         hbins[ii] = h->ProjectionY(Form("bin%d",ii+1),ii+1,ii+2);
+         if (hbins[ii]->GetEntries()>0)
+            {
+               color++;
+               hbins[ii]->Rebin(20);
+               hbins[ii]->SetLineColor(color);
+               hbins[ii]->GetXaxis()->SetRangeUser(0,3);
+               hbins[ii]->Draw("same");
+            }
       }
 
 }

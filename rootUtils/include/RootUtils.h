@@ -4,8 +4,8 @@
 #include "TSeq_Event.h"
 #include "TChrono_Event.h"
 #include "TStoreEvent.hh"
-#include "TChronoChannelName.h"
-#include "chrono_module.h"
+//#include "TChronoChannelName.h"
+#include "ChronoUtil.h"
 
 #include "Rtypes.h"
 #include "TTree.h"

@@ -40,7 +40,7 @@ private:
    double amplitude_cut; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
+   const static int sample_waveforms_to_plot = 100; // Saves a number of raw pulses for inspection
    int hit_num=0;
 
 public:
@@ -56,6 +56,7 @@ private:
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
    TH2D *hBsc_AmplitudeVsChannel = NULL;
+   TH1D *hBsc_MedianAmplitudeVsChannel = NULL;
    TH2D *hBsc_SaturatedVsBar = NULL;
    TH2D *hBsc_TimeVsChannel = NULL;
    TH1D* hWave = NULL;
@@ -64,6 +65,7 @@ private:
    TH2D* hFitAmp = NULL;
    TH2D* hFitStartTime = NULL;
    TH2D* hFitEndTime = NULL;
+   TH1D* hNumBars = NULL;
 
 public:
 
@@ -140,11 +142,12 @@ public:
       delete hBsc_AmplitudeVsBar;
       delete hBsc_SaturatedVsBar;
       delete hBsc_AmplitudeVsChannel;
+      delete hBsc_MedianAmplitudeVsChannel;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
       delete hFitEndTime;
-      delete hNumChan;
+      delete hNumBars;
 
    }
 
@@ -273,7 +276,7 @@ public:
                   sgfit->SetParLimits(1,0,500);
                   sgfit->SetParLimits(2,0,100);
                   sgfit->SetParLimits(3,0,2);
-                  hWave->Fit("sgfit","RQ");
+                  hWave->Fit("sgfit","RQ0");
       
                   // Extrapolates amplitude and interpolates start and end times
                   double fit_amp = sgfit->GetParameter(0) - baseline;
@@ -359,6 +362,20 @@ public:
             if( !(fFlags->fPulser) )  // Normal run
                delete sgfit;
             }
+            
+            // Fills histograms
+            hBars->Fill(bar);
+            hBsc_Time->Fill(start_time*10);
+            hBsc_TimeVsBar->Fill(bar,start_time*10);
+            hFitAmp->Fill(amp,fit_amp);
+            hFitStartTime->Fill(start_time*10,fit_start_time*10);
+            hFitEndTime->Fill(end_time*10,fit_end_time*10);
+            hBsc_Amplitude->Fill(fit_amp);
+            hBsc_AmplitudeVsBar->Fill(bar,fit_amp);
+            hBsc_SaturatedVsBar->Fill(bar,(max>32000));
+          
+            // Fills bar event
+            BarEvent->AddADCHit(bar,fit_amp,fit_start_time*10);
 
          }
 
@@ -366,6 +383,16 @@ public:
 
       return BarEvent;
    }
+
+   static double sgfunc(double* x, double* p)
+    {
+            // "[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))"
+            double xx=x[0];
+            double skew=0.;
+            if( xx>p[1] ) skew = p[3]*(xx-p[1]);
+            double t=(xx-p[1])/(p[2]+skew);
+            return p[0]*exp(-0.5*pow(t,2.));
+    }
 
 };
 
@@ -388,6 +415,7 @@ public:
    {
       TString json="default";
       printf("BscModuleFactory::Init!\n");
+
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
             Help();

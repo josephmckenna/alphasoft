@@ -62,6 +62,7 @@ LookUpTable::LookUpTable(double quencherFrac):finterpol_tdrad(0),finterpol_tdphi
 					      fMapBegin(700.),
 					      fMinTime(-1.),fMaxTime(0.)
 {  
+  std::cout<<"LookUpTable::LookUpTable garfield++ sim with field map"<<std::endl;
   frad.clear();
   fdrift.clear();
   flor.clear();

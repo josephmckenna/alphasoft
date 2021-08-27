@@ -61,8 +61,8 @@ public:
 
   TVector3 GetPosition(double t, 
 		       double ux, double uy, double uz, 
-		       double x0, double y0, double z0);
-  TVector3 GetPosition(double t);
+		       double x0, double y0, double z0) const;
+  TVector3 GetPosition(double t) const;
   TVector3 GetError2(double ) { TVector3 v(0.,0.,0.); return v; }
   TVector3 Evaluate(double r2, 
 		    double ux, double uy, double uz, 
@@ -104,8 +104,8 @@ public:
 
   virtual double MinDistPoint(TVector3&);
   double PointDistance2(double* par, double* point);
-  virtual double MinRad();
-  TVector3 Zintersection();
+  virtual double MinRad() const;
+  TVector3 Zintersection() const;
 
   virtual bool IsGood();
   virtual void Reason();

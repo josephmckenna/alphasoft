@@ -16,7 +16,6 @@
 #include "TTree.h"
 #include "TChrono_Event.h"
 #include <iostream>
-#include "chrono_module.h"
 #include "TChronoChannelName.h"
 
 class OfficialTimeFlags

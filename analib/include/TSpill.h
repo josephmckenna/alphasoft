@@ -94,7 +94,50 @@ class TSpillScalerData: public TObject
    }
    bool Ready( bool have_vertex_detector);
    double GetDumpLength() { return StopTime - StartTime; };
-
+   std::string ContentCSVTitle(std::vector<std::string> ChannelNames = {}) const
+   {
+      std::string title = "Start Time (s),Stop Time (s),Durations (s),";
+      if (ChannelNames.size() == DetectorCounts.size())
+      {
+         for (size_t i=0; i<ChannelNames.size(); i++)
+         {
+            title += ChannelNames.at(i) + ",";
+         }
+      }
+      else 
+      {
+         std::cout <<"Warning: " << __FILE__  << ":" << __LINE__ << "\tNo detector channel names given\n";
+         for (size_t i=0; i<DetectorCounts.size(); i++)
+         {
+            title += "Scaler Channel " + std::to_string(i) + ",";
+         }
+      }
+      //This is very verbose... probably a better way of doing this
+      title += "First Vertex Event,LastVertexEvent,Vertex Events,Verticies,PassCuts,PassMVA,";
+      return title;
+   }
+   std::string ContentCSV() const
+   {
+      std::string line;
+      line += std::to_string(StartTime) + "," +
+              std::to_string(StopTime) + "," +
+              std::to_string(StopTime - StartTime) + ",";
+      for (size_t i = 0; i<DetectorCounts.size(); i++)
+      {
+         if (ScalerFilled.at(i))
+            line += std::to_string(DetectorCounts.at(i)) + ",";
+         else
+            line += "-1,";
+      }
+      //This is very verbose... probably a better way of doing this
+      line += std::to_string(FirstVertexEvent) + ",";
+      line += std::to_string(LastVertexEvent) + ",";
+      line += std::to_string(VertexEvents) + ",";
+      line += std::to_string(Verticies) + ",";
+      line += std::to_string(PassCuts) + ",";
+      line += std::to_string(PassMVA) + ",";
+      return line;
+   }
    ClassDef(TSpillScalerData,1);
 };
 class TSpillSequencerData: public TObject
@@ -113,7 +156,20 @@ class TSpillSequencerData: public TObject
    TSpillSequencerData* operator/(const TSpillSequencerData* b);
    using TObject::Print;
    virtual void Print();
-
+   std::string ContentCSVTitle() const
+   {
+      std::string title = "Sequencer ID,Sequencer Name, Dump ID, Start State, Stop State,";
+      return title;
+   }
+   std::string ContentCSV() const
+   {
+      std::string line = std::to_string(fSequenceNum) + "," +
+                         fSeqName + "," +
+                         std::to_string(fDumpID) + "," +
+                         std::to_string(fStartState) + "," +
+                         std::to_string(fStopState) + ",";
+      return line;
+   }
    ClassDef(TSpillSequencerData,1);
 };
 class TSpill: public TObject
@@ -147,9 +203,27 @@ public:
 
    virtual int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
    TString Content(std::vector<int>*, int& );
-
+   std::string ContentCSVTitle() const
+   {
+      std::string title = "RunNumber, Sequencer Start Time (Unix Time), Dump Name, Is Dump Type, Is Info Type,";
+      return title;
+   }
+   std::string ContentCSV() const
+   {
+      std::string line = std::to_string(RunNumber) + "," +
+                         std::to_string(Unixtime) + "," +
+                         Name + ",";
+                         if (IsDumpType)
+                            line +="1,";
+                         else
+                            line +="0,";
+                         if (IsInfoType)
+                            line +="1,";
+                         else
+                            line +="0,";
+      return line;
+   }
    ClassDef(TSpill,1);
-
 };
 
 #endif
