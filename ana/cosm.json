@@ -69,7 +69,7 @@
 
    "BscModule": {
        "pulse_threshold": 1400,
-       "ADCamplitude": 1000,
+       "ADCamplitude": 2000,
        "max_adc_tdc_diff": 4.0e-8,
        "max_top_bot_diff": 1.0e-6,
        "max_dz": 300.0,

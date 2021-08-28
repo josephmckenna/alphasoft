@@ -56,16 +56,12 @@ private:
    TH1D *hBsc_Amplitude = NULL;
    TH2D *hBsc_AmplitudeVsBar = NULL;
    TH2D *hBsc_AmplitudeVsChannel = NULL;
-   TH1D *hBsc_MedianAmplitudeVsChannel = NULL;
-   TH2D *hBsc_SaturatedVsBar = NULL;
    TH2D *hBsc_TimeVsChannel = NULL;
    TH1D* hWave = NULL;
    TF1* sgfit = NULL;
    TH1D* hNumChan = NULL;
    TH2D* hFitAmp = NULL;
    TH2D* hFitStartTime = NULL;
-   TH2D* hFitEndTime = NULL;
-   TH1D* hNumBars = NULL;
 
 public:
 
@@ -89,40 +85,51 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
 
-      if (fFlags->fProtoTOF) {
-         hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
+      if (fFlags->fProtoTOF and fFlags->fPulser) {
          hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         if( !(fFlags->fPulser) ) {
-            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
-            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
-            hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
-            hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
-            hFitEndTime = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]",400,1200,2000,400,1200,2000);
-            hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
-            hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,0,2000);
-            hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",7,-0.5,6.5);
-         }
-         if( fFlags->fPulser ) {
-            hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
-            hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
-            hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
-            hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.);
-            hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.);
-         }
+         hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
+         hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
+         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
+         hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
+         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
+
       }
-      if ( !(fFlags->fProtoTOF) ) {
-         hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
+      if (fFlags->fProtoTOF and !(fFlags->fPulser)) {
+         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
+         hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
+         hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
+         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
+         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
+         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
+         hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,0,2000);
+         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
+
+      }
+      if (!(fFlags->fProtoTOF) and fFlags->fPulser) {
+         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
+         hBars = new TH1D("hBars", "Bars hit;Bar number",128,-0.5,127.5);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
+         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
+         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",128,-0.5,127.5);
          hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
          hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.);
-         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
-         hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
-         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
-         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1000,1400,200,1000,1400);
-         hFitEndTime = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]",400,1000,1800,400,1000,1800);
-         hNumChan = new TH1D("hNumBars", "Number of bar ends hit;Number of channels",16,-0.5,15.5);
+
       }
+      if (!(fFlags->fProtoTOF) and !(fFlags->fPulser)) {
+         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
+         hBars = new TH1D("hBars", "Bars hit;Bar number",128,-0.5,127.5);
+         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
+         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
+         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
+         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
+         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",128,-0.5,127.5);
+         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
+         hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
+
+      }
+
       gDirectory->mkdir("SampleWaveforms");
 
    }
@@ -140,14 +147,11 @@ public:
       delete hBsc_TimeVsChannel;
       delete hBsc_Amplitude;
       delete hBsc_AmplitudeVsBar;
-      delete hBsc_SaturatedVsBar;
       delete hBsc_AmplitudeVsChannel;
-      delete hBsc_MedianAmplitudeVsChannel;
       delete hWave;
       delete hFitAmp;
       delete hFitStartTime;
-      delete hFitEndTime;
-      delete hNumBars;
+      delete hNumChan;
 
    }
 
@@ -255,20 +259,20 @@ public:
             // Count 1 pulse in the event
             counter++;
 
-            // Plots pulse. Sets zero error for saturated pulses since fitter ignores zero error bins
-            hWave->Reset();
-            for (int ii=0;ii<ch->adc_samples.size();ii++)
-               {
-                  int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
-                  if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
-                  else hWave->SetBinError(bin_num,100);
-               }
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             {
 
             if( !(fFlags->fPulser) )  // Normal run
                {
 
+                  // Plots pulse. Sets zero error for saturated pulses since fitter ignores zero error bins
+                  hWave->Reset();
+                  for (int ii=0;ii<ch->adc_samples.size();ii++)
+                     {
+                        int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
+                        if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
+                        else hWave->SetBinError(bin_num,100);
+                     }
                   // Fits pulse
                   sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
                   sgfit->SetParameters(max,imax,5,0.2);
@@ -277,6 +281,14 @@ public:
                   sgfit->SetParLimits(2,0,100);
                   sgfit->SetParLimits(3,0,2);
                   hWave->Fit("sgfit","RQ0");
+                  // Copies histogram to sample histogram
+                  if (hit_num < sample_waveforms_to_plot)
+                     {
+                        runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+                        gDirectory->cd("bsc/SampleWaveforms");
+                        hWave->Clone(Form("Sample Waveform %d",(hit_num)));
+                        hit_num++;
+                     }
       
                   // Extrapolates amplitude and interpolates start and end times
                   double fit_amp = sgfit->GetParameter(0) - baseline;
@@ -290,11 +302,10 @@ public:
 
                   // Converts amplitude to volts
                   double amp_volts = fit_amp*adc_conversion;
-      
+
                   // Fills histograms
                   hFitAmp->Fill(amp,fit_amp);
                   hFitStartTime->Fill(start_time*10,fit_start_time*10);
-                  hFitEndTime->Fill(end_time*10,fit_end_time*10);
                   hBsc_Amplitude->Fill(amp_volts);
                   if (fFlags->fProtoTOF) {
                      hBsc_AmplitudeVsChannel->Fill(chan,amp_volts);
@@ -302,6 +313,7 @@ public:
                   if ( !(fFlags->fProtoTOF) ) {
                      hBsc_AmplitudeVsBar->Fill(bar,amp_volts);
                   }
+                  delete sgfit;
       
                   // Fills bar event
                   int bar = ch->bsc_bar;
@@ -337,6 +349,20 @@ public:
                   if ( !(fFlags->fProtoTOF) ) {
                      BarEvent->AddADCHit(bar,amp_volts,start_time*10);
                   }
+                  // Copies histogram to sample histogram
+                  if (hit_num < sample_waveforms_to_plot)
+                     {
+                        hWave->Reset();
+                        for (int ii=0;ii<ch->adc_samples.size();ii++)
+                           {
+                              int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
+                           }
+                        runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+                        gDirectory->cd("bsc/SampleWaveforms");
+                        hWave->Clone(Form("Sample Waveform %d",(hit_num)));
+                        hit_num++;
+                     }
+                  delete sgfit;
 
                }
 
@@ -351,31 +377,7 @@ public:
                hBars->Fill(bar);
             }
 
-            // Copies histogram to sample histogram
-            if (hit_num < sample_waveforms_to_plot)
-               {
-                  runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-                  gDirectory->cd("bsc/SampleWaveforms");
-                  hWave->Clone(Form("Sample Waveform %d",(hit_num)));
-                  hit_num++;
-               }
-            if( !(fFlags->fPulser) )  // Normal run
-               delete sgfit;
             }
-            
-            // Fills histograms
-            hBars->Fill(bar);
-            hBsc_Time->Fill(start_time*10);
-            hBsc_TimeVsBar->Fill(bar,start_time*10);
-            hFitAmp->Fill(amp,fit_amp);
-            hFitStartTime->Fill(start_time*10,fit_start_time*10);
-            hFitEndTime->Fill(end_time*10,fit_end_time*10);
-            hBsc_Amplitude->Fill(fit_amp);
-            hBsc_AmplitudeVsBar->Fill(bar,fit_amp);
-            hBsc_SaturatedVsBar->Fill(bar,(max>32000));
-          
-            // Fills bar event
-            BarEvent->AddADCHit(bar,fit_amp,fit_start_time*10);
 
          }
 

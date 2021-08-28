@@ -56,7 +56,8 @@ private:
 
    // Container declaration
    int protoTOFTdcMap[16][4];
-   double TdcOffsets[16] = {0};
+   double TdcOffsets[128] = {0};
+   double ProtoTOFTdcOffsets[16] = {0};
    int bscTdcMap[64][5];
    
 
@@ -66,54 +67,13 @@ private:
    TH1D* hNTdcHits = NULL;
    TH1D* hNMatchedHits = NULL;
    TH2D* hBarDiffAdc = NULL;
-   TH1D* hBarDiffDiffAdc = NULL;
    TH2D* hBarDiffTdc = NULL;
-   TH2D* hBarDiffTdcPart = NULL;
-   TH2D* hBarDiffTdcRaw = NULL;
    TH1D* hBarDiffDiffTdc = NULL;
-   TH1D* hBarDiffDiffTdcPart = NULL;
-   TH1D* hBarDiffDiffTdcRaw = NULL;
    TH2D* hDiffAdc = NULL;
    TH2D* hDiffTdc = NULL;
-   TH1D* hTOFADC = NULL;
    TH1D* hTOFTDC = NULL;
-   TH2D* hNMatchedByChan = NULL;
    TH2D* hTdcDiffByChan = NULL;
    TH1D* hTdcDiffByChanMedian = NULL;
-   TH1D* hTdcCalibrationOffsets = NULL;
-
-   TH1D* hTOFTDCPart = NULL;
-   TH1D* hTOFTDCRaw = NULL;
-   TH2D* hTdc1DiffByChan = NULL;
-   TH1D* hTdc1DiffByChanMedian = NULL;
-   TH2D* hTdc1DiffByChanCorrected = NULL;
-   TH2D* hTdc2DiffByChan = NULL;
-   TH1D* hTdc2DiffByChanMedian = NULL;
-   TH2D* hTdc2DiffByChanCorrected = NULL;
-   TH2D* hTdc1FallDiffByChan = NULL;
-   TH2D* hTdc1FallDiffByChanCorrected = NULL;
-   TH2D* hTdc2FallDiffByChanCorrected = NULL;
-   TH2D* hTdc2FallDiffByChan = NULL;
-   TH2D* hTdc12DiffByChan = NULL;
-   TH2D* hTdc1Duration = NULL;
-   TH2D* hTdc2Duration = NULL;
-   TH2D* hTdcGap = NULL;
-   TH2D* hTdcRise2Rise = NULL;
-   TH2D* hTWOppositeEnds = NULL;
-   TH1D* hTime_1_0 = NULL;
-   TH1D* hTime_2_0 = NULL;
-   TH1D* hTime_2_1 = NULL;
-
-   TH2D* hOffset2 = NULL;
-   TH2D* hOffset3 = NULL;
-   TH2D* hOffset4 = NULL;
-   TH2D* hOffset5 = NULL;
-   TH2D* hOffset6 = NULL;
-   TH2D* hOffset7 = NULL;
-   TH2D* hOffset8 = NULL;
-   TH2D* hOffset9 = NULL;
-
-
    TH1D* hTDCbar=0;
 
    // Counter initialization
@@ -146,57 +106,35 @@ public:
       gDirectory->mkdir("bsc_tdc_module")->cd();
 
       // Histogramm declaration
-      if (fFlags->fProtoTOF) {
+      if (fFlags->fProtoTOF and fFlags->fPulser) {
          hTdcChan = new TH1D("hTdcChan","Number of hits on tdc channel;tdc channel",34,-1.5,32.5);
-         if( !(fFlags->fPulser) ) { // Normal run
-            hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",11,-0.5,10.5);
-            hBarDiffAdc = new TH2D("hBarDiffAdc","ADC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-15e-9,15e-9,200,-15e-9,15e-9);
-            hBarDiffTdc = new TH2D("hBarDiffTdc","TDC time difference between ends of bars (channel-by-channel and time-walk correction);Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
-            hBarDiffTdcPart = new TH2D("hBarDiffTdcPart","TDC time difference between ends of bars (channel-by-channel correction only);Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
-            hBarDiffTdcRaw = new TH2D("hBarDiffTdcRaw","TDC time difference between ends of bars (no corrections);Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
-            hBarDiffDiffTdc = new TH1D("hBarDiffDiffTdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC (channel-by-channel and time-walk correction);TDC Time difference [s]",200,-4e-9,4e-9);
-            hBarDiffDiffTdcPart = new TH1D("hBarDiffDiffTdcPart","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC (channel-by-channel corrections only);TDC Time difference [s]",200,-4e-9,4e-9);
-            hBarDiffDiffTdcRaw = new TH1D("hBarDiffDiffTdcRaw","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC (no corrections);TDC Time difference [s]",200,-4e-9,4e-9);
-            hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC (channel-by-channel and time-walk correction);Time of flight [s]",200,-5e-9,5e-9);
-            hTOFTDCPart = new TH1D("hTOFTDCPart","Time of flight calculated using TDC (channel-by-channel correction only);Time of flight [s]",200,-5e-9,5e-9);
-            hTOFTDCRaw = new TH1D("hTOFTDCRaw","Time of flight calculated using TDC (no corrections);Time of flight [s]",200,-5e-9,5e-9);
-            hTWOppositeEnds = new TH2D("hTWOppositeEnds","Time walk correction for hits on opposite ends of same bar;Time walk correction Top [s];Time walk correction Bottom [s]",1000,0,4e-9,1000,0,4e-9);
-         }
-         if( fFlags->fPulser ) { // Pulser run
-            hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",65,-0.5,64.5);
-            hTdc1DiffByChan = new TH2D("hTdc1DiffByChan","Pulser TDC time offset for first hit;adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc1DiffByChanCorrected = new TH2D("hTdc1DiffByChanCorrected","Pulser TDC time offset for first hit (after corrections);adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc2DiffByChan = new TH2D("hTdc2DiffByChan","Pulser TDC time offset for second hit;adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc2DiffByChanCorrected = new TH2D("hTdc2DiffByChanCorrected","Pulser TDC time offset for second hit (after corrections);adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc12DiffByChan = new TH2D("hTdc12DiffByChan","Pulser TDC time offset second hit minus first hit;adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc1FallDiffByChan = new TH2D("hTdc1FallDiffByChan","Pulser TDC time offset for first hit falling edge;adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc1FallDiffByChanCorrected = new TH2D("hTdc1FallDiffByChanCorrected","Pulser TDC time offset for first hit falling edge (after corrections);adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc2FallDiffByChan = new TH2D("hTdc2FallDiffByChan","Pulser TDC time offset for second hit falling edge;adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hTdc1Duration = new TH2D("hTdc1Duration","First pulse time-over-threshold;adc channel;TDC time [ns]",16,-0.5,15.5,1000,0,100);
-            hTdc2Duration = new TH2D("hTdc2Duration","Second pulse time-over-threshold;adc channel;TDC time [ns]",16,-0.5,15.5,1000,0,100);
-            hTdcGap = new TH2D("hTdcGap","Gap between first and second pulses;adc channel;TDC time [ns]",16,-0.5,15.5,1000,0,150);
-            hTdcRise2Rise = new TH2D("hhTdcRise2Rise","Difference between first and second pulse starts;adc channel;TDC time [ns]",16,-0.5,15.5,1000,0,300);
-            hTdc2FallDiffByChanCorrected = new TH2D("hTdc2FallDiffByChanCorrected","Pulser TDC time offset for second hit falling edge (after corrections);adc channel;TDC time [ns]",16,-0.5,15.5,2000,-4,8);
-            hOffset2 = new TH2D("hOffset2","Offset on channel 2;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset3 = new TH2D("hOffset3","Offset on channel 3;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset4 = new TH2D("hOffset4","Offset on channel 4;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset5 = new TH2D("hOffset5","Offset on channel 5;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset6 = new TH2D("hOffset6","Offset on channel 6;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset7 = new TH2D("hOffset7","Offset on channel 7;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset8 = new TH2D("hOffset8","Offset on channel 8;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-            hOffset9 = new TH2D("hOffset9","Offset on channel 9;Hit number;Time [s]",1000,0,5e6,1000,-5e-9,7e-9);
-         }
+         hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",50,-0.5,49.5);
+         hTdcDiffByChan = new TH2D("hTdcDiffByChan","Time difference relative to channel 0;tdc channel;time [s]",16,0.5,16.5,200,-5e-9,5e-9);
       }
-      if ( !(fFlags->fProtoTOF) ) {
+      if (!(fFlags->fProtoTOF) and fFlags->fPulser) {
+         hTDCbar = new TH1D("hTdcBar","Hits on each bar;tdc bar",128,-0.5,127.5);
+         hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",250,-0.5,249.5);
+         hTdcDiffByChan = new TH2D("hTdcDiffByChan","Time difference relative to channel 0;tdc channel;time [s]",128,-0.5,127.5,200,-5e-9,5e-9);
+
+      }
+      if (fFlags->fProtoTOF and !(fFlags->fPulser)) {
+         hTdcChan = new TH1D("hTdcChan","Number of hits on tdc channel;tdc channel",34,-1.5,32.5);
+         hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",10,-0.5,9.5);
+         hBarDiffAdc = new TH2D("hBarDiffAdc","ADC time difference between ends of bars;Time difference bar A [s];Time difference bar B [s]",200,-15e-9,15e-9,200,-15e-9,15e-9);
+         hBarDiffTdc = new TH2D("hBarDiffTdc","TDC time difference between ends of bars (channel-by-channel and time-walk correction);Time difference bar A [s];Time difference bar B [s]",200,-10e-9,10e-9,200,-10e-9,10e-9);
+         hBarDiffDiffTdc = new TH1D("hBarDiffDiffTdc","(BarA top - BarA bottom) - (BarB top - BarB bottom) for TDC (channel-by-channel and time-walk correction);TDC Time difference [s]",200,-4e-9,4e-9);
+         hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC (channel-by-channel and time-walk correction);Time of flight [s]",200,-5e-9,5e-9);
+
+      }
+      if (!(fFlags->fProtoTOF) and !(fFlags->fPulser)) {
+         hTDCbar = new TH1D("hTdcBar","Hits on each bar;tdc bar",128,-0.5,127.5);
+         hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",50,-0.5,49.5);
          hTdcAdcTime = new TH2D("hTdcAdcTime","adc vs tdc time;adc time;tdc time",250,1000,1500,200,-2.0e-6,0);
-         hNTdcHits = new TH1D("hNTdcHits","Number of TDC hits in event;Number of tdc hits",100,-0.5,99.5);
-         hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in channel corresponding to ADC hit;Number of tdc hits",30,-0.5,29.5);
+         hNMatchedHits = new TH1D("hNMatchedHits","Number of TDC hits in channel corresponding to ADC hit;Number of tdc hits",50,-0.5,49.5);
          hDiffAdc = new TH2D("hDiffAdc","ADC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-50e-9,50e-9);
          hDiffTdc = new TH2D("hDiffTdc","TDC time difference between ends;Bar number;Time [s]",64,-0.5,63.5,200,-50e-9,50e-9);
          hTOFTDC = new TH1D("hTOFTDC","Time of flight calculated using TDC (channel-by-channel and time-walk correction);Time of flight [s]",200,-20e-9,20e-9);
-         hTOFTDCPart = new TH1D("hTOFTDCPart","Time of flight calculated using TDC (channel-by-channel correction only);Time of flight [s]",200,-20e-9,20e-9);
-         hTOFTDCRaw = new TH1D("hTOFTDCRaw","Time of flight calculated using TDC (no corrections);Time of flight [s]",200,-20e-9,20e-9);
-         hTDCbar = new TH1D("hTdcBar","Hits on each bar;tdc bar",128,-0.5,127.5);
+
       }
 
       // Load Bscint tdc map
@@ -228,9 +166,7 @@ public:
             getline(ftdcoff, comment);
             for(int i=0; i<16; i++)
                {
-                  ftdcoff >> num >> TdcOffsets[i];
-                  hTdcCalibrationOffsets->Fill(i+1,TdcOffsets[i]);
-                  hTdcCalibrationOffsets->SetBinError(i+1,0);
+                  ftdcoff >> num >> ProtoTOFTdcOffsets[i];
                }
             ftdcoff.close();
          }
@@ -263,10 +199,6 @@ public:
             gDirectory->cd("bsc_tdc_module");
             hTdcDiffByChanMedian = hTdcDiffByChan->QuantilesX(0.5,"hTdcDiffByChanMedian");
             hTdcDiffByChanMedian->SetTitle("Median time offset by TDC channel;TDC channel;TDC time [s]");
-            hTdc1DiffByChanMedian = hTdc1DiffByChan->QuantilesX(0.5,"hTdc1DiffByChanMedian");
-            hTdc1DiffByChanMedian->SetTitle("Median time offset by TDC channel for second hit;TDC channel;TDC time [s]");
-            hTdc2DiffByChanMedian = hTdc2DiffByChan->QuantilesX(0.5,"hTdc2DiffByChanMedian");
-            hTdc2DiffByChanMedian->SetTitle("Median time offset by TDC channel for second hit;TDC channel;TDC time [s]");
 
             // Writes offsets to file
             if ( fFlags->fWriteOffsets )
@@ -275,8 +207,6 @@ public:
                   Ofile.open(fFlags->fOffsetFile);
                   Ofile<<"TDC channel | Offset(s)\n";
                   for (int i=1;i<=16;i++) Ofile<<i<<"\t"<<hTdcDiffByChanMedian->GetBinContent(i)<<"\n";
-                  Ofile<<"ADC channel | Offset(s)\n";
-                  for (int i=1;i<=16;i++) Ofile<<i<<"\t"<<hTdc1DiffByChanMedian->GetBinContent(i)<<"\n";
                   //for (int i=1;i<=16;i++) Ofile<<i<<"\t"<<hTdcSDiffByChan->ProjectionY("Projection",i,i)->GetMean()<<"\n";
                   Ofile.close();
                }
@@ -295,7 +225,6 @@ public:
                {
                   printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
                   printf("Total number of top+bot hits = %d\n",c_topbot);
-                  if (fFlags->ftwA!=0) printf("twA = %.6e sigma_TOF = %.9e\n",fFlags->ftwA,hTOFTDC->GetStdDev());
                }
          }
 
@@ -308,49 +237,10 @@ public:
       delete hDiffTdc;
       delete hBarDiffAdc;
       delete hBarDiffTdc;
-      delete hBarDiffTdcPart;
-      delete hBarDiffTdcRaw;
-      delete hBarDiffDiffAdc;
       delete hBarDiffDiffTdc;
-      delete hBarDiffDiffTdcPart;
-      delete hBarDiffDiffTdcRaw;
-      delete hTOFADC;
       delete hTOFTDC;
-      delete hTOFTDCPart;
-      delete hTOFTDCRaw;
-      delete hTdc1DiffByChan;
-      delete hTdc1DiffByChanMedian;
-      delete hTdc1DiffByChanCorrected;
-      delete hTdc2DiffByChan;
-      delete hTdc2DiffByChanMedian;
-      delete hTdc2DiffByChanCorrected;
-      delete hTdc12DiffByChan;
-      delete hTdc1FallDiffByChan;
-      delete hTdc1FallDiffByChanCorrected;
-      delete hTdc2FallDiffByChan;
-      delete hTdc2FallDiffByChanCorrected;
-      delete hTdc1Duration;
-      delete hTdc2Duration;
-      delete hTdcGap;
-      delete hTdcRise2Rise;
-      delete hNMatchedByChan;
       delete hTdcDiffByChan;
       delete hTdcDiffByChanMedian;
-      delete hTdcCalibrationOffsets;
-      
-      delete hTWOppositeEnds;
-      delete hTime_1_0;
-      delete hTime_2_0;
-      delete hTime_2_1;
-      
-      delete hOffset2;
-      delete hOffset3;
-      delete hOffset4;
-      delete hOffset5;
-      delete hOffset6;
-      delete hOffset7;
-      delete hOffset8;
-      delete hOffset9;
       delete hTDCbar;
    }
 
@@ -413,6 +303,7 @@ public:
                      {
                         PulserAnalysis(barEvt,tdc);
                      }
+                  if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent comlpete\n");
                }
             else
                if( fFlags->fPrint )
@@ -438,91 +329,64 @@ public:
       std::vector<TdcHit*> tdchits = tdc->hits;
       c_tdc+=tdchits.size();
 
+      double n_hits = 0;
+
       if (fFlags->fProtoTOF) {
-         double n_hits = 0;
-         std::vector<double> first_hit(17,0);
-         std::vector<double> second_hit(17,0);
-         std::vector<double> first_hit_corrected(17,0);
-         std::vector<double> second_hit_corrected(17,0);
-         std::vector<double> first_hit_fall(17,0);
-         std::vector<double> second_hit_fall(17,0);
-         std::vector<double> first_hit_fall_corrected(17,0);
-         std::vector<double> second_hit_fall_corrected(17,0);
+         std::vector<double> hit_times(17);
 
          for (TdcHit* tdchit: tdchits) {
             // Use only rising edge
-            //if (tdchit->rising_edge==0) continue;
-            printf("fpga %d channel %d rising %d\n",int(tdchit->fpga),int(tdchit->chan),int(tdchit->rising_edge));
-      
+            if (tdchit->rising_edge==0) continue;
+   
             // Use only fpga 1
             if (int(tdchit->fpga)!=1) continue;
-      
+   
             // Only channels 1-16
             int tdc_chan = int(tdchit->chan);
-            //if  (tdc_chan<1 or tdc_chan>16) continue;
-
+            if  (tdc_chan<1 or tdc_chan>16) continue;
             // Counts hits
             n_hits++;
-
             // Calculates hit time
             double time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-            double corrected_time = time - TdcOffsets[tdc2adc(tdc_chan)]*1e-9;
-            if (fFlags->fPrint) printf("GS: channel %d rising %d time %.12e correction %.12e final %.12e\n",tdc_chan,tdchit->rising_edge,time,TdcOffsets[tdc2adc(tdc_chan)]*1e-9,corrected_time);
-
-            if (tdchit->rising_edge==1) {
-               if (first_hit[tdc_chan]!=0 and second_hit[tdc_chan]==0) {
-                  second_hit[tdc_chan]=time;
-                  second_hit_corrected[tdc_chan]=corrected_time;
-               }
-               if (first_hit[tdc_chan]==0) {
-                  first_hit[tdc_chan]=time;
-                  first_hit_corrected[tdc_chan]=corrected_time;
-               }
-            }
-            if (tdchit->rising_edge==0) {
-               if (first_hit_fall[tdc_chan]!=0 and second_hit_fall[tdc_chan]==0) {
-                  second_hit_fall[tdc_chan]=time;
-                  second_hit_fall_corrected[tdc_chan]=corrected_time;
-               }
-               if (first_hit_fall[tdc_chan]==0) {
-                  first_hit_fall[tdc_chan]=time;
-                  first_hit_fall_corrected[tdc_chan]=corrected_time;
-               }
-            }
+            double corrected_time = time - ProtoTOFTdcOffsets[tdc2adc(tdc_chan)]*1e-9;
+            hit_times[tdc_chan] = corrected_time;
 
             // Fills histograms
             hTdcChan->Fill(int(tdchit->chan));
-
          }
+         for (int i=1;i<=16;i++) {
+            // Time difference from channel 0
+            double time_diff = hit_times[i]-hit_times[0];
+            hTdcDiffByChan->Fill(i,time_diff);
+         }
+      }
+      if (!(fFlags->fProtoTOF)) {
+         std::vector<double> hit_times(128);
+
+         for (TdcHit* tdchit: tdchits) {
+            // Use only rising edge
+            if (tdchit->rising_edge==0) continue;
+            // Gets bar ID
+            int tdc_bar = fpga2barID(int(tdchit->fpga),int(tdchit->chan));
+   
+            // Counts hits
+            n_hits++;
+            // Calculates hit time
+            double time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+            double corrected_time = time - TdcOffsets[tdc_bar]*1e-9;
+            hit_times[tdc_bar] = corrected_time;
+            // Fills histograms
+            hTdcChan->Fill(int(tdchit->chan));
+         }
+         for (int i=0;i<128;i++) {
+            // Time difference from channel 0
+            double time_diff = hit_times[i]-hit_times[0];
+            hTdcDiffByChan->Fill(i,time_diff);
+         }
+      }
       
-         // Fills histograms
-         hNTdcHits->Fill(n_hits);
-         for (int i=1;i<17;i++) hTdc1DiffByChan->Fill(tdc2adc(i),1e9*(first_hit[i]-first_hit[1]));
-         for (int i=1;i<17;i++) hTdc1DiffByChanCorrected->Fill(tdc2adc(i),1e9*(first_hit_corrected[i]-first_hit_corrected[1]));
-         for (int i=1;i<17;i++) hTdc2DiffByChan->Fill(tdc2adc(i),1e9*(second_hit[i]-second_hit[1]));
-         for (int i=1;i<17;i++) hTdc2DiffByChanCorrected->Fill(tdc2adc(i),1e9*(second_hit_corrected[i]-second_hit_corrected[1]));
-         for (int i=1;i<17;i++) hTdc1FallDiffByChan->Fill(tdc2adc(i),1e9*(first_hit_fall[i]-first_hit_fall[1]));
-         for (int i=1;i<17;i++) hTdc1FallDiffByChanCorrected->Fill(tdc2adc(i),1e9*(first_hit_fall_corrected[i]-first_hit_fall_corrected[1]));
-         for (int i=1;i<17;i++) hTdc2FallDiffByChan->Fill(tdc2adc(i),1e9*(second_hit_fall[i]-second_hit_fall[1]));
-         for (int i=1;i<17;i++) hTdc2FallDiffByChanCorrected->Fill(tdc2adc(i),1e9*(second_hit_fall_corrected[i]-second_hit_fall_corrected[1]));
-         for (int i=1;i<17;i++) hTdc12DiffByChan->Fill(tdc2adc(i),1e9*((second_hit[i]-second_hit[1])-(first_hit[i]-first_hit[1])));
-         for (int i=1;i<17;i++) hTdc1Duration->Fill(tdc2adc(i),1e9*(first_hit_fall[i]-first_hit[i]));
-         for (int i=1;i<17;i++) hTdc2Duration->Fill(tdc2adc(i),1e9*(second_hit_fall[i]-second_hit[i]));
-         for (int i=1;i<17;i++) hTdcGap->Fill(tdc2adc(i),1e9*(second_hit[i]-first_hit_fall[i]));
-         for (int i=1;i<17;i++) hTdcRise2Rise->Fill(tdc2adc(i),1e9*(second_hit[i]-first_hit[i]));
-         hOffset2->Fill(c_tdc,second_hit[2]-second_hit[1]);
-         hOffset3->Fill(c_tdc,second_hit[3]-second_hit[1]);
-         hOffset4->Fill(c_tdc,second_hit[4]-second_hit[1]);
-         hOffset5->Fill(c_tdc,second_hit[5]-second_hit[1]);
-         hOffset6->Fill(c_tdc,second_hit[6]-second_hit[1]);
-         hOffset7->Fill(c_tdc,second_hit[7]-second_hit[1]);
-         hOffset8->Fill(c_tdc,second_hit[8]-second_hit[1]);
-         hOffset9->Fill(c_tdc,second_hit[9]-second_hit[1]);
-      }
-
-      if (!(fFlags->fProtoTOF) ) {
-
-      }
+      // Fills histograms
+      hNTdcHits->Fill(n_hits);
 
    }
 
@@ -591,22 +455,25 @@ public:
                   if (fFlags->fProtoTOF) {
                      hTdcChan->Fill(int(tdchit->chan));
                   }
+                  if (!(fFlags->fProtoTOF)) {
+                     hTDCbar->Fill(tdc_bar);
+                     hTdcAdcTime->Fill(endhit->GetADCTime(),tdc_time);
+                  }
 
-
-                  hTdcAdcTime->Fill(endhit->GetADCTime(),tdc_time);
-                  hTDCbar->Fill(tdc_bar);
                }
 
             // Fills histograms
             hNTdcHits->Fill(n_hits);
-            hNMatchedHits->Fill(n_good);
+            if (!(fFlags->fProtoTOF)) {
+               hNMatchedHits->Fill(n_good);
+            }
 
             // Corrects for tdc time offset
             double calib_time = tdc_time;
             if (fFlags->fProtoTOF) {
                if ( !(matched_tdc_hit)) continue;
                int tdc_chan = int(matched_tdc_hit->chan);
-               if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - TdcOffsets[tdc2adc(tdc_chan)] * 1e-9;
+               if (tdc_chan>0 and tdc_chan<=16) calib_time = tdc_time - ProtoTOFTdcOffsets[tdc2adc(tdc_chan)] * 1e-9;
             }
 
             // Corrects for time walk
@@ -697,31 +564,21 @@ public:
       std::vector<BarHit*> barhits = barEvt->GetBars();
       double diff_adc_0 = 0;
       double diff_tdc_0 = 0;
-      double diff_tdc_raw_0 = 0;
-      double diff_tdc_part_0 = 0;
       double diff_adc_1 = 0;
       double diff_tdc_1 = 0;
-      double diff_tdc_raw_1 = 0;
-      double diff_tdc_part_1 = 0;
       for (BarHit* hit: barhits)
          {
             int bar = hit->GetBar();
             double diff_tdc = hit->GetTopHit()->GetTDCTime() - hit->GetBotHit()->GetTDCTime();
-            double diff_tdc_part = hit->GetTopHit()->GetTDCTimePartCalib() - hit->GetBotHit()->GetTDCTimePartCalib();
-            double diff_tdc_raw = hit->GetTopHit()->GetTDCTimeRaw() - hit->GetBotHit()->GetTDCTimeRaw();
             double diff_adc = (hit->GetTopHit()->GetADCTime() - hit->GetBotHit()->GetADCTime())*1e-9;
             if (fFlags->fProtoTOF) {
                if (bar==0) {
                   diff_adc_0 = diff_adc;
                   diff_tdc_0 = diff_tdc;
-                  diff_tdc_raw_0 = diff_tdc_raw;
-                  diff_tdc_part_0 = diff_tdc_part;
                }
                if (bar==1) {
                   diff_adc_1 = diff_adc;
                   diff_tdc_1 = diff_tdc;
-                  diff_tdc_raw_1 = diff_tdc_raw;
-                  diff_tdc_part_1 = diff_tdc_part;
                }
             }
             if ( !(fFlags->fProtoTOF) ) {
@@ -735,19 +592,16 @@ public:
             double refrac = 1.58;
             double factor = c/refrac * 0.5;
             hBarDiffTdc->Fill(diff_tdc_0,diff_tdc_1);
-            hBarDiffTdcRaw->Fill(diff_tdc_raw_0,diff_tdc_raw_1);
-            hBarDiffTdcPart->Fill(diff_tdc_part_0,diff_tdc_part_1);
             hBarDiffAdc->Fill(diff_adc_0,diff_adc_1);
             hBarDiffDiffTdc->Fill(diff_tdc_1-diff_tdc_0);
-            hBarDiffDiffAdc->Fill(diff_adc_1-diff_adc_0);
-            hBarDiffDiffTdcRaw->Fill(diff_tdc_raw_1-diff_tdc_raw_0);
-            hBarDiffDiffTdcPart->Fill(diff_tdc_part_1-diff_tdc_part_0);
          }
 
    }
 
    void CalculateTOF(TBarEvent* barEvt) {
-         
+
+      if (!(fFlags->fProtoTOF)) return;
+
       std::vector<BarHit*> barhits = barEvt->GetBars();
       for (int i=0;i<barhits.size();i++)
          {
@@ -762,33 +616,16 @@ public:
                   double t_ADC_2 = (hit2->GetTopHit()->GetADCTime() + hit2->GetBotHit()->GetADCTime())/2.;
                   double t_TDC_1 = (hit1->GetTopHit()->GetTDCTime() + hit1->GetBotHit()->GetTDCTime())/2.;
                   double t_TDC_2 = (hit2->GetTopHit()->GetTDCTime() + hit2->GetBotHit()->GetTDCTime())/2.;
-                  double t_TDC_raw_1 = (hit1->GetTopHit()->GetTDCTimeRaw() + hit1->GetBotHit()->GetTDCTimeRaw())/2.;
-                  double t_TDC_raw_2 = (hit2->GetTopHit()->GetTDCTimeRaw() + hit2->GetBotHit()->GetTDCTimeRaw())/2.;
-                  double t_TDC_part_1 = (hit1->GetTopHit()->GetTDCTimePartCalib() + hit1->GetBotHit()->GetTDCTimePartCalib())/2.;
-                  double t_TDC_part_2 = (hit2->GetTopHit()->GetTDCTimePartCalib() + hit2->GetBotHit()->GetTDCTimePartCalib())/2.;
                   double TOF_ADC = t_ADC_1 - t_ADC_2;
                   double TOF_TDC = t_TDC_1 - t_TDC_2;
-                  double TOF_TDC_Raw = t_TDC_raw_1 - t_TDC_raw_2;
-                  double TOF_TDC_Part = t_TDC_part_1 - t_TDC_part_2;
                   if (bar1==1) {
                      TOF_ADC = t_ADC_2 - t_ADC_1;
                      TOF_TDC = t_TDC_2 - t_TDC_1;
-                     TOF_TDC_Raw = t_TDC_raw_2 - t_TDC_raw_1;
-                     TOF_TDC_Part = t_TDC_part_2 - t_TDC_part_1;
                   }
                   hTOFTDC->Fill(TOF_TDC);
-
-                  hTOFTDCRaw->Fill(TOF_TDC_Raw);
-                  hTOFTDCPart->Fill(TOF_TDC_Part);
-                  if (fFlags->fProtoTOF) {
-                     hTWOppositeEnds->Fill(twA/TMath::Sqrt(hit1->GetTopHit()->GetAmp()),
-                                           twA/TMath::Sqrt(hit1->GetBotHit()->GetAmp()));
-                     hTWOppositeEnds->Fill(twA/TMath::Sqrt(hit2->GetTopHit()->GetAmp()),
-                                           twA/TMath::Sqrt(hit2->GetBotHit()->GetAmp()));
                   }
                }
          }
-   }
 
 
    //________________________________
