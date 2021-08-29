@@ -19,6 +19,7 @@ include_directories(${ROOT_INCLUDE_DIR})
 #
 find_package(Garfield REQUIRED)
 include_directories(${GARFIELD_INCLUDE_DIRS})
+message(STATUS "Garfieldpp incs: ${GARFIELD_INCLUDE_DIRS}")
 link_libraries(${GARFIELD_LIBRARIES})
 message(STATUS "Garfieldpp libs: ${GARFIELD_LIBRARIES}")
 

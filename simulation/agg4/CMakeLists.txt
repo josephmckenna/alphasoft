@@ -61,8 +61,10 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 		    ${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
 ROOT_GENERATE_DICTIONARY( G__G4dict TDigi.hh TScintDigi.hh TTPCelement.hh TAnode.hh TPads.hh LINKDEF include/G4dictLinkDef.hh )
-set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigi.cc ${PROJECT_SOURCE_DIR}/src/TTPCelement.cc ${PROJECT_SOURCE_DIR}/src/TAnode.cc ${PROJECT_SOURCE_DIR}/src/TPads.cc)
-add_library(G4dict SHARED ${LIBRARY_SOURCES} G__G4dict)
+#set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigi.cc ${PROJECT_SOURCE_DIR}/src/TTPCelement.cc ${PROJECT_SOURCE_DIR}/src/TAnode.cc ${PROJECT_SOURCE_DIR}/src/TPads.cc )
+#add_library(G4dict SHARED agg4.cc ${LIBRARY_SOURCES} G__G4dict)
+
+#target_link_libraries(G4dict PUBLIC ${Geant4_LIBRARIES} ${GARFIELD_LIBRARIES} ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(APPEND sources ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc)
@@ -74,7 +76,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 add_executable(agg4 agg4.cc G__G4dict ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
 add_compile_definitions(CRYDATAPATH="${CRY_DATA_PATH}")
-target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out G4dict)
+target_link_libraries(agg4 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -88,7 +90,7 @@ set(AGG4_SCRIPTS
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS agg4 DESTINATION simulation)
-install(TARGETS G4dict DESTINATION lib)
+#install(TARGETS G4dict DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libG4dict_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libG4dict.rootmap DESTINATION lib)
 install(FILES ${headers} DESTINATION include)
