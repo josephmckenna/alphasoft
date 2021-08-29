@@ -1,6 +1,8 @@
 #ifndef _FILE_WRITERS_
 #define _FILE_WRITERS_
 
+
+#include <fstream>
 #include "TreeGetters.h"
 #include "TStoreGEMEvent.h"
 std::string WriteTStoreGEMFile(TStoreGEMFile* file);
