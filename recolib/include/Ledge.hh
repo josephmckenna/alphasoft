@@ -92,9 +92,9 @@ private:
     
     std::vector<double> temp(length);
     // calculate the difference from the mean: xi-m
-    // std::bind2nd is depreciated in c++17... is this a working fix? Perhaps we should make a lamda function here?
-    // std::transform(first, last, temp.begin(),std::bind2nd(std::minus<double>(), mean));
-    std::transform(first, last, temp.begin(),std::bind(std::minus<double>(), mean,0));
+
+  // calculate the difference from the mean: xi-m
+    std::transform(first, last, temp.begin(),[mean](const int &s){ return s - mean; });
     // square it: (xi-m)*(xi-m)
     std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
     // norm = (N-1)/N 
