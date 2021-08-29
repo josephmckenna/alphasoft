@@ -12,6 +12,15 @@ if [ ! -d "${AGRELEASE}/RunLogs" ]; then
     mkdir -p ${AGRELEASE}/RunLogs
 fi
 
+#Check if we need cmake3 command or cmake
+if [ `command -v cmake3` ]; then
+    #command cmake3 found... lets use it
+    export CMAKE=cmake3
+else
+    #cmake3 not found. Default version of cmake is probably 3
+    export CMAKE=cmake
+fi
+
 build_M1()
 {
     if [[ "$1" == "clean" ]]; then
@@ -19,11 +28,11 @@ build_M1()
 	rm -rf $AGRELEASE/binM1 $AGRELEASE/buildM1
 	mkdir -p $AGRELEASE/buildM1
 	cd $AGRELEASE/buildM1
-	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM1
+	${CMAKE} .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM1
     fi
     cd $AGRELEASE/buildM1
-    #cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DMINUIT2FIT=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM1 |& tee ../BuildLogM1.txt
-    cmake3 --build . --target install --verbose -- -j`nproc --ignore=2` |& tee -a ../BuildLogM1.txt
+    #${CMAKE} .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DMINUIT2FIT=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM1 |& tee ../BuildLogM1.txt
+    ${CMAKE} --build . --target install --verbose -- -j`nproc --ignore=2` |& tee -a ../BuildLogM1.txt
 }
 
 build_M2()
@@ -33,10 +42,10 @@ build_M2()
 	rm -rf $AGRELEASE/binM2 $AGRELEASE/buildM2
 	mkdir -p $AGRELEASE/buildM2
 	cd $AGRELEASE/buildM2
-	cmake3 .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM2 |& tee ../BuildLogM2.txt
+	${CMAKE} .. -DBUILD_AG_SIM=ON -DBUILD_A2=OFF -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$AGRELEASE/binM2 |& tee ../BuildLogM2.txt
     fi
     cd $AGRELEASE/buildM2
-    cmake3 --build . --target install --verbose -- -j`nproc --ignore=2` |& tee -a ../BuildLogM2.txt
+    ${CMAKE} --build . --target install --verbose -- -j`nproc --ignore=2` |& tee -a ../BuildLogM2.txt
 }
 
 build_run_debug()
@@ -49,8 +58,8 @@ build_run_debug()
     rm -rf $AGRELEASE/bin $AGRELEASE/build
     mkdir -p $AGRELEASE/build
     cd $AGRELEASE/build
-    cmake3 .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
-    time cmake3 --build . --target install -- -j`nproc --ignore=2`
+    ${CMAKE} .. -DBUILD_AG_SIM=OFF -DBUILD_A2=ON -DBUILD_MANALYZER=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$AGRELEASE/bin
+    time ${CMAKE} --build . --target install -- -j`nproc --ignore=2`
     cd $AGRELEASE
     rm -f gdb.txt
     gdb -ex="set logging on" -ex=r --args agana.exe -O"$DATADIR/test/$fout" --mt "${fin}" -- --diag --anasettings $AGRELEASE/ana/cosm.json
