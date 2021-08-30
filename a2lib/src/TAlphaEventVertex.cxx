@@ -210,7 +210,8 @@ TVector3* FindDCAToVertex( TAlphaEventHelix *helix, double x, double y, double z
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini(10);
+  ROOT::Minuit2::FunctionMinimum min = mini(10);
+  // mini(10);
   upar =mini.Parameters();
   //mini = new TMinuit(1);
   //mini->SetPrintLevel(-1);
@@ -265,7 +266,8 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   //minidca->SetParameter(1, "s_b", 0, 0.1, -100, 100 )
   
   // create Minimizer (default is Migrad)
-  minidca(100);
+  // minidca(100);
+  ROOT::Minuit2::FunctionMinimum min = minidca(100);
   upar =minidca.Parameters();
   //int iret = minidca.Minimize();
   //minidca = new TMinuit(2);
