@@ -14,6 +14,7 @@
 #include <iterator>
 #include <numeric>
 #include <algorithm>
+#include <functional>
 #include <cassert>
 #include <cmath>
 
@@ -91,7 +92,9 @@ private:
     
     std::vector<double> temp(length);
     // calculate the difference from the mean: xi-m
-    std::transform(first, last, temp.begin(),bind2nd(std::minus<double>(), mean));
+
+  // calculate the difference from the mean: xi-m
+    std::transform(first, last, temp.begin(),[mean](const int &s){ return s - mean; });
     // square it: (xi-m)*(xi-m)
     std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
     // norm = (N-1)/N 

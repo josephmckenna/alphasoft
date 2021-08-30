@@ -23,7 +23,7 @@
 
 #ifdef HAVE_MIDAS
 #include "midas.h"
-//#include "msystem.h"
+#include "msystem.h"
 #include "mrpc.h"
 #endif
 
@@ -150,9 +150,9 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
-   
+#ifdef HAVE_MIDAS
    SpillLogPrinter fSpillLogPrinter;
-
+#endif
    std::vector<std::string> InMemorySpillTable;
    TTree* SpillTree = NULL;
 
@@ -244,10 +244,12 @@ public:
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       //if (fFlags->fOnlineSpillLog)
+#ifdef HAVE_MIDAS
       if (runinfo->fRunNo)
       {
          fSpillLogPrinter.BeginRun(SpillLogTitle, runinfo->fRunNo);
       }
+#endif
       if (fFlags->fWriteSpillDB)
       {
          if (sqlite3_open("SpillLog/A2SpillLog.db",&ppDb) == SQLITE_OK)
@@ -337,11 +339,10 @@ public:
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
-      //if (fFlags->fOnlineSpillLog)
-      if (runinfo->fRunNo)
+      if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
       {
 #ifdef HAVE_MIDAS
-         fSpillLogPrinter.EndRun(runinfo->fRunNo);
+         fSpillLogPrinter.EndRun();
 #else
          std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
 #endif
@@ -349,7 +350,7 @@ public:
       }
 
       InMemorySpillTable.push_back("End run");
-      InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
+      InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
       size_t lines=InMemorySpillTable.size();
       unsigned long byte_size=0;
       for (size_t i=0; i<lines; i++)
