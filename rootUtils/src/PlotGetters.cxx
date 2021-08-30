@@ -665,7 +665,7 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
    return Plot_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
 }
 
-static TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -677,7 +677,7 @@ static TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
    return Plot_SIS(runNumber,SIS_Channel,tmin, tmax);
 }
 
-static TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, spills);
