@@ -75,27 +75,60 @@ class SpillLogPrinter
    {
      fSpillLogLineNumber = 0;
    }
-   void BeginRun(TString SpillLogTitle)
+   void BeginRun(TString SpillLogTitle, int RunNo)
    {
       Reset();
+      if (!RunNo)
+         return;
       fSpillLogTitle = SpillLogTitle;
       int width = fSpillLogTitle.Length();
+      
+      int indent = width / 2 - 52/2;
+      std::string logo_indent;
+      for (int i = 0; i < indent; i++)
+         logo_indent += ' ';
+      //For readability make a large break from the last run
+      cm_msg1(MINFO, "SpillLog", "alpha2online","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
+
+
       std::string line;
       for (int i = 0; i < width; i++)
          line += '-';
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
+      std::string first_line(line);
+      std::string title = std::string("# Begin run ") + std::to_string(RunNo) + std::string(" #");
+      if (title.size() < first_line.size() + 10)
+      {
+         int title_pos = 0;
+         int line_pos = line.size() / 2 - title.size() / 2; 
+         while (title_pos < title.size())
+         {
+            first_line.at(line_pos++ ) = title.at(title_pos++);
+         }
+      }
+      else
+      {
+         first_line = title;
+      }
+      
+      //cm_msg_log((INT)MINFO, (const char*) "SpillLog", (const char*) first_line.c_str() );
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", first_line.c_str());
+      //cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       fSpillLogLineNumber++;
    }
    void EndRun()
    {
-      cm_msg1(MINFO, "SpillLog", "alpha2online","%s","End run");
       int width = fSpillLogTitle.Length();
       std::string line;
       for (int i = 0; i < width; i++)
          line += '=';
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
+      cm_msg1(MINFO, "SpillLog", "alpha2online","End run %d",RunNo);
+      
    }
    
    void PrintLine(const char *string)
@@ -210,7 +243,10 @@ public:
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
 #ifdef HAVE_MIDAS
-      fSpillLogPrinter.BeginRun(SpillLogTitle);
+      if (runinfo->fRunNo)
+      {
+         fSpillLogPrinter.BeginRun(SpillLogTitle, runinfo->fRunNo);
+      }
 #endif
       if (fFlags->fWriteSpillDB)
       {
@@ -301,10 +337,11 @@ public:
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
-      if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
+      //if (fFlags->fOnlineSpillLog)
+      if (runinfo->fRunNo)
       {
 #ifdef HAVE_MIDAS
-         fSpillLogPrinter.EndRun();
+         fSpillLogPrinter.EndRun(runinfo->fRunNo);
 #else
          std::cout<<"WARNING: fOnlineSpillLog set but software not build with MIDAS"<<std::endl;
 #endif
