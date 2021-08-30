@@ -71,11 +71,11 @@ endif()
   target_compile_definitions(manalyzer_main PUBLIC ${ROOT_CCX_FLAGS} -DHAVE_ROOT)
   target_compile_definitions(manalyzer      PUBLIC -DHAVE_ROOT_HTTP -DHAVE_THTTP_SERVER)
   target_compile_definitions(manalyzer_main PUBLIC -DHAVE_ROOT_HTTP -DHAVE_THTTP_SERVER)
-  target_link_libraries(manalyzer PUBLIC RHTTP)
-  target_link_libraries(manalyzer_main PUBLIC RHTTP)
+  target_link_libraries(manalyzer PUBLIC RHTTP Gui)
+  target_link_libraries(manalyzer_main PUBLIC RHTTP Gui)
 endif()
 
-target_link_libraries(manalyzer PUBLIC Gui)
+
 
 
 #message(Binaries: ${BINS})
