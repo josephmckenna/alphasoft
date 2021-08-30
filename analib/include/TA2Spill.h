@@ -7,6 +7,8 @@
 #include "TSVD_QOD.h"
 #include "TSISEvent.h"
 
+#define DUMP_NAME_WIDTH 40
+
 //Class to integrate SIS and VF48 event counts
 class TA2SpillScalerData: public TSpillScalerData
 {

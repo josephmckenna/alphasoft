@@ -84,9 +84,7 @@ class SpillLogPrinter
       int width = fSpillLogTitle.Length();
       
       int indent = width / 2 - 52/2;
-      std::string logo_indent;
-      for (int i = 0; i < indent; i++)
-         logo_indent += ' ';
+      std::string logo_indent(indent,' ');
       //For readability make a large break from the last run
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
@@ -94,9 +92,7 @@ class SpillLogPrinter
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
 
 
-      std::string line;
-      for (int i = 0; i < width; i++)
-         line += '-';
+      std::string line(width,'-');
       std::string first_line(line);
       std::string title = std::string("# Begin run ") + std::to_string(RunNo) + std::string(" #");
       if (title.size() < first_line.size() + 10)
@@ -189,13 +185,13 @@ public:
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
       std::vector<std::pair<std::string,std::string>> channels=
       {
-         {"SIS_PMT_CATCH_OR","Catch OR"},
+         {"SIS_PMT_CATCH_OR", "Catch OR"},
          {"SIS_PMT_CATCH_AND","Catch AND"},
-         {"CT_SiPM1","CT SiPM1"},
-         {"CT_SiPM2","CT SiPM2"},
-         {"CT_SiPM_OR","CT SiPM OR"},
-         {"CT_SiPM_AND","CT SiPM AND"},
-         {"PMT_12_AND_13","CT Stick"},
+         {"CT_SiPM1",         "CT SiPM1"},
+         {"CT_SiPM2",         "CT SiPM2"},
+         {"CT_SiPM_OR",       "CT SiOR"},
+         {"CT_SiPM_AND",      "CT SiAND"},
+         {"PMT_12_AND_13",    "CT Stick"},
          //{"IO32_TRIG_NOBUSY","IO32_TRIG"},
          //{"PMT_10","PMT 10"},
          //{"ATOMSTICK","Atom Stick"}
@@ -203,7 +199,12 @@ public:
   
       for (size_t i=0; i<channels.size(); i++)
          sis_channels.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
-      SpillLogTitle="            Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        |";
+      SpillLogTitle="            Dump Time            | ";
+      std::string dump_names = "CAT RCT ATM POS";
+      assert(dump_names.size() < DUMP_NAME_WIDTH - 1);
+      //Pad to proper width
+      dump_names.insert(dump_names.size(), DUMP_NAME_WIDTH - dump_names.size() - 1, ' ');
+      SpillLogTitle += dump_names + std::string("|");
       char buf[200];
       for (size_t i=0; i<channels.size(); i++)
       {
@@ -265,7 +266,7 @@ public:
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
          InMemorySpillTable.push_back(SpillLogTitle.Data());
          //InMemorySpillTable.push_back("             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK ");
-         InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+         InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
       }
       if (fFlags->fWriteSpillTxt)
       {
@@ -277,7 +278,7 @@ public:
          SpillLogHeader.open("SpillLog/title.txt");
          SpillLogHeader<<SpillLogTitle.Data();
          //SpillLogHeader<<"             Dump Time            | CAT Event       RCT Event       ATM Event       POS Event        | CATCH_OR  CATCH_AND ATOM_OR   ATOM_AND  CTSTICK   IO32_TRIG ATOMSTICK NewATOMSTICK "<<std::endl;
-         SpillLogHeader<<"---------------------------------------------------------------------------------------------------------------------------------------------------------------------"<<std::endl;
+         SpillLogHeader<<std::string(SpillLogTitle.Length(),'-')<<std::endl;
          SpillLogHeader.close();
          //List of active dumps
 
@@ -349,7 +350,7 @@ public:
       }
 
       InMemorySpillTable.push_back("End run");
-      InMemorySpillTable.push_back("---------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+      InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
       size_t lines=InMemorySpillTable.size();
       unsigned long byte_size=0;
       for (size_t i=0; i<lines; i++)
