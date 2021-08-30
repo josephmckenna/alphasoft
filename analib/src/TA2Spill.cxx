@@ -267,23 +267,22 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    if (SeqData)
    {
-      if (SeqData->fSequenceNum==0)
-        sprintf(buf," %-65s|",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==1)
-        sprintf(buf," %-16s%-49s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==2)
-        sprintf(buf," %-32s%-33s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==3)
-        sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
-      log += buf;
+      std::string dump_name;
+      for (int i = 0; i < SeqData->fSequenceNum; i++)
+         dump_name += std::string(4,' ');
+      dump_name += Name; // dump description
+      if (dump_name.size() > DUMP_NAME_WIDTH)
+         dump_name = dump_name.substr(0,DUMP_NAME_WIDTH);
+      else if (dump_name.size() < DUMP_NAME_WIDTH)
+         dump_name.insert(dump_name.size(), DUMP_NAME_WIDTH - dump_name.size(), ' ');
+      log += dump_name + std::string("|");
    }
    else
    {
       if (ScalerData)
-         sprintf(buf," %-65s|",Name.c_str());
+         log += std::string(DUMP_NAME_WIDTH,' ') + std::string("|") + Name;
       else
-         sprintf(buf," %s",Name.c_str());
-      log += buf;
+         log += std::string(" ") + Name;
    }
    if (ScalerData)
    {
