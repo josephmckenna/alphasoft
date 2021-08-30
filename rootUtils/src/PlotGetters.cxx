@@ -606,13 +606,41 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<dou
    TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
 
    std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
-
+   double max_height = 0;
+   double min_height = 1E99;
+   for (TH1D* h: hh)
+   {
+      double min, max;
+      h->GetMinimumAndMaximum(min, max);
+      if (max > max_height)
+      {
+         max_height = max;
+      }
+      if (min < min_height)
+      {
+         min_height = min;
+      }
+   }
+   if (min_height < 10 && min_height >= 0)
+      min_height = 0;
    for (size_t i=0; i<hh.size(); i++)
    {
       legend->AddEntry(hh[i]);
       hh[i]->SetLineColor(colour.GetNewColour());
-      hh[i]->Draw("SAME");
+      if (i ==0 )
+      {
+         hh[i]->GetYaxis()->SetRangeUser(min_height,max_height);
+         hh[i]->Draw("HIST");
+         
+      }
+      else
+      {
+         hh[i]->GetYaxis()->SetRangeUser(min_height,max_height);
+         hh[i]->Draw("HIST SAME");
+
+      }
    }
+   //std::cout<<"min:"<< min_height <<"\tmax:"<<max_height <<std::endl;
    legend->Draw();
    c->Update();
    c->Draw();
@@ -637,7 +665,7 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
    return Plot_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<TA2Spill> spills)
+static TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -649,7 +677,7 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<T
    return Plot_SIS(runNumber,SIS_Channel,tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
+static TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, spills);
