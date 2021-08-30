@@ -81,7 +81,10 @@ lxplus()
   fi
 }
 
-
+alphadaq()
+{
+   export ROOTANASYS=${AGRELEASE}/rootana
+}
 
 
 
@@ -160,11 +163,14 @@ alphavme*  )
   ;;
 alphagdaq* | alphadaq* )
   echo "DAQ computer detected..."
-  echo "DO NOT RUN ANALYSIS ON DAQ!!!"
+  alphadaq
+  echo "DO NOT RUN ANALYSIS ON DAQ!!! Just online tools"
   return
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
+  . ~/packages/root_6_22_02/bin/thisroot.sh
+  alphadaq
   export AGMIDASDATA="/alpha/agdaq/data"
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"

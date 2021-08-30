@@ -111,7 +111,7 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
 
     if( MIDAS_FOUND )
-      target_link_directories(${bin} PUBLIC ${MIDAS_LIBRARY_DIRS})
+      link_directories(${bin} PUBLIC ${MIDAS_LIBRARY_DIRS})
       target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
     endif()
     
@@ -120,7 +120,7 @@ foreach( LIST_FILE ${BINS} )
     endif()
 
     if( BUILD_AG )
-      target_link_directories(${bin} PUBLIC ${manalyzer_lib_dir})
+      link_directories(${bin} PUBLIC ${manalyzer_lib_dir})
     endif()
    
     target_link_libraries( ${bin} ${A2_LINK_LIBS}

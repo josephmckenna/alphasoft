@@ -71,7 +71,6 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, s
 void Plot_SVD(Int_t runNumber, std::vector<double> tmin, std::vector<double> tmax);
 void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills);
 void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition);
-
 #endif
 
 #endif

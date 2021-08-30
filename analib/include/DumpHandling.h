@@ -4,6 +4,17 @@
 #include "TSequencerState.h"
 #include <deque>
 // yes, then we can have A2 and AG classes that do fancy things with chronobox / SIS data...
+/*constexpr std::map<int,std::string> SEQ_NAMES = {
+  { 0, "CAT" },
+  { 1, "RCT" },
+  { 2, "ATM" },
+  { 3, "POS" },
+  { 4, "BML" },
+  { 5, "RCT_BOTG" },
+  { 6, "ATM_BOTG" },
+  { 7, "RCT_TOPG" },
+  { 8, "RCT_TOPG" }
+};*/
 
 class DumpMarker
 {
@@ -21,6 +32,7 @@ class DumpMarker
    void Print()
    {
       std::cout<<"SequencerID:"<<fSequencerID
+               //<<"Name:"<< SEQ_NAMES[fSequencerID]
                <<"\tSequenceCount:"<<fSequenceCount
                <<"\tDescription:"<<Description.c_str()
                <<"\tType:"<<DumpType
