@@ -357,7 +357,8 @@ Int_t TAlphaEventHelix::FitLineParameters()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini(40);
+  ROOT::Minuit2::FunctionMinimum min = mini(40);
+  // mini(40);
   upar = mini.Parameters();
   /*
   
