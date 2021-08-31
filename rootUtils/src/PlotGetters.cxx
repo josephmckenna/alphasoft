@@ -1,4 +1,5 @@
 #include "PlotGetters.h"
+#include "TSISChannels.h"
 
 extern Int_t gNbin;
 //Plots
@@ -416,6 +417,171 @@ TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFi
   return cEnergy;
 }
 #endif
+
+
+#ifdef BUILD_A2
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, int whichSpill)
+{  
+  //Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
+  //Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
+
+  std::vector<TA2Spill> spills = Get_A2_Spills(runNumber,{"Hot Dump"},{-1});
+  std::cout << "Spills size = " << spills.size() << std::endl;
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  std::cout << "tmin size = " << tmin.size() << std::endl;
+  std::cout << "tmax size = " << tmax.size() << std::endl;
+  for (TA2Spill& s: spills) {
+    tmin.push_back(s.GetStartTime());
+    tmax.push_back(s.GetStopTime());
+  }
+    std::cout << "tmin size = " << tmin.size() << std::endl;
+  std::cout << "tmax size = " << tmax.size() << std::endl;
+
+  Double_t start_time = tmin.at(whichSpill);
+  Double_t stop_time = tmax.at(whichSpill);
+
+  if (stop_time<0.) stop_time=GetA2TotalRunTime(runNumber);
+
+  Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
+  Double_t stopOffset = 0.; // dump finishes at trigger
+  
+  Double_t dumpDuration = stop_time-start_time-startOffset-stopOffset;
+  
+  std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
+  std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
+
+  Int_t oldBinNumber = gNbin;
+  gNbin=1.e4;
+
+  TSISChannels chans(runNumber);
+  int channel = chans.GetChannel("SIS_PMT_CATCH_OR");
+  std::vector<int> SISChannels = {channel};
+  
+  std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
+  gNbin=oldBinNumber;
+ 
+  if(!dumpHisto.at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
+  // and the voltage ramp function of time
+  TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
+  if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
+     std::vector<TH1D*> dumpHisto_toPlot = Get_SIS(runNumber, SISChannels, {start_time+startOffset}, {stop_time}); // this is a lower resolution histo to plot
+
+  TString htitle = "Run ";
+  htitle+=runNumber;
+  htitle+=" : #bar{p} energy  Hot Dump;Energy [eV];counts";
+
+  // energy (temperature) histogram
+  Double_t RampTmin=dumpRamp->GetXmin();
+  Double_t RampTmax=dumpRamp->GetXmax();
+  if ( RampTmax<0.) {Error("PlotEnergyDump","Ramp invalid? Can't work out how long it was"); return 0; }
+  Double_t Emin=dumpRamp->Eval(RampTmax), Emax=dumpRamp->Eval(RampTmin);
+  TH1D* hEnergy = new TH1D("pbar_temperature", htitle.Data(), binNumber, Emin, Emax);
+  hEnergy->SetMarkerColor(kRed);
+  hEnergy->SetMarkerStyle(7);
+  hEnergy->SetLineColor(kBlack);
+
+  // calculate the energy resolution
+  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+  char resolution[80];
+  sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
+  printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
+  // map time to energy
+  Double_t dt,energy,energy_max=0.;
+  Int_t counts=0.;
+  for(Int_t b=1; b<=dumpHisto.at(0)->GetNbinsX(); ++b)
+    {
+      dt = (dumpHisto.at(0)->GetBinCenter(b)/*-start_time*/-startOffset);//(dumpDuration);
+      energy = dumpRamp->Eval(dt);
+      //~ //if(energy<res) continue;
+      counts = dumpHisto.at(0)->GetBinContent(b);
+      if(energy>energy_max && counts>10) energy_max=energy; // interesting bins only
+#if DEBUG > 1
+      std::cout<<b<<"\t"<<dt<<"\t"<<energy<<"\t"<<dumpHisto->GetBinContent(b)<<std::endl;
+#endif
+      hEnergy->Fill(energy, counts);
+
+    }
+
+  //hEnergy->GetXaxis()->SetRangeUser(Emin,energy_max);
+
+  // calculate the total number of counts in the intresting range
+  Int_t binmin = hEnergy->FindBin(Emin),
+    binmax = hEnergy->FindBin(energy_max);
+  Double_t total_counts = hEnergy->Integral(binmin,binmax);
+  char integral[80];
+  sprintf(integral,"Integral %1.01f",total_counts);
+
+  // information
+  TPaveText* tt = new TPaveText(0.1,0.5,0.9,0.9);
+  tt->SetFillColor(0);
+  tt->AddText(resolution);
+  tt->AddText(integral);
+
+  // plotting and wait for fitting
+  //  if (gLegendDetail>=1)
+  //    {
+    //Lukas turned off
+      //TStyle->SetOptStat(1011111);
+      //    }
+      //  else
+      //    {
+      //      gStyle->SetOptStat("ni");
+      //    }
+  delete gc;
+  TCanvas* cEnergy = new TCanvas("AntiprotonTemperature","AntiprotonTemperature",1800,1000);
+  cEnergy->Divide(2,2);
+  cEnergy->cd(1);
+  gPad->SetLogy(1);
+  dumpHisto_toPlot.at(0)->Draw("HIST");
+  cEnergy->cd(2);
+  
+  hEnergy->GetXaxis()->SetRangeUser(0,EnergyRangeFactor*(hEnergy->GetMean()));
+  hEnergy->Draw("E1 HIST");
+  gPad->SetLogy(1);
+  cEnergy->cd(3);
+  dumpRamp->Draw();
+
+  cEnergy->cd(4);
+  tt->Draw();
+
+  //necessary for fitting
+  gc=cEnergy;
+  gh=hEnergy;
+  return cEnergy;
+}
+
+
+
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description)
+{
+
+  int runNumber = runNumbers.at(0);
+
+  std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
+
+  for(auto run : runNumbers)
+  {
+    std::cout << "currentRunNum = " << run << std::endl;
+
+    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, description, {-1});
+
+    std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
+
+    TSISChannels chans(runNumber);
+    int channel = chans.GetChannel(SIS_Channel.c_str());
+    std::vector<int> SISChannels = {channel};
+
+    auto hists = Get_SIS(runNumber, SISChannels, spills);
+
+    std::cout << "NumHistsForThisRun = " << hists.size() << std::endl;
+
+  }
+
+}
+#endif
+
+
 #ifdef BUILD_AG
 TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
