@@ -556,11 +556,11 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpF
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description)
 {
 
-  int runNumber = runNumbers.at(0);
+  Int_t runNumber = runNumbers.at(0);
 
   std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
-
-  for(auto run : runNumbers)
+  std::vector<TH1D *> histos;
+  for(Int_t run : runNumbers)
   {
     std::cout << "currentRunNum = " << run << std::endl;
 
@@ -575,6 +575,11 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Ch
     auto hists = Get_SIS(runNumber, SISChannels, spills);
 
     std::cout << "NumHistsForThisRun = " << hists.size() << std::endl;
+
+    for(auto hist: hists)
+    {
+      histos.push_back(hist);
+    }
 
   }
 

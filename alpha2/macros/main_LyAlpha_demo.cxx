@@ -1,10 +1,8 @@
-//#include "LyAlpha.C"
-#include "PlotGetters.h"
+#include "LyAlpha.C"
 
 int main()
 {
-    //PlotLyAlphaScan(57019, 0);
-    //return EXIT_SUCCESS;
-     Plot_A2_CT_ColdDump(58461, 1000, "ana/macros/temp2.dump", 10.);
+    PlotLyAlphaScan(57019, 0);
+    return EXIT_SUCCESS;
     return 0;
 }
