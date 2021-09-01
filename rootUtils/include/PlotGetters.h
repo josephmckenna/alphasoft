@@ -54,7 +54,7 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber,Int_t binNumber=1000,
                           const char* dumpFile="ana/macros/temp2.dump", 
                           Double_t EnergyRangeFactor=10., int whichSpill = 0);
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description);
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description, std::vector<int> repition);
 
 #endif
 

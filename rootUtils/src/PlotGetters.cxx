@@ -553,15 +553,16 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpF
 
 
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description)
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description, std::vector<int> repitition)
 {
 
-  Int_t runNumber = runNumbers.at(0);
+  //SIS_PMT_CATCH_OR
+
+  /*Int_t runNumber = runNumbers.at(0);
 
   std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
   std::vector<TH1D *> histos;
-  for(Int_t run : runNumbers)
-  {
+  for(Int_t run : runNumbers) {
     std::cout << "currentRunNum = " << run << std::endl;
 
     std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, description, {-1});
@@ -581,7 +582,52 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Ch
       histos.push_back(hist);
     }
 
+  }*/
+
+  std::vector<TH1D*> allHistos;
+
+std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
+
+for(int j=0; j<runNumbers.size();  j++)
+{
+  Int_t run = runNumbers.at(j);
+
+  TSISChannels chans(run);
+  int channel = chans.GetChannel(SIS_Channel.c_str());
+  std::vector<int> SISChannels = {channel};
+
+  std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {-1});
+
+  std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
+
+  for(int i=0; i<spills.size(); i++)
+  {
+    if(i == repitition.at(j))
+    {
+      std::vector<TA2Spill> currentSpill = { spills.at(i) };
+      std::vector<TH1D*> SIS = Get_SIS(run, SISChannels, currentSpill); //This is a TH1D*
+      TH1D* currentHist = SIS.at(0);
+      allHistos.push_back(currentHist);
+      std::cout << "Pushing back spill number "<< i << std::endl;
+    }
+
+
   }
+  std::cout << "New total hist count = " << allHistos.size() << std::endl;
+
+
+}
+TCanvas *c1 = new TCanvas("c1","different scales hists");
+allHistos.at(0)->Draw("HIST");
+
+for(int i=1; i<allHistos.size(); i++)
+{
+  std::cout << "Drawing Hist "<< i << std::endl;
+  allHistos.at(i)->SetLineColor(50*i);
+  allHistos.at(i)->Draw("SAME HIST");
+}
+  //c1->Update();
+  return c1;
 
 }
 #endif

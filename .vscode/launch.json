@@ -15,7 +15,7 @@
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
             //"args": ["${workspaceFolder}/runs/run58453sub00000.mid.gz"],
 
-            "program": "~/mainAlphasoft/build/alpha2/macro_main_LyAlpha_demo.exe",
+            "program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
             //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
             //"args": ["${workspaceFolder}/runs/run58453sub00000.mid.gz"],
 
