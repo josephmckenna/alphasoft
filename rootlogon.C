@@ -48,12 +48,12 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
  
-  libname="libGEM";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
-  else cout<<" Not loaded"<<endl;
+  // libname="libGEM";
+  // libname=gSystem->FindDynamicLibrary(libname);
+  // cout<<"Loading: "<<libname;
+  // s=gSystem->Load( libname );
+  // if(s==0) cout<<"... ok"<<endl;
+  // else cout<<" Not loaded"<<endl;
   
   libname="libaged";
   libname=gSystem->FindDynamicLibrary(libname);
