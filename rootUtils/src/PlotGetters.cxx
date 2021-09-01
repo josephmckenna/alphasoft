@@ -1,5 +1,7 @@
 #include "PlotGetters.h"
 #include "TSISChannels.h"
+#include "THStack.h"
+#include "TStyle.h"
 
 extern Int_t gNbin;
 //Plots
@@ -555,79 +557,49 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpF
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description, std::vector<int> repitition)
 {
-
   //SIS_PMT_CATCH_OR
+  //MultiPlotRunsAndDumps({58461, 58462}, "SIS_PMT_CATCH_OR", {"Hot Dump"}, {0,0});
+  //std::vector<Int_t> runNumbers = {58461, 58462};
+  //std::string SIS_Channel = "SIS_PMT_CATCH_OR";
+  //std::vector<std::string> description = {"Hot Dump"};
+  //std::vector<int> repitition = {0,0};
 
-  /*Int_t runNumber = runNumbers.at(0);
-
+  std::vector<TH1D*> allHistos;
   std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
-  std::vector<TH1D *> histos;
-  for(Int_t run : runNumbers) {
-    std::cout << "currentRunNum = " << run << std::endl;
 
-    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, description, {-1});
+  for(int j=0; j<runNumbers.size();  j++) {
+    Int_t run = runNumbers.at(j);
 
-    std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
-
-    TSISChannels chans(runNumber);
+    TSISChannels chans(run);
     int channel = chans.GetChannel(SIS_Channel.c_str());
     std::vector<int> SISChannels = {channel};
 
-    auto hists = Get_SIS(runNumber, SISChannels, spills);
+    std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {-1});
+    std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
 
-    std::cout << "NumHistsForThisRun = " << hists.size() << std::endl;
-
-    for(auto hist: hists)
-    {
-      histos.push_back(hist);
+    for(int i=0; i<spills.size(); i++) {
+      if(i == repitition.at(j)) {
+        std::vector<TA2Spill> currentSpill = { spills.at(i) };
+        std::vector<TH1D*> SIS = Get_SIS(run, SISChannels, currentSpill); //This is a TH1D*
+        TH1D* currentHist = SIS.at(0);
+        allHistos.push_back(currentHist);
+        std::cout << "Pushing back spill number "<< i << std::endl;
+      }
     }
-
-  }*/
-
-  std::vector<TH1D*> allHistos;
-
-std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
-
-for(int j=0; j<runNumbers.size();  j++)
-{
-  Int_t run = runNumbers.at(j);
-
-  TSISChannels chans(run);
-  int channel = chans.GetChannel(SIS_Channel.c_str());
-  std::vector<int> SISChannels = {channel};
-
-  std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {-1});
-
-  std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
-
-  for(int i=0; i<spills.size(); i++)
-  {
-    if(i == repitition.at(j))
-    {
-      std::vector<TA2Spill> currentSpill = { spills.at(i) };
-      std::vector<TH1D*> SIS = Get_SIS(run, SISChannels, currentSpill); //This is a TH1D*
-      TH1D* currentHist = SIS.at(0);
-      allHistos.push_back(currentHist);
-      std::cout << "Pushing back spill number "<< i << std::endl;
-    }
-
-
+    std::cout << "New total hist count = " << allHistos.size() << std::endl;
   }
-  std::cout << "New total hist count = " << allHistos.size() << std::endl;
 
+  TCanvas *c1 = new TCanvas("c1","different scales hists");
+  THStack *histoStack = new THStack("hs","");
+  gStyle->SetPalette(kRainBow);
 
-}
-TCanvas *c1 = new TCanvas("c1","different scales hists");
-allHistos.at(0)->Draw("HIST");
+  for(int i=0; i<allHistos.size(); i++) {
+    std::cout << "Drawing Hist "<< i << std::endl;
+    histoStack->Add(allHistos.at(i));
+  }
 
-for(int i=1; i<allHistos.size(); i++)
-{
-  std::cout << "Drawing Hist "<< i << std::endl;
-  allHistos.at(i)->SetLineColor(50*i);
-  allHistos.at(i)->Draw("SAME HIST");
-}
-  //c1->Update();
-  return c1;
+    histoStack->Draw("pfc hist");
+    return c1;
 
 }
 #endif

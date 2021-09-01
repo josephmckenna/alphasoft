@@ -170,7 +170,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 
       TH1D* h= new TH1D( name.Data(),
                         Title.Data(),
-                        gNbin,0.,range );
+                        gNbin,0.,std::ceil(range) );
       hh.push_back(h);
    }
 
