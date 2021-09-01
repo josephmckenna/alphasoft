@@ -422,7 +422,7 @@ TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFi
 
 
 #ifdef BUILD_A2
-TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, int whichSpill)
+TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, int whichSpill)
 {  
   //Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
   //Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
@@ -555,7 +555,7 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber, const char* dumpF
 
 
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Channel, std::vector<std::string> description, std::vector<int> repitition)
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> repitition)
 {
   //SIS_PMT_CATCH_OR
   //MultiPlotRunsAndDumps({58461, 58462}, "SIS_PMT_CATCH_OR", {"Hot Dump"}, {0,0});
@@ -570,9 +570,9 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Ch
   for(int j=0; j<runNumbers.size();  j++) {
     Int_t run = runNumbers.at(j);
 
-    TSISChannels chans(run);
-    int channel = chans.GetChannel(SIS_Channel.c_str());
-    std::vector<int> SISChannels = {channel};
+    TSISChannels channelFinder(run);
+    int channel = channelFinder.GetChannel(SISChannel.c_str());
+    std::vector<int> channels = {channel};
 
     std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {-1});
     std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
@@ -580,26 +580,41 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SIS_Ch
     for(int i=0; i<spills.size(); i++) {
       if(i == repitition.at(j)) {
         std::vector<TA2Spill> currentSpill = { spills.at(i) };
-        std::vector<TH1D*> SIS = Get_SIS(run, SISChannels, currentSpill); //This is a TH1D*
-        TH1D* currentHist = SIS.at(0);
+        std::vector<TH1D*> currentSIS = Get_SIS(run, channels, currentSpill); //This is a TH1D*
+        TH1D* currentHist = currentSIS.at(0);
         allHistos.push_back(currentHist);
         std::cout << "Pushing back spill number "<< i << std::endl;
       }
     }
     std::cout << "New total hist count = " << allHistos.size() << std::endl;
   }
+  std::string title = description.at(0);
+  title+="s for the following runs and spills (RunNum/Spill): ";
+  for(int i=0; i<runNumbers.size(); i++) {
+    title+="(";
+    title+=std::to_string(runNumbers.at(i));
+    title+="/";
+    title+=std::to_string(repitition.at(i));
+    title+=")";
+    title+=", ";
+  }
 
-  TCanvas *c1 = new TCanvas("c1","different scales hists");
-  THStack *histoStack = new THStack("hs","");
+  TCanvas *finalCanvas = new TCanvas("c1","MultiPlot");
+  THStack *histoStack = new THStack("hs",title.c_str());
+  TLegend *legend = new TLegend();
   gStyle->SetPalette(kRainBow);
 
   for(int i=0; i<allHistos.size(); i++) {
     std::cout << "Drawing Hist "<< i << std::endl;
     histoStack->Add(allHistos.at(i));
+    legend->AddEntry(allHistos.at(i), std::to_string(runNumbers.at(i)).c_str() );
   }
-
     histoStack->Draw("pfc hist");
-    return c1;
+    legend->Draw();
+    histoStack->GetXaxis()->SetTitle("Time (s)");
+    histoStack->GetYaxis()->SetTitle("Counts");
+    histoStack->Draw("pfc hist");
+    return finalCanvas;
 
 }
 #endif
