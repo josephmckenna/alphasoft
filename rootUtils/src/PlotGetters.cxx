@@ -555,67 +555,64 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
 
 
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> repitition)
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> dumpNumbers, bool stack)
 {
-  //SIS_PMT_CATCH_OR
-  //MultiPlotRunsAndDumps({58461, 58462}, "SIS_PMT_CATCH_OR", {"Hot Dump"}, {0,0});
-  //std::vector<Int_t> runNumbers = {58461, 58462};
-  //std::string SIS_Channel = "SIS_PMT_CATCH_OR";
-  //std::vector<std::string> description = {"Hot Dump"};
-  //std::vector<int> repitition = {0,0};
-
+  //Set up a vector of final histograms to save.
   std::vector<TH1D*> allHistos;
-  std::cout << "NumRunNumbers = " << runNumbers.size() << std::endl;
 
-  for(int j=0; j<runNumbers.size();  j++) {
-    Int_t run = runNumbers.at(j);
+  //Loop through each run inputed.
+  for(int i=0; i<runNumbers.size();  i++) 
+  {
+    Int_t run = runNumbers.at(i);
 
+    //These 3 lines find the SIS channel of the input. 
     TSISChannels channelFinder(run);
     int channel = channelFinder.GetChannel(SISChannel.c_str());
     std::vector<int> channels = {channel};
 
-    std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {-1});
-    std::cout << "NumSpillsForThisRun = " << spills.size() << std::endl;
-
-    for(int i=0; i<spills.size(); i++) {
-      if(i == repitition.at(j)) {
-        std::vector<TA2Spill> currentSpill = { spills.at(i) };
-        std::vector<TH1D*> currentSIS = Get_SIS(run, channels, currentSpill); //This is a TH1D*
-        TH1D* currentHist = currentSIS.at(0);
-        allHistos.push_back(currentHist);
-        std::cout << "Pushing back spill number "<< i << std::endl;
-      }
-    }
-    std::cout << "New total hist count = " << allHistos.size() << std::endl;
+    //Get the spills from the data (should only be the one selected in the dumpNumbers) 
+    std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {dumpNumbers.at(i)});
+    //Get the SIS from the spill, pills the first (and only histo) and adds it to allHistos
+    allHistos.push_back( Get_SIS(run, channels, {spills.at(0)}).at(0) );
   }
+
+  //Set up a nice title.
   std::string title = description.at(0);
   title+="s for the following runs and spills (RunNum/Spill): ";
   for(int i=0; i<runNumbers.size(); i++) {
     title+="(";
     title+=std::to_string(runNumbers.at(i));
     title+="/";
-    title+=std::to_string(repitition.at(i));
+    title+=std::to_string(dumpNumbers.at(i));
     title+=")";
     title+=", ";
   }
 
-  TCanvas *finalCanvas = new TCanvas("c1","MultiPlot");
-  THStack *histoStack = new THStack("hs",title.c_str());
+  //Drawing options. We create a histo stack and then draw that.
+  TCanvas *finalCanvas = new TCanvas("finalCanvas","MultiPlot");
+  THStack *histoStack = new THStack("histoStack",title.c_str());
   TLegend *legend = new TLegend();
   gStyle->SetPalette(kRainBow);
 
-  for(int i=0; i<allHistos.size(); i++) {
-    std::cout << "Drawing Hist "<< i << std::endl;
-    histoStack->Add(allHistos.at(i));
-    legend->AddEntry(allHistos.at(i), std::to_string(runNumbers.at(i)).c_str() );
+  //Loop through all histos and stack.
+  for(int i=0; i<allHistos.size(); i++) 
+  {
+    histoStack->Add(allHistos.at(i)); //Add each histo to the stack. 
+    legend->AddEntry(allHistos.at(i), std::to_string(runNumbers.at(i)).c_str() ); //Add an entry to the legend.
   }
-    histoStack->Draw("pfc hist");
-    legend->Draw();
-    histoStack->GetXaxis()->SetTitle("Time (s)");
-    histoStack->GetYaxis()->SetTitle("Counts");
-    histoStack->Draw("pfc hist");
-    return finalCanvas;
 
+  //We have to draw it first to be able to get the axis. This draw will be overwritten below. 
+  histoStack->Draw();
+  legend->Draw();
+  histoStack->GetXaxis()->SetTitle("Time (s)");
+  histoStack->GetYaxis()->SetTitle("Counts");
+
+  if(stack) 
+    histoStack->Draw("pfc hist"); 
+  else 
+    histoStack->Draw("pfc hist nostack");
+
+  return finalCanvas;
 }
 #endif
 
