@@ -1,6 +1,6 @@
 #include "PlotGetters.h"
 #include "TSISChannels.h"
-#include "THStack.h"
+
 #include "TStyle.h"
 
 extern Int_t gNbin;
@@ -557,12 +557,17 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> dumpNumbers, bool stack)
 {
+  //std::vector<Int_t> runNumbers = {58460, 58460};
+  //std::string SISChannel = "SIS_PMT_CATCH_OR";
+  //std::vector<std::string> description = {"Hot Dump"};
+  //std::vector<int> dumpNumbers = {6,6};
+  //bool stack = true;
+
   //Set up a vector of final histograms to save.
   std::vector<TH1D*> allHistos;
 
   //Loop through each run inputed.
-  for(int i=0; i<runNumbers.size();  i++) 
-  {
+  for(int i=0; i<runNumbers.size();  i++) {
     Int_t run = runNumbers.at(i);
 
     //These 3 lines find the SIS channel of the input. 
@@ -595,26 +600,51 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
   gStyle->SetPalette(kRainBow);
 
   //Loop through all histos and stack.
-  for(int i=0; i<allHistos.size(); i++) 
-  {
+  for(int i=0; i<allHistos.size(); i++) {
     histoStack->Add(allHistos.at(i)); //Add each histo to the stack. 
     legend->AddEntry(allHistos.at(i), std::to_string(runNumbers.at(i)).c_str() ); //Add an entry to the legend.
   }
 
   //We have to draw it first to be able to get the axis. This draw will be overwritten below. 
-  histoStack->Draw();
-  legend->Draw();
-  histoStack->GetXaxis()->SetTitle("Time (s)");
-  histoStack->GetYaxis()->SetTitle("Counts");
+  //histoStack->Draw();
 
   if(stack) 
     histoStack->Draw("pfc hist"); 
   else 
     histoStack->Draw("pfc hist nostack");
 
+  THStack *mountainStack = new THStack();
+  mountainStack = GenerateMountainStack(allHistos, mountainStack);
+  mountainStack->Draw();
+  legend->Draw();
+  histoStack->GetXaxis()->SetTitle("Time (s)");
+  histoStack->GetYaxis()->SetTitle("Counts");
+  mountainStack->Draw();
+
   return finalCanvas;
 }
 #endif
+
+THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack) {
+  THStack *newStack = new THStack();
+  int numOfHists = allHistos.size();
+  
+  for(int i=0; i<numOfHists; i++) {
+    TH1D* currentHist = allHistos.at(i);
+    int numXbins = currentHist->GetNbinsX();
+    double minX = currentHist->GetXaxis()->GetXmin();
+    double maxX = currentHist->GetXaxis()->GetXmax();
+    TH2D *h2 = new TH2D( Form("h2_%d",i), Form("h2_%d",i), numXbins, minX, maxX, numOfHists, 0, numOfHists);
+    for (int j=1; j<=numXbins; j++) {
+      h2->SetBinContent(j,i+1,currentHist->GetBinContent(j));
+    }
+    h2->SetFillColor(i*2);
+    newStack->Add(h2);
+    emptyStack->Add(h2);
+  }
+  emptyStack = newStack;
+  return emptyStack;
+}
 
 
 #ifdef BUILD_AG

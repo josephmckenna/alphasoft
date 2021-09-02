@@ -4,6 +4,7 @@
 #include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
+#include "THStack.h"
 #include "TPaveText.h"
 
 #include "TAPlot.h"
@@ -57,6 +58,8 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber,Int_t binNumber=1000,
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
                                 std::vector<std::string> description, std::vector<int> dumpNumbers, 
                                 bool stack = false);
+
+THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack);
 
 #endif
 
