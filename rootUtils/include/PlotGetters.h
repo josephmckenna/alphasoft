@@ -59,7 +59,7 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
                                 std::vector<std::string> description, std::vector<int> dumpNumbers, 
                                 bool stack = false);
 
-THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack);
+THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings);
 
 #endif
 

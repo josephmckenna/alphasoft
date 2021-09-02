@@ -557,10 +557,10 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> dumpNumbers, bool stack)
 {
-  //std::vector<Int_t> runNumbers = {58460, 58460};
+  //std::vector<Int_t> runNumbers = {58460, 58460, 58460, 58460, 58460, 58460, 58460};
   //std::string SISChannel = "SIS_PMT_CATCH_OR";
   //std::vector<std::string> description = {"Hot Dump"};
-  //std::vector<int> dumpNumbers = {6,6};
+  //std::vector<int> dumpNumbers = {7, 12, 3, 18, 32, 28, 23};
   //bool stack = true;
 
   //Set up a vector of final histograms to save.
@@ -583,6 +583,7 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
 
   //Set up a nice title.
   std::string title = description.at(0);
+  std::vector<std::string> legendStrings;
   title+="s for the following runs and spills (RunNum/Spill): ";
   for(int i=0; i<runNumbers.size(); i++) {
     title+="(";
@@ -591,6 +592,7 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
     title+=std::to_string(dumpNumbers.at(i));
     title+=")";
     title+=", ";
+    legendStrings.push_back("(" + std::to_string(runNumbers.at(i)) + "/" + std::to_string(dumpNumbers.at(i)) + ")");
   }
 
   //Drawing options. We create a histo stack and then draw that.
@@ -614,18 +616,19 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
     histoStack->Draw("pfc hist nostack");
 
   THStack *mountainStack = new THStack();
-  mountainStack = GenerateMountainStack(allHistos, mountainStack);
+  TLegend *mountainLegend = new TLegend();
+  mountainStack = GenerateMountainStack(allHistos, mountainStack, mountainLegend, legendStrings);
   mountainStack->Draw();
-  legend->Draw();
-  histoStack->GetXaxis()->SetTitle("Time (s)");
-  histoStack->GetYaxis()->SetTitle("Counts");
-  mountainStack->Draw();
+  mountainStack->GetXaxis()->SetTitle("Time (s)");
+  mountainStack->GetYaxis()->SetTitle("Counts");
+  mountainStack->Draw("lego2");
+  mountainLegend->Draw();
 
   return finalCanvas;
 }
 #endif
 
-THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack) {
+THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings) {
   THStack *newStack = new THStack();
   int numOfHists = allHistos.size();
   
@@ -638,7 +641,9 @@ THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack
     for (int j=1; j<=numXbins; j++) {
       h2->SetBinContent(j,i+1,currentHist->GetBinContent(j));
     }
-    h2->SetFillColor(i*2);
+    gStyle->SetPalette(kRainBow);
+    //h2->SetFillColor(i*2);
+    legend->AddEntry(h2, legendStrings.at(i).c_str() );
     newStack->Add(h2);
     emptyStack->Add(h2);
   }
