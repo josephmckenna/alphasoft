@@ -555,19 +555,14 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
 
 
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, bool stack)
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, std::string drawOption)
 {
-  //std::vector<Int_t> runNumbers = {58460, 58460, 58460, 58460, 58460, 58460, 58460};
-  //std::string SISChannel = "SIS_PMT_CATCH_OR";
-  //std::vector<std::string> description = {"Hot Dump"};
-  //std::vector<int> dumpNumbers = {7, 12, 3, 18, 32, 28, 23};
-  //bool stack = true;
-
   //Set up a vector of final histograms to save.
   std::vector<TH1D*> allHistos;
 
   //Loop through each run inputed.
-  for(int i=0; i<runNumbers.size();  i++) {
+  for(int i=0; i<runNumbers.size();  i++) 
+  {
     Int_t run = runNumbers.at(i);
 
     //These 3 lines find the SIS channel of the input. 
@@ -575,83 +570,106 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
     int channel = channelFinder.GetChannel(SISChannel.c_str());
     std::vector<int> channels = {channel};
 
-    //Get the spills from the data (should only be the one selected in the dumpNumbers) 
+    //Get the spills from the data (should only be the range selected in the dumpNumbers) 
     std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {dumpNumbers.at(i)});
-    //Get the SIS from the spill, pills the first (and only histo) and adds it to allHistos
+    //Get the SIS from the spill, then pills the first (and only histo) and adds it to allHistos
     allHistos.push_back( Get_SIS(run, channels, {spills.at(0)}).at(0) );
   }
 
-  //Set up a nice title.
-  std::string title = description.at(0);
+  //Set up a nice title, and create a vector of strings for the legend(s).
   std::vector<std::string> legendStrings;
+  std::string title = description.at(0);
   title+="s for the following runs and spills (RunNum/Spill): ";
-  for(int i=0; i<runNumbers.size(); i++) {
+  for(int i=0; i<runNumbers.size(); i++) 
+  {
+    //Turn a vector into a string - this is the best way in C++
+    std::stringstream result;
+    std::copy(dumpNumbers.at(i).begin(), dumpNumbers.at(i).end(), std::ostream_iterator<int>(result, " "));
+    
+    //Add to the long title string.
     title+="(";
     title+=std::to_string(runNumbers.at(i));
     title+="/";
-    std::stringstream result;
-    std::copy(dumpNumbers.at(i).begin(), dumpNumbers.at(i).end(), std::ostream_iterator<int>(result, " "));
     title+=result.str();
     title+=")";
     title+=", ";
-    legendStrings.push_back("Hist " + std::to_string(i) + "= (" + std::to_string(runNumbers.at(i)) + "/ [" + result.str() + "] )");
+
+    //Add each string to legend names vector.
+    legendStrings.push_back("Hist " + std::to_string(i) + " = (" + std::to_string(runNumbers.at(i)) + " / [" + result.str() + "])");
   }
 
-  //Drawing options. We create a histo stack and then draw that.
-  TCanvas *finalCanvas = new TCanvas("finalCanvas","MultiPlot");
-  THStack *histoStack = new THStack("histoStack",title.c_str());
-  TLegend *legend = new TLegend();
-  gStyle->SetPalette(kRainBow);
+  //Create the final canvas, 2D histogram stack, and 2D legend.
+  TCanvas *finalCanvas = new TCanvas("finalCanvas",title.c_str());
+  THStack *histoStack2D = new THStack("histoStack",title.c_str());
+  TLegend *legend2D = new TLegend();
+  gStyle->SetPalette(kRainBow); //Select colour style, this has been the clearest I can find.
 
-  //Loop through all histos and stack.
-  for(int i=0; i<allHistos.size(); i++) {
-    histoStack->Add(allHistos.at(i)); //Add each histo to the stack. 
-    legend->AddEntry(allHistos.at(i), std::to_string(runNumbers.at(i)).c_str() ); //Add an entry to the legend.
+  //Loop through all histos and stack into a standard 2D stack.
+  for(int i=0; i<allHistos.size(); i++) 
+  {
+    histoStack2D->Add(allHistos.at(i)); //Add each histo to the stack. 
+    legend2D->AddEntry(allHistos.at(i), legendStrings.at(i).c_str() ); //Add an entry to the legend.
   }
 
-  //We have to draw it first to be able to get the axis. This draw will be overwritten below. 
-  //histoStack->Draw();
+  //If 2D draw options are selected we will enter this and draw. If not the 2D stack is used to convert to a 3D stack.
+  if(drawOption == "2dstack" || drawOption == "2dnostack")
+  {
+    //We have to draw it first to be able to get the axis. This draw will be overwritten below. 
+    histoStack2D->Draw(); //Dummy draw
+    histoStack2D->GetXaxis()->SetTitle("Time (s)");
+    histoStack2D->GetYaxis()->SetTitle("Counts");
+    if(drawOption == "2dstack") 
+      histoStack2D->Draw("pfc hist"); //Real draw
+    else if (drawOption == "2dnostack")
+      histoStack2D->Draw("pfc hist nostack"); //Real draw
+    legend2D->Draw(); //Draw legend
+  }
 
-  if(stack) 
-    histoStack->Draw("pfc hist"); 
-  else 
-    histoStack->Draw("pfc hist nostack");
 
-  THStack *mountainStack = new THStack();
-  TLegend *mountainLegend = new TLegend();
-  mountainStack = GenerateMountainStack(allHistos, mountainStack, mountainLegend, legendStrings);
-  mountainStack->Draw();
-  mountainStack->GetXaxis()->SetTitle("Time (s)");
-  mountainStack->GetYaxis()->SetTitle("Run and dump - see legend");
-  mountainStack->GetHistogram()->GetZaxis()->SetTitle("Counts");
-  mountainStack->Draw("lego2");
-  mountainLegend->Draw();
 
+  //If 3D options are selected we will skip the 2D draw, go straight to the 3D conversion then the 3D draw.
+  if(drawOption == "3dheat" || drawOption == "3dstack")
+  {
+    //Create new 3D stacks and legend.
+    THStack *histoStack3D = new THStack("histoStack",title.c_str());
+    TLegend *legend3D = new TLegend();
+    //This function adds a z axis to the plots to allow to plot them in 3D.
+    Generate3DTHStack(allHistos, histoStack3D, legend3D, legendStrings);
+    histoStack3D->Draw(); //Dummy draw, again just to be able to grab axis and set titles.
+    histoStack3D->GetXaxis()->SetTitle("Time (s)");
+    histoStack3D->GetYaxis()->SetTitle("Run and dump - see legend");
+    histoStack3D->GetHistogram()->GetZaxis()->SetTitle("Counts");
+    if(drawOption == "3dheat") 
+      histoStack3D->Draw("lego2"); //Real draw
+    else if (drawOption == "3dstack")
+      histoStack3D->Draw("pfc lego1"); //Real draw
+    legend3D->Draw(); //Draw the legend
+    }
   return finalCanvas;
 }
 #endif
 
-THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings) {
-  THStack *newStack = new THStack();
+void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* emptyLegend, std::vector<std::string> legendStrings) {
+  //Function takes the vector of relevent histos we had and generates a 3D histogram stack from it for visualisation. 
   int numOfHists = allHistos.size();
+  gStyle->SetPalette(kRainBow); //This should match the one above but can be different if you like.
   
-  for(int i=0; i<numOfHists; i++) {
-    TH1D* currentHist = allHistos.at(i);
+  for(int i=0; i<numOfHists; i++) 
+  {
+    //Loops over all relevant TH1D histograms and grabs the x data.
+    TH1D* currentHist = allHistos.at(i); 
     int numXbins = currentHist->GetNbinsX();
     double minX = currentHist->GetXaxis()->GetXmin();
     double maxX = currentHist->GetXaxis()->GetXmax();
-    TH2D *h2 = new TH2D( Form("h2_%d",i), Form("h2_%d",i), numXbins, minX, maxX, numOfHists, 0, numOfHists);
-    for (int j=1; j<=numXbins; j++) {
-      h2->SetBinContent(j,i+1,currentHist->GetBinContent(j));
+    //Creates a TH2D with the old TH1D x data and a arbitrary y axis such that each histogram is back to back.
+    TH2D *newHist = new TH2D( Form("h2_%d",i), Form("h2_%d",i), numXbins, minX, maxX, numOfHists, 0, numOfHists);
+    for (int j=1; j<=numXbins; j++) 
+    {
+      newHist->SetBinContent(j,i+1,currentHist->GetBinContent(j)); //Populates each histogram with its original content in x and just its number in y.
     }
-    gStyle->SetPalette(kRainBow);
-    //h2->SetFillColor(i*2);
-    legend->AddEntry(h2, legendStrings.at(i).c_str() );
-    newStack->Add(h2);
-    emptyStack->Add(h2);
+    emptyStack->Add(newHist); //Add histogram to our empty stack.
+    emptyLegend->AddEntry(newHist, legendStrings.at(i).c_str() ); //Adds legend entry to our old legend.
   }
-  emptyStack = newStack;
-  return emptyStack;
 }
 
 
