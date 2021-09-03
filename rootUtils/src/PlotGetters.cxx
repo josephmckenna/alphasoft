@@ -555,7 +555,7 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
 
 
 
-TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<int> dumpNumbers, bool stack)
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, bool stack)
 {
   //std::vector<Int_t> runNumbers = {58460, 58460, 58460, 58460, 58460, 58460, 58460};
   //std::string SISChannel = "SIS_PMT_CATCH_OR";
@@ -589,10 +589,12 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
     title+="(";
     title+=std::to_string(runNumbers.at(i));
     title+="/";
-    title+=std::to_string(dumpNumbers.at(i));
+    std::stringstream result;
+    std::copy(dumpNumbers.at(i).begin(), dumpNumbers.at(i).end(), std::ostream_iterator<int>(result, " "));
+    title+=result.str();
     title+=")";
     title+=", ";
-    legendStrings.push_back("(" + std::to_string(runNumbers.at(i)) + "/" + std::to_string(dumpNumbers.at(i)) + ")");
+    legendStrings.push_back("Hist " + std::to_string(i) + "= (" + std::to_string(runNumbers.at(i)) + "/ [" + result.str() + "] )");
   }
 
   //Drawing options. We create a histo stack and then draw that.
@@ -620,7 +622,8 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
   mountainStack = GenerateMountainStack(allHistos, mountainStack, mountainLegend, legendStrings);
   mountainStack->Draw();
   mountainStack->GetXaxis()->SetTitle("Time (s)");
-  mountainStack->GetYaxis()->SetTitle("Counts");
+  mountainStack->GetYaxis()->SetTitle("Run and dump - see legend");
+  mountainStack->GetHistogram()->GetZaxis()->SetTitle("Counts");
   mountainStack->Draw("lego2");
   mountainLegend->Draw();
 

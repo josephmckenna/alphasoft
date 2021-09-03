@@ -56,7 +56,7 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber,Int_t binNumber=1000,
                           Double_t EnergyRangeFactor=10., int whichSpill = 0);
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
-                                std::vector<std::string> description, std::vector<int> dumpNumbers, 
+                                std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, 
                                 bool stack = false);
 
 THStack* GenerateMountainStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings);
