@@ -71,6 +71,11 @@ class SpillLogPrinter
    {
      fSpillLogLineNumber = 0;
    }
+   ~SpillLogPrinter()
+   {
+     // The new manalzyer calls the dtor between runs... 
+     //cm_msg1(MINFO, "SpillLog", "alpha2online","Exiting...");
+   }
    void Reset()
    {
      fSpillLogLineNumber = 0;
@@ -116,7 +121,7 @@ class SpillLogPrinter
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       fSpillLogLineNumber++;
    }
-   void EndRun()
+   void EndRun(int RunNo)
    {
       int width = fSpillLogTitle.Length();
       std::string line;
@@ -124,7 +129,6 @@ class SpillLogPrinter
          line += '=';
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
       cm_msg1(MINFO, "SpillLog", "alpha2online","End run %d",RunNo);
-      
    }
    
    void PrintLine(const char *string)
