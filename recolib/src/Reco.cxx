@@ -428,7 +428,11 @@ int Reco::FitLines()
          line->SetChi2Cut( fLineChi2Cut );
          line->SetChi2Min( fLineChi2Min );
          line->SetPointsCut( fNspacepointsCut );
+#ifdef __MINUIT2FIT__
+         line->FitM2();
+#else
          line->Fit();
+#endif
          if( line->GetStat() > 0 )
             {
                line->CalculateResiduals();
