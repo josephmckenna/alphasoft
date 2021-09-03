@@ -472,8 +472,11 @@ int Reco::FitHelix()
          helix->SetChi2RMin( fHelChi2RMin );
          helix->SetChi2ZMin( fHelChi2ZMin );
          helix->SetDCut( fHelDcut );
+#ifdef __MINUIT2FIT__
+         helix->FitM2();
+#else
          helix->Fit();
-
+#endif
          if( helix-> GetStatR() > 0 &&
              helix-> GetStatZ() > 0 )
             helix->CalculateResiduals();
