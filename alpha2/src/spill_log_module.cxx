@@ -48,6 +48,8 @@ time_t LastUpdate;
 
 #include "TSISChannels.h"
 
+#include "TAnalysisReport.h"
+
 class SpillLogFlags
 {
 public:
@@ -124,9 +126,7 @@ class SpillLogPrinter
    void EndRun(int RunNo)
    {
       int width = fSpillLogTitle.Length();
-      std::string line;
-      for (int i = 0; i < width; i++)
-         line += '=';
+      std::string line(width,'=');
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
       cm_msg1(MINFO, "SpillLog", "alpha2online","End run %d",RunNo);
    }
@@ -264,6 +264,17 @@ public:
             exit(555);
          }
       }
+
+      TA2AnalysisReport* report = new TA2AnalysisReport(runinfo->fRunNo);
+      std::string VersionLine = report->GetProgramName() + std::string("\tGit version: ") + report->GetGitHash() + std::string(" Build date: ") + report->GetCompilationDateString();
+      if (report->GetGitDiff().size())
+         VersionLine += std::string(" with ") + report->GetGitDiff();
+
+      TA2Spill* versionSpill = new TA2Spill(report->GetRunNumber(), report->GetRunStartTime(), VersionLine.c_str());
+
+      A2SpillFlow* flow = new A2SpillFlow(NULL);
+      flow->spill_events.push_back(versionSpill);
+      runinfo->AddToFlowQueue(flow);
 
       if (!fFlags->fNoSpillSummary)
       {
