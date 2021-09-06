@@ -26,6 +26,8 @@ bsc_tdc_module.o
 # GS
 #bv_tpc_matching_module.o
 #histo_module.o
+# GS
+bsc_histo_module.o
 #phspectrum_module.o
 #calib_module.o
 #display_module.o

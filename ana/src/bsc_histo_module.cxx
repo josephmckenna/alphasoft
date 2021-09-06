@@ -1,0 +1,476 @@
+#include "AgFlow.h"
+#include "RecoFlow.h"
+
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TProfile.h"
+#include "TGraph.h"
+
+#include "TBarEvent.hh"
+#include <set>
+#include <iostream>
+
+class BscHistoFlags
+{
+public:
+   bool fPrint=false;
+   bool fPulser=false;
+   bool fProtoTOF = false;
+   bool fBscDiag = false;
+
+public:
+   BscHistoFlags() // ctor
+   { }
+
+   ~BscHistoFlags() // dtor
+   { }
+};
+
+class BscHistoModule: public TARunObject
+{
+public:
+   BscHistoFlags* fFlags = NULL;
+   int fCounter;
+
+private:
+
+   bool diagnostics;
+
+   // Container declaration
+   int BVTdcMap[64][7];
+   int protoTOFTdcMap[16][4];
+
+   // ADC
+   TH1D* hAdcOccupancy;
+   TH2D* hAdcCorrelation;
+   TH1D* hAdcTime;
+   TH2D* hAdcTime2d;
+   TH1D* hAdcMultiplicity;
+   TH1D* hAdcAmp;
+   TH2D* hAdcAmp2d;
+   TH1D* hAdcFitAmp;
+   TH2D* hAdcFitAmp2d;
+   TH2D* hAdcFitting;
+
+   // TDC
+   TH1D* hAdcTdcOccupancy;
+   TH2D* hTdcCorrelation;
+   TH1D* hTdcMultiplicity;
+   TH1D* hTdcSingleChannelMultiplicity;
+   TH2D* hTdcSingleChannelMultiplicity2d;
+   TH1D* hBarMultiplicity;
+   TH2D* hBarCorrelation;
+   TH1D* hTdcTimeVsCh0;
+   TH2D* hTdcTimeVsCh02d;
+
+   // Bars
+   TH1D* hTopBotDiff;
+   TH2D* hTopBotDiff2d;
+   TH1D* hZed;
+   TH2D* hZed2d;
+   TH1D* hTwoBarTOF;
+   TH2D* hTwoBarTOF2d;
+   TH1D* hNBarTOF;
+   TH2D* hNBarTOF2d;
+   TH1D* hTwoBarDPhi;
+   TH1D* hNBarDPhi;
+
+
+
+public:
+   BscHistoModule(TARunInfo* runinfo, BscHistoFlags* f)
+      :  TARunObject(runinfo), fFlags(f), fCounter(0)
+   {
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Bsc Histo Module";
+#endif
+      diagnostics=f->fBscDiag;
+   }
+
+   ~BscHistoModule(){}
+
+   void BeginRun(TARunInfo* runinfo)
+   {
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      if(!diagnostics) return;
+      printf("BscHistoModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      fCounter = 0;
+
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      if( !gDirectory->cd("bsc_histo_module") )
+         gDirectory->mkdir("bsc_histo_module")->cd();
+
+      // Loads BV and protoTOF maps
+      TString protoTOFmapfile=getenv("AGRELEASE");
+      protoTOFmapfile+="/ana/bscint/protoTOF.map";
+      TString BVmapfile=getenv("AGRELEASE");
+      BVmapfile+="/ana/bscint/BV.map";
+      std::ifstream fBVMap(BVmapfile.Data());
+      std::ifstream fProtoTOFMap(protoTOFmapfile.Data());
+      if(fBVMap) {
+         std::string comment; getline(fBVMap, comment);
+         for(int i=0; i<64; i++) {
+            fBVMap >> BVTdcMap[i][0] >> BVTdcMap[i][1] >> BVTdcMap[i][2] >> BVTdcMap[i][3] >> BVTdcMap[i][4] >> BVTdcMap[i][5] >> BVTdcMap[i][6];
+         }
+         fBVMap.close();
+      }
+      if(fProtoTOFMap) {
+         std::string comment; getline(fProtoTOFMap, comment);
+         for(int i=0; i<16; i++) {
+            fProtoTOFMap >> protoTOFTdcMap[i][0] >> protoTOFTdcMap[i][1] >> protoTOFTdcMap[i][2] >> protoTOFTdcMap[i][3];
+         }
+         fProtoTOFMap.close();
+      }
+
+      if (fFlags->fProtoTOF) { // two bar prototype
+
+         // ADC
+         gDirectory->mkdir("adc_histos")->cd();
+         hAdcOccupancy = new TH1D("hAdcOccupancy","ADC channel occupancy;Channel number",16,-0.5,15.5);
+         hAdcCorrelation = new TH2D("hAdcCorrelation","ADC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
+         hAdcMultiplicity = new TH1D("hAdcMultiplicity","ADC channel multiplicity;Number of ADC channels hit",17,-0.5,16.5);
+         hAdcAmp = new TH1D("hAdcAmp","ADC pulse amplitude;Amplitude (volts)",200,0.,4.);
+         hAdcAmp2d = new TH2D("hAdcAmp2d","ADC pulse amplitude;Channel number;Amplitude (volts)",16,-0.5,15.5,200,0.,4.);
+         hAdcFitAmp = new TH1D("hAdcFitAmp","ADC pulse amplitude from fit;Amplitude from fit (volts)",200,0.,4.);
+         hAdcFitAmp2d = new TH2D("hAdcFitAmp2d","ADC pulse amplitude from fit;Channel number;Amplitude from fit (volts)",16,-0.5,15.5,200,0.,4.);
+         hAdcFitting = new TH2D("hAdcFitting","ADC pulse amplitude fit vs. measured;Amplitude (Volts);Amplitude from fit (volts)",200,0.,4.,200,0.,4.);
+         hAdcTime = new TH1D("hAdcTime","ADC pulse start time;ADC pulse start time [ns]",3000,0,3000);
+         hAdcTime2d = new TH2D("hAdcTime2d","ADC pulse start time;Channel number;ADC pulse start time [ns]",16,-0.5,15.5,3000,0,3000);
+         gDirectory->cd("..");
+
+         // TDC
+         gDirectory->mkdir("tdc_histos")->cd();
+         hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",16,-0.5,15.5);
+         hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
+         hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",17,-0.5,16.5);
+         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,10,-0.5,9.5);
+         if (fFlags->fPulser) {
+            hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-5,5);
+            hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",16,-0.5,15.5,200,-5,5);
+         }
+         if ( !(fFlags->fPulser) ) {
+            hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",3,-0.5,2.5);
+            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-10,10);
+            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",2,-0.5,1.5,200,-10,10);
+            hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-2,2);
+            hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",2,-0.5,1.5,200,-2,2);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,-20,20);
+         }
+         gDirectory->cd("..");
+
+      }
+
+      if ( !(fFlags->fProtoTOF) ) { // full barrel veto
+
+         // ADC
+         gDirectory->mkdir("adc_histos")->cd();
+         hAdcOccupancy = new TH1D("hAdcOccupancy","ADC channel occupancy;Channel number;Counts",128,-0.5,127.5);
+         hAdcCorrelation = new TH2D("hAdcCorrelation","ADC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
+         hAdcMultiplicity = new TH1D("hAdcMultiplicity","ADC hit multiplicity;Number of ADC channels hit",129,-0.5,128.5);
+         hAdcAmp = new TH1D("hAdcAmp","ADC pulse amplitude;Amplitude (volts)",200,0.,4.);
+         hAdcAmp2d = new TH2D("hAdcAmp2d","ADC pulse amplitude;Channel number;Amplitude (volts)",128,-0.5,127.5,200,0.,4.);
+         hAdcFitAmp = new TH1D("hAdcFitAmp","ADC pulse amplitude from fit;Amplitude from fit (volts)",200,0.,4.);
+         hAdcFitAmp2d = new TH2D("hAdcFitAmp2d","ADC pulse amplitude from fit;Channel number;Amplitude from fit (volts)",128,-0.5,127.5,200,0.,4.);
+         hAdcFitting = new TH2D("hAdcFitting","ADC pulse amplitude fit vs. measured;Amplitude (Volts);Amplitude from fit (volts)",200,0.,4.,200,0.,4.);
+         hAdcTime = new TH1D("hAdcTime","ADC pulse start time;ADC pulse start time [ns]",3000,0,3000);
+         hAdcTime2d = new TH2D("hAdcTime2d","ADC pulse start time;Channel number;ADC pulse start time [ns]",128,-0.5,127.5,3000,0,3000);
+         gDirectory->cd("..");
+
+         // TDC
+         gDirectory->mkdir("tdc_histos")->cd();
+         hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",128,-0.5,127.5);
+         hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
+         hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",129,-0.5,128.5);
+         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,10,-0.5,9.5);
+         if (fFlags->fPulser) {
+            hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-5,5);
+            hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",128,-0.5,127.5,200,-5,5);
+         }
+         if ( !(fFlags->fPulser) ) {
+            hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",65,-0.5,64.5);
+            hBarCorrelation = new TH2D("hBarCorrelation","Bar correlation;Bar number;Bar number",64,-0.5,63.5,64,-0.5,63.5);
+            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-30,30);
+            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",64,-0.5,63.5,200,-30,30);
+            hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-3,3);
+            hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",64,-0.5,63.5,200,-2,2);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","TOF for events with N=2 bars;TOF (ns)",200,-20,20);
+            hTwoBarTOF2d = new TH2D("hTwoBarTOF2d","TOF for events with N=2 bars;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
+            hNBarTOF = new TH1D("hNBarTOF","TOF for any permutation of two hits;TOF (ns)",200,-20,20);
+            hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
+            hTwoBarDPhi = new TH1D("hTwoBarDPhi","Angular separation for events with N=2 bars;Delta phi (degrees)",32,0,180);
+            hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (degrees)",32,0,180);
+         }
+         gDirectory->cd("..");
+      }
+
+
+   }
+
+   void EndRun(TARunInfo* runinfo)
+   {
+      if(!diagnostics) return;
+      printf("BscHistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+   }
+
+   void PauseRun(TARunInfo* runinfo)
+   {
+      if( fFlags->fPrint ) printf("PauseRun, run %d\n", runinfo->fRunNo);
+   }
+
+   void ResumeRun(TARunInfo* runinfo)
+   {
+      if( fFlags->fPrint ) printf("ResumeRun, run %d\n", runinfo->fRunNo);
+   }
+
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {      
+      if(!diagnostics)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      
+      const AgEventFlow* ef = flow->Find<AgEventFlow>();
+     
+      if (!ef || !ef->fEvent)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+           
+      AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
+      if( !bef || !bef->BarEvent)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+
+      TBarEvent* barEvt = bef->BarEvent;
+      AgEvent* agEvt = ef->fEvent;
+
+      TdcEvent* tdc = agEvt->tdc;
+
+      if (!tdc || !tdc->complete)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         if (fFlags->fPrint) printf("bsc_histo_module: TDC event incomplete or missing\n");
+         return flow;
+      }
+     
+      
+      std::vector<EndHit*> endhits = barEvt->GetEndHits();
+      if (endhits.size()==0) {
+         if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
+         return flow;
+      }
+      std::vector<TdcHit*> tdchits = tdc->hits;
+      if (tdchits.size()==0) {
+         if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
+         return flow;
+      }
+
+      if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent start\n");
+
+      AdcHistos(endhits);
+      TdcHistos(endhits);
+      DirectTdcHistos(tdchits);
+
+      std::vector<BarHit*> barhits = barEvt->GetBars();
+      if (barhits.size()==0) {
+         if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no barhits\n");
+         return flow;
+      }
+      BarHistos(barhits);
+      TOFHistos(barhits);
+
+      ++fCounter;
+      if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent complete\n");
+      return flow;
+   }
+
+   void AdcHistos(std::vector<EndHit*> endhits)
+   {
+      hAdcMultiplicity->Fill(endhits.size());
+      for (EndHit* endhit: endhits) {
+         int bar = endhit->GetBar();
+         hAdcOccupancy->Fill(bar);
+         hAdcTime->Fill(endhit->GetADCTime());
+         hAdcTime2d->Fill(bar,endhit->GetADCTime());
+         hAdcAmp->Fill(endhit->GetAmpRaw());
+         hAdcAmp2d->Fill(bar,endhit->GetAmpRaw());
+         hAdcFitAmp->Fill(endhit->GetAmp());
+         hAdcFitAmp2d->Fill(bar,endhit->GetAmp());
+         hAdcFitting->Fill(endhit->GetAmpRaw(),endhit->GetAmp());
+         for (EndHit* endhit2: endhits) {
+            hAdcCorrelation->Fill(bar,endhit2->GetBar());
+         }
+      }
+   }
+
+   void TdcHistos(std::vector<EndHit*> endhits)
+   {
+      double ch0 = 0;
+      for (EndHit* endhit: endhits) {
+         if (!(endhit->IsTDCMatched())) continue;
+         int end = endhit->GetBar();
+         if (end==0) ch0 = endhit->GetTDCTime();
+         hAdcTdcOccupancy->Fill(end);
+      }
+      if (fFlags->fPulser and ch0!=0) {
+         for (EndHit* endhit: endhits) {
+            hTdcTimeVsCh0->Fill(1e9*(endhit->GetTDCTime()-ch0));
+            hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
+         }
+      }
+   }
+
+   void DirectTdcHistos(std::vector<TdcHit*> tdchits)
+   {
+      int max_chan=128;
+      if (fFlags->fProtoTOF) max_chan=16;
+      std::vector<int> counts(max_chan,0);
+      for (int bar=0;bar<max_chan;bar++) {
+         for (TdcHit* tdchit: tdchits) {
+            if (tdchit->rising_edge==0) continue;
+            if (int(tdchit->chan)<=0) continue;
+            if (fFlags->fProtoTOF and protoTOFFindBarID(int(tdchit->chan))!=bar) continue;
+            if (!(fFlags->fProtoTOF) and BVFindBarID(int(tdchit->fpga),int(tdchit->chan))!=bar) continue;
+            counts[bar]++;
+         }
+      }
+      int bars=0;
+      for (int bar=0;bar<max_chan;bar++) {
+         hTdcSingleChannelMultiplicity->Fill(counts[bar]);
+         hTdcSingleChannelMultiplicity2d->Fill(bar,counts[bar]);
+         if (counts[bar]>0) bars++;
+         for (int bar2=0;bar2<max_chan;bar2++) {
+            hTdcCorrelation->Fill(bar,bar2,counts[bar]*counts[bar2]);
+         }
+      }
+      hTdcMultiplicity->Fill(bars);
+   }
+
+   void BarHistos(std::vector<BarHit*> barhits)
+   {
+      if (fFlags->fPulser) return;
+      hBarMultiplicity->Fill(barhits.size());
+      for (BarHit* barhit: barhits) {
+         int bar = barhit->GetBar();
+         hTopBotDiff->Fill(1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
+         hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
+         hZed->Fill(barhit->GetTDCZed());
+         hZed2d->Fill(bar,barhit->GetTDCZed());
+         if (!(fFlags->fProtoTOF)) {
+            for (BarHit* barhit2: barhits) {
+               hBarCorrelation->Fill(bar,barhit2->GetBar());
+            }
+         }
+      }
+   }
+
+   void TOFHistos(std::vector<BarHit*> barhits)
+   {
+      if (barhits.size()<2) return;
+      if (fFlags->fPulser) return;
+      if (barhits.size()==2) {
+         hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+         if (!(fFlags->fProtoTOF)) {
+            hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+            hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
+            double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
+            if (angle>180) angle = 360 - angle;
+            hTwoBarDPhi->Fill(angle);
+         }
+      }
+      if (!(fFlags->fProtoTOF)) {
+         for (BarHit* barhit: barhits) {
+            for (BarHit* barhit2: barhits) {
+               double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
+               if (TOF==0) continue;
+               hNBarTOF->Fill(TOF);
+               hNBarTOF2d->Fill(barhit->GetBar(),TOF);
+               double angle = (180/TMath::Pi())*TMath::Abs(barhit->GetPhi()-barhit2->GetPhi());
+               if (angle>180) angle = 360 - angle;
+               hNBarDPhi->Fill(angle);
+            }
+         }
+      }
+   }
+
+   // Helpers
+
+   int BVFindBarID(int fpga, int chan)
+   {
+      for (int bar=0; bar<64; bar++) {
+         if (fpga==BVTdcMap[bar][1]-1 and chan==BVTdcMap[bar][5]) return bar+64; // top
+         if (fpga==BVTdcMap[bar][1]-1 and chan==BVTdcMap[bar][6]) return bar; // bottom
+      }
+      if (fFlags->fPrint) printf("bsc_tdc_module failed to get bar number for fpga %d chan %d \n",fpga,chan);
+      return -1;
+   }
+   int protoTOFFindBarID(int tdc_chan)
+   {
+      for (int i=0;i<16;i++) {
+         if (protoTOFTdcMap[i][1]==tdc_chan) return protoTOFTdcMap[i][0];
+      }
+      return -1;
+   }
+
+
+};
+
+
+class BscHistoModuleFactory: public TAFactory
+{
+public:
+   BscHistoFlags fFlags;
+   
+public:
+   void Init(const std::vector<std::string> &args)
+   {
+      printf("BscHistoModuleFactory::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++) {
+         if( args[i] == "--bscdiag" )
+            fFlags.fBscDiag = true;
+         if (args[i] == "--bscprint")
+            fFlags.fPrint = true;
+         if( args[i] == "--bscpulser" )
+            fFlags.fPulser = true;
+         if( args[i] == "--bscProtoTOF" )
+            fFlags.fProtoTOF = true;
+
+      }
+   }
+
+   void Finish()
+   {
+      printf("BscHistoModuleFactory::Finish!\n");
+   }
+
+   TARunObject* NewRunObject(TARunInfo* runinfo)
+   {
+      printf("BscHistoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new BscHistoModule(runinfo, &fFlags);
+   }
+};
+
+static TARegister tar(new BscHistoModuleFactory);
+
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

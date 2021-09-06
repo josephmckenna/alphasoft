@@ -16,13 +16,10 @@ class EndHit: public TObject
 {
 private:
   int fBarID=-1;
-  //TDC data
   double fTDCTime=-1; // Fully calibrated time
-  double fTDCTimePartCalib=-1; // Applied channel by channel correction, not time-walk correction
-  double fTDCTimeRaw=-1; // No calibrations or corrections applied
-  //ADC data'
   double fADCTime=-1;
   double fAmp=-1;
+  double fAmpRaw=-1; // Without fitting
   bool fTDCMatched=false;
 
 public:
@@ -31,10 +28,11 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
-  void SetADCHit(int _fBarID, double _fAmp, double _fADCTime) 
+  void SetADCHit(int _fBarID, double _fAmp, double _fAmpRaw, double _fADCTime) 
   {
      fBarID=_fBarID;
      fAmp=_fAmp;
+     fAmpRaw=_fAmpRaw;
      fADCTime=_fADCTime;
   }
 
@@ -44,21 +42,12 @@ public:
      fTDCMatched=true;
   } 
 
-  void SetTDCHit(double _fTDCTime, double _fTDCTimePartCalib, double _fTDCTimeRaw)
-  {
-     fTDCTime=_fTDCTime;
-     fTDCTimePartCalib=_fTDCTimePartCalib;
-     fTDCTimeRaw=_fTDCTimeRaw;
-     fTDCMatched=true;
-  } 
-  
   bool IsTDCMatched() const {return fTDCMatched;}
   int GetBar() const {return fBarID;}
   double GetAmp() const {return fAmp;}
+  double GetAmpRaw() const {return fAmpRaw;}
   double GetADCTime() const {return fADCTime;}
   double GetTDCTime() const {return fTDCTime; }
-  double GetTDCTimePartCalib() const {return fTDCTimePartCalib; }
-  double GetTDCTimeRaw() const {return fTDCTimeRaw; }
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
@@ -79,6 +68,7 @@ private:
   EndHit* fBotHit;
   bool fTPCMatched=false;
   TVector3 fTPC;
+  double fZed=-9999;
 
 public:
   BarHit(); // ctor
@@ -86,20 +76,11 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
 
-  void SetBotHit(EndHit* _fBotHit)
-  {
-     fBotHit=_fBotHit;
-  }
-  void SetTopHit(EndHit* _fTopHit)
-  {
-     fTopHit=_fTopHit;
-  }
-  void SetBar(int _fBarID)
-  {
-     fBarID=_fBarID;
-  }
-  void SetTPCHit(TVector3 _fTPC)
-  {
+  void SetBotHit(EndHit* _fBotHit) { fBotHit=_fBotHit; }
+  void SetTopHit(EndHit* _fTopHit) { fTopHit=_fTopHit; }
+  void SetBar(int _fBarID) { fBarID=_fBarID; }
+  void SetZed(double _fZed) { fZed=_fZed; }
+  void SetTPCHit(TVector3 _fTPC) {
      fTPC=_fTPC;
      fTPCMatched=true;
   }
@@ -108,13 +89,14 @@ public:
   EndHit* GetBotHit() const {return fBotHit;}
   double GetAmpTop() const {return fTopHit->GetAmp();}
   double GetAmpBot() const {return fBotHit->GetAmp();}
+  double GetAmpRawTop() const {return fTopHit->GetAmpRaw();}
+  double GetAmpRawBot() const {return fBotHit->GetAmpRaw();}
   double GetTDCTop() const {return fTopHit->GetTDCTime();}
   double GetTDCBot() const {return fBotHit->GetTDCTime();}
-  double GetTDCTopRaw() const {return fTopHit->GetTDCTimeRaw();}
-  double GetTDCBotRaw() const {return fBotHit->GetTDCTimeRaw();}
   TVector3 GetTPC() const {return fTPC;}
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
+  double GetTDCZed() const {return fZed;}
 
   double GetPhi()
   {
@@ -137,9 +119,9 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
-  double GetTDCZed() {
-      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
-  }
+//  double GetTDCZed() { // This should probably not be done here. The value of the speed of light should be put into the analysis settings, and this should be done in the tdc module.
+//      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
+//  }
   ClassDef(BarHit,3);
 };
 
@@ -188,10 +170,16 @@ public:
     fBarHit.push_back(b);
   }
 
+  void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)
+  {
+     EndHit* hit = new EndHit;
+     hit->SetADCHit( fBarID, fAmp, fAmpRaw, fADCTime);
+     AddEndHit(hit);
+  }
   void AddADCHit(int fBarID, double fAmp, double fADCTime)
   {
      EndHit* hit = new EndHit;
-     hit->SetADCHit( fBarID, fAmp, fADCTime);
+     hit->SetADCHit( fBarID, fAmp, fAmp, fADCTime);
      AddEndHit(hit);
   }
 

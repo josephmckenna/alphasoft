@@ -16,7 +16,6 @@
 
 #include "TMath.h"
 #include "TH1D.h"
-#include "TH2D.h"
 #include "TF1.h"
 
 #include "TBarEvent.hh"
@@ -40,7 +39,7 @@ private:
    double amplitude_cut; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
-   const static int sample_waveforms_to_plot = 100; // Saves a number of raw pulses for inspection
+   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
    int hit_num=0;
 
 public:
@@ -48,20 +47,8 @@ public:
 
 private:
 
-   // Initialize histograms
-   TH1D* hBars = NULL;
-   TH1D* hChan = NULL;
-   TH1D *hBsc_Time=NULL;
-   TH2D *hBsc_TimeVsBar = NULL;
-   TH1D *hBsc_Amplitude = NULL;
-   TH2D *hBsc_AmplitudeVsBar = NULL;
-   TH2D *hBsc_AmplitudeVsChannel = NULL;
-   TH2D *hBsc_TimeVsChannel = NULL;
    TH1D* hWave = NULL;
    TF1* sgfit = NULL;
-   TH1D* hNumChan = NULL;
-   TH2D* hFitAmp = NULL;
-   TH2D* hFitStartTime = NULL;
 
 public:
 
@@ -84,52 +71,7 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
-
-      if (fFlags->fProtoTOF and fFlags->fPulser) {
-         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
-         hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
-         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,2840,2900);
-         hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,2840,2900);
-         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
-
-      }
-      if (fFlags->fProtoTOF and !(fFlags->fPulser)) {
-         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         hChan = new TH1D("hChan", "Channels hit;Channel number",16,-0.5,15.5);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
-         hBsc_AmplitudeVsChannel=new TH2D("hBsc_AmplitudeVsChannel", "ADC Pulse Amplitude;Channel;Amplitude (V)", 15, -0.5, 15.5, 2000,0.,4.0);
-         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
-         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
-         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
-         hBsc_TimeVsChannel=new TH2D("hBsc_TimeVsChannel", "ADC Time;Channel;ADC Time [ns]", 16,-0.5,15.5,200,0,2000);
-         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",17,-0.5,16.5);
-
-      }
-      if (!(fFlags->fProtoTOF) and fFlags->fPulser) {
-         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         hBars = new TH1D("hBars", "Bars hit;Bar number",128,-0.5,127.5);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
-         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
-         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",128,-0.5,127.5);
-         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
-         hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-
-      }
-      if (!(fFlags->fProtoTOF) and !(fFlags->fPulser)) {
-         hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-         hBars = new TH1D("hBars", "Bars hit;Bar number",128,-0.5,127.5);
-         hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude (V)", 2000,0.,4.0);
-         hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude (V)", 128, -0.5, 127.5, 2000,0.,4.);
-         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
-         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1200,1600,200,1200,1600);
-         hNumChan = new TH1D("hNumChan", "Number of channels hit;Number of channels",128,-0.5,127.5);
-         hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
-         hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-
-      }
-
+      hWave = new TH1D("hWave","ADC Waveform",700,0,700);
       gDirectory->mkdir("SampleWaveforms");
 
    }
@@ -138,31 +80,17 @@ public:
    {
       // Write histograms
       runinfo->fRoot->fOutputFile->Write();
-
-      // Delete histograms
-      delete hBars;
-      delete hChan;
-      delete hBsc_Time;
-      delete hBsc_TimeVsBar;
-      delete hBsc_TimeVsChannel;
-      delete hBsc_Amplitude;
-      delete hBsc_AmplitudeVsBar;
-      delete hBsc_AmplitudeVsChannel;
       delete hWave;
-      delete hFitAmp;
-      delete hFitStartTime;
-      delete hNumChan;
-
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("PauseRun, run %d\n", runinfo->fRunNo);
+      if( fFlags->fPrint ) printf("PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("ResumeRun, run %d\n", runinfo->fRunNo);
+      if( fFlags->fPrint ) printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
 
@@ -296,33 +224,18 @@ public:
                   int error_level_save = gErrorIgnoreLevel;
                   gErrorIgnoreLevel = kFatal;
                   double fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
-                  double fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
                   gErrorIgnoreLevel = error_level_save;
-                  double time_before_peak = fit_start_time - maximum_time;
+                  delete sgfit;
 
                   // Converts amplitude to volts
                   double amp_volts = fit_amp*adc_conversion;
+                  double amp_volts_raw = amp*adc_conversion;
 
-                  // Fills histograms
-                  hFitAmp->Fill(amp,fit_amp);
-                  hFitStartTime->Fill(start_time*10,fit_start_time*10);
-                  hBsc_Amplitude->Fill(amp_volts);
-                  if (fFlags->fProtoTOF) {
-                     hBsc_AmplitudeVsChannel->Fill(chan,amp_volts);
-                  }
-                  if ( !(fFlags->fProtoTOF) ) {
-                     hBsc_AmplitudeVsBar->Fill(bar,amp_volts);
-                  }
-                  delete sgfit;
       
-                  // Fills bar event
+                  // Writes bar event
                   int bar = ch->bsc_bar;
-                  if (fFlags->fProtoTOF) {
-                     BarEvent->AddADCHit(chan,amp_volts,fit_start_time*10);
-                  }
-                  if ( !(fFlags->fProtoTOF) ) {
-                     BarEvent->AddADCHit(bar,amp_volts,fit_start_time*10);
-                  }
+                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,fit_start_time*10);
+                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,fit_start_time*10);
 
                }
 
@@ -332,23 +245,10 @@ public:
                   // Converts amplitude to volts
                   double amp_volts = amp*adc_conversion;
       
-                  // Fills histograms
-                  hBsc_Amplitude->Fill(amp_volts);
-                  if (fFlags->fProtoTOF) {
-                     hBsc_AmplitudeVsChannel->Fill(chan,amp_volts);
-                  }
-                  if ( !(fFlags->fProtoTOF) ) {
-                     hBsc_AmplitudeVsBar->Fill(bar,amp_volts);
-                  }
-
-                  // Fills bar event
+                  // Writes bar event
                   int bar = ch->bsc_bar;
-                  if (fFlags->fProtoTOF) {
-                     BarEvent->AddADCHit(chan,amp_volts,start_time*10);
-                  }
-                  if ( !(fFlags->fProtoTOF) ) {
-                     BarEvent->AddADCHit(bar,amp_volts,start_time*10);
-                  }
+                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
+                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
                   // Copies histogram to sample histogram
                   if (hit_num < sample_waveforms_to_plot)
                      {
@@ -363,26 +263,9 @@ public:
                         hit_num++;
                      }
                   delete sgfit;
-
                }
-
-            // Fills histograms
-            hBsc_Time->Fill(start_time*10);
-            if (fFlags->fProtoTOF) {
-               hBsc_TimeVsChannel->Fill(chan,start_time*10);
-               hChan->Fill(chan);
             }
-            if ( !(fFlags->fProtoTOF) ) {
-               hBsc_TimeVsBar->Fill(bar,start_time*10);
-               hBars->Fill(bar);
-            }
-
-            }
-
          }
-
-      hNumChan->Fill(counter);
-
       return BarEvent;
    }
 
