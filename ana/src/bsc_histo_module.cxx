@@ -349,6 +349,7 @@ public:
       }
       if (fFlags->fPulser and ch0!=0) {
          for (EndHit* endhit: endhits) {
+            if (endhit->GetBar()==0) continue;
             hTdcTimeVsCh0->Fill(1e9*(endhit->GetTDCTime()-ch0));
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
          }
