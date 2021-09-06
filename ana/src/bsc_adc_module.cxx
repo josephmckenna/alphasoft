@@ -96,8 +96,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fFlags->fPrint ) printf("BscModule::Analyze, run %d\n", runinfo->fRunNo);
-         
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)

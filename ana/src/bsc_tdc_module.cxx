@@ -177,8 +177,6 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent run %d\n",runinfo->fRunNo);
-
       // Unpack Event flow
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
@@ -349,7 +347,9 @@ public:
             EndHit* bothit = NULL;
             for (EndHit* hit: endhits)
                {
-                  if (hit->GetBar()==bot_chan) bothit = hit;
+                  if (!(hit->GetBar()==bot_chan)) continue;
+                  if (!(hit->IsTDCMatched())) continue;
+                  bothit = hit;
                }
 
             // Exit if none found

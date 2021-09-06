@@ -35,6 +35,7 @@ public:
 private:
 
    bool diagnostics;
+   double c = 0.2998; // m/ns
 
    // Container declaration
    int BVTdcMap[64][7];
@@ -54,6 +55,7 @@ private:
 
    // TDC
    TH1D* hAdcTdcOccupancy;
+   TH1D* hTdcOccupancy;
    TH2D* hTdcCorrelation;
    TH1D* hTdcMultiplicity;
    TH1D* hTdcSingleChannelMultiplicity;
@@ -74,6 +76,10 @@ private:
    TH2D* hNBarTOF2d;
    TH1D* hTwoBarDPhi;
    TH1D* hNBarDPhi;
+   TH1D* hTwoBarDZed;
+   TH1D* hNBarDZed;
+   TH1D* hTwoBarExpectedTOF;
+   TH2D* hTwoBarExpectedTOFvsTOF;
 
 
 
@@ -141,14 +147,19 @@ public:
          // TDC
          gDirectory->mkdir("tdc_histos")->cd();
          hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",16,-0.5,15.5);
+         hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",16,-0.5,15.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",17,-0.5,16.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
-         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,10,-0.5,9.5);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-5,5);
             hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",16,-0.5,15.5,200,-5,5);
          }
+         gDirectory->cd("..");
+
+         // Bar
+         gDirectory->mkdir("bar_histos")->cd();
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",3,-0.5,2.5);
             hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-10,10);
@@ -156,6 +167,7 @@ public:
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-2,2);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",2,-0.5,1.5,200,-2,2);
             hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,-20,20);
+            hTwoBarDZed = new TH1D("hTwoBarDZed","Zed difference between two bars;Delta Zed (m)",200,-2,2);
          }
          gDirectory->cd("..");
 
@@ -180,14 +192,19 @@ public:
          // TDC
          gDirectory->mkdir("tdc_histos")->cd();
          hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",128,-0.5,127.5);
+         hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",128,-0.5,127.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",129,-0.5,128.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
-         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,10,-0.5,9.5);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-5,5);
             hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",128,-0.5,127.5,200,-5,5);
          }
+         gDirectory->cd("..");
+
+         // Bar
+         gDirectory->mkdir("bar_histos")->cd();
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",65,-0.5,64.5);
             hBarCorrelation = new TH2D("hBarCorrelation","Bar correlation;Bar number;Bar number",64,-0.5,63.5,64,-0.5,63.5);
@@ -201,6 +218,10 @@ public:
             hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
             hTwoBarDPhi = new TH1D("hTwoBarDPhi","Angular separation for events with N=2 bars;Delta phi (degrees)",32,0,180);
             hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (degrees)",32,0,180);
+            hTwoBarDZed = new TH1D("hTwoBarDZed","Zed separation for events with N=2 bars;Delta zed (m)",200,-6,6);
+            hNBarDZed = new TH1D("hNBarDZed","Zed separation for any permutation of two hits;Delta zed (m)",200,-6,6);
+           hTwoBarExpectedTOF = new TH1D("hTwoBarExpectedTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns)",200,0,30);
+           hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,30,200,0,30);
          }
          gDirectory->cd("..");
       }
@@ -346,13 +367,16 @@ public:
             if (fFlags->fProtoTOF and protoTOFFindBarID(int(tdchit->chan))!=bar) continue;
             if (!(fFlags->fProtoTOF) and BVFindBarID(int(tdchit->fpga),int(tdchit->chan))!=bar) continue;
             counts[bar]++;
+            hTdcOccupancy->Fill(bar);
          }
       }
       int bars=0;
       for (int bar=0;bar<max_chan;bar++) {
-         hTdcSingleChannelMultiplicity->Fill(counts[bar]);
-         hTdcSingleChannelMultiplicity2d->Fill(bar,counts[bar]);
-         if (counts[bar]>0) bars++;
+         if (counts[bar]>0) {
+            bars++;
+            hTdcSingleChannelMultiplicity->Fill(counts[bar]);
+            hTdcSingleChannelMultiplicity2d->Fill(bar,counts[bar]);
+         }
          for (int bar2=0;bar2<max_chan;bar2++) {
             hTdcCorrelation->Fill(bar,bar2,counts[bar]*counts[bar2]);
          }
@@ -370,6 +394,9 @@ public:
          hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
          hZed->Fill(barhit->GetTDCZed());
          hZed2d->Fill(bar,barhit->GetTDCZed());
+         if (TMath::Abs(barhit->GetTDCZed())>3) {
+            if (fFlags->fPrint) printf("BscHistoModule: weird bar hit: bar %d zed %f top %f bot %f diff %f \n",bar,barhit->GetTDCZed(),barhit->GetTDCTop(),barhit->GetTDCBot(),barhit->GetTDCTop()-barhit->GetTDCBot());
+         }
          if (!(fFlags->fProtoTOF)) {
             for (BarHit* barhit2: barhits) {
                hBarCorrelation->Fill(bar,barhit2->GetBar());
@@ -384,12 +411,21 @@ public:
       if (fFlags->fPulser) return;
       if (barhits.size()==2) {
          hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+         double x0,y0,x1,y1,z0,z1;
+         barhits[0]->GetXY(x0,y0);
+         barhits[1]->GetXY(x1,y1);
+         z0 = barhits[0]->GetTDCZed();
+         z1 = barhits[1]->GetTDCZed();
+         hTwoBarDZed->Fill(z0-z1);
          if (!(fFlags->fProtoTOF)) {
             hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
             hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
             double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
             if (angle>180) angle = 360 - angle;
             hTwoBarDPhi->Fill(angle);
+            double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+            hTwoBarExpectedTOF->Fill(expTOF);
+            hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
          }
       }
       if (!(fFlags->fProtoTOF)) {
@@ -402,6 +438,7 @@ public:
                double angle = (180/TMath::Pi())*TMath::Abs(barhit->GetPhi()-barhit2->GetPhi());
                if (angle>180) angle = 360 - angle;
                hNBarDPhi->Fill(angle);
+               hNBarDZed->Fill(barhit->GetTDCZed()-barhit2->GetTDCZed());
             }
          }
       }
