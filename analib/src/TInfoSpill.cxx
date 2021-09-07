@@ -3,7 +3,7 @@
 ClassImp(TInfoSpill)
 TInfoSpill::TInfoSpill(): TSpill()
 {
-   IsDumpType =false; //By default, expect this to be a dump
+   IsDumpType =false; //By default, this is never a dump
    IsInfoType =true;
    Unixtime   =0;
 }
