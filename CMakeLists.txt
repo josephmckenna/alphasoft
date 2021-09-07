@@ -65,7 +65,6 @@ if(DEFINED ENV{MIDASSYS})
    set(MIDASSYS "$ENV{MIDASSYS}")
    set(MIDAS_LIBRARIES midas)
    message(STATUS "MIDAS found ${MIDASSYS}")
-   set(MIDAS_LIBRARY_DIRS "${MIDASSYS}/lib")
    message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
    message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARY_DIRS = ${MIDAS_LIBRARY_DIRS}")
 else()
@@ -76,7 +75,7 @@ endif()
 
 
 # SQLITE3
-find_package(SQLite3 REQUIRED)
+find_package(SQLite3)
 if(SQLite3_FOUND)
   message(STATUS "SQLite3 ${SQLite3_VERSION} found")
 else()

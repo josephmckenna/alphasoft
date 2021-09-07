@@ -153,6 +153,8 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
    int n_chans=SIS_Channel.size();
    std::vector<TH1D*> hh;
 
+   TSISChannels chans(runNumber);
+
    for (int i=0; i<n_chans; i++)
    {
       TString Title="R";
@@ -160,6 +162,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
       Title+=" SIS Channel:";
       Title+=SIS_Channel[i];
       Title+=" - ";
+      Title+=chans.GetDescription(SIS_Channel[i], runNumber);
 
       //Replace this is a data base call to get the channel name
       TString name=SIS_Channel[i];

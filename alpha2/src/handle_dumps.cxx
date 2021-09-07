@@ -14,6 +14,7 @@
 #include "A2Flow.h"
 #include "TSISChannels.h"
 #include "DumpHandling.h"
+#include "GEM_BANK_flow.h"
 #include <iostream>
 class DumpMakerModuleFlags
 {
@@ -37,6 +38,10 @@ public:
 
    int DumpStartChannels[USED_SEQ] ={-1};
    int DumpStopChannels[USED_SEQ]  ={-1};
+   
+   int fADChannel = -1;
+   int fADCounter;
+   
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
    
@@ -53,14 +58,6 @@ public:
 #endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
-      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
-      for (int j=0; j<USED_SEQ; j++) 
-      {
-         dumplist[j].SequencerID=j;
-         DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
-         DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
-      }
-      delete SISChannels;
    }
 
    ~DumpMakerModule()
@@ -73,6 +70,17 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
+      for (int j=0; j<USED_SEQ; j++) 
+      {
+         dumplist[j].SequencerID=j;
+         DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
+         DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
+      }
+      fADChannel = SISChannels->GetChannel("SIS_AD", runinfo->fRunNo);
+      delete SISChannels;
+
+      fADCounter = 0;
       for (int j=0; j<USED_SEQ; j++) 
          dumplist[j].fRunNo=runinfo->fRunNo;
    }
@@ -164,6 +172,21 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
+      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
+      GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
+      GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+
+      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow)
+      {
+        //We have some work to do on the flow
+      }
+      else
+      {
+         //Nothing to do here
+         return flow;   
+      }
+      A2SpillFlow* f=new A2SpillFlow(flow);
+      
       if (SISFlow)
       {
          //Add timestamps to dumps
@@ -178,7 +201,7 @@ public:
                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                    for (int nstarts=0; nstarts<e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
+                    for (int nstarts=0; nstarts < e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
                        dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
                     }
@@ -188,7 +211,13 @@ public:
                        dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
                     }
                }
+               if (e->GetCountsInChannel(fADChannel))
+               {
+                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
+                 f->spill_events.push_back(beam);
+               }
             }
+
          }
          //Add SIS counts to dumps
          for (int a=0; a<USED_SEQ; a++)
@@ -201,7 +230,7 @@ public:
             }
          }
       }
-      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
+
       if (SVDFlow)
       {
          for (int a=0; a<USED_SEQ; a++)
@@ -210,8 +239,70 @@ public:
             dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
          }
       }
-      
-      A2SpillFlow* f=new A2SpillFlow(flow);
+
+
+
+
+      double LNE0 = -1.;
+      double LNE5 = -1.;
+      uint32_t unixtime = -1;
+      if (GEMFlow)
+      {
+         GEMBANK<float> *bank = (GEMBANK<float>*) GEMFlow->data;
+         unixtime = GEMFlow->MIDAS_TIME;
+         if (bank->GetCategoryName() == "ADandELENA" && bank->GetSizeOfDataArray())
+         {
+            //LNE0
+            if (bank->GetVariableName() == "LNEAPULB0030")
+               LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
+            //LNE5
+            if (bank->GetVariableName() == "LNEAPULB5030")
+               LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
+         }
+      }
+
+      if (GEMArrayFlow)
+      {
+         GEMBANKARRAY *array = GEMArrayFlow->data;
+         unixtime = GEMArrayFlow->MIDAS_TIME;
+         int bank_no = 0;
+         GEMBANK<float>* bank = (GEMBANK<float>*) array->GetGEMBANK(bank_no);
+         while(bank)
+         {
+
+            if (bank->GetCategoryName() == "ADandELENA")// && bank->GetSizeOfDataArray())
+            {
+               //LNE0
+               if (bank->GetVariableName() == "LNEAPULB0030")
+               {
+                  LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
+               }
+               //LNE5
+               if (bank->GetVariableName() == "LNEAPULB5030")
+               {
+                  LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
+               }
+            }
+            bank = (GEMBANK<float>*) array->GetGEMBANK(++bank_no);
+         }
+      }
+      if (LNE0 > 0 || LNE5 > 0)
+      {
+         
+         std::string ELENA_STRING = std::string("LNE0: ") + std::to_string(LNE0) + std::string("\tLNE5: ") + std::to_string(LNE5);
+         TA2Spill* elena = NULL;
+         if (LNE0 > 0 && LNE5 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E \t LNE5: %.2E	",LNE0 * 1E6,LNE5 * 1E6);
+         else if (LNE0 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E ",LNE0 * 1E6);
+         else if (LNE5 > 0)
+            elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> \t\t\tLNE5: %.2E ",LNE5 * 1E6);
+         if (elena)
+            f->spill_events.push_back(elena);
+         //std::cout << "DATA" << LNE0 << "\t" << LNE5 << std::endl;
+      }
+
+
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)
       {
