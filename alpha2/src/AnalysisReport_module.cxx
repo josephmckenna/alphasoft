@@ -197,10 +197,7 @@ public:
       runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
-      
-      
-      
-      
+
       std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
                                 std::string("\tGit version: ") + 
                                 fFlags->AnalysisReport->GetGitHash() + 
