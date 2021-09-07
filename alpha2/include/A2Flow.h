@@ -194,6 +194,25 @@ class SISEventFlow: public TAFlowEvent
   }
 };
 
+//This should probably live somewhere else as its a A2 & Ag data type
+#include "TInfoSpill.h"
+
+class TInfoSpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<TInfoSpill*> spill_events;
+
+  TInfoSpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~TInfoSpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
+  }
+};
+
 #include "TA2Spill.h"
 
 class A2SpillFlow: public TAFlowEvent
