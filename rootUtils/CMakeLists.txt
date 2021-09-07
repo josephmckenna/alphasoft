@@ -4,6 +4,7 @@ project(rootutils)
 
 include_directories(
    include 
+   containers/include
    ${ROOT_INCLUDE_DIRS} 
    ${CMAKE_SOURCE_DIR}/libGEM/include
    ${CMAKE_SOURCE_DIR}/analib/include
@@ -23,15 +24,17 @@ else()
 endif()
 
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
-ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
+file(GLOB LINK_HEADER_FILES_CONTAINERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/containers/include containers/include/*.h)
+ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} ${LINK_HEADER_FILES_CONTAINERS} LINKDEF LibLinkDef.hh)
 
 
 # Create a shared library with geneated dictionary
-file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx)
+file(GLOB LIBRARY_SOURCES src/*.c src/*.cxx containers/src/*.cxx)
 add_library(rootUtils SHARED ${LIBRARY_SOURCES} G__rootUtils.cxx )
 target_include_directories( rootUtils
                             PUBLIC
 			    include 
+			    containers/include
 			    ${CMAKE_SOURCE_DIR}/libGEM/include
 			    ${CMAKE_SOURCE_DIR}/recolib/include
 			    ${CMAKE_SOURCE_DIR}/analib/include
@@ -58,5 +61,5 @@ install(TARGETS rootUtils
 	)
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/librootUtils.rootmap DESTINATION lib)
-file(GLOB HEADER_FILES include/*.h)
+file(GLOB HEADER_FILES containers/include/*.h include/*.h)
 install(FILES ${HEADER_FILES} DESTINATION include)

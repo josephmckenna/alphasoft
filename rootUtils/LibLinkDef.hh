@@ -6,6 +6,16 @@
 
 #pragma link C++ class TAPlot+;
 
+#pragma link C++ class TEnvDataPlot+;
+#pragma link C++ class TEnvData+;
+
+#pragma link C++ class TFEGEMData+;
+#pragma link C++ class TFELabVIEWData+;
+
+
+#pragma link C++ class TVertexEvents+;
+#pragma link C++ class TTimeWindows+;
+
 #ifdef BUILD_AG
 #pragma link C++ class TAGPlot+;
 #endif

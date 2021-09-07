@@ -21,7 +21,6 @@
 
 //Root Utils headers:
 
-#include "TAGPlot.h"
 
 #include "BoolGetters.h"
 #include "DoubleGetters.h"
