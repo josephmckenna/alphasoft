@@ -16,13 +16,17 @@
 #pragma link C++ class TVertexEvents+;
 #pragma link C++ class TTimeWindows+;
 
+#pragma link C++ class TScalerPlot+;
+
 #ifdef BUILD_AG
 #pragma link C++ class TAGPlot+;
+#pragma link C++ class TChronoPlot+;
 #endif
 
 #ifdef BUILD_A2
 #pragma link C++ class TA2Plot+;
 #pragma link C++ class TA2Plot_Filler;
+#pragma link C++ class TSISPlot+;
 #pragma link C++ class TSISPlotEvents;
 #endif
 

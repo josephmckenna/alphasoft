@@ -40,6 +40,12 @@
 #include "FileWriters.h"
 
 #include "Sequencer_Channels.h"
+
+//Plotting tools
+#include "TA2Plot.h"
+#include "TSISPlot.h"
+
+
 #define CLOCK_CHANNEL 59
 void SetBinNumber(int i=100);
 #endif

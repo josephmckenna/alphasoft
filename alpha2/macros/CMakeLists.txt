@@ -5,6 +5,7 @@ foreach( MainMacro ${MainMacros} )
   get_filename_component(bin ${bin} NAME)
   add_executable( macro_${bin}  ${MainMacro} )
   target_include_directories(macro_${bin} PUBLIC ${CMAKE_SOURCE_DIR}/rootUtils/include)
+  target_include_directories(macro_${bin} PUBLIC ${CMAKE_SOURCE_DIR}/rootUtils/containers/include)
 
   target_include_directories(macro_${bin} PUBLIC .)
   target_include_directories(macro_${bin} PUBLIC ${CMAKE_SOURCE_DIR}/a2lib/include)

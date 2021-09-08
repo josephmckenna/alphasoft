@@ -17,7 +17,8 @@
                 "${workspaceFolder}/analib/include/**",
                 "${workspaceFolder}/reco/include/**",
                 "${workspaceFolder}/recolib/include/**",
-                "${workspaceFolder}/rootUtils/include/**"
+                "${workspaceFolder}/rootUtils/include/**",
+                "${workspaceFolder}/rootUtils/containers/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",
