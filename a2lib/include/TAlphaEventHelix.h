@@ -131,7 +131,7 @@ public:
   {
     helix=h;
   }
-
+  
   double operator() (const std::vector<double> & par) const
   {
     Double_t chi2 = 0;
