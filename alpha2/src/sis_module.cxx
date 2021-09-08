@@ -58,6 +58,9 @@ public:
 
    bool fTrace = true;
 
+   TMBank* fTempSISBank[2] = {0};
+   int fTempSize[2] = {0};
+
    SIS(TARunInfo* runinfo, SISFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -174,11 +177,63 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          bankname[3] = '0' + i; 
          //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
          sis_bank[i] = event->FindBank(bankname);
+         
+         
+         /*int jmax = event->banks.size();
+         std::cout << "Size of the event banks for this event = " << jmax << std::endl;
+         std::cout << "They are called: ";
+         for(int j=0; j<jmax; j++)
+         {
+            std::cout << "" << event->banks[j].name << ", ";
+         }
+         std::cout << std::endl;*/
+
+
          if (!sis_bank[i]) continue;
          size[i]=sis_bank[i]->data_size/4;
          totalsize+=size[i];
          (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
+      }
+
+      ///Lukas additions
+      if (size[0] != size[1] )
+      {
+         std::cout << "Event mismatch was found. Lets investigate." << std::endl;
+         if(size[0] > 0 || size[1] > 0)
+         {
+            std::cout << "At least one size was non zero. Is there a previous event? If so match, if not save." << std::endl;
+            std::cout << "Previous event? " << fTempSISBank[0] << " and " << fTempSISBank[1] << std::endl;
+            if(fTempSISBank[0] || fTempSISBank[1])
+            {
+               std::cout << "Previous event exists, lets match up." << std::endl;
+               if(size[0] < size[1])
+               {
+                  sis_bank[0] = fTempSISBank[0];
+                  size[0] = fTempSize[0];
+               }
+               if(size[1] < size[0])
+               {
+                  sis_bank[1] = fTempSISBank[1];
+                  size[1] = fTempSize[1];
+               }
+               std::cout << "Now that we've matched the event lets wipe temp event." << std::endl;
+               fTempSISBank[0] = NULL;
+               fTempSISBank[1] = NULL;
+               fTempSize[0] = 0;
+               fTempSize[1] = 1;
+               std::cout << "Deleted." << std::endl;
+            }
+            else
+            {
+               std::cout << "Previous event does not exist, lets save" << std::endl;
+               fTempSISBank[0] = sis_bank[0];
+               fTempSISBank[1] = sis_bank[1];
+               fTempSize[0] = size[0];
+               fTempSize[1] = size[1];
+               std::cout << "Saved." << std::endl;
+            }
+         }
       }
       //if (!size[0]) return flow;
       if (size[0] != size[1])
