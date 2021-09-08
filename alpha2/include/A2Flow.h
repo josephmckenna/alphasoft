@@ -136,43 +136,6 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 
 #include "TSISEvent.h"
-class SISModuleFlow: public TAFlowEvent
-{
-  public:
-  char* xdata[NUM_SIS_MODULES];
-  int xdata_size[NUM_SIS_MODULES]={0};
-  unsigned long MidasEventID=0;
-  uint32_t MidasTime=0;
-
-
-  void AddData(int module, char* data, int size)
-  {
-    //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
-    xdata_size[module]=size;
-    xdata[module]=(char*) malloc(size*4);
-    memcpy(xdata[module], data, size*4);
-    return;
-  }
-  void Clear()
-  {
-    for (int i=0; i<NUM_SIS_MODULES; i++)
-    {
-      if (xdata_size[i])
-      {
-        free(xdata[i]);
-        xdata_size[i]=0;
-      }
-    }
-  }
-  SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
-  {
-  }
-  ~SISModuleFlow()
-  {
-    Clear();
-  }
-};
-
 
 class SISEventFlow: public TAFlowEvent
 {
@@ -180,6 +143,10 @@ class SISEventFlow: public TAFlowEvent
   std::vector<TSISEvent*> sis_events[NUM_SIS_MODULES];
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
+  }
+  void Add(TSISEvent* s)
+  {
+    sis_events[s->GetSISModule()].push_back(s);
   }
   ~SISEventFlow()
   {

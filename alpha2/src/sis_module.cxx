@@ -162,63 +162,76 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       event->FindAllBanks();
 
       //void* ptr[NUM_SIS_MODULES];
-      TMBank* sis_bank[2]={0};
-      int size[NUM_SIS_MODULES]={0};
+      TMBank* sis_bank = {0};
+      int size = {0};
     
       char bankname[] = "MCS0";
       int totalsize = 0;
       Int_t SISdiff =0;
 
+      std::vector<TSISEvent*> SIS_Events;
+
       for (int i=0; i<NUM_SIS_MODULES; i++)
       {
          bankname[3] = '0' + i; 
          //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
-         sis_bank[i] = event->FindBank(bankname);
-         if (!sis_bank[i]) continue;
-         size[i]=sis_bank[i]->data_size/4;
-         totalsize+=size[i];
-         (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
-         assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
-      }
-      //if (!size[0]) return flow;
-      if (size[0] != size[1])
-      {
-         //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
-         if (SISdiff+ SISdiffPrev !=0 )
+         sis_bank = event->FindBank(bankname);
+         if (!sis_bank) continue;
+         size = sis_bank->data_size/4;
+         totalsize+=size;
+         SIS_Events.reserve(totalsize);
+         (i==0)? SISdiff+=size:SISdiff-=size; 
+         assert( size % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
+         
+         // Copy the sis data into a TSISEvent
+         for (int sis_event = 0; sis_event < size; sis_event+=NUM_SIS_CHANNELS )
          {
-            std::string warning = std::string("Unpaired SIS buffers ") + 
-                                  std::to_string(size[0]/NUM_SIS_CHANNELS) + 
-                                  std::string(" ") + 
-                                  std::to_string(size[1]/NUM_SIS_CHANNELS) + 
-                                  std::string(" diff ") + 
-                                  std::to_string(gSISdiff/NUM_SIS_CHANNELS);
-            std::cout << warning << "\n";
-            gBadSisCounter++;
-            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
+            TSISEvent* s=new TSISEvent();
+            s->SetMidasUnixTime(event->time_stamp);
+            s->SetMidasEventID(event->event_id);
+            s->SetRunNumber(runinfo->fRunNo);
+            s->SetSISModuleNo(i);
+            unsigned long int *sis_data = (unsigned long int*) event->GetBankData(sis_bank);
+            // We may want to set the gClock variable in the other function.. not this function is in the main thread and the other is a side thread
+            unsigned long int clock = sis_data[0];
+            gClock[i] += clock;
+            for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
+            {
+               s->SetCountsInChannel(kk,sis_data[kk]);
+            } 
+           double runtime = clock2time(gClock[i],gExptStartClock[i]); 
+           s->SetRunTime(runtime);
+           s->SetClock(gClock[i]);
 
-            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
-            f->spill_events.push_back(WarningSpill);
-            return f;
+           if (i==0)
+           {
+              gVF48Clock += sis_data[vf48clkchan];
+              s->SetVF48Clock(gVF48Clock);
+           }
+           SIS_Events.push_back(s);
          }
-         SISdiffPrev+=SISdiff; 
       }
-      
-      if (totalsize<=0) return flow;
-      gSisCounter++;
-      SISModuleFlow* mf=new SISModuleFlow(flow);
-      mf->MidasEventID=event->event_id;
-      mf->MidasTime=event->time_stamp;
-      for (int j=0; j<NUM_SIS_MODULES; j++)
-         mf->AddData(j,event->GetBankData(sis_bank[j]),size[j]);
-      flow=mf;
 
+      if (SIS_Events.size())
+      {
+         std::cout<<"Sending SIS_Events " << SIS_Events.size() <<std::endl;
+         SISEventFlow* sf = new SISEventFlow(flow);
+         for (TSISEvent* s: SIS_Events)
+         {
+            sf->Add(s);
+         }
+         flow = sf;
+         gSisCounter++;
+      }
       return flow;
    }
 
+std::deque<TSISEvent*> gSISSyncBuffer[NUM_SIS_CHANNELS];
+
 TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {
-      SISModuleFlow* mf=flow->Find<SISModuleFlow>();
-      if (!mf)
+{
+      SISEventFlow* sf = new SISEventFlow(flow);
+      if (!sf)
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -226,59 +239,78 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
          return flow;
       }
 
-      SISEventFlow* sf=new SISEventFlow(flow);
-      int size[NUM_SIS_MODULES];
-      uint32_t* sis[NUM_SIS_MODULES];
-      for (int j=0; j<NUM_SIS_MODULES; j++)
-      {
-         sis[j] = (uint32_t*)mf->xdata[j]; // get pointers
-         size[j] = mf->xdata_size[j];
-         if(gExptStartClock[j]==0 && sis[j])
+     //Sort SIS events here!
+     int list_size_0 = sf->sis_events[0].size();
+     int list_size_1 = sf->sis_events[1].size();
+
+     if (list_size_0 != list_size_1)
+     {
+         for (int module = 0; module < NUM_SIS_MODULES; module++)
          {
-            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
+            for (TSISEvent* s: sf->sis_events[module])
+               gSISSyncBuffer[module].push_back(s);
+            sf->sis_events[module].clear();  
+         }
+         //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
+         //if (SISdiff+ SISdiffPrev !=0 )
+         {
+            std::string warning = std::string("Unpaired SIS buffers ") + 
+                                  std::to_string(sf->sis_events[0].size()/NUM_SIS_CHANNELS) + 
+                                  std::string(" ") + 
+                                  std::to_string(sf->sis_events[1].size()/NUM_SIS_CHANNELS) + 
+                                  std::string(" diff ") + 
+                                  std::to_string(gSISdiff/NUM_SIS_CHANNELS);
+            std::cout << warning << "\n";
+            gBadSisCounter++;
+            // Joe: TODO We need a UNIX TIMESTAMP FOR THIS... grab it from a TSIS Event
+            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, 0 /*event->time_stamp*/ , warning.c_str());
+
+            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+            f->spill_events.push_back(WarningSpill);
+            flow = f;
          }
       }
-      for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
+      // If we have data in the buffer... it needs to come first
+      if (gSISSyncBuffer[0].size() || gSISSyncBuffer[1].size())
       {
-        //uint32_t* b=(uint32_t*)sis_bank[j];
-        if (!size[j]) continue;
-        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
-        {
-           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
-           gClock[j] += clock;
-           double runtime=clock2time(gClock[j],gExptStartClock[j]); 
-           //SISModule* module=new SISModule(j,gClock[j],runtime);
-           TSISEvent* s=new TSISEvent();
-           s->SetMidasUnixTime(mf->MidasTime);
-           s->SetMidasEventID(mf->MidasEventID);
-           s->SetRunNumber(runinfo->fRunNo);
-           s->SetRunTime(runtime);
-           s->SetClock(gClock[j]);
-           s->SetSISModuleNo(j);
-           if (j==0)
-           {
-              gVF48Clock+=sis[j][vf48clkchan];
-              s->SetVF48Clock(gVF48Clock);
-           }
-           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
-           {
-              s->SetCountsInChannel(kk,sis[j][kk]);
-           }
-           //SisEvent->Print();
-           sf->sis_events[j].push_back(s);
-           
-           //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
-        }
-      }
-      flow=sf;
-      //I am totally done with the Module Flow... lets free some ram now
-      mf->Clear();
-
-      for (int j=0; j<NUM_SIS_MODULES; j++)
-      {
-         for (size_t i=0; i<sf->sis_events[j].size(); i++)
+         for (int j=0; j<NUM_SIS_MODULES; j++)
          {
-            SaveToTree(runinfo,sf->sis_events[j].at(i));
+            for (TSISEvent* s: sf->sis_events[j])
+            {
+               gSISSyncBuffer[j].push_back(s);
+            }
+            //reset flow contents
+            sf->sis_events[j].clear();
+         }         
+         while (gSISSyncBuffer[0].size() && gSISSyncBuffer[1].size())
+         {
+            //Check the time stamps of events here joe!
+            std::cout<<"sis_module "<<__LINE__<<std::endl;
+
+            TSISEvent* sis_event[2];
+            sis_event[0] = gSISSyncBuffer[0].front();
+            sis_event[1] = gSISSyncBuffer[1].front();
+
+            if (sis_event[0]->GetClock() != sis_event[1]->GetClock())
+            {
+               assert(!"FML");
+            }
+            for (int j=0; j<NUM_SIS_MODULES; j++)
+            {
+               SaveToTree(runinfo,gSISSyncBuffer[j].front());
+               sf->sis_events[j].push_back(gSISSyncBuffer[j].front());
+               gSISSyncBuffer[j].pop_front();
+            }
+         }
+      }
+      else
+      {
+         for (int j=0; j<NUM_SIS_MODULES; j++)
+         {
+            for (size_t i=0; i<sf->sis_events[j].size(); i++)
+            {
+               SaveToTree(runinfo,sf->sis_events[j].at(i));
+            }
          }
       }
       return flow;
