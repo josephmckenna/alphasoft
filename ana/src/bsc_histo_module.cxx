@@ -17,6 +17,7 @@ public:
    bool fPulser=false;
    bool fProtoTOF = false;
    bool fBscDiag = false;
+   bool fWriteOffsetFile = false;
 
 public:
    BscHistoFlags() // ctor
@@ -64,6 +65,7 @@ private:
    TH2D* hBarCorrelation;
    TH1D* hTdcTimeVsCh0;
    TH2D* hTdcTimeVsCh02d;
+   std::map<int,TH2D*> hTdcOffsetByRTM;
 
    // Bars
    TH1D* hTopBotDiff;
@@ -198,8 +200,15 @@ public:
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,10,-0.5,9.5);
          if (fFlags->fPulser) {
-            hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-5,5);
-            hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",128,-0.5,127.5,200,-5,5);
+            hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel zero;TDC time minus ch0 time (ns)",200,-35,35);
+            hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel zero;Channel number;TDC time minus ch0 time (ns)",128,-0.5,127.5,200,-35,35);
+            gDirectory->mkdir("offsets")->cd();
+            for (int rtm=0;rtm<8;rtm++) {
+               TString hname = TString::Format("hOffsetRTM%d",rtm);
+               TString htitle = TString::Format("Time offset from channel 0 of RTM %d;Channel number;TDC time minus ch0 time (ns)",rtm);
+               hTdcOffsetByRTM[rtm] = new TH2D(hname.Data(),htitle.Data(),16,-0.5,15.5,200,-35.,35.);
+            }
+            gDirectory->cd("..");
          }
          gDirectory->cd("..");
 
@@ -231,8 +240,30 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      if(!diagnostics) return;
-      printf("BscHistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      if( fFlags->fPrint ) printf("BscHistoModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      if (fFlags->fWriteOffsetFile and fFlags->fPulser) {
+         if (!hTdcTimeVsCh02d) {
+            if (fFlags->fPrint) printf("BscHistoModule can't save TDC offsets, offset histogram not found\n");
+            return;
+         }
+         if (fFlags->fPrint) printf("BscHistoModule calculating TDC channel offsets");
+         TH1D* hTdcTimeQuantiles = hTdcTimeVsCh02d->QuantilesX(0.5,"hTdcTimeQuantiles");
+         TString Ofilename=getenv("AGRELEASE");
+         if (!(fFlags->fProtoTOF)) Ofilename+="/ana/bscint/BVoffsets.calib";
+         if (fFlags->fProtoTOF) Ofilename+="/ana/bscint/protoTOFoffsets.calib";
+         if (fFlags->fPrint) printf("BscHistoModule saving TDC channel offset file as %s\n",Ofilename.Data());
+         std::ofstream Ofile;
+         Ofile.open(Ofilename);
+         Ofile<<"Bar end number | Offset(ns)\n";
+			int n_ch = 128;
+         if (fFlags->fProtoTOF) n_ch = 16;
+         for (int ch=0;ch<n_ch;ch++) { // First channel is reference channel
+            Ofile<<ch<<"\t"<<hTdcTimeQuantiles->GetBinContent(ch+1)<<"\n"; // Bin 0 is underflow, labelling starts at 1
+         }
+         Ofile.close();
+         delete hTdcTimeQuantiles;
+         if (fFlags->fPrint) printf("BscHistoModule TDC channel offsets saved");
+      }
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -247,7 +278,7 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
-      if(!diagnostics)
+      if( (!diagnostics) and (!(fFlags->fWriteOffsetFile and fFlags->fPulser)) )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -341,10 +372,12 @@ public:
    void TdcHistos(std::vector<EndHit*> endhits)
    {
       double ch0 = 0;
+      std::map<int,double> ch0s;
       for (EndHit* endhit: endhits) {
          if (!(endhit->IsTDCMatched())) continue;
          int end = endhit->GetBar();
          if (end==0) ch0 = endhit->GetTDCTime();
+         if (end%8==0) ch0s[int(end/8)] = endhit->GetTDCTime();
          hAdcTdcOccupancy->Fill(end);
       }
       if (fFlags->fPulser and ch0!=0) {
@@ -352,6 +385,18 @@ public:
             if (endhit->GetBar()==0) continue;
             hTdcTimeVsCh0->Fill(1e9*(endhit->GetTDCTime()-ch0));
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
+         }
+      }
+      if (fFlags->fPulser and !(fFlags->fProtoTOF)) {
+         for (EndHit* endhit: endhits) {
+            int end = endhit->GetBar();
+            if (end==0) continue;
+            //if (end%8==0 and end<63) continue;
+            int rtm = (end/8)%8;
+            int chan = end%8;
+            if (end>=64) chan+=8;
+            //hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0s[rtm]));
+            hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0));
          }
       }
    }
@@ -487,6 +532,8 @@ public:
             fFlags.fPulser = true;
          if( args[i] == "--bscProtoTOF" )
             fFlags.fProtoTOF = true;
+         if( args[i] == "--bscWriteOffsetFile" )
+            fFlags.fWriteOffsetFile = true;
 
       }
    }

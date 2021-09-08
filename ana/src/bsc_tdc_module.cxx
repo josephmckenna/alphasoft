@@ -27,6 +27,7 @@ public:
    bool fProtoTOF = false;
    bool fPulser = false;
    std::string fOffsetFile = ""; 
+   bool fNoDelayCorrection = false;
    double ftwA = 0;
    AnaSettings* ana_settings=0;
 };
@@ -131,6 +132,11 @@ public:
          std::string comment; getline(fBVoffsets, comment);
          int num;
          for(int i=0; i<128; i++) fBVoffsets >> num >> BVTdcOffsets[i];
+         if (fFlags->fPrint) {
+            printf("BV TDC offset file loaded from %s\n",BVoffsetfile.Data());
+            printf("Bar | TDC time offset (ns)\n");
+            for (int i=0;i<128;i++) printf("%d | %f\n",i,BVTdcOffsets[i]);
+         }
          fBVoffsets.close();
       }
       std::ifstream fprotoTOFoffsets(protoTOFoffsetfile.Data());
@@ -138,6 +144,11 @@ public:
          std::string comment; getline(fprotoTOFoffsets, comment);
          int num;
          for(int i=0; i<16; i++) fprotoTOFoffsets >> num >> ProtoTOFTdcOffsets[i];
+         if (fFlags->fPrint) {
+            printf("protoTOF TDC offset file loaded from %s\n",protoTOFoffsetfile.Data());
+            printf("Channel | TDC time offset (ns)\n");
+            for (int i=0;i<128;i++) printf("%d | %f\n",i,ProtoTOFTdcOffsets[i]);
+         }
          fprotoTOFoffsets.close();
       }
 
@@ -276,13 +287,15 @@ public:
 
             // Corrects for tdc time offset
             double calib_time = tdc_time;
-            if (fFlags->fProtoTOF) {
-               if (bar<0 || bar>=16) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
-               else calib_time = tdc_time - ProtoTOFTdcOffsets[bar] * 1e-9;
-            }
-            if (!(fFlags->fProtoTOF)) {
-               if (bar<0 || bar>=128) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
-               calib_time = tdc_time - BVTdcOffsets[bar] * 1e-9;
+            if (!(fFlags->fNoDelayCorrection)) {
+               if (fFlags->fProtoTOF) {
+                  if (bar<0 || bar>=16) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
+                  else calib_time = tdc_time - ProtoTOFTdcOffsets[bar]*1e-9;
+               }
+               if (!(fFlags->fProtoTOF)) {
+                  if (bar<0 || bar>=128) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
+                  else calib_time = tdc_time - BVTdcOffsets[bar]*1e-9;
+               }
             }
 
             // Corrects for time walk
@@ -443,6 +456,8 @@ public:
             fFlags.fProtoTOF = true;
          if( args[i] == "--twA" )
             fFlags.ftwA = atof(args[i+1].c_str());
+         if( args[i] == "--nodelaycorr" )
+            fFlags.fNoDelayCorrection = true;
          if( args[i] == "--anasettings" ) 
             json=args[i+1];
       }
