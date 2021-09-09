@@ -222,11 +222,8 @@ public:
                   if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent analysing event\n");
 
                   AddTDCdata(barEvt,tdc);
-                  if( !(fFlags->fPulser) )
-                     {
-                        CombineEnds(barEvt);
-                        CalculateZ(barEvt);
-                     }
+                  CombineEnds(barEvt);
+                  CalculateZ(barEvt);
 
                   if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent comlpete\n");
                }

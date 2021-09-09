@@ -42,6 +42,14 @@ private:
    int BVTdcMap[64][7];
    int protoTOFTdcMap[16][4];
 
+   // TDC constants
+   const double epoch_freq = 97656.25; // 200MHz/(2<<11); KO+Thomas approved right frequency
+   const double coarse_freq = 200.0e6; // 200MHz
+      // linear calibration:
+      // $ROOTANASYS/libAnalyzer/TRB3Decoder.hxx
+   const double trb3LinearLowEnd = 17.0;
+   const double trb3LinearHighEnd = 450.0;
+
    // ADC
    TH1D* hAdcOccupancy;
    TH2D* hAdcCorrelation;
@@ -57,17 +65,19 @@ private:
    // TDC
    TH1D* hAdcTdcOccupancy;
    TH1D* hTdcOccupancy;
+   TH1D* hTdcCoincidence;
    TH2D* hTdcCorrelation;
    TH1D* hTdcMultiplicity;
    TH1D* hTdcSingleChannelMultiplicity;
    TH2D* hTdcSingleChannelMultiplicity2d;
-   TH1D* hBarMultiplicity;
-   TH2D* hBarCorrelation;
    TH1D* hTdcTimeVsCh0;
    TH2D* hTdcTimeVsCh02d;
    std::map<int,TH2D*> hTdcOffsetByRTM;
 
    // Bars
+   TH1D* hBarMultiplicity;
+   TH1D* hBarOccupancy;
+   TH2D* hBarCorrelation;
    TH1D* hTopBotDiff;
    TH2D* hTopBotDiff2d;
    TH1D* hZed;
@@ -162,6 +172,7 @@ public:
 
          // Bar
          gDirectory->mkdir("bar_histos")->cd();
+         hBarOccupancy = new TH1D("hBarOccupancy","Bar occupancy;Bar number;Counts",2,-0.5,1.5);
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",3,-0.5,2.5);
             hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-10,10);
@@ -195,6 +206,7 @@ public:
          gDirectory->mkdir("tdc_histos")->cd();
          hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",128,-0.5,127.5);
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",128,-0.5,127.5);
+         hTdcCoincidence = new TH1D("hTdcCoincidence","TDC hits with corresponing hit on other end;Channel number",128,-0.5,127.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",129,-0.5,128.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
@@ -214,6 +226,7 @@ public:
 
          // Bar
          gDirectory->mkdir("bar_histos")->cd();
+         hBarOccupancy = new TH1D("hBarOccupancy","Bar occupancy;Bar number;Counts",64,-0.5,63.5);
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",65,-0.5,64.5);
             hBarCorrelation = new TH2D("hBarCorrelation","Bar correlation;Bar number;Bar number",64,-0.5,63.5,64,-0.5,63.5);
@@ -372,12 +385,10 @@ public:
    void TdcHistos(std::vector<EndHit*> endhits)
    {
       double ch0 = 0;
-      std::map<int,double> ch0s;
       for (EndHit* endhit: endhits) {
          if (!(endhit->IsTDCMatched())) continue;
          int end = endhit->GetBar();
          if (end==0) ch0 = endhit->GetTDCTime();
-         if (end%8==0) ch0s[int(end/8)] = endhit->GetTDCTime();
          hAdcTdcOccupancy->Fill(end);
       }
       if (fFlags->fPulser and ch0!=0) {
@@ -393,9 +404,7 @@ public:
             if (end==0) continue;
             //if (end%8==0 and end<63) continue;
             int rtm = (end/8)%8;
-            int chan = end%8;
-            if (end>=64) chan+=8;
-            //hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0s[rtm]));
+            int chan = end%8+(end/64)*8;
             hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0));
          }
       }
@@ -414,6 +423,18 @@ public:
             if (!(fFlags->fProtoTOF) and BVFindBarID(int(tdchit->fpga),int(tdchit->chan))!=bar) continue;
             counts[bar]++;
             hTdcOccupancy->Fill(bar);
+
+            if (!(fFlags->fProtoTOF)) {
+               bool matched = false;
+               for (TdcHit* tdchit2: tdchits) {
+                  if (BVFindBarID(int(tdchit2->fpga),int(tdchit2->chan))!=(bar+64) and BVFindBarID(int(tdchit2->fpga),int(tdchit2->chan))!=(bar-64)) continue;
+                  double tdctime = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+                  double tdctime2 = GetFinalTime(tdchit2->epoch,tdchit2->coarse_time,tdchit2->fine_time);
+                  if (TMath::Abs(tdctime-tdctime2)>25*1e-9) continue;
+                  matched = true;
+               }
+               if (matched) hTdcCoincidence->Fill(bar);
+            }
          }
       }
       int bars=0;
@@ -432,6 +453,9 @@ public:
 
    void BarHistos(std::vector<BarHit*> barhits)
    {
+      for (BarHit* barhit: barhits) {
+         hBarOccupancy->Fill(barhit->GetBar());
+      }
       if (fFlags->fPulser) return;
       hBarMultiplicity->Fill(barhits.size());
       for (BarHit* barhit: barhits) {
@@ -508,6 +532,13 @@ public:
       }
       return -1;
    }
+   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates time from tdc data (in seconds)
+   {
+      double B = double(fine) - trb3LinearLowEnd;
+      double C = trb3LinearHighEnd - trb3LinearLowEnd;
+      return double(epoch)/epoch_freq +  double(coarse)/coarse_freq - (B/C)/coarse_freq;
+   }
+
 
 
 };
