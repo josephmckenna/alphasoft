@@ -175,8 +175,9 @@ public:
       SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
       GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
       GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+      felabviewFlowEvent* LabVIEWFlow = flow->Find<felabviewFlowEvent>();
 
-      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow)
+      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow || LabVIEWFlow)
       {
         //We have some work to do on the flow
       }
@@ -301,7 +302,20 @@ public:
             f->spill_events.push_back(elena);
          //std::cout << "DATA" << LNE0 << "\t" << LNE5 << std::endl;
       }
-
+  
+  
+      if (LabVIEWFlow)
+      {
+         if (LabVIEWFlow->GetBankName() == "PADT" || LabVIEWFlow->GetBankName() == "PADG")
+         {
+            std::string CsI = LabVIEWFlow->GetBankName() + ": ";
+            for (int i = 1; i < LabVIEWFlow->GetData()->size(); i++)
+               CsI+=std::to_string(LabVIEWFlow->GetData()->at(i)) + "\t";
+            //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
+            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.c_str());
+            f->spill_events.push_back(lv);
+         }
+      }
 
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)
