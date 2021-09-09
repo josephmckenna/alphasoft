@@ -1,10 +1,23 @@
 #!/bin/bash
 
-RUNNO=${1}
+case `hostname` in
+alphadaq*)
+    echo "Good, we are on alphadaq"
+    ;;
+*)
+    echo "The start_daq script should be executed on alphadaq"
+    exit 1
+    ;;
+esac
 
+
+
+RUNNO=${1}
 if [ -z ${RUNNO} ]; then
    echo "No run number set"
-   exit
+   Run_number=`odbedit -e ${MIDAS_EXPT_NAME} -c 'ls "/Runinfo/Run number"'`
+   echo ${Run_number}
+   RUNNO=`echo $Run_number | awk '{print $3}'`
 fi
 
 cd ~/alphasoft
