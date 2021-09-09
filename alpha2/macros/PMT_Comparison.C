@@ -44,10 +44,14 @@ void PMT_Comparison(int runNumber)
    example->Draw();
 
    
+  std::vector<TCanvas*> cgraph;
+  for(Int_t i=0; i<=spills.size()/20; i++)
+  {
+    cgraph.push_back(new TCanvas(Form("cgraph_%d",i),Form("run %d (%d)",runNumber,i),2000,1500));
+    cgraph.at(i)->Divide(5,4); 
+  }
 
-   TCanvas *cgraph = new TCanvas("cgraph","cgraph",2000,1500);
-   cgraph->Divide(TMath::Sqrt(spills.size())+1,TMath::Sqrt(spills.size()));
- 
+   
    //When that works... do it again for the next Hot Dumps
    for (int i = 0; i < spills.size(); i++)
    {
@@ -73,17 +77,25 @@ void PMT_Comparison(int runNumber)
       Scattgraph->SetMarkerColor(kBlue);
       Scattgraph->GetXaxis()->SetTitle("PMT counts");
       Scattgraph->GetYaxis()->SetTitle("SiPM counts");
+      Scattgraph->GetXaxis()->SetTitleSize(0.055);
+      Scattgraph->GetYaxis()->SetTitleSize(0.055);
+      Scattgraph->GetXaxis()->SetLabelSize(0.045);
+      Scattgraph->GetYaxis()->SetLabelSize(0.045);
+      
       for(Int_t j=1; j<= nBins; j++)
       {
         Scattgraph->SetPoint(j,hPMT->GetBinContent(j),hSiPM->GetBinContent(j));
       }
-      cgraph->cd(i+1);
+      
+      cgraph.at(i/20)->cd(i%20+1);
       gPad->SetLeftMargin(0.15);
+      gPad->SetBottomMargin(0.15);
       Scattgraph->Draw("AP");
          
       //The TGraph should look like a stright line... can you fit a straight line please?
       TF1 *l1 = new TF1(Form("l1_%d",i),"pol1",0, hPMT->GetBinContent(hPMT->GetMaximumBin()));
       Scattgraph->Fit(l1);
+      
    }
    
    //When that works... try some more runs from the last week
