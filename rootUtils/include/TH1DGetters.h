@@ -22,6 +22,8 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* des
 //ALPHA2
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range = -1);
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills);
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax);
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills);
 #endif
 
 
