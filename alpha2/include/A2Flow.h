@@ -148,7 +148,7 @@ class SISModuleFlow: public TAFlowEvent
   void AddData(int module, char* data, int size)
   {
     //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
-    xdata_size[module]=size;
+    xdata_size[module]+=size;
     xdata[module]=(char*) malloc(size*4);
     memcpy(xdata[module], data, size*4);
     return;

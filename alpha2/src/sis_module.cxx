@@ -19,15 +19,9 @@
 #include "TSISChannels.h"
 #include "TSISEvent.h"
 
-//Made these things global... Very illegal.
-TMBank* fTempSISBank[2] = {0};
-int fTempSize[2] = {0};
-//Lets make a global deque - we'll just save the MIDAS event for now. 
-//I don't know how we can possibly even really pair but we'll see. 
-//It might also be too late after the dump has finished being analysed...
+//This works but obviously this stuff is global which is very bad.
 std::deque<TMEvent*> unpairedSISEvents;
-
-void pushbackevent(TMEvent* event)
+void pushbackevent(TMEvent* event) //This is a global function. We in python now bois.
 {
    unpairedSISEvents.push_back(new TMEvent(*event));
 }
@@ -182,6 +176,9 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       int totalsize = 0;
       Int_t SISdiff =0;
 
+      bool useJankyFlow = false;
+      SISModuleFlow* flowtouse = new SISModuleFlow(flow);
+
       for (int i=0; i<NUM_SIS_MODULES; i++)
       {
          bankname[3] = '0' + i; 
@@ -206,51 +203,68 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
       }
 
-      ///Lukas additions - DOesn't work, might work if fTemp and fSis are saved more globally. Lets just try that for now. 
+      ///Lukas additions
       if (size[0] != size[1] )
       {
          std::cout << "Event mismatch was found. Lets investigate." << std::endl;
-         if(size[0] > 0 || size[1] > 0)
+         std::cout << "Is there an event in the deque?" << std::endl;
+         if(unpairedSISEvents.size() > 0)
          {
-            //Lets save this event to the deque no matter what.
+            std::cout << "Yes. In this case lets match the two and empty the deque." << std::endl;
+            //We will perform a sanity check.
+            //unpairedSISEvents[0]->FindBank(MSC0).data_size() + event->FindBank(MSC0).data_size() must be equal to...
+            //unpairedSISEvents[0]->FindBank(MSC1).data_size() + event->FindBank(MSC1).data_size()
+            //This essentially means that the data of these two events added together match up. So lets check that:
+            int sizequeueBank0 = ( unpairedSISEvents.at(0)->FindBank("MSC0")? unpairedSISEvents.at(0)->FindBank("MSC0")->data_size:0 );
+            int sizequeueBank1 = ( unpairedSISEvents.at(0)->FindBank("MSC1")? unpairedSISEvents.at(0)->FindBank("MSC1")->data_size:0 );
+            int sizeeventBank0 = ( event->FindBank("MSC0")? event->FindBank("MSC0")->data_size:0 );
+            int sizeeventBank1 = ( event->FindBank("MSC1")? event->FindBank("MSC1")->data_size:0 );
+
+            if( sizequeueBank0 + sizeeventBank0 == sizequeueBank1 + sizeeventBank1 )
+            {
+               std::cout << "The data sizes seem to match up." << std::endl;
+               //Lets then match events. We need to somehow combine these two events into one...
+               //Once done we can empty the queue. 
+               //For now some tests to figure out whats going on in this thing... 
+               char bankname0[] = "MCS0";
+               char bankname1[] = "MCS1";
+
+               TMBank* sis_banks[4] = {0};
+               sis_banks[0] = unpairedSISEvents.at(0)->FindBank(bankname0);
+               sis_banks[1] = unpairedSISEvents.at(0)->FindBank(bankname1);
+               sis_banks[2] = event->FindBank(bankname0);
+               sis_banks[3] = event->FindBank(bankname1);
+
+               int sizes[4] = {0};
+               sizes[0]=sis_banks[0]?sis_banks[0]->data_size/4:0;
+               sizes[1]=sis_banks[1]?sis_banks[1]->data_size/4:0;
+               sizes[2]=sis_banks[2]?sis_banks[2]->data_size/4:0;
+               sizes[3]=sis_banks[3]?sis_banks[3]->data_size/4:0;
+
+               std::vector<char*> dataVec;
+
+
+               dataVec.push_back( unpairedSISEvents.at(0)->GetBankData(sis_banks[0]) );
+               dataVec.push_back( unpairedSISEvents.at(0)->GetBankData(sis_banks[1]) );
+               dataVec.push_back( event->GetBankData(sis_banks[2]) );
+               dataVec.push_back( event->GetBankData(sis_banks[3]) );
+
+               flowtouse->MidasEventID = event->event_id;
+               flowtouse->MidasTime = event->time_stamp;
+               flowtouse->AddData(0,dataVec[0],sizes[0]);
+               flowtouse->AddData(0,dataVec[2],sizes[2]);
+               flowtouse->AddData(1,dataVec[1],sizes[1]);
+               flowtouse->AddData(1,dataVec[3],sizes[3]);
+               useJankyFlow = true;
+               flow=flowtouse;
+
+               unpairedSISEvents.pop_front();
+            }
+         }
+         else
+         {
+            std::cout << "No. In this case let's just add to the deque." << std::endl;
             pushbackevent(event);
-
-
-            std::cout << "At least one size was non zero. Is there a previous event? If so match, if not save." << std::endl;
-            //std::cout << "Previous event? " << fTempSISBank[0] << " and " << fTempSISBank[1] << std::endl;
-            if(fTempSISBank[0] || fTempSISBank[1])
-            {
-               std::cout << "Previous event exists, lets match up." << std::endl;
-               if(size[0] < size[1])
-               {
-                  sis_bank[0] = fTempSISBank[0];
-                  size[0] = fTempSize[0];
-               }
-               if(size[1] < size[0])
-               {
-                  sis_bank[1] = fTempSISBank[1];
-                  size[1] = fTempSize[1];
-               }
-               std::cout << "Now that we've matched the event lets wipe temp event." << std::endl;
-               fTempSISBank[0] = NULL;
-               fTempSISBank[1] = NULL;
-               fTempSize[0] = 0;
-               fTempSize[1] = 1;
-               std::cout << "Deleted." << std::endl;
-               
-               
-               //Instead of all this we need to find a way to check the deque if there is a match pair it up and if not go down and add to the deque. 
-            }
-            else
-            {
-               std::cout << "Previous event does not exist, lets save" << std::endl;
-               //Instead  of this lets add to a deque.
-               fTempSISBank[0] = sis_bank[0];
-               fTempSISBank[1] = sis_bank[1];
-               fTempSize[0] = size[0];
-               fTempSize[1] = size[1];
-               std::cout << "Saved." << std::endl;
-            }
          }
       }
       //if (!size[0]) return flow;
@@ -271,13 +285,24 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 
             TInfoSpillFlow* f = new TInfoSpillFlow(flow);
             f->spill_events.push_back(WarningSpill);
-            return f;
+            if(!useJankyFlow)
+            {
+               return f;
+            }
+            else
+            {
+               return flow;
+            }
          }
          SISdiffPrev+=SISdiff; 
       }
       
       if (totalsize<=0) return flow;
       gSisCounter++;
+      if(useJankyFlow)
+      {
+         return flow;
+      }
       SISModuleFlow* mf=new SISModuleFlow(flow);
       mf->MidasEventID=event->event_id;
       mf->MidasTime=event->time_stamp;
