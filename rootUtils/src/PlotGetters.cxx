@@ -599,13 +599,13 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 
 
 #ifdef BUILD_A2
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
    TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
 
-   std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
+   std::vector<TH1D*> hh=Get_Summed_SIS(runNumber, SIS_Channel,tmin, tmax);
    double max_height = 0;
    double min_height = 1E99;
    for (TH1D* h: hh)
@@ -647,10 +647,10 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<dou
    return c;
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS(runNumber, chans, tmin, tmax);
+   return Plot_Summed_SIS(runNumber, chans, tmin, tmax);
 }
 
 TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::pair<double,int>> SIS_Counts,double tstart, double tstop)
@@ -662,10 +662,10 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
      tmin.push_back(a.first + tstart);
      tmax.push_back(a.first + tstop);
    }
-   return Plot_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
+   return Plot_Summed_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -674,25 +674,25 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2
       tmin.push_back(s.GetStartTime());
       tmax.push_back(s.GetStopTime());
    }
-   return Plot_SIS(runNumber,SIS_Channel,tmin, tmax);
+   return Plot_Summed_SIS(runNumber,SIS_Channel,tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS(runNumber, chans, spills);
+   return Plot_Summed_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
    std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
-   return Plot_SIS(runNumber, SIS_Channel, s);
+   return Plot_Summed_SIS(runNumber, SIS_Channel, s);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS( runNumber, chans, description, repetition);
+   return Plot_Summed_SIS( runNumber, chans, description, repetition);
 }
 
 #endif
