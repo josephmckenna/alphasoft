@@ -19,6 +19,19 @@
 #include "TSISChannels.h"
 #include "TSISEvent.h"
 
+//Made these things global... Very illegal.
+TMBank* fTempSISBank[2] = {0};
+int fTempSize[2] = {0};
+//Lets make a global deque - we'll just save the MIDAS event for now. 
+//I don't know how we can possibly even really pair but we'll see. 
+//It might also be too late after the dump has finished being analysed...
+std::deque<TMEvent*> unpairedSISEvents;
+
+void pushbackevent(TMEvent* event)
+{
+   unpairedSISEvents.push_back(new TMEvent(*event));
+}
+
 class SISFlags
 {
 public:
@@ -57,9 +70,6 @@ public:
    TTree* SISTree;
 
    bool fTrace = true;
-
-   TMBank* fTempSISBank[2] = {0};
-   int fTempSize[2] = {0};
 
    SIS(TARunInfo* runinfo, SISFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
@@ -196,14 +206,18 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
       }
 
-      ///Lukas additions
+      ///Lukas additions - DOesn't work, might work if fTemp and fSis are saved more globally. Lets just try that for now. 
       if (size[0] != size[1] )
       {
          std::cout << "Event mismatch was found. Lets investigate." << std::endl;
          if(size[0] > 0 || size[1] > 0)
          {
+            //Lets save this event to the deque no matter what.
+            pushbackevent(event);
+
+
             std::cout << "At least one size was non zero. Is there a previous event? If so match, if not save." << std::endl;
-            std::cout << "Previous event? " << fTempSISBank[0] << " and " << fTempSISBank[1] << std::endl;
+            //std::cout << "Previous event? " << fTempSISBank[0] << " and " << fTempSISBank[1] << std::endl;
             if(fTempSISBank[0] || fTempSISBank[1])
             {
                std::cout << "Previous event exists, lets match up." << std::endl;
@@ -223,10 +237,14 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
                fTempSize[0] = 0;
                fTempSize[1] = 1;
                std::cout << "Deleted." << std::endl;
+               
+               
+               //Instead of all this we need to find a way to check the deque if there is a match pair it up and if not go down and add to the deque. 
             }
             else
             {
                std::cout << "Previous event does not exist, lets save" << std::endl;
+               //Instead  of this lets add to a deque.
                fTempSISBank[0] = sis_bank[0];
                fTempSISBank[1] = sis_bank[1];
                fTempSize[0] = size[0];
