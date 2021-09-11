@@ -16,6 +16,8 @@
 #include "DumpHandling.h"
 #include "GEM_BANK_flow.h"
 #include <iostream>
+#include <sstream>
+
 class DumpMakerModuleFlags
 {
 public:
@@ -306,13 +308,35 @@ public:
   
       if (LabVIEWFlow)
       {
-         if (LabVIEWFlow->GetBankName() == "PADT" || LabVIEWFlow->GetBankName() == "PADG")
+         if (LabVIEWFlow->GetBankName() == "PADT" )
          {
-            std::string CsI = LabVIEWFlow->GetBankName() + ": ";
+            std::ostringstream CsI;
+            CsI << std::setprecision(2) << "\t" << LabVIEWFlow->GetBankName() << ": ";
+            std::vector<std::string> names = { "CsI1*", "CsI1", "CsI2", "CsIA", "CsIB", "CsIC", "CsID", "CsE", "CsIF" };
             for (int i = 1; i < LabVIEWFlow->GetData()->size(); i++)
-               CsI+=std::to_string(LabVIEWFlow->GetData()->at(i)) + "\t";
+            {
+               if ( i - 1 < names.size() )
+                  CsI << names.at(i-1) << std::string(": ");
+               CsI << LabVIEWFlow->GetData()->at(i) << "\t";
+            }
             //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
-            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.c_str());
+            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
+            f->spill_events.push_back(lv);
+         }
+         else if( LabVIEWFlow->GetBankName() == "PADG")
+         {
+            std::ostringstream CsI;
+            CsI << std::setprecision(2) << "\t" << LabVIEWFlow->GetBankName() << ": ";
+            std::vector<std::string> names = { "PScreen", "AG1", "AG2", "BL A", "BL B", "BL C", "BL D", "BL E", "BL F" };
+            for (int i = 1; i < LabVIEWFlow->GetData()->size(); i++)
+            {
+               if ( i - 1 < names.size() )
+                  CsI  << names.at(i-1)  << std::string(": ");
+
+               CsI << LabVIEWFlow->GetData()->at(i) << "\t";
+            }
+            //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
+            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
             f->spill_events.push_back(lv);
          }
       }
