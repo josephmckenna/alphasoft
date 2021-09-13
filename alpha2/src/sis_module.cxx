@@ -43,6 +43,8 @@ private:
    Int_t ID;
    TTree* SISEventTree   = NULL;
    
+   std::deque<TSISBufferEvent*> unmatched_buffer[NUM_SIS_MODULES];
+
 public:
    SISFlags* fFlags;
    
@@ -176,96 +178,16 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
       int totalsize = 0;
       Int_t SISdiff =0;
 
-      bool useJankyFlow = false;
-      SISModuleFlow* flowtouse = new SISModuleFlow(flow);
-
       for (int i=0; i<NUM_SIS_MODULES; i++)
       {
          bankname[3] = '0' + i; 
          //size[i] = event.LocateBank(NULL,bankname,&ptr[i]);
          sis_bank[i] = event->FindBank(bankname);
-         
-         
-         /*int jmax = event->banks.size();
-         std::cout << "Size of the event banks for this event = " << jmax << std::endl;
-         std::cout << "They are called: ";
-         for(int j=0; j<jmax; j++)
-         {
-            std::cout << "" << event->banks[j].name << ", ";
-         }
-         std::cout << std::endl;*/
-
-
          if (!sis_bank[i]) continue;
          size[i]=sis_bank[i]->data_size/4;
          totalsize+=size[i];
          (i==0)? SISdiff+=size[i]:SISdiff-=size[i]; 
          assert( size[i] % NUM_SIS_CHANNELS == 0);// check SIS databank size is a multiple of 32
-      }
-
-      ///Lukas additions
-      if (size[0] != size[1] )
-      {
-         std::cout << "Event mismatch was found. Lets investigate." << std::endl;
-         std::cout << "Is there an event in the deque?" << std::endl;
-         if(unpairedSISEvents.size() > 0)
-         {
-            std::cout << "Yes. In this case lets match the two and empty the deque." << std::endl;
-            //We will perform a sanity check.
-            //unpairedSISEvents[0]->FindBank(MSC0).data_size() + event->FindBank(MSC0).data_size() must be equal to...
-            //unpairedSISEvents[0]->FindBank(MSC1).data_size() + event->FindBank(MSC1).data_size()
-            //This essentially means that the data of these two events added together match up. So lets check that:
-            int sizequeueBank0 = ( unpairedSISEvents.at(0)->FindBank("MSC0")? unpairedSISEvents.at(0)->FindBank("MSC0")->data_size:0 );
-            int sizequeueBank1 = ( unpairedSISEvents.at(0)->FindBank("MSC1")? unpairedSISEvents.at(0)->FindBank("MSC1")->data_size:0 );
-            int sizeeventBank0 = ( event->FindBank("MSC0")? event->FindBank("MSC0")->data_size:0 );
-            int sizeeventBank1 = ( event->FindBank("MSC1")? event->FindBank("MSC1")->data_size:0 );
-
-            if( sizequeueBank0 + sizeeventBank0 == sizequeueBank1 + sizeeventBank1 )
-            {
-               std::cout << "The data sizes seem to match up." << std::endl;
-               //Lets then match events. We need to somehow combine these two events into one...
-               //Once done we can empty the queue. 
-               //For now some tests to figure out whats going on in this thing... 
-               char bankname0[] = "MCS0";
-               char bankname1[] = "MCS1";
-
-               TMBank* sis_banks[4] = {0};
-               sis_banks[0] = unpairedSISEvents.at(0)->FindBank(bankname0);
-               sis_banks[1] = unpairedSISEvents.at(0)->FindBank(bankname1);
-               sis_banks[2] = event->FindBank(bankname0);
-               sis_banks[3] = event->FindBank(bankname1);
-
-               int sizes[4] = {0};
-               sizes[0]=sis_banks[0]?sis_banks[0]->data_size/4:0;
-               sizes[1]=sis_banks[1]?sis_banks[1]->data_size/4:0;
-               sizes[2]=sis_banks[2]?sis_banks[2]->data_size/4:0;
-               sizes[3]=sis_banks[3]?sis_banks[3]->data_size/4:0;
-
-               std::vector<char*> dataVec;
-
-
-               dataVec.push_back( unpairedSISEvents.at(0)->GetBankData(sis_banks[0]) );
-               dataVec.push_back( unpairedSISEvents.at(0)->GetBankData(sis_banks[1]) );
-               dataVec.push_back( event->GetBankData(sis_banks[2]) );
-               dataVec.push_back( event->GetBankData(sis_banks[3]) );
-
-               flowtouse->MidasEventID = event->event_id;
-               flowtouse->MidasTime = event->time_stamp;
-               flowtouse->AddData(0,dataVec[0],sizes[0]);
-               flowtouse->AddData(0,dataVec[2],sizes[2]);
-               flowtouse->AddData(1,dataVec[1],sizes[1]);
-               flowtouse->AddData(1,dataVec[3],sizes[3]);
-               useJankyFlow = true;
-               flow=flowtouse;
-
-               unpairedSISEvents.pop_front();
-            }
-         }
-         else
-         {
-            std::cout << "No. In this case let's just add to the deque." << std::endl;
-            pushbackevent(event);
-         }
       }
       //if (!size[0]) return flow;
       if (size[0] != size[1])
@@ -285,24 +207,15 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
 
             TInfoSpillFlow* f = new TInfoSpillFlow(flow);
             f->spill_events.push_back(WarningSpill);
-            if(!useJankyFlow)
-            {
-               return f;
-            }
-            else
-            {
-               return flow;
-            }
+            //Return flow here to disable unpaired SIS events recovery (added Sept 2021)
+            //return f;
+            flow = f;
          }
          SISdiffPrev+=SISdiff; 
       }
       
       if (totalsize<=0) return flow;
       gSisCounter++;
-      if(useJankyFlow)
-      {
-         return flow;
-      }
       SISModuleFlow* mf=new SISModuleFlow(flow);
       mf->MidasEventID=event->event_id;
       mf->MidasTime=event->time_stamp;
@@ -325,28 +238,43 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       }
 
       SISEventFlow* sf=new SISEventFlow(flow);
-      int size[NUM_SIS_MODULES];
-      uint32_t* sis[NUM_SIS_MODULES];
+      //Put TSISBufferEvent flow into a matching buffer
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         sis[j] = (uint32_t*)mf->xdata[j]; // get pointers
-         size[j] = mf->xdata_size[j];
-         if(gExptStartClock[j]==0 && sis[j])
+/*         std::move(std::begin(mf->fSISBufferEvents[j]), std::end(mf->fSISBufferEvents[j]),unmatched_buffer[j]); */
+         // Can we std::move from std::vector to std::deque here instead of these next 4 lines?
+         for (TSISBufferEvent* e: mf->fSISBufferEvents[j])
+            unmatched_buffer[j].push_back(e);
+         //Ownership of pointers moved... lets clean up
+         mf->fSISBufferEvents[j].clear();
+
+         if(gExptStartClock[j]==0 && !unmatched_buffer[j].empty())
          {
-            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
+            gExptStartClock[j] = unmatched_buffer[j].front()->fCounts[clkchan[j]];  //first clock reading
          }
       }
+      //Lets get the number of events in the shortest queue (these should be pairs of SIS events)
+      int range = 0;
+      if (unmatched_buffer[0].size() < unmatched_buffer[1].size())
+         range = unmatched_buffer[0].size();
+      else
+         range = unmatched_buffer[1].size();
+      //std::cout<<"Buffer:" << unmatched_buffer[0].size() <<"\t"<< unmatched_buffer[1].size() << std::endl;
+         
       for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
       {
         //uint32_t* b=(uint32_t*)sis_bank[j];
-        if (!size[j]) continue;
-        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
+        if (!range) continue;
+        for (int i = 0; i < range; i++)
         {
-           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
+           TSISBufferEvent* event = unmatched_buffer[j].front();
+           // event->Print();
+           unmatched_buffer[j].pop_front();
+           unsigned long int clock = event->fCounts[clkchan[j]]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
-           TSISEvent* s=new TSISEvent();
+           TSISEvent* s = new TSISEvent(event);
            s->SetMidasUnixTime(mf->MidasTime);
            s->SetMidasEventID(mf->MidasEventID);
            s->SetRunNumber(runinfo->fRunNo);
@@ -355,16 +283,11 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            s->SetSISModuleNo(j);
            if (j==0)
            {
-              gVF48Clock+=sis[j][vf48clkchan];
+              gVF48Clock+=s->GetCountsInChannel(vf48clkchan);
               s->SetVF48Clock(gVF48Clock);
            }
-           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
-           {
-              s->SetCountsInChannel(kk,sis[j][kk]);
-           }
-           //SisEvent->Print();
+           // s->Print();
            sf->sis_events[j].push_back(s);
-           
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
