@@ -7,6 +7,7 @@ include_directories(
    ${ROOT_INCLUDE_DIRS} 
    ${CMAKE_SOURCE_DIR}/libGEM/include
    ${CMAKE_SOURCE_DIR}/analib/include
+   ${CMAKE_SOURCE_DIR}/recolib/include
    ${CMAKE_SOURCE_DIR}/a2lib/include)
    
 
