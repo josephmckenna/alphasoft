@@ -85,13 +85,37 @@ public:
             );
       }
 
+
+   }
+   ~SisMonitor()
+   {
+      printf("SisMonitor::dtor!\n");
+   }
+   
+
+   void BeginRun(TARunInfo* runinfo)
+   {
+
+   std::vector<std::string> channel_ID_string;
+      std::vector<std::string> channel_display_name;
+         MVOdbError* error = new MVOdbError();
+      
+      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelIDName",&channel_ID_string,true,20,32,error);
+      //Re-read and resize?
+      int actual_size = 0;
+      for (const std::string& s: channel_ID_string)
+         if (s.size())
+            actual_size++;
+      
+      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelDisplayName",&channel_display_name,true,20,32,error);
+      
       //Stolen from spill_log_module... should be upgraded to ODB reads
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
 
 
       for (int i = 0; i < NUM_SIS_MODULES * NUM_SIS_CHANNELS; i++)
       {
-         TString name = sisch->GetDescription(i, runinfo->fRunNo);
+         TString name = std::to_string(i) + std::string("-") + sisch->GetDescription(i, runinfo->fRunNo);
          
          fLiveHisto.emplace_back(
             TH1I(
@@ -104,32 +128,14 @@ public:
          );  
       }
 
-
-      std::vector<std::pair<std::string,std::string>> channels=
-      {
-         {"SIS_PMT_CATCH_OR", "Catch OR"},
-         {"SIS_PMT_CATCH_AND","Catch AND"},
-         {"CT_SiPM1",         "CT SiPM1"},
-         {"CT_SiPM2",         "CT SiPM2"},
-         {"CT_SiPM_OR",       "CT SiOR"},
-         {"CT_SiPM_AND",      "CT SiAND"},
-         {"PMT_12_AND_13",    "CT Stick"},
-         //{"IO32_TRIG_NOBUSY","IO32_TRIG"},
-         //{"PMT_10","PMT 10"},
-         //{"ATOMSTICK","Atom Stick"}
-      };
-
-      fLiveCanvas.Divide(1,channels.size());
+      fLiveCanvas.Divide(1,actual_size);
 
       gDirectory->cd();
-      for (size_t i=0; i<channels.size(); i++)
+      for (size_t i=0; i<channel_ID_string.size(); i++)
       {
-         fSISChannel.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
+         if (channel_ID_string.at(i).size())
+            fSISChannel.push_back(sisch->GetChannel(channel_ID_string.at(i).c_str()));
       }
-   }
-   ~SisMonitor()
-   {
-      printf("SisMonitor::dtor!\n");
    }
   
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
