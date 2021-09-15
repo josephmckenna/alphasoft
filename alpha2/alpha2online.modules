@@ -25,5 +25,7 @@ handle_dumps.o
 catch_efficiency_module.o
 #cold_dump_temperaturefit.o
 spill_log_module.o
+#Generate online display of histograms
+sis_monitor.o
 
 AnalysisReport_module.o
