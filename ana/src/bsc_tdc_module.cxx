@@ -318,7 +318,6 @@ public:
 
             // Gets first hit bar info from map
             int top_chan = tophit->GetBar();
-            //            printf("top chan = %d",top_chan);
             int bot_chan = -1;
             int bar_num = -1;
             int end_num = -1;

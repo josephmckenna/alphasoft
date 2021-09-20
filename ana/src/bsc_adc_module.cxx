@@ -39,8 +39,7 @@ private:
    double amplitude_cut; // Minimum ADC value for peak height
    double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
    double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
-   int hit_num=0;
+   std::vector<bool> sample_plotted;
 
 public:
    BscFlags* fFlags;
@@ -73,6 +72,7 @@ public:
       gDirectory->mkdir("bsc")->cd();
       hWave = new TH1D("hWave","ADC Waveform",700,0,700);
       gDirectory->mkdir("SampleWaveforms");
+      for (int i=0;i<128;i++) sample_plotted.push_back(false);
 
    }
 
@@ -182,6 +182,9 @@ public:
             // Exit if the pulse is too small
             if (amp<amplitude_cut) continue;
 
+            // Exit if bad bar
+            if (bar<0 or bar>128) continue;
+
             // Count 1 pulse in the event
             counter++;
 
@@ -208,12 +211,12 @@ public:
                   sgfit->SetParLimits(3,0,2);
                   hWave->Fit("sgfit","RQ0");
                   // Copies histogram to sample histogram
-                  if (hit_num < sample_waveforms_to_plot)
+                  if (!(sample_plotted.at(bar)))
                      {
                         runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
                         gDirectory->cd("bsc/SampleWaveforms");
-                        hWave->Clone(Form("Sample Waveform %d",(hit_num)));
-                        hit_num++;
+                        hWave->Clone(Form("Sample Ch  %d",(bar)));
+                        sample_plotted.at(bar)=true;
                      }
       
                   // Extrapolates amplitude and interpolates start and end times
@@ -231,7 +234,7 @@ public:
 
       
                   // Writes bar event
-                  int bar = ch->bsc_bar;
+                  //int bar = ch->bsc_bar;
                   if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,fit_start_time*10);
                   if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,fit_start_time*10);
 
@@ -244,11 +247,11 @@ public:
                   double amp_volts = amp*adc_conversion;
       
                   // Writes bar event
-                  int bar = ch->bsc_bar;
+                  //int bar = ch->bsc_bar;
                   if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
                   if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
                   // Copies histogram to sample histogram
-                  if (hit_num < sample_waveforms_to_plot)
+                  if (!(sample_plotted.at(bar)))
                      {
                         hWave->Reset();
                         for (int ii=0;ii<ch->adc_samples.size();ii++)
@@ -257,8 +260,8 @@ public:
                            }
                         runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
                         gDirectory->cd("bsc/SampleWaveforms");
-                        hWave->Clone(Form("Sample Waveform %d",(hit_num)));
-                        hit_num++;
+                        hWave->Clone(Form("Sample Waveform Channel %d",(bar)));
+                        sample_plotted.at(bar)=true;
                      }
                   delete sgfit;
                }
