@@ -843,7 +843,7 @@ public:
       error_queue.push_back(
          new SpillType(fRunNo,
             unixtime,
-            "%s Sequencer: Sequenece %d queued",
+            "%s Sequencer: Sequence %d queued",
             SEQ_NAMES.at(SequencerID).c_str(),
             seqcount
          )
