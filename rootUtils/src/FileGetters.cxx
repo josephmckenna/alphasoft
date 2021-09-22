@@ -25,6 +25,8 @@ TFile *Get_File(Int_t run_number, Bool_t die)
      {
         file_name = file_path;
      }
+  if (!file_name.EndsWith("/"))
+     file_name+="/";
   file_name += "output";
   if (run_number < 10000)
     file_name += "0";
