@@ -309,7 +309,9 @@ struct ChronoChannelEvent {
       fChronoEvent[b][Chan]->SetCounts(counts);
       ChronoEvent* CE=new ChronoEvent{MidasTime,RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
-      //fChronoEvent[b][Chan]->Print();
+      if (Chan != 59)
+         if (b>1)
+           fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
       LastCounts[b][Chan]=counts;
       ID++;
