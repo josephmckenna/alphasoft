@@ -16,6 +16,7 @@
 #include "DumpHandling.h"
 #include "GEM_BANK_flow.h"
 #include <iostream>
+#include <iomanip> //set precision
 #include <sstream>
 
 class DumpMakerModuleFlags
