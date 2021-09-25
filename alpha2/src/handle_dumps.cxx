@@ -42,7 +42,9 @@ public:
    int DumpStopChannels[USED_SEQ]  ={-1};
    
    int fADChannel = -1;
+   int fPreTriggerChannel = -1;
    int fADCounter;
+   int fPreTriggerCounter;
    
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
@@ -80,9 +82,12 @@ public:
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
       fADChannel = SISChannels->GetChannel("SIS_AD", runinfo->fRunNo);
+      fPreTriggerChannel = SISChannels->GetChannel("SIS_DIX_ALPHA", runinfo->fRunNo);
       delete SISChannels;
 
       fADCounter = 0;
+      fPreTriggerCounter = 0;
+
       for (int j=0; j<USED_SEQ; j++) 
          dumplist[j].fRunNo=runinfo->fRunNo;
    }
@@ -218,6 +223,11 @@ public:
                {
                  TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
                  f->spill_events.push_back(beam);
+               }
+               if (e->GetCountsInChannel(fPreTriggerChannel))
+               {
+                 TA2Spill* pretrigger = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"----- Pre Trigger %d------->",fPreTriggerCounter++);
+                 f->spill_events.push_back(pretrigger);
                }
             }
 
