@@ -4,5 +4,4 @@ int main()
 {
     PlotLyAlphaScan(57019, 0);
     return EXIT_SUCCESS;
-    return 0;
 }
