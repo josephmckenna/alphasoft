@@ -100,42 +100,43 @@ public:
   inline TVector3* GetVertex()       { return &Vertex; }
   inline TVector3* GetCosmicVector() { return &CosmicVector; }
   
-  Double_t GetVertexX() { return Vertex.X(); }
-  Double_t GetVertexY() { return Vertex.Y(); }
-  Double_t GetVertexZ() { return Vertex.Z(); }
-  Double_t GetVertexR() { return Vertex.Perp(); }
-  Double_t GetVertexPhi() { return Vertex.Phi()/3.14159*180.; }
+  Double_t GetVertexX() const { return Vertex.X(); }
+  Double_t GetVertexY() const { return Vertex.Y(); }
+  Double_t GetVertexZ() const { return Vertex.Z(); }
+  Double_t GetVertexR() const { return Vertex.Perp(); }
+  Double_t GetVertexPhi() const { return Vertex.Phi()/3.14159*180.; }
  
   
-  Int_t GetVertexType()              { return VertexType; }
-  Int_t GetNTracks()                 { return NTracks; }
-  Int_t GetNVertices()               { return NVertices; }
-  Int_t GetNHits()                   { return NHits; }
-  Int_t GetNRawHits()                { return (NsideNRawHits+PsideNRawHits); }
-  Int_t GetNsideNRawHits()                { return NsideNRawHits; }
-  Int_t GetPsideNRawHits()                { return PsideNRawHits; }
-  bool  GetPassedCuts()                   { return PassedCuts; }
+  Int_t GetVertexType() const             { return VertexType; }
+  Int_t GetNTracks() const                { return NTracks; }
+  Int_t GetNVertices() const              { return NVertices; }
+  Int_t GetNHits() const                  { return NHits; }
+  Int_t GetNRawHits() const               { return (NsideNRawHits+PsideNRawHits); }
+  Int_t GetNsideNRawHits() const               { return NsideNRawHits; }
+  Int_t GetPsideNRawHits() const               { return PsideNRawHits; }
+  bool  GetPassedCuts() const                  { return PassedCuts; }
 
-  Int_t GetVF48NEvent()	             { return VF48NEvent; }
-  Int_t GetVF48NTrigger()            { return VF48NTrigger; }
-  Double_t GetVF48Timestamp()        { return VF48Timestamp; }
+  Int_t GetVF48NEvent() const             { return VF48NEvent; }
+  Int_t GetVF48NTrigger() const            { return VF48NTrigger; }
+  Double_t GetVF48Timestamp() const        { return VF48Timestamp; }
 
-  Int_t GetRunNumber()               { return RunNumber; }
+  Int_t GetRunNumber() const              { return RunNumber; }
 
-  Double_t GetRunTime()		     { return RunTime; }
-  Double_t GetExptTime()	     { return ExptTime; }
-  Double_t GetTSRunTime()            { return TSRunTime; }
+  Double_t GetRunTime() const     { return RunTime; }
+  Double_t GetExptTime() const     { return ExptTime; }
+  Double_t GetTSRunTime() const           { return TSRunTime; }
 
-  Int_t GetExptNumber()              { return ExptNumber; }
+  Int_t GetExptNumber() const             { return ExptNumber; }
 
-  Double_t GetDCA()                  { return DCA; }
-  Double_t GetResidual()             { return Residual; }
+  Double_t GetDCA() const                 { return DCA; }
+  Double_t GetResidual() const            { return Residual; }
 
-  Int_t GetSISCounter()              { return SisCounter; }
-  Int_t GetLabVIEWCounter()	     { return LabVIEWCounter; }
+  Int_t GetSISCounter() const             { return SisCounter; }
+  Int_t GetLabVIEWCounter() const     { return LabVIEWCounter; }
 
   TSiliconModule* GetSiliconModule( const  Int_t ModuleNumber );
-  std::vector<TSiliconModule*> GetSiliconModuleArray() { return SiliconModules; }
+  const TSiliconModule* GetSiliconModule( const  Int_t ModuleNumber ) const;
+  std::vector<TSiliconModule*> GetSiliconModuleArray() const { return SiliconModules; }
   Int_t CompressSiliconVAs();
   Int_t CompressSiliconModules();
   

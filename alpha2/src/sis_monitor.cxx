@@ -165,9 +165,8 @@ public:
       int i = fFIFO.back().fBin;
       while (fFIFO.back().GetRunTime() < mostmax)
       {
-         fFIFO.emplace_back(TSIS(i));
+         fFIFO.emplace_back(TSIS(++i));
          fFIFO.pop_front();
-         i++;
       }
 
       //Find bin of the first event

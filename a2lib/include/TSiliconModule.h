@@ -30,15 +30,16 @@ public:
   virtual ~TSiliconModule();
 
   // getters
-  Int_t GetModuleNumber( ){ return ModuleNumber; }
-  Int_t GetVF48ModuleNumber( ){ return VF48ModuleNumber; }
-  Int_t GetVF48GroupNumber( ){ return VF48GroupNumber; }
-  Int_t GetFRCNumber( ){ return FRCNumber; }
-  Int_t GetFRCPortNumber( ){ return FRCPortNumber; }
+  Int_t GetModuleNumber( ) const        { return ModuleNumber; }
+  Int_t GetVF48ModuleNumber( ) const    { return VF48ModuleNumber; }
+  Int_t GetVF48GroupNumber( ) const     { return VF48GroupNumber; }
+  Int_t GetFRCNumber( ) const           { return FRCNumber; }
+  Int_t GetFRCPortNumber( ) const       { return FRCPortNumber; }
   TSiliconVA* GetASIC( const Int_t number );
-  Int_t GetNumberOfASICs( ){ return ASICs.size(); }
-  Bool_t IsAHitModule( ){ return HitModule; }
-  std::vector<TSiliconVA*>  GetASICs( ){ return ASICs; }
+  const TSiliconVA* GetASIC( const Int_t number ) const;
+  Int_t GetNumberOfASICs( ) const       { return ASICs.size(); }
+  Bool_t IsAHitModule( ) const          { return HitModule; }
+  std::vector<TSiliconVA*>  GetASICs( ) { return ASICs; }
   
   // setters
   void SetModuleNumber( Int_t _ModuleNumber ){ ModuleNumber = _ModuleNumber; }
