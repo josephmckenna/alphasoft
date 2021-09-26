@@ -17,6 +17,10 @@
 
 #include "TPCconstants.hh"
 
+#include"LineFCN.hh"
+#include"Minuit2/FunctionMinimum.h"
+#include"Minuit2/VariableMetricMinimizer.h"
+
 static TMinuit* lfitter=0;
 void FitFunc(int&, double*, double& chi2, double* p, int)
 {
@@ -236,6 +240,55 @@ void TFitLine::Fit()
   ferr2z0 = errz0*errz0;
 }
 
+void TFitLine::FitM2()
+{
+  if(fNpoints<=fNpar) return;
+  fStatus=0;
+
+  // Set starting values for parameters
+  static double vstart[fNpar*3];
+  Initialization(vstart);
+
+  std::vector<double> init_params = {vstart[0],vstart[1],vstart[2],vstart[3],vstart[4],vstart[5]};
+  std::vector<double> init_errors(6,0.0001);
+  
+  LineFCN the_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer the_minimizer;
+  ROOT::Minuit2::FunctionMinimum min = the_minimizer.Minimize(the_fcn, init_params, init_errors);
+
+  ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
+
+  fchi2 = the_state.Fval();
+  fStat = the_state.CovarianceStatus();
+  fux = the_state.Value(0);
+  fuy = the_state.Value(1);
+  fuz = the_state.Value(2);
+  fx0 = the_state.Value(3);
+  fy0 = the_state.Value(4);
+  fz0 = the_state.Value(5);
+
+  double mod = TMath::Sqrt(fux*fux+fuy*fuy+fuz*fuz);
+  if( mod == 0.) {
+        std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
+        return;
+     }else {
+	  //Maybe the error in these parameters should be propagated after
+	  //normalization
+      fux/=mod;
+      fuy/=mod;
+      fuz/=mod;
+    }
+
+  fr0 = sqrt( fx0*fx0 + fy0*fy0 );
+
+  ferr2ux = std::pow(the_state.Error(0),2);
+  ferr2uy = std::pow(the_state.Error(1),2);
+  ferr2uz = std::pow(the_state.Error(2),2);
+  ferr2x0 = std::pow(the_state.Error(3),2);
+  ferr2y0 = std::pow(the_state.Error(4),2);
+  ferr2z0 = std::pow(the_state.Error(5),2);
+}
+
 
 TVector3 TFitLine::GetPosition(double t, 
 			       double ux, double uy, double uz, 
@@ -297,7 +350,7 @@ double TFitLine::GetParameter( double r2 )
 
 TVector3 TFitLine::Evaluate(double r2, 
 			    double ux, double uy, double uz, 
-			    double x0, double y0, double z0)
+			    double x0, double y0, double z0) const
 {
   double a = ux*ux+uy*uy, 
     beta = ux*x0+uy*y0,

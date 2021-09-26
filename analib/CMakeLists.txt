@@ -31,6 +31,7 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerState.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TInfoSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx)
 if(BUILD_AG)
   list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx)
@@ -50,11 +51,12 @@ else()
 endif()
 
 if(BUILD_AG)
-   target_link_libraries(analib agtpc)
+   target_link_libraries(analib PUBLIC agtpc)
 endif()
 if(BUILD_A2)
-   target_link_libraries(analib sqlite3)
+   target_link_libraries(analib PUBLIC sqlite3)
 endif()
+target_link_libraries(analib PUBLIC XMLParser Core RIO Hist)
 add_dependencies(analib gitinfo)
 
 install(TARGETS analib DESTINATION lib)

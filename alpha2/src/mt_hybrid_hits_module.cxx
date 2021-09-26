@@ -160,8 +160,8 @@ public:
    {
       if (fTrace)
          printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      if (runinfo->fRunNo && !fFlags->fUnpackOff)
+         fFlags->LoadAllStrips(runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -169,8 +169,6 @@ public:
    {
       if (fTrace)
          printf("HitModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -266,7 +264,29 @@ public:
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
-      // load the sqlite3 db
+      SettingsDB = NULL;
+      gVF48SiMap = NULL;
+   }
+   ~HitModule_vf48(){ 
+      if (SettingsDB)
+      {
+         delete SettingsDB;
+         SettingsDB = NULL;
+      }
+      if (gVF48SiMap)
+      {
+         delete gVF48SiMap;
+         gVF48SiMap = NULL;
+      }
+   }
+   
+   void BeginRun(TARunInfo* runinfo)
+   {
+      //if (fTrace)
+         printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if (!runinfo->fRunNo)
+         return;
+         // load the sqlite3 db
       SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
       const int m=fFlags->ProcessVF48;
       {
@@ -314,10 +334,6 @@ public:
             ++StripCount;
          }
       }
-   }
-   ~HitModule_vf48(){ 
-      delete SettingsDB;
-      delete gVF48SiMap;
    }
    
    TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* SiliconEvent)
@@ -558,7 +574,6 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("HitModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      fFlags.LoadAllStrips(runinfo->fRunNo);
       return new HitModule(runinfo, &fFlags);
    }
 };

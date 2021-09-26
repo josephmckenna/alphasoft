@@ -5,7 +5,11 @@ project(rootutils)
 include_directories(
    include 
    ${ROOT_INCLUDE_DIRS} 
-   ${CMAKE_SOURCE_DIR}/libGEM/include)
+   ${CMAKE_SOURCE_DIR}/libGEM/include
+   ${CMAKE_SOURCE_DIR}/analib/include
+   ${CMAKE_SOURCE_DIR}/recolib/include
+   ${CMAKE_SOURCE_DIR}/a2lib/include)
+   
 
 if(BUILD_MANALYZER)
   include_directories(${CMAKE_SOURCE_DIR}/manalyzer)
@@ -37,10 +41,10 @@ target_include_directories( rootUtils
 			    ${CMAKE_SOURCE_DIR}/midasio
 			    ${CMAKE_SOURCE_DIR}/mvodb
 			    )
-target_link_libraries(rootUtils analib GEM ${ROOT_LIBRARIES})
+target_link_libraries(rootUtils PUBLIC analib GEM ${ROOT_LIBRARIES})
 
 if(BUILD_A2)
-   target_link_libraries(rootUtils alpha2)
+   target_link_libraries(rootUtils PUBLIC alpha2)
 endif(BUILD_A2)
 
 if (${Python_FOUND})

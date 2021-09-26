@@ -125,10 +125,11 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
 
 
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
    assert(tmin.size()==tmax.size());
-   double last_time=0;
+   double first_time = 1E99;
+   double last_time = 0;
    
    int n_times=tmin.size();
    
@@ -141,17 +142,22 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
          if (range<diff) range=diff;
       }
    }
-
+   for (auto& t: tmin)
+   {
+      if (t < first_time) first_time = t;
+   }
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
-      if (t<0) t=1E99; //FIXME: Get total run time!
+      if (t < 0) t = 1E99; //FIXME: Get total run time!
       //Find the latest tmax time
-      if (last_time<t ) last_time=t;
+      if (last_time < t ) last_time = t;
    }
 
    int n_chans=SIS_Channel.size();
    std::vector<TH1D*> hh;
+
+   TSISChannels chans(runNumber);
 
    for (int i=0; i<n_chans; i++)
    {
@@ -160,9 +166,10 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
       Title+=" SIS Channel:";
       Title+=SIS_Channel[i];
       Title+=" - ";
+      Title+=chans.GetDescription(SIS_Channel[i], runNumber);
 
       //Replace this is a data base call to get the channel name
-      TString name=SIS_Channel[i];
+      TString name=chans.GetDescription(SIS_Channel[i], runNumber);
       //Title+=name.Data();
 
       TH1D* h= new TH1D( name.Data(),
@@ -180,6 +187,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
    while (reader->Next())
    {
       double t=SISEvent->GetRunTime();
+      if (t < first_time) continue;
       if (t>last_time) break;
       
       //Loop over all time windows
@@ -206,7 +214,123 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+{
+   std::vector<double> tmin;
+   std::vector<double> tmax;
+   for (auto & spill: spills)
+   {
+      if (spill.ScalerData)
+      {
+         tmin.push_back(spill.ScalerData->StartTime);
+         tmax.push_back(spill.ScalerData->StopTime);
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return Get_Summed_SIS(runNumber,  SIS_Channel, tmin, tmax );
+}
+#endif
+#ifdef BUILD_A2
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+{
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
+   return Get_Summed_SIS( runNumber, SIS_Channel, spills);
+}
+#endif
+
+
+
+#ifdef BUILD_A2
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
+{
+   assert(tmin.size()==tmax.size());
+   double first_time = 1E99;
+   double last_time = 0;
+   
+   int n_times=tmin.size();
+
+   for (auto& t: tmin)
+   {
+      if (t < first_time) first_time = t;
+   }
+   for (auto& t: tmax)
+   {
+      //Replace negative tmax times with the end of run...
+      if (t < 0) t = 1E99; //FIXME: Get total run time!
+      //Find the latest tmax time
+      if (last_time < t ) last_time = t;
+   }
+
+   int n_chans=SIS_Channel.size();
+
+   std::vector<std::vector<TH1D*>> hh;
+
+   TSISChannels chans(runNumber);
+
+   for (int i=0; i<n_chans; i++)
+   {
+      std::vector<TH1D*> times;
+      for (int j=0; j<tmax.size(); j++)
+      {
+         TString Title="R";
+         Title+=runNumber;
+         Title+=" SIS Channel:";
+         Title+=SIS_Channel[i];
+         Title+=" - ";
+         Title+=chans.GetDescription(SIS_Channel[i], runNumber);
+
+         //Replace this is a data base call to get the channel name
+         TString name=chans.GetDescription(SIS_Channel[i], runNumber);
+         name += "_";
+         name += j;
+         //Title+=name.Data();
+
+         TH1D* h= new TH1D( name.Data(),
+                           Title.Data(),
+                           gNbin,0. ,tmax.at(j) - tmin.at(j) );
+         times.push_back(h);
+      }
+      hh.push_back(times);
+   }
+   //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
+   //More performance is maybe available if we use DataFrames...
+   TTreeReader* reader=A2_SIS_Tree_Reader(runNumber);
+   TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (reader->Next())
+   {
+      double t=SISEvent->GetRunTime();
+      if (t < first_time) continue;
+      if (t>last_time) break;
+      
+      //Loop over all time windows
+      for (int j=0; j<n_times; j++)
+      {
+         if (t>tmin[j] && t< tmax[j])
+         {
+            for (int i=0; i<n_chans; i++)
+            {
+               int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
+               if (counts)
+               {
+                  hh.at(i).at(j)->Fill(t-tmin[j],counts);
+               }
+            }
+            //This event has been written to the array... so I dont need
+            //to check the other winodws... break! Move to next SISEvent
+            break;
+         }
+      }
+   }
+   return hh;
+}
+#endif
+#ifdef BUILD_A2
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -226,7 +350,7 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
 {
    std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
    return Get_SIS( runNumber, SIS_Channel, spills);

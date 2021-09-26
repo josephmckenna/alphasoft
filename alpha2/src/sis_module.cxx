@@ -19,6 +19,13 @@
 #include "TSISChannels.h"
 #include "TSISEvent.h"
 
+//This works but obviously this stuff is global which is very bad.
+std::deque<TMEvent*> unpairedSISEvents;
+void pushbackevent(TMEvent* event) //This is a global function. We in python now bois.
+{
+   unpairedSISEvents.push_back(new TMEvent(*event));
+}
+
 class SISFlags
 {
 public:
@@ -36,6 +43,8 @@ private:
    Int_t ID;
    TTree* SISEventTree   = NULL;
    
+   std::deque<TSISBufferEvent*> unmatched_buffer[NUM_SIS_MODULES];
+
 public:
    SISFlags* fFlags;
    
@@ -47,6 +56,8 @@ public:
    
    int clkchan[NUM_SIS_MODULES] = {-1};
    int vf48clkchan=-1;
+
+   uint32_t midas_start_time = -1 ;
    
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
@@ -101,7 +112,15 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
-      
+
+      //Get the start time of the run (for TInfoSpill constructors)
+      #ifdef INCLUDE_VirtualOdb_H
+      midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
+      #endif   
+
       gVF48Clock=0;
       ID=0;
       delete SISChannels;
@@ -176,15 +195,27 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
          if (SISdiff+ SISdiffPrev !=0 )
          {
-            //printf("Unpaired SIS buffers %d  %d  diff %d \n", size[0]/NUM_SIS_CHANNELS, size[1]/NUM_SIS_CHANNELS, gSISdiff/NUM_SIS_CHANNELS);
+            std::string warning = std::string("Unpaired SIS buffers ") + 
+                                  std::to_string(size[0]/NUM_SIS_CHANNELS) + 
+                                  std::string(" ") + 
+                                  std::to_string(size[1]/NUM_SIS_CHANNELS) + 
+                                  std::string(" diff ") + 
+                                  std::to_string(gSISdiff/NUM_SIS_CHANNELS);
+            std::cout << warning << "\n";
             gBadSisCounter++;
-            //return flow;
+            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
+
+            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+            f->spill_events.push_back(WarningSpill);
+            //Return flow here to disable unpaired SIS events recovery (added Sept 2021)
+            //return f;
+            flow = f;
          }
          SISdiffPrev+=SISdiff; 
       }
       
       if (totalsize<=0) return flow;
-      
+      gSisCounter++;
       SISModuleFlow* mf=new SISModuleFlow(flow);
       mf->MidasEventID=event->event_id;
       mf->MidasTime=event->time_stamp;
@@ -207,28 +238,43 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       }
 
       SISEventFlow* sf=new SISEventFlow(flow);
-      int size[NUM_SIS_MODULES];
-      uint32_t* sis[NUM_SIS_MODULES];
+      //Put TSISBufferEvent flow into a matching buffer
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-         sis[j] = (uint32_t*)mf->xdata[j]; // get pointers
-         size[j] = mf->xdata_size[j];
-         if(gExptStartClock[j]==0 && sis[j])
+/*         std::move(std::begin(mf->fSISBufferEvents[j]), std::end(mf->fSISBufferEvents[j]),unmatched_buffer[j]); */
+         // Can we std::move from std::vector to std::deque here instead of these next 4 lines?
+         for (TSISBufferEvent* e: mf->fSISBufferEvents[j])
+            unmatched_buffer[j].push_back(e);
+         //Ownership of pointers moved... lets clean up
+         mf->fSISBufferEvents[j].clear();
+
+         if(gExptStartClock[j]==0 && !unmatched_buffer[j].empty())
          {
-            gExptStartClock[j]=sis[j][clkchan[j]];  //first clock reading
+            gExptStartClock[j] = unmatched_buffer[j].front()->fCounts[clkchan[j]];  //first clock reading
          }
       }
+      //Lets get the number of events in the shortest queue (these should be pairs of SIS events)
+      int range = 0;
+      if (unmatched_buffer[0].size() < unmatched_buffer[1].size())
+         range = unmatched_buffer[0].size();
+      else
+         range = unmatched_buffer[1].size();
+      //std::cout<<"Buffer:" << unmatched_buffer[0].size() <<"\t"<< unmatched_buffer[1].size() << std::endl;
+         
       for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
       {
         //uint32_t* b=(uint32_t*)sis_bank[j];
-        if (!size[j]) continue;
-        for (int i=0; i<size[j]; i+=NUM_SIS_CHANNELS, sis[j]+=NUM_SIS_CHANNELS)
+        if (!range) continue;
+        for (int i = 0; i < range; i++)
         {
-           unsigned long int clock = sis[j][clkchan[j]]; // num of 10MHz clks
+           TSISBufferEvent* event = unmatched_buffer[j].front();
+           // event->Print();
+           unmatched_buffer[j].pop_front();
+           unsigned long int clock = event->fCounts[clkchan[j]]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
-           TSISEvent* s=new TSISEvent();
+           TSISEvent* s = new TSISEvent(event);
            s->SetMidasUnixTime(mf->MidasTime);
            s->SetMidasEventID(mf->MidasEventID);
            s->SetRunNumber(runinfo->fRunNo);
@@ -237,16 +283,11 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            s->SetSISModuleNo(j);
            if (j==0)
            {
-              gVF48Clock+=sis[j][vf48clkchan];
+              gVF48Clock+=s->GetCountsInChannel(vf48clkchan);
               s->SetVF48Clock(gVF48Clock);
            }
-           for (int kk=0; kk<NUM_SIS_CHANNELS; kk++)
-           {
-              s->SetCountsInChannel(kk,sis[j][kk]);
-           }
-           //SisEvent->Print();
+           // s->Print();
            sf->sis_events[j].push_back(s);
-           
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
@@ -270,6 +311,23 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
          printf("SIS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
+   
+   void PreEndRun(TARunInfo* runinfo)
+   {
+      if (gBadSisCounter)
+      {
+         std::string WarningLine = std::string("Warning: ") +
+                                   std::to_string(gBadSisCounter) + 
+                                   std::string(" bad sis events out of ") + 
+                                   std::to_string(gSisCounter);
+         TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, 0, 0, WarningLine.c_str());
+
+         TInfoSpillFlow* flow = new TInfoSpillFlow(NULL);
+         flow->spill_events.push_back(WarningSpill);
+         runinfo->AddToFlowQueue(flow);
+      }
+   }
+   
 };
 
 class SISFactory: public TAFactory
