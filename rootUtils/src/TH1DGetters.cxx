@@ -132,6 +132,14 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
    
    int n_times=tmin.size();
    
+   for (auto& t: tmax)
+   {
+      //Replace negative tmax times with the end of run...
+      if (t<0) t=GetTotalRunTimeFromSIS(runNumber);
+      //Find the latest tmax time
+      if (last_time<t ) last_time=t;
+   }
+   
    //If range is not set, calcualte it
    if (range<0)
    {
@@ -142,13 +150,6 @@ std::vector<TH1D*> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::v
       }
    }
 
-   for (auto& t: tmax)
-   {
-      //Replace negative tmax times with the end of run...
-      if (t<0) t=1E99; //FIXME: Get total run time!
-      //Find the latest tmax time
-      if (last_time<t ) last_time=t;
-   }
 
    int n_chans=SIS_Channel.size();
    std::vector<TH1D*> hh;
