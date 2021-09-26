@@ -71,6 +71,11 @@ class SpillLogPrinter
    {
      fSpillLogLineNumber = 0;
    }
+   ~SpillLogPrinter()
+   {
+     // The new manalzyer calls the dtor between runs... 
+     //cm_msg1(MINFO, "SpillLog", "alpha2online","Exiting...");
+   }
    void Reset()
    {
      fSpillLogLineNumber = 0;
@@ -116,15 +121,12 @@ class SpillLogPrinter
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
       fSpillLogLineNumber++;
    }
-   void EndRun()
+   void EndRun(int RunNo)
    {
       int width = fSpillLogTitle.Length();
-      std::string line;
-      for (int i = 0; i < width; i++)
-         line += '=';
+      std::string line(width,'=');
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
       cm_msg1(MINFO, "SpillLog", "alpha2online","End run %d",RunNo);
-      
    }
    
    void PrintLine(const char *string)
@@ -260,7 +262,6 @@ public:
             exit(555);
          }
       }
-
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
@@ -456,6 +457,17 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      const TInfoSpillFlow* TInfoFlow= flow->Find<TInfoSpillFlow>();
+      if (TInfoFlow)
+      {
+         for (TInfoSpill* s: TInfoFlow->spill_events)
+         {
+            InMemorySpillTable.push_back(s->Name.c_str());
+#ifdef HAVE_MIDAS
+                fSpillLogPrinter.PrintLine(s->Name.c_str());
+#endif
+         }
+      }
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {

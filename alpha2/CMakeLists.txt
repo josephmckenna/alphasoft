@@ -75,7 +75,7 @@ endif()
   target_link_libraries(manalyzer_main PUBLIC RHTTP Gui)
 endif()
 
-target_link_libraries(manalyzer PUBLIC Gui)
+
 
 
 #message(Binaries: ${BINS})
@@ -131,8 +131,8 @@ foreach( LIST_FILE ${BINS} )
                            ${SQLite3_LIBRARIES}
                            ${ROOT_LIBRARIES}
                            ${ZLIB_LIBRARIES}
-			   manalyzer manalyzer_main
-			   ${MIDAS_LIBRARIES}) 
+                           manalyzer manalyzer_main
+                           ${MIDAS_LIBRARIES} ) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

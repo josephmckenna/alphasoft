@@ -17,6 +17,10 @@
 #include <TMatrixDSym.h>
 #include <TMatrixD.h>
 
+#include"HelixFCN.hh"
+#include"Minuit2/FunctionMinimum.h"
+#include"Minuit2/VariableMetricMinimizer.h"
+
 bool kDcut = true;
 bool kccut = false;
 bool kpcut = false;
@@ -838,6 +842,96 @@ void TFitHelix::Fit()
   delete[] vstart;
 }
 
+void TFitHelix::FitM2()
+{
+  if(fNpoints<=fNpar) return;
+  fStatus=0;
+
+  // Set starting values for parameters
+  double* vstart = new double[fNpar];
+  Initialization(vstart);
+
+  //Minuit2 fitting for R FIT 1
+  std::vector<double> init_rfit = {vstart[0], vstart[1], vstart[2]};
+  std::vector<double> init_rerr(3, 0.001);
+
+  RadFuncFCN rfit1_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer rfit1_minimizer;
+  ROOT::Minuit2::FunctionMinimum rfit1_min = rfit1_minimizer.Minimize(rfit1_fcn, init_rfit, init_rerr);
+
+  ROOT::Minuit2::MnUserParameterState rf1_state = rfit1_min.UserState();
+
+  double chi2 = rf1_state.Fval();
+  int stat = rf1_state.CovarianceStatus();
+
+  //Minuit2 fitting for R FIT 2
+  RadFunc_FCN rfit2_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer rfit2_minimizer;
+  ROOT::Minuit2::FunctionMinimum rfit2_min = rfit2_minimizer.Minimize(rfit2_fcn, init_rfit, init_rerr);
+
+  ROOT::Minuit2::MnUserParameterState rf2_state = rfit2_min.UserState();
+  double chi2_ = rf2_state.Fval();
+  int stat_ = rf2_state.CovarianceStatus();
+
+  double errR,errphi0,errD;
+
+  // ======== R FIT 1 or 2 ? ========
+  if(chi2<chi2_) {
+	  fRc = rf1_state.Value(0);
+	  errR = rf1_state.Error(0);
+	  fphi0 = rf1_state.Value(1);
+	  errphi0 = rf1_state.Error(1);
+	  fD = rf1_state.Value(2);
+	  errD = rf1_state.Error(2);
+      fStatR = stat;
+      fchi2R = chi2;
+      fBranch = 1;
+    }else {
+	  fRc = rf2_state.Value(0);
+	  errR = rf2_state.Error(0);
+	  fphi0 = rf2_state.Value(1);
+	  errphi0 = rf2_state.Error(1);
+	  fD = rf2_state.Value(2);
+	  errD = rf2_state.Error(2);
+      fStatR = stat_;
+      fchi2R = chi2_;
+      fBranch = -1;
+    }
+
+  fc = 0.5/fRc;
+  ferr2Rc = errR*errR;
+  ferr2c = 4.*TMath::Power(fc,4.)*ferr2Rc;
+  ferr2phi0 = errphi0*errphi0;
+  ferr2D = errD*errD;
+  fx0=-fD*TMath::Sin(fphi0);
+  fy0=fD*TMath::Cos(fphi0);
+
+  fa=-0.299792458*TMath::Sign(1.,fc)*fB;
+
+  //Minuit2 fitting for Z
+  std::vector<double> init_zfit = {vstart[3], vstart[4]};
+  std::vector<double> init_zerr = {0.001, 0.01};
+
+  ZedFuncFCN zfit_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer zfit_minimizer;
+  ROOT::Minuit2::FunctionMinimum zfit_min = zfit_minimizer.Minimize(zfit_fcn, init_zfit, init_zerr);
+
+  ROOT::Minuit2::MnUserParameterState zf_state = zfit_min.UserState();
+  
+  fStatZ = zf_state.CovarianceStatus();
+  fchi2Z = zf_state.Fval();
+
+  double errlambda, errz0;
+  flambda = zf_state.Value(0);
+  errlambda = zf_state.Error(0);
+  fz0 = zf_state.Value(1);
+  errz0 = zf_state.Error(1);
+
+  ferr2lambda = errlambda*errlambda;
+  ferr2z0 = errz0*errz0;
+  delete[] vstart;
+}
+
 
 //==============================================================================================
 // use analytical straight line through first and last spacepoint
@@ -897,7 +991,7 @@ void TFitHelix::Initialization(double* Ipar)
 
 //==============================================================================================
 // internal helix parameter
-inline double TFitHelix::GetBeta(double r2, double Rc, double D)
+inline double TFitHelix::GetBeta(double r2, double Rc, double D) const
 {
    double num = r2-D*D;
    if (num<0) return 0.;
@@ -920,12 +1014,12 @@ inline double TFitHelix::GetBetaMinus(double r2, double Rc, double D)
    return -TMath::Sqrt(arg)*0.5/Rc;
 }
 
-inline double TFitHelix::GetArcLength(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLength(double r2, double Rc, double D) const
 {
   return TMath::ASin( GetBeta(r2,Rc,D) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLength_(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLength_(double r2, double Rc, double D) const
 {
   return ( TMath::Pi() - TMath::ASin( GetBeta(r2,Rc,D) ) ) * 2. * Rc;
 }
@@ -951,7 +1045,7 @@ inline double TFitHelix::GetArcLengthMinus_(double r2, double Rc, double D)
 }
 
 // FitHelix Axial and FitVertex::FindSeed and FitVertex::Improve
-double TFitHelix::GetArcLength(double r2)
+double TFitHelix::GetArcLength(double r2) const
 {
   if(fBranch==1)
     return GetArcLength(r2,fRc,fD);
@@ -986,7 +1080,7 @@ inline Vector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-inline Vector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D)
+Vector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D) const
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -1004,7 +1098,7 @@ inline Vector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
   return Evaluate_( r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch
-inline Vector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D)
+Vector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D) const
 {
   double x0 = -D*v0,
     y0 = D*u0,
@@ -1078,7 +1172,7 @@ inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, doubl
 }
 
 // FitHelix Axial
-inline double TFitHelix::Evaluate(double s, double l, double z0)
+double TFitHelix::Evaluate(double s, double l, double z0) const
 {
   return z0 + l * s;
 }

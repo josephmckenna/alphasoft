@@ -91,7 +91,7 @@ public:
        std::cout<<"VF48Events: "  << VF48Events << "\t";
        std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
        std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
-      std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
+       std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
     }
 };
 #endif
@@ -188,7 +188,7 @@ public:
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
-      fFlags->AnalysisReport=new TA2AnalysisReport(runinfo->fRunNo);
+      fFlags->AnalysisReport = new TA2AnalysisReport(runinfo->fRunNo);
       uint32_t midas_start_time = -1 ;
       #ifdef INCLUDE_VirtualOdb_H
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -197,6 +197,20 @@ public:
       runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
+
+      std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
+                                std::string("\tGit version: ") + 
+                                fFlags->AnalysisReport->GetGitHash() + 
+                                std::string(" Build date: ") + 
+                                fFlags->AnalysisReport->GetCompilationDateString();
+      if (fFlags->AnalysisReport->GetGitDiff().size())
+         VersionLine += std::string(" with ") + fFlags->AnalysisReport->GetGitDiff();
+
+      TInfoSpill* versionSpill = new TInfoSpill(fFlags->AnalysisReport->GetRunNumber(), fFlags->AnalysisReport->GetRunStartTime(), fFlags->AnalysisReport->GetRunStartTime(), VersionLine.c_str());
+
+      TInfoSpillFlow* flow = new TInfoSpillFlow(NULL);
+      flow->spill_events.push_back(versionSpill);
+      runinfo->AddToFlowQueue(flow);
    }
 
    void EndRun(TARunInfo* runinfo)

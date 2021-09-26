@@ -38,6 +38,10 @@ public:
 
    int DumpStartChannels[USED_SEQ] ={-1};
    int DumpStopChannels[USED_SEQ]  ={-1};
+   
+   int fADChannel = -1;
+   int fADCounter;
+   
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
    
@@ -54,14 +58,6 @@ public:
 #endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
-      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
-      for (int j=0; j<USED_SEQ; j++) 
-      {
-         dumplist[j].SequencerID=j;
-         DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
-         DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
-      }
-      delete SISChannels;
    }
 
    ~DumpMakerModule()
@@ -74,6 +70,17 @@ public:
    {
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
+      for (int j=0; j<USED_SEQ; j++) 
+      {
+         dumplist[j].SequencerID=j;
+         DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
+         DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
+      }
+      fADChannel = SISChannels->GetChannel("SIS_AD", runinfo->fRunNo);
+      delete SISChannels;
+
+      fADCounter = 0;
       for (int j=0; j<USED_SEQ; j++) 
          dumplist[j].fRunNo=runinfo->fRunNo;
    }
@@ -165,6 +172,21 @@ public:
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
+      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
+      GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
+      GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+
+      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow)
+      {
+        //We have some work to do on the flow
+      }
+      else
+      {
+         //Nothing to do here
+         return flow;   
+      }
+      A2SpillFlow* f=new A2SpillFlow(flow);
+      
       if (SISFlow)
       {
          //Add timestamps to dumps
@@ -179,7 +201,7 @@ public:
                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                    for (int nstarts=0; nstarts<e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
+                    for (int nstarts=0; nstarts < e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
                        dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
                     }
@@ -189,7 +211,13 @@ public:
                        dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
                     }
                }
+               if (e->GetCountsInChannel(fADChannel))
+               {
+                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
+                 f->spill_events.push_back(beam);
+               }
             }
+
          }
          //Add SIS counts to dumps
          for (int a=0; a<USED_SEQ; a++)
@@ -202,7 +230,7 @@ public:
             }
          }
       }
-      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
+
       if (SVDFlow)
       {
          for (int a=0; a<USED_SEQ; a++)
@@ -212,9 +240,9 @@ public:
          }
       }
 
-      A2SpillFlow* f=new A2SpillFlow(flow);
 
-      GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
+
+
       double LNE0 = -1.;
       double LNE5 = -1.;
       uint32_t unixtime = -1;
@@ -226,13 +254,13 @@ public:
          {
             //LNE0
             if (bank->GetVariableName() == "LNEAPULB0030")
-               LNE0 = *bank->GetFirstDataEntry()->DATA(0);
+               LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
             //LNE5
             if (bank->GetVariableName() == "LNEAPULB5030")
-               LNE5 = *bank->GetFirstDataEntry()->DATA(0);
+               LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
          }
       }
-      GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+
       if (GEMArrayFlow)
       {
          GEMBANKARRAY *array = GEMArrayFlow->data;

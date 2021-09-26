@@ -47,6 +47,8 @@ public:
    
    int clkchan[NUM_SIS_MODULES] = {-1};
    int vf48clkchan=-1;
+
+   uint32_t midas_start_time = -1 ;
    
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
@@ -101,7 +103,15 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
-      
+
+      //Get the start time of the run (for TInfoSpill constructors)
+      #ifdef INCLUDE_VirtualOdb_H
+      midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      #endif
+      #ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
+      #endif   
+
       gVF48Clock=0;
       ID=0;
       delete SISChannels;
@@ -176,15 +186,25 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          //if (SISdiffPrev !=0 && SISdiff+ SISdiffPrev !=0 ){
          if (SISdiff+ SISdiffPrev !=0 )
          {
-            //printf("Unpaired SIS buffers %d  %d  diff %d \n", size[0]/NUM_SIS_CHANNELS, size[1]/NUM_SIS_CHANNELS, gSISdiff/NUM_SIS_CHANNELS);
+            std::string warning = std::string("Unpaired SIS buffers ") + 
+                                  std::to_string(size[0]/NUM_SIS_CHANNELS) + 
+                                  std::string(" ") + 
+                                  std::to_string(size[1]/NUM_SIS_CHANNELS) + 
+                                  std::string(" diff ") + 
+                                  std::to_string(gSISdiff/NUM_SIS_CHANNELS);
+            std::cout << warning << "\n";
             gBadSisCounter++;
-            //return flow;
+            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
+
+            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+            f->spill_events.push_back(WarningSpill);
+            return f;
          }
          SISdiffPrev+=SISdiff; 
       }
       
       if (totalsize<=0) return flow;
-      
+      gSisCounter++;
       SISModuleFlow* mf=new SISModuleFlow(flow);
       mf->MidasEventID=event->event_id;
       mf->MidasTime=event->time_stamp;
@@ -270,6 +290,23 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
          printf("SIS::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n",
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
+   
+   void PreEndRun(TARunInfo* runinfo)
+   {
+      if (gBadSisCounter)
+      {
+         std::string WarningLine = std::string("Warning: ") +
+                                   std::to_string(gBadSisCounter) + 
+                                   std::string(" bad sis events out of ") + 
+                                   std::to_string(gSisCounter);
+         TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, 0, 0, WarningLine.c_str());
+
+         TInfoSpillFlow* flow = new TInfoSpillFlow(NULL);
+         flow->spill_events.push_back(WarningSpill);
+         runinfo->AddToFlowQueue(flow);
+      }
+   }
+   
 };
 
 class SISFactory: public TAFactory

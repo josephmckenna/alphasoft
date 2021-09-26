@@ -58,6 +58,7 @@ public:
   TFitLine& operator=( const TFitLine& );
 
   virtual void Fit();
+  virtual void FitM2();
 
   TVector3 GetPosition(double t, 
 		       double ux, double uy, double uz, 
@@ -66,7 +67,7 @@ public:
   TVector3 GetError2(double ) { TVector3 v(0.,0.,0.); return v; }
   TVector3 Evaluate(double r2, 
 		    double ux, double uy, double uz, 
-		    double x0, double y0, double z0);
+		    double x0, double y0, double z0) const;
   TVector3 Evaluate(double r2);
   TVector3 EvaluateErrors2(double ) { TVector3 v(0.,0.,0.); return v; }
 
@@ -95,8 +96,7 @@ public:
 
   inline int GetStat()    const { return fStat; }
   inline double GetChi2() const { return fchi2; }
-  inline int GetDoF()     const { return fNpoints - fNpar; }
-
+  inline int GetDoF()     const { return fNpoints - fNpar; } 
   inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
   inline double GetChi2Cut() const   {return fChi2Cut;}    
   inline void SetChi2Min(double min) {fChi2Min=min;}

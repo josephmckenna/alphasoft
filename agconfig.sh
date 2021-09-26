@@ -84,6 +84,8 @@ lxplus()
 alphadaq()
 {
    export ROOTANASYS=${AGRELEASE}/rootana
+   export MIDASSYS=/home/alpha/packages/midas-develop
+   export AGOUTPUT=${AGRELEASE}/root_output_files/
 }
 
 
