@@ -349,9 +349,9 @@ public:
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
          return flow;
       }
-      std::vector<TdcHit*> tdchits = tdc->hits;
+      std::vector<SimpleTdcHit*> tdchits = barEvt->GetTdcHits();
       if (tdchits.size()==0) {
-         if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
+         if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no tdc hits\n");
          return flow;
       }
 
@@ -421,44 +421,34 @@ public:
       }
    }
 
-   void DirectTdcHistos(std::vector<TdcHit*> tdchits)
+   void DirectTdcHistos(std::vector<SimpleTdcHit*> tdchits)
    {
       int max_chan=128;
       if (fFlags->fProtoTOF) max_chan=16;
       std::vector<int> counts(max_chan,0);
       std::vector<double> t0(max_chan,0);
-      for (int bar=0;bar<max_chan;bar++) {
-         t0[bar]=0;
-         for (TdcHit* tdchit: tdchits) {
-            if (tdchit->rising_edge==0) continue;
-            if (int(tdchit->chan)<=0) continue;
-            if (fFlags->fProtoTOF and protoTOFFindBarID(int(tdchit->chan))!=bar) continue;
-            if (!(fFlags->fProtoTOF) and BVFindBarID(int(tdchit->fpga),int(tdchit->chan))!=bar) continue;
-            counts[bar]++;
-            hTdcOccupancy->Fill(bar);
-            if (t0[bar]!=0) {
-               double t = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-               hTdcSingleChannelHitTime->Fill(1e9*(t-t0[bar]));
-               hTdcSingleChannelHitTime2d->Fill(bar,1e9*(t-t0[bar]));
+      for (SimpleTdcHit* tdchit: tdchits) {
+         int bar = tdchit->GetBar();
+         double time = tdchit->GetTime();
+         hTdcOccupancy->Fill(bar);
+         counts[bar]++;
+         if (t0[bar]!=0) {
+            hTdcSingleChannelHitTime->Fill(1e9*(time-t0[bar]));
+            hTdcSingleChannelHitTime2d->Fill(bar,1e9*(time-t0[bar]));
+         }
+         if (t0[bar]==0) t0[bar] = time;
+         if (!(fFlags->fProtoTOF)) {
+            bool matched = false;
+            for (SimpleTdcHit* tdchit2: tdchits) {
+               if (tdchit2->GetBar()!=(bar+64) and tdchit2->GetBar()!=(bar-64)) continue;
+               double time2 = tdchit2->GetTime();
+               if (TMath::Abs(time-time2)>25*1e-9) continue;
+               matched = true;
             }
-            if (t0[bar]==0) {
-               double t = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-               t0[bar] = t;
-            }
-
-            if (!(fFlags->fProtoTOF)) {
-               bool matched = false;
-               for (TdcHit* tdchit2: tdchits) {
-                  if (BVFindBarID(int(tdchit2->fpga),int(tdchit2->chan))!=(bar+64) and BVFindBarID(int(tdchit2->fpga),int(tdchit2->chan))!=(bar-64)) continue;
-                  double tdctime = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-                  double tdctime2 = GetFinalTime(tdchit2->epoch,tdchit2->coarse_time,tdchit2->fine_time);
-                  if (TMath::Abs(tdctime-tdctime2)>25*1e-9) continue;
-                  matched = true;
-               }
-               if (matched) hTdcCoincidence->Fill(bar);
-            }
+            if (matched) hTdcCoincidence->Fill(bar);
          }
       }
+
       int bars=0;
       for (int bar=0;bar<max_chan;bar++) {
          if (counts[bar]>0) {
@@ -535,32 +525,6 @@ public:
          }
       }
    }
-
-   // Helpers
-
-   int BVFindBarID(int fpga, int chan)
-   {
-      for (int bar=0; bar<64; bar++) {
-         if (fpga==BVTdcMap[bar][1]-1 and chan==BVTdcMap[bar][5]) return bar+64; // top
-         if (fpga==BVTdcMap[bar][1]-1 and chan==BVTdcMap[bar][6]) return bar; // bottom
-      }
-      if (fFlags->fPrint) printf("bsc_tdc_module failed to get bar number for fpga %d chan %d \n",fpga,chan);
-      return -1;
-   }
-   int protoTOFFindBarID(int tdc_chan)
-   {
-      for (int i=0;i<16;i++) {
-         if (protoTOFTdcMap[i][1]==tdc_chan) return protoTOFTdcMap[i][0];
-      }
-      return -1;
-   }
-   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates time from tdc data (in seconds)
-   {
-      double B = double(fine) - trb3LinearLowEnd;
-      double C = trb3LinearHighEnd - trb3LinearLowEnd;
-      return double(epoch)/epoch_freq +  double(coarse)/coarse_freq - (B/C)/coarse_freq;
-   }
-
 
 
 };

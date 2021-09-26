@@ -221,7 +221,8 @@ public:
                   if (!barEvt) return flow;
                   if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent analysing event\n");
 
-                  AddTDCdata(barEvt,tdc);
+                  GetTDCTimes(barEvt,tdc);
+                  MatchTDCtoADC(barEvt);
                   CombineEnds(barEvt);
                   CalculateZ(barEvt);
 
@@ -243,65 +244,85 @@ public:
 
 
    // Adds data from the tdc to the end hits
-   void AddTDCdata(TBarEvent* barEvt, TdcEvent* tdc)
+   void GetTDCTimes(TBarEvent* barEvt, TdcEvent* tdc)
+   {
+      // Get tdc data
+      std::vector<TdcHit*> tdchits = tdc->hits;
+      c_tdc+=tdchits.size();
+
+      // Computes time for tdc hits
+      for (TdcHit* tdchit: tdchits)
+         {
+            // Use only rising edge
+            if (tdchit->rising_edge==0) continue;
+
+            // Skip negative channels
+            if (int(tdchit->chan)<=0) continue;
+
+            // Gets channel number
+            int barID = -1;
+            if (!(fFlags->fProtoTOF)) barID = BVFindBarID(int(tdchit->fpga),int(tdchit->chan));
+            if (fFlags->fProtoTOF) barID = protoTOFFindBarID(tdchit->chan);
+
+            // Calculates hit time
+            double tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
+            
+            // Corrects for tdc time offset
+            double calib_time = tdc_time;
+            if (!(fFlags->fNoDelayCorrection)) {
+               if (fFlags->fProtoTOF) {
+                  if (barID<0 || barID>=16) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",barID); }
+                  else calib_time = tdc_time - ProtoTOFTdcOffsets[barID]*1e-9;
+               }
+               if (!(fFlags->fProtoTOF)) {
+                  if (barID<0 || barID>=128) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",barID); }
+                  else calib_time = tdc_time - BVTdcOffsets[barID]*1e-9;
+               }
+            }
+
+            // Fills occupancy histogram
+            hTDCbar->Fill(barID);
+
+            // Writes tdc data to SimpleTdcHit to add back into the flow
+            barEvt->AddTdcHit(barID,calib_time);
+         }
+   }
+
+   // Matches a tdc hit to each waveform
+   void MatchTDCtoADC(TBarEvent* barEvt)
    {
       // Get endhits from adc module
       std::vector<EndHit*> endhits = barEvt->GetEndHits();
       c_adc+=endhits.size();
 
-      // Get tdc data
-      std::vector<TdcHit*> tdchits = tdc->hits;
-      c_tdc+=tdchits.size();
+      // Gets tdc hits added to BarEvent by last function
+      std::vector<SimpleTdcHit*> tdchits = barEvt->GetTdcHits();
 
       for (EndHit* endhit: endhits)
          {
             double tdc_time = 0;
             int bar = int(endhit->GetBar());
     
-            // Finds tdc hits
-            for (TdcHit* tdchit: tdchits)
+            // Finds tdc hit
+            for (SimpleTdcHit* tdchit: tdchits)
                {
-                  // Use only rising edge
-                  if (tdchit->rising_edge==0) continue;
-
-                  // Skip negative channels
-                  if (int(tdchit->chan)<=0) continue;
-
                   // Checks channel number
-                  if (!(fFlags->fProtoTOF) and bar!=BVFindBarID(int(tdchit->fpga),int(tdchit->chan))) continue;
-                  if (fFlags->fProtoTOF and bar!=protoTOFFindBarID(tdchit->chan)) continue;
+                  if (bar!=tdchit->GetBar()) continue;
 
-                  // Calculates hit time
-                  if (tdc_time==0) tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
-
-                  // Fills occupancy histogram
-                  hTDCbar->Fill(bar);
-
+                  // Saves hit time of first hit in matching channel
+                  if (tdc_time==0) tdc_time = tdchit->GetTime();
                }
 
             // Continue if no match found
             if (tdc_time==0) continue;
 
-            // Corrects for tdc time offset
-            double calib_time = tdc_time;
-            if (!(fFlags->fNoDelayCorrection)) {
-               if (fFlags->fProtoTOF) {
-                  if (bar<0 || bar>=16) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
-                  else calib_time = tdc_time - ProtoTOFTdcOffsets[bar]*1e-9;
-               }
-               if (!(fFlags->fProtoTOF)) {
-                  if (bar<0 || bar>=128) { if (fFlags->fPrint) printf("bsc_tdc_module: bar ID = %d out of bounds, time offset calibration not applied\n",bar); }
-                  else calib_time = tdc_time - BVTdcOffsets[bar]*1e-9;
-               }
-            }
-
             // Corrects for time walk
             double amp = endhit->GetAmp();
             double tw_correction = twA/TMath::Sqrt(amp);
             if (fFlags->ftwA!=0) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
-            double correct_time = calib_time - tw_correction;
+            double correct_time = tdc_time - tw_correction;
 
-            // Writes tdc data to hit
+            // Writes tdc data to endhit
             endhit->SetTDCHit(correct_time);
             c_adctdc+=1;
          }

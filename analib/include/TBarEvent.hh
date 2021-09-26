@@ -12,6 +12,31 @@
 #include "TObject.h"
 #endif
 
+class SimpleTdcHit: public TObject
+{
+private:
+   int fBarID=-1;
+   double fTime=-1;
+
+public:
+   SimpleTdcHit(); //ctor
+  using TObject::Print;
+  virtual void Print();
+  virtual ~SimpleTdcHit(); // dtor
+
+  void SetHit(int _fBarID, double _fTime) 
+  {
+     fBarID=_fBarID;
+     fTime=_fTime;
+  }
+
+  int GetBar() const {return fBarID;}
+  double GetTime() const {return fTime;}
+
+  ClassDef(SimpleTdcHit, 3);
+};
+
+
 class EndHit: public TObject
 {
 private:
@@ -59,6 +84,7 @@ public:
   }
   ClassDef(EndHit, 3);
 };
+
 
 class BarHit: public TObject
 {
@@ -133,6 +159,7 @@ private:
   double fEventTime;
   std::vector<BarHit*> fBarHit;
   std::vector<EndHit*> fEndHit;
+  std::vector<SimpleTdcHit*> fTdcHit;
 
 public:
   TBarEvent(); //ctor
@@ -152,6 +179,8 @@ public:
     fEndHit.clear();
     for (auto hit: fBarHit) delete hit;
     fBarHit.clear();
+    for (auto hit: fTdcHit) delete hit;
+    fTdcHit.clear();
   }
   void AddEndHit(EndHit* e)
   {
@@ -161,6 +190,10 @@ public:
   {
     fBarHit.push_back(b);
   }
+  void AddTdcHit(SimpleTdcHit* b)
+  {
+    fTdcHit.push_back(b);
+  }
   void AddBarHit(EndHit* fBotHit, EndHit* fTopHit, int fBarID)
   {
     BarHit* b = new BarHit;
@@ -169,7 +202,12 @@ public:
     b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
-
+  void AddTdcHit(int fBarID, double fTime)
+  {
+    SimpleTdcHit* hit = new SimpleTdcHit;
+    hit->SetHit(fBarID, fTime);
+    AddTdcHit(hit);
+  }
   void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)
   {
      EndHit* hit = new EndHit;
@@ -187,6 +225,7 @@ public:
   int GetNEnds() { return fEndHit.size(); }
   std::vector<BarHit*> GetBars() { return fBarHit; }
   std::vector<EndHit*> GetEndHits() { return fEndHit; }
+  std::vector<SimpleTdcHit*> GetTdcHits() { return fTdcHit; }
 
   ClassDef(TBarEvent, 1);
 };
