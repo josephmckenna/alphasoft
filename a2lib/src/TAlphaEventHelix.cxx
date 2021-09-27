@@ -5,7 +5,6 @@
 #include <Riostream.h>
 #include <TGeoManager.h>
 #include <TVirtualGeoTrack.h>
-#include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
@@ -344,8 +343,6 @@ Int_t TAlphaEventHelix::DetermineLineParameters()
 Int_t TAlphaEventHelix::FitLineParameters()
 {
 
-
-
   minuit2Helix fcn(this);
   ROOT::Minuit2::MnUserParameters upar;
   //Oct 13 fits 1300mW sim
@@ -357,12 +354,12 @@ Int_t TAlphaEventHelix::FitLineParameters()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  mini(40);
-  upar =mini.Parameters();
-  /*
-  
-  
+  ROOT::Minuit2::FunctionMinimum min = mini(40);
+  upar = min.UserParameters();
+  // mini(40);
+  // upar = mini.Parameters();
 
+  /*
 std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
   // Fit the Line Parameters using Minuit
 
@@ -431,7 +428,10 @@ std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
 */
   fz0     = upar.Value(0);
   fLambda = upar.Value(1);
-  fChi2   = 0;
+  std::vector<double> outval(2);
+  outval[0] = fz0;
+  outval[1] = fLambda;
+  fChi2   = fcn(outval);
   return kTRUE;
 }
 

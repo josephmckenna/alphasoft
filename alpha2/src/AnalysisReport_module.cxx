@@ -156,6 +156,7 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
+   bool fVersionReported = false;
 
    AnalysisReportFlags* fFlags;
 
@@ -198,19 +199,7 @@ public:
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
 
-      std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
-                                std::string("\tGit version: ") + 
-                                fFlags->AnalysisReport->GetGitHash() + 
-                                std::string(" Build date: ") + 
-                                fFlags->AnalysisReport->GetCompilationDateString();
-      if (fFlags->AnalysisReport->GetGitDiff().size())
-         VersionLine += std::string(" with ") + fFlags->AnalysisReport->GetGitDiff();
 
-      TInfoSpill* versionSpill = new TInfoSpill(fFlags->AnalysisReport->GetRunNumber(), fFlags->AnalysisReport->GetRunStartTime(), fFlags->AnalysisReport->GetRunStartTime(), VersionLine.c_str());
-
-      TInfoSpillFlow* flow = new TInfoSpillFlow(NULL);
-      flow->spill_events.push_back(versionSpill);
-      runinfo->AddToFlowQueue(flow);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -247,6 +236,27 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
+   }
+
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   {
+      if (!fVersionReported)
+      {
+         fVersionReported = true;
+         std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
+                                std::string("\tGit version: ") + 
+                                fFlags->AnalysisReport->GetGitHash() + 
+                                std::string(" Build date: ") + 
+                                fFlags->AnalysisReport->GetCompilationDateString();
+         if (fFlags->AnalysisReport->GetGitDiff().size())
+            VersionLine += std::string(" with ") + fFlags->AnalysisReport->GetGitDiff();
+
+         TInfoSpill* versionSpill = new TInfoSpill(fFlags->AnalysisReport->GetRunNumber(), fFlags->AnalysisReport->GetRunStartTime(), fFlags->AnalysisReport->GetRunStartTime(), VersionLine.c_str());
+         TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+         f->spill_events.push_back(versionSpill);
+         return f;
+      }
+      return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
