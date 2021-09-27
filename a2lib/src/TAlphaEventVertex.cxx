@@ -1,5 +1,4 @@
 //TAlphaEventVertex
-//#include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventVertex.h"

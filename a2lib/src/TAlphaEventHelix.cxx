@@ -5,7 +5,6 @@
 #include <Riostream.h>
 #include <TGeoManager.h>
 #include <TVirtualGeoTrack.h>
-// #include <TMinuit.h>
 
 #include "TAlphaEvent.h"
 #include "TAlphaEventHelix.h"
