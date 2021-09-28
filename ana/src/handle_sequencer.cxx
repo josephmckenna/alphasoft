@@ -169,7 +169,7 @@ public:
             buf[i] = 'X';
          else if (buf[i] == 0x1D)
             buf[i] = 'X';
-
+      
       int parsecode = fParser->ParseBuffer(buf,bufLength);
     
       if (parsecode < 0 ) 
@@ -186,7 +186,10 @@ public:
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
+      {
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       driver->Parse(node);
+      }
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
