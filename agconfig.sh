@@ -18,7 +18,7 @@ export A2DATAPATH=${AGRELEASE}/alpha2
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 if [[ -z ${AGOUTPUT} ]]; then
-    export AGOUTPUT=${AGRELEASE} # this is the default location
+    export AGOUTPUT=${AGRELEASE}/root_output_files/ # this is the default location
 fi
 
 #Use EOS PUBLIC if not already set
