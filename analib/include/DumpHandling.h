@@ -4,22 +4,14 @@
 #include "TSequencerState.h"
 #include <deque>
 // yes, then we can have A2 and AG classes that do fancy things with chronobox / SIS data...
-/*constexpr std::map<int,std::string> SEQ_NAMES = {
-  { 0, "CAT" },
-  { 1, "RCT" },
-  { 2, "ATM" },
-  { 3, "POS" },
-  { 4, "BML" },
-  { 5, "RCT_BOTG" },
-  { 6, "ATM_BOTG" },
-  { 7, "RCT_TOPG" },
-  { 8, "RCT_TOPG" }
-};*/
-
+//std::map? or just this vector
+static std::vector<std::string> SEQ_NAMES = {
+     "CAT", "RCT","ATM", "POS", "BML", "RCT_BOTG", "ATM_BOTG", "RCT_TOPG", "RCT_TOPG"};
 class DumpMarker
 {
    public:
    enum DumpTypes { Info, Start, Stop, ADSpill, Positrons, Mixing, FRD, Other};
+
 
    std::string Description;
    int fSequencerID; //Unique to each sequencer
@@ -32,7 +24,7 @@ class DumpMarker
    void Print()
    {
       std::cout<<"SequencerID:"<<fSequencerID
-               //<<"Name:"<< SEQ_NAMES[fSequencerID]
+               <<"Name:"<< SEQ_NAMES.at(fSequencerID)
                <<"\tSequenceCount:"<<fSequenceCount
                <<"\tDescription:"<<Description.c_str()
                <<"\tType:"<<DumpType
@@ -828,8 +820,8 @@ public:
          complete.push_back(
             new SpillType(fRunNo,
                0,
-               "Sequencer %d: Sequence %d dumps completed",
-               SequencerID, 
+               "%s Sequencer: Sequence %d dumps completed",
+               SEQ_NAMES.at(SequencerID).c_str(), 
                seqcount
             )
          );
@@ -851,8 +843,8 @@ public:
       error_queue.push_back(
          new SpillType(fRunNo,
             unixtime,
-            "Sequencer %d: Sequenece %d queued",
-            SequencerID,
+            "%s Sequencer: Sequence %d queued",
+            SEQ_NAMES.at(SequencerID).c_str(),
             seqcount
          )
       );

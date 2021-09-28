@@ -136,41 +136,37 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 
 #include "TSISEvent.h"
+//Flow for passing SIS data from Analyze function (main thread) to the AnalyzeFlowEvent (side thread)
 class SISModuleFlow: public TAFlowEvent
 {
   public:
-  char* xdata[NUM_SIS_MODULES];
-  int xdata_size[NUM_SIS_MODULES]={0};
-  unsigned long MidasEventID=0;
-  uint32_t MidasTime=0;
+      std::vector<TSISBufferEvent*> fSISBufferEvents[NUM_SIS_MODULES];
+      unsigned long MidasEventID=0;
+      uint32_t MidasTime=0;
 
-
-  void AddData(int module, char* data, int size)
-  {
-    //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
-    xdata_size[module]=size;
-    xdata[module]=(char*) malloc(size*4);
-    memcpy(xdata[module], data, size*4);
-    return;
-  }
-  void Clear()
-  {
-    for (int i=0; i<NUM_SIS_MODULES; i++)
-    {
-      if (xdata_size[i])
+   void AddData(const int module, char* data,const int size)
+   {
+      if (!size) return;
+      uint32_t* ptr = (uint32_t*) data;
+      const int nevents = size / 32;
+      fSISBufferEvents[module].reserve(nevents);
+      for ( int i = 0; i < nevents; i++ )
       {
-        free(xdata[i]);
-        xdata_size[i]=0;
+         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr));
+         ptr += NUM_SIS_CHANNELS;
       }
-    }
-  }
-  SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
-  {
-  }
-  ~SISModuleFlow()
-  {
-    Clear();
-  }
+      return;
+   }
+   void Clear()
+   {
+   }
+   SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+   {
+   }
+   ~SISModuleFlow()
+   {
+      Clear();
+   }
 };
 
 
@@ -191,6 +187,25 @@ class SISEventFlow: public TAFlowEvent
         }
         sis_events[j].clear();
      }
+  }
+};
+
+//This should probably live somewhere else as its a A2 & Ag data type
+#include "TInfoSpill.h"
+
+class TInfoSpillFlow: public TAFlowEvent
+{
+  public:
+  std::vector<TInfoSpill*> spill_events;
+
+  TInfoSpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+  {
+  }
+  ~TInfoSpillFlow()
+  {
+     for (size_t i=0; i<spill_events.size(); i++)
+        delete spill_events[i];
+     spill_events.clear();
   }
 };
 

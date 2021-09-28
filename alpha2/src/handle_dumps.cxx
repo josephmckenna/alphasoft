@@ -16,6 +16,9 @@
 #include "DumpHandling.h"
 #include "GEM_BANK_flow.h"
 #include <iostream>
+#include <iomanip> //set precision
+#include <sstream>
+
 class DumpMakerModuleFlags
 {
 public:
@@ -40,7 +43,9 @@ public:
    int DumpStopChannels[USED_SEQ]  ={-1};
    
    int fADChannel = -1;
+   int fPreTriggerChannel = -1;
    int fADCounter;
+   int fPreTriggerCounter;
    
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
@@ -78,9 +83,12 @@ public:
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
       fADChannel = SISChannels->GetChannel("SIS_AD", runinfo->fRunNo);
+      fPreTriggerChannel = SISChannels->GetChannel("SIS_DIX_ALPHA", runinfo->fRunNo);
       delete SISChannels;
 
       fADCounter = 0;
+      fPreTriggerCounter = 0;
+
       for (int j=0; j<USED_SEQ; j++) 
          dumplist[j].fRunNo=runinfo->fRunNo;
    }
@@ -175,8 +183,9 @@ public:
       SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
       GEMBANK_Flow* GEMFlow = flow->Find<GEMBANK_Flow>();
       GEMBANKARRAY_Flow* GEMArrayFlow = flow->Find<GEMBANKARRAY_Flow>();
+      felabviewFlowEvent* LabVIEWFlow = flow->Find<felabviewFlowEvent>();
 
-      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow)
+      if (SISFlow || SVDFlow || GEMFlow || GEMArrayFlow || LabVIEWFlow)
       {
         //We have some work to do on the flow
       }
@@ -215,6 +224,11 @@ public:
                {
                  TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
                  f->spill_events.push_back(beam);
+               }
+               if (e->GetCountsInChannel(fPreTriggerChannel))
+               {
+                 TA2Spill* pretrigger = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"----- Pre Trigger %d------->",fPreTriggerCounter++);
+                 f->spill_events.push_back(pretrigger);
                }
             }
 
@@ -301,7 +315,42 @@ public:
             f->spill_events.push_back(elena);
          //std::cout << "DATA" << LNE0 << "\t" << LNE5 << std::endl;
       }
+  
+  
+      if (LabVIEWFlow)
+      {
+         if (LabVIEWFlow->GetBankName() == "PADT" )
+         {
+            std::ostringstream CsI;
+            CsI << std::setprecision(2) << "\t" << LabVIEWFlow->GetBankName() << ": ";
+            std::vector<std::string> names = { "CsI1*", "CsI1", "CsI2", "CsIA", "CsIB", "CsIC", "CsID", "CsE", "CsIF" };
+            for (int i = 1; i < LabVIEWFlow->GetData()->size(); i++)
+            {
+               if ( i - 1 < names.size() )
+                  CsI << names.at(i-1) << std::string(": ");
+               CsI << LabVIEWFlow->GetData()->at(i) << "\t";
+            }
+            //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
+            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
+            f->spill_events.push_back(lv);
+         }
+         else if( LabVIEWFlow->GetBankName() == "PADG")
+         {
+            std::ostringstream CsI;
+            CsI << std::setprecision(2) << "\t" << LabVIEWFlow->GetBankName() << ": ";
+            std::vector<std::string> names = { "PScreen", "AG1", "AG2", "BL A", "BL B", "BL C", "BL D", "BL E", "BL F" };
+            for (int i = 1; i < LabVIEWFlow->GetData()->size(); i++)
+            {
+               if ( i - 1 < names.size() )
+                  CsI  << names.at(i-1)  << std::string(": ");
 
+               CsI << LabVIEWFlow->GetData()->at(i) << "\t";
+            }
+            //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
+            TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
+            f->spill_events.push_back(lv);
+         }
+      }
 
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)

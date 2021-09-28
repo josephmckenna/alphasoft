@@ -156,6 +156,7 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
+   bool fVersionReported = false;
 
    AnalysisReportFlags* fFlags;
 
@@ -188,7 +189,7 @@ public:
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
-      fFlags->AnalysisReport=new TA2AnalysisReport(runinfo->fRunNo);
+      fFlags->AnalysisReport = new TA2AnalysisReport(runinfo->fRunNo);
       uint32_t midas_start_time = -1 ;
       #ifdef INCLUDE_VirtualOdb_H
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -197,6 +198,8 @@ public:
       runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
+
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -233,6 +236,27 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
+   }
+
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   {
+      if (!fVersionReported)
+      {
+         fVersionReported = true;
+         std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
+                                std::string("\tGit version: ") + 
+                                fFlags->AnalysisReport->GetGitHash() + 
+                                std::string(" Build date: ") + 
+                                fFlags->AnalysisReport->GetCompilationDateString();
+         if (fFlags->AnalysisReport->GetGitDiff().size())
+            VersionLine += std::string(" with ") + fFlags->AnalysisReport->GetGitDiff();
+
+         TInfoSpill* versionSpill = new TInfoSpill(fFlags->AnalysisReport->GetRunNumber(), fFlags->AnalysisReport->GetRunStartTime(), fFlags->AnalysisReport->GetRunStartTime(), VersionLine.c_str());
+         TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+         f->spill_events.push_back(versionSpill);
+         return f;
+      }
+      return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)

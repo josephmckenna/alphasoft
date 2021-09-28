@@ -48,8 +48,6 @@ time_t LastUpdate;
 
 #include "TSISChannels.h"
 
-#include "TAnalysisReport.h"
-
 class SpillLogFlags
 {
 public:
@@ -264,18 +262,6 @@ public:
             exit(555);
          }
       }
-
-      TA2AnalysisReport* report = new TA2AnalysisReport(runinfo->fRunNo);
-      std::string VersionLine = report->GetProgramName() + std::string("\tGit version: ") + report->GetGitHash() + std::string(" Build date: ") + report->GetCompilationDateString();
-      if (report->GetGitDiff().size())
-         VersionLine += std::string(" with ") + report->GetGitDiff();
-
-      TA2Spill* versionSpill = new TA2Spill(report->GetRunNumber(), report->GetRunStartTime(), VersionLine.c_str());
-
-      A2SpillFlow* flow = new A2SpillFlow(NULL);
-      flow->spill_events.push_back(versionSpill);
-      runinfo->AddToFlowQueue(flow);
-
       if (!fFlags->fNoSpillSummary)
       {
          InMemorySpillTable.push_back("Begin run "+std::to_string(runinfo->fRunNo) );
@@ -471,6 +457,17 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+      const TInfoSpillFlow* TInfoFlow= flow->Find<TInfoSpillFlow>();
+      if (TInfoFlow)
+      {
+         for (TInfoSpill* s: TInfoFlow->spill_events)
+         {
+            InMemorySpillTable.push_back(s->Name.c_str());
+#ifdef HAVE_MIDAS
+                fSpillLogPrinter.PrintLine(s->Name.c_str());
+#endif
+         }
+      }
       const A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (SpillFlow)
       {
