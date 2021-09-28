@@ -36,13 +36,13 @@ class felabViewModuleWriter
    private:
       void BranchTreeFromData(TTree* t, TStoreLabVIEWEvent* LVEvent)
       {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          TBranch* TAObj_b = t->GetBranch("TStoreLabVIEWEvent");
          if (!TAObj_b)
             t->Branch("TStoreLabVIEWEvent",&LVEvent);
          {
             t->SetBranchAddress("TStoreLabVIEWEvent",&LVEvent);
          }
-         
          t->Fill();
       }
       TTree* FindOrCreateTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
@@ -64,6 +64,7 @@ class felabViewModuleWriter
          }
          if(!treeAlreadyExists)
          {
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             runinfo->fRoot->fOutputFile->cd("felabview");
             currentTree = new TTree(name.c_str(),"Tree with vectors");
             trees.push_back(currentTree);
@@ -82,14 +83,12 @@ class felabViewModuleWriter
       public:
       void WriteTrees(TARunInfo* runinfo)
       {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd("felabview");
          for (TTree* t: trees)
             t->Write();
       }
       void SaveToTree(TARunInfo* runinfo, felabviewFlowEvent* mf)
       {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          TTree* t = FindOrCreateTree(runinfo, mf);
          TStoreLabVIEWEvent m_LabViewEvent = CreateTAObjectFromFlow(runinfo, mf);
          BranchTreeFromData(t, &m_LabViewEvent);  
