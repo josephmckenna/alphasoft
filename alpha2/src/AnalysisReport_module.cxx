@@ -184,7 +184,6 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
