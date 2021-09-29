@@ -150,6 +150,14 @@ class TVertexEvents: public TObject
       {
          return fRunNumbers.size();
       }
+      int CountPassedCuts(int type = 1) const 
+      {
+         int i = 0;
+         for (const int& p: fCutsResults)
+            if (p & type)
+               i++;
+         return i;
+      }
 };
 
 class TTimeWindows : public TObject
