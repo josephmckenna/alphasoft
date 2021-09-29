@@ -38,6 +38,7 @@ cd $AGRELEASE
 echo "Generating SIS plots..."
 echo ".L alpha2/macros/SaveAllDumps.cxx 
 SaveAllDumps(${RUNNO})
+SaveAllDumpsSVD(${RUNNO})
 .q
 " | root -l -b &> AutoSISPlots/R${RUNNO}.log
 
