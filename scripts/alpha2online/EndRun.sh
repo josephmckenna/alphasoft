@@ -10,7 +10,7 @@ alphadaq*)
     ;;
 esac
 
-
+sleep 3
 
 RUNNO=${1}
 if [ -z ${RUNNO} ]; then
