@@ -20,6 +20,11 @@
 
 #include "TBarEvent.hh"
 
+#include"fitBV.hh"
+#include"Minuit2/FunctionMinimum.h"
+#include"Minuit2/VariableMetricMinimizer.h"
+
+
 class BscFlags
 {
 public:
@@ -46,8 +51,8 @@ public:
 
 private:
 
-   TH1D* hWave = NULL;
-   TF1* sgfit = NULL;
+   std::map<int,TH1D*> hSampleWaveforms;
+   std::map<int,TF1*> hSampleWaveformFits;
 
 public:
 
@@ -70,9 +75,19 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("bsc")->cd();
-      hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-      gDirectory->mkdir("SampleWaveforms");
-      for (int i=0;i<128;i++) sample_plotted.push_back(false);
+      gDirectory->mkdir("SampleWaveforms")->cd();
+      for (int ii=0;ii<128;ii++)
+         {
+            TString hname = TString::Format("hSampleBar%d",ii);
+            TString htitle = TString::Format("Sample ADC Waveform Channel %d",ii);
+            hSampleWaveforms[ii] = new TH1D(hname,htitle,700,0,700);
+            sample_plotted.push_back(false);
+            if (!(fFlags->fPulser)) {
+               TString fitname = TString::Format("fitSampleBar%d",ii);
+               hSampleWaveformFits[ii] = new TF1(fitname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))");
+            }
+         }
+      gDirectory->cd("..");
 
    }
 
@@ -80,7 +95,6 @@ public:
    {
       // Write histograms
       runinfo->fRoot->fOutputFile->Write();
-      delete hWave;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -188,55 +202,55 @@ public:
             // Count 1 pulse in the event
             counter++;
 
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             {
 
             if( !(fFlags->fPulser) )  // Normal run
                {
 
-                  // Plots pulse. Sets zero error for saturated pulses since fitter ignores zero error bins
-                  hWave->Reset();
+                  // Sets weights of saturated bins to zero
+                  std::vector<double> weights(ch->adc_samples.size(),1.);
                   for (int ii=0;ii<ch->adc_samples.size();ii++)
-                     {
-                        int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
-                        if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
-                        else hWave->SetBinError(bin_num,100);
-                     }
-                  // Fits pulse
-                  sgfit = new TF1("sgfit","[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
-                  sgfit->SetParameters(max,imax,5,0.2);
-                  sgfit->SetParLimits(0,0.9*max,100*max);
-                  sgfit->SetParLimits(1,0,500);
-                  sgfit->SetParLimits(2,0,100);
-                  sgfit->SetParLimits(3,0,2);
-                  hWave->Fit("sgfit","RQ0");
+                     if (ch->adc_samples.at(ii) > 32750) weights[ii] = 0.;
+
+                  // Creates fitting FCN
+                  SkewGaussFcn theFCN(ch->adc_samples, weights);
+
+                  // Initial fitting parameters
+                  std::vector<double> init_params = {max, double(imax), 5, 0.2};
+                  std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
+
+                  // Creates minimizer
+                  ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
+                  theMinimizer.Builder().SetPrintLevel(0);
+                  int error_level_save = gErrorIgnoreLevel;
+                  gErrorIgnoreLevel = kFatal;
+
+                  // Minimize to fit waveform
+                  ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
+                  gErrorIgnoreLevel = error_level_save;
+
+                  // Gets minimized parameters
+                  ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
+                  double new_fit_amp = the_state.Value(0) - baseline;
+
+                  // Converts amplitude to volts
+                  double amp_volts = new_fit_amp*adc_conversion;
+                  double amp_volts_raw = amp*adc_conversion;
+
                   // Copies histogram to sample histogram
                   if (!(sample_plotted.at(bar)))
                      {
-                        runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-                        gDirectory->cd("bsc/SampleWaveforms");
-                        hWave->Clone(Form("Sample Ch  %d",(bar)));
+                        for (int ii=0;ii<ch->adc_samples.size();ii++)
+                           { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
+                        hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                        hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
+                        hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
                         sample_plotted.at(bar)=true;
                      }
       
-                  // Extrapolates amplitude and interpolates start and end times
-                  double fit_amp = sgfit->GetParameter(0) - baseline;
-                  double maximum_time = sgfit->GetMaximumX();
-                  int error_level_save = gErrorIgnoreLevel;
-                  gErrorIgnoreLevel = kFatal;
-                  double fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
-                  gErrorIgnoreLevel = error_level_save;
-                  delete sgfit;
-
-                  // Converts amplitude to volts
-                  double amp_volts = fit_amp*adc_conversion;
-                  double amp_volts_raw = amp*adc_conversion;
-
-      
                   // Writes bar event
-                  //int bar = ch->bsc_bar;
-                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,fit_start_time*10);
-                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,fit_start_time*10);
+                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
+                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
 
                }
 
@@ -247,41 +261,22 @@ public:
                   double amp_volts = amp*adc_conversion;
       
                   // Writes bar event
-                  //int bar = ch->bsc_bar;
                   if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
                   if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
                   // Copies histogram to sample histogram
                   if (!(sample_plotted.at(bar)))
                      {
-                        hWave->Reset();
                         for (int ii=0;ii<ch->adc_samples.size();ii++)
-                           {
-                              int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
-                           }
-                        runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-                        gDirectory->cd("bsc/SampleWaveforms");
-                        hWave->Clone(Form("Sample Waveform Channel %d",(bar)));
+                           { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
                         sample_plotted.at(bar)=true;
                      }
-                  delete sgfit;
                }
             }
          }
       return BarEvent;
    }
 
-   static double sgfunc(double* x, double* p)
-    {
-            // "[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))"
-            double xx=x[0];
-            double skew=0.;
-            if( xx>p[1] ) skew = p[3]*(xx-p[1]);
-            double t=(xx-p[1])/(p[2]+skew);
-            return p[0]*exp(-0.5*pow(t,2.));
-    }
-
 };
-
 
 class BscModuleFactory: public TAFactory
 {
