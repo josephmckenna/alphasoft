@@ -422,7 +422,7 @@ TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFi
 
 
 #ifdef BUILD_A2
-TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, int whichSpill)
+TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
   //Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
   //Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
@@ -440,8 +440,8 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
     std::cout << "tmin size = " << tmin.size() << std::endl;
   std::cout << "tmax size = " << tmax.size() << std::endl;
 
-  Double_t start_time = tmin.at(whichSpill);
-  Double_t stop_time = tmax.at(whichSpill);
+  Double_t start_time = tmin.at(repitition);
+  Double_t stop_time = tmax.at(repitition);
 
   if (stop_time<0.) stop_time=GetA2TotalRunTime(runNumber);
 
@@ -460,14 +460,14 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t binNumber, const char* dumpFi
   int channel = chans.GetChannel("SIS_PMT_CATCH_OR");
   std::vector<int> SISChannels = {channel};
   
-  std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
+  std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time}).front();
   gNbin=oldBinNumber;
  
   if(!dumpHisto.at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-     std::vector<TH1D*> dumpHisto_toPlot = Get_SIS(runNumber, SISChannels, {start_time+startOffset}, {stop_time}); // this is a lower resolution histo to plot
+     std::vector<TH1D*> dumpHisto_toPlot = Get_SIS(runNumber, SISChannels, {start_time+startOffset}, {stop_time}).front(); // this is a lower resolution histo to plot
 
   TString htitle = "Run ";
   htitle+=runNumber;
@@ -573,7 +573,7 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
     //Get the spills from the data (should only be the range selected in the dumpNumbers) 
     std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {dumpNumbers.at(i)});
     //Get the SIS from the spill, then pills the first (and only histo) and adds it to allHistos
-    allHistos.push_back( Get_SIS(run, channels, {spills.at(0)}).at(0) );
+    allHistos.push_back( Get_SIS(run, channels, {spills.at(0)}).front().front() );
   }
 
   //Set up a nice title, and create a vector of strings for the legend(s).
@@ -856,13 +856,13 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 
 
 #ifdef BUILD_A2
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
    TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
 
-   std::vector<TH1D*> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
+   std::vector<TH1D*> hh=Get_Summed_SIS(runNumber, SIS_Channel,tmin, tmax);
    double max_height = 0;
    double min_height = 1E99;
    for (TH1D* h: hh)
@@ -904,10 +904,10 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<dou
    return c;
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS(runNumber, chans, tmin, tmax);
+   return Plot_Summed_SIS(runNumber, chans, tmin, tmax);
 }
 
 TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::pair<double,int>> SIS_Counts,double tstart, double tstop)
@@ -919,7 +919,93 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
      tmin.push_back(a.first + tstart);
      tmax.push_back(a.first + tstop);
    }
-   return Plot_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
+   return Plot_Summed_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
+}
+
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+{
+   std::vector<double> tmin;
+   std::vector<double> tmax;
+   for (TA2Spill& s: spills)
+   {
+      tmin.push_back(s.GetStartTime());
+      tmax.push_back(s.GetStopTime());
+   }
+   return Plot_Summed_SIS(runNumber,SIS_Channel,tmin, tmax);
+}
+
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
+{
+   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   return Plot_Summed_SIS(runNumber, chans, spills);
+}
+
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+{
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   return Plot_Summed_SIS(runNumber, SIS_Channel, s);
+}
+
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+{
+   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   return Plot_Summed_SIS( runNumber, chans, description, repetition);
+}
+
+
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+{
+   TCanvas* c = new TCanvas();
+   AlphaColourWheel colour;
+   TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+
+   std::vector<std::vector<TH1D*>> hh=Get_SIS(runNumber, SIS_Channel,tmin, tmax);
+   double max_height = 0;
+   double min_height = 1E99;
+   for (auto times: hh)
+      for (TH1D* h: times)
+      {
+         double min, max;
+         h->GetMinimumAndMaximum(min, max);
+         if (max > max_height)
+         {
+            max_height = max;
+         }
+         if (min < min_height)
+         {
+            min_height = min;
+         }
+      }
+   if (min_height < 10 && min_height >= 0)
+      min_height = 0;
+   
+   for (int j=0; j<tmin.size(); j++)
+      for (int i=0; i<SIS_Channel.size(); i++)
+      {
+         legend->AddEntry(hh[i][j]);
+         hh[i][j]->SetLineColor(colour.GetNewColour());
+         if (i ==0 && j == 0)
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST");
+         }
+         else
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST SAME");
+         }
+      }
+   //std::cout<<"min:"<< min_height <<"\tmax:"<<max_height <<std::endl;
+   legend->Draw();
+   c->Update();
+   c->Draw();
+   return c;
+}
+
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
+{
+   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   return Plot_SIS(runNumber, chans, tmin, tmax);
 }
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
