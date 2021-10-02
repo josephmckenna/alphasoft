@@ -4,11 +4,15 @@
 #include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
+#include "THStack.h"
 #include "TPaveText.h"
 
 #include "TAPlot.h"
 #include "TA2Plot.h"
 #include "TAGPlot.h"
+
+#include <sstream>
+
 #ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition=1, Int_t offset=0);
@@ -47,6 +51,19 @@ TCanvas* Plot_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000,
 TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/RCT_BOTg_rampfile.dump", 
                           Double_t EnergyRangeFactor=10.);
+#endif
+
+#ifdef BUILD_A2
+TCanvas* Plot_A2_CT_HotDump(Int_t runNumber,Int_t binNumber=1000, 
+                          const char* dumpFile="ana/macros/temp2.dump", 
+                          Double_t EnergyRangeFactor=10., int whichSpill = 0);
+
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
+                                std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, 
+                                std::string drawOption = "3dheat");
+
+void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings);
+
 #endif
 
 Double_t FitEnergyDump(Double_t Emin, Double_t Emax,TH1D* fit=NULL);

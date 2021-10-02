@@ -128,8 +128,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
    assert(tmin.size()==tmax.size());
-   double first_time = 1E99;
-   double last_time = 0;
+   double last_time=0;
    
    int n_times=tmin.size();
    
@@ -142,10 +141,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
          if (range<diff) range=diff;
       }
    }
-   for (auto& t: tmin)
-   {
-      if (t < first_time) first_time = t;
-   }
+
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
@@ -169,7 +165,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
       Title+=chans.GetDescription(SIS_Channel[i], runNumber);
 
       //Replace this is a data base call to get the channel name
-      TString name=chans.GetDescription(SIS_Channel[i], runNumber);
+      TString name=SIS_Channel[i];
       //Title+=name.Data();
 
       TH1D* h= new TH1D( name.Data(),
@@ -187,7 +183,6 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
    while (reader->Next())
    {
       double t=SISEvent->GetRunTime();
-      if (t < first_time) continue;
       if (t>last_time) break;
       
       //Loop over all time windows
@@ -240,9 +235,6 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
    return Get_Summed_SIS( runNumber, SIS_Channel, spills);
 }
 #endif
-
-
-
 #ifdef BUILD_A2
 std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
 {
