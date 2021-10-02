@@ -1,12 +1,34 @@
 #include "TA2Plot.h"
 #include "TAPlot.h"
 
-/*int CheckCosmicAnalysisReport(int runNumber)
-{
-   TA2AnalysisReport report = Get_A2Analysis_Report(runNumber);
-}*/
 #include <vector>
 #include <string>
+
+std::vector<std::pair<std::string,std::string>> CheckForTrees(int runNumber)
+{
+   std::vector<std::pair<std::string,std::string>> errors;
+
+   TTreeReader* SISTree = A2_SIS_Tree_Reader(runNumber);
+   if (SISTree->GetEntries() <= 0 )
+   {
+      std::string announcement = "Alarm: No SIS data!";
+      std::string full_message = "No SIS data in run, was fevme running?";
+      errors.push_back({announcement, full_message});
+   }
+   delete SISTree;
+   
+   TTreeReader* SVDQODTree = Get_A2_SVD_Tree(runNumber);
+   if (SVDQODTree->GetEntries() <= 0 )
+   {
+      std::string announcement = "Alarm: No SVD data!";
+      std::string full_message = "Is the SVD on? Is it triggering?";
+      errors.push_back({announcement, full_message});
+   }
+   delete SVDQODTree;
+   return errors;
+   
+}
+
 
 std::vector<std::pair<std::string,std::string>> CheckCosmicTriggerRates(TA2Plot* entire_run) // Must be a single time window
 {
@@ -37,6 +59,7 @@ std::vector<std::pair<std::string,std::string>> CheckCosmicTriggerRates(TA2Plot*
    
    if (IO32_NOBUSY_RATE<8)
    {
+      std::cout<<"IO32_NOBUSY_RATE: " << IO32_NOBUSY_RATE << " < 8... Bad"<<std::endl;
       std::string announcement = "Warning: Silicon Detector trigger rate is low, check autoAnalysis log";
       std::string full_message = 
 "*****************************************************\n\
@@ -59,12 +82,14 @@ std::vector<std::pair<std::string,std::string>> CheckCosmicTriggerRates(TA2Plot*
    }
    else
    {
+      system("Color E4");
       std::cout<<"IO32_NOBUSY_RATE: " << IO32_NOBUSY_RATE << " > 8... Good"<<std::endl;
    }
    
     
    if (IO32_NOBUSY_RATE>12 ) //do not announce on very short runs (it might be a dump we are looking at)
    {
+      std::cout<<"IO32_NOBUSY_RATE: " << IO32_NOBUSY_RATE << " > 12... Bad!"<<std::endl;
       std::string announcement = "Warning: Silicon Detector trigger rate is high, check autoAnalysis  log";
       std::string full_message = 
 "*****************************************************\n\
@@ -83,6 +108,7 @@ std::vector<std::pair<std::string,std::string>> CheckCosmicTriggerRates(TA2Plot*
    
    if ((double)IO32_NOBUSY_Counts * 1.1 < IO32_Counts)
    {
+      std::cout << "IO32_NOBUSY_Counts ( "<< IO32_NOBUSY_Counts << ") * 1.1 < IO32_Counts ( " << IO32_Counts << " )... Bad" << std::endl;
       std::string announcement = "Warning: Silicon Detector readouts high (or trigger low). Check autoAnalysis log";
       std::string full_message = 
 "*****************************************************\n\
@@ -101,6 +127,7 @@ std::vector<std::pair<std::string,std::string>> CheckCosmicTriggerRates(TA2Plot*
    }
    if ((double)IO32_Counts * 1.1 < IO32_NOBUSY_Counts)
    {
+      std::cout << "IO32_Counts ( "<< IO32_Counts << ") * 1.1 < IO32_NOBUSY_Counts ( " << IO32_NOBUSY_Counts << " )... Bad" << std::endl;
       std::string announcement = "Warning: Silicon Detector readouts low (or trigger high). Check autoAnalysis log";
       std::string full_message = 
 "*****************************************************\n\
@@ -198,8 +225,23 @@ std::vector<std::pair<std::string,std::string>> CheckOccupancy(TA2AnalysisReport
    return errors;
 }
 
-void Test(int runNumber = 58687)
+void RunFullTestSuite(int runNumber)
 {
+   TA2AnalysisReport report = Get_A2Analysis_Report(runNumber);
+   report.Print();
+   std::cout<<"\n\n";
+
+   std::vector<std::pair<std::string,std::string>> TreeErrors = CheckForTrees(runNumber);
+   if (TreeErrors.size())
+   {
+      std::cout<<"There are missing Trees in this data file... so more tests will likely fail, I continue to test anyway...\n\n";
+      for (const std::pair<std::string,std::string>& e: TreeErrors)
+      {
+         std::cout << e.first << std::endl;
+         std::cout << e.second << std::endl;
+      }
+   }
+
    TA2Plot a;
    a.AddTimeGate(runNumber,0,GetA2TotalRunTime(runNumber));
    a.LoadData();
@@ -210,7 +252,7 @@ void Test(int runNumber = 58687)
      std::cout << e.second << std::endl;
    }
 
-   TA2AnalysisReport report = Get_A2Analysis_Report(runNumber);
+   
    std::vector<std::pair<std::string,std::string>>  OccupancyErrors = CheckOccupancy(&report);
    for (const std::pair<std::string,std::string>& e: OccupancyErrors)
    {
@@ -218,5 +260,10 @@ void Test(int runNumber = 58687)
      std::cout << e.second << std::endl;
    }
 
+}
+
+void Test(int runNumber = 58687)
+{
+  return RunFullTestSuite(runNumber);
 }
 
