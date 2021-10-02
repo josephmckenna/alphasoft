@@ -168,7 +168,7 @@ public:
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpsFlow->states);
+      dumplist[iSeq].AddStates(DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
       dumplist[iSeq].check(DumpsFlow->driver);
       

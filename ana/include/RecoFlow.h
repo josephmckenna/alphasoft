@@ -118,7 +118,7 @@ class DumpFlow: public TAFlowEvent
   public:
     int SequencerNum=-1;
     std::vector<DumpMarker> DumpMarkers;
-    std::vector<TSequencerState*> states;
+    std::vector<TSequencerState> states;
     TSequencerDriver* driver;
   public:
   DumpFlow(TAFlowEvent* flow) // ctor
@@ -129,8 +129,6 @@ class DumpFlow: public TAFlowEvent
    {
       if (driver)
          delete driver;
-      for ( auto & state: states )
-         delete state;
       states.clear();
       DumpMarkers.clear();
    }
@@ -165,7 +163,7 @@ class DumpFlow: public TAFlowEvent
       AddDumpEvent(_SequencerNum, _SeqCount, _SequenceStartTime, _Description, type, _onCount, _onState);
    }
 
-   void AddStateEvent(TSequencerState* s )
+   void AddStateEvent(const TSequencerState& s )
    {
       states.push_back(s);
    }

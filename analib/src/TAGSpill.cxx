@@ -97,7 +97,7 @@ TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...): TSpil
 }
 
 TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
-   TSpill(runno, d->StartDumpMarker->MidasTime, d->StartDumpMarker->Description.c_str())
+   TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
 {
    
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;

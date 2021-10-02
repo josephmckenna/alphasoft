@@ -22,6 +22,7 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 
 Int_t GetSISChannel(int runNumber, const char* ChannelName);
 std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames);
+int Count_SIS_Triggers(int runNumber, int ch, std::vector<double> tmin, std::vector<double> tmax);
 
 #endif
 //*************************************************************

@@ -120,7 +120,7 @@ TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...): TSpil
 }
 
 TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
-   TSpill(runno, d->StartDumpMarker->MidasTime, d->StartDumpMarker->Description.c_str())
+   TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);

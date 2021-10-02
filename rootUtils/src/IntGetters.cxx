@@ -133,6 +133,16 @@ std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>&
     }
     return channels;
 }
+
+
+int Count_SIS_Triggers(int runNumber, int ch, std::vector<double> tmin, std::vector<double> tmax)
+{
+   std::vector<std::pair<double,int>> counts = GetSISTimeAndCounts(runNumber, ch, tmin, tmax);
+   int total = 0;
+   for (const std::pair<double,int>& c: counts)
+      total += c.second;
+   return total;
+}
 #endif
 
 //*************************************************************

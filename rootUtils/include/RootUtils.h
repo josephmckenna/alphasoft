@@ -32,6 +32,7 @@
 #include "PrintTools.h"
 #include "TH1DGetters.h"
 #include "TSeqEventGetters.h"
+#include "TSequencerStateGetters.h"
 #include "TStringGetters.h"
 #include "TreeGetters.h"
 #include "TGraphGetters.h"

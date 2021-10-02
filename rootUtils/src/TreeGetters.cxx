@@ -62,6 +62,12 @@ TTree* Get_Seq_Event_Tree(Int_t runNumber)
 {
    return Get_Tree_By_Name(runNumber,"SequencerEventTree");
 }
+
+TTree* Get_Seq_State_Tree(Int_t runNumber)
+{
+   return Get_Tree_By_Name(runNumber,"SequencerStateTree");
+}
+
 #ifdef BUILD_AG
 TTree* Get_StoreEvent_Tree(Int_t runNumber)
 {

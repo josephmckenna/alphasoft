@@ -27,6 +27,7 @@ TTreeReader* Get_A2SpillTree(Int_t runNumber);
 
 #endif
 TTree* Get_Seq_Event_Tree(Int_t runNumber);
+TTree* Get_Seq_State_Tree(Int_t runNumber);
 
 // ALPHA 2 Getters:
 #ifdef BUILD_A2
