@@ -157,14 +157,15 @@ public:
    }
    ~PedModule_vf48()
    {
-      for (int i = 0; i < NUM_SI_MODULES * 4 * 128; i++)
-		  {
-           if(Strip_ADCs[i]) 
-           {
-			   delete Strip_ADCs[i];
-            Strip_ADCs[i] = NULL;
-           }
-		  }
+      for (TStripPed* s: Strip_ADCs)
+      {
+         if(s) 
+         {
+            delete s;
+            s = NULL;
+         }
+      }
+      Strip_ADCs.clear();
       delete SettingsDB;
       delete gVF48SiMap;
    }
