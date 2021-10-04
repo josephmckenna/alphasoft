@@ -453,6 +453,11 @@ public:
    {  
       printf("TdcModuleFactory::Help\n");
       printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+      printf("\t--bscpulser\t\t\tanalyze run with calibration pulser data instead of cosmics/hbar data\n");
+      printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
+      printf("\t--bscprint\t\t\tverbose mode\n");
+      printf("\t--twA float\t\t\tsets the parameter used in the time-walk correction. 0=no correction\n");
+      printf("\t--nodelaycorr\t\t\tdisables the channel-by-channel tdc time delay correction\n");
    }
    void Usage()
    {

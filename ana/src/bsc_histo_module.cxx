@@ -536,6 +536,15 @@ public:
    BscHistoFlags fFlags;
    
 public:
+   void Help()
+   {  
+      printf("BscHistoModuleFactory::Help\n");
+      printf("\t--bscdiag\t\t\tenables analysis histograms\n");
+      printf("\t--bscpulser\t\t\tanalyze run with calibration pulser data instead of cosmics/hbar data\n");
+      printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
+      printf("\t--bscprint\t\t\tverbose mode\n");
+      printf("\t--bscWriteOffsetFile\t\t\twhen used on calibration pulser data, saves a calibration file to correct the tdc channel-by-channel time offsets\n");
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("BscHistoModuleFactory::Init!\n");

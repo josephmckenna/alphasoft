@@ -31,6 +31,7 @@ public:
    bool fPrint = false;
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
+   bool fFitAll = false; // If false, fits only saturated waveforms
    AnaSettings* ana_settings=0;
 };
 
@@ -183,7 +184,7 @@ public:
             for (int ii=0; ii<sample_length; ii++)
                {
                   // Exit if the pulse starts by going negative, then positive (its noise)
-                  if (ch->adc_samples.at(ii) - baseline < -1*threshold && start_time==0) {start_time = -1; break;}
+                  //if (ch->adc_samples.at(ii) - baseline < -1*threshold && start_time==0) {start_time = -1; break;}
                   // Pulse start time is the first time it goes above threshold
                   if (ch->adc_samples.at(ii) - baseline > threshold && start_time==0) start_time = ii;
                   // Pulse end time is the first time it goes back below threshold
@@ -206,51 +207,72 @@ public:
 
             if( !(fFlags->fPulser) )  // Normal run
                {
+                  // Converts amplitude to volts
+                  double amp_volts = amp*adc_conversion;
+                  double amp_volts_raw = amp*adc_conversion;
+
 
                   // Sets weights of saturated bins to zero
                   std::vector<double> weights(ch->adc_samples.size(),1.);
-                  for (int ii=0;ii<ch->adc_samples.size();ii++)
-                     if (ch->adc_samples.at(ii) > 32750) weights[ii] = 0.;
+                  bool saturated = false;
+                  for (int ii=0;ii<ch->adc_samples.size();ii++) {
+                     if (ch->adc_samples.at(ii) > 32750) {
+                        weights[ii] = 0.;
+                        saturated = true;
+                     }
+                  }
 
-                  // Creates fitting FCN
-                  SkewGaussFcn theFCN(ch->adc_samples, weights);
+                  if (fFlags->fFitAll or saturated) {
 
-                  // Initial fitting parameters
-                  std::vector<double> init_params = {max, double(imax), 5, 0.2};
-                  std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
+                     // Creates fitting FCN
+                     SkewGaussFcn theFCN(ch->adc_samples, weights);
 
-                  // Creates minimizer
-                  ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
-                  theMinimizer.Builder().SetPrintLevel(0);
-                  int error_level_save = gErrorIgnoreLevel;
-                  gErrorIgnoreLevel = kFatal;
+                     // Initial fitting parameters
+                     std::vector<double> init_params = {max, double(imax), (end_time-start_time)/4., 0.2};
+                     std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
 
-                  // Minimize to fit waveform
-                  ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
-                  gErrorIgnoreLevel = error_level_save;
+                     // Creates minimizer
+                     ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
+                     theMinimizer.Builder().SetPrintLevel(0);
+                     int error_level_save = gErrorIgnoreLevel;
+                     gErrorIgnoreLevel = kFatal;
 
-                  // Gets minimized parameters
-                  ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
-                  double new_fit_amp = the_state.Value(0) - baseline;
+                     // Minimize to fit waveform
+                     ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
+                     gErrorIgnoreLevel = error_level_save;
 
-                  // Converts amplitude to volts
-                  double amp_volts = new_fit_amp*adc_conversion;
-                  double amp_volts_raw = amp*adc_conversion;
+                     // Gets minimized parameters
+                     ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
+                     double new_fit_amp = the_state.Value(0) - baseline;
+                     if (!(sample_plotted.at(bar)))
+                        hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+
+                     // Saves fit voltage
+                     amp_volts = new_fit_amp*adc_conversion;
+                  }
 
                   // Copies histogram to sample histogram
                   if (!(sample_plotted.at(bar)))
                      {
                         for (int ii=0;ii<ch->adc_samples.size();ii++)
                            { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
-                        hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
-                        hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
-                        hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                        if (saturated) {
+                           hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
+                           hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                        }
                         sample_plotted.at(bar)=true;
                      }
       
                   // Writes bar event
-                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
-                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
+                  if (saturated) {
+                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
+                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
+                  }
+                  if (!saturated) {
+                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts_raw,start_time*10);
+                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts_raw,start_time*10);
+                  }
+
 
                }
 
@@ -287,6 +309,10 @@ public:
    {   
       printf("BscModuleFactory::Help\n");
       printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+      printf("\t--bscpulser\t\t\tanalyze run with calibration pulser data instead of cosmics/hbar data\n");
+      printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
+      printf("\t--bscprint\t\t\tverbose mode\n");
+      printf("\t--bscfitall\t\t\tfits all bsc adc waveforms instead of only saturated waveforms\n");
    }
    void Usage()
    {
@@ -308,6 +334,8 @@ public:
             fFlags.fProtoTOF = true;
          if( args[i] == "--anasettings" ) 
             json=args[i+1];
+         if( args[i] == "--bscfitall")
+            fFlags.fFitAll = true;
       }
       fFlags.ana_settings=new AnaSettings(json.Data());
    }
