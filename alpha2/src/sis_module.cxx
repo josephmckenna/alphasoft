@@ -203,13 +203,14 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
                                   std::to_string(gSISdiff/NUM_SIS_CHANNELS);
             std::cout << warning << "\n";
             gBadSisCounter++;
-            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
+            // Dont report this in the spill log
+            //TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
 
-            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
-            f->spill_events.push_back(WarningSpill);
-            //Return flow here to disable unpaired SIS events recovery (added Sept 2021)
-            //return f;
-            flow = f;
+            //TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+            //f->spill_events.push_back(WarningSpill);
+            ////Return flow here to disable unpaired SIS events recovery (added Sept 2021)
+            ////return f;
+            //flow = f;
          }
          SISdiffPrev+=SISdiff; 
       }
