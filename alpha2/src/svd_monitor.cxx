@@ -13,6 +13,11 @@
 #include "TAlphaEvent.h"
 #include "TSiliconEvent.h"
 
+#include "TStyle.h"
+#include "TColor.h"
+#include "TF2.h"
+#include "TExec.h"
+#include "TCanvas.h"
 
 #define SECONDS_TO_BUFFER 60
 
@@ -117,6 +122,7 @@ private:
    TH2I fZTpass;
    //TH1I fR;
    TH2I fOccupancyT[4];
+   TStyle* fSVDStyle;
 
 public:
    SVDMonitor(TARunInfo* runinfo)
@@ -137,6 +143,8 @@ public:
                   i - BUFFER_DEPTH 
                )
             );
+         fSVDStyle = new TStyle("SVDStyle","SVDStyle");
+         fSVDStyle->SetPalette(kCool);
       }
    }
    ~SVDMonitor()
@@ -200,7 +208,6 @@ public:
 
       fLiveVertex.Divide(2,2);
       fLiveOccupancy.Divide(1,4);
-
       gDirectory->cd();
    }
   
@@ -245,6 +252,7 @@ public:
       fXYpass.Reset();
       fZTvert.Reset();
       fZTpass.Reset();
+      fSVDStyle->SetPalette(kCool);
 
       //Update the histograms
       for (TSVD& s: fFIFO)
