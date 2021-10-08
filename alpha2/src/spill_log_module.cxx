@@ -268,8 +268,8 @@ public:
          if (i != channels.size() - 1)
          channel_summary +=", ";
       }
+#if HAVE_MIDAS
       cm_msg1(MINFO, "SpillLog", "alpha2online", channel_summary.c_str());
-      
       //Check the number of Channels and Channel names match
       int n_chans = 0;
       int n_names = 0;
@@ -285,6 +285,7 @@ public:
       }
       if (n_chans != n_names)
          cm_msg1(MERROR, "SpillLog", "alpha2online", "ChannelIDName entires (%d) does not match ChannelDisplayName entires (%d)",n_chans, n_names);
+#endif
 
       //Convert strings into channel numbers
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
