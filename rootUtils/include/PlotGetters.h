@@ -51,6 +51,10 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000,
 #endif
 
 #ifdef BUILD_A2
+TCanvas* Plot_A2_ColdDump(Int_t runNumber, int repetition = 1, Int_t binNumber=1000, 
+                          const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
+                          Double_t EnergyRangeFactor=10., const char* SIS_Channel_Name = "SIS_PMT_CATCH_OR");
+
 TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition = 1, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
                           Double_t EnergyRangeFactor=10.);

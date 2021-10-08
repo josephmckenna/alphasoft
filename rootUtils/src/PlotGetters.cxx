@@ -597,8 +597,7 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 	
 }
 
-TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
-
+TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, const char* SIS_Channel_Name)
 {  
 
    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber,{"Cold Dump"},{-1});
@@ -634,7 +633,8 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, co
 
    TSISChannels chans(runNumber);
 
-   int channel = chans.GetChannel("SIS_PMT_CATCH_OR");
+   int channel = chans.GetChannel(SIS_Channel_Name);
+   std::cout<<"Plotting SIS Channel "<<channel<<std::endl;
    std::vector<int> SISChannels = {channel};
  
    std::vector<std::vector<TH1D*>> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
@@ -730,6 +730,13 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, co
    return cEnergy;
 
 }
+
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition, Int_t binNumber, 
+                          const char* dumpFile,
+                          Double_t EnergyRangeFactor)
+                          {
+                            return Plot_A2_ColdDump(runNumber, repetition, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
+                          }
 
 
 #ifdef BUILD_A2
