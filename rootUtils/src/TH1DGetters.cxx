@@ -180,33 +180,36 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   TTreeReader* reader=A2_SIS_Tree_Reader(runNumber);
-   TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (reader->Next())
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      double t=SISEvent->GetRunTime();
-      if (t < first_time) continue;
-      if (t>last_time) break;
-      
-      //Loop over all time windows
-      for (int j=0; j<n_times; j++)
+      TTreeReader* reader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (reader->Next())
       {
-         if (t>tmin[j] && t< tmax[j])
+         double t = SISEvent->GetRunTime();
+         if (t < first_time) continue;
+         if (t>last_time) break;
+
+         //Loop over all time windows
+         for (int j=0; j<n_times; j++)
          {
-            for (int i=0; i<n_chans; i++)
+            if (t>tmin[j] && t< tmax[j])
             {
-               int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
-               if (counts)
+               for (int i=0; i<n_chans; i++)
                {
-                  //std::cout<<t<<"\t"<<tmin[j]<<"\t"<<t-tmin[j]<<std::endl;
-                  hh[i]->Fill(t-tmin[j],counts);
+                  int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
+                  if (counts)
+                  {
+                     //std::cout<<t<<"\t"<<tmin[j]<<"\t"<<t-tmin[j]<<std::endl;
+                     hh[i]->Fill(t-tmin[j],counts);
+                  }
                }
+               //This event has been written to the array... so I dont need
+               //to check the other winodws... break! Move to next SISEvent
+               break;
             }
-            //This event has been written to the array... so I dont need
-            //to check the other winodws... break! Move to next SISEvent
-            break;
          }
       }
    }
@@ -297,32 +300,35 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Ch
    }
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   TTreeReader* reader=A2_SIS_Tree_Reader(runNumber);
-   TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (reader->Next())
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      double t=SISEvent->GetRunTime();
-      if (t < first_time) continue;
-      if (t>last_time) break;
-      
-      //Loop over all time windows
-      for (int j=0; j<n_times; j++)
+      TTreeReader* reader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (reader->Next())
       {
-         if (t>tmin[j] && t< tmax[j])
+         double t=SISEvent->GetRunTime();
+         if (t < first_time) continue;
+         if (t>last_time) break;
+      
+         //Loop over all time windows
+         for (int j=0; j<n_times; j++)
          {
-            for (int i=0; i<n_chans; i++)
+            if (t>tmin[j] && t< tmax[j])
             {
-               int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
-               if (counts)
+               for (int i=0; i<n_chans; i++)
                {
-                  hh.at(i).at(j)->Fill(t-tmin[j],counts);
+                  int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
+                  if (counts)
+                  {
+                     hh.at(i).at(j)->Fill(t-tmin[j],counts);
+                  }
                }
+               //This event has been written to the array... so I dont need
+               //to check the other winodws... break! Move to next SISEvent
+               break;
             }
-            //This event has been written to the array... so I dont need
-            //to check the other winodws... break! Move to next SISEvent
-            break;
          }
       }
    }

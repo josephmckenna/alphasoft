@@ -41,7 +41,7 @@ private:
    //Used in 
    uint64_t gVF48Clock;
    Int_t ID;
-   TTree* SISEventTree   = NULL;
+   TTree* SISEventTree[NUM_SIS_MODULES]   = {nullptr};
    
    std::deque<TSISBufferEvent*> unmatched_buffer[NUM_SIS_MODULES];
 
@@ -62,8 +62,6 @@ public:
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
    uint LastTS[NUM_SIS_MODULES]={0};
-   
-   TTree* SISTree;
 
    bool fTrace = true;
 
@@ -148,16 +146,21 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
    {
          if (!fFlags->fSaveSIS) return;
+         int i = s->GetSISModule();
+         assert(i => 0 && i < NUM_SIS_MODULES);
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
-         if (!SISEventTree)
-            SISEventTree = new TTree("SISEventTree","SISEventTree");
-         TBranch* b_variable = SISEventTree->GetBranch("TSISEvent");
+         if (!SISEventTree[i])
+         {
+            std::string TreeName = "SIS" + std::to_string(i) + std::string("Tree");
+            SISEventTree[i] = new TTree(TreeName.c_str(),TreeName.c_str());
+         }
+         TBranch* b_variable = SISEventTree[i]->GetBranch("TSISEvent");
          if (!b_variable)
-            SISEventTree->Branch("TSISEvent","TSISEvent",&s,16000,1);
+            SISEventTree[i]->Branch("TSISEvent","TSISEvent",&s,16000,1);
          else
-            SISEventTree->SetBranchAddress("TSISEvent",&s);
-         SISEventTree->Fill();
+            SISEventTree[i]->SetBranchAddress("TSISEvent",&s);
+         SISEventTree[i]->Fill();
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {

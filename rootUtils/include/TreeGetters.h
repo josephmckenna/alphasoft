@@ -21,7 +21,7 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 
 
 // ALPHA 2 Getters:
-TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber, Int_t SIS_Module);
 TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
 

@@ -86,10 +86,11 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
 #endif
 #ifdef BUILD_A2
 // ALPHA 2 Getters:
-TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber)
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber, Int_t Module_Number)
 {
    TFile* f=Get_File(runNumber);
-   TTreeReader* t=new TTreeReader("SISEventTree", f);
+   std::string TreeName = "SIS" + std::to_string(Module_Number)+ std::string("Tree");
+   TTreeReader* t=new TTreeReader(TreeName.c_str(), f);
    return t;
 }
 

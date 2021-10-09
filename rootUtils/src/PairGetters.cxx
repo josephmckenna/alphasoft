@@ -31,33 +31,37 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    assert(tmin.size() == tmax.size());
    const int entries = tmin.size();
 
-   TTreeReader* SISReader=A2_SIS_Tree_Reader( runNumber);
-   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
    //Set broad range we are looking for
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (SISReader->Next())
+
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      double t = SISEvent->GetRunTime();
-      if (t < first_time)
-         continue;
-      if (t > last_time)
-         break;
-      for (int i=0; i<entries; i++)
+      TTreeReader* SISReader=A2_SIS_Tree_Reader( runNumber, sis_module_no);
+      TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (SISReader->Next())
       {
-          if (t > tmin[i])
-             if (t < tmax[i])
-             {
-                int counts = SISEvent->GetCountsInChannel(SIS_Channel);
-                if (counts)
+         double t = SISEvent->GetRunTime();
+         if (t < first_time)
+            continue;
+         if (t > last_time)
+            break;
+         for (int i=0; i<entries; i++)
+         {
+             if (t > tmin[i])
+                if (t < tmax[i])
                 {
-                  TimeCounts.push_back(std::make_pair(t, counts));
+                   int counts = SISEvent->GetCountsInChannel(SIS_Channel);
+                   if (counts)
+                   {
+                     TimeCounts.push_back(std::make_pair(t, counts));
+                   }
                 }
-             }
-                
+         }
       }
    }
    return TimeCounts;

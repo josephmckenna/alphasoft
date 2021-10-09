@@ -278,18 +278,22 @@ void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
    SetSISChannels(runNumber);
-   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
-   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   while (SISReader->Next())
+
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      double t = SISEvent->GetRunTime();
-      if (t < firstTime)
-         continue;
-      if (t > lastTime)
-         break;
-      AddSISEvent(&(*SISEvent));
+      TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
+      while (SISReader->Next())
+      {
+         double t = SISEvent->GetRunTime();
+         if (t < firstTime)
+            continue;
+         if (t > lastTime)
+            break;
+         AddSISEvent(&(*SISEvent));
+      }
    }
 }
 

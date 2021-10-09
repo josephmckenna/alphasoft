@@ -176,12 +176,17 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
 #if BUILD_A2
 Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
 {
-   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
-   if (!SISReader->GetTree())
-      return -1.;
-   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-   SISReader->SetEntry(SISReader->GetEntries(false) -1 );
-   double t = SISEvent->GetRunTime();
+   double t = -1;
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
+   {
+      TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      if (!SISReader->GetTree())
+         continue;
+      TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+      SISReader->SetEntry(SISReader->GetEntries(false) -1 );
+      if (SISEvent->GetRunTime() > t)
+         t = SISEvent->GetRunTime();
+   }
    return t;   
 }
 Double_t GetTotalRunTimeFromSVD(Int_t runNumber)
