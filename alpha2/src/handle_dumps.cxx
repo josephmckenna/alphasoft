@@ -350,6 +350,50 @@ public:
             TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
             f->spill_events.push_back(lv);
          }
+         // Check pattern XRWX
+         else if ( strncmp(LabVIEWFlow->GetBankName().c_str() + 1, "RW", 2) == 0)
+         {
+            //Catching trap
+            if (LabVIEWFlow->GetBankName().at(0) == 'C')
+            {
+               std::ostringstream CTRW;
+               CTRW << "[" << LabVIEWFlow->GetBankName() << "]: ";
+               
+               // This is a clunky handling of the frequency units
+               double StartSweep = LabVIEWFlow->GetData()->at(2);
+               double StopSweep = LabVIEWFlow->GetData()->at(3);
+               //If units should be kHz
+               if ( StartSweep > 1000 && StopSweep > 1000)
+               {
+                   StartSweep /= 1000;
+                   StopSweep /= 1000;
+                   //If units should be MHz
+                   if ( StartSweep > 1000 && StopSweep > 1000)
+                   {
+                      StartSweep /= 1000;
+                      StopSweep /= 1000;
+                      CTRW << StartSweep << "-" << StopSweep <<"MHz\t";
+                   }
+                   else // Am kHz
+                   {
+                      CTRW << StartSweep << "-" << StopSweep <<"kHz\t";
+                   }
+               }
+               else // Am Hz
+               {
+                  CTRW << StartSweep << "-" << StopSweep << "Hz\t";
+               }
+               CTRW << "Total "<< LabVIEWFlow->GetData()->at(4) <<"s (" << LabVIEWFlow->GetData()->at(5) <<" fade ms)\t";
+               CTRW << LabVIEWFlow->GetData()->at(6) <<"-"<< LabVIEWFlow->GetData()->at(7) << "V";
+               TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CTRW.str().c_str());
+               f->spill_events.push_back(lv);
+            }
+            //Atom trap
+            else if (LabVIEWFlow->GetBankName().at(0) == 'A')
+            {
+               
+            }
+         }
       }
 
       //Flush errors
