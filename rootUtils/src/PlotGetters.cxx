@@ -18,10 +18,10 @@ void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   return Plot_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
 #endif
@@ -40,10 +40,10 @@ void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 #endif
@@ -59,10 +59,10 @@ void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   return Plot_Delta_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
 #endif
@@ -76,10 +76,10 @@ void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 #endif
@@ -106,10 +106,10 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t repetition, Int_t offset)
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   return PlotChronoScintillators(runNumber, tmin, tmax);
 }
 #endif
@@ -126,10 +126,10 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
   std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
   double ttmin = GetTrigTimeBefore(runNumber,tmin),
     ttmax = GetTrigTimeAfter(runNumber,tmax);
@@ -138,14 +138,14 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repetition, Int_t offset)
+void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex, Int_t offset)
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
   for( Int_t i=0; i<Nruns; ++i )
     {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
-      Double_t tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
-      Double_t tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+      Double_t tmin=MatchEventToTime(runNumber[i], description,true,dumpIndex, offset);
+      Double_t tmax=MatchEventToTime(runNumber[i], description,false,dumpIndex, offset);
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
@@ -185,17 +185,17 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t repetition, Int_t offset)
+			      Int_t dumpIndex, Int_t offset)
 { 
   Int_t runList[]={runNumber};
   Int_t Nruns = 1;
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
-				   repetition, offset);
+				   dumpIndex, offset);
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t repetition, Int_t offset)
+			      Int_t dumpIndex, Int_t offset)
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
   p->SetPlotTracks();
@@ -217,8 +217,8 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 	}
       else
 	{
-	  tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
-	  tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+	  tmin=MatchEventToTime(runNumber[i], description,true,dumpIndex, offset);
+	  tmax=MatchEventToTime(runNumber[i], description,false,dumpIndex, offset);
 	}
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
@@ -940,16 +940,16 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_N
    return Plot_Summed_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_Summed_SIS(runNumber, SIS_Channel, s);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_Summed_SIS( runNumber, chans, description, repetition);
+   return Plot_Summed_SIS( runNumber, chans, description, dumpIndex);
 }
 
 
@@ -1026,16 +1026,16 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, s
    return Plot_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_SIS(runNumber, SIS_Channel, s);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS( runNumber, chans, description, repetition);
+   return Plot_SIS( runNumber, chans, description, dumpIndex);
 }
 
 #endif
@@ -1069,9 +1069,9 @@ void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills)
    return Plot_SVD(runNumber,tmin,tmax);
 }
 
-void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition)
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_SVD(runNumber,s);
 }
 #endif

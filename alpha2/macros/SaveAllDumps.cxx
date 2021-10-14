@@ -29,7 +29,7 @@ void SaveAllDumps(int runNumber)
    {
       std::string channel_name = detector_channels.at(i);
       
-      std::map<std::string,int> repetition_counter;
+      std::map<std::string,int> dumpIndex_counter;
     
       TSISChannels* sisch = new TSISChannels(runNumber);
       int ch = sisch->GetChannel(channel_name.c_str());
@@ -57,7 +57,7 @@ void SaveAllDumps(int runNumber)
             std::cout<<s.Name << " has no counts in channel " << ch<<" ... skipping plot" <<std::endl;
             continue;
          }
-         std::string dump_name = s.Name + "_" + std::to_string(repetition_counter[s.Name]++);
+         std::string dump_name = s.Name + "_" + std::to_string(dumpIndex_counter[s.Name]++);
          // Remove quote marks... they upset uploading to elog
          dump_name.erase(std::remove(dump_name.begin(), dump_name.end(), '"'), dump_name.end());
          std::cout << "dump_name:"<< channel_name << "/"<< dump_name <<std::endl;

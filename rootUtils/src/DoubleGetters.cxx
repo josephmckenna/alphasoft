@@ -49,21 +49,21 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t dumpIndex, Int_t offset)
 {
    double official_time;
    TTree* t=Get_Chrono_Tree(runNumber,{Board,Channel},official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
-   if (repetition+offset>t->GetEntries()) return -1;
-   t->GetEntry(repetition-1+offset);
+   if (dumpIndex+offset>t->GetEntries()) return -1;
+   t->GetEntry(dumpIndex-1+offset);
    //Double_t RunTime=e->GetRunTime();
    delete e;
    return official_time;
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t dumpIndex, Int_t offset)
 {
    Int_t chan=-1;
    Int_t board=-1;
@@ -72,7 +72,7 @@ Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t
        chan=Get_Chrono_Channel(runNumber, board, ChannelName);
        if (chan>-1) break;
    }
-   return GetRunTimeOfChronoCount(runNumber, board, chan,  repetition,  offset);
+   return GetRunTimeOfChronoCount(runNumber, board, chan,  dumpIndex,  offset);
 }
 #endif
 #ifdef BUILD_AG
@@ -94,16 +94,16 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 #endif
 
 #ifdef BUILD_AG
-Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
+Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
 {
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, repetition); //Creates new TSeq_Event
+   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, dumpIndex); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;
 }
-Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
+Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
 {
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, repetition); //Creates new TSeq_Event
+   TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, dumpIndex); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;

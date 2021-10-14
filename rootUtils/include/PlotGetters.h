@@ -15,26 +15,26 @@
 
 #ifdef BUILD_AG
 void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 
 void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 
 void PlotChronoScintillators(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);
-void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t repetition=1, Int_t offset=0);
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 
 void Plot_TPC(Int_t runNumber,  Double_t tmin=0., Double_t tmax=-1.);
-void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition=1, Int_t offset=0);
-void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repetition=1, Int_t offset=0);
+void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex=0, Int_t offset=0);
+void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax);
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t repetition=1, Int_t offset=0);
+			      Int_t dumpIndex=0, Int_t offset=0);
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t repetition=1, Int_t offset=0);
+			      Int_t dumpIndex=0, Int_t offset=0);
 
 void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);
@@ -82,8 +82,8 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<TA2Spill> spills);
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills);
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition);
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition);
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex);
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex);
 
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax);
@@ -93,13 +93,13 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<TA2Spill> spills);
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills);
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition);
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition);
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<Int_t> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex);
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex);
 
 
 void Plot_SVD(Int_t runNumber, std::vector<double> tmin, std::vector<double> tmax);
 void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills);
-void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition);
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex);
 #endif
 
 #endif

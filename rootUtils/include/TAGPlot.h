@@ -172,7 +172,7 @@ public:
 
   void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
 
-  Int_t AddEvents(Int_t runNumber, char *description, Int_t repetition = 1, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, char *description, Int_t dumpIndex=0, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
   Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
 
   void SetChronoChannels(Int_t runNumber);

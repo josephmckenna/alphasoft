@@ -296,10 +296,10 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
 }
 
 //Maybe dont have this function... lets see...
-Int_t TAGPlot::AddEvents(Int_t runNumber, char *description, Int_t repetition, Double_t Toffset, Bool_t zeroTime)
+Int_t TAGPlot::AddEvents(Int_t runNumber, char *description, Int_t dumpIndex, Double_t Toffset, Bool_t zeroTime)
 {
-  Double_t start_time = MatchEventToTime(runNumber, "startDump", description, repetition);
-  Double_t stop_time = MatchEventToTime(runNumber, "stopDump", description, repetition);
+  Double_t start_time = MatchEventToTime(runNumber, "startDump", description, dumpIndex);
+  Double_t stop_time = MatchEventToTime(runNumber, "stopDump", description, dumpIndex);
   return AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
 }
 
