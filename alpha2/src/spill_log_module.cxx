@@ -136,7 +136,7 @@ class SpillLogPrinter
       {
         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
       }
-      cm_msg1(MINFO, "SpillLog", "alpha2online", string);
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", string);
    }
    
 };
@@ -563,22 +563,22 @@ public:
             if (s->IsInfoType)
             {
                 //s->Print();
-                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+                InMemorySpillTable.push_back(s->Content(sis_channels).Data());
 #ifdef HAVE_MIDAS
-                fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
+                fSpillLogPrinter.PrintLine(s->Content(sis_channels).Data());
 #endif
                 continue;
             }
             if (!s->SeqData) continue;
 
             if (fFlags->fWriteSpillTxt)
-               LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
+               LiveSpillLog << s->Content(sis_channels);
             if (fFlags->fWriteSpillDB)
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
-               InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+               InMemorySpillTable.push_back(s->Content(sis_channels).Data());
 #ifdef HAVE_MIDAS
-            fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
+            fSpillLogPrinter.PrintLine(s->Content(sis_channels).Data());
 #endif
             SaveToTree(runinfo,s);
          }

@@ -231,14 +231,14 @@ void TA2Spill::Print()
    std::cout<<std::endl;
 }
 
-TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
+TString TA2Spill::Content(const std::vector<int> sis_channels)
 {
-   char buf[800];
+   
    TString log;
    //if (indent){
     log += "   "; // indentation     
    //}
-   TString units="";
+   std::string units="";
    {
       int open=Name.find_last_of('(');
       int close=Name.find_last_of(')');
@@ -249,6 +249,7 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    if (ScalerData)
    {
+      char buf[200];
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
                  ScalerData->StartTime,
                  ScalerData->StopTime,
@@ -260,6 +261,7 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    {
       if (Unixtime)
       {
+         char buf[80];
          struct tm * timeinfo = ( (tm*) &Unixtime);
          sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
          log += buf;
@@ -279,22 +281,23 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    else
    {
-      if (ScalerData)
-         log += std::string(DUMP_NAME_WIDTH,' ') + std::string("|") + Name;
-      else
-         log += std::string(" ") + Name;
+      log += std::string(" ") + Name;
    }
    if (ScalerData)
    {
-      for (int iDet = 0; iDet<n_chans; iDet++)
+      char buf[80];
+      for ( const int& chan: sis_channels)
       {
          int counts=-1;
-         int chan=sis_channels->at(iDet);
          //If valid channel number:
          if (chan>0)
             counts=ScalerData->DetectorCounts[chan];
-         sprintf(buf,"%9d%s ",counts,units.Data());
+         sprintf(buf,"%9d",counts);
          log += buf;
+         if (units.size())
+            log += units;
+         else
+            log += " ";
       }
       sprintf(buf,"%9d ",ScalerData->PassCuts);
       log += buf;
