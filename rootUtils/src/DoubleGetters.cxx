@@ -56,7 +56,7 @@ Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, In
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
    if (dumpIndex+offset>t->GetEntries()) return -1;
-   t->GetEntry(dumpIndex-1+offset);
+   t->GetEntry(dumpIndex+offset);
    //Double_t RunTime=e->GetRunTime();
    delete e;
    return official_time;

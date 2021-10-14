@@ -19,8 +19,8 @@ TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, Bool_t IsSta
       {
          if (e->GetEventName().CompareTo(DumpType)==0)
          {
-           matches++;
            if (matches==dumpIndex) return e;
+           matches++;
          }
       }
    }
@@ -40,8 +40,8 @@ TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, const char* 
       {
          if (e->GetEventName().CompareTo(DumpType)==0)
          {
-            matches++;
             if (matches==dumpIndex) return e;
+            matches++;
          }
       }
    }
