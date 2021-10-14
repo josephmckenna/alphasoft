@@ -6,7 +6,7 @@
     "configurations": [
 
         {
-            "name": "(gdb) Launch",
+            "name": "(gdbdwfrewf) Launch",
             "type": "cppdbg",
             "request": "launch",
 
