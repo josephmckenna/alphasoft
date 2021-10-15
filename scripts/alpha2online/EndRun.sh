@@ -23,12 +23,12 @@ fi
 cd ~/alphasoft
 . agconfig.sh
 
-if [ ${RUNNO} -lt 50000 ]; then
+if [ ${RUNNO} -lt 55000 ]; then
    echo "Invalid run Number"
    exit
 fi
 
-if [ ${RUNNO} -gt 60000 ]; then
+if [ ${RUNNO} -gt 65000 ]; then
    echo "Invalid run Number"
    exit
 fi
