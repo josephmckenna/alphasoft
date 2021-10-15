@@ -151,6 +151,7 @@ void TA2Plot_Filler::LoadData()
 
    for (size_t i=0; i<runNumbers.size(); i++)
    {
+      std::cout<<"plot# "<<i<<" first "<<first_times[i]<<" last "<<last_times[i]<<std::endl;
       LoadData(runNumbers[i],first_times[i],last_times[i]);
    }
    //Give the TAPlots a timestamp so we can track how long processing has taken

@@ -435,6 +435,7 @@ class TEnvData: public TObject
          }
          return fPlots.at(index);
       }
+   std::vector<TEnvDataPlot*>GetPlots() {return fPlots;}
       TGraph* BuildGraph(int index, bool zeroTime)
       {
          TGraph* graph = GetPlot(index)->GetGraph(zeroTime);
@@ -474,9 +475,10 @@ class TFEGEMData: public TEnvData
 class TFELabVIEWData: public TEnvData
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
+   void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows,double lvoffset)
       {
-         double time=labviewEvent->GetRunTime();
+         double time=labviewEvent->GetRunTime() + lvoffset;
+         //std::cout<<"Storelvtimes MT "<<labviewEvent->GetMIDAS_TIME()<<" RT "<<labviewEvent->GetRunTime()<<" LV "<<labviewEvent->GetLabviewTime()<<std::endl;
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);
@@ -519,6 +521,7 @@ class TAPlot: public TObject
       std::vector<int> fRuns; //check dupes - ignore copies. AddRunNumber
       std::vector<TFEGEMData> fFEGEM;
       std::vector<TFELabVIEWData> fFELV;
+      std::vector<std::pair<Int_t, Double_t>> LVOffsets;
 
       TTimeWindows fTimeWindows;
       TVertexEvents fVertexEvents;
@@ -563,6 +566,10 @@ class TAPlot: public TObject
       TObjArray            GetHisto()               {  return fHistos;}
       std::map<std::string,int> GetHistoPosition()  {  return fHistoPositions;}
       const std::vector<int> GetArrayOfRuns()       {  return fRuns; }
+   //AO TStoreLabVIEWEvent*       GetFELVEvent(int i)     {return &fFELV[i];}
+      TFELabVIEWData* GetFELVEvent(int i)     {return &fFELV[i];}
+      int                  GetNLVData()            {return fFELV.size();}   
+   std::vector<TFELabVIEWData> GetFELVEvents() {return fFELV;} 
       //Getters defined in .cxx
       std::vector<std::pair<std::string,int>> GetGEMChannels();
       std::vector<std::pair<std::string,int>> GetLVChannels();
@@ -572,7 +579,7 @@ class TAPlot: public TObject
       int GetNPassedType(const int type);
       int GetNVertexType(const int type);
       TString GetListOfRuns();
-
+      Double_t GetLVOffset(Int_t runNumber);
       //Adders.
       virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) {assert(!"Child class must have this");};
       void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
@@ -586,6 +593,7 @@ class TAPlot: public TObject
       void AddTimeGate(const int runNumber, const double minTime, const double maxTime, const double zeroTime);
       void AddTimeGate(const int runNumber, const double minTime, const double maxTime);
       void AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vertexStatus, double x, double y, double z, double t, double eventTime, double eunTime, int numHelices, int numTracks);
+      void AddLVOffset(Int_t runNumber, Double_t offset);
 
 
       //Load data functions.

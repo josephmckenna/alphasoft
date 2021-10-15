@@ -240,6 +240,18 @@ void TAPlot::PrintFull()
    }
 
    std::cout << "===========================" << std::endl;
+   std::cout<<"  Labview Event lists size"<<fFELV.size()<<std::endl; 
+   for(size_t i=0; i<fFELV.size(); i++)
+     {
+       std::cout<< fFELV.at(i).GetLabel()<<std::endl;
+        // for (auto& plot: fFELV.at(i).fPlots)
+        //  {
+        //     for (double& data: plot->fData)
+        //       std::cout<<data<<",";
+        //     std::cout<<std::endl;
+        //  }
+   std::cout << "===========================" << std::endl;
+     }
    std::cout << std::endl << std::endl << std::endl;
 }
 
@@ -264,6 +276,14 @@ void TAPlot::Print(Option_t *option) const
          std::cout <<histogram->GetTitle()<<"\t"<<histogram->Integral()<<std::endl;
       }
   }
+  // //Loop over Labview events requires removing const from print
+  // std::cout<<"  Labview Event lists size"<<fFELV.size()<<std::endl; 
+  //  for(size_t i=0; i<fFELV.size(); i++)
+  //    {
+  //      std::cout<< fFELV.at(i).GetLabel()<<std::endl;
+  //    }
+  //  std::cout << "===========================" << std::endl;
+   
   
 }
 
@@ -464,6 +484,15 @@ TString TAPlot::GetListOfRuns()
    }
    return runsString;
 }
+Double_t TAPlot::GetLVOffset(Int_t runNumber)
+  {
+    for(auto& lvoff : LVOffsets)
+      {
+        if (lvoff.first == runNumber) return lvoff.second;
+      }
+    std::cout<<"LVOffset time for run "<<runNumber<<" not found\n";
+    return(0.0);
+  }
 
 //Adders
 void TAPlot::AddRunNumber(int runNumber)
@@ -571,6 +600,18 @@ void TAPlot::AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vert
    fVertexEvents.fNumHelices.push_back(numHelices);
    fVertexEvents.fNumTracks.push_back(numTracks);
 }
+void TAPlot::AddLVOffset(Int_t runNumber, Double_t offset)
+  {
+    for (auto& of :LVOffsets)
+      {
+       if (of.first==runNumber) 
+       { of.second = offset;
+         return;
+       }
+      }
+    LVOffsets.push_back({runNumber, offset});
+  }
+
 
 
 //Load data functions
@@ -630,13 +671,14 @@ void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReade
    // so get multiple channels and multiple time windows in one pass
    while (labviewReader->Next())
    {
-      double runTime = labviewEvent->GetRunTime();
+     Double_t lvoffset= GetLVOffset( labviewEvent->GetRunNumber());
+     double runTime = labviewEvent->GetRunTime() +lvoffset;
       //A rough cut on the time window is very fast...
       if (runTime < firstTime)
          continue;
       if (runTime > lastTime)
          break;
-      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows());
+      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows(),lvoffset);
    }
    return;
 }

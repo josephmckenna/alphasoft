@@ -15,13 +15,25 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
     ActualFreq={-100, -25, -12.5, -0., 12.5, 25, 37.5, 50, 100};
   std::vector<TA2Spill> spills;
   std::vector<std::pair<double,double>> DarkTimes[nfreq];       
-  const std::vector<TA2Spill>& LaserSpills = Get_A2_Spills(runNumber,{"243 List*"},{-1});  for (int i=0; i<nfreq; i++)
+  const std::vector<TA2Spill>& LaserSpills = Get_A2_Spills(runNumber,{"243 List*"},{-1});
+  for (int i=0; i<nfreq; i++)
     {
-      VertexPlot[i][0]=new TA2Plot(-zcut,zcut,ZeroTime);
-      VertexPlot[i][1]=new TA2Plot(-zcut,zcut,ZeroTime);
-      DarkVertexPlot[i][0]=new TA2Plot(-zcut,zcut,ZeroTime);
-      DarkVertexPlot[i][1]=new TA2Plot(-zcut,zcut,ZeroTime);
-      
+      for (int j=0; j<2; j++)
+        {
+          char tit[80];
+          VertexPlot[i][j]=new TA2Plot(-zcut,zcut,ZeroTime);
+          sprintf(tit,"VertexPlot_%u_%u",i,j);
+          VertexPlot[i][j]->SetTAPlotTitle(tit);
+          DarkVertexPlot[i][j]=new TA2Plot(-zcut,zcut,ZeroTime);
+          sprintf(tit,"DarkVertexPlot_%u_%u",i,j);
+          DarkVertexPlot[i][j]->SetTAPlotTitle(tit);
+          VertexPlot[i][j]->AddLVOffset(57181,-7.05);
+          VertexPlot[i][j]->AddLVOffset(57195,-6.55);
+          VertexPlot[i][j]->AddLVOffset(57208, -7.0);                                
+          DarkVertexPlot[i][j]->AddLVOffset(57181,-7.05);
+          DarkVertexPlot[i][j]->AddLVOffset(57195,-6.55);
+          DarkVertexPlot[i][j]->AddLVOffset(57208, -7.0);                                
+        }
       std::cout<<"Populating frequency "<<i<<std::endl;
 
       for (int k=0; k<4; k++)
@@ -103,6 +115,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
         }
     }
   DataLoader.SetLVChannel("D243",2);
+
   //Load all data in a single pass of each tree (I am aiming for efficiency)
   DataLoader.LoadData();
 
@@ -341,6 +354,37 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   hDarkRepC->Write();
   c3->Update();
   c3->SaveAs(canvasTitle+".png");
+  //Now do the power plots
+    //Power vs frequency
+  TH2D* hDP=new TH2D("hDP","DD freq vs Cavity Power", 9,-.5,8.5,220,-0.02,0.02);
+  TH2D* hCP=new TH2D("hCP","CC freq vs Cavity Power", 9,-.5,8.5,220,-0.02,0.02); 
+  TH2D* hDPT=new TH2D("hDPT","Power vs LVtfromdump",100,-0.2,0.2,125,-1.,2.4);
+  TH2D* hCPT=new TH2D("hCPT","Power vs LVtfromdump",100,-0.2,0.2,125,-1.,2.4);
+  TH2D* hDPTw=new TH2D("hDPTw","Power vs LVtfromdump window",100,-0.2,0.2,125,-1.0,2.4);
+  TH2D* hCPTw=new TH2D("hCPTw","Power vs LVtfromdump window",100,-0.2,0.2,125,-1.0,2.4);
+  // TGraph* gPower = new TGraph(nLVdata,LVTime,LVData);
+  // gPower->SetMarkerStyle(7);
+  // gPower->GetYaxis()->SetRangeUser(-0.016,0.016);
+  // gPower->SetName("gPower");
+  // gPower->SetTitle("Laser Power");
+  // TGraph* gtlight=new TGraph(4*nFreq*nList*nRep);
+  // gtlight->GetYaxis()->SetRangeUser(-0.016,0.016);
+  // gtlight->SetName("gtlight");
+  // gPower->SetTitle("Shutter Open/Close");
+  // for (int ifreq=0; ifreq<nfreq; ifreq++)
+  //   {
+  // // We have to get the array of labview events from array of TStoreLabVIEWEvent
+  //     for (int j=0; j<2; j++)
+  //       {
+  //         int Nlvdata=VertexPlot[ifreq][j]->GetNLVData();
+  //         for (int ilvdata=0; ilvdata<Nlvdata; ilvdata++)
+  //           {TFELabVIEWData*   LVEvent= VertexPlot[ifreq][j]->GetFELVEvent(ilvdata);
+  //             (j=0)?hDP->Fill(LVEvent->GetLabViewTime(),LVEvent->GetArrayEntry(0)):hCP->Fill(LVEvent->GetLabViewTime(),LVEvent->GetArrayEntry(0));
+  //             LVEvent= DarkVertexPlot[ifreq][j]->GetFELVEvent(ilvdata);
+  //             (j=0)?hDP->Fill(LVEvent->GetLabViewTime(),LVEvent->GetArrayEntry(0)):hCP->Fill(LVEvent->GetLabViewTime(),LVEvent->GetArrayEntry(0));
+  //           }
+  //       }
+  //   }
   f->Close();
  
 
@@ -410,4 +454,17 @@ int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs, bool zeroTime)
    
    return 0;
 }
-
+void testplot()
+{
+  int runNumber=57208;
+  TString hfilename("testplot");
+  hfilename+=runNumber;
+  hfilename+=".root";
+   std::vector<TA2Plot*> R57208plots = Plot_243_Light_And_Dark_Lineshape(57208,false, true); 
+TA2Plot* vertex2_0=R57208plots.at(4);
+ TFELabVIEWData* LVevent=vertex2_0->GetFELVEvent(0);
+ TEnvDataPlot* plot = LVevent->GetPlot(0);
+ std::vector<TEnvDataPlot*>plots=LVevent->GetPlots();
+}
+ 
+ 
