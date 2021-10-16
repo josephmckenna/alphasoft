@@ -584,7 +584,10 @@ void SaveCanvas(Int_t runNumber, const char* Description)
 
 void SaveCanvas(TString Description)
 {
-  Description+=".pdf";
+  TSubString extension = Description(Description.Sizeof()-5,Description.Sizeof());
+  //If not a 3 char extension... add one
+  if (extension[0] != '.')
+     Description+=".png";
   gc->SaveAs(Description);
   std::cout << "File saved here:" << std::endl << Description << std::endl;
 }
