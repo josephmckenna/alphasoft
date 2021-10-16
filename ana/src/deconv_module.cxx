@@ -682,7 +682,8 @@ public:
 
       // DECONVOLUTION
       int nsig = Deconv(&AnodeWaves,sanode,aTimes,fAnodeIndex,fAnodeResponse,theAnodeBin,true);
-      std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
+      if( fTrace )
+         std::cout<<"DeconvModule::FindAnodeTimes "<<nsig<<" found"<<std::endl;
       //
 
       if( diagnostics )
@@ -855,7 +856,8 @@ public:
 
       // DECONVOLUTION
       int nsig = Deconv(&PadWaves,spad,pTimes,fPadIndex,fPadResponse,thePadBin,false);
-      std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
+      if( fTrace )
+         std::cout<<"DeconvModule::FindPadTimes "<<nsig<<" found"<<std::endl;
       //
 
       if( diagnostics )

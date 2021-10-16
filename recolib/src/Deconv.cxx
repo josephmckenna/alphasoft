@@ -611,7 +611,7 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
    int nsig=-1;
    if(!sanode) nsig=0;
    else nsig = sanode->size();
-   std::cout<<"Deconv::FindAnodeTimes "<<nsig<<" found"<<std::endl;
+   //std::cout<<"Deconv::FindAnodeTimes "<<nsig<<" found"<<std::endl;
    // ===========================================
 
    if( fDiagnostic )
@@ -763,7 +763,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    int nsig=-1;
    if(!spad) nsig=0;
    else nsig = spad->size();
-   std::cout<<"Deconv::FindPadTimes "<<nsig<<" found"<<std::endl;
+   //std::cout<<"Deconv::FindPadTimes "<<nsig<<" found"<<std::endl;
    // ===========================================   
 
    if( fDiagnostic )
