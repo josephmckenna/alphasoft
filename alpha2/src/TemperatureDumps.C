@@ -1,4 +1,4 @@
-#include "PlotDumps.C+"
+
 
 // important constants 
 Double_t eps0 = 8.9E-12; // # in Farads/meter
@@ -11,7 +11,6 @@ Double_t pi = 3.14159265358979323846;
 // so that this computation doesn't need to be performed again 
 Double_t eps0e = eps0 / e;
 Double_t kBe = kB / e;
-enum {PBAR,RECATCH,ATOM,POS}; //Copied from alphaAnalysis.cxx
 
 // global, so debugable!  
 TH1D* hh; 
@@ -52,7 +51,7 @@ std::vector<double> expectedCounts(Double_t *par) {
   }
   
   // TODO: do spline on log counts? 
-  
+
   // something to do with interpolating and then taking a derivative!
   TSpline5* VsNsSpline = 
     new TSpline5("interpolated function", Vs, Ns, interpSize); 
@@ -113,14 +112,14 @@ void loadPsiTable() {
         getline(file, value,','); // read a string until next comma: http://www.cplusplus.com/reference/string/getline/
       else
         getline(file, value, '\n'); // read a string until next line
-        
+      double v = atof(value.c_str());
+      //std::cout<<"table: "<<v<<std::endl;
       // PsiTable[i].push_back(atof(value.c_str()));
       if (i == 1)
-        Psi_Final.push_back(atof(value.c_str()));
+        Psi_Final.push_back(v);
       else if (i == 2)
-        F_esc.push_back(exp10(atof(value.c_str())));
+        F_esc.push_back(exp10(v));
 
-      // cout<<PsiTable[i].back()<<"\t";
       // if (i==2)
       // std::cout<<std::endl;
     }
@@ -129,8 +128,10 @@ void loadPsiTable() {
 } 
 
 //double ElectrodeMap[27][1001];
-std::vector<std::vector<double>> ElectrodeMap;
-void loadElectrodeMaps(int SequencerID) {
+
+std::vector<std::vector<double>> loadElectrodeMaps(int SequencerID) {
+  std::vector<std::vector<double>> ElectrodeMap;
+  std::cout<<"SEQ ID: " << SequencerID <<std::endl;
   int nElectrodes=-1;
   std::string seqName;
   if (SequencerID==ATOM || SequencerID==RECATCH )
@@ -143,80 +144,56 @@ void loadElectrodeMaps(int SequencerID) {
      nElectrodes=19;
      seqName="CATCH_TRAP";
   }
+  std::cout<<seqName<<std::endl;
   ElectrodeMap.resize(nElectrodes);
   // loads Psi Table to memory 
   for (int i = 0; i < nElectrodes; i++) {
     char path[300];
-    sprintf(path,"%s/aux/electrodeMaps/%s/electrodeMap_%d.csv",getenv("RELEASE"),seqName.c_str(),i);
+    sprintf(path,"%s/a2lib/electrodeMaps/%s/electrodeMap_%d.csv",getenv("AGRELEASE"),seqName.c_str(),i);
     ifstream file(path);
     string value;
-    ElectrodeMap.at(i).resize(1001);
+    int n_ignored = 0;
     for (int j = 0; j < 1001; j++) {
       if (j < 1000)
         getline(file, value,','); // read a string until next comma: http://www.cplusplus.com/reference/string/getline/
       else {
         
         getline(file, value, '\n'); // read a string until next line
-        printf("%d, %d, ", i, j);
-        cout<<atof(value.c_str())<<"\n";
+        //printf("%d, %d, ", i, j);
+        //cout<<atof(value.c_str())<<"\n";
       }
+      double v = atof(value.c_str());
       
       // IGNORE 
-      if ((atof(value.c_str()) > 10.0) || (atof(value.c_str()) < 1.E-6)) {
-        printf("BAD! ");
-        cout<<atof(value.c_str())<<"\n";
+      if ((v > 10.0) || (v < 1.E-6)) {
+        //cout<< "BAD! " << v <<"\n";
+        n_ignored++;
+        ElectrodeMap[i].push_back(0);
         continue;
       }
-        
-      ElectrodeMap[i][j] = atof(value.c_str());
-      
-      /*cout<<atof(value.c_str())<<"\t";
-      if (i==2)
-        std::cout<<std::endl;*/
+      ElectrodeMap[i].push_back(v);
+
     }
+    std::cout<<n_ignored << " ignored values in electrode " << i <<std::endl;
     //cout << string( value, 1, value.length()-2 ); // display value removing the first and the last character from it
   }
+  return ElectrodeMap;
 } 
 
-Double_t GetSaveOfDumpEvent(Int_t runNumber, const char *eventName, const char *description, Int_t repetition, Int_t offset, bool exact_match)
-{
-  TSeq_Event *seqEvent = FindSequencerEvent(runNumber, eventName, description, repetition, offset, exact_match);
-  if (seqEvent == NULL)
-  {
-    Error("MatchEventToTime", "\033[33mCould not find sequencer event %s (%s) in run %d\033[00m", eventName, description, runNumber);
-    return -1;
-  }
 
-  Double_t runTime = Get_RunTime_of_SequencerEvent(runNumber, seqEvent, offset);
-
-  delete seqEvent;
-  return runTime;
-}
-
-
-TSeq_State* GetStateAfterDump(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0, bool exact_match=false)
+TSequencerState* GetStateAfterDump(Int_t runNumber, const char* description, Int_t dumpIndex = 0)
 {
 
-
-  TSeq_Event *seqEvent = FindSequencerEvent(runNumber, "startDump", description, repetition, offset, exact_match);
+  TSeq_Event* seqEvent = Get_Seq_Event(runNumber, description, true, dumpIndex + 1);
+  //std::cout<<seqEvent<<std::endl;
+  //seqEvent->Print();
   int state=seqEvent->getonState()+1;
   int seq=seqEvent->GetSeqNum();
-  std::cout<<"STATE WE ARE LOOKING FOR:"<<state<<std::endl;
-  TSeq_State* seqState=new TSeq_State();
-  TTree* t=GetSequencerStateTree(runNumber);
-  t->SetBranchAddress("SequenceState",&seqState);
-  for ( int i=0; i< t->GetEntries(); i++)
-  {
-    t->GetEntry(i);
-    //Must be from same sequence
-    if (seqState->GetSeqNum()!=seq) continue;
-  seqState->Print();
-    //Not at the right state yet:
-    if (seqState->GetState()<state) continue;
-    //Match found:
-    if (seqState->GetState()==state) break;
-  }
-  return seqState;
+  std::cout<<"Getting state of Seq" << seq << " State: "<< state<<std::endl;
+  return Get_Seq_State(runNumber, seq, state);
+}
+/*
+{
   
   //How to clean up array:
   std::vector<double> init=seqState->GetAnalogueOut()->AOi;
@@ -243,87 +220,48 @@ TSeq_State* GetStateAfterDump(Int_t runNumber, char* description, Int_t repetiti
      electrodeVoltagesInit.push_back(init[init.size()-1]);
      electrodeVoltagesFinal.push_back(fin[fin.size()-1]);
   }
-  /*
-  double electrodeVoltagesInit[] = {0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, // E1 to E7
-  0.0021, -60.0012, -21.0007, -20.0009, -50.0006, 0.0011, 0.0011, 0.0011, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021}; // E8 to E27, hard coded 
-  // (last four entries for this particular XML are pbar-mix ekick (soft ekick) (channel 0), and nullx3)
   
-  double electrodeVoltagesFinal[] = {0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, // E1 to E7
-  0.0021, -60.0012, -21.0007, -20.0009, -18.9989, 0.0011, 0.0011, 0.0011, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021}; // E8 to E27, hard coded
-  // as you can see, for this HARD CODED RUN, it is only E12 that changes 
- */
-}
+  //double electrodeVoltagesInit[] = {0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, // E1 to E7
+  //0.0021, -60.0012, -21.0007, -20.0009, -50.0006, 0.0011, 0.0011, 0.0011, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021}; // E8 to E27, hard coded 
+  //// (last four entries for this particular XML are pbar-mix ekick (soft ekick) (channel 0), and nullx3)
+  
+  //double electrodeVoltagesFinal[] = {0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, // E1 to E7
+  //0.0021, -60.0012, -21.0007, -20.0009, -18.9989, 0.0011, 0.0011, 0.0011, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021}; // E8 to E27, hard coded
+  //// as you can see, for this HARD CODED RUN, it is only E12 that changes 
+ 
+}*/
 
 
-void SavePMTData(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0, Int_t channel=-1)
+void SavePMTData(int runNumber, const char* description, int dumpIndex= 0, int channel=-1)
 {
   // for fit!
   loadPsiTable();
 
 
   Int_t ch=channel;
-  printf("Channel %d\n\n", ch);
+  std::cout << "Channel " << ch << "\n\n";
+  
+  std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, {description}, {dumpIndex});
+
   //Get time range values
-  Double_t tmin = MatchEventToTime(runNumber,"startDump",description,repetition,offset);
+  Double_t tmin = spills.front().GetStartTime();
 
   // HARD CODED!
   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
   Double_t tfromramp = tmin + startOffset;
 
-  Double_t tmax = MatchEventToTime(runNumber,"stopDump",description,repetition,offset);
+  Double_t tmax = spills.front().GetStopTime();
   //Prepare reading data from root tree
   TSISChannels* sisch = new TSISChannels(runNumber);
   TString hname = sisch->GetDescription(ch,runNumber);
   
-  TTree* det_tree = Get_Sis_Tree(runNumber, ch);
-  TSisEvent* det_event = new TSisEvent();
-  det_tree->SetBranchAddress("SisEvent", &det_event );
+  std::vector<std::pair<double,int>> DumpCounts = GetSISTimeAndCounts(runNumber, ch, spills);
+  std::vector<std::pair<double,int>> BackgroundCounts = GetSISTimeAndCounts(runNumber, ch, {tmax}, {tmax+10});
   
-  
-  // chnel(runNumber, tmin, tmax); 
   int ts_chan=0;
   if (ch>32) ts_chan=32;
-  TTree* ts_tree = Get_Sis_Tree(runNumber, ts_chan);
-  TSisEvent* ts_event = new TSisEvent();
-  ts_tree->SetBranchAddress("SisEvent",&ts_event );
+  std::vector<std::pair<double,int>> AllSISTimes = GetSISTimeAndCounts(runNumber, ts_chan, spills);
 
-  std::vector<Double_t> DumpTimes;
-  std::vector<int> DumpCounts;
-  
-  std::vector<Double_t> BackgroundTimes;
-  std::vector<int> BackgroundCounts;
-
-  
-  //Do the thing!!!1
-  for(Int_t i=0; i < det_tree->GetEntries(); ++i) {
-    det_tree->GetEntry(i);
-    Double_t run_time = det_event->GetRunTime();
-    if (run_time <= tmin) continue; //Data too early... skip
-    if (run_time <= tmax) { //Is inside the dump
-       // printf("%f,%d\n", det_event->GetRunTime(),det_event->GetCountsInChannel());         
-       DumpTimes.push_back(det_event->GetRunTime());
-       DumpCounts.push_back(det_event->GetCountsInChannel());
-    }
-    else //I am after the dump... so I am background data (run_time>tmax)
-    {
-        BackgroundTimes.push_back(det_event->GetRunTime());
-        BackgroundCounts.push_back(det_event->GetCountsInChannel());       
-    }
-  }
-  
-  
-  // this is an array of, rather, transfer times
-  std::vector<Double_t> AllSISTimes;
-  for(Int_t i=0; i<ts_tree->GetEntries(); ++i) {
-    ts_tree->GetEntry(i);
-    Double_t run_time = ts_event->GetRunTime();
-
-    if(run_time <= tmin) 
-      continue; //Data too early ... SKIP!                                                                                        
-    if(run_time <= tmax) { //Is inside the dump                                                                                                      
-      AllSISTimes.push_back(run_time);
-    }
-  }
   //Add some processing here!
   // This loads counts and edge times into semi-pre-processed arrays
   // un-needed, if zero counts were included, ... which will be in 2020!
@@ -333,29 +271,26 @@ void SavePMTData(Int_t runNumber, char* description, Int_t repetition=1, Int_t o
   //   inferred end of bin time 
   std::vector<double> BinEdgetimes;
   std::vector<int> BinCounts;
-  
-  Double_t prev_bin_endtime;
-  Double_t bin_starttime;
-  Double_t bin_endtime; 
-  Int_t bin_count;
-  
-  
+
   // first bin's edgetime
-  prev_bin_endtime = (AllSISTimes.at(0) + AllSISTimes.at(1)) / 2;
+  double prev_bin_endtime = AllSISTimes.at(0).first;
   BinEdgetimes.push_back(prev_bin_endtime); 
   
   int j = 0; // counter for DumpTimes
   
-  for (int i = 1; i < AllSISTimes.size() - 1; i++) { 
-    if (AllSISTimes.at(i) < DumpTimes.at(j)) // it's a 0 bin event -- continue!
+  for (int i = 0; i < AllSISTimes.size() - 1; i++) { 
+    //std::cout << AllSISTimes.at(i).first << " < " << DumpCounts.at(j).first <<std::endl;
+    // it's a 0 bin event -- continue!
+    if (AllSISTimes.at(i).first < DumpCounts.at(j).first) // it's a 0 bin event -- continue!
       continue; 
-    else if (AllSISTimes.at(i) == DumpTimes.at(j)) {
+    else if (AllSISTimes.at(i).first == DumpCounts.at(j).first) {
       // printf("Match found! %f, %f\n", AllSISTimes.at(i) , DumpTimes.at(j));
       // Match found!
       
-      bin_starttime = (AllSISTimes.at(i-1) + AllSISTimes.at(i)) / 2; 
-      bin_endtime = (AllSISTimes.at(i) + AllSISTimes.at(i+1)) / 2; 
-      bin_count = DumpCounts.at(j);
+      // Timing channel is a 10Mhz clock
+      double bin_starttime = AllSISTimes.at(i).first ; 
+      double bin_endtime = AllSISTimes.at(i).first + (AllSISTimes.at(i).second / 10000000);
+      int bin_count = DumpCounts.at(j).second;
       
       if (bin_starttime == prev_bin_endtime) {
         // no zero bins in between 
@@ -376,7 +311,7 @@ void SavePMTData(Int_t runNumber, char* description, Int_t repetition=1, Int_t o
       // increment the next non-zero bin to Match for
       j++;
       
-      if (j == DumpTimes.size()) { // end of days!!
+      if (j == DumpCounts.size()) { // end of days!!
         // printf("end of days!\n");
         if (!(bin_endtime == tmax)) {
           // add one more zero bin
@@ -393,14 +328,14 @@ void SavePMTData(Int_t runNumber, char* description, Int_t repetition=1, Int_t o
   // get lambda_noise (units: counts per second)
   int total_background_counts = 0;
   for (int i = 0; i < BackgroundCounts.size(); i++) {
-    total_background_counts = total_background_counts + BackgroundCounts[i];
+    total_background_counts += BackgroundCounts[i].second;
   }
 
   // for weird statistical purposes ... 
   total_background_counts--;
-  lambda_noise = ((Double_t) total_background_counts) / (BackgroundTimes.back() - tmax);
+  lambda_noise = ((double) total_background_counts) / (BackgroundCounts.back().first - BackgroundCounts.front().first);
   printf("%d counts in %f seconds to get lambda_noise: %f counts per second\n", 
-    total_background_counts, (BackgroundTimes.back() - tmax), lambda_noise);
+    total_background_counts, BackgroundCounts.back().first - BackgroundCounts.front().first, lambda_noise);
 
 
 
@@ -412,18 +347,25 @@ void SavePMTData(Int_t runNumber, char* description, Int_t repetition=1, Int_t o
   
 
 
-TSeq_State* seqState=GetStateAfterDump(runNumber, description, repetition, offset);
-  
+   TSequencerState* seqState = GetStateAfterDump(runNumber, description, dumpIndex);
+   std::cout<<seqState <<std::endl;
+   if(!seqState)
+   {
+      std::cout<<"No sequencer state... FAIL!"<<std::endl;
+      exit(EXIT_FAILURE);
+   }
   
   // TODO here: an attempt to reverse engineer the ramp!!
   // loads electrode maps!
   std::cout<<"Loading maps...."<<std::endl;
-  loadElectrodeMaps(seqState->GetSeqNum()); 
-
+  std::vector<std::vector<double>> ElectrodeMap = loadElectrodeMaps(seqState->GetSeqNum());
+  std::cout<< ElectrodeMap.size() <<std::endl;
+  std::cout<< ElectrodeMap.at(0).size() <<std::endl;
 std::cout<<"Map loaded"<<std::endl;
 
   //How to clean up array:
   std::vector<double> init=seqState->GetAnalogueOut()->AOi;
+  std::cout<<init.size()<<std::endl;
   std::vector<double> fin=seqState->GetAnalogueOut()->AOf;
   for ( int i=0; i< init.size(); i++)
      std::cout<<init.at(i) <<"\t"<<fin.at(i)<<std::endl;
@@ -447,6 +389,8 @@ std::cout<<"Map loaded"<<std::endl;
      electrodeVoltagesInit.push_back(init[init.size()-1]);
      electrodeVoltagesFinal.push_back(fin[fin.size()-1]);
   }
+  
+  
 /*
   double electrodeVoltagesInit[] = {0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, // E1 to E7
   0.0021, -60.0012, -21.0007, -20.0009, -50.0006, 0.0011, 0.0011, 0.0011, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021, 0.0021}; // E8 to E27, hard coded 
@@ -484,23 +428,25 @@ std::cout<<"Map loaded"<<std::endl;
 
   for (int n = 0; n < N_time_points+1; n++) {
     // a linear time interpolation of electrode_i and electrode_f is electrode_curr
-    double electrode_curr[electrodeVoltagesInit.size()];
+
     double lambda_ramp = ((double) n) / N_time_points;
 
     // a linear combination of laplace solutions is computed from electrode_curr
-    double V_curr[1001];
 
-    for (int i = 0; i <electrodeVoltagesInit.size(); i++) {
-      electrode_curr[i] = electrodeVoltagesInit[i]*(1. - lambda_ramp)
-        + electrodeVoltagesFinal[i]*lambda_ramp;
+    for (int i = 0; i <electrodeVoltagesInit.size(); i++)
+    {
+
+        double electrode_curr =  electrodeVoltagesInit.at(i)*(1. - lambda_ramp)
+               + electrodeVoltagesFinal.at(i)*lambda_ramp ;
+       if (i >= ElectrodeMap.size())
+         continue;
 
       for (int j = 0; j < 1001; j++) {
         // j demarcates space (z)
         // n demarcates time (t)
         // i is eletrode index
-        V_curr[j] = electrode_curr[i]*ElectrodeMap[i][j];
-        
-        voltages_ramp[j][n] = voltages_ramp[j][n] + V_curr[j];
+        double V_curr = electrode_curr * ElectrodeMap.at(i).at(j);
+        voltages_ramp[j][n] += V_curr;
         // electrode_curr[i]*ElectrodeMap[i][j];
       }
     /*
@@ -640,9 +586,12 @@ std::cout<<"Map loaded"<<std::endl;
       break;
     }
   }
-  
+  TCanvas* c = new TCanvas();
+  c->Divide(2,2);
+  c->cd(1);
   TGraph *gr1 = new TGraph (1000, ts, barrier_ramp);
   gr1->Draw();
+  c->Draw();
   // this here computes the barrier voltage ramp of a single time point
   // barrier_ramp[n] = ComputeBarrierVoltage(n, V_curr, j_min, j_max);
   // gPad->WaitPrimitive();
@@ -676,9 +625,9 @@ std::cout<<"Map loaded"<<std::endl;
 
     
     TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);*/
-    
+
   TSpline5* dumpRamp = new TSpline5("our spline!", ts, barrier_ramp, N_time_points);
-  
+
     if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
     
     // energy (temperature) histogram
@@ -819,15 +768,12 @@ std::cout<<"Map loaded"<<std::endl;
    
     // FINALLY: PLOT EVERYTHING OUT!
     
-    // temporary array as to fit into hh bin category 
-    Double_t BinEdgeEnergies_[BinEdgeEnergies.size()];
-    std::copy(BinEdgeEnergies.begin(), BinEdgeEnergies.end(), BinEdgeEnergies_);
     // TH1D* global variable definied above
-
+    c->cd(2);
     hh = new TH1D("pbar_temperature",
       "Hist with variable bin width",
       BinCenterCounts.size(),
-      BinEdgeEnergies_
+      BinEdgeEnergies.data()
     );
     
     // fill in the bins!
@@ -842,31 +788,24 @@ std::cout<<"Map loaded"<<std::endl;
     hh->SetMarkerColor(kRed);
     hh->SetMarkerStyle(7);
     hh->SetLineColor(kBlack);
-    
+
     // this plot FIT  
     
     std::vector<double> exp_BinCenterCounts = expectedCounts(par);
 
-    Double_t x[BinCenterEnergies.size()];
-    std::copy(BinCenterEnergies.begin(), BinCenterEnergies.end(), x);
-    
-    Double_t y[BinCenterEnergies.size()];
-    std::copy(exp_BinCenterCounts.begin(), exp_BinCenterCounts.end(), y);
-
 //    for (int i = 0; i < BinCenterEnergies.size() - 4; i++) {
 //      printf("%f, %f \n", x[i], y[i]);
 //    }
-
     //gr = new TGraph(BinCenterEnergies.size() - 4,BinCenterEnergies.data(),y);
-    gr = new TGraph(BinCenterEnergies.size() - 4,x,y);
+    gr = new TGraph(BinCenterEnergies.size() - 4,BinCenterEnergies.data(),exp_BinCenterCounts.data());
     gr->SetLineColor(4);
     gr->Draw("AC SAME");
 
     // hh->Scale(1, "width");
     
-    hh->Draw("E1 HIST SAME"); // hh->Draw("HIST L SAME");  
+//    hh->Draw("E1 HIST SAME"); // hh->Draw("HIST L SAME");  
     gPad->SetLogy(1);
-    
+    c->Draw();
     //gr->SetTitle(dumpFile);
 
     
@@ -899,12 +838,15 @@ void getChannel(Int_t runNumber, Double_t tmin, Double_t tmax) {
 */
 
 
-void SavePMTDataBestChannel(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0) {
+void SavePMTDataBestChannel(Int_t runNumber, const char* description, Int_t repetition=1) {
   // AUTOMATICALLY FINDS THE GOOD CHANNEL, i.e. channel with most counts 
   
   //Get time range values
-  Double_t tmin = MatchEventToTime(runNumber,"startDump",description,repetition,offset);
-  Double_t tmax = MatchEventToTime(runNumber,"stopDump",description,repetition,offset);
+  
+  std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, {description}, {repetition});
+
+  Double_t tmin = spills.front().GetStartTime();
+  Double_t tmax = spills.front().GetStopTime();
   //Prepare reading data from root tree
   TSISChannels* sisch = new TSISChannels(runNumber);
 
@@ -921,7 +863,7 @@ void SavePMTDataBestChannel(Int_t runNumber, char* description, Int_t repetition
   
   for (int i = 0; i < 5; i++) {
     int ch = possible_channels[i];
-    int ch_counts = Count_SIS_Triggers(runNumber, ch, tmin, tmax);
+    int ch_counts = Count_SIS_Triggers(runNumber, ch, {tmin}, {tmax});
     
     printf("channel %d has %d counts\n", ch, ch_counts);
     
@@ -936,33 +878,33 @@ void SavePMTDataBestChannel(Int_t runNumber, char* description, Int_t repetition
     return; 
   }
 
-  return SavePMTData(runNumber, description, repetition, offset, highest_channel);    
+  return SavePMTData(runNumber, description, repetition, highest_channel);    
 }
 
-void SavePMTDataAtomStick(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0)
+void SavePMTDataAtomStick(Int_t runNumber, const char* description, Int_t repetition=1)
 {
-  return SavePMTData(runNumber, description, repetition, offset, 42);  
+  return SavePMTData(runNumber, description, repetition, 42);  
 }
 
-void SavePMTDataAtomOR(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0)
+void SavePMTDataAtomOR(Int_t runNumber, const char* description, Int_t repetition=1)
 {
   TSISChannels* sisch = new TSISChannels(runNumber);
-  return SavePMTData(runNumber, description, repetition, offset, sisch->GetChannel("SIS_PMT_ATOM_OR"));  
+  return SavePMTData(runNumber, description, repetition, sisch->GetChannel("SIS_PMT_ATOM_OR"));  
 }
 
-void SavePMTDataAtomAND(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0)
+void SavePMTDataAtomAND(Int_t runNumber, const char* description, Int_t repetition=1)
 {
   TSISChannels* sisch = new TSISChannels(runNumber);
-  return SavePMTData(runNumber, description, repetition, offset, sisch->GetChannel("SIS_PMT_ATOM_AND"));  
+  return SavePMTData(runNumber, description, repetition, sisch->GetChannel("SIS_PMT_ATOM_AND"));  
 }
-void SavePMTDataCatchOR(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0)
+void SavePMTDataCatchOR(Int_t runNumber, const char* description, Int_t repetition=1)
 {
   TSISChannels* sisch = new TSISChannels(runNumber);
-  return SavePMTData(runNumber, description, repetition, offset, sisch->GetChannel("SIS_PMT_CATCH_OR"));  
+  return SavePMTData(runNumber, description, repetition, sisch->GetChannel("SIS_PMT_CATCH_OR"));  
 }
 
-void SavePMTDataCatchAND(Int_t runNumber, char* description, Int_t repetition=1, Int_t offset=0)
+void SavePMTDataCatchAND(Int_t runNumber, const char* description, Int_t repetition=1)
 {
   TSISChannels* sisch = new TSISChannels(runNumber);
-  return SavePMTData(runNumber, description, repetition, offset, sisch->GetChannel("SIS_PMT_CATCH_AND"));  
+  return SavePMTData(runNumber, description, repetition, sisch->GetChannel("SIS_PMT_CATCH_AND"));  
 }
