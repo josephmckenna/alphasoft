@@ -14,7 +14,7 @@ TSequencerState* Get_Seq_State(Int_t runNumber, int SequencerID, int state)
    for ( int i=0; i< t->GetEntries(); i++)
    {
       t->GetEntry(i);
-      seqState->Print();
+      //seqState->Print();
       //Must be from same sequence
       if (seqState->GetSeqNum()!=SequencerID)
          continue;
