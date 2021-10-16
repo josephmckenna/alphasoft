@@ -102,7 +102,7 @@ Double_t negLogLikelihood(Double_t *par)
 
 void loadPsiTable() {
   // loads Psi Table to memory 
-  ifstream file ( "tempFitterPsiTable.csv"); // declare file stream: http://www.cplusplus.com/reference/iostream/ifstream/
+  ifstream file ( "a2lib/tempFitterPsiTable.csv"); // declare file stream: http://www.cplusplus.com/reference/iostream/ifstream/
   string value;
   getline(file, value, '\n');   // Skip the first line
 
