@@ -96,11 +96,8 @@ public:
          printf("MatchModule::BeginRun, run %d, file %s\n", 
                 runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-      bool MTing = runinfo->fMtInfo;
-      if(fTrace)
-         printf("MatchModule::BeginRun Are we MTing? %d\n",MTing);
                 
-      match=new Match(fFlags->ana_settings, MTing);
+      match=new Match(fFlags->ana_settings);
       //Global lock from manalzer (needed if your using roots basic fitting methods)
       match->SetGlobalLockVariable(&TAMultithreadHelper::gfLock);
       match->SetTrace(fTrace);
@@ -201,7 +198,7 @@ public:
          return flow;
       }
 
-      if( ! SigFlow->awSig )
+      if( ! SigFlow->awSig.size() )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -210,11 +207,11 @@ public:
       }
       if( fTrace )
       {
-         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       }  
      
-      if( SigFlow->pdSig )
+      if( SigFlow->pdSig.size() )
         {
             // -----------------
             //I am the first thread... 
@@ -222,10 +219,6 @@ public:
             if (fFlags->ThreadID < 0)
             {
                SigFlow->comb = match->CombPads( SigFlow->pdSig );
-               //Prepare pointer for next threads...
-               //... should we only make this pointer if SigFlow->comb.size()>0 ?...
-               // if we dont set this pointer, then the analysis will try to fake pads for us
-               SigFlow->combinedPads=new std::vector<ALPHAg::signal>;
                return flow;
             }
             // -----------------
@@ -238,7 +231,7 @@ public:
 
                //std::cout<<"SIZE:"<<SigFlow->comb.size()<<"\t"<<start<<" - "<<stop<<std::endl;
                for (size_t i=start; i<stop; i++)
-                  SigFlow->combinedPads = match->CombineAPad( &SigFlow->comb,SigFlow->combinedPads,i );
+                  match->CombineAPad( SigFlow->comb,SigFlow->combinedPads,i );
                return flow;
             }
         }
@@ -248,16 +241,16 @@ public:
       if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
       {
          // allow events without pwbs
-         std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
-         if( SigFlow->combinedPads )
+         std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > spacepoints;
+         if( SigFlow->combinedPads.size() )
             {
                //if( fTrace )
-                  printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
+                  printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads.size()));
                SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
-               SigFlow->AddPadSignals( SigFlow->combinedPads );
+               SigFlow->AddAndMovePadSignals( SigFlow->combinedPads );
                spacepoints =
-                  match->MatchElectrodes( SigFlow->awSig,SigFlow->combinedPads );
-               spacepoints = match->CombPoints(spacepoints);
+                  match->MatchElectrodes( SigFlow->awSig,SigFlow->pdSig );
+               match->CombPoints(spacepoints);
             }
          else if( fFlags->fForceReco ) // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
             {
@@ -266,17 +259,15 @@ public:
                spacepoints = match->FakePads( SigFlow->awSig );
             }
 
-         if( spacepoints )
+         if( spacepoints.size() )
             {
                if(fFlags->fTrace)
-                  printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
-               if( spacepoints->size() > 0 )
-                  SigFlow->AddMatchSignals( spacepoints );
+                  printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
+               if( spacepoints.size() > 0 )
+                  SigFlow->AddAndMoveMatchSignals( spacepoints );
             }
          else
             printf("MatchModule::Analyze Spacepoints should exists at this point\n");
-
-         delete spacepoints;
          return flow;
       }
       return flow;
@@ -393,7 +384,6 @@ public:
       return new MatchModule(runinfo, &fFlags);
    }
 };
-
 
 static TARegister tar(new MatchModuleFactory);
 //Choose how many threads you want here (2,4,8,16, 32 or 64)... more threads need more ram

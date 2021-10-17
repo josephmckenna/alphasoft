@@ -232,7 +232,7 @@ public:
          return flow;
       }
 
-      if( !SigFlow->awSig )
+      if( !SigFlow->awSig.size() )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -240,10 +240,10 @@ public:
          return flow;
       }
       
-      if( SigFlow->awSig->size() > 0 )
+      if( SigFlow->awSig.size() > 0 )
          {
-            printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
-            AnalyzeSignals(SigFlow->awSig);
+            printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
+            AnalyzeSignals(&SigFlow->awSig);
             if (fTrace)
                printf("CalibRun::Analysis DONE\n");
             ++fCounter;

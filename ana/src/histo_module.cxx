@@ -495,21 +495,21 @@ public:
             else
                printf("HistoModule::Analyze, NO PWB signals\n");
 
-            if( SigFlow->awSig )
+            if( SigFlow->awSig.size() )
                printf("HistoModule::Analyze, AW # signals %d\n", 
-                      int(SigFlow->awSig->size()));
+                      int(SigFlow->awSig.size()));
             else
                printf("HistoModule::Analyze, NO AW signals\n");
 
-            if( SigFlow->pdSig )
+            if( SigFlow->pdSig.size() )
                printf("HistoModule::Analyze, PAD # signals %d\n",
-                      int(SigFlow->pdSig->size()));
+                      int(SigFlow->pdSig.size()));
             else
                printf("HistoModule::Analyze, NO PAD signals\n");
             
-            if( SigFlow->matchSig )
+            if( SigFlow->matchSig.size() )
                printf("HistoModule::Analyze, SP # %d\n",
-                      int(SigFlow->matchSig->size()));
+                      int(SigFlow->matchSig.size()));
             else
                printf("HistoModule::Analyze, NO SP matches\n");
          }
@@ -538,23 +538,23 @@ public:
       if( fTrace )
          printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
 
-      if( SigFlow->awSig )
-         AWdiagnostic(SigFlow->awSig);
+      if( SigFlow->awSig.size() )
+         AWdiagnostic(&SigFlow->awSig);
 
-      if( SigFlow->pdSig )
-         PADdiagnostic(SigFlow->pdSig);
+      if( SigFlow->pdSig.size() )
+         PADdiagnostic(&SigFlow->pdSig);
 
-      if( SigFlow->adc32max && SigFlow->awSig )
-         AWDeconvDiag(SigFlow->adc32max,SigFlow->awSig);
+      if( SigFlow->adc32max && SigFlow->awSig.size() )
+         AWDeconvDiag(SigFlow->adc32max,&SigFlow->awSig);
       
-      if(  SigFlow->pwbMax && SigFlow->pdSig )
-         PWBDeconvDiag( SigFlow->pwbMax, SigFlow->pdSig );
+      if(  SigFlow->pwbMax && SigFlow->pdSig.size()  )
+         PWBDeconvDiag( SigFlow->pwbMax, &SigFlow->pdSig );
 
-      if( SigFlow->pdSig && SigFlow->awSig )
-         MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
+      if( SigFlow->pdSig.size()  && SigFlow->awSig.size()  )
+         MatchDiagnostic(&SigFlow->awSig,&SigFlow->pdSig);
          
-      if( SigFlow->matchSig )
-         SigSpacePointsDiagnostic( SigFlow->matchSig );
+      if( SigFlow->matchSig.size()  )
+         SigSpacePointsDiagnostic( &SigFlow->matchSig );
 
       ++fCounter;
       return flow;

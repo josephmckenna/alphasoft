@@ -153,20 +153,20 @@ Reco::~Reco()
    delete fSTR;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > spacepoints )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for ( const std::pair<ALPHAg::signal,ALPHAg::signal> sp: spacepoints)
       {
          // STR: (t,z)->(r,phi)
-         const double time = sp->first.t, zed = sp->second.z;
+         const double time = sp.first.t, zed = sp.second.z;
          if( fTrace )
             {
-               double z = ( double(sp->second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
-               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+               double z = ( double(sp.second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
+               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp.first.idx
                         <<" t: "<<time
-                        <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" (z: "<<z
-                        <<") ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                        <<"\tcol: "<<sp.second.sec<<" row: "<<sp.second.idx<<" (z: "<<z
+                        <<") ~ "<<sp.second.z<<" err: "<<sp.second.errz<<std::endl;
             }
          double r = fSTR->GetRadius( time , zed ),
             correction = fSTR->GetAzimuth( time , zed ),
@@ -182,12 +182,12 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                         <<" Err rad: "<<err<<" Err Lorentz"<<erp<<std::endl;
             }
          TSpacePoint* point=new TSpacePoint();
-         point->Setup(sp->first.idx,
-                      sp->second.sec,sp->second.idx,
+         point->Setup(sp.first.idx,
+                      sp.second.sec,sp.second.idx,
                       time,
                       r,correction,zed,
-                      err,erp,sp->second.errz,
-                      sp->first.height);
+                      err,erp,sp.second.errz,
+                      sp.first.height);
          fPointsArray.push_back(point);
          ++n;
       }
@@ -196,13 +196,13 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double z_fid )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > spacepoints, const double z_fid )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for ( const std::pair<ALPHAg::signal,ALPHAg::signal>& sp: spacepoints)
       {
          // STR: (t,z)->(r,phi)
-         const double time = sp->first.t, zed = sp->second.z;
+         const double time = sp.first.t, zed = sp.second.z;
          // skip over points outside fiducial region
          if( fabs(zed) > z_fid ) continue;
 
@@ -216,20 +216,20 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
 
          if( fTrace )
             {
-               double z = ( double(sp->second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
-               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->first.idx
+               double z = ( double(sp.second.idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
+               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp.first.idx
                         <<" t: "<<time<<" r: "<<r
-                        <<"\tcol: "<<sp->second.sec<<" row: "<<sp->second.idx<<" z: "<<z
-                        <<" ~ "<<sp->second.z<<" err: "<<sp->second.errz<<std::endl;
+                        <<"\tcol: "<<sp.second.sec<<" row: "<<sp.second.idx<<" z: "<<z
+                        <<" ~ "<<sp.second.z<<" err: "<<sp.second.errz<<std::endl;
                //<<time<<" "<<r<<" "<<correction<<" "<<err<<std::endl;
             }
          TSpacePoint* point=new TSpacePoint();
-         point->Setup(sp->first.idx,
-                      sp->second.sec,sp->second.idx,
+         point->Setup(sp.first.idx,
+                      sp.second.sec,sp.second.idx,
                       time,
                       r,correction,zed,
-                      err,erp,sp->second.errz,
-                      sp->first.height);
+                      err,erp,sp.second.errz,
+                      sp.first.height);
          fPointsArray.push_back(point);
          ++n;
       }
@@ -250,18 +250,18 @@ void Reco::AddSpacePoint( const TObjArray* p )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
+void Reco::AddSpacePoint( const std::vector<ALPHAg::signal> spacepoints )
 {
    int n = 0;
    double zed = 0.,zerr=ALPHAg::_padpitch*ALPHAg::_sq12;
    int padidx=288,padsec=0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for (const ALPHAg::signal& sp: spacepoints)
       {
          // STR: (t,z)->(r,phi)
-         const double time = sp->t;
+         const double time = sp.t;
          if( fTrace )
             {
-               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp->idx
+               std::cout<<"Reco::AddSpacePoint "<<n<<" aw: "<<sp.idx
                         <<" t: "<<time<<std::endl;
             }
          double r = fSTR->GetRadius( time , zed ),
@@ -278,15 +278,15 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
                         <<" Err rad: "<<err<<" Err Lorentz"<<erp<<std::endl;
             }
 
-         padsec=sp->idx/8;
+         padsec=sp.idx/8;
 
          TSpacePoint* point=new TSpacePoint();
-         point->Setup(sp->idx,
+         point->Setup(sp.idx,
                       padsec,padidx,
                       time,
                       r,correction,zed,
                       err,erp,zerr,
-                      sp->height);
+                      sp.height);
          fPointsArray.push_back(point);
          ++n;
       }

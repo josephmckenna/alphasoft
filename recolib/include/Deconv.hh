@@ -76,8 +76,8 @@ private:
    std::vector<ALPHAg::electrode> fAnodeIndex;
    std::vector<ALPHAg::electrode> fPadIndex;
 
-   std::vector<ALPHAg::signal>* sanode;
-   std::vector<ALPHAg::signal>* spad;
+   std::vector<ALPHAg::signal> sanode;
+   std::vector<ALPHAg::signal> spad;
 
    // // check
    // std::vector<double> resRMS_a;
@@ -92,7 +92,7 @@ private:
    int ReadADCRescaleFile();
    int ReadPWBRescaleFile();
 
-   std::vector<ALPHAg::signal>* Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
+   std::vector<ALPHAg::signal> Deconvolution(const std::vector<ALPHAg::wfholder*> subtracted,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                        std::vector<double> &fResponse, unsigned theBin, bool isanode);
 
@@ -109,7 +109,7 @@ private:
                     std::vector<double> &fResponse, const unsigned theBin);
    
    ALPHAg::comp_hist_t wf_comparator;
-   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b);
+   std::vector<ALPHAg::wfholder*> wforder(const std::vector<ALPHAg::wfholder*> subtracted, const unsigned b);
    
    std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex);
@@ -252,8 +252,8 @@ public:
    int FindAnodeTimes(const Alpha16Event*);
    int FindPadTimes(const FeamEvent*);
 
-   inline std::vector<ALPHAg::signal>* GetAnodeSignal() { return sanode; }
-   inline std::vector<ALPHAg::signal>* GetPadSignal()  { return spad; }
+   inline std::vector<ALPHAg::signal> GetAnodeSignal() { return sanode; }
+   inline std::vector<ALPHAg::signal> GetPadSignal()  { return spad; }
 
    inline std::vector<ALPHAg::signal>* GetAdcPeaks() { return fAdcPeaks; }
    inline std::vector<ALPHAg::signal>* GetPWBPeaks() { return fPwbPeaks; }

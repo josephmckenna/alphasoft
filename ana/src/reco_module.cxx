@@ -253,16 +253,14 @@ public:
       bool skip_reco=false;
       if( fTrace )
          {
-            int AW,PAD,SP=-1;
-            AW=PAD=SP;
-            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            int AW=int(SigFlow->awSig.size());
             printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            int PAD=int(SigFlow->pdSig.size());
             printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            int SP=int(SigFlow->matchSig.size());
             printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
-      if (!SigFlow->matchSig)
+      if (!SigFlow->matchSig.size())
       {
           std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
@@ -270,7 +268,7 @@ public:
           flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
 #endif
       }
-      else if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig.size() > fNhitsCut )
          {
             std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
@@ -287,7 +285,7 @@ public:
 #endif
       
             if( !fiducialization )
-               r.AddSpacePoint( SigFlow->matchSig );
+               r.AddSpacePoint( SigFlow->GetMatchSig() );
             else
                r.AddSpacePoint( SigFlow->matchSig, z_fid );
       

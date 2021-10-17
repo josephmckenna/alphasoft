@@ -265,7 +265,7 @@ public:
    {
       return sec + 32 * row;
    }
-   inline int index(short& sec, int& row) const
+   inline int index(const short& sec, const int& row) const
    {
       return sec + 32 * row;
    }

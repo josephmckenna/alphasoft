@@ -183,19 +183,19 @@ public:
       }
 
       if(esig){
-         if( !esig->awSig ) return flow;
-         for (unsigned i=0; i<esig->awSig->size(); i++) {
-            fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig->at(i).idx);
-            fASignalTree->GetBranch("time")->SetAddress(&esig->awSig->at(i).t);
-            fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig->at(i).height);
+         if( !esig->awSig.size() ) return flow;
+         for (unsigned i=0; i<esig->awSig.size(); i++) {
+            fASignalTree->GetBranch("wire")->SetAddress(&esig->awSig.at(i).idx);
+            fASignalTree->GetBranch("time")->SetAddress(&esig->awSig.at(i).t);
+            fASignalTree->GetBranch("amp")->SetAddress(&esig->awSig.at(i).height);
             fASignalTree->Fill();
          }
-         if( !esig->pdSig ) return flow;
-         for (unsigned i=0; i<esig->pdSig->size(); i++) {
-            fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig->at(i).sec);
-            fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig->at(i).idx);
-            fPSignalTree->GetBranch("time")->SetAddress(&esig->pdSig->at(i).t);
-            fPSignalTree->GetBranch("amp")->SetAddress(&esig->pdSig->at(i).height);
+         if( !esig->pdSig.size() ) return flow;
+         for (unsigned i=0; i<esig->pdSig.size(); i++) {
+            fPSignalTree->GetBranch("col")->SetAddress(&esig->pdSig.at(i).sec);
+            fPSignalTree->GetBranch("row")->SetAddress(&esig->pdSig.at(i).idx);
+            fPSignalTree->GetBranch("time")->SetAddress(&esig->pdSig.at(i).t);
+            fPSignalTree->GetBranch("amp")->SetAddress(&esig->pdSig.at(i).height);
             fPSignalTree->Fill();
          }
       }

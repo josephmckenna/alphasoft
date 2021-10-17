@@ -180,7 +180,7 @@ public:
          {
              int stat = d.FindPadTimes(pwb);
              if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
+             if( stat > 0 ) flow_sig->AddAndMovePadSignals(d.GetPadSignal());
 
              if( fFlags->fDiag )
                {

@@ -174,7 +174,6 @@ public:
          {
             int stat = d.FindAnodeTimes( aw );
             if(fTrace) printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
-
             AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetAnodeSignal());
              
             if( fFlags->fDiag )

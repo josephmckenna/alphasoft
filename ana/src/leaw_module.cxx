@@ -172,7 +172,7 @@ public:
             int stat = l.FindAnodeTimes( aw );
             printf("LEawModule::AnalyzeFlowEvent() status: %d\n",stat);
             
-            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, l.GetSignal());
+            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, *l.GetSignal());
             // if( fFlags->fDiag && stat>0 ) 
             //    {
             //       flow_sig->AddAdcPeaks( l.GetSignal() );

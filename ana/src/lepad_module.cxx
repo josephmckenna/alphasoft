@@ -169,7 +169,7 @@ public:
          {
              int stat = l.FindPadTimes(pwb);
              printf("LEpadModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(l.GetSignal());
+             if( stat > 0 ) flow_sig->AddAndMovePadSignals(*l.GetSignal());
 
              // if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
 

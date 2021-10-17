@@ -301,16 +301,8 @@ void Deconv::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
 
 void Deconv::Reset()
 { 
-   if(sanode)
-      {
-         sanode->clear(); 
-         delete sanode;
-      }
-   if(spad)
-      {
-         spad->clear();
-         delete spad;
-      }
+   sanode.clear(); 
+   spad.clear();
    fbinsize = 1;
    
    if( fDiagnostic )
@@ -511,7 +503,7 @@ int Deconv::FindPadTimes(TClonesArray* PADsignals)
       }// channels
 
    // ============== DECONVOLUTION ==============
-   spad = Deconvolution(&PadWaves,fPadIndex,fPadResponse,thePadBin,false);
+   spad = Deconvolution(PadWaves,fPadIndex,fPadResponse,thePadBin,false);
    int nsig=-1;
    if(!spad) nsig=0;
    else nsig = spad->size();
@@ -607,10 +599,8 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
       }// channels
 
    // ============== DECONVOLUTION ==============
-   sanode = Deconvolution(&AnodeWaves,fAnodeIndex,fAnodeResponse,theAnodeBin, true);
-   int nsig=-1;
-   if(!sanode) nsig=0;
-   else nsig = sanode->size();
+   sanode = Deconvolution(AnodeWaves,fAnodeIndex,fAnodeResponse,theAnodeBin, true);
+   int nsig = sanode.size();
    std::cout<<"Deconv::FindAnodeTimes "<<nsig<<" found"<<std::endl;
    // ===========================================
 
@@ -759,10 +749,8 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
       }// channels
 
    // ============== DECONVOLUTION ==============
-   spad = Deconvolution(&PadWaves,fPadIndex,fPadResponse,thePadBin,false);
-   int nsig=-1;
-   if(!spad) nsig=0;
-   else nsig = spad->size();
+   spad = Deconvolution(PadWaves,fPadIndex,fPadResponse,thePadBin,false);
+   int nsig = spad.size();
    std::cout<<"Deconv::FindPadTimes "<<nsig<<" found"<<std::endl;
    // ===========================================   
 
@@ -796,19 +784,18 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    return nsig;
 }
 
-std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
+std::vector<ALPHAg::signal> Deconv::Deconvolution( std::vector<ALPHAg::wfholder*> subtracted,
                                             std::vector<ALPHAg::electrode> &fElectrodeIndex,
                                             std::vector<double> &fResponse, unsigned theBin, bool isanode)
 {
-
-   if(subtracted->size()==0) return 0;
-   size_t nsamples = subtracted->back()->h->size();
-   std::vector<ALPHAg::signal>* fSignals=new std::vector<ALPHAg::signal>;
+   std::vector<ALPHAg::signal> fSignals;
+   if(subtracted.size()==0) return fSignals;
+   size_t nsamples = subtracted.back()->h->size();
    assert(nsamples >= theBin);
-   fSignals->reserve(nsamples-theBin);
+   fSignals.reserve(nsamples-theBin);
    assert(nsamples < 1000);
    if( fTrace )
-      std::cout<<"Deconv::Deconvolution Subtracted Size: "<<subtracted->size()
+      std::cout<<"Deconv::Deconvolution Subtracted Size: "<<subtracted.size()
                <<"\t# samples: "<<nsamples<<"\ttheBin: "<<theBin<<std::endl;
 
    double t_delay = fPWBdelay;
@@ -828,13 +815,13 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first
-         std::vector<ALPHAg::wfholder*>* histset = wforder( subtracted, b );
+         std::vector<ALPHAg::wfholder*> histset = wforder( subtracted, b );
          // std::cout<<"Deconv::Deconvolution bin of interest: "<<b
          //          <<" workable wf: "<<histset.size()<<std::endl;
          // this is useful to split deconv into the "Subtract" method
          // map ordered wf to corresponding electrode
          double neTotal = 0.0;
-         for (auto const it : *histset)
+         for (auto const& it : histset)
             {
                unsigned int i = it->index;
                std::vector<double>* wf=it->h;
@@ -846,18 +833,17 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
                      neTotal += ne;
                      // loop over all bins for subtraction
                      if( isanode ) 
-                        SubtractAW(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
+                        SubtractAW(it,&subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                      else
-                        SubtractPAD(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
+                        SubtractPAD(it,&subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                      if( int(b-theBin) >= 0)
                         {
                            // time in ns of the bin b centre
                            double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                           fSignals->emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val),isanode);
+                           fSignals.emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val),isanode);
                         }
                   }// if deconvolution threshold Avalanche Size
             }// loop set of ordered waveforms
-         delete histset;
          //delete histmap;
       }// loop bin of interest
    return fSignals;
@@ -944,26 +930,26 @@ void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
       }// bin loop: subtraction
 }
 
-std::vector<ALPHAg::wfholder*>* Deconv::wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b)
+std::vector<ALPHAg::wfholder*> Deconv::wforder(const std::vector<ALPHAg::wfholder*> subtracted, const unsigned b)
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
-   std::vector<ALPHAg::wfholder*>* histset=new std::vector<ALPHAg::wfholder*>;
-   size_t size = subtracted->size();
+   std::vector<ALPHAg::wfholder*> histset;
+   const size_t size = subtracted.size();
    //   std::cout<<"Deconv::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
-   histset->reserve(size);
+   histset.reserve(size);
    for(unsigned int i=0; i<size;++i)
       {
          //         std::cout<<"wf# "<<i;
-         ALPHAg::wfholder* mh=subtracted->at(i);
+         ALPHAg::wfholder* mh=subtracted.at(i);
          // std::cout<<"\twf index: "<<mh->index;
          // std::cout<<"\twf size: "<<mh->h->size();
          //std::cout<<"\twf bin: "<<b<<std::endl;
          mh->val = fScale*mh->h->at(b);
          //         std::cout<<"\twf val: "<<mh->val<<std::endl;
-         histset->push_back(mh);
+         histset.push_back(mh);
       }
-   std::sort(histset->begin(), histset->end(),wf_comparator);
+   std::sort(histset.begin(), histset.end(),wf_comparator);
    return histset;
 }
 

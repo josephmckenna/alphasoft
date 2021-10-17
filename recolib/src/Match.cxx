@@ -31,10 +31,9 @@ TH1D* Match::htimeblobs=NULL;
 TH1D* Match::htimefit=NULL;
 
 
-Match::Match(const AnaSettings* ana_set, bool mt):
+Match::Match(const AnaSettings* ana_set):
    fTrace(false),
    fDebug(false),
-   fMT(mt),
    ana_settings(ana_set),
    fCoincTime(     ana_settings->GetDouble("MatchModule","coincTime")),
    maxPadGroups(   ana_settings->GetInt("MatchModule","maxPadGroups")),
@@ -54,9 +53,6 @@ Match::Match(const AnaSettings* ana_set, bool mt):
 {
   //std::cout<<"Match::Loading AnaSettings from json"<<std::endl;
 
-  if( fMT )
-    CentreOfGravityFunction=2;
-
   TString CentreOfGravity=ana_settings->GetString("MatchModule","CentreOfGravityMethod");
   if ( CentreOfGravity.EqualTo("CentreOfGravity") )
     { 
@@ -64,12 +60,6 @@ Match::Match(const AnaSettings* ana_set, bool mt):
       CentreOfGravityFunction=1; 
     }
   if ( CentreOfGravity.EqualTo("CentreOfGravity_blobs") ) CentreOfGravityFunction=2;
-
-  if( fMT )
-    {
-      std::cout<<"Match::Match MT-mode: selecting thread-safe CentreOfGravity_blobs"<<std::endl;
-      CentreOfGravityFunction=2;
-    }
 
   if ( CentreOfGravityFunction <= 0 )
     {
@@ -97,13 +87,13 @@ void Match::Setup(TFile* OutputFile)
       if( OutputFile )
         { 
           OutputFile->cd(); // select correct ROOT directory
-	  int error_level_save = gErrorIgnoreLevel;
-	  gErrorIgnoreLevel = kFatal;
+          int error_level_save = gErrorIgnoreLevel;
+          gErrorIgnoreLevel = kFatal;
           if( !gDirectory->cd("padmatch") )
             gDirectory->mkdir("padmatch")->cd();
-	  else 
-	    gDirectory->cd("padmatch");
-	  gErrorIgnoreLevel = error_level_save;
+          else 
+            gDirectory->cd("padmatch");
+          gErrorIgnoreLevel = error_level_save;
         }
       else
         gFile->cd();
@@ -113,10 +103,10 @@ void Match::Setup(TFile* OutputFile)
                             0.,maxPadGroups+1.);
       // if (!hcognpeaksrms)
       //   hcognpeaksrms = new TH2D("hcognpeaksrms","CombPads CoG - Number of Avals vs RMS", 500, 0., 50,int(maxPadGroups+1.),
-      // 			       0.,maxPadGroups+1.);
+      //                                0.,maxPadGroups+1.);
       // if (!hcognpeakswidth)
       //   hcognpeakswidth = new TH2D("hcognpeakswidth","CombPads CoG - Number of Avals vs width", 20, 0., 20,int(maxPadGroups+1.),
-      // 				 0.,maxPadGroups+1.);
+      //                                  0.,maxPadGroups+1.);
       if (!hcogsigma)
         hcogsigma = new TH1D("hcogsigma","CombPads CoG - Sigma Charge Induced;[mm]",700,0.,70.);
       if (!hcogerr)
@@ -140,56 +130,54 @@ void Match::Setup(TFile* OutputFile)
     }
 }
 
-std::pair<std::set<short>,std::vector< std::vector<ALPHAg::signal> >> Match::PartitionBySector(std::vector<ALPHAg::signal>* padsignals)
+std::pair<std::set<short>,std::vector< std::vector<ALPHAg::signal> >> Match::PartitionBySector(const std::vector<ALPHAg::signal> padsignals)
 {
-  std::vector< std::vector<ALPHAg::signal> > pad_bysec;
-  pad_bysec.resize(32);
-
+  std::vector< std::vector<ALPHAg::signal> > pad_bysec(32);
   std::set<short> secs;
-
-  for( auto ipd=padsignals->begin(); ipd!=padsignals->end(); ++ipd )
+  for (const auto& ipd: padsignals)
     {
       //ipd->print();
-      secs.insert( ipd->sec );
-      pad_bysec.at(ipd->sec).push_back(*ipd);
+      secs.insert( ipd.sec );
+      pad_bysec[ipd.sec].push_back(ipd);
     }
   return {secs,pad_bysec};
 }
 
-std::vector< std::vector<ALPHAg::signal> > Match::PartitionByTime( std::vector<ALPHAg::signal>& sig )
+std::vector< std::vector<ALPHAg::signal> > Match::PartitionByTime( const std::vector<ALPHAg::signal> sig )
 {
   if( fDebug ) std::cout<<"Match::PartitionByTime  "<<sig.size()<<std::endl;
   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> sig_bytime(sig.begin(),
-						      sig.end());
+                                                      sig.end());
   double temp=-999999.;
   std::vector< std::vector<ALPHAg::signal> > pad_bytime;
-  for( auto isig = sig_bytime.begin(); isig!=sig_bytime.end(); ++isig )
-    {
-      if( fDebug ) isig->print();
+  for (const auto& isig: sig_bytime)
+  {
+      if( fDebug ) isig.print();
       //      if( isig->t > temp ) // 
-      if( (isig->t - temp) > fCoincTime )
-	{
-	  temp=isig->t;
-	  pad_bytime.emplace_back();
-	  pad_bytime.back().push_back( *isig );
-	}
+      if( (isig.t - temp) > fCoincTime )
+      {
+        temp = isig.t;
+        pad_bytime.emplace_back();
+        pad_bytime.back().push_back( isig );
+      }
       else
-	pad_bytime.back().push_back( *isig );
-    }
-  sig_bytime.clear();
+      {
+        pad_bytime.back().push_back( isig );
+      }
+  }
   if( fDebug ) std::cout<<"Match::PartitionByTime # of time partitions: "<<pad_bytime.size()<<std::endl;
   return pad_bytime;
 }
 
-std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::signal>* padsignals)
+std::vector<std::vector<ALPHAg::signal>> Match::CombPads(const std::vector<ALPHAg::signal> padsignals)
 {
   if( fTrace )
     std::cout<<"Match::CombPads!"<<std::endl;
 
   std::vector< std::vector<ALPHAg::signal> > comb;
-  if( int(padsignals->size()) > fNpadsCut )
+  if( int(padsignals.size()) > fNpadsCut )
     {
-      std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()<<" exceeds its limit "<<fNpadsCut<<std::endl;
+      std::cout<<"Match::CombPads number of pads signals "<<padsignals.size()<<" exceeds its limit "<<fNpadsCut<<std::endl;
       comb.resize(0);
       return comb;
     }
@@ -197,14 +185,19 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   // combine pads in the same column only
   std::vector< std::vector<ALPHAg::signal> > pad_bysec;
   std::set<short> secs;
-  std::tie(secs, pad_bysec) = PartitionBySector( padsignals ) ;
-  
+  std::tie(secs, pad_bysec) = PartitionBySector( padsignals );
+
+  size_t size = 0;
+  for (const std::vector<ALPHAg::signal>& s: pad_bysec)
+     size += s.size();
+  //Malloc total space possible
+  comb.reserve(size);
+
   if( fTrace )
     std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
 
-  for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
+  for (const auto& sector: secs)
     {
-      short sector = *isec;
       if( sector < 0 || sector > 31 ) continue;
       if( fDebug )
         std::cout<<"Match::CombPads sec: "<<sector
@@ -212,26 +205,26 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
          <<" size: "<<pad_bysec[sector].size()<<std::endl;
       // combine pads in the same time slice only
       std::vector< std::vector<ALPHAg::signal> > pad_bytime = PartitionByTime( pad_bysec[sector] );
-      for( auto it=pad_bytime.begin(); it!=pad_bytime.end(); ++it )
-        {
-          if( it->size() <= 2 ) continue; // it->size() <= padsNmin
-          if( it->begin()->t < 0. ) continue;
-          comb.push_back( *it );
+      for (std::vector<ALPHAg::signal>& it: pad_bytime)
+         {
+          if( it.size() <= 2 ) continue; // it->size() <= padsNmin
+          if( it.begin()->t < 0. ) continue;
+          comb.push_back( std::move(it) );
         }
-      pad_bytime.clear();
     }
-  secs.clear();
-  pad_bysec.clear();
   if( fTrace )
     std::cout<<"Match::CombPads # of teeth: "<<comb.size()<<std::endl;
   return comb;
 }
 
-std::vector<ALPHAg::signal>* Match::CombineAPad(std::vector< std::vector<ALPHAg::signal> > *comb,std::vector<ALPHAg::signal>* CombinedPads, size_t PadNo)
+void Match::CombineAPad(
+    const std::vector< std::vector<ALPHAg::signal> > comb,
+    std::vector<ALPHAg::signal>& CombinedPads,
+    const size_t PadNo)
 {
 
-  if (PadNo > comb->size())
-    return CombinedPads;
+  if (PadNo > comb.size())
+    return;
 
   switch(CentreOfGravityFunction)
   {
@@ -242,34 +235,31 @@ std::vector<ALPHAg::signal>* Match::CombineAPad(std::vector< std::vector<ALPHAg:
     }
     case 1:
     {
-      CentreOfGravity(comb->at(PadNo),CombinedPads);
-      break;
+      return CentreOfGravity(comb[PadNo],CombinedPads);
     }
     case 2:
     {
-      CentreOfGravity_blobs(comb->at(PadNo), CombinedPads);
-      break;
+      return CentreOfGravity_blobs(comb[PadNo], CombinedPads);
     }
   }
-  return CombinedPads;
+  return;
 }
 
 
-std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg::signal> > *comb)
+std::vector<ALPHAg::signal> Match::CombinePads(const std::vector< std::vector<ALPHAg::signal> > comb)
 {
-
-  if( comb->size()==0 ) return NULL;
-  std::vector<ALPHAg::signal>* CombinedPads=new std::vector<ALPHAg::signal>;
+  std::vector<ALPHAg::signal> CombinedPads;
+  if( comb.size()==0 ) return CombinedPads;
 
   if( fTrace ) 
     {
-      std::cout<<"Match::CombinePads comb size: "<<comb->size()<<"\t";
+      std::cout<<"Match::CombinePads comb size: "<<comb.size()<<"\t";
       std::cout<<"Using CentreOfGravityFunction: "<<CentreOfGravityFunction<<std::endl;
       std::cout<<"Match::CombinePads sssigv: ";
       if( fDebug ) {
-        for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+        for ( const auto& sigv: comb)
           {
-            std::cout<<sigv->size()<<" ";
+            std::cout<<sigv.size()<<" ";
           }
       }
       std::cout<<"\n";
@@ -282,49 +272,44 @@ std::vector<ALPHAg::signal>* Match::CombinePads(std::vector< std::vector<ALPHAg:
       break;
     }
   case 1: {
-    for( auto sigv=comb->begin(); sigv!=comb->end(); ++sigv )
+    for (const auto& sigv: comb)
       {
-	auto start = std::chrono::high_resolution_clock::now();
-	CentreOfGravity(*sigv,CombinedPads);
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
-	if( fTrace ) 
-	  std::cout << "Match::CombinePads Time taken CentreOfGravity: "
-		    << duration.count() << " us" << std::endl; 
-	if( diagnostic ) htimecog->Fill(duration.count());
+        auto start = std::chrono::high_resolution_clock::now();
+        CentreOfGravity(sigv,CombinedPads);
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+        if( fTrace ) 
+          std::cout << "Match::CombinePads Time taken CentreOfGravity: "
+                    << duration.count() << " us" << std::endl; 
+        if( diagnostic ) htimecog->Fill(duration.count());
       }
     break;}
   case 2: {
-    std::vector<std::thread> cogthread;
-    auto cogstart = std::chrono::high_resolution_clock::now();
-    for( unsigned i=0; i<comb->size(); ++i)
+
+      auto cogstart = std::chrono::high_resolution_clock::now();
+      for (const auto& sigv: comb)
       {
-	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,
-					 std::ref(comb->at(i)), CombinedPads ) );
+         CentreOfGravity_blobs( sigv, CombinedPads );
       }   
-    for( auto th=cogthread.begin();th!=cogthread.end();++th)
-      {
-	th->join();
-      }
     auto cogstop = std::chrono::high_resolution_clock::now();
     auto cogdura = std::chrono::duration_cast<std::chrono::microseconds>(cogstop-cogstart);
     if( diagnostic ) htimecog->Fill(cogdura.count());
     if( fTrace ) {
       std::cout<<"Match::CombinePads Time taken CentreOfGravity_blobs: "
-	       << cogdura.count() << " us" << std::endl; 
+               << cogdura.count() << " us" << std::endl; 
     }
     break;}
   }
   return CombinedPads;
 }
 
- std::vector<ALPHAg::signal>* Match::CombinePads(std::vector<ALPHAg::signal>* padsignals)
+ std::vector<ALPHAg::signal> Match::CombinePads(const std::vector<ALPHAg::signal> padsignals)
 {
   std::vector< std::vector<ALPHAg::signal> > comb = CombPads( padsignals );
-  return CombinePads(&comb);
+  return CombinePads(comb);
 }
 
-void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* CombinedPads )
+void Match::CentreOfGravity(const std::vector<ALPHAg::signal> vsig, std::vector<ALPHAg::signal>& CombinedPads )
 {
   if(!vsig.size()) return;
 
@@ -367,7 +352,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
     {
       nfound = 1;
       if( fDebug )
-	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
+        std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
   double peakx[nfound];
@@ -419,22 +404,22 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
             //if( err < padFitErrThres && sigma > 0. )
             {
               // create new signal with combined pads
-              CombinedPads->emplace_back( col, row, time, amp, eamp, pos, err );
+              CombinedPads.emplace_back( col, row, time, amp, eamp, pos, err );
               if( fDebug )
-        	std::cout<<"Combination Found! s: "<<col
-        		 <<" i: "<<row
-        		 <<" t: "<<time
-        		 <<" a: "<<amp
-        		 <<" z: "<<pos
-        		 <<" err: "<<err<<std::endl;
+                std::cout<<"Combination Found! s: "<<col
+                         <<" i: "<<row
+                         <<" t: "<<time
+                         <<" a: "<<amp
+                         <<" z: "<<pos
+                         <<" err: "<<err<<std::endl;
             }
           else // fit is crazy
             {
               if( fTrace )
-        	std::cout<<"Combination NOT found... position error: "<<err
-        		 <<" or sigma: "<<sigma<<std::endl;
+                std::cout<<"Combination NOT found... position error: "<<err
+                         <<" or sigma: "<<sigma<<std::endl;
 #ifdef RESCUE_FIT
-   	      stat=false;
+                 stat=false;
 #endif
             }
         }// fit is valid
@@ -445,7 +430,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 #ifdef RESCUE_FIT
             stat=false;
 #endif
-	}
+        }
       delete ff;
 
 #ifdef RESCUE_FIT
@@ -474,17 +459,17 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
               CombinedPads->emplace_back( col, index, time, amp, sqrt(amp), pos, zed_err );
         
               if( fDebug )
-        	std::cout<<"at last Found! s: "<<col
-        		 <<" i: "<<index
-        		 <<" t: "<<time
-        		 <<" a: "<<amp
-        		 <<" z: "<<pos<<std::endl;
+                std::cout<<"at last Found! s: "<<col
+                         <<" i: "<<index
+                         <<" t: "<<time
+                         <<" a: "<<amp
+                         <<" z: "<<pos<<std::endl;
               stat=true;
             }
           else
             {
               if( fTrace )
-        	std::cout<<"Failed last combination resort"<<std::endl;
+                std::cout<<"Failed last combination resort"<<std::endl;
             }
         }
 #endif
@@ -497,8 +482,8 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 
 
 // TH1-independent method to find peaks in pad charge distribution
-std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> &sigs,
-							 int ifirst, int ilast)
+std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> sigs,
+                                                         const int ifirst, int ilast)
 {
   if(ilast < 0) ilast = int(sigs.size())-1;
   std::vector<ALPHAg::signal>::const_iterator first = std::next(sigs.begin(),ifirst);
@@ -536,16 +521,16 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
     }
   } else {                  // large width, save this peak, then search for more
     blobs.emplace_back(maxpos, max);
-    int maxbin = maxit-sigs.begin();
-    int cutbin = maxbin-padmask;
+    const int maxbin = maxit - sigs.begin();
+    const int cutbin_low = maxbin - padmask;
+    const int cutbin_high = maxbin + padmask;
     std::vector<std::pair<double, double> > subblobs;
-    if(cutbin-ifirst > padsNmin){ // search left of found peak
-      subblobs = FindBlobs(sigs, ifirst, cutbin);
+    if(cutbin_low - ifirst > padsNmin){ // search left of found peak
+      subblobs = FindBlobs(sigs, ifirst, cutbin_low);
       blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
     }
-    cutbin = maxbin+padmask;
-    if(ilast-cutbin > padsNmin){ // search right of found peak
-      subblobs = FindBlobs(sigs, cutbin, ilast);
+    if(ilast - cutbin_high > padsNmin){ // search right of found peak
+      subblobs = FindBlobs(sigs, cutbin_high, ilast);
       blobs.insert(blobs.end(), subblobs.begin(), subblobs.end());
     }
   }
@@ -553,64 +538,67 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
 }
 
 
-void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vector<ALPHAg::signal>* CombinedPads )
+void Match::CentreOfGravity_blobs(const std::vector<ALPHAg::signal> vsig, std::vector<ALPHAg::signal>& CombinedPads )
 {
   int nPositions=0;
   if(int(vsig.size()) < padsNmin) return;
-  double time = vsig.begin()->t;
-  short col = vsig.begin()->sec;
+  const double time = vsig.begin()->t;
+  const short col = vsig.begin()->sec;
 
   std::vector<ALPHAg::signal> vsig_sorted(vsig);
   ALPHAg::signal::indexorder sigcmp_z;
   auto start = std::chrono::high_resolution_clock::now();
   std::sort(vsig_sorted.begin(), vsig_sorted.end(), sigcmp_z);
-  std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
+  const std::vector<std::pair<double, double> > blobs = FindBlobs(vsig_sorted, 0, -1);
   
-  int nfound = blobs.size();
+  const int nfound = blobs.size();
   if( fTrace )
     std::cout<<"MatchModule::CentreOfGravity_blobs nfound: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
 
   std::vector<double> peakx, peaky; // initiliaze CoG fit
+  peakx.reserve(nfound * nfound * 0.5);
+  peaky.reserve(nfound * nfound * 0.5);
   // cut grass
   for(int i = 0; i < nfound; ++i)
     {
       bool grass(false);
       for(int j = 0; j < i; j++)
-	{
-	  if(abs(blobs[i].first-blobs[j].first) < goodDist)
-	    if(blobs[i].second < grassCut*blobs[j].second)
-	      grass = true;
-	}
+        {
+          if(abs(blobs[i].first-blobs[j].first) < goodDist)
+            if(blobs[i].second < grassCut*blobs[j].second)
+              grass = true;
+        }
       if(!grass)
-	{
-	  if( fDebug ) 
-	    std::cout << blobs[i].first << '\t';
-	  peakx.push_back(blobs[i].first);
-	  peaky.push_back(blobs[i].second);
-	}
+        {
+          if( fDebug ) 
+            std::cout << blobs[i].first << '\t';
+          peakx.push_back(blobs[i].first);
+          peaky.push_back(blobs[i].second);
+        }
       else
-      	{
-      	  if( fDebug ) std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
-      	}
+        {
+          if( fDebug )
+            std::cout << "OOOO cut grass peak at " << blobs[i].first << std::endl;
+        }
     }
   if( fDebug ) std::cout << "\n";
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
  
-  nfound=int(peakx.size());
+  const int npeaks = int(peakx.size());
   if( fDebug )
-    std::cout<<"Match::MatchModule::CentreOfGravity_blobs nfound after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
-    // assert(int(peakx.size())==nfound);
+    std::cout<<"Match::MatchModule::CentreOfGravity_blobs npeaks after grass cut: "<<nfound<<" @ t: "<<time<<" in sec: "<<col<<std::endl;
+    // assert(int(peakx.size())==npeaks);
 
   if(diagnostic)
     {
       htimeblobs->Fill(duration.count());
-      hcognpeaks->Fill(nfound);
+      hcognpeaks->Fill(npeaks);
     }
 
-  fitSignals ffs( vsig_sorted, nfound );
-  for(int i = 0; i < nfound; ++i)
+  fitSignals ffs( vsig_sorted, npeaks );
+  for(int i = 0; i < npeaks; ++i)
     {
       ffs.SetStart(3*i,peaky[i]);
       ffs.SetStart(1+3*i,peakx[i]);
@@ -632,331 +620,344 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::signal>& vsig, std::vecto
   if( r==1 ) // it's good
     {
       if( fTrace ) ffs.Print();
-      for(int i = 0; i < nfound; ++i)
-	{
-	  double amp = ffs.GetAmplitude(i);
-	  double amp_err = ffs.GetAmplitudeError(i);
+      for(int i = 0; i < npeaks; ++i)
+        {
+          double amp = ffs.GetAmplitude(i);
+          double amp_err = ffs.GetAmplitudeError(i);
 
-	  double pos = ffs.GetMean(i);
-	  double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
-	  int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
+          double pos = ffs.GetMean(i);
+          double zix = ( pos + ALPHAg::_halflength ) / ALPHAg::_padpitch - 0.5;
+          int row = (zix - floor(zix)) < 0.5 ? int(floor(zix)):int(ceil(zix));
 
-	  double err = ffs.GetMeanError(i);
-	  double sigma = ffs.GetSigma(i);
+          double err = ffs.GetMeanError(i);
+          double sigma = ffs.GetSigma(i);
 
-	  if( diagnostic )
-	    {
-	      hcogsigma->Fill(sigma);
-	      hcogerr->Fill(err);
-	      int index = pmap.index(col,row);
-	      hcogpadssigma->Fill(double(index),sigma);
-	      hcogpadsamp->Fill(double(index),amp);
-	      // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
-	      double totq = sqrt(2.*M_PI)*sigma*amp;
-	      hcogpadsint->Fill(double(index),totq);
-	      hcogpadsampamp->Fill(peaky[i],amp);
-	    }
+          if( diagnostic )
+            {
+              hcogsigma->Fill(sigma);
+              hcogerr->Fill(err);
+              int index = pmap.index(col,row);
+              hcogpadssigma->Fill(double(index),sigma);
+              hcogpadsamp->Fill(double(index),amp);
+              // double totq = ff->Integral(pos-10.*sigma,pos+10.*sigma);
+              double totq = sqrt(2.*M_PI)*sigma*amp;
+              hcogpadsint->Fill(double(index),totq);
+              hcogpadsampamp->Fill(peaky[i],amp);
+            }
 
-	  if( err < padFitErrThres &&
-	      fabs(sigma-padSigma)/padSigma < padSigmaD )
-	    {
-	      if( fabs(pos) < ALPHAg::_halflength )
-		{
-		  if (fMT)
-		    manalzer_global_mtx->lock();
-		  // create new signal with combined pads
-		  CombinedPads->emplace_back( col, row, time, amp, amp_err, pos, err );
-		  if (fMT)
-    		  manalzer_global_mtx->unlock();
-		  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
-		  //padcog.push_back(pad_cog);
-		  ++nPositions;
-		  if( fDebug )
-		    std::cout<<"CoG_blobs Combination Found! s: "<<col
-			     <<" i: "<<row
-			     <<" t: "<<time
-			     <<" a: "<<amp
-			     <<" z: "<<pos
-			     <<" err: "<<err<<std::endl;
-		}
-	      else
-		{
-		  if( fDebug )
-		    std::cout<<"CoG_blobs Bad Combination Found! (z outside TPC) s: "<<col
-			     <<" i: "<<row
-			     <<" t: "<<time
-			     <<" a: "<<amp
-			     <<" z: "<<pos
-			     <<" err: "<<err<<std::endl;
-		}
-	    }
-	  else // fit is crazy
-	    {
-	      if( fTrace )
-		std::cout<<"Combination NOT found... position error: "<<err
-			 <<" or sigma: "<<sigma<<std::endl;
-	    }
-	} // loop over blobs and their fit
+          if( err < padFitErrThres &&
+              fabs(sigma-padSigma)/padSigma < padSigmaD )
+            {
+              if( fabs(pos) < ALPHAg::_halflength )
+                {
+                  // create new signal with combined pads
+                  CombinedPads.emplace_back( col, row, time, amp, amp_err, pos, err );
+                  //signal pad_cog( col, row, time, amp, amp_err, pos, err );
+                  //padcog.push_back(pad_cog);
+                  ++nPositions;
+                  if( fDebug )
+                    std::cout<<"CoG_blobs Combination Found! s: "<<col
+                             <<" i: "<<row
+                             <<" t: "<<time
+                             <<" a: "<<amp
+                             <<" z: "<<pos
+                             <<" err: "<<err<<std::endl;
+                }
+              else
+                {
+                  if( fDebug )
+                    std::cout<<"CoG_blobs Bad Combination Found! (z outside TPC) s: "<<col
+                             <<" i: "<<row
+                             <<" t: "<<time
+                             <<" a: "<<amp
+                             <<" z: "<<pos
+                             <<" err: "<<err<<std::endl;
+                }
+            }
+          else // fit is crazy
+            {
+              if( fTrace )
+                std::cout<<"Combination NOT found... position error: "<<err
+                         <<" or sigma: "<<sigma<<std::endl;
+            }
+        } // loop over blobs and their fit
     }// fit is valid
   else
     {
       if( fTrace )
-	std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
+        std::cout<<"\tFit Not valid with status: "<<r<<std::endl;
     }
 
   if( fTrace )
     std::cout<<"-------------------------------"<<std::endl;
-
+  return;
   //  return nPositions;
 }
 
 
-std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::MatchElectrodes(std::vector<ALPHAg::signal>* awsignals, std::vector<ALPHAg::signal>* CombinedPads )
+std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > Match::MatchElectrodes(
+     const std::vector<ALPHAg::signal> awsignals,
+     const std::vector<ALPHAg::signal> CombinedPads )
 {
-  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
-						     awsignals->end());
-  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(CombinedPads->begin(),
-						      CombinedPads->end());
-
-  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints=new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >;
-  int Nmatch=0;
-  for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals.begin(),
+ 					     awsignals.end());
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(CombinedPads.begin(),
+						      CombinedPads.end());
+  //Make very fast estimate of how big we need spacepoints to be
+  size_t Nmatch = 0;
+  for (const auto& iaw: aw_bytime)
+     if( iaw.t >= 0. )
+        for (const auto& ipd: pad_bytime)
+          if( ipd.t >= 0. )
+            Nmatch++;
+  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > spacepoints;
+  spacepoints.reserve(Nmatch);
+  Nmatch = 0;
+  for( const auto& iaw: aw_bytime)
     {
-      if( iaw->t < 0. ) continue;
-      short sector = short(iaw->idx/8);
-      short secwire = short(iaw->idx%8);
+      if( iaw.t < 0. ) continue;
+      const short sector = short(iaw.idx/8);
+      const short secwire = short(iaw.idx%8);
       if( fTrace )
-	std::cout<<"Match::Match aw: "<<iaw->idx
-		 <<" t: "<<iaw->t<<" pad sector: "<<sector<<std::endl;
-      for( auto ipd=pad_bytime.begin(); ipd!=pad_bytime.end(); ++ipd )
-	{
-	  if( ipd->t < 0. ) continue;
-	  bool tmatch=false;
-	  bool pmatch=false;
+        std::cout<<"Match::Match aw: "<<iaw.idx
+                 <<" t: "<<iaw.t<<" pad sector: "<<sector<<std::endl;
+      for (const auto& ipd: pad_bytime)
+       {
+
+          if( ipd.t < 0. ) continue;
+          //!pmatch
+          if( sector != ipd.sec ) continue;
+          //!tmatch
+          if( fabs( iaw.t - ipd.t ) >= fCoincTime ) continue;
 
           bool ampCut = (charge_dist_scale==0);
-
-	  double delta = fabs( iaw->t - ipd->t );
-	  if( delta < fCoincTime ) tmatch=true;
-
-	  if( sector == ipd->sec ) pmatch=true;
-
           if( !ampCut ){
-              ampCut = (ipd->height > charge_dist_scale*padThr*relCharge[secwire]);
+              ampCut = (ipd.height > charge_dist_scale*padThr*relCharge[secwire]);
           }
-
-	  if( tmatch && pmatch && ampCut )
-	    {
-	      spacepoints->push_back( std::make_pair(*iaw,*ipd) );
-	      //pad_bytime.erase( ipd );
-	      ++Nmatch;
-	      if( fTrace )
-		std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd->sec<<" pad row: "<<ipd->idx
-			 <<"\tpad err: "<<ipd->errz<<std::endl;
-	    }
-	}
+          if( ampCut )
+            {
+              spacepoints.emplace_back( std::make_pair(iaw,ipd) );
+              //pad_bytime.erase( ipd );
+              ++Nmatch;
+              if( fTrace )
+                std::cout<<"\t"<<Nmatch<<")  pad col: "<<ipd.sec<<" pad row: "<<ipd.idx
+                         <<"\tpad err: "<<ipd.errz<<std::endl;
+            }
+        }
     }
   //  if( fTrace )
   //std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
-  if( int(spacepoints->size()) != Nmatch )
-    std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
+  if( int(spacepoints.size()) != Nmatch )
+    std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints.size()<<std::endl;
   return spacepoints;
 }
 
 
-std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*  Match::FakePads(std::vector<ALPHAg::signal>* awsignals)
+std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >  Match::FakePads(const std::vector<ALPHAg::signal> awsignals)
 {
-  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
-						     awsignals->end());
-  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints=new std::vector<std::pair < ALPHAg::signal, ALPHAg::signal>>;
-  int Nmatch=0;
-  for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
+  std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals.begin(),
+                                                     awsignals.end());
+  size_t Nmatch = 0;
+  for (const auto& iaw: aw_bytime)
+      if( iaw.t >= 0. )
+         Nmatch++;
+  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > spacepoints;
+  spacepoints.reserve(Nmatch);
+  for (const auto& iaw: aw_bytime)
     {
-      if( iaw->t < 0. ) continue;
-      short sector = short(iaw->idx/8);
+      if( iaw.t < 0. ) continue;
+      const short sector = short(iaw.idx/8);
       //signal fake_pad( sector, 288, iaw->t, 1., 0.0 );
       //signal fake_pad( sector, 288, iaw->t, 1., 0.0, kUnknown);
-      ALPHAg::signal fake_pad( sector, 288, iaw->t, 1., 0.0, 0.0, zed_err);
-      spacepoints->push_back( std::make_pair(*iaw,fake_pad) );
-      ++Nmatch;
+      ALPHAg::signal fake_pad( sector, 288, iaw.t, 1., 0.0, 0.0, zed_err);
+      spacepoints.push_back( std::make_pair(iaw,fake_pad) );
     }
-  if( int(spacepoints->size()) != Nmatch )
-    std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
+  if( int(spacepoints.size()) != Nmatch )
+    std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints.size()<<std::endl;
   std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
   return spacepoints;
 }
 
-void Match::SortPointsAW(  const std::pair<double,int>& pos,
-			   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
-			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw )
+
+std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> Match::SortPointsAW(  const std::pair<double,int> pos,
+                       const std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*> vec )
 {
-  for(auto& s: vec)
+	std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw;
+  for(const auto& s: vec)
     {
       if( 1 )
-	std::cout<<"\ttime: "<<pos.first
-		 <<" row: "<<pos.second
-		 <<" aw: "<<s->first.idx
-		 <<" amp: "<<s->first.height
-		 <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
+        std::cout<<"\ttime: "<<pos.first
+                 <<" row: "<<pos.second
+                 <<" aw: "<<s->first.idx
+                 <<" amp: "<<s->first.height
+                 <<"   ("<<s->first.t<<", "<<s->second.idx<<")"<<std::endl;
       spaw[s->first.idx].push_back( s );
     }// vector of sp with same time and row
-}
-void Match::SortPointsAW(  std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
-			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw )
-//void Match::SortPointsAW(  const std::pair<double,int>& pos,
-//			   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
-//			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw )
-{
-  for(auto& s: vec)
-    {
-      spaw[s->first.idx].push_back( s );
-    }// vector of sp with same time and row
+    return spaw;
 }
 
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw,
-			 std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger)
+std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> Match::SortPointsAW( const std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*> vec)
+ //void Match::SortPointsAW(  const std::pair<double,int>& pos,
+ //			   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
+ //			   std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw )
+ {
+  std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw;
+  for(const auto& s: vec)
+    {
+      spaw[s->first.idx].push_back( s );
+    }// vector of sp with same time and row
+    return spaw;
+}
+
+std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>>  Match::CombPointsAW(std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw)
 {
+  std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> merger;
   int m=-1, aw = spaw.begin()->first, q=0;
-  for( auto& msp: spaw )
+  for( const auto& msp: spaw )
     {
       if( fTrace )
-	std::cout<<"Match::CombPointsAW: "<<msp.first<<std::endl;
-      for( auto &s: msp.second )
-	{
-	  if( abs(s->first.idx-aw) <= 1 )
-	    {
-	      merger[q].push_back( s );
-	      ++m;
-	    }
-	  else
-	    {
-	      ++q;
-	      merger[q].push_back( s );
-	      m=0;
-	    }
-	  if( fTrace )
-	    std::cout<<"\t"<<m
-		     <<" aw: "<<s->first.idx
-		     <<" amp: "<<s->first.height
-		     <<" phi: "<<s->first.phi
-		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
-		     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
-		     <<") {"
-		     <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
-		     <<std::endl;
-	  aw = s->first.idx;
-	}// vector of sp with same time and row and decreasing aw number
+        std::cout<<"Match::CombPointsAW: "<<msp.first<<std::endl;
+      for( const auto &s: msp.second )
+        {
+          if( abs(s->first.idx-aw) <= 1 )
+            {
+              merger[q].push_back( s );
+              ++m;
+            }
+          else
+            {
+              ++q;
+              merger[q].push_back( s );
+              m=0;
+            }
+          if( fTrace )
+            std::cout<<"\t"<<m
+                     <<" aw: "<<s->first.idx
+                     <<" amp: "<<s->first.height
+                     <<" phi: "<<s->first.phi
+                     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
+                     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
+                     <<") {"
+                     <<s->first.idx%8<<", "<<s->first.idx/8<<", "<<s->second.sec<<"}"
+                     <<std::endl;
+          aw = s->first.idx;
+        }// vector of sp with same time and row and decreasing aw number
     }// map of sp sorted by increasing aw number
+    return merger;
 }
-void Match::CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw,
-			 std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger)
-{
+
+std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> Match::CombPointsAW(const std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> spaw )
+ {
+  std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> merger;
   int m=-1, aw = spaw.begin()->first, q=0;
   // std::cout<<"Match::CombPoints() anode: "<<aw
   //          <<" pos: "<<_anodepitch * ( double(aw) + 0.5 )<<std::endl;
-  for( auto& msp: spaw )
+  for( const auto& msp: spaw )
     {
-      for( auto &s: msp.second )
-	{
-	  if( abs(s->first.idx-aw) <= 1 )
-	    {
-	      merger[q].push_back( s );
-	      ++m;
-	    }
-	  else
-	    {
-	      ++q;
-	      merger[q].push_back( s );
-	      m=0;
-	    }
-	  if( 0 )
-	    std::cout<<"\t"<<m
-		     <<" aw: "<<s->first.idx
-		     <<" amp: "<<s->first.height
-		     <<" phi: "<<s->first.phi
-		     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
-		     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
-		     <<") "
-		     <<std::endl;
-	  aw = s->first.idx;
-	}// vector of sp with same time and row and increasing aw number
+      for( const auto &s: msp.second )
+        {
+          if( abs(s->first.idx-aw) <= 1 )
+            {
+              merger[q].push_back( s );
+              ++m;
+            }
+          else
+            {
+              ++q;
+              merger[q].push_back( s );
+              m=0;
+            }
+          if( 0 )
+            std::cout<<"\t"<<m
+                     <<" aw: "<<s->first.idx
+                     <<" amp: "<<s->first.height
+                     <<" phi: "<<s->first.phi
+                     <<"   ("<<s->first.t<<", "<<s->second.idx<<", "
+                     << ALPHAg::_anodepitch * ( double(s->first.idx) + 0.5 )
+                     <<") "
+                     <<std::endl;
+          aw = s->first.idx;
+        }// vector of sp with same time and row and increasing aw number
     }// map of sp sorted by increasing aw number
+    return merger;
 }
 
-uint Match::MergePoints(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger,
-			std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
-			uint& number_of_merged)
-{
+uint Match::MergePoints(
+      const std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger,
+ 			std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
+ 		  uint& number_of_merged)
+ {
   uint np = 0;
-  for( auto &mmm: merger )
+  for( const std::pair<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>>& mmm: merger )
     {
       double pos=0.,amp=0.;
       double maxA=amp, amp2=amp*amp;
       if( fTrace )
-	std::cout<<"==="<<mmm.first<<std::endl;
+        std::cout<<"==="<<mmm.first<<std::endl;
       np+=mmm.second.size();
       uint j=0, idx=j;
       int wire=-1;
-      for( auto &p: mmm.second )
-	{
-	  double A = p->first.height,
-	    pphi = p->first.phi;
-	  if( 0 )
-	    std::cout<<" aw: "<<p->first.idx
-		     <<" amp: "<<p->first.height
-		     <<" phi: "<<p->first.phi
-		     <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
-		     << ALPHAg::_anodepitch * ( double(p->first.idx) + 0.5 )
-		     <<") "<<std::endl;
-	  amp += A;
-	  amp2 += (A*A);
-	  pos += (pphi*A);
-	  if( A > maxA )
-	    {
-	      idx = j;
-	      maxA = A;
-	      wire = p->first.idx;
-	    }
-	  ++number_of_merged;
-	  ++j;
-	}
-      double phi = pos/amp,
-	err = phi_err*sqrt(amp2)/amp,
-	H = amp/double(mmm.second.size());
+      for( const auto &p: mmm.second )
+        {
+          const double A = p->first.height,
+            pphi = p->first.phi;
+          if( 0 )
+            std::cout<<" aw: "<<p->first.idx
+                     <<" amp: "<<p->first.height
+                     <<" phi: "<<p->first.phi
+                     <<"   ("<<p->first.t<<", "<<p->second.idx<<", "
+                     << ALPHAg::_anodepitch * ( double(p->first.idx) + 0.5 )
+                     <<") "<<std::endl;
+          amp += A;
+          amp2 += (A*A);
+          pos += (pphi*A);
+          if( A > maxA )
+            {
+              idx = j;
+              maxA = A;
+              wire = p->first.idx;
+            }
+          ++number_of_merged;
+          ++j;
+        }
+      const double phi = pos/amp,
+        err = phi_err*sqrt(amp2)/amp,
+        H = amp/double(mmm.second.size());
       if( fTrace )
-	std::cout<<"\tpnt: "<<phi<<" +/- "<<err
-		 <<" A: "<<H<<" # "<<mmm.second.size()
-		 <<" wire: "<<wire<<" maxA: "<<maxA
-		 <<std::endl;
+        std::cout<<"\tpnt: "<<phi<<" +/- "<<err
+                 <<" A: "<<H<<" # "<<mmm.second.size()
+                 <<" wire: "<<wire<<" maxA: "<<maxA
+                 <<std::endl;
       for( uint i=0; i<mmm.second.size(); ++i )
-	{
-	  if( i == idx )
-	    {
-	      mmm.second.at(i)->first.height = H;
-	      mmm.second.at(i)->first.phi = phi;
-	      mmm.second.at(i)->first.errphi = err;
-	      merged.push_back( *mmm.second.at(i) );
-	      --number_of_merged;
-	    }
-	}
+        {
+          if( i == idx )
+            {
+              std::pair<ALPHAg::signal,ALPHAg::signal> m(*mmm.second.at(i));
+              m.first.height = H;
+              m.first.phi = phi;
+              m.first.errphi = err;
+              merged.emplace_back( m );
+              --number_of_merged;
+            }
+        }
     }
   return np;
 }
 
-std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints)
+void Match::CombPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >& spacepoints)
 {
   if( fTrace )
-    std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints->size()<<std::endl;
+    std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
 
   // sort sp by row and time
-  std::map<std::pair<double,int>,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>> combsp;
-  for(auto &sp: *spacepoints)
+  std::map<std::pair<double,int>,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> combsp;
+  for(const auto &sp: spacepoints)
     {
-      double time = sp.first.t;
-      int row = sp.second.idx;
+      const double time = sp.first.t;
+      const int row = sp.second.idx;
       std::pair<double,int> spid(time,row);
-      combsp[spid].push_back( &sp );
+      combsp[spid].emplace_back( &sp );
     }
 
   if( fTrace )
@@ -964,49 +965,46 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::
   uint n=0;
   std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>> merged;
   uint m=0;
-  for(auto &k: combsp)
+  for(const auto &k: combsp)
     {
       n+=k.second.size();
       if( k.second.size() > 1 )
-	{
-	  if( fTrace )
-	    std::cout<<"Match::CombPoints() vec size: "<<k.second.size()
-		     <<"\ttime: "<<k.first.first
-		     <<"ns row: "<<k.first.second<<std::endl;
+        {
+          if( fTrace )
+            std::cout<<"Match::CombPoints() vec size: "<<k.second.size()
+                     <<"\ttime: "<<k.first.first
+                     <<"ns row: "<<k.first.second<<std::endl;
 
-	  // sort sp by decreasing aw number
-	  std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw;
-	  //                  SortPointsAW( k.first, k.second, spaw );
-	  SortPointsAW( k.second, spaw );
+          // sort sp by decreasing aw number
+          std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>> spaw = SortPointsAW( k.second );
 
-	  std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>> merger;
-	  CombPointsAW(spaw,merger);
-	  if( 0 )
-	    std::cout<<"Match::CombPoints() merger size: "<<merger.size()<<std::endl;
+          std::map<int,std::vector<const std::pair<ALPHAg::signal,ALPHAg::signal>*>> merger = CombPointsAW(spaw);
+          if( 0 )
+            std::cout<<"Match::CombPoints() merger size: "<<merger.size()<<std::endl;
 
-	  uint np = MergePoints( merger, merged, m );
-	  if( np != k.second.size() )
-	    std::cerr<<"Match::CombPoints() ERROR tot merger size: "<<np
-		     <<" vec size: "<<k.second.size()<<std::endl;
-	}// more than 1 sp at the same time in the same row
+          uint np = MergePoints( merger, merged, m );
+          if( np != k.second.size() )
+            std::cerr<<"Match::CombPoints() ERROR tot merger size: "<<np
+                     <<" vec size: "<<k.second.size()<<std::endl;
+        }// more than 1 sp at the same time in the same row
       else
-	{
-	  merged.push_back( *k.second.at(0) );
-	}
+        {
+          merged.push_back( *k.second.at(0) );
+        }
     }// map of sp sorted by row and time
 
-  if( n != spacepoints->size() )
+  if( n != spacepoints.size() )
     std::cerr<<"Match::CombPoints() ERROR total comb size: "<<n
-	     <<"spacepoints size: "<<spacepoints->size()<<std::endl;
+             <<"spacepoints size: "<<spacepoints.size()<<std::endl;
   if( (n-merged.size()) != m )
     std::cerr<<"Match::CombPoints() ERROR spacepoints merged diff size: "<<n-merged.size()
-	     <<"\t"<<m<<std::endl;
+             <<"\t"<<m<<std::endl;
 
-  spacepoints->assign( merged.begin(), merged.end() );
+  spacepoints.assign( merged.begin(), merged.end() );
   if( fTrace ) {
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
-    std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
+    std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints.size()<<std::endl;
   }
-  std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
-  return spacepoints;
+  std::cout<<"Match::CombPoints() "<<spacepoints.size()<<" found"<<std::endl;
+  return;
 }

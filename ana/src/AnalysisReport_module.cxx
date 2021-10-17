@@ -68,14 +68,14 @@ public:
    }
 #endif
 #ifdef BUILD_AG
-   void FillTPCSigFlow(AgSignalsFlow* SigFlow)
+   void FillTPCSigFlow(const AgSignalsFlow* SigFlow)
    {
-      if (SigFlow->awSig)
-         sum_aw    += (double)SigFlow->awSig->size();
-      if (SigFlow->pdSig)
-         sum_pad   += (double)SigFlow->pdSig->size();
-      if (SigFlow->matchSig)
-         sum_match += (double)SigFlow->matchSig->size();
+      if (SigFlow->awSig.size())
+         sum_aw    += (double)SigFlow->awSig.size();
+      if (SigFlow->pdSig.size())
+         sum_pad   += (double)SigFlow->pdSig.size();
+      if (SigFlow->matchSig.size())
+         sum_match += (double)SigFlow->matchSig.size();
       AnalysisReport->IncrementSigEvents();
    }
 #endif

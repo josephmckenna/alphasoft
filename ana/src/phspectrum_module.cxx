@@ -120,13 +120,13 @@ public:
       std::vector<ALPHAg::signal>* adc32 = SigFlow->adc32max;
       std::vector<ALPHAg::signal>* pwb = SigFlow->pwbMax;
       
-      std::vector<ALPHAg::signal>* aws = SigFlow->awSig;
-      std::vector<ALPHAg::signal>* pads = SigFlow->pdSig;
+      std::vector<ALPHAg::signal> aws = SigFlow->awSig;
+      std::vector<ALPHAg::signal> pads = SigFlow->pdSig;
 
       if( fFlags->fMagneticField > 0. )
-         HelPHspect(e,*adc32,*pwb,*aws,*pads);
+         HelPHspect(e,*adc32,*pwb,aws,pads);
       else
-         LinePHspect(e,*adc32,*pwb,*aws,*pads);
+         LinePHspect(e,*adc32,*pwb,aws,pads);
       
       return flow;
    }
