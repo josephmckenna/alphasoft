@@ -49,6 +49,7 @@ option(BUILD_A2_SIM "Build A2 Simulation" OFF)
 option(BUILD_MANALYZER "Build MIDAS analyzer (manalyzer)" OFF)
 option(WARNINGS_ALL "Enable gcc warnings" OFF)
 option(LINTER "Enable clang-tidy to inspect C++ code" OFF)
+option(MINUIT2TRACK "Enable Minuit2 for track fitting" OFF)
 
 
 # Find Git
