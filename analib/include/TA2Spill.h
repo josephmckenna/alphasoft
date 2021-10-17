@@ -63,6 +63,13 @@ public:
       else
          return -1;
    }
+   std::string GetSequenceName() const
+   {
+      if (SeqData)
+         return SeqData->fSeqName;
+      else
+         return "none";
+   }
    using TObject::Print;
    virtual void Print();
 
