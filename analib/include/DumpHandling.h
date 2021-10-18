@@ -23,9 +23,12 @@ class DumpMarker
    uint32_t fMidasTime; //Sequence start time
    void Print()
    {
-      std::cout<<"SequencerID:"<<fSequencerID
-               <<"Name:"<< SEQ_NAMES.at(fSequencerID)
-               <<"\tSequenceCount:"<<fSequenceCount
+      std::cout<<"SequencerID:"<<fSequencerID;
+      if (fSequencerID < 0)
+        std::cout <<"\tName:N/A";
+      else
+         std::cout <<"\tName:"<< SEQ_NAMES.at(fSequencerID);
+      std::cout<<"\tSequenceCount:"<<fSequenceCount
                <<"\tDescription:"<<fDescription.c_str()
                <<"\tType:"<<fDumpType
                <<"\tonCount:"<<fonCount
@@ -850,8 +853,6 @@ public:
             seqcount
          )
       );
-      if (SequencerID==2)
-      Print();
       return;
    }
    void finish()
