@@ -155,53 +155,54 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+      fSVDStyle->SetPalette(kCool);
       fXYvert = TH2I(
                "XY Vertex",
-               "XY Vertex",
+               "XY Vertex; X(cm); Y(cm)",
                100,-4,4,
                100,-4,4
             );
       fZTvert = TH2I(
                "ZT Vertex",
-               "ZT Vertex",
+               "ZT Vertex; Z(cm); Run Time(s);",
                100,-30,30,
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime()
             );
       fXYpass = TH2I(
                "XY Pass Cut",
-               "XY Pass Cut",
+               "XY Pass Cut; X(cm); Y(cm)",
                100,-4,4,
                100,-4,4
             );
       fZTpass = TH2I(
                "ZT Pass Cut",
-               "ZT Pass Cut",
+               "ZT Pass Cut; Z(cm); Run Time(s)",
                100,-30,30,
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime()
             );
       fOccupancyT[0]= TH2I(
                "Hit Occupancy",
-               "Hit Occupancy",
+               "Hit Occupancy; Run Time(s); Silicon Module No;",
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime(),
                nSil,0,nSil
             );
       fOccupancyT[1]= TH2I(
                "Hit Occupancy with Tracks",
-               "Hit Occupancy with Tracks",
+               "Hit Occupancy with Tracks; Run Time(s); Silicon Module No;",
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime(),
                nSil,0,nSil
             );
 
       fOccupancyT[2]= TH2I(
                "Hit Occupancy with Vertex",
-               "Hit Occupancy with Vertex",
+               "Hit Occupancy with Vertex; Run Time(s); Silicon Module No;",
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime(),
                nSil,0,nSil
             );
             
       fOccupancyT[3]= TH2I(
                "Hit Occupancy with Pass Cut",
-               "Hit Occupancy with Pass Cut",
+               "Hit Occupancy with Pass Cut; Run Time(s); Silicon Module No;",
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime(),
                nSil,0,nSil
             );
