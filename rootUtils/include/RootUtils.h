@@ -13,8 +13,10 @@
 #include "TTreeReaderValue.h"
 #include "TGraph.h"
 
-#include "TSpill.h"
-#include "TA2Spill.h"
+
+#include "TA2SpillGetters.h"
+#include "TAGSpillGetters.h"
+
 
 #include "TAnalysisReport.h"
 

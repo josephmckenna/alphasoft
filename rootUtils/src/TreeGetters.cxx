@@ -12,7 +12,17 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    }
    return tree;
 }
+
+
 #ifdef BUILD_AG
+
+TTreeReader* Get_AGSpillTree(Int_t runNumber)
+{
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("AGSpillTree", f);
+   return t;
+}
+
 TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel)
 {
    TString Name="chrono/ChronoEventTree_";

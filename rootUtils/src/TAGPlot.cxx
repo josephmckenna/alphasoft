@@ -287,8 +287,7 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();
   Event.Counts        =event->GetCounts();
-  Event.Chrono_Channel.Board  =event->GetBoardIndex()-1;
-  Event.Chrono_Channel.Channel=event->GetChannel();
+  Event.Chrono_Channel=event->GetChannel();
   Event.RunTime       =event->GetRunTime();
   Event.OfficialTime  =official_time;
   Event.t             =official_time-StartOffset;
