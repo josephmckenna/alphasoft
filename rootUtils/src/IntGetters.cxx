@@ -102,14 +102,14 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
    delete e;
    return FirstEvent;
 }
-Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
    return  GetTPCEventNoBeforeOfficialTime(runNumber, tmin);
 }
-Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return  GetTPCEventNoBeforeOfficialTime(runNumber, tmax)+1;
 }
 #endif
@@ -176,7 +176,8 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
   std::cout<<"Ramp Duration "<<"\t"<<endRampTime<<" s"<<std::endl;
 
   // time "normalization"
-  //for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime;
+  //for(Int_t i=0; i<n; ++i) x[i] = x[i]-1; //For a ramp file off by 1s for whatever reason. 
+  for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime; //For a normal ramp file.
 
   return n;
 }

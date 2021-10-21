@@ -583,7 +583,7 @@ class TAPlot: public TObject
       TString GetListOfRuns();
 
       //Adders.
-      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) {assert(!"Child class must have this");};
+      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex ) {assert(!"Child class must have this");};
       void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
       void AddStopDumpMarker(double time)                {  fDumpStops.push_back(time); }
       void AddInjection(double time)                     {  fInjections.push_back(time);}

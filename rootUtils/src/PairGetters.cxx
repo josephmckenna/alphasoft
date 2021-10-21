@@ -35,6 +35,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
+   if(last_time < 0) last_time=GetTotalRunTimeFromSIS(runNumber);
 
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {

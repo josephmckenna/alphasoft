@@ -177,7 +177,7 @@ class TA2Plot: public TAPlot
       //Adding events and dumps
       void AddSVDEvent(TSVD_QOD* SVDEvent);
       void AddSISEvent(TSISEvent* SISEvent);
-      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
+      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex );
       void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
       //If spills are from one run, it is faster to call the function above
       void AddDumpGates(std::vector<TA2Spill> spills );

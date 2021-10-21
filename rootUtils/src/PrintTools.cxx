@@ -122,10 +122,10 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return PrintTPCEvents(runNumber,tmin,tmax);
 }
 #endif
@@ -437,17 +437,17 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << std::setw(10)<< runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t "<< std::setw(10) << runTimes[i];
          PrintedStarts++;
-         //Turn off repetition counting in SequenceQOD printing... just find the first matching stop after the start
-         /*Int_t repetition=0;
+         //Turn off dumpIndex counting in SequenceQOD printing... just find the first matching stop after the start
+         /*Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="startDump" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="startDump" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          */
          for (Int_t j=i; j< DumpCount; j++)
          {
-            if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {repetition--; }
+            if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {dumpIndex--; }
             //if (Names[j]=="stopDump" && Descriptions[i]==Descriptions[j])
             {
                TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
@@ -468,15 +468,15 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          shutterOpens++;
-         Int_t repetition=0;
+         Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          {
-            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")  { repetition--; }
-            if (repetition==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")
+            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")  { dumpIndex--; }
+            if (dumpIndex==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")
             {
                std::cout << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
                LogFile << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
@@ -490,15 +490,15 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          shutterOpens++;
-         Int_t repetition=0;
+         Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          {
-            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")  { repetition--; }
-            if (repetition==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")
+            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")  { dumpIndex--; }
+            if (dumpIndex==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")
             {
                std::cout << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
                LogFile << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;

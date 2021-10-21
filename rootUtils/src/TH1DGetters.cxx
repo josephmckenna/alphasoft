@@ -33,10 +33,10 @@ TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double
 }
 #endif
 #ifdef BUILD_AG
-TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+TH1D* Get_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
 #endif
@@ -54,10 +54,10 @@ TH1D* Get_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double
 }
 #endif
 #ifdef BUILD_AG
-TH1D* Get_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+TH1D* Get_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return Get_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 #endif
@@ -94,10 +94,10 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 }
 #endif
 #ifdef BUILD_AG
-TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+TH1D* Get_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
 }
 #endif
@@ -115,10 +115,10 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, 
 }
 #endif
 #ifdef BUILD_AG
-TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
+   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
    return Get_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
 }
 #endif
@@ -237,14 +237,12 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return Get_Summed_SIS( runNumber, SIS_Channel, spills);
 }
 #endif
-
-
 
 #ifdef BUILD_A2
 std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
@@ -356,9 +354,9 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Ch
 }
 #endif
 #ifdef BUILD_A2
-std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return Get_SIS( runNumber, SIS_Channel, spills);
 }
 #endif
