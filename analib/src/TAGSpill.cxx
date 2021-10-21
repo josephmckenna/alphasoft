@@ -1,18 +1,19 @@
 #include "TAGSpill.h"
 
-
 #ifdef BUILD_AG
 ClassImp(TAGSpillScalerData)
-
 /*TAGSpillScalerData::TAGSpillScalerData()
 {
 
 }*/
+
 TAGSpillScalerData::~TAGSpillScalerData()
 {
 
 }
-TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels): TSpillScalerData(n_scaler_channels)
+
+TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels):
+   TSpillScalerData(n_scaler_channels)
 {
 
 }
@@ -21,12 +22,9 @@ TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScale
 {
 
 }
-/*TAGSpillScalerData* TAGSpillScalerData::operator/(const TAGSpillScalerData* b)
-{
-   std::cout<<"JOE IMPLEMENT ME"<<std::endl;
-   return NULL;
-}*/
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d): TAGSpillScalerData()
+
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+   TAGSpillScalerData()
 {
    for (int i=0; i<CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
    {
@@ -48,15 +46,11 @@ TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N
    PassMVA           =d->IntegratedSVDCounts.PassMVA;*/
    VertexFilled      =true;
 }
-void TAGSpillScalerData::Print()
-{
-   std::cout<<"LOLOLOL IMPLEMENT THIS YOU FOOL"<<std::endl;
-}
-
 
 ClassImp(TAGSpillSequencerData)
 
-TAGSpillSequencerData::TAGSpillSequencerData(): TSpillSequencerData()
+TAGSpillSequencerData::TAGSpillSequencerData():
+   TSpillSequencerData()
 {
 }
 TAGSpillSequencerData::~TAGSpillSequencerData()
@@ -66,13 +60,36 @@ TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CH
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
+   if ( fSequenceNum < 0 )
+      fSeqName = "Sequencer Unknown";
+   else
    fSeqName    = SeqNames.at(fSequenceNum);
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
 
+void TAGSpillScalerData::Print()
+{
+   std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
+   std::cout<<"ChronoFilled: ";
+   for (size_t i=0; i<ScalerFilled.size(); i++)
+   {
+      std::cout<<ScalerFilled.at(i);
+   }
+   std::cout  << " BVFilled: "<<VertexFilled <<std::endl;
+   int sum=0;
+   for (int i = 0; i < CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+      sum+=DetectorCounts[i];
+   std::cout<<"ChronoEntries:"<< sum <<std::endl;
+   for (int i = 0; i < CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+   {
+      std::cout<<DetectorCounts[i]<<"\t";
+   }
+}
 
-TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a) : TSpillSequencerData(a)
+
+TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a):
+   TSpillSequencerData(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -82,11 +99,20 @@ TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a) : T
 }
 
 ClassImp(TAGSpill)
+
 TAGSpill::TAGSpill()
 {
-
+   SeqData    =NULL;
+   ScalerData =NULL;
 }
-TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...): TSpill(runno,unixtime)
+TAGSpill::TAGSpill(int runno, uint32_t unixtime): TSpill(runno, unixtime)
+{
+   SeqData    =NULL;
+   ScalerData =NULL;
+}
+
+TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...):
+   TSpill(runno,unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -106,31 +132,132 @@ TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*C
    //Print();
 }
 
+TAGSpill::TAGSpill(const TAGSpill& a):
+   TSpill(a)
+{
+   if (a.ScalerData)
+      ScalerData=new TAGSpillScalerData(*a.ScalerData);
+   else
+      ScalerData=NULL;
+   if (a.SeqData)
+      SeqData=new TAGSpillSequencerData(*a.SeqData);
+   else
+      SeqData=NULL;
+}
+
 TAGSpill::~TAGSpill()
 {
+   if (ScalerData)
+      delete ScalerData;
+   ScalerData=NULL;
+   if (SeqData)
+      delete SeqData;
+   SeqData=NULL;
 }
 
-TAGSpill::TAGSpill(const TAGSpill& a):
-   TSpill(a), ScalerData(a.ScalerData), SeqData(a.SeqData)
-{
+#include "assert.h"
 
-}
-TString TAGSpill::Content(std::vector<std::pair<int,int>>* chrono_channels, int& n_chans)
+
+TAGSpill* TAGSpill::operator/( TAGSpill* b)
 {
-   char buf[800];
-   TString log;
+   //c=a/b
+   TAGSpill* c=new TAGSpill(this->RunNumber, this->Unixtime);
+   c->IsInfoType=true;
+   assert(this->RunNumber == b->RunNumber);
+
+   assert(this->ScalerData->ScalerFilled.size());
+   assert(b->ScalerData->ScalerFilled.size());
+
+   assert(this->ScalerData->BVFilled);
+   assert(b->ScalerData->BVFilled);
+   if (DumpHasMathSymbol())
+      Name='('+Name+')';
+   if (b->DumpHasMathSymbol())
+   {
+      b->Name='('+b->Name+')';
+   }
+   char dump_name[200];
+   sprintf(dump_name,"%s / %s (%%)",this->Name.c_str(),b->Name.c_str());
+   c->Name=dump_name;
+
+   c->ScalerData =*ScalerData / b->ScalerData;
+
+   c->IsDumpType=false;
+   return c;
+}
+
+TAGSpill* TAGSpill::operator+( TAGSpill* b)
+{
+   //c=a/b
+   TAGSpill* c=new TAGSpill(this->RunNumber, this->Unixtime);
+   c->IsInfoType=true;
+   assert(this->RunNumber == b->RunNumber);
+
+   assert(this->ScalerData->ScalerFilled.size());
+   assert(b->ScalerData->ScalerFilled.size());
+
+   assert(this->ScalerData->BVFilled);
+   assert(b->ScalerData->BVFilled);
+
+   if (DumpHasMathSymbol())
+      Name='('+Name+')';
+
+   if (b->DumpHasMathSymbol())
+      b->Name='('+b->Name+')';
+
+   char dump_name[200];
+   sprintf(dump_name,"%s + %s",this->Name.c_str(),b->Name.c_str());
+
+   c->Name=dump_name;
+
+   c->ScalerData =*ScalerData + b->ScalerData;
+
+   c->IsDumpType=false;
+   return c;
+}
+
+bool TAGSpill::Ready( bool have_BV)
+{
+   if (IsDumpType)
+   {
+      return ScalerData->Ready(have_BV);
+   }
+   else
+   {
+      return true;
+   }
+}
+
+void TAGSpill::Print()
+{
+   std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
+   if (SeqData)
+      SeqData->Print();
+   if (ScalerData)
+      ScalerData->Print();
+   std::cout<<"Ready? "<< Ready(true) << " " << Ready(false)<<std::endl;
+   std::cout<<std::endl;
+}
+
+TString TAGSpill::Content(std::vector<ChronoChannel> chrono_channels)
+{
+   
+      TString log;
    //if (indent){
     log += "   "; // indentation     
    //}
-   TString units="";
+   std::string units="";
    {
-      int open=Name.find('(');
-      int close=Name.find(')');
-      if (open>0 && close > open)
-      units=(Name.substr (open+1,close-open-1));
+      int open=Name.find_last_of('(');
+      int close=Name.find_last_of(')');
+      if (open>0 &&       //Have open bracket
+         close > open &&  //Have close bracket
+         close - open<6)  //Units less than 6 characters long
+         units=(Name.substr (open+1,close-open-1));
    }
    if (ScalerData)
    {
+      char buf[200];
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
                  ScalerData->StartTime,
                  ScalerData->StopTime,
@@ -142,6 +269,7 @@ TString TAGSpill::Content(std::vector<std::pair<int,int>>* chrono_channels, int&
    {
       if (Unixtime)
       {
+         char buf[80];
          struct tm * timeinfo = ( (tm*) &Unixtime);
          sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
          log += buf;
@@ -149,36 +277,35 @@ TString TAGSpill::Content(std::vector<std::pair<int,int>>* chrono_channels, int&
    }
    if (SeqData)
    {
-      if (SeqData->fSequenceNum==0)
-        sprintf(buf," %-65s|",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==1)
-        sprintf(buf," %-16s%-49s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==2)
-        sprintf(buf," %-32s%-33s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==3)
-        sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
-      log += buf;
+      std::string dump_name;
+      for (int i = 0; i < SeqData->fSequenceNum; i++)
+         dump_name += std::string(4,' ');
+      dump_name += Name; // dump description
+      if (dump_name.size() > DUMP_NAME_WIDTH)
+         dump_name = dump_name.substr(0,DUMP_NAME_WIDTH);
+      else if (dump_name.size() < DUMP_NAME_WIDTH)
+         dump_name.insert(dump_name.size(), DUMP_NAME_WIDTH - dump_name.size(), ' ');
+      log += dump_name + std::string("|");
    }
    else
    {
-      if (ScalerData)
-         sprintf(buf," %-65s|",Name.c_str());
-      else
-         sprintf(buf," %s",Name.c_str());
-      log += buf;
+      log += std::string(" ") + Name;
    }
    if (ScalerData)
    {
-      for (int iDet = 0; iDet<n_chans; iDet++)
+      char buf[80];
+      for (const ChronoChannel& c: chrono_channels)
       {
          int counts=-1;
-         int board=chrono_channels->at(iDet).first;
-         int chan=chrono_channels->at(iDet).second;
          //If valid channel number:
-         if (chan>0)
-            counts=ScalerData->DetectorCounts[board*CHRONO_N_CHANNELS+chan];
-         sprintf(buf,"%9d%s ",counts,units.Data());
+         if (c.Channel > 0)
+            counts=ScalerData->DetectorCounts[c.GetIndex()];
+         sprintf(buf,"%9d",counts);
          log += buf;
+         if (units.size())
+            log += units;
+         else
+            log += " ";
       }
       sprintf(buf,"%9d ",ScalerData->PassCuts);
       log += buf;

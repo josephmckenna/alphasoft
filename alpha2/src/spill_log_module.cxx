@@ -182,22 +182,7 @@ public:
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
-      
 
-      std::vector<std::pair<std::string,std::string>> channels=
-      {
-         {"SIS_PMT_CATCH_OR", "Catch OR"},
-         {"SIS_PMT_CATCH_AND","Catch AND"},
-         //{"CT_SiPM1",         "CT SiPM1"},
-         //{"CT_SiPM2",         "CT SiPM2"},
-         {"CT_SiPM_OR",       "CT SiOR"},
-         {"CT_SiPM_AND",      "CT SiAND"},
-         {"SIS_PMT_ATOM_OR", "ATM OR"},
-         //{"PMT_12_AND_13",    "CT Stick"},
-         {"IO32_TRIG_NOBUSY","IO32_TRIG"},
-         {"PMT_10","PMT 10"},
-         {"ATOMSTICK","Atom Stick"}
-      };
  //RSA(const char* varname, std::vector<std::string> *value, bool create = false, int create_size = 0, int create_string_length = 0, MVOdbError* error = NULL) = 0;
   
    }
@@ -427,7 +412,7 @@ public:
 
       InMemorySpillTable.push_back("End run");
       InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
-      size_t lines=InMemorySpillTable.size();
+      const size_t lines = InMemorySpillTable.size();
       unsigned long byte_size=0;
       for (size_t i=0; i<lines; i++)
          byte_size+=InMemorySpillTable[i].size()*sizeof(char);
@@ -515,7 +500,7 @@ public:
       LogSpills();
       Spill_List.clear();
 
-      #endif
+#endif
    }
 
    void PauseRun(TARunInfo* runinfo)

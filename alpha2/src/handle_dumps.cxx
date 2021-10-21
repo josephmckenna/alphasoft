@@ -79,6 +79,7 @@ public:
       for (int j=0; j<USED_SEQ; j++) 
       {
          dumplist[j].SequencerID=j;
+         dumplist[j].fRunNo=runinfo->fRunNo;
          DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
@@ -148,7 +149,7 @@ public:
 #endif
          return flow;
       }
-      uint ndumps=DumpsFlow->DumpMarkers.size();
+      const uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
       {
 #ifdef HAVE_MANALYZER_PROFILER

@@ -12,7 +12,8 @@ TA2SpillScalerData::~TA2SpillScalerData()
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels): TSpillScalerData(n_scaler_channels)
+TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels):
+   TSpillScalerData(n_scaler_channels)
 {
 
 }
@@ -22,7 +23,8 @@ TA2SpillScalerData::TA2SpillScalerData(const TA2SpillScalerData& a): TSpillScale
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d): TA2SpillScalerData()
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d):
+   TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
@@ -50,7 +52,8 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODUL
 
 ClassImp(TA2SpillSequencerData)
 
-TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
+TA2SpillSequencerData::TA2SpillSequencerData():
+   TSpillSequencerData()
 {
 }
 TA2SpillSequencerData::~TA2SpillSequencerData()
@@ -67,6 +70,7 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
+
 void TA2SpillScalerData::Print()
 {
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
@@ -77,17 +81,18 @@ void TA2SpillScalerData::Print()
    }
    std::cout  << " SVDFilled: "<<VertexFilled <<std::endl;
    int sum=0;
-   for (int i=0; i<64; i++)
+   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
       sum+=DetectorCounts[i];
    std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VertexEvents<<std::endl;
-   for (int i=0; i<64; i++)
+   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
    {
       std::cout<<DetectorCounts[i]<<"\t";
    }
 }
 
 
-TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a) : TSpillSequencerData(a)
+TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a):
+   TSpillSequencerData(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -109,7 +114,8 @@ TA2Spill::TA2Spill(int runno, uint32_t unixtime): TSpill(runno, unixtime)
    ScalerData =NULL;
 }
 
-TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...): TSpill(runno,unixtime)
+TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...):
+   TSpill(runno,unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -128,7 +134,8 @@ TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
    //Print();
 }
 
-TA2Spill::TA2Spill(const TA2Spill& a): TSpill(a)
+TA2Spill::TA2Spill(const TA2Spill& a):
+   TSpill(a)
 {
    if (a.ScalerData)
       ScalerData=new TA2SpillScalerData(*a.ScalerData);
@@ -139,6 +146,7 @@ TA2Spill::TA2Spill(const TA2Spill& a): TSpill(a)
    else
       SeqData=NULL;
 }
+
 TA2Spill::~TA2Spill()
 {
    if (ScalerData)
@@ -179,6 +187,7 @@ TA2Spill* TA2Spill::operator/( TA2Spill* b)
    c->IsDumpType=false;
    return c;
 }
+
 TA2Spill* TA2Spill::operator+( TA2Spill* b)
 {
    //c=a/b
@@ -220,6 +229,7 @@ bool TA2Spill::Ready( bool have_svd)
       return true;
    }
 }
+
 void TA2Spill::Print()
 {
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
@@ -286,11 +296,11 @@ TString TA2Spill::Content(const std::vector<int> sis_channels)
    if (ScalerData)
    {
       char buf[80];
-      for ( const int& chan: sis_channels)
+      for (const int& chan: sis_channels)
       {
          int counts=-1;
          //If valid channel number:
-         if (chan>0)
+         if (chan > 0)
             counts=ScalerData->DetectorCounts[chan];
          sprintf(buf,"%9d",counts);
          log += buf;

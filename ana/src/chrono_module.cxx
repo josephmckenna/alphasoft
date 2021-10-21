@@ -302,10 +302,9 @@ struct ChronoChannelEvent {
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
-      fChronoEvent[b][Chan]->SetBoardIndex(b+1);
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
       //fChronoEvent[b][Chan]->SetOfficialTime(OT);
-      fChronoEvent[b][Chan]->SetChannel(Chan);
+      fChronoEvent[b][Chan]->SetChannel(Chan,b+1);
       fChronoEvent[b][Chan]->SetCounts(counts);
       ChronoEvent* CE=new ChronoEvent{MidasTime,RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
@@ -336,9 +335,8 @@ struct ChronoChannelEvent {
       fChronoTS[b][Chan]->SetID(TSID);
       TSID++;
       fChronoTS[b][Chan]->SetTS(gFullTS[b]);
-      fChronoTS[b][Chan]->SetBoardIndex(b+1);
       fChronoTS[b][Chan]->SetRunTime(RunTime);
-      fChronoTS[b][Chan]->SetChannel(Chan);
+      fChronoTS[b][Chan]->SetChannel(Chan,b+1);
       ChronoTimeStampTree[b][Chan]->Fill();
       gLastTS[b]=gTS[b];
       TSEvents[b]++;

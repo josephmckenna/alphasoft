@@ -8,13 +8,11 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "TSISEvent.h"
 #include "TSpill.h"
 #include "AgFlow.h"
 #include "RecoFlow.h"
 #include "TChrono_Event.h"
 #include "TChronoChannelName.h"
-#include "AnalysisTimer.h"
 #include "DumpHandling.h"
 #include <iostream>
 class DumpMakerModuleFlags
@@ -22,8 +20,6 @@ class DumpMakerModuleFlags
 public:
    bool fPrint = false;
 };
-TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
-
 
 class DumpMakerModule: public TARunObject
 {
@@ -37,6 +33,12 @@ public:
 
    ChronoChannel DumpStartChannels[USED_SEQ];
    ChronoChannel DumpStopChannels[USED_SEQ];
+   
+   ChronoChannel fADChannel = {-1, -1};
+   ChronoChannel fPreTriggerChannel = {-1, -1};
+   int fADCounter;
+   int fPreTriggerCounter;
+   
    ChronoChannel detectorCh[MAXDET];
    TString detectorName[MAXDET];
    
@@ -48,6 +50,9 @@ public:
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Handle Dumps";
+#endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
    }
@@ -63,7 +68,10 @@ public:
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       for (int j=0; j<USED_SEQ; j++) 
+      {
+         dumplist[j].SequencerID=j;
          dumplist[j].fRunNo=runinfo->fRunNo;
+      }
       //Save chronobox channel names
       TChronoChannelName* name[CHRONO_N_BOARDS];
       TString ChannelName;
@@ -71,6 +79,7 @@ public:
       for (int i=0; i<USED_SEQ; i++)
       {
          int iSeq=USED_SEQ_NUM[i];
+         
          std::cout<<i<<" is " << iSeq <<std::endl;
          DumpStartChannels[iSeq].Channel=-1;
          DumpStartChannels[iSeq].Board=-1;
@@ -173,7 +182,11 @@ public:
       if (IncompleteDumps.size())
          printf("Error: Incomplete dumps!!!");
       for ( auto &spill :  IncompleteDumps )
+      {
+         std::cout<<"Deleting spill:"<<std::endl;
          spill->Print();
+         delete spill;
+      }
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -191,38 +204,48 @@ public:
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       if( me->event_id != 8 ) // sequencer event id
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
-      if (!DumpFlow)
+      }
+      DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
+      if (!DumpsFlow)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      uint ndumps=DumpFlow->DumpMarkers.size();
+      }
+      const uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      int iSeq=DumpFlow->SequencerNum;
+      }
+      int iSeq=DumpsFlow->SequencerNum;
+      std::cout <<"iSeq"<<iSeq <<std::endl;
       {
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
       dumplist[iSeq].setup(me->time_stamp);
       
-      for(auto dump: DumpFlow->DumpMarkers)
+      for(auto dump: DumpsFlow->DumpMarkers)
       {
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpFlow->states);
+      dumplist[iSeq].AddStates(DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver);
+      dumplist[iSeq].check(DumpsFlow->driver);
       
       }
       //dumplist[iSeq].Print();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
-      #endif
       return flow;
    }
 

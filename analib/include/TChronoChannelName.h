@@ -31,18 +31,12 @@
 class TChronoChannelName : public TObject
 {
   private:
-  Int_t fChronoBoxIndex; //Box index isn't used yet...
   Int_t fChronoBoardIndex;
-  TString Name[CHRONO_N_CHANNELS];
+  std::vector<std::string> fName;
   public:
   
    TChronoChannelName();
-#ifdef INCLUDE_VirtualOdb_H
-   TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex=-1);
-#endif
-#ifdef INCLUDE_MVODB_H
-  TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex=-1);
-#endif
+   TChronoChannelName(MVOdb* Odb, Int_t board);
    
    TChronoChannelName(TString json, Int_t b);
 
@@ -51,14 +45,12 @@ class TChronoChannelName : public TObject
    using TObject::Print;
    virtual void Print();
    virtual ~TChronoChannelName();
-   Int_t GetBoxIndex()                   { return fChronoBoxIndex; }
-   Int_t GetBoardIndex()                 { return fChronoBoardIndex; }
-   TString GetChannelName(Int_t Channel) { return Name[Channel]; }
-   Int_t GetChannel(TString ChannelName, Bool_t exact_match=kTRUE);
+   Int_t GetBoardIndex() const                 { return fChronoBoardIndex; }
+   std::string GetChannelName(Int_t Channel) const { return fName.at(Channel); }
+   Int_t GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
 
-   void SetBoxIndex(Int_t _index)        { fChronoBoxIndex = _index; }
-   void SetBoardIndex(Int_t _index)      { fChronoBoardIndex = _index; }
-   void SetChannelName(TString _name, Int_t i) { Name[i]=_name; }
+   void SetBoardIndex(Int_t index)      { fChronoBoardIndex = index; }
+   void SetChannelName(std::string name, size_t i) { fName.at(i)= name; }
    
   ClassDef( TChronoChannelName, 1 )
 };

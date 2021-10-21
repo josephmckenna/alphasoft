@@ -22,33 +22,22 @@ TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
 #endif
 #ifdef INCLUDE_MVODB_H
 //New manalyzer uses VirtualODB (after Jan 2020)
-TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex)
+TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
 {
    SetBoardIndex(b+1);
-   SetBoxIndex(BoxIndex);
-   for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-      {
-         TString OdbPath="Equipment/cbms0";
-         OdbPath+=b+1;
-         OdbPath+="/Settings/ChannelNames";
+   std::string OdbPath="Equipment/cbms0" + std::to_string( b + 1) + "/Settings/ChannelNames";
          //std::cout<<"MVODB "<<OdbPath<<" ch: "<<chan<<std::endl;
          //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
          //if (Odb->odbReadString(OdbPath.Data(),chan))
-         std::string tmp;
-         Odb->RSAI(OdbPath.Data(),chan,&tmp);
-         SetChannelName(tmp.c_str(),chan);
-      }
+   Odb->RSA(OdbPath.c_str(),&fName,true,60,250);
 }
 #endif
-TChronoChannelName::TChronoChannelName()
+TChronoChannelName::TChronoChannelName(): fName(CHRONO_N_CHANNELS)
 {
-   fChronoBoxIndex=-1;
    fChronoBoardIndex=-1;
-   for (int i=0; i<CHRONO_N_CHANNELS; i++)
-     Name[i]="";
 }
 
-TChronoChannelName::TChronoChannelName(TString json, Int_t b)
+TChronoChannelName::TChronoChannelName(TString json, Int_t b): fName(CHRONO_N_CHANNELS)
 {
    TString ChannelJSON;
    int last;
@@ -83,8 +72,7 @@ TChronoChannelName::TChronoChannelName(TString json, Int_t b)
    exit(1);
    #endif
    for (int i=0; i<CHRONO_N_CHANNELS; i++)
-      Name[i]=me->GetChannelName(i);
-   fChronoBoxIndex=me->GetBoxIndex();
+      fName[i]=me->GetChannelName(i);
    fChronoBoardIndex=me->GetBoardIndex();
    //me->Print();
    delete me;
@@ -120,21 +108,20 @@ void TChronoChannelName::DumpToJson(int runno)
 
 void TChronoChannelName::Print()
 {
-
-  std::cout<<"Box Index:\t"<<fChronoBoxIndex<<std::endl;;
-  std::cout<<"Board Index:\t"<<fChronoBoardIndex<<std::endl;
-  for (int i=0; i<CHRONO_N_CHANNELS; i++)
-     std::cout<<i<<": "<<Name[i] <<std::endl;
+   std::cout<<"Board Index:\t"<<fChronoBoardIndex<<std::endl;
+   for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      std::cout<<i<<": "<<fName[i] <<std::endl;
 }
 
-Int_t TChronoChannelName::GetChannel(TString ChannelName, Bool_t exact_match)
+Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_match) const
 {
    if (!exact_match)
    {
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
          //std::cout <<Name[i]<<std::endl;
-         if (Name[i].BeginsWith(ChannelName)) return i;
+         //std::string doesn't have this functionality until C++20 :(
+         if (TString(fName[i]).BeginsWith(ChannelName)) return i;
       }
    }
    else
@@ -142,7 +129,7 @@ Int_t TChronoChannelName::GetChannel(TString ChannelName, Bool_t exact_match)
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
          //std::cout <<Name[i]<<std::endl;
-         if (Name[i].CompareTo(ChannelName)==0) return i;
+         if (fName[i] == ChannelName) return i;
       }
    }
    return -1;
