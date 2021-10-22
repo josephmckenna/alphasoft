@@ -259,10 +259,11 @@ struct ChronoChannelEvent {
       else
       {
          gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b])// && gClock[b]<100000)
+         if (gClock[b]<LastTime[b] && gClock[b]<100000)
          {
             NOverflows[b]++;
-            //std::cout <<"OVERFLOWING"<<std::endl;
+            std::cout <<"OVERFLOWING" << b<<std::endl;
+            std::cout<<gClock[b] << "<"<< LastTime[b]<<std::endl;
          }
          //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
          LastTime[b]=gClock[b];
@@ -281,7 +282,6 @@ struct ChronoChannelEvent {
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
-
       //Check for sync
       if (Chan==SyncChannel[b])
          if (FirstSyncTime[b]<0)
@@ -446,7 +446,7 @@ struct ChronoChannelEvent {
                         //Double check the right channel numbers?
                         //if (Chan<CHRONO_N_CHANNELS)
                         if (pos<0) break;
-                        if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
+                        if (cce[pos].Channel == CHRONO_CLOCK_CHANNEL) break;
                         if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
                         {
                            std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;
