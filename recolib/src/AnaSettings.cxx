@@ -24,7 +24,7 @@ AnaSettings::AnaSettings(const char* name)
       //      std::cout<<"JSON: "<<str<<std::endl;
    }
    settings =json::parse(str);
-   std::cout<<"Json parsing success!"<<std::endl;
+   //std::cout<<"Json parsing success!"<<std::endl;
    json_file.close();
 }
 

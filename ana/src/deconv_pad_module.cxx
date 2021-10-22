@@ -265,7 +265,7 @@ public:
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
-      fFlags.ana_settings->Print();
+      if(fFlags.fTrace) fFlags.ana_settings->Print();
    }
 
    void Finish()
