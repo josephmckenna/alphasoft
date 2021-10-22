@@ -3,21 +3,19 @@
 #endif
 
 
-std::ostream& operator<<(std::ostream& o, ChronoChannel& c)
+std::ostream& operator<<(std::ostream& o, const TChronoChannel& c)
 {
-   return o << "Board: " << c.Board << "\tChannel: " << c.Channel; 
+   return o << "Board: " << c.GetBoard() << "\tChannel: " << c.GetChannel(); 
 }
-bool operator==(const ChronoChannel & lhs,const ChronoChannel & rhs) {
-    return ((lhs.Channel == rhs.Channel) && (lhs.Board == rhs.Board));
+bool operator==(const TChronoChannel & lhs,const TChronoChannel & rhs) {
+    return ((lhs.GetChannel() == rhs.GetChannel()) && (lhs.GetBoard() == rhs.GetBoard()));
 }
 
 ClassImp(TChrono_Event)
 
-TChrono_Event::TChrono_Event()
+TChrono_Event::TChrono_Event(): TChronoChannel()
 {
 // ctor
-   fChannel.Board=-1.;
-   fChannel.Channel=-1.;
    fID=-1.;
    fCounts = 0;
    ts=0.;
@@ -27,8 +25,8 @@ TChrono_Event::TChrono_Event()
 
 void TChrono_Event::Reset()
 {
-   fChannel.Board=-1.;
-   fChannel.Channel=-1.;
+   SetBoard(-1.);
+   SetChannel(-1.);
    fID=-1.;
    fCounts = 0;
    ts=0.;
@@ -38,9 +36,9 @@ void TChrono_Event::Reset()
 
 void TChrono_Event::Print()
 {
-   std::cout<<"Board Index:\t"<<fChannel.Board<<std::endl;
+   std::cout<<"Board Index:\t"<<GetBoard()<<std::endl;
    std::cout<<"Event ID:\t"<<fID<<std::endl;
-   std::cout<<"Channel:\t"<<fChannel.Channel<<std::endl;
+   std::cout<<"Channel:\t"<<GetChannel()<<std::endl;
    std::cout<<"Counts:\t" << fCounts <<std::endl;
    std::cout<<"TimeStamp:\t"<<ts<<std::endl;;
    std::cout<<"RunTime:\t"<<runtime<<std::endl;

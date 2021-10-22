@@ -164,7 +164,7 @@ public:
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
 
-   std::vector<ChronoChannel> chrono_channels;
+   std::vector<TChronoChannel> chrono_channels;
    int n_chrono_channels;
 
 
@@ -175,10 +175,10 @@ public:
    // Int_t SequencerNum[4];
    Int_t gADSpillNumber;
    TSpill* gADSpill;
-   ChronoChannel gADSpillChannel={-1,-1};
+   TChronoChannel gADSpillChannel={-1,-1};
    
    Int_t gPOSSpillNumber;
-   ChronoChannel gPOSSpillChannel={-1,-1};
+   TChronoChannel gPOSSpillChannel={-1,-1};
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
@@ -298,13 +298,14 @@ public:
             if (channel>0)
             {
                found = true;
-               chrono_channels.push_back({channel,board});
+               chrono_channels.emplace_back(TChronoChannel(board,channel));
                break;
             }
          }
          if (!found)
-               chrono_channels.push_back({-1,-1});
+            chrono_channels.emplace_back(TChronoChannel(-1,-1));
       }
+
       n_chrono_channels=chrono_channels.size();
 
       for (auto c: chrono_channels)

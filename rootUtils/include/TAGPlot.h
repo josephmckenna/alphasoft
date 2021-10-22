@@ -75,7 +75,7 @@ struct ChronoPlotEvent {
    Double_t RunTime;
    Double_t OfficialTime;
    Int_t Counts;
-   ChronoChannel Chrono_Channel;
+   TChronoChannel Chrono_Channel;
 };
 
 class TAGPlot : public TObject
@@ -106,15 +106,15 @@ private:
   std::map<std::string,int> HISTO_POSITION;
   
   //Detector Chrono channels
-  ChronoChannel top;
-  ChronoChannel bottom;
-  ChronoChannel sipmad;
-  ChronoChannel sipmcf;
-  ChronoChannel TPC_TRIG;
+  TChronoChannel top;
+  TChronoChannel bottom;
+  TChronoChannel sipmad;
+  TChronoChannel sipmcf;
+  TChronoChannel TPC_TRIG;
     
   //Beam injection/ ejection markers:
-  ChronoChannel Beam_Injection;
-  ChronoChannel Beam_Ejection;
+  TChronoChannel Beam_Injection;
+  TChronoChannel Beam_Ejection;
   std::vector<Double_t> Ejections;
   std::vector<Double_t> Injections;
   
@@ -130,7 +130,7 @@ private:
   
   //List of all SIS channels above,used to loop over them
   //(Set in SetSISChannel(runNumber))
-  std::vector<ChronoChannel> ChronoChannels;
+  std::vector<TChronoChannel> ChronoChannels;
   
   std::vector<Int_t> Runs;
 
@@ -172,7 +172,7 @@ public:
 
   void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
 
-  Int_t AddEvents(Int_t runNumber, char *description, Int_t dumpIndex=0, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
+  Int_t AddEvents(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
   Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
 
   void SetChronoChannels(Int_t runNumber);

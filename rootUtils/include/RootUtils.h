@@ -17,6 +17,7 @@
 #include "TA2SpillGetters.h"
 #include "TAGSpillGetters.h"
 
+#include "TChronoChannelGetters.h"
 
 #include "TAnalysisReport.h"
 

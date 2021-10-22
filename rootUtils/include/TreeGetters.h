@@ -12,8 +12,8 @@ TTreeReader* Get_AGSpillTree(Int_t runNumber);
 
 #include "TChrono_Event.h"
 
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel);
-TTree* Get_Chrono_Tree(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel, double &official_time);
+TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, TChronoChannel ChronoBoardChannel);
+TTree* Get_Chrono_Tree(Int_t runNumber, TChronoChannel ChronoBoardChannel, double &official_time);
 //TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time);
 TTree* Get_Chrono_Name_Tree(Int_t runNumber);
 

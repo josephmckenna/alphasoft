@@ -36,7 +36,7 @@ void PrintChronoNames(int runNumber)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {
-         Names[boards][chans]=Get_Chrono_Name(runNumber, boards, chans);
+         Names[boards][chans]=Get_Chrono_Name(runNumber, TChronoChannel(boards, chans));
       }
    }
    std::cout<<"Name\tBoard\tChannel"<<std::endl;
@@ -61,8 +61,8 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {
-         Names[boards][chans]=Get_Chrono_Name(runNumber, boards, chans);
-         Counts[boards][chans]=GetCountsInChannel(runNumber,boards,chans,tmin,tmax);
+         Names[boards][chans]=Get_Chrono_Name(runNumber, TChronoChannel(boards, chans));
+         Counts[boards][chans]=GetCountsInChannel(runNumber,TChronoChannel(boards, chans),tmin,tmax);
       }
    }
    std::cout<<"Name\tBoard\tChannel\tCounts\tRate"<<std::endl;
@@ -122,10 +122,11 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t dumpIndex)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   Double_t tmin = spills.front().GetStartTime();
+   Double_t tmax = spills.front().GetStopTime();
    return PrintTPCEvents(runNumber,tmin,tmax);
 }
 #endif
@@ -217,7 +218,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       Sequencer[i]=seqEvent->GetSeq();
       Names[i] = seqEvent->GetEventName();
       //std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
-      runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent, 0); //Turn off redundant timecheck for speed here
+      runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent); //Turn off redundant timecheck for speed here
       //Get_RunTime_of_SequencerEvent(runNumber, seqEvent);
       //std::cout << "\t" << runTimes[i] <<std::endl;
       if (runTimes[i]<0.)
@@ -257,7 +258,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
       double ot;
-      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,GetChronoBoardChannel(runNumber, CHRONO_FLAG_NAME), ot );
+      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,Get_Chrono_Channel(runNumber, CHRONO_FLAG_NAME), ot );
 
       if( trigger_tree == NULL )
          continue; //Error state?
@@ -325,22 +326,16 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
   std::cout<<"\n";
  
   Int_t nChannels=6;
-  Int_t* channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
-  Int_t* boards[CHRONO_N_CHANNELS*CHRONO_N_BOARDS];
-  Int_t chan=0;
+  TChronoChannel channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
   
-   for (Int_t i=0; i<nChannels; i++)
-   {
-      channels[i]=new Int_t(-1);
-      boards[i]=new Int_t(-1);
-   }
+  TChronoChannel chan;
+  
    for (Int_t board=0; board<CHRONO_N_BOARDS; board++)
      {
-      chan=Get_Chrono_Channel(runNumber,board,"CATCH_OR");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"CATCH_OR");
+      if (chan.IsValidChannel())
       {
-        *channels[0]=chan;
-        *boards[0]=board;
+        channels[0]=chan;
       }
       // chan=Get_Chrono_Channel(runNumber,board,"CATCH_AND");
       // if (chan>-1)
@@ -372,35 +367,30 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       //   *channels[5]=chan;
       //   *boards[5]=board;
       // }
-      chan=Get_Chrono_Channel(runNumber,board,"TPC_TRIG");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"TPC_TRIG");
+      if (chan.IsValidChannel())
       {
-        *channels[1]=chan;
-        *boards[1]=board;
+        channels[1]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_B");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_B");
+      if (chan.IsValidChannel())
       {
-        *channels[2]=chan;
-        *boards[2]=board;
+        channels[2]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_E");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_E");
+      if (chan.IsValidChannel())
       {
-        *channels[3]=chan;
-        *boards[3]=board;
+        channels[3]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A_AND_D");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_A_AND_D");
+      if (chan.IsValidChannel())
       {
-        *channels[4]=chan;
-        *boards[4]=board;
+        channels[4]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C_AND_F");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_C_AND_F");
+      if (chan.IsValidChannel())
       {
-        *channels[5]=chan;
-        *boards[5]=board;
+        channels[5]=chan;
       }
      }
    
@@ -423,12 +413,13 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       StopTriggers+=GetCountsInChannel(runNumber,"POS_STOP_DUMP");
     
    std::cout<<"\nStart Triggers: "<<StartTriggers<<"\tStop Triggers: "<<StopTriggers<<"\n"<<std::endl;
-
-   std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels) <<"\n";
+   // FIX ME!
+   //std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,TChronoChannel(boards,channels),nChannels) <<"\n";
    LogFile << "===================="<<"\n";
    LogFile << "Dump and CB trigger table: " <<"\n";
    LogFile << "===================="<<"\n";
-   LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
+   // FIX ME!
+   //LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
    for (Int_t i=0; i< DumpCount; i++)
    {
       //Pair start and Stop dump makers in table
@@ -450,9 +441,10 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
             if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {dumpIndex--; }
             //if (Names[j]=="stopDump" && Descriptions[i]==Descriptions[j])
             {
-               TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
-               std::cout << " \t " << std::setw(10)<<runTimes[j] << " \t " <<std::setw(10)<< runTimes[j]-runTimes[i]<<DetectorData <<std::endl;
-               LogFile << " \t " << std::setw(10)<<runTimes[j] << " \t "<<std::setw(10) << runTimes[j]-runTimes[i]<<DetectorData <<"\n";
+               //FIX ME
+               //TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
+               //std::cout << " \t " << std::setw(10)<<runTimes[j] << " \t " <<std::setw(10)<< runTimes[j]-runTimes[i]<<DetectorData <<std::endl;
+               //LogFile << " \t " << std::setw(10)<<runTimes[j] << " \t "<<std::setw(10) << runTimes[j]-runTimes[i]<<DetectorData <<"\n";
                PrintedStops++;
                break;
             }

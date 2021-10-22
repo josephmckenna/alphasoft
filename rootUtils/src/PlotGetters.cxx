@@ -7,51 +7,87 @@ extern Int_t gNbin;
 //Plots
 
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+
+// Significant duplication of code between this and Plot_SIS...
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax)
 {
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
-  h->GetXaxis()->SetTitle("Time [s]");
-  h->GetYaxis()->SetTitle("Counts");
-  h->Draw();
-  return;  
-} 
+   TCanvas* c = new TCanvas();
+   AlphaColourWheel colour;
+   TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+
+   std::vector<std::vector<TH1D*>> hh=Get_Chrono(runNumber, channel,tmin, tmax);
+   double max_height = 0;
+   double min_height = 1E99;
+   for (auto times: hh)
+      for (TH1D* h: times)
+      {
+         double min, max;
+         h->GetMinimumAndMaximum(min, max);
+         if (max > max_height)
+         {
+            max_height = max;
+         }
+         if (min < min_height)
+         {
+            min_height = min;
+         }
+      }
+   if (min_height < 10 && min_height >= 0)
+      min_height = 0;
+   
+   for (int j=0; j<tmin.size(); j++)
+      for (int i=0; i<channel.size(); i++)
+      {
+         legend->AddEntry(hh[i][j]);
+         hh[i][j]->SetLineColor(colour.GetNewColour());
+         if (i ==0 && j == 0)
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST");
+         }
+         else
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST SAME");
+         }
+      }
+   //std::cout<<"min:"<< min_height <<"\tmax:"<<max_height <<std::endl;
+   legend->Draw();
+   c->Update();
+   c->Draw();
+   return c;
+}
+
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
+
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<std::string> description, std::vector<int> index)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
-  return Plot_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, description, index);
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  for (const TAGSpill& s: spills)
+  {
+    tmin.push_back( s.GetStartTime() );
+    tmax.push_back( s.GetStopTime() );
+  }
+  return Plot_Chrono(runNumber, channel, tmin, tmax);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
+TCanvas* Plot_Chrono(Int_t runNumber, const char* ChannelName, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);  
-  h->GetXaxis()->SetTitle("Time [s]");
-  h->GetYaxis()->SetTitle("Counts");
-  TString cname = TString::Format("c%s_%1.3f-%1.3f",ChannelName,tmin,tmax);
-  TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1000);
-  c->cd();
-  h->Draw();
-  return;  
-} 
-#endif
-#ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
-{
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
-  return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
+  std::vector<TChronoChannel> chan;
+  chan.push_back( Get_Chrono_Channel(runNumber, ChannelName) );
+  return Plot_Chrono(runNumber, chan, description, dumpIndex);
 }
 #endif
+
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);  
+  TH1D* h=Get_Delta_Chrono( runNumber, channel, tmin, tmax);  
   h->GetXaxis()->SetTitle("Time [s]");
   h->GetYaxis()->SetTitle("Counts");
   h->Draw();
@@ -59,11 +95,17 @@ void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, const char* description, Int_t dumpIndex)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
-  return Plot_Delta_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  for (const TAGSpill& s: spills)
+  {
+    tmin.push_back( s.GetStartTime() );
+    tmax.push_back( s.GetStopTime() );
+  }
+  return Plot_Delta_Chrono(runNumber, channel, tmin.front(), tmax.front());
 }
 #endif
 #ifdef BUILD_AG
@@ -76,11 +118,10 @@ void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
-  return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   return Plot_Delta_Chrono(runNumber, ChannelName, spills.front().GetStartTime(), spills.front().GetStopTime());
 }
 #endif
 #ifdef BUILD_AG
@@ -96,7 +137,8 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
   int i=0;
   for(auto it = channels.begin(); it!=channels.end(); ++it)
     {
-      TH1D* h=Get_Chrono( runNumber, it->c_str(), tmin, tmax);  
+      TChronoChannel chan = Get_Chrono_Channel(runNumber,it->c_str());
+      TH1D* h=Get_Chrono( runNumber, {chan}, {tmin}, {tmax}).front().front();
       h->GetXaxis()->SetTitle("Time [s]");
       h->GetYaxis()->SetTitle("Counts"); 
       c->cd(++i);
@@ -108,9 +150,8 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 #ifdef BUILD_AG
 void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
-  return PlotChronoScintillators(runNumber, tmin, tmax);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   return PlotChronoScintillators(runNumber, spills.front().GetStartTime(), spills.front().GetStopTime());
 }
 #endif
 #ifdef BUILD_AG
@@ -128,8 +169,9 @@ void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
 #ifdef BUILD_AG
 void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   double tmin = spills.front().GetStartTime();
+   double tmax = spills.front().GetStopTime();
   std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
   double ttmin = GetTrigTimeBefore(runNumber,tmin),
     ttmax = GetTrigTimeAfter(runNumber,tmax);
@@ -140,12 +182,14 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t 
 #ifdef BUILD_AG
 void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex, Int_t offset)
 { 
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
-  for( Int_t i=0; i<Nruns; ++i )
-    {
+   TAGPlot* p=new TAGPlot(0); //Cuts off  
+   for( Int_t i=0; i<Nruns; ++i )
+   {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
-      Double_t tmin=MatchEventToTime(runNumber[i], description,true,dumpIndex, offset);
-      Double_t tmax=MatchEventToTime(runNumber[i], description,false,dumpIndex, offset);
+      std::vector<TAGSpill> spills = Get_AG_Spills(runNumber[i], {description}, {dumpIndex});
+      double tmin = spills.front().GetStartTime();
+      double tmax = spills.front().GetStopTime();
+  
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
@@ -217,8 +261,10 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 	}
       else
 	{
-	  tmin=MatchEventToTime(runNumber[i], description,true,dumpIndex, offset);
-	  tmax=MatchEventToTime(runNumber[i], description,false,dumpIndex, offset);
+	   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber[i], {description}, {dumpIndex});
+     tmin = spills.front().GetStartTime();
+     tmax = spills.front().GetStopTime();
+  
 	}
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
@@ -295,12 +341,19 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TCanvas* c=new TCanvas("ChronoClockSync","ChronoClockSync",1200,800);
   c->Divide(CHRONO_N_BOARDS,2);
+  std::vector<double> starts;
+  std::vector<double> stops;
+  starts.push_back(tmin);
+  stops.push_back(tmax);
   for (int i=0; i<CHRONO_N_BOARDS; i++)
     {
+      std::vector<TChronoChannel> chans;
+      chans.emplace_back(i, Get_Chrono_Channel_In_Board(runNumber,i,"CHRONO_SYNC",false));
+  
       c->cd(1 + (i*2));
-      Plot_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
+      Plot_Chrono(runNumber, chans, starts,stops);
       c->cd(2 + (i*2));
-      Plot_Delta_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
+      Plot_Delta_Chrono(runNumber,TChronoChannel(i,Get_Chrono_Channel_In_Board(runNumber,i,"CHRONO_SYNC",false)), tmin,tmax);
     }
   c->Draw();
 }
@@ -311,10 +364,11 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
 TCanvas* gc;
 TH1D* gh;
 #ifdef BUILD_AG
-TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
+TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
-  Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
-  Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {"Cold Dump"}, {dumpIndex});
+  Double_t start_time = spills.front().GetStartTime();
+  Double_t stop_time = spills.front().GetStopTime();
   if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
 
   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
@@ -327,14 +381,14 @@ TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFi
 
   Int_t oldBinNumber = gNbin;
   gNbin=1.e4;
-  TH1D* dumpHisto=Get_Chrono( runNumber, "CATCH_OR", start_time, stop_time );
+  TH1D* dumpHisto=Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,"CATCH_OR")}, {start_time}, {stop_time} ).front().front();
   gNbin=oldBinNumber;
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,"CATCH_OR",start_time+startOffset,stop_time); // this is a lower resolution histo to plot
+    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,{Get_Chrono_Channel(runNumber,"CATCH_OR")},{start_time+startOffset},{stop_time}).front().front(); // this is a lower resolution histo to plot
 
   TString htitle = "Run ";
   htitle+=runNumber;
@@ -676,9 +730,11 @@ void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegen
 #ifdef BUILD_AG
 TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
-  Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
-  Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
-  if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
+  
+    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber,{"Cold Dump"},{-1});
+  
+  Double_t start_time = spills.front().GetStartTime();
+  Double_t stop_time = spills.front().GetStopTime();
 
   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
   Double_t stopOffset = 0.; // dump finishes at trigger
@@ -690,14 +746,14 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpF
 
   Int_t oldBinNumber = gNbin;
   gNbin=1.e4;
-  TH1D* dumpHisto=Get_Chrono( runNumber, "SiPM_B", start_time, stop_time );
+  TH1D* dumpHisto=Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,"SiPM_B")}, {start_time}, {stop_time} ).front().front();
   gNbin=oldBinNumber;
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,"SiPM_B",start_time+startOffset,stop_time); // this is a lower resolution histo to plot
+    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,{Get_Chrono_Channel(runNumber,"SiPM_B")},{start_time+startOffset},{stop_time}).front().front(); // this is a lower resolution histo to plot
 
   TString htitle = "Run ";
   htitle+=runNumber;

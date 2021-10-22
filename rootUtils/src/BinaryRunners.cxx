@@ -18,10 +18,16 @@ void RunAGEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax)
    return;
 }
 
-void RunAGEventViewerInTime(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
+void RunAGEventViewerInTime(Int_t runNumber,  const char* description, Int_t dumpIndex)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,dumpIndex, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,dumpIndex, offset);
+   std::vector<TAGSpill> s = Get_AG_Spills(runNumber,{description},{dumpIndex});
+   if (s.empty())
+   {
+      std::cout<<"No matching dump name"<<std::endl;
+      return;
+   }
+   Double_t tmin=s.front().GetStartTime();
+   Double_t tmax=s.front().GetStopTime();
    return RunAGEventViewerInTime(runNumber, tmin, tmax);
 }
 #endif

@@ -76,7 +76,7 @@ public:
    virtual void Print();
 
    
-   TString Content(const std::vector<ChronoChannel> );
+   TString Content(const std::vector<TChronoChannel> );
    std::string ContentCSVTitle(std::vector<std::string> ChannelNames = {}) const
    {
       std::string title = TSpill::ContentCSVTitle();

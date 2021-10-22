@@ -49,30 +49,24 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t dumpIndex, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t event_index)
 {
    double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,{Board,Channel},official_time);
+   TTree* t=Get_Chrono_Tree(runNumber,chan,official_time);
    TChrono_Event* e=new TChrono_Event();
    t->SetBranchAddress("ChronoEvent", &e);
-   if (dumpIndex+offset>t->GetEntries()) return -1;
-   t->GetEntry(dumpIndex+offset);
+   if (event_index > t->GetEntries()) return -1;
+   t->GetEntry(event_index);
    //Double_t RunTime=e->GetRunTime();
    delete e;
    return official_time;
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t dumpIndex, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t event_number)
 {
-   Int_t chan=-1;
-   Int_t board=-1;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
-   {
-       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
-       if (chan>-1) break;
-   }
-   return GetRunTimeOfChronoCount(runNumber, board, chan,  dumpIndex,  offset);
+   TChronoChannel chan = Get_Chrono_Channel(runNumber, ChannelName);
+   return GetRunTimeOfChronoCount(runNumber, chan,  event_number);
 }
 #endif
 #ifdef BUILD_AG
@@ -80,16 +74,12 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 {
    TString ChronoChannelName=Get_Chrono_Name(e);
    //   std::cout <<"Channel Name:"<<ChronoChannelName<<std::endl;
-   Int_t board=0;
-   Int_t chan=0;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
-   {
-      chan=Get_Chrono_Channel(runNumber,board,ChronoChannelName,kTRUE);
-      if (chan>-1) break;
-   }
+   TChronoChannel chan = Get_Chrono_Channel(runNumber,ChronoChannelName,kTRUE);
+   if (chan.IsValidChannel())
+      return GetRunTimeOfChronoCount(runNumber,  chan,e->GetID()+1 + offset);
+   else
+      return -1.;
    //   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
-   Double_t RunTime=GetRunTimeOfChronoCount(runNumber, board, chan,e->GetID()+1, offset);
-   return RunTime;
 }
 #endif
 

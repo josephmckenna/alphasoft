@@ -11,16 +11,18 @@
 #include "TA2Plot.h"
 #include "TAGPlot.h"
 
+#include "TChrono_Event.h"
+
 #include <sstream>
 
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex=0, Int_t offset=0);
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex=0, Int_t offset=0);
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax);
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<std::string> description, std::vector<int> index);
+TCanvas* Plot_Chrono(Int_t runNumber, const char* ChannelName, std::vector<std::string> description, std::vector<int> dumpIndex);
 
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin=0., Double_t tmax=-1.);
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t dumpIndex=0, Int_t offset=0);
+
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, Double_t tmin=0., Double_t tmax=-1.);
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 

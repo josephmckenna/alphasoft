@@ -31,7 +31,7 @@
 class TChronoChannelName : public TObject
 {
   private:
-  Int_t fChronoBoardIndex;
+  int fChronoBoardIndex;
   std::vector<std::string> fName;
   public:
   
@@ -45,9 +45,9 @@ class TChronoChannelName : public TObject
    using TObject::Print;
    virtual void Print();
    virtual ~TChronoChannelName();
-   Int_t GetBoardIndex() const                 { return fChronoBoardIndex; }
-   std::string GetChannelName(Int_t Channel) const { return fName.at(Channel); }
-   Int_t GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
+   int GetBoardIndex() const                 { return fChronoBoardIndex; }
+   std::string GetChannelName(int Channel) const { return fName.at(Channel); }
+   int GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
 
    void SetBoardIndex(Int_t index)      { fChronoBoardIndex = index; }
    void SetChannelName(std::string name, size_t i) { fName.at(i)= name; }

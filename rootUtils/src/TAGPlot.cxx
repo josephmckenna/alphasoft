@@ -287,7 +287,7 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();
   Event.Counts        =event->GetCounts();
-  Event.Chrono_Channel=event->GetChannel();
+  Event.Chrono_Channel=event->GetTChronoChannel();
   Event.RunTime       =event->GetRunTime();
   Event.OfficialTime  =official_time;
   Event.t             =official_time-StartOffset;
@@ -295,11 +295,18 @@ void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_
 }
 
 //Maybe dont have this function... lets see...
-Int_t TAGPlot::AddEvents(Int_t runNumber, char *description, Int_t dumpIndex, Double_t Toffset, Bool_t zeroTime)
+Int_t TAGPlot::AddEvents(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex, Double_t Toffset, Bool_t zeroTime)
 {
-  Double_t start_time = MatchEventToTime(runNumber, "startDump", description, dumpIndex);
-  Double_t stop_time = MatchEventToTime(runNumber, "stopDump", description, dumpIndex);
-  return AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
+  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber,{description},{dumpIndex});
+  Int_t sum = 0;
+  for (const TAGSpill& s: spills)
+  {
+     Double_t start_time = s.GetStartTime();
+     Double_t stop_time = s.GetStopTime();
+     sum += AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
+  }
+  return sum;
+  
 }
 
 Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset, Bool_t zeroTime)
@@ -368,7 +375,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
   {
     //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
     double official_time;
-    TTree *t = Get_Chrono_Tree(runNumber, {ChronoChannels[j].Board, ChronoChannels[j].Channel},official_time);
+    TTree *t = Get_Chrono_Tree(runNumber, {ChronoChannels[j].GetBoard(), ChronoChannels[j].GetChannel()},official_time);
     TChrono_Event* e=new TChrono_Event();
 
     t->SetBranchAddress("ChronoEvent", &e);
@@ -416,12 +423,12 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
   ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
 */
   //Add all valid SIS channels to a list for later:
-  if (top.Channel>0)             ChronoChannels.push_back(top);
-  if (bottom.Channel>0)          ChronoChannels.push_back(bottom);
-  if (sipmad.Channel>0)             ChronoChannels.push_back(sipmad);
-  if (sipmcf.Channel>0)          ChronoChannels.push_back(sipmcf);
-  if (TPC_TRIG.Channel>0)        ChronoChannels.push_back(TPC_TRIG);
-  if (Beam_Injection.Channel>0)  ChronoChannels.push_back(Beam_Injection);
+  if (top.IsValidChannel())             ChronoChannels.push_back(top);
+  if (bottom.IsValidChannel())          ChronoChannels.push_back(bottom);
+  if (sipmad.IsValidChannel())             ChronoChannels.push_back(sipmad);
+  if (sipmcf.IsValidChannel())          ChronoChannels.push_back(sipmcf);
+  if (TPC_TRIG.IsValidChannel())        ChronoChannels.push_back(TPC_TRIG);
+  if (Beam_Injection.IsValidChannel())  ChronoChannels.push_back(Beam_Injection);
   /*if (CATStart>0)       SISChannels.push_back(CATStart);
   if (CATStop>0)        SISChannels.push_back(CATStop);
   if (RCTStart>0)       SISChannels.push_back(RCTStart);
@@ -758,7 +765,7 @@ void TAGPlot::FillHisto()
       }*/
       Double_t time = ChronoPlotEvents[i].t;
       if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
-      ChronoChannel Channel = ChronoPlotEvents[i].Chrono_Channel;
+      TChronoChannel Channel = ChronoPlotEvents[i].Chrono_Channel;
       Int_t CountsInChannel = ChronoPlotEvents[i].Counts;
  
       if (Channel == top)

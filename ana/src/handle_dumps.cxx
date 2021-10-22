@@ -31,15 +31,15 @@ public:
    bool fTrace = false;
    std::deque<TAGSpill*> IncompleteDumps;
 
-   ChronoChannel DumpStartChannels[USED_SEQ];
-   ChronoChannel DumpStopChannels[USED_SEQ];
+   TChronoChannel DumpStartChannels[USED_SEQ];
+   TChronoChannel DumpStopChannels[USED_SEQ];
    
-   ChronoChannel fADChannel = {-1, -1};
-   ChronoChannel fPreTriggerChannel = {-1, -1};
+   TChronoChannel fADChannel = {-1, -1};
+   TChronoChannel fPreTriggerChannel = {-1, -1};
    int fADCounter;
    int fPreTriggerCounter;
    
-   ChronoChannel detectorCh[MAXDET];
+   TChronoChannel detectorCh[MAXDET];
    TString detectorName[MAXDET];
    
    bool have_svd_events = false;
@@ -81,10 +81,10 @@ public:
          int iSeq=USED_SEQ_NUM[i];
          
          std::cout<<i<<" is " << iSeq <<std::endl;
-         DumpStartChannels[iSeq].Channel=-1;
-         DumpStartChannels[iSeq].Board=-1;
-         DumpStopChannels[iSeq].Channel=-1;
-         DumpStopChannels[iSeq].Board=-1;
+         DumpStartChannels[iSeq].SetChannel(-1);
+         DumpStartChannels[iSeq].SetBoard(-1);
+         DumpStopChannels[iSeq].SetChannel(-1);
+         DumpStopChannels[iSeq].SetBoard(-1);
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
@@ -94,8 +94,8 @@ public:
          name[board]->SetBoardIndex(board+1);
          for (int det=0; det<MAXDET; det++)
          {
-            detectorCh[det].Channel=-1;
-            detectorCh[det].Board=-1;
+            detectorCh[det].SetChannel(-1);
+            detectorCh[det].SetBoard(-1);
          }
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
@@ -124,8 +124,8 @@ public:
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStartChannels[iSeq].Channel=channel;
-               DumpStartChannels[iSeq].Board=board;
+               DumpStartChannels[iSeq].SetChannel(channel);
+               DumpStartChannels[iSeq].SetBoard(board);
                std::cout<<"Start Channel:"<<channel<<std::endl;
             }
             
@@ -133,8 +133,8 @@ public:
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStopChannels[iSeq].Channel=channel;
-               DumpStopChannels[iSeq].Board=board;
+               DumpStopChannels[iSeq].SetChannel(channel);
+               DumpStopChannels[iSeq].SetBoard(board);
                std::cout<<"Stop Channel:"<<channel<<std::endl;
             }
             /*
@@ -269,8 +269,8 @@ public:
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
                //std::cout<<DumpStartChannels[a].Board<<" =="<< e->ChronoBoard<<std::endl;
-               if (DumpStartChannels[a].Channel==e->Channel)
-               if (DumpStartChannels[a].Board ==e->ChronoBoard)
+               if (DumpStartChannels[a].GetChannel()==e->Channel)
+               if (DumpStartChannels[a].GetBoard() ==e->ChronoBoard)
                {
                   //if (e->GetCountsInChannel(DumpStartChannels[a]))
                   for (uint32_t nstarts=0; nstarts<e->Counts; nstarts++)
@@ -278,8 +278,8 @@ public:
                      dumplist[a].AddStartTime(e->MidasTime, e->RunTime);
                   }
                }
-               if (DumpStopChannels[a].Channel==e->Channel)
-               if (DumpStopChannels[a].Board  ==e->ChronoBoard)
+               if (DumpStopChannels[a].GetChannel()==e->Channel)
+               if (DumpStopChannels[a].GetBoard()  ==e->ChronoBoard)
                {
                   for (uint32_t nstops=0; nstops<e->Counts; nstops++)
                   {

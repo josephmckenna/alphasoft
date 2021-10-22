@@ -239,7 +239,7 @@ void TAGSpill::Print()
    std::cout<<std::endl;
 }
 
-TString TAGSpill::Content(std::vector<ChronoChannel> chrono_channels)
+TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
 {
    
       TString log;
@@ -294,11 +294,11 @@ TString TAGSpill::Content(std::vector<ChronoChannel> chrono_channels)
    if (ScalerData)
    {
       char buf[80];
-      for (const ChronoChannel& c: chrono_channels)
+      for (const TChronoChannel& c: chrono_channels)
       {
          int counts=-1;
          //If valid channel number:
-         if (c.Channel > 0)
+         if (c.GetChannel() > 0)
             counts=ScalerData->DetectorCounts[c.GetIndex()];
          sprintf(buf,"%9d",counts);
          log += buf;
