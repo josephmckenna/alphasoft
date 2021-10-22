@@ -27,6 +27,12 @@
 //MAX DET defined here:
 #include "TSpill.h"
 
+#ifdef HAVE_MIDAS
+#include "midas.h"
+#include "msystem.h"
+#include "mrpc.h"
+#endif
+
 #define MAXDET 10
 
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
@@ -153,7 +159,9 @@ public:
    Int_t gRunNumber =0;
    time_t run_start_time=0;
    time_t run_stop_time=0;
-
+#ifdef HAVE_MIDAS
+   SpillLogPrinter fSpillLogPrinter;
+#endif
    std::vector<std::string> InMemorySpillTable;
    TTree* SpillTree = NULL;
 
@@ -605,11 +613,6 @@ public:
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
       }
-  if(gROOT->IsBatch()) {
-    printf("Cannot run in batch mode\n");
-    exit (1);
-  }
- 
    }
 
    void Finish()
