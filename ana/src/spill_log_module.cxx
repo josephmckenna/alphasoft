@@ -64,6 +64,7 @@ public:
    bool fWriteSpillDB = false;
    bool fWriteSpillTxt = false;
    bool fNoSpillSummary = false;
+   bool fOnlineSpillLog = false;
 };
 
 #ifdef HAVE_MIDAS
@@ -81,7 +82,7 @@ class SpillLogPrinter
    ~SpillLogPrinter()
    {
      // The new manalzyer calls the dtor between runs... 
-     //cm_msg1(MINFO, "SpillLog", "alpha2online","Exiting...");
+     //cm_msg1(MINFO, "SpillLog", "alphagonline","Exiting...");
    }
    void Reset()
    {
@@ -98,10 +99,10 @@ class SpillLogPrinter
       int indent = width / 2 - 52/2;
       std::string logo_indent(indent,' ');
       //For readability make a large break from the last run
-      cm_msg1(MINFO, "SpillLog", "alpha2online","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
+      cm_msg1(MINFO, "SpillLog", "alphagonline","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
 
 
       std::string line(width,'-');
@@ -122,18 +123,18 @@ class SpillLogPrinter
       }
       
       //cm_msg_log((INT)MINFO, (const char*) "SpillLog", (const char*) first_line.c_str() );
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", first_line.c_str());
-      //cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", line.c_str());
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", first_line.c_str());
+      //cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", line.c_str());
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", fSpillLogTitle.Data());
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", line.c_str());
       fSpillLogLineNumber++;
    }
    void EndRun(int RunNo)
    {
       int width = fSpillLogTitle.Length();
       std::string line(width,'=');
-      cm_msg1(MINFO, "SpillLog", "alpha2online","%s", line.c_str());  
-      cm_msg1(MINFO, "SpillLog", "alpha2online","End run %d",RunNo);
+      cm_msg1(MINFO, "SpillLog", "alphagonline","%s", line.c_str());  
+      cm_msg1(MINFO, "SpillLog", "alphagonline","End run %d",RunNo);
    }
    
    void PrintLine(const char *string)
@@ -141,9 +142,9 @@ class SpillLogPrinter
       fSpillLogLineNumber++;
       if ( (fSpillLogLineNumber % fPrintInterval ) == 0 )
       {
-        cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
+        cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", fSpillLogTitle.Data());
       }
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", string);
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s", string);
    }
    
 };
@@ -275,7 +276,7 @@ public:
          channel_summary +=", ";
       }
 #if HAVE_MIDAS
-      cm_msg1(MINFO, "SpillLog", "alpha2online", channel_summary.c_str());
+      cm_msg1(MINFO, "SpillLog", "alphagonline", channel_summary.c_str());
       //Check the number of Channels and Channel names match
       int n_chans = 0;
       int n_names = 0;
@@ -290,7 +291,7 @@ public:
             n_names++;
       }
       if (n_chans != n_names)
-         cm_msg1(MERROR, "SpillLog", "alpha2online", "ChannelIDName entires (%d) does not match ChannelDisplayName entires (%d)",n_chans, n_names);
+         cm_msg1(MERROR, "SpillLog", "alphagonline", "ChannelIDName entires (%d) does not match ChannelDisplayName entires (%d)",n_chans, n_names);
 #endif
 
       TChronoChannelName* name[CHRONO_N_BOARDS];
@@ -334,6 +335,12 @@ public:
       for (int i = 0; i < CHRONO_N_BOARDS; i++)
          delete name[i];
 
+#ifdef HAVE_MIDAS
+      if (runinfo->fRunNo)
+      {
+         fSpillLogPrinter.BeginRun(SpillLogTitle, runinfo->fRunNo);
+      }
+#endif
       if (fFlags->fWriteSpillDB)
       {
          if (sqlite3_open("SpillLog/AGSpillLog.db",&ppDb) == SQLITE_OK)
@@ -398,7 +405,6 @@ public:
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
 
-
       if (run_start_time>0 && run_stop_time==0) //Start run
       {
          for (int i=0; i<USED_SEQ; i++)
@@ -412,7 +418,6 @@ public:
       }
       if (gIsOnline)
       {
-
       }
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
@@ -422,6 +427,7 @@ public:
       if (fTrace)
          printf("SpillLog::EndRun, run %d\n", runinfo->fRunNo);
       //runinfo->State
+      //if (fFlags->fOnlineSpillLog)
       if (runinfo->fRunNo)
       {
 #ifdef HAVE_MIDAS
@@ -493,7 +499,7 @@ public:
          spillLog.close();
 #ifdef HAVE_MIDAS
          char cmd[200]={0};
-         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
+         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=alphagonline &",spillLogName.Data(),gRunNumber);
          printf("--- Command: \n%s\n", cmd);
          if ( fFlags->fWriteElog )
             system(cmd);
@@ -547,6 +553,17 @@ public:
 #endif
          return flow;
       }
+//      const TInfoSpillFlow* TInfoFlow= flow->Find<TInfoSpillFlow>();
+//      if (TInfoFlow)
+//      {
+//         for (TInfoSpill* s: TInfoFlow->spill_events)
+//         {
+//            InMemorySpillTable.push_back(s->Name.c_str());
+//#ifdef HAVE_MIDAS
+//                fSpillLogPrinter.PrintLine(s->Name.c_str());
+//#endif
+//         }
+//      }
       time(&gTime);  /* get current time; same as: timer = time(NULL)  */
 
       const AGSpillFlow* SpillFlow= flow->Find<AGSpillFlow>();
@@ -560,6 +577,9 @@ public:
             if (!s->IsDumpType && !s->IsInfoType)
             {
                 InMemorySpillTable.push_back(s->Name.c_str());
+#ifdef HAVE_MIDAS
+                fSpillLogPrinter.PrintLine(s->Name.c_str());
+#endif
                 //continue;
             }
             //Add spills that have analysis data in (eg Catching efficiency: Cold Dump / Hot Dump)
@@ -567,6 +587,9 @@ public:
             {
                 //s->Print();
                 InMemorySpillTable.push_back(s->Content(chrono_channels).Data());
+#ifdef HAVE_MIDAS
+                fSpillLogPrinter.PrintLine(s->Content(chrono_channels).Data());
+#endif
                 continue;
             }
             if (!s->SeqData) continue;
@@ -577,6 +600,9 @@ public:
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(chrono_channels).Data());
+#ifdef HAVE_MIDAS
+            fSpillLogPrinter.PrintLine(s->Content(chrono_channels).Data());
+#endif
             SaveToTree(runinfo,s);
          }
       }
@@ -602,6 +628,15 @@ public:
    SpillLogFlags fFlags;
 
 public:
+   void Usage()
+   {
+      std::cout<<"SpillLogFactor::Help!"<<std::endl;
+      std::cout<<"\t--elog\t\tWrite elog (not implemented)"<<std::endl;
+      std::cout<<"\t--spilldb\t\tSwrite to Spill log sqlite database (local)"<<std::endl;
+      std::cout<<"\t--spilltxt\t\tWrite Spill log to SpillLog/reload.txt"<<std::endl;
+      std::cout<<"\t--nospillsummary\t\tTurn off spill log table printed at end of run"<<std::endl;
+      std::cout<<"\t--onlinespills\t\tWrite spills live to SpillLog in midas"<<std::endl;
+   }
    void Init(const std::vector<std::string> &args)
    {
       printf("SpillLogFactory::Init!\n");
@@ -612,11 +647,20 @@ public:
             fFlags.fPrint = true;
          if (args[i] == "--elog")
             fFlags.fWriteElog = true;
+         if (args[i] == "--spilldb")
+            fFlags.fWriteSpillDB = true;
+         if (args[i] == "--spilltxt")
+            fFlags.fWriteSpillTxt = true;
+         if (args[i] == "--nospillsummary")
+            fFlags.fNoSpillSummary = true;
+         if (args[i] == "--onlinespills")
+            fFlags.fOnlineSpillLog = true;
       }
    }
 
    void Finish()
    {
+      if (fFlags.fPrint)
       printf("SpillLogFactory::Finish!\n");
    }
    
