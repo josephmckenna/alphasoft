@@ -731,7 +731,7 @@ void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegen
 TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
 {  
   
-    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber,{"Cold Dump"},{-1});
+    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber,{"Cold Dump"},{-1});
   
   Double_t start_time = spills.front().GetStartTime();
   Double_t stop_time = spills.front().GetStopTime();
@@ -912,7 +912,7 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 	iSaveCanvas->SaveAs(Output);
 	
 }
-
+#ifdef BUILD_A2
 TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, const char* SIS_Channel_Name)
 {  
 
@@ -1046,14 +1046,16 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
    return cEnergy;
 
 }
+#endif
 
+#ifdef BUILD_A2
 TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition, Int_t binNumber, 
                           const char* dumpFile,
                           Double_t EnergyRangeFactor)
                           {
                             return Plot_A2_ColdDump(runNumber, repetition, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
                           }
-
+#endif
 
 #ifdef BUILD_A2
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)

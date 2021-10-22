@@ -100,7 +100,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
 }
 #endif
 #ifdef BUILD_AG
-std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chrono_chans, std::vector<TA2Spill> spills)
+std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chrono_chans, std::vector<TAGSpill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -123,7 +123,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
 #ifdef BUILD_AG
 std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chrono_chans, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
+   std::vector<TAGSpill> spills=Get_AG_Spills(runNumber, description, dumpIndex);
    return Get_Summed_Chrono( runNumber, chrono_chans, spills);
 }
 #endif
