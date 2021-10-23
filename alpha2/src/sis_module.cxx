@@ -147,7 +147,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    {
          if (!fFlags->fSaveSIS) return;
          int i = s->GetSISModule();
-         assert(i => 0 && i < NUM_SIS_MODULES);
+         assert(i >= 0 && i < NUM_SIS_MODULES);
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
          if (!SISEventTree[i])
