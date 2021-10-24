@@ -26,13 +26,13 @@ public:
 class LifetimeModule: public TARunObject
 {
 private:
-   clock_t start_time;
-   uint32_t FirstEvent=0;
+   clock_t fStartTime;
+   uint32_t fFirstEvent=0;
    //Once all of these exist and we see another cold dump. We add the lifetime measurment to spill log.
-   TA2Spill* FifthDump0=NULL;
-   TA2Spill* FifthDump1=NULL;
-   TA2Spill* ColdDump=NULL;
-   TA2Spill* Lifetime=NULL;
+   TA2Spill* fFirstFifthDump=NULL;
+   TA2Spill* fSecondFifthDump=NULL;
+   TA2Spill* fColdDump=NULL;
+   TA2Spill* fLifetime=NULL;
 
 
 public:
@@ -60,23 +60,23 @@ public:
    {
       if (fTrace)
          printf("LifetimeModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      start_time=clock();
+      fStartTime=clock();
     }
 
    void EndRun(TARunInfo* runinfo)
    {
-      if (FifthDump0)
-         delete FifthDump0;
-      if (FifthDump1)
-         delete FifthDump1;
-      if (ColdDump)
-         delete ColdDump;
-      if (Lifetime)
-         delete Lifetime;
+      if (fFirstFifthDump)
+         delete fFirstFifthDump;
+      if (fSecondFifthDump)
+         delete fSecondFifthDump;
+      if (fColdDump)
+         delete fColdDump;
+      if (fLifetime)
+         delete fLifetime;
 
-      if(Lifetime && !HaveAllDumps())
-         printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected but not enough cold and/or fifth dumps detected for the calculation.", runinfo->fRunNo);
-      if(Lifetime && HaveAllDumps() && !fFlags->fLifetimeDone)
+      if(fLifetime && !HaveAllDumps())
+         printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected but not enough cold and/or fifth dumps found for the calculation. This module requires 2xCold Dumps, 2xFifth Dumps, and 1xLifetime Dump to automate the calculation.", runinfo->fRunNo);
+      if(fLifetime && HaveAllDumps() && !fFlags->fLifetimeDone)
          printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected plus all conditions, but for some reason not calculated. Please alert Lukas.", runinfo->fRunNo);
 
 
@@ -96,10 +96,6 @@ public:
          printf("LifetimeModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   bool HaveAllDumps()
-   {
-       return (FifthDump0 && FifthDump1 && Lifetime && ColdDump);
-   }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
   {
@@ -122,62 +118,53 @@ public:
             if (strcmp(s->Name.c_str(),"\"Fifth Dump\"")==0)
             {
                //If fifth dump found, check whether its first or second and save.
-               if(FifthDump0 && FifthDump1)
+               if(fFirstFifthDump && fSecondFifthDump)
                {
-                    FifthDump0 = new TA2Spill(*FifthDump1);
-                    FifthDump1 = new TA2Spill(*s);
+                  //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.  
+                    fFirstFifthDump = new TA2Spill(*fSecondFifthDump);
+                    fSecondFifthDump = new TA2Spill(*s);
                }
-               else if(FifthDump0)
+               else if(fFirstFifthDump)
                {
-                   FifthDump1 = new TA2Spill(*s);
+                  //If we have one, save the other.
+                   fSecondFifthDump = new TA2Spill(*s);
                }
                else
                {
-                   FifthDump0 = new TA2Spill(*s);
+                  //If we have none, save the first.
+                   fFirstFifthDump = new TA2Spill(*s);
                }
             }
             if (strcmp(s->Name.c_str(),"\"Lifetime\"")==0)
             {
                //If lifetime found, save for later. 
-               Lifetime = new TA2Spill(*s);
+               fLifetime = new TA2Spill(*s);
+               std::cout << "Lifetime run detected..." <<std::endl; //We announce detection of lifetime dump here. If the user does not run the sequence with required dumps the end run will let you know. 
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
                if (HaveAllDumps())
                {
+                  //Once we have all the conditions to calculate a lifetime dump, lets do it in this AnalyzeFlowEvent(). 
                   fFlags->fLifetimeReady = true;
                }
                else
                {
-                   ColdDump = new TA2Spill(*s);
+                  //Else save the cold dump for later and wait until we have everything we need.
+                   fColdDump = new TA2Spill(*s);
                }
             }
 
             if (fFlags->fLifetimeReady)
             {
-                std::cout<<"lifetime_module::CalculateLifetime"<<std::endl;
-                std::cout << "Lifetime run detected..." <<std::endl;
-                std::ostringstream lifetimeStream;
                 
                 //Do lifetime calc. 
-                double lifetimeHold = Lifetime->GetStopTime() - Lifetime->GetStartTime();
+                double lifetimeInMins = CalculateLifetime(runinfo, s);
             
-                int bestChannel = FindBestChannel(runinfo);
-                double countsFD0 = FifthDump0->ScalerData->DetectorCounts[bestChannel];
-                double countsFD1 = FifthDump1->ScalerData->DetectorCounts[bestChannel];
-                double countsCD0 = ColdDump->ScalerData->DetectorCounts[bestChannel];
-                double countsCD1 = s->ScalerData->DetectorCounts[bestChannel];
-                double countslifetime = Lifetime->ScalerData->DetectorCounts[bestChannel];
-
-                double normalised0 = countsCD0/countsFD0;
-                double normalised1 = countsCD1/countsFD1;
-                double logfactor = ( normalised0 / normalised1 );
-                double lifetime = lifetimeHold / TMath::Log( logfactor );
-                double lifetimeInMins = lifetime/60;
-
-                lifetimeStream << "Lifetime measurment detected... Normalised to cold dumps the lifetime = " << lifetimeInMins << "m.";
-                TA2Spill* LT = new TA2Spill(runinfo->fRunNo,Lifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
-                SpillFlow->spill_events.push_back(LT);
+                std::ostringstream lifetimeStream;
+                lifetimeStream << "Lifetime measurment detected... Normalised to fifth dumps the lifetime = " << lifetimeInMins << "m.";
+                TA2Spill* lifetimeSpill = new TA2Spill(runinfo->fRunNo,fLifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
+                SpillFlow->spill_events.push_back(lifetimeSpill);
                 fFlags->fLifetimeDone=true;
             }
             
@@ -200,35 +187,79 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
+   bool HaveAllDumps()
+   {
+       return (fFirstFifthDump && fSecondFifthDump && fLifetime && fColdDump);
+   }
+
    int FindBestChannel(TARunInfo* runinfo) 
    {
        // AUTOMATICALLY FINDS THE GOOD CHANNEL
-       // We use the cold dump to see where this lifetime was done.
+       // We use the cold dump numbers to see where this lifetime was done.
        // We assume the channel with the most counts is the best place to measure the cold dump.
-       // It coudl just do it on every channel and let the user decide but that seems non ideal.
+       // We could just do it on every channel and let the user decide which is useful like the efficiency module but I prefer this.
+         //Note: To do this we would require a function that takes all our dumps as an input and returns lifetime dump. It would go where the / operator overload in CE module goes.
+       // Searching over so many channels could be a major cause of slowdown. Also saving 5 dumps in memory is non ideal. 
       TSISChannels* channels = new TSISChannels(runinfo->fRunNo);
       std::vector<int> channelsToCheck
       {
-         42, 
+         42, //??
          channels->GetChannel("SIS_PMT_ATOM_OR"),
          channels->GetChannel("SIS_PMT_CATCH_OR"), 
          channels->GetChannel("SIS_PMT_5_AND_6"), 
          channels->GetChannel("SIS_PMT_7_AND_8"), 
          channels->GetChannel("PMT_12_AND_13"), 
          channels->GetChannel("CT_SiPM_OR"), 
+         channels->GetChannel("SiPM_A"), //AlphaG channels?
+         channels->GetChannel("SiPM_B"), 
+         channels->GetChannel("SiPM_C"), 
+         channels->GetChannel("SiPM_D"), 
+         channels->GetChannel("SiPM_E"), 
+         channels->GetChannel("SiPM_F"), 
          channels->GetChannel("PMT_10_AND_PMT_11")
       }; 
       int bestChannel = -1;
       int bestCount = 0;
       for(auto i: channelsToCheck)
       {
-         if(ColdDump->ScalerData->DetectorCounts[i] > bestCount)
+         if(fColdDump->ScalerData->DetectorCounts[i] > bestCount)
          {
             bestChannel = i;
-            bestCount = ColdDump->ScalerData->DetectorCounts[i];
+            bestCount = fColdDump->ScalerData->DetectorCounts[i];
          }
       }
        return bestChannel;
+   }
+
+   double CalculateLifetime(TARunInfo* runinfo, TA2Spill* finalColdDump)
+   {
+      std::cout<<"lifetime_module::CalculateLifetime"<<std::endl;
+      int bestChannel = FindBestChannel(runinfo);
+      
+      //Step by step - good for debugging, potentially worse for performance.
+      double lifetimeHold = fLifetime->GetStopTime() - fLifetime->GetStartTime();
+      double countsFD0 = fFirstFifthDump->ScalerData->DetectorCounts[bestChannel];
+      double countsFD1 = fSecondFifthDump->ScalerData->DetectorCounts[bestChannel];
+      double countsCD0 = fColdDump->ScalerData->DetectorCounts[bestChannel];
+      double countsCD1 = finalColdDump->ScalerData->DetectorCounts[bestChannel];
+      double countslifetime = fLifetime->ScalerData->DetectorCounts[bestChannel];
+      double normalised0 = countsCD0/countsFD0;
+      double normalised1 = countsCD1/countsFD1;
+      double logfactor = ( normalised0 / normalised1 );
+      double lifetime = lifetimeHold / TMath::Log( logfactor );
+      double lifetimeInMins = lifetime/60;
+
+      //This refuses to work as a one liner. For now we keep the above method but these are here if someone decides to make this work. 
+      /*double lifetimeInMins = ((fLifetime->GetStopTime() - fLifetime->GetStartTime()) / 
+                              TMath::Log( (((fColdDump->ScalerData->DetectorCounts[bestChannel])/
+                              (fFirstFifthDump->ScalerData->DetectorCounts[bestChannel])) / 
+                              ((finalColdDump->ScalerData->DetectorCounts[bestChannel])/(fSecondFifthDump->ScalerData->DetectorCounts[bestChannel]))) ))/60; */
+
+      /*double lifetimeInMins = ( fLifetime->GetStopTime() - fLifetime->GetStartTime() ) / 
+                                 (60 * TMath::Log( (fColdDump->ScalerData->DetectorCounts[bestChannel] / fFirstFifthDump->ScalerData->DetectorCounts[bestChannel]) / 
+                                 (finalColdDump->ScalerData->DetectorCounts[bestChannel] / fSecondFifthDump->ScalerData->DetectorCounts[bestChannel]) ));*/
+
+      return lifetimeInMins;
    }
 };
 
