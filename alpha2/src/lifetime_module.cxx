@@ -12,9 +12,9 @@
 #include "A2Flow.h"
 #include "TSpill.h"
 #include "TSISChannels.h"
-
-
 #include <iostream>
+#include <sstream>
+
 class LifetimeModuleFlags
 {
 public:
