@@ -25,3 +25,6 @@
 [submodule "manalyzer"]
 	path = manalyzer
 	url = https://bitbucket.org/tmidas/manalyzer.git
+[submodule "chronobox_software"]
+	path = chronobox_software
+	url = https://bitbucket.org/expalpha/chronobox_software.git
