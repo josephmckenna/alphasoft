@@ -105,7 +105,7 @@ public:
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
             TString OdbPath = "/Equipment/cb0";
-            OdbPath += board+1;
+            OdbPath += board;
             OdbPath += "/Settings/names";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             #ifdef INCLUDE_VirtualOdb_H
