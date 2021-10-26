@@ -42,20 +42,20 @@ void TSISEvent::ClearSISEvent()
    SetRunNumber(-1);
    SetMidasUnixTime(0);
 }
-TSISEvent* TSISEvent::operator+=( TSISEvent* b)
+TSISEvent& TSISEvent::operator+=( const TSISEvent& b)
 {
    //Events from differnt SIS modules cannot be added!
    //this->Print();
    //std::cout <<"Adding module "<<b->GetSISModule() << " to "<<this->GetSISModule()<<std::endl;
-   assert(this->GetSISModule()==b->GetSISModule());
+   assert(this->GetSISModule()==b.GetSISModule());
    if (this->fCounts.size() == 0)
       fCounts = std::vector<uint32_t>(NUM_SIS_CHANNELS,0);
    int i=0;
    for (int j=GetSISModule()*32; j<(GetSISModule()+1)*NUM_SIS_CHANNELS; j++)
    {
-     this->fCounts[i++]+=b->GetCountsInChannel(j);
+     this->fCounts[i++]+=b.GetCountsInChannel(j);
    }
-   return this;
+   return *this;
 }
 void TSISEvent::Print()
 {
