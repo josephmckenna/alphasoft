@@ -52,7 +52,7 @@ class TChronoChannel {
    }
    std::string GetBranchName() const
    {
-      return std::string("cb0") + std::to_string(fBoard);
+      return std::string("cb0") + std::to_string(fBoard + 1);
    }
    TChronoChannel& operator=(const TChronoChannel& other)
    {

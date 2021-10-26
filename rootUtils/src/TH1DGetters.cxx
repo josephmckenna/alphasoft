@@ -62,6 +62,8 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
    for (int b = 0; b < CHRONO_N_BOARDS; b++)
    {
       TTree* t = Get_Chrono_Tree(runNumber, TChronoChannel(b,CHRONO_CLOCK_CHANNEL).GetBranchName());
+      if (!t)
+         continue;
       //We might be able to use TTreeReader with a friend... this is sub optimal 
       TCbFIFOEvent* e=new TCbFIFOEvent();
       t->SetBranchAddress("FIFOData", &e);
@@ -189,6 +191,8 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
       if (!chrono_chan[i].IsValidChannel())
          continue;
       TTree* t = Get_Chrono_Tree(runNumber, chrono_chan[i].GetBranchName());
+      if (!t)
+         continue;
       //We might be able to use TTreeReader with a friend... this is sub optimal 
       TCbFIFOEvent* e=new TCbFIFOEvent();
       t->SetBranchAddress("FIFOData", &e);

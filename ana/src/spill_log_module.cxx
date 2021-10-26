@@ -265,7 +265,19 @@ public:
       MVOdb* channel_settings = runinfo->fOdb->Chdir("Equipment/alphagonline/Settings", true);
       channel_settings->RSA("ChannelIDName",&channels, true, 60, 250);
       channel_settings->RSA("ChannelDisplayName",&channel_names, true, 60, 250);
- 
+      //Remove empty channels
+      std::vector<std::string> tmpchan(channels);
+      std::vector<std::string> tmpnames(channel_names);
+      channels.clear();
+      channel_names.clear();
+      for (int i = 0; i < tmpchan.size(); i++)
+      {
+         if (tmpchan.at(i).size() || tmpnames.at(i).size())
+         {
+            channels.emplace_back(tmpchan.at(i));
+            channel_names.emplace_back(tmpnames.at(i));
+         }
+      }
       //Print channel list into spill log
       std::string channel_summary = "Channel List: ";
       for (int i = 0; i < channels.size(); i++)

@@ -28,6 +28,14 @@ TTreeReader* Get_AGSpillTree(Int_t runNumber)
 TTree* Get_Chrono_Tree(const int runNumber, const std::string ChronoBoardChannel)
 {
    std::string Name="ChronoBox_" + ChronoBoardChannel;
+   std::cout<<"Loading "<<Name<<std::endl;
+
+   if (ChronoBoardChannel == "cb01")
+   {
+      std::cout<<"AT TIME OF WRITING cb01 is not useful for FIFO analysis.... skipping"<<std::endl;
+      return NULL;
+   }
+
    TTree* t=Get_Tree_By_Name(runNumber,Name.c_str());
    return t;
 }
