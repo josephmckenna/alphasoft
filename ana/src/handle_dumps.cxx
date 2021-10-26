@@ -256,9 +256,6 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       TCbFlow* FIFOFlow = flow->Find<TCbFlow>();
       uint32_t midas_time = 0;
       if (FIFOFlow)
@@ -355,11 +352,6 @@ public:
       }
 
       flow=f;
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
-      #endif
-
       return flow; 
    }
 

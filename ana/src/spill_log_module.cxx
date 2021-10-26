@@ -43,7 +43,6 @@
 
 #define HOT_DUMP_LOW_THR 500
 
-time_t gTime; // system timestamp of the midasevent
 time_t LastUpdate;
 //struct tm LastUpdate = {0};
 
@@ -210,6 +209,8 @@ public:
    {
       if (fTrace)
          printf("SpillLog::dtor!\n");
+      delete SpillTree;
+      SpillTree = NULL;
    }
    void SaveToTree(TARunInfo* runinfo,TAGSpill* s)
    {
@@ -451,6 +452,7 @@ public:
 #endif
 
       }
+      SpillTree->Write();
 
       InMemorySpillTable.push_back("End run");
       InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
@@ -559,27 +561,17 @@ public:
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-      if (!gIsOnline)
+      const TInfoSpillFlow* TInfoFlow= flow->Find<TInfoSpillFlow>();
+      if (TInfoFlow)
       {
-#ifdef HAVE_MANALYZER_PROFILER
-         *flags|=TAFlag_SKIP_PROFILE;
+         for (TInfoSpill* s: TInfoFlow->spill_events)
+         {
+            InMemorySpillTable.push_back(s->Name.c_str());
+#ifdef HAVE_MIDAS
+                fSpillLogPrinter.PrintLine(s->Name.c_str());
 #endif
-         return flow;
+         }
       }
-//      const TInfoSpillFlow* TInfoFlow= flow->Find<TInfoSpillFlow>();
-//      if (TInfoFlow)
-//      {
-//         for (TInfoSpill* s: TInfoFlow->spill_events)
-//         {
-//            InMemorySpillTable.push_back(s->Name.c_str());
-//#ifdef HAVE_MIDAS
-//                fSpillLogPrinter.PrintLine(s->Name.c_str());
-//#endif
-//         }
-//      }
-      time(&gTime);  /* get current time; same as: timer = time(NULL)  */
-
       const AGSpillFlow* SpillFlow= flow->Find<AGSpillFlow>();
       if (SpillFlow)
       {
@@ -619,6 +611,12 @@ public:
 #endif
             SaveToTree(runinfo,s);
          }
+      }
+      else
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
       }
       return flow;
    }
