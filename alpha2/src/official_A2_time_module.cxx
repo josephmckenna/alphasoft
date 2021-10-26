@@ -254,14 +254,14 @@ public:
       if (SISFlow)
       {
          //VF48 clock is on SIS0
-         std::vector<TSISEvent*>* ce=&SISFlow->sis_events[0];
+         const std::vector<TSISEvent>* ce = SISFlow->sis_events;
          std::lock_guard<std::mutex> lock(fTimeStampLock);
-         for (uint i=0; i<ce->size(); i++)
+         for (uint i = 0; i < ce->size(); i++)
          {
-            TSISEvent* e=ce->at(i);
-            SISEventRunTime.push_back(e->GetRunTime());
-            SISClock.push_back(e->GetClock());
-            VF48Clock.push_back(e->GetVF48Clock());
+            const TSISEvent& e = ce->at(i);
+            SISEventRunTime.push_back(e.GetRunTime());
+            SISClock.push_back(e.GetClock());
+            VF48Clock.push_back(e.GetVF48Clock());
             //if (e->Channel==CHRONO_SYNC_CHANNEL)
          }
       }

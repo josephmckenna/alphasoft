@@ -173,7 +173,7 @@ class SISModuleFlow: public TAFlowEvent
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<TSISEvent*> sis_events[NUM_SIS_MODULES];
+  std::vector<TSISEvent> sis_events[NUM_SIS_MODULES];
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
   }
@@ -181,10 +181,6 @@ class SISEventFlow: public TAFlowEvent
   {
      for (int j=0; j<NUM_SIS_MODULES; j++)
      {
-        for (size_t i=0; i<sis_events[j].size(); i++)
-        {
-           delete sis_events[j].at(i);
-        }
         sis_events[j].clear();
      }
   }

@@ -202,33 +202,33 @@ public:
          //Add timestamps to dumps
          for (int j=0; j<NUM_SIS_MODULES; j++)
          {
-            std::vector<TSISEvent*>* ce=&SISFlow->sis_events[j];
+            const std::vector<TSISEvent>* ce = SISFlow->sis_events;
             for (uint i=0; i<ce->size(); i++)
             {
-              TSISEvent* e=ce->at(i);
+              const TSISEvent& e = ce->at(i);
               for (int a=0; a<USED_SEQ; a++)
               {
                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                    for (int nstarts=0; nstarts < e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
+                    for (int nstarts=0; nstarts < e.GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
-                       dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
+                       dumplist[a].AddStartTime(e.GetMidasUnixTime(), e.GetRunTime());
                     }
                  if (DumpStopChannels[a]>0)
-                    for (int nstops=0; nstops<e->GetCountsInChannel(DumpStopChannels[a]); nstops++)
+                    for (int nstops=0; nstops<e.GetCountsInChannel(DumpStopChannels[a]); nstops++)
                     {
-                       dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
+                       dumplist[a].AddStopTime(e.GetMidasUnixTime(),e.GetRunTime());
                     }
                }
-               if (e->GetCountsInChannel(fADChannel))
+               if (e.GetCountsInChannel(fADChannel))
                {
-                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
+                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e.GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
                  f->spill_events.push_back(beam);
                }
-               if (e->GetCountsInChannel(fPreTriggerChannel))
+               if (e.GetCountsInChannel(fPreTriggerChannel))
                {
-                 TA2Spill* pretrigger = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"----- Pre Trigger %d------->",fPreTriggerCounter++);
+                 TA2Spill* pretrigger = new TA2Spill(runinfo->fRunNo,e.GetMidasUnixTime(),"----- Pre Trigger %d------->",fPreTriggerCounter++);
                  f->spill_events.push_back(pretrigger);
                }
             }
@@ -241,7 +241,7 @@ public:
             for (int j=0; j<NUM_SIS_MODULES; j++)
             {
                //if (SISFlow->sis_events[j].size())
-                  dumplist[a].AddScalerEvents(&SISFlow->sis_events[j]);
+                  dumplist[a].AddScalerEvents(SISFlow->sis_events[j]);
             }
          }
       }

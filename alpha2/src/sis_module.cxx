@@ -8,9 +8,8 @@
 
 #include "TTree.h"
 #include "TMath.h"
-#include "TChrono_Event.h"
+
 #include <iostream>
-#include "TChronoChannelName.h"
 
 #include <TBufferJSON.h>
 #include <fstream>
@@ -278,7 +277,8 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
-           TSISEvent* s = new TSISEvent(event);
+           sf->sis_events[j].emplace_back(TSISEvent(event));
+           TSISEvent* s = &sf->sis_events[j].back();
            s->SetMidasUnixTime(mf->MidasTime);
            s->SetMidasEventID(mf->MidasEventID);
            s->SetRunNumber(runinfo->fRunNo);
@@ -291,7 +291,6 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
               s->SetVF48Clock(gVF48Clock);
            }
            // s->Print();
-           sf->sis_events[j].push_back(s);
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
@@ -303,7 +302,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       {
          for (size_t i=0; i<sf->sis_events[j].size(); i++)
          {
-            SaveToTree(runinfo,sf->sis_events[j].at(i));
+            SaveToTree(runinfo,&sf->sis_events[j].at(i));
          }
       }
       return flow;
