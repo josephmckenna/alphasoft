@@ -15,8 +15,6 @@
 #pragma link C++ class  AnalogueOut+;
 #pragma link C++ class  TriggerIn+;
 #pragma link C++ class TChronoChannel+;
-//Retired
-#pragma link C++ class  TChrono_Event+;
 
 #pragma link C++ class TCbFIFOEvent+;
 #pragma link C++ class  TChronoChannelName+;

@@ -23,14 +23,14 @@ TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScale
 
 }
 
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
    TAGSpillScalerData()
 {
    for (int i=0; i<CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
    {
-      ChronoEvent* e=d->IntegratedSISCounts[i];
-      DetectorCounts.at(i)=e->Counts;
-      ScalerFilled[i]=true;
+      const TCbFIFOEvent& e = d->IntegratedSISCounts[i];
+      DetectorCounts.at(i) = e.fCounts;
+      ScalerFilled[i] = true;
    }
 
    if (d->StartDumpMarker)
@@ -56,7 +56,7 @@ TAGSpillSequencerData::TAGSpillSequencerData():
 TAGSpillSequencerData::~TAGSpillSequencerData()
 {
 }
-TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
+TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
@@ -122,7 +122,7 @@ TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...):
    va_end(args);
 }
 
-TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
    TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
 {
    

@@ -36,49 +36,7 @@ class AgBarEventFlow: public TAFlowEvent
    }
 };
 
-#include "ChronoUtil.h"
-class AgChronoFlow: public TAFlowEvent
-{
-  public:
-    std::vector<ChronoEvent*>* events;
-  public:
-   AgChronoFlow(TAFlowEvent* flow, std::vector<ChronoEvent*>* _events) // ctor
-    : TAFlowEvent(flow)
-   {
-      events=_events;
-   }
-   ~AgChronoFlow()
-   {
-      if (events)
-      {
-         for (uint i=0; i<events->size(); i++)
-         {
-            delete events->at(i);
-         }
-      }
-      delete events;
-   }
-   void AddEvent(ChronoEvent e)
-   {
-      ChronoEvent* a = new ChronoEvent();
-      memcpy(a,&e,sizeof e);
-      events->push_back(a);
-   }
-   void PrintChronoFlow()
-   {
-      for (int i=0; i<CHRONO_N_CHANNELS; i++)
-      {
-         for (uint j=0; j<events->size(); j++)
-         {
-            std::cout <<"Chronoflow: Board:\t"<<events->at(j)->ChronoBoard<<std::endl;
-            std::cout<<"RunTime:\t"<<events->at(j)->RunTime<<std::endl;
-            std::cout <<i<<":"<<events->at(j)->Counts;
-         }
-      std::cout<<std::endl;
-      }
-   }
 
-};
 #endif
 
 #include "Sequencer_Channels.h"

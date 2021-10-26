@@ -23,29 +23,12 @@ TTreeReader* Get_AGSpillTree(Int_t runNumber)
    return t;
 }
 
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, TChronoChannel ChronoBoardChannel)
-{
-   TString Name="chrono/ChronoEventTree_";
-           Name+=ChronoBoardChannel.GetBoard();
-           Name+="_";
-           Name+=ChronoBoardChannel.GetChannel();
-           Name+="OfficialTime";
-   return Get_Tree_By_Name(runNumber,Name.Data());
-}
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, TChronoChannel ChronoBoardChannel, double &official_time)
+TTree* Get_Chrono_Tree(const int runNumber, const std::string ChronoBoardChannel)
 {
-   TString Name="chrono/ChronoEventTree_";
-           Name+=ChronoBoardChannel.GetBoard();
-           Name+="_";
-           Name+=ChronoBoardChannel.GetChannel();
-           
-   TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
-   Name+="OfficialTime";
-   TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
-   tf->SetBranchAddress("OfficialTime",&official_time);
-   t->AddFriend(tf);
+   std::string Name="ChronoBox_" + ChronoBoardChannel;
+   TTree* t=Get_Tree_By_Name(runNumber,Name.c_str());
    return t;
 }
 #endif

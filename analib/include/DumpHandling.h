@@ -141,7 +141,7 @@ public:
    enum STATUS {NO_EQUIPMENT, NOT_FILLED, FILLED};
    //ALPHA 2:
    std::vector<STATUS> SIS_Filled;
-   std::vector<ScalerType*> IntegratedSISCounts;
+   std::vector<ScalerType> IntegratedSISCounts;
    STATUS SVD_Filled;
    SVDCounts<VertexType> IntegratedSVDCounts;
    bool IsPaired = false;
@@ -154,8 +154,8 @@ public:
       StopDumpMarker=NULL;
       for (int i=0; i<NumScalers; i++)
       {
-         IntegratedSISCounts.push_back(new ScalerType());
-         IntegratedSISCounts[i]->SetScalerModuleNo(i);
+         IntegratedSISCounts.emplace_back(ScalerType());
+         IntegratedSISCounts[i].SetScalerModuleNo(i);
          SIS_Filled.push_back(NO_EQUIPMENT);
       }
       SVD_Filled=NO_EQUIPMENT;
@@ -261,8 +261,7 @@ public:
       for (size_t i=0; i<states.size(); i++)
          delete states.at(i);
       states.clear();
-      for (size_t i=0; i<IntegratedSISCounts.size(); i++)
-         delete IntegratedSISCounts.at(i);
+
       IntegratedSISCounts.clear();
    }
    void AddStartDump(DumpMarker* d)
@@ -319,11 +318,11 @@ public:
       return 0;
    }
 
-   int AddScalerEvent(ScalerType* s)
+   int AddScalerEvent(const ScalerType& s)
    {
       //For ALPHA 2, ScalerModule is SIS channel 1 or 2 (total = 2)
       //For ALPHA g, ScalerModule is the Board* NChannels+ Channel (total = 120)
-      int ScalerModule=s->GetScalerModule();
+      int ScalerModule = s.GetScalerModule();
       //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
 #ifdef _TSISEvent_
@@ -333,7 +332,7 @@ public:
          SIS_Filled[ScalerModule]=NOT_FILLED;
       }
 #endif
-      double t=s->GetRunTime();
+      const double t = s.GetRunTime();
       if (StartDumpMarker)
       {
          if (StartDumpMarker->fRunTime<0)
@@ -350,7 +349,7 @@ public:
             }
       //std::cout<<"POOP"<<std::endl;
       //s->Print();
-      *(IntegratedSISCounts[ScalerModule])+=s;
+      IntegratedSISCounts[ScalerModule] += s;
       return 0;
    }
    int AddSVDEvent(VertexType* s)
@@ -737,17 +736,19 @@ public:
       //pair->Print();
       return;
    }
-   void AddScalerEvents(std::vector<ScalerType*>* events)
+
+   void AddScalerEvents(std::vector<ScalerType> events)
    {
       for ( auto &pair : dumps )
       {
          if (!pair) continue;
-         for ( auto &s : *events )
+         for ( const ScalerType &s : events )
          {
             if (pair->AddScalerEvent(s)>0) break;
          }
       }
    }
+
    void AddSVDEvents(std::vector<VertexType*>* events)
    {
       for ( auto &pair : dumps )

@@ -2,7 +2,7 @@
 #ifndef _RootUtils_
 #define _RootUtils_
 #include "TSeq_Event.h"
-#include "TChrono_Event.h"
+#include "TChronoChannel.h"
 #include "TStoreEvent.hh"
 //#include "TChronoChannelName.h"
 #include "ChronoUtil.h"

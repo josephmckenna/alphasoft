@@ -11,7 +11,7 @@
 #include "TA2Plot.h"
 #include "TAGPlot.h"
 
-#include "TChrono_Event.h"
+#include "TChronoChannel.h"
 
 #include <sstream>
 

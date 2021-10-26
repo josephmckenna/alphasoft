@@ -26,10 +26,18 @@ TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
 {
    SetBoardIndex(b+1);
    std::string OdbPath="Equipment/cbms0" + std::to_string( b + 1) + "/Settings/ChannelNames";
+   Odb->RSA(OdbPath.c_str(),&fName,true,60,250);
+   if (b>=2)
+   {
+       OdbPath="Equipment/cb0" + std::to_string( b + 1) + "/Settings/names";
+       Odb->RSA(OdbPath.c_str(),&fName,true,60,16);
+       for (const auto& n: fName)
+          std::cout<<"\t"<<n<<std::endl;
+   }
          //std::cout<<"MVODB "<<OdbPath<<" ch: "<<chan<<std::endl;
          //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
          //if (Odb->odbReadString(OdbPath.Data(),chan))
-   Odb->RSA(OdbPath.c_str(),&fName,true,60,250);
+   
 }
 #endif
 TChronoChannelName::TChronoChannelName(): fName(CHRONO_N_CHANNELS)
@@ -126,9 +134,11 @@ Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_m
    }
    else
    {
-      for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      for (int i=0; i < CHRONO_N_CHANNELS; i++)
       {
          //std::cout <<Name[i]<<std::endl;
+         if ( i >= fName.size() )
+            continue;
          if (fName[i] == ChannelName) return i;
       }
    }

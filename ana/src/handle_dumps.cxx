@@ -11,10 +11,15 @@
 #include "TSpill.h"
 #include "AgFlow.h"
 #include "RecoFlow.h"
-#include "TChrono_Event.h"
+
+#include "cb_flow.h"
+#include "store_cb.h"
+
 #include "TChronoChannelName.h"
 #include "DumpHandling.h"
 #include <iostream>
+
+
 class DumpMakerModuleFlags
 {
 public:
@@ -44,7 +49,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TAGSpill,TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
+   DumpList<TAGSpill,TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -99,9 +104,9 @@ public:
          }
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
-            TString OdbPath="/Equipment/cbms0";
-            OdbPath+=board+1;
-            OdbPath+="/Settings/ChannelNames";
+            TString OdbPath = "/Equipment/cb0";
+            OdbPath += board+1;
+            OdbPath += "/Settings/names";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             #ifdef INCLUDE_VirtualOdb_H
             if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
@@ -254,47 +259,57 @@ public:
       #ifdef _TIME_ANALYSIS_
       START_TIMER
       #endif
-      AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
+      TCbFlow* FIFOFlow = flow->Find<TCbFlow>();
+      uint32_t midas_time = 0;
+      if (FIFOFlow)
+         midas_time = FIFOFlow->fMidasTime;
+
+      TCbFIFOEventFlow* ChronoFlow = flow->Find<TCbFIFOEventFlow>();
       if (ChronoFlow)
       {
-         //Add timestamps to dumps
-         std::vector<ChronoEvent*>* ce=ChronoFlow->events;
-         //We need the start channel to come before the stop channel (issue unique to chronobox when start and stop have same timestamp)
-         std::sort (ce->begin(), ce->end(), ChronoEvent::SortByTimeThenByChannel);
-         //grep std::cout<<"SIZE:"<<ce->size()<<std::endl;
-         for (uint i=0; i<ce->size(); i++)
+         for (const std::pair<std::string,std::vector<TCbFIFOEvent>> hits: ChronoFlow->fCbHits)
          {
-            ChronoEvent* e=ce->at(i);
+            const std::string cbname = hits.first;
+            char number = cbname[3];
+            int ChronoBoard = number - '0';
             for (int a=0; a<USED_SEQ; a++)
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
-               //std::cout<<DumpStartChannels[a].Board<<" =="<< e->ChronoBoard<<std::endl;
-               if (DumpStartChannels[a].GetChannel()==e->Channel)
-               if (DumpStartChannels[a].GetBoard() ==e->ChronoBoard)
+               if (DumpStartChannels[a].GetBoard() == ChronoBoard)
                {
-                  //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                  for (uint32_t nstarts=0; nstarts<e->Counts; nstarts++)
+                  for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     dumplist[a].AddStartTime(e->MidasTime, e->RunTime);
+                     if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
+                     {
+                        if (hit.IsLeadingEdge())
+                           dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
+                     }
                   }
                }
-               if (DumpStopChannels[a].GetChannel()==e->Channel)
-               if (DumpStopChannels[a].GetBoard()  ==e->ChronoBoard)
+               if (DumpStopChannels[a].GetBoard() == ChronoBoard)
                {
-                  for (uint32_t nstops=0; nstops<e->Counts; nstops++)
+                  for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     dumplist[a].AddStopTime(e->MidasTime, e->RunTime);
+                     if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
+                     {
+                        if (hit.IsLeadingEdge())
+                           dumplist[a].AddStopTime(midas_time, hit.GetRunTime());
+                     }
                   }
                }
             }
-         }
-         //Add SIS counts to dumps
-         for (int a=0; a<USED_SEQ; a++)
-         {
-            std::lock_guard<std::mutex> lock(SequencerLock[a]);
-            //if (SISFlow->sis_events[j].size()
-            dumplist[a].AddScalerEvents(ce);
-            //dumplist[a].Print();
+            //grep std::cout<<"SIZE:"<<ce->size()<<std::endl;
+
+
+            //This is pretty dumb... but I need a container that can handle addition. Joe, FIX THIS!
+            
+            for (int a=0; a<USED_SEQ; a++)
+            {
+               std::lock_guard<std::mutex> lock(SequencerLock[a]);
+               //if (SISFlow->sis_events[j].size()
+               dumplist[a].AddScalerEvents(hits.second);
+               //dumplist[a].Print();
+            }
          }
       }
       /*
@@ -332,7 +347,7 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
-         std::vector<TAGSpill*> finished=dumplist[a].flushComplete();
+         std::vector<TAGSpill*> finished = dumplist[a].flushComplete();
          for (size_t i=0; i<finished.size(); i++)
          {
             f->spill_events.push_back(finished.at(i));

@@ -282,15 +282,15 @@ void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
 }
  
 
-void TAGPlot::AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset)
+void TAGPlot::AddChronoEvent(TCbFIFOEvent *event, int board, Double_t StartOffset)
 {
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();
-  Event.Counts        =event->GetCounts();
-  Event.Chrono_Channel=event->GetTChronoChannel();
-  Event.RunTime       =event->GetRunTime();
-  Event.OfficialTime  =official_time;
-  Event.t             =official_time-StartOffset;
+  if (event->IsLeadingEdge())
+    Event.Counts++;
+  Event.Chrono_Channel= TChronoChannel(board, event->GetChannel());
+  Event.RunTime       = event->GetRunTime();
+  Event.t             = event->GetRunTime() - StartOffset;
   ChronoPlotEvents.push_back(Event);
 }
 
@@ -374,22 +374,21 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
   for (UInt_t j=0; j<ChronoChannels.size(); j++)
   {
     //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
-    double official_time;
-    TTree *t = Get_Chrono_Tree(runNumber, {ChronoChannels[j].GetBoard(), ChronoChannels[j].GetChannel()},official_time);
-    TChrono_Event* e=new TChrono_Event();
+    TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].GetBranchName());
+    TCbFIFOEvent* e=new TCbFIFOEvent();
 
-    t->SetBranchAddress("ChronoEvent", &e);
+    t->SetBranchAddress("FIFOData", &e);
     for (Int_t i = 0; i < t->GetEntriesFast(); ++i)
     {
       t->GetEntry(i);
-      if (official_time <= tmin)
+      if (e->GetRunTime() <= tmin)
         continue;
-      if (official_time > tmax)
+      if (e->GetRunTime() > tmax)
         break;
       if (zeroTime)
-        AddChronoEvent(e, official_time, Toffset + tmin);
+        AddChronoEvent(e, ChronoChannels[j].GetBoard(), Toffset + tmin);
       else
-        AddChronoEvent(e, official_time, Toffset);
+        AddChronoEvent(e,ChronoChannels[j].GetBoard(), Toffset);
 
       ++processed_ts;
       if( (processed_ts%1000) == 0 ) std::cout<<"TAGPlot::AddEvents Chrono Events: "<<processed_ts<<std::endl;

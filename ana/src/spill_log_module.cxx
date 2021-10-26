@@ -18,7 +18,9 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
-#include "TChrono_Event.h"
+#include "store_cb.h"
+
+#include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 #include "TROOT.h"
 #include "TTree.h"
@@ -234,7 +236,7 @@ public:
       std::vector<std::string> channels =
       {
          //channel name, descriptive name
-         "CATCH_OR",
+         "PMT_CATCH_OR",
          "SiPM_B",
          "SiPM_E",
          "TPC_TRIG",

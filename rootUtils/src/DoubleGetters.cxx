@@ -3,17 +3,14 @@
 #ifdef BUILD_AG
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
-   Double_t OfficialTime;
-   TTree* t=Get_Chrono_Tree(runNumber,{Board,CHRONO_CLOCK_CHANNEL},OfficialTime);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
+   TTree* t=Get_Chrono_Tree(runNumber,TChronoChannel(Board,CHRONO_CLOCK_CHANNEL).GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
    t->GetEntry(t->GetEntries()-1);
-   Double_t RunTime=e->GetRunTime();
-   std::cout<<"End time from CB0"<<Board<<" (official time):"<<RunTime<<" ("<<OfficialTime<<")"<<std::endl;
+   Double_t RunTime = e->GetRunTime();
+   std::cout << "End time from CB0" << Board << ":" << RunTime << std::endl;
    delete e;
-   if (RunTime>OfficialTime)
-      return RunTime;
-   return OfficialTime;
+   return RunTime;
 }
 #endif
 #ifdef BUILD_AG
@@ -21,7 +18,7 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
 {
    Double_t OfficialTime;
    TTree* t=Get_StoreEvent_Tree(runNumber, OfficialTime);
-   TStoreEvent* e=new TStoreEvent();
+   TStoreEvent* e = new TStoreEvent();
    t->SetBranchAddress("StoredEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetTimeOfEvent();
@@ -51,15 +48,14 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 #ifdef BUILD_AG
 Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t event_index)
 {
-   double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,chan,official_time);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
+   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress(chan.GetBranchName().c_str(), &e);
    if (event_index > t->GetEntries()) return -1;
    t->GetEntry(event_index);
-   //Double_t RunTime=e->GetRunTime();
+   Double_t RunTime = e->GetRunTime();
    delete e;
-   return official_time;
+   return RunTime;
 }
 #endif
 #ifdef BUILD_AG

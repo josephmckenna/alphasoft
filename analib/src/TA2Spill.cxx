@@ -28,10 +28,10 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODUL
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
-      TSISEvent* e=d->IntegratedSISCounts[i];
+      const TSISEvent& e = d->IntegratedSISCounts[i];
       for (int j=i*NUM_SIS_CHANNELS; j<(i+1)*NUM_SIS_CHANNELS; j++)
       {
-         DetectorCounts.at(j)=e->GetCountsInChannel(j);
+         DetectorCounts.at(j) = e.GetCountsInChannel(j);
          ScalerFilled[j]=true;
       }
    }

@@ -24,8 +24,8 @@ ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 set(LIBRARY_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer2.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TAnalysisReport.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoChannel.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoChannelName.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChrono_Event.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Dump.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Event.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx

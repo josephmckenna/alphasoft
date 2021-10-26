@@ -6,10 +6,35 @@
 
 #ifdef BUILD_AG
 #include "TStoreEvent.hh"
-#include "TChrono_Event.h"
+#include "store_cb.h"
+#include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 
 #define DUMP_NAME_WIDTH 40
+
+
+struct CbHitCounter
+{
+   double   time;
+   uint32_t epoch;
+   uint32_t timestamp;
+   uint32_t channel;
+   uint32_t flags;
+   int      Counts;
+   CbHitCounter(const CbHit& c)
+   {
+      time = c.time;
+      epoch = c.epoch;
+      timestamp = c.timestamp;
+      channel = c.channel;
+      flags = c.flags;
+      if (!(c.flags & CB_HIT_FLAG_TE))
+         Counts = 1;
+      else
+         Counts = 0;
+   }
+};
+
 
 //Class to inegrate AG scaler and data counts
 class TAGSpillScalerData: public TSpillScalerData
@@ -20,7 +45,7 @@ class TAGSpillScalerData: public TSpillScalerData
    TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
    TAGSpillScalerData(const TAGSpillScalerData& a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
-   TAGSpillScalerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    using TObject::Print;
    virtual void Print();
 
@@ -33,7 +58,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
    TAGSpillSequencerData();
    ~TAGSpillSequencerData();
    TAGSpillSequencerData(const TAGSpillSequencerData& s);
-   TAGSpillSequencerData(DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillSequencerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
 
 
    ClassDef(TAGSpillSequencerData,1);
@@ -47,7 +72,7 @@ public:
    TAGSpill();
    TAGSpill(int runno, uint32_t unixtime);
    TAGSpill(int runno, uint32_t unixtime, const char* format, ...);
-   TAGSpill(int runno, DumpPair<TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpill(int runno, DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
    TAGSpill* operator/( TAGSpill* b);
    TAGSpill* operator+( TAGSpill* b);
    TAGSpill(const TAGSpill& a);

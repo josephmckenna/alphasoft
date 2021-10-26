@@ -17,17 +17,18 @@ Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, Int_t ChronoBoard, const char
 Int_t GetCountsInChannel(Int_t runNumber,  TChronoChannel channel, Double_t tmin, Double_t tmax)
 {
    Int_t Counts=0;
-   double official_time;
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,channel,official_time);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
+   TTree* t=Get_Chrono_Tree(runNumber,channel.GetBranchName());
+   TCbFIFOEvent* e = new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)
    {
       t->GetEntry(i);
-      if (official_time<tmin) continue;
-      if (official_time>tmax) continue;
-      Counts+=e->GetCounts();
+      if (e->GetRunTime() < tmin) continue;
+      if (e->GetRunTime() > tmax) continue;
+      //Is leading edge pulse
+      if (! (e->GetFlag() & CB_HIT_FLAG_TE))
+         Counts++;
    }
    return Counts;
 }

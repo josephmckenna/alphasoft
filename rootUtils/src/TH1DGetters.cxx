@@ -58,38 +58,32 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   for (int c = 0; c < CHRONO_N_CHANNELS; c++)
+   
+   for (int b = 0; b < CHRONO_N_BOARDS; b++)
    {
-      for (int b = 0; b < CHRONO_N_BOARDS; b++)
+      TTree* t = Get_Chrono_Tree(runNumber, TChronoChannel(b,CHRONO_CLOCK_CHANNEL).GetBranchName());
+      //We might be able to use TTreeReader with a friend... this is sub optimal 
+      TCbFIFOEvent* e=new TCbFIFOEvent();
+      t->SetBranchAddress("FIFOData", &e);
+      for (Int_t i = 0; i < t->GetEntriesFast(); ++i)
       {
-         double official_time;
-         TTree* t = Get_Chrono_Tree(runNumber, TChronoChannel(b,c), official_time);
-         //We might be able to use TTreeReader with a friend... this is sub optimal 
-         TChrono_Event* e=new TChrono_Event();
-         t->SetBranchAddress("ChronoEvent", &e);
-         for (Int_t i = 0; i < t->GetEntriesFast(); ++i)
+         t->GetEntry(i);
+         if (e->GetRunTime() < first_time) continue;
+         if (e->GetRunTime() > last_time) break;
+         //Loop over all time windows
+         for (int j = 0; j < n_times; j++)
          {
-            t->GetEntry(i);
-            if (official_time < first_time) continue;
-            if (official_time > last_time) break;
-            //Loop over all time windows
-            for (int j = 0; j < n_times; j++)
+            if (e->GetRunTime() > tmin[j] && e->GetRunTime() < tmax[j])
             {
-               if (official_time > tmin[j] && official_time < tmax[j])
+               //const int counts = e->GetCounts();
+               if (e->IsLeadingEdge())
                {
-                  for (int i = 0; i < n_chans; i++)
-                  {
-                     const int counts=e->GetCounts();
-                     if (counts)
-                     {
-                        //std::cout<<t<<"\t"<<tmin[j]<<"\t"<<t-tmin[j]<<std::endl;
-                        hh[i]->Fill(official_time - tmin[j], counts);
-                     }
-                  }
-                  //This event has been written to the array... so I dont need
-                  //to check the other winodws... break! Move to next SISEvent
-                 break;
+                  //std::cout<<t<<"\t"<<tmin[j]<<"\t"<<t-tmin[j]<<std::endl;
+                  hh[e->GetChannel()]->Fill(e->GetRunTime() - tmin[j], 1);
                }
+               //This event has been written to the array... so I dont need
+               //to check the other winodws... break! Move to next SISEvent
+               break;
             }
          }
          delete e;
@@ -194,27 +188,28 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    {
       if (!chrono_chan[i].IsValidChannel())
          continue;
-      double official_time;
-      TTree* t = Get_Chrono_Tree(runNumber, chrono_chan[i], official_time);
+      TTree* t = Get_Chrono_Tree(runNumber, chrono_chan[i].GetBranchName());
       //We might be able to use TTreeReader with a friend... this is sub optimal 
-      TChrono_Event* e=new TChrono_Event();
-      t->SetBranchAddress("ChronoEvent", &e);
+      TCbFIFOEvent* e=new TCbFIFOEvent();
+      t->SetBranchAddress("FIFOData", &e);
       for (Int_t event_n = 0; event_n < t->GetEntries(); ++event_n)
       {
          t->GetEntry(event_n);
+         if (e->GetChannel() != chrono_chan[i].GetChannel())
+            continue;
          //if (official_time < first_time) continue;
          //if (official_time > last_time) break;
          //Loop over all time windows
          for (int j = 0; j < n_times; j++)
          {
             //Increase efficiency by breaking this look when we are outside of range
-            if (official_time > tmin[j] && official_time < tmax[j])
+            if (e->GetRunTime() > tmin[j] && e->GetRunTime() < tmax[j])
             {
-               const int counts=e->GetCounts();
-               if (counts)
+               //const int counts=e->GetCounts();
+               if (e->IsLeadingEdge())
                {
                   //std::cout<<official_time<<"\t"<<tmin[j]<<"\t"<<official_time - tmin[j] <<"\t" << e->GetRunTime()<<std::endl;
-                  hh.at(i).at(j)->Fill(official_time - tmin[j], counts);
+                  hh.at(i).at(j)->Fill(e->GetRunTime() - tmin[j], 1);
                }
             }
          }
@@ -260,9 +255,8 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber,std::vector<TChronoCh
 TH1D* Get_Delta_Chrono(Int_t runNumber, TChronoChannel chan, Double_t tmin, Double_t tmax, Double_t PlotMin, Double_t PlotMax)
 {
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,chan,official_time);
-   TChrono_Event* e=new TChrono_Event();
+   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
    TString name=Get_Chrono_Name(runNumber,chan);
    TString Title="Chrono Time between Events - Board:";
    Title+=chan.GetBoard();
@@ -276,14 +270,16 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, TChronoChannel chan, Double_t tmin, Doub
 
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(0);
-   double last_time=official_time;
+   double last_time = e->GetRunTime();
    for (Int_t i = 1; i < t->GetEntries(); ++i)
    {
       t->GetEntry(i);
-      if (official_time<tmin) continue;
-      if (official_time>tmax) continue;
-      hh->Fill(official_time-last_time,e->GetCounts());
-      last_time=official_time;
+      if (e->GetRunTime() < tmin) continue;
+      if (e->GetRunTime() > tmax) continue;
+      if (e->IsLeadingEdge())
+         hh->Fill(e->GetRunTime() - last_time,1);
+
+      last_time = e->GetRunTime();
    }
    return hh;
 }

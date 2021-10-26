@@ -10,7 +10,8 @@
 #include "TF1.h"
 #include "TCanvas.h"
 #include "TStoreEvent.hh"
-#include "TChrono_Event.h"
+#include "TChronoChannel.h"
+#include "store_cb.h"
 #include "TStoreHelix.hh"
 
 #include "TSpacePoint.hh"
@@ -170,7 +171,7 @@ public:
   void AddToTAGPlot(TString file="plot.root");
   TAGPlot* LoadTAGPlot(TString file="plot.root");
 
-  void AddChronoEvent(TChrono_Event *event, double official_time, Double_t StartOffset);
+  void AddChronoEvent(TCbFIFOEvent *event, int board, Double_t StartOffset);
 
   Int_t AddEvents(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
   Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);
