@@ -9,8 +9,7 @@
 #ifndef _RECOFLOW_
 #define _RECOFLOW_ 1
 
-#include "manalyzer.h"
-#include <iostream>
+#include "AnalysisFlow.h"
 
 #ifdef BUILD_AG
 
