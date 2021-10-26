@@ -207,12 +207,16 @@ public:
             }
          }
       }
+      std::cout << "fLiveHisto size = " << fLiveHisto.size() << std::endl;
+      std::cout << "fSISChannel size = " << fSISChannel.size() << std::endl;
       for (int i = 0; i < fSISChannel.size(); i++)
       {
+         std::cout << "for i = " << i << "fSISChannel[i] = " << fSISChannel[i] << " and fLiveHisto has this many entries..." << fLiveHisto[fSISChannel[i]].GetEntries() << std::endl;
          if (fSISChannel[i] > 0)
          {
             fLiveCanvas.cd(i + 1);
-            fLiveHisto[fSISChannel[i]].Draw("HIST");
+            //This is the first draw causing an issue. Locking this moved the issue to the other draws. 
+            fLiveHisto.at(fSISChannel[i]).Draw("HIST");
          }
       }
       return flow;

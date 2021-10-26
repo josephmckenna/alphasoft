@@ -280,6 +280,7 @@ public:
             }
          }
       }
+      //These draws all also cause an issue. Locking these don't quite fix everything and send the issue back to the previous draw.
       fLiveVertex.cd(1);
       fXYvert.Draw("colz");
       fLiveVertex.cd(2);

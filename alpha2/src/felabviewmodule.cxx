@@ -39,7 +39,7 @@ class felabViewModuleWriter
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          TBranch* TAObj_b = t->GetBranch("TStoreLabVIEWEvent");
          if (!TAObj_b)
-            t->Branch("TStoreLabVIEWEvent",&LVEvent);
+            t->Branch("TStoreLabVIEWEvent", LVEvent); //This is already a pointer.
          {
             t->SetBranchAddress("TStoreLabVIEWEvent",&LVEvent);
          }
@@ -157,7 +157,10 @@ public:
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
             return flow;
          }
-         treeWriter.SaveToTree(runinfo, mf);
+         #ifdef HAVE_CXX11_THREADS
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         #endif
+         treeWriter.SaveToTree(runinfo, mf); //Lock this treewriter.
       }
       return flow; 
    }
