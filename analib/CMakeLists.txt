@@ -33,7 +33,9 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TInfoSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_cb.cxx)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_cb.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/store_cb.cxx
+    )
 if(BUILD_AG)
   list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx)
 endif()
