@@ -2,38 +2,16 @@
 
 ClassImp(TChronoChannelName)
 
-#ifdef INCLUDE_VirtualOdb_H
-//Old manalyzer uses VirtualODB (before Jan 2020)
-TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
-{
-   SetBoardIndex(b+1);
-   SetBoxIndex(BoxIndex);
-   for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-      {
-         TString OdbPath="/Equipment/cbms0";
-         OdbPath+=b+1;
-         OdbPath+="/Settings/ChannelNames";
-         //std::cout<<"VirtualODB "<<OdbPath<<" ch: "<<chan<<std::endl;
-         //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-         if (Odb->odbReadString(OdbPath.Data(),chan))
-            SetChannelName(Odb->odbReadString(OdbPath.Data(),chan),chan);
-      }
-}
-#endif
+
 #ifdef INCLUDE_MVODB_H
 //New manalyzer uses VirtualODB (after Jan 2020)
 TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
 {
    SetBoardIndex(b+1);
-   std::string OdbPath="Equipment/cbms0" + std::to_string( b + 1) + "/Settings/ChannelNames";
-   Odb->RSA(OdbPath.c_str(),&fName,true,60,250);
-   if (b>=2)
-   {
-       OdbPath="Equipment/cb0" + std::to_string( b + 1) + "/Settings/names";
-       Odb->RSA(OdbPath.c_str(),&fName,true,60,16);
-       for (const auto& n: fName)
-          std::cout<<"\t"<<n<<std::endl;
-   }
+   std::string OdbPath="Equipment/cb0" + std::to_string( b + 1) + "/Settings/names";
+   Odb->RSA(OdbPath.c_str(),&fName,true,60,16);
+   for (const auto& n: fName)
+       std::cout<<"\t"<<n<<std::endl;
          //std::cout<<"MVODB "<<OdbPath<<" ch: "<<chan<<std::endl;
          //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
          //if (Odb->odbReadString(OdbPath.Data(),chan))
