@@ -71,7 +71,7 @@ void SaveAllDumps(int runNumber)
          TCanvas* c = new TCanvas();
          Histos.at(i).at(j)->Draw("HIST");
 
-         std::string folder = "AutoSISPlots/";
+         std::string folder = "AutoChronoPlots/";
          gSystem->mkdir(folder.c_str());
          folder += std::to_string(runNumber) + "/";
          gSystem->mkdir(folder.c_str());
