@@ -340,7 +340,7 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
-         std::vector<TAGSpill*> finished = dumplist[a].flushComplete(0);
+         std::vector<TAGSpill*> finished = dumplist[a].flushComplete();
          for (TAGSpill* spill: finished)
          {
             //spill->Print();
