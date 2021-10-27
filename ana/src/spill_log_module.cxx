@@ -156,7 +156,6 @@ class SpillLog: public TARunObject
 public: 
    SpillLogFlags* fFlags;
    bool fTrace = false;
-   int gIsOnline = 0;
    Int_t RunState =-1;
    Int_t gRunNumber =0;
    time_t run_start_time=0;
@@ -209,8 +208,6 @@ public:
    {
       if (fTrace)
          printf("SpillLog::dtor!\n");
-      delete SpillTree;
-      SpillTree = NULL;
    }
    void SaveToTree(TARunInfo* runinfo,TAGSpill* s)
    {
@@ -420,20 +417,6 @@ public:
       std::cout<<"START:"<< run_start_time<<std::endl;
       std::cout<<"STOP: "<< run_stop_time<<std::endl;
 
-      if (run_start_time>0 && run_stop_time==0) //Start run
-      {
-         for (int i=0; i<USED_SEQ; i++)
-         {
-            gIsOnline=1;
-         }
-      }
-      else
-      {
-         gIsOnline=0;
-      }
-      if (gIsOnline)
-      {
-      }
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -452,7 +435,7 @@ public:
 #endif
 
       }
-      SpillTree->Write();
+ //     SpillTree->Write();
 
       InMemorySpillTable.push_back("End run");
       InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
@@ -497,8 +480,6 @@ public:
          }
       }
       
-      if (!gIsOnline) return;
-
       //if (fileCache)
       if (runinfo->fRunNo)
       {
@@ -607,6 +588,7 @@ public:
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(chrono_channels).Data());
 #ifdef HAVE_MIDAS
+std::cout<<"AAAAAAAAA"<<std::endl;
             fSpillLogPrinter.PrintLine(s->Content(chrono_channels).Data());
 #endif
             SaveToTree(runinfo,s);
