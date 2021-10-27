@@ -93,10 +93,10 @@ public:
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
-      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
          name[board]=new TChronoChannelName();
-         name[board]->SetBoardIndex(board+1);
+         name[board]->SetBoardIndex(board);
          for (int det=0; det<MAXDET; det++)
          {
             detectorCh[det].SetChannel(-1);
@@ -105,7 +105,7 @@ public:
          for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
          {
             TString OdbPath = "/Equipment/cb0";
-            OdbPath += board;
+            OdbPath += board + 1;
             OdbPath += "/Settings/names";
             //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
             #ifdef INCLUDE_VirtualOdb_H
@@ -119,7 +119,7 @@ public:
             #endif
          }
      }
-      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
          int channel=-1;
          for (int i=0; i<USED_SEQ; i++)
@@ -139,7 +139,7 @@ public:
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
                DumpStopChannels[iSeq].SetChannel(channel);
-               DumpStopChannels[iSeq].SetBoard(board);
+               DumpStopChannels[iSeq].SetBoard(board );
                std::cout<<"Stop Channel:"<<channel<<std::endl;
             }
             /*
@@ -152,19 +152,19 @@ public:
             }
             */
          }
-/*
+
          channel=name[board]->GetChannel("AD_TRIG");
          if (channel>0)
          {
-            gADSpillChannel.Channel=channel;
-            gADSpillChannel.Board=board;
+            fADChannel.SetChannel(channel);
+            fADChannel.SetBoard(board);
             std::cout<<"AD_TRIG:"<<channel<<" board:"<<board<<std::endl;
          }
-         channel=name[board]->GetChannel("POS_TRIG");
+         /*channel=name[board]->GetChannel("POS_TRIG");
          if (channel>0 )
          {
-            gPOSSpillChannel.Channel=channel;
-            gPOSSpillChannel.Board=board;
+            fPOSChannel.SetChannel(channel);
+            fPOSChannel.SetBoard(board);
          }*/
       }
    }
@@ -262,13 +262,20 @@ public:
          midas_time = FIFOFlow->fMidasTime;
 
       TCbFIFOEventFlow* ChronoFlow = flow->Find<TCbFIFOEventFlow>();
+      if (!FIFOFlow && !ChronoFlow)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
       if (ChronoFlow)
       {
          for (const std::pair<std::string,std::vector<TCbFIFOEvent>> hits: ChronoFlow->fCbHits)
          {
             const std::string cbname = hits.first;
             char number = cbname[3];
-            int ChronoBoard = number - '0';
+            int ChronoBoard = number - '0' - 1;
             for (int a=0; a<USED_SEQ; a++)
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
@@ -309,18 +316,7 @@ public:
             }
          }
       }
-      /*
-      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
-      if (SVDFlow)
-      {
-         for (int a=0; a<USED_SEQ; a++)
-         {
-            std::lock_guard<std::mutex> lock(SequencerLock[a]);
-            dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
-         }
-      }
-      */
-      AGSpillFlow* f=new AGSpillFlow(flow);
+      AGSpillFlow* f = new AGSpillFlow(flow);
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)
       {
@@ -344,10 +340,12 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
-         std::vector<TAGSpill*> finished = dumplist[a].flushComplete();
-         for (size_t i=0; i<finished.size(); i++)
+         std::vector<TAGSpill*> finished = dumplist[a].flushComplete(0);
+         for (TAGSpill* spill: finished)
          {
-            f->spill_events.push_back(finished.at(i));
+            //spill->Print();
+            f->spill_events.push_back(spill);
+            std::cout<<"SPILL FINISHED"<<std::endl;
          }
       }
 
