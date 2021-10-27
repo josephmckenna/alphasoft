@@ -179,6 +179,8 @@ public:
       if (!StopDumpMarker) return false;
       if (StartDumpMarker->fRunTime<0) return false;
       if (StopDumpMarker->fRunTime<0) return false;
+      //FIX ME AGAIN FOR A2... we need refactor!!!
+      return true;
       for ( size_t i=0; i<SIS_Filled.size(); i++)
          if (SIS_Filled[i]==NOT_FILLED) return false;
       if (SVD_Filled==NOT_FILLED) return false;
@@ -325,13 +327,14 @@ public:
       int ScalerModule = s.GetScalerModule();
       //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
-#ifdef _TSISEvent_
-      if (std::is_same<ScalerType,TSISEvent>::value)
-      {
-         //This breaks ALPHAg chronoflow where channels have no counts...
-         SIS_Filled[ScalerModule]=NOT_FILLED;
-      }
-#endif
+//JOE! LUKAS! PUT THIS BACK AFTER REFACTOR
+//#ifdef _TSISEvent_
+//      if (std::is_same<ScalerType,TSISEvent>::value)
+//      {
+//         //This breaks ALPHAg chronoflow where channels have no counts...
+//         SIS_Filled[ScalerModule]=NOT_FILLED;
+//      }
+//#endif
       const double t = s.GetRunTime();
       if (StartDumpMarker)
       {
@@ -347,8 +350,7 @@ public:
                SIS_Filled[ScalerModule]=FILLED;
                return 1;
             }
-      //std::cout<<"POOP"<<std::endl;
-      //s->Print();
+      //s.Print();
       IntegratedSISCounts[ScalerModule] += s;
       return 0;
    }
@@ -592,11 +594,11 @@ public:
       // dump... note, negative values will be ignored as are 
       // sequences in the future
       
-      int best_i=SequenceStartTimes.front().first;
-      int best_diff=SequenceStartTimes.front().second;
+      int best_i = SequenceStartTimes.front().first;
+      int best_diff = SequenceStartTimes.front().second;
       for (size_t i=0; i<SequenceStartTimes.size(); i++)
       {
-         int dt=midas_time-SequenceStartTimes.at(i).second;
+         int dt = midas_time - SequenceStartTimes.at(i).second;
          if (dt<=2) continue;
          if (dt<best_diff)
          {

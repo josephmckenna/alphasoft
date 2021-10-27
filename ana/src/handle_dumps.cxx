@@ -95,30 +95,8 @@ public:
       }
       for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
-         name[board]=new TChronoChannelName();
-         name[board]->SetBoardIndex(board);
-         for (int det=0; det<MAXDET; det++)
-         {
-            detectorCh[det].SetChannel(-1);
-            detectorCh[det].SetBoard(-1);
-         }
-         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-         {
-            TString OdbPath = "/Equipment/cb0";
-            OdbPath += board + 1;
-            OdbPath += "/Settings/names";
-            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            #ifdef INCLUDE_VirtualOdb_H
-            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name[board]->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
-            #endif
-            #ifdef INCLUDE_MVODB_H
-            std::string tmp;
-            runinfo->fOdb->RSAI(OdbPath.Data(),chan,&tmp);
-            name[board]->SetChannelName(tmp.c_str(),chan);
-            #endif
-         }
-     }
+         name[board]=new TChronoChannelName(runinfo->fOdb,board);
+      }
       for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
          int channel=-1;
