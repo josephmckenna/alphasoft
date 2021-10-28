@@ -442,7 +442,7 @@ public:
             for (SimpleTdcHit* tdchit2: tdchits) {
                if (tdchit2->GetBar()!=(bar+64) and tdchit2->GetBar()!=(bar-64)) continue;
                double time2 = tdchit2->GetTime();
-               if (TMath::Abs(time-time2)>25*1e-9) continue;
+               if (TMath::Abs(time-time2)>50*1e-9) continue;
                matched = true;
             }
             if (matched) hTdcCoincidence->Fill(bar);
