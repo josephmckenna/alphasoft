@@ -9,8 +9,8 @@
 #include "manalyzer.h"
 #include "midasio.h"
 
-#include "A2Flow.h"
-#include "TSISEvent.h"
+#include "RecoFlow.h"
+
 
 #include "TStyle.h"
 #include "TColor.h"
@@ -32,6 +32,23 @@
 #include "TCanvas.h"
 
 #include "store_cb.h"
+#include <stdio.h>
+#include <vector>
+#include <iostream>
+#include <string>
+
+#include "manalyzer.h"
+#include "midasio.h"
+#include "TChronoChannelName.h"
+
+#include "unpack_cb.h"
+#include <TH1D.h>
+#include <TH1I.h>
+
+#include "cb_flow.h"
+
+#include "TTree.h"
+#include "store_cb.h"
 
 class TChron
 {
@@ -49,12 +66,9 @@ class TChron
    {
 
    }
-   void operator +=(const TSISEvent& data)
+   void operator +=(const TCbFIFOEvent* cbFIFO)
    {
-      for (int i = 0; i < CHRONO_N_BOARDS * CHRONO_N_CHANNELS; i++)
-      {
-         fCounts[i] += data.GetCountsInChannel(i);
-      }
+      fCounts[cbFIFO->fChannel] += cbFIFO->fCounts;
    }
    double GetRunTime() const
    {
@@ -98,6 +112,7 @@ public:
       std::vector<std::string> channel_display_name;
          MVOdbError* error = new MVOdbError();
 
+         double board = 0;
         TString OdbPath = "/Equipment/cb0";
         OdbPath += board + 1; //TODO Get the correct board number.
         OdbPath += "/Settings/names";
@@ -112,13 +127,12 @@ public:
       runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
       
       //Stolen from spill_log_module... should be upgraded to ODB reads
-      TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
 
         //Just for testing lets get only the first board. Since thats all we're pulling above.
       //for (int i = 0; i < CHRONO_N_BOARDS * CHRONO_N_CHANNELS; i++)
       for (int i = 0; i < 1 * CHRONO_N_CHANNELS; i++)
       {
-         TString name = std::to_string(i) + std::string("-") + sisch->GetDescription(i, runinfo->fRunNo);
+         TString name = std::to_string(i) + std::string("-") + channel_display_name.at(i);
          
          fLiveHisto.emplace_back(
             TH1I(
@@ -152,17 +166,18 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      TCbFIFOEvent* cbFIFO=flow->Find<TCbFIFOEvent>();
+      TCbFIFOEvent* cbFIFO = flow->Find<TCbFIFOEvent>();
       if (!cbFIFO)
          return flow;
 
       // Obtain time range for incoming data
       double mostmax = 0;
-      for ( int j = 0; j < CHRONO_N_BOARDS; j++ )
+      //Again just doing the first board for now
+      //for ( int j = 0; j < CHRONO_N_BOARDS; j++ )
+      for ( int j = 0; j < 1; j++ )
       {
-         if (cbFIFO->sis_events[0].size())
-            if ( mostmax < sf->sis_events[j].back().GetRunTime())
-               mostmax = sf->sis_events[j].back().GetRunTime();
+            if ( mostmax < cbFIFO->GetRunTime())
+               mostmax = cbFIFO->GetRunTime();
       }
       // Reserve space for all incoming TSISEvents
       int i = fFIFO.back().fBin;
@@ -173,15 +188,14 @@ public:
       }
 
       //Find bin of the first event
-      for (int j = 0; j < CHRONO_N_BOARDS; j++)
+      //Again just doing the first board for now
+      //for ( int j = 0; j < CHRONO_N_BOARDS; j++ )
+      for ( int j = 0; j < 1; j++ )
       {
          int bin = 0;
-         for (const TSISEvent& e: sf->sis_events[j]) 
-         {
-            while ( e.GetRunTime() > fFIFO.at(bin).GetRunTime())
+            while ( cbFIFO->GetRunTime() > fFIFO.at(bin).GetRunTime())
                bin++;
-            fFIFO.at(bin) += e;
-         }
+            fFIFO.at(bin) += cbFIFO;
       }
       //Resise histograms
       for (int i = 0; i < fLiveHisto.size(); i++)
