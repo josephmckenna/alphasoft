@@ -165,7 +165,7 @@ public:
   UInt_t GetVertexEventEntries() { return VertexEvents.size(); }
   UInt_t GetChronoPlotEventEntreis() { return ChronoPlotEvents.size(); }
 
-  void AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset = 0.);
+  void AddStoreEvent(TStoreEvent *event, Double_t StartOffset = 0.);
 
   void AddToTAGPlot(TAGPlot *ialphaplot);
   void AddToTAGPlot(TString file="plot.root");
