@@ -4,6 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class std::vector<std::vector<int> >+;
+
 #ifdef BUILD_AG
 #pragma link C++ class  TStoreEvent+;
 #pragma link C++ class  TStoreHelix+;

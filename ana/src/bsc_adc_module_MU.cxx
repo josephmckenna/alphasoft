@@ -19,7 +19,6 @@
 #include "TF1.h"
 
 #include "TBarEvent.hh"
-#pragma link C++ class std::vector<std::vector<int> >+;
 
 class BscFlags {
 public:
@@ -64,7 +63,7 @@ private:
    std::vector<bool>    bar_pair_flag;
    std::vector<bool>    bar_amp_flag;
    std::vector<bool>    bar_time_flag;
-   // std::vector<std::vector<int> > bar_waveforms;
+   std::vector<std::vector<int> > bar_waveforms; //! int
 
    void ResetBarVectors()
    {
@@ -78,12 +77,11 @@ private:
       bar_pair_flag.clear();
       bar_amp_flag.clear();
       bar_time_flag.clear();
-      // Clear the vectors
-      // std::vector<std::vector<int> >::iterator it;
-      // for (it = bar_waveforms.begin(); it != bar_waveforms.end(); it++) {
-      //    (*it).clear();
-      // }
-      // bar_waveforms.clear();
+      std::vector<std::vector<int> >::iterator it;
+      for (it = bar_waveforms.begin(); it != bar_waveforms.end(); it++) {
+         (*it).clear();
+      }
+      bar_waveforms.clear();
    }
 
 public:
@@ -136,6 +134,8 @@ public:
       tBSC->Branch("bar_pair_flag", "std::vector<bool>", &bar_pair_flag);
       tBSC->Branch("bar_amp_flag", "std::vector<bool>", &bar_amp_flag);
       tBSC->Branch("bar_time_flag", "std::vector<bool>", &bar_time_flag);
+      tBSC->Branch("bar_waveforms",&bar_waveforms);
+
       // tBSC->Branch("bar_waveforms", &bar_waveforms);
 
       gDirectory->mkdir("SampleWaveforms");
@@ -223,7 +223,7 @@ public:
 
       int num_bars = 0;
       ResetBarVectors(); ///< Empty the bar vectors (holding the id of the bars that are in the data)
-      for (unsigned int i = 0; i < channels.size(); ++i) {
+      for (unsigned int i = 0; i < channels.size(); ++i) { ///< Loop over the channels (bar/SiPM that fired?)
          auto &ch = channels.at(i); // Alpha16Channel*
 
          // Cuts out adc channels and bad bar numbers
@@ -262,8 +262,8 @@ public:
 
          // Exit if there is no pulse
          // Exit if the pulse is too small
-         // if (start_time <= 0 or end_time <= 0) continue;
-         // if (amp < amplitude_cut) continue;
+         if (start_time <= 0 or end_time <= 0) continue;
+         if (amp < amplitude_cut) continue;
 
          // Count 1 pulse in event
          num_bars++;
@@ -283,7 +283,7 @@ public:
          ///< Check if there is also the corresponding "top/bottom" pair
          bool is_paired = false;
          for(auto & id : bar_id) {
-            if(bar==(id+68)||bar==(id-68)) is_paired = true;
+            if(bar==(id+64)||bar==(id-64)) is_paired = true;
          }
          bar_id.push_back(bar);
          bar_base.push_back(baseline);
@@ -296,7 +296,10 @@ public:
          bar_pair_flag.push_back(is_paired);
          if (start_time <= 0 or end_time <= 0) bar_time_flag.push_back(0); else bar_time_flag.push_back(1);
          if (amp < amplitude_cut) bar_amp_flag.push_back(0); else bar_amp_flag.push_back(1);
-         // bar_waveforms.push_back(wave);
+         bar_waveforms.push_back(wave);
+         ///< ##########################
+         ///< FITTING THE PULSE 
+         ///< ##########################
          // Fits pulse
          double fit_amp;
          double maximum_time;
@@ -352,7 +355,7 @@ public:
 
          // Fills bar event
          BarEvent->AddADCHit(bar, fit_amp, fit_start_time * 10);
-      }
+      } ///< Loop over the channels (bar/SiPM that fired?)
 
       hNumBars->Fill(num_bars);
       return BarEvent;
