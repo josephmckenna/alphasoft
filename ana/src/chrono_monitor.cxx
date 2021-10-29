@@ -169,7 +169,8 @@ public:
       TCbFIFOEvent* cbFIFO = flow->Find<TCbFIFOEvent>();
       if (!cbFIFO)
          return flow;
-
+      std::cout << "WE HAVE CAUGHT A cbFIFO EVENT. This should mean live is working if we get here?" <<std::endl;
+      
       // Obtain time range for incoming data
       double mostmax = 0;
       //Again just doing the first board for now
