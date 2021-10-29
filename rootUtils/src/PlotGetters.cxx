@@ -155,19 +155,19 @@ void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dum
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
+TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TAGPlot* p=new TAGPlot(0); //Cuts off
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off
   p->SetTimeRange(0.,tmax-tmin);
   p->AddEvents(runNumber,tmin,tmax);
   TString cname = TString::Format("cVTX_R%d",runNumber);
   std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
-  p->Canvas(cname);
+  return p->Canvas(cname);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
 {
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    double tmin = spills.front().GetStartTime();
@@ -180,7 +180,7 @@ void Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t 
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex, Int_t offset)
+TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex, Int_t offset)
 { 
    TAGPlot* p=new TAGPlot(0); //Cuts off  
    for( Int_t i=0; i<Nruns; ++i )
@@ -198,8 +198,7 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dump
       p->AddEvents(runNumber[i],tmin,tmax);
     }
   TString cname = TString::Format("cVTX_%s_Rlist",description);
-  p->Canvas(cname);
-  return;
+  return p->Canvas(cname);
 }
 #endif
 #ifdef BUILD_AG
