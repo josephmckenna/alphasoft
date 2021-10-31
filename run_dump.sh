@@ -60,8 +60,8 @@ agana.exe ${MIDAS_PATH}/run${RUNNO_FILE}sub*.mid.lz4 -- --anasettings ana/cern20
 #  p->Canvas(cname)->SaveAs(\"R${RUNNO}_Verts.png\");
 #" | root -l
 
-echo "Plot_TPC(5365, ${START_TIME} + ${FUDGE_TIME}, ${STOP_TIME}-${FUDGE_TIME}, true)->SaveAs(\"R${RUNNO}_Verts_WithCuts.png\");
+echo "Plot_TPC(${RUNNO}, ${START_TIME} + ${FUDGE_TIME}, ${STOP_TIME}-${FUDGE_TIME}, true)->SaveAs(\"R${RUNNO}_Verts_WithCuts.png\");
 " | root -l -b
 
-echo "Plot_TPC(5365, ${START_TIME} + ${FUDGE_TIME}, ${STOP_TIME}-${FUDGE_TIME}, false)->SaveAs(\"R${RUNNO}_Verts_NoCuts.png\");
+echo "Plot_TPC(${RUNNO}, ${START_TIME} + ${FUDGE_TIME}, ${STOP_TIME}-${FUDGE_TIME}, false)->SaveAs(\"R${RUNNO}_Verts_NoCuts.png\");
 " | root -l -b
