@@ -48,7 +48,7 @@ class TChronoChannel {
    }
    int GetIndex() const
    {
-      return fBoard*CHRONO_N_CHANNELS+fChannel;
+      return fBoard * CHRONO_N_CHANNELS + fChannel;
    }
    std::string GetBranchName() const
    {
@@ -64,6 +64,5 @@ class TChronoChannel {
 std::ostream& operator<<(std::ostream& o,const TChronoChannel& c);
 bool operator==( const TChronoChannel & lhs, const TChronoChannel & rhs);
 
-
-
 #endif
+

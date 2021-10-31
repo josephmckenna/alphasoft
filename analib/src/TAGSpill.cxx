@@ -299,7 +299,7 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
          int counts=-1;
          //If valid channel number:
          if (c.GetChannel() > 0)
-            counts=ScalerData->DetectorCounts[c.GetIndex()];
+            counts = ScalerData->DetectorCounts[c.GetIndex()];
          sprintf(buf,"%9d",counts);
          log += buf;
          if (units.size())

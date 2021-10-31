@@ -95,7 +95,7 @@ void TChronoChannelName::DumpToJson(int runno)
 void TChronoChannelName::Print()
 {
    std::cout<<"Board Index:\t"<<fChronoBoardIndex<<std::endl;
-   for (int i=0; i<CHRONO_N_CHANNELS; i++)
+   for (int i = 0; i < CHRONO_N_CHANNELS; i++)
       std::cout<<i<<": "<<fName[i] <<std::endl;
 }
 
@@ -105,7 +105,7 @@ Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_m
    {
       for (int i=0; i<CHRONO_N_CHANNELS; i++)
       {
-         //std::cout <<Name[i]<<std::endl;
+         //std::cout <<fName[i]<<std::endl;
          //std::string doesn't have this functionality until C++20 :(
          if (TString(fName[i]).BeginsWith(ChannelName)) return i;
       }
@@ -114,7 +114,7 @@ Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_m
    {
       for (int i=0; i < CHRONO_N_CHANNELS; i++)
       {
-         //std::cout <<Name[i]<<std::endl;
+         //std::cout <<fName[i]<<std::endl;
          if ( i >= fName.size() )
             continue;
          if (fName[i] == ChannelName) return i;
