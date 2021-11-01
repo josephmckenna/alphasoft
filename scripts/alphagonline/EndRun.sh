@@ -40,7 +40,7 @@ fi
 cd $AGRELEASE
 
 echo "Generating Chrono plots..."
-echo ".L ana/macros/SaveAllDumps.cxx 
+echo ".L ana/macros/SaveAllDumps.C
 SaveAllDumps(${RUNNO})
 .q
 " | root -l -b &> AutoChronoPlots/R${RUNNO}.log
