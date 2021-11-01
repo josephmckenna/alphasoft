@@ -1,4 +1,21 @@
 #include "FileGetters.h"
+
+namespace FileGetters {
+   std::string gFileNamePattern = "output%5d.root";
+}
+
+void SetFileNamePatter(const std::string pattern)
+{
+   FileGetters::gFileNamePattern = pattern;
+   return;
+}
+
+std::string GetFileNamePattern()
+{
+    return FileGetters::gFileNamePattern;
+}
+
+
 TFile *Get_File(Int_t run_number, Bool_t die)
 {
   TFile *f = NULL;
@@ -27,18 +44,10 @@ TFile *Get_File(Int_t run_number, Bool_t die)
      }
   if (!file_name.EndsWith("/"))
      file_name+="/";
-  file_name += "output";
-  if (run_number < 10000)
-    file_name += "0";
-  if (run_number < 1000)
-    file_name += "0";
-  if (run_number < 100)
-    file_name += "0";
-  if (run_number < 10)
-    file_name += "0";
-  file_name += run_number;
-  file_name += ".root";
 
+  char root_filename[200];
+  sprintf(root_filename,FileGetters::gFileNamePattern.c_str(),run_number);
+  file_name += root_filename;
 
 // ALPHA G EOS PATH NOT SETUP YET...
   TString EOS_name(getenv("EOS_MGM_URL"));
