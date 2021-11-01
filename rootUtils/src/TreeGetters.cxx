@@ -116,6 +116,19 @@ TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber)
    TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
    return t;
 }
+
+#endif
+
+#ifdef BUILD_AG
+
+TTreeReader* Get_TAGAnalysisReport_Tree(Int_t runNumber)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("AnalysisReport");
+   TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
+   return t;
+}
+
 #endif
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)
