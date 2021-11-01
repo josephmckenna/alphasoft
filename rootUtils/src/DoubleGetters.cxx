@@ -4,8 +4,12 @@
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
    TTree* t=Get_Chrono_Tree(runNumber,TChronoChannel(Board,CHRONO_CLOCK_CHANNEL).GetBranchName());
+   if (!t)
+      return -1;
    TCbFIFOEvent* e=new TCbFIFOEvent();
    t->SetBranchAddress("FIFOData", &e);
+   if (!t->GetEntries())
+      return -1;
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime = e->GetRunTime();
    std::cout << "End time from CB0" << Board << ":" << RunTime << std::endl;

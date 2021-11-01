@@ -172,15 +172,15 @@ void TAGPlot::AddToTAGPlot(TString file)
 }
 
 
-void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t OfficialTimeStamp, Double_t StartOffset)
+void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
 {
   AGVertexEvent Event;
   TVector3 vtx = event->GetVertex();
   Event.EventNo= event->GetEventNumber();
 
   Event.EventTime= event->GetTimeOfEvent();
-  Event.RunTime= OfficialTimeStamp;
-  Event.t= OfficialTimeStamp - StartOffset;
+  Event.RunTime= event->GetTimeOfEvent();
+  Event.t= event->GetTimeOfEvent() - StartOffset;
   Event.VertexStatus=event->GetVertexStatus();
   Event.x=vtx.X();
   Event.y=vtx.Y();
@@ -333,8 +333,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
     Runs.push_back(runNumber);
   }
   TStoreEvent *store_event = new TStoreEvent();
-  Double_t official_time;
-  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+  TTree *t0 = Get_StoreEvent_Tree(runNumber);
   t0->SetBranchAddress("StoredEvent", &store_event);
   //SPEED THIS UP BY PREPARING FIRST ENTRY!
   Int_t processed_events = 0;
@@ -342,24 +341,25 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
   {
     store_event->Reset();
     t0->GetEntry(i);
-    //store_event->Print();
     if (!store_event)
     {
       std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
       break;
     }
-    if (official_time <= tmin)
+    if (store_event->GetTimeOfEvent() <= tmin)
     {
       continue;
     }
-    if (official_time > tmax)
+    if (store_event->GetTimeOfEvent() > tmax)
     {
       break;
     }
+    //store_event->Print();
+    
     if (zeroTime)
-      AddStoreEvent(store_event, official_time, Toffset + tmin);
+      AddStoreEvent(store_event,  Toffset + tmin);
     else
-      AddStoreEvent(store_event, official_time,Toffset);
+      AddStoreEvent(store_event, Toffset);
     ++processed_events;
     if( (processed_events%1000) == 0 ) std::cout<<"TAGPlot::AddEvents StoreEvents: "<<processed_events<<std::endl;
   }

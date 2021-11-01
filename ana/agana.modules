@@ -6,6 +6,8 @@ unpack_module.o
 
 #Full reconstruction (development branch style):
 eos_module.o handle_sequencer.o cb_module.o
+handle_dumps.o
+spill_log_module.o
 
 # AC
 bsc_adc_module.o     
