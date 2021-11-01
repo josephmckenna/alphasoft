@@ -8,18 +8,22 @@ void SaveAllDumps(int runNumber)
 {
    std::vector<TAGSpill> all = Get_AG_Spills(runNumber,{"*"},{-1});
    //Get this list from the root file! (or ODB)
+   
+   //List of channels for the AutoAnalysis to look at
    std::vector<std::string> detector_channels = {
       //channel name, descriptive name
-      "CATCH_OR",
-      "SiPM_B",
+      "PMT_CATCH_OR",
+      "SiPM_CATCH_OR",
+      "SiPM_A","SiPM_D","SiPM_A_OR_D",
       "SiPM_E",
+      "SiPM_C","SiPM_F","SiPM_C_OR_F",
+      "SiPM_B",
+      "ADC_TRG",
+      //Are these gone? yep
       "TPC_TRIG",
       "SiPM_A_AND_D",
       "SiPM_C_AND_F",
       "SiPM A_OR_C-AND-D_OR_F",
-      "SiPM_C",
-      "SiPM_D",
-      "SiPM_F"
    };
    std::vector<TChronoChannel> chans;
    for (std::string channel_name: detector_channels)
@@ -84,6 +88,53 @@ void SaveAllDumps(int runNumber)
          c->Close();
          delete c;
       }
+   }
+
+
+
+   //Make compound plots
+
+   std::map<std::string,int> dumpIndex_counter;
+   for (int j = 0; j < all.size(); j++)
+   {
+      TCanvas* c = new TCanvas("cSiPM","cSiPM", 1800, 1500);
+      c->Divide(2,4);
+
+      const TAGSpill s = all.at(j);
+
+      std::string dump_name = s.GetSequenceName() + "_" + s.Name + "_" + std::to_string(dumpIndex_counter[s.GetSequenceName() + "_" + s.Name]++);
+      // Remove quote marks... they upset uploading to elog
+      dump_name.erase(std::remove(dump_name.begin(), dump_name.end(), '"'), dump_name.end());
+
+      for (int i = 0; i< detector_channels.size(); i++)
+      {
+         // List of channels for the 8 plot combined canvas
+         std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_OR_D","SiPM_E",
+                                           "SiPM_C","SiPM_F","SiPM_C_OR_F","ADC_TRG"};
+         std::string channel_name = detector_channels.at(i);
+         for ( int k = 0; k < channels.size(); k++ )
+         {
+            if (channels.at(k) == channel_name)
+            {
+               c->cd(k + 1);
+               TH1D* h = Histos.at(i).at(j);
+               h->GetXaxis()->SetTitle("Time [s]");
+               h->GetYaxis()->SetTitle("Counts"); 
+              h->Draw("HIST");
+            }
+         }
+      }
+      
+      std::string folder = "AutoChronoPlots/";
+      gSystem->mkdir(folder.c_str());
+      folder += std::to_string(runNumber) + "/";
+      gSystem->mkdir(folder.c_str());
+      folder += "ChronoScintialltors/";
+      gSystem->mkdir(folder.c_str());
+      std::string filename = folder + "R" + std::to_string(runNumber) + std::string("_") + dump_name + ".png";
+      c->Draw();
+      c->SaveAs(filename.c_str());
+      delete c;
    }
 }
 

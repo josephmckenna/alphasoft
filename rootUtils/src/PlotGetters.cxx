@@ -129,8 +129,8 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
 
-  std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_AND_D","SiPM_E",
-      "SiPM_C","SiPM_F","SiPM_C_AND_F","SiPM_B"};
+  std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_OR_D","SiPM_E",
+      "SiPM_C","SiPM_F","SiPM_C_OR_F","SiPM_B"};
   TString cname = TString::Format("cSiPM_%1.3f-%1.3f",tmin,tmax);
   TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1500);
   c->Divide(2,4);
