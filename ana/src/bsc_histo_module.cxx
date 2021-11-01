@@ -165,8 +165,8 @@ public:
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",16,-0.5,15.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",17,-0.5,16.5);
-         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
-         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,201,-0.5,200.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
          hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",16,-0.5,15.5,1000,0,400);
          if (fFlags->fPulser) {
@@ -214,8 +214,8 @@ public:
          hTdcCoincidence = new TH1D("hTdcCoincidence","TDC hits with corresponing hit on other end;Channel number",128,-0.5,127.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",129,-0.5,128.5);
-         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",10,-0.5,9.5);
-         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,10,-0.5,9.5);
+         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,201,-0.5,200.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
          hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",128,-0.5,127.5,1000,0,400);
          if (fFlags->fPulser) {
