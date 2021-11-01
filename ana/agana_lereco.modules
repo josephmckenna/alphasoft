@@ -20,9 +20,6 @@ bsc_tdc_module.o
 
 leaw_module.o lepad_module.o spacepoint_module.o reco_module.o
 
-# GS
-bv_tpc_matching_module.o
-
 histo_module.o
 phspectrum_module.o
 calib_module.o
