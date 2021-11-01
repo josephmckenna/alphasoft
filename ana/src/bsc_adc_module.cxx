@@ -29,6 +29,7 @@ class BscFlags
 {
 public:
    bool fPrint = false;
+   bool fDiag = false;
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
    bool fFitAll = false; // If false, fits only saturated waveforms
@@ -75,20 +76,22 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->mkdir("bsc")->cd();
-      gDirectory->mkdir("SampleWaveforms")->cd();
-      for (int ii=0;ii<128;ii++)
-         {
-            TString hname = TString::Format("hSampleBar%d",ii);
-            TString htitle = TString::Format("Sample ADC Waveform Channel %d",ii);
-            hSampleWaveforms[ii] = new TH1D(hname,htitle,700,0,700);
-            sample_plotted.push_back(false);
-            if (!(fFlags->fPulser)) {
-               TString fitname = TString::Format("fitSampleBar%d",ii);
-               hSampleWaveformFits[ii] = new TF1(fitname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))");
+      if (fFlags->fDiag) {
+         gDirectory->mkdir("bsc")->cd();
+         gDirectory->mkdir("SampleWaveforms")->cd();
+         for (int ii=0;ii<128;ii++)
+            {
+               TString hname = TString::Format("hSampleBar%d",ii);
+               TString htitle = TString::Format("Sample ADC Waveform Channel %d",ii);
+               hSampleWaveforms[ii] = new TH1D(hname,htitle,700,0,700);
+               sample_plotted.push_back(false);
+               if (!(fFlags->fPulser)) {
+                  TString fitname = TString::Format("fitSampleBar%d",ii);
+                  hSampleWaveformFits[ii] = new TF1(fitname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))");
+               }
             }
-         }
-      gDirectory->cd("..");
+         gDirectory->cd("..");
+      }
 
    }
 
@@ -244,24 +247,28 @@ public:
                      // Gets minimized parameters
                      ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
                      double new_fit_amp = the_state.Value(0) - baseline;
-                     if (!(sample_plotted.at(bar)))
-                        hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                     if (fFlags->fDiag) {
+                        if (!(sample_plotted.at(bar)))
+                           hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                     }
 
                      // Saves fit voltage
                      amp_volts = new_fit_amp*adc_conversion;
                   }
 
                   // Copies histogram to sample histogram
-                  if (!(sample_plotted.at(bar)))
-                     {
-                        for (int ii=0;ii<ch->adc_samples.size();ii++)
-                           { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
-                        if (saturated) {
-                           hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
-                           hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                  if (fFlags->fDiag) {
+                     if (!(sample_plotted.at(bar)))
+                        {
+                           for (int ii=0;ii<ch->adc_samples.size();ii++)
+                              { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
+                           if (saturated) {
+                              hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
+                              hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                           }
+                           sample_plotted.at(bar)=true;
                         }
-                        sample_plotted.at(bar)=true;
-                     }
+                  }
       
                   // Writes bar event
                   if (saturated) {
@@ -309,6 +316,7 @@ public:
    {   
       printf("BscModuleFactory::Help\n");
       printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+      printf("\t--bscdiag\t\t\tenables analysis histograms\n");
       printf("\t--bscpulser\t\t\tanalyze run with calibration pulser data instead of cosmics/hbar data\n");
       printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
       printf("\t--bscprint\t\t\tverbose mode\n");
@@ -328,6 +336,8 @@ public:
             Help();
          if (args[i] == "--bscprint")
             fFlags.fPrint = true;
+         if (args[i] == "--bscdiag")
+            fFlags.fDiag = true;
          if( args[i] == "--bscpulser")
             fFlags.fPulser = true;
          if (args[i] == "--bscProtoTOF")

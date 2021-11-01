@@ -24,6 +24,7 @@ class TdcFlags
 {
 public:
    bool fPrint = false;
+   bool fDiag = false;
    bool fProtoTOF = false;
    bool fPulser = false;
    std::string fOffsetFile = ""; 
@@ -89,15 +90,17 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->mkdir("bsc_tdc_module")->cd();
+      if (fFlags->fDiag) {
+         runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+         gDirectory->mkdir("bsc_tdc_module")->cd();
 
-      // Histogramm declaration
-      if (fFlags->fProtoTOF) {
-         hTDCbar = new TH1D("hTdcBar","TDC channel occupancy;Channel number",16,-0.5,15.5);
-      }
-      if (!(fFlags->fProtoTOF)) {
-         hTDCbar = new TH1D("hTdcBar","TDC channel occupancy;Channel number",128,-0.5,127.5);
+         // Histogramm declaration
+         if (fFlags->fProtoTOF) {
+            hTDCbar = new TH1D("hTdcBar","TDC channel occupancy;Channel number",16,-0.5,15.5);
+         }
+         if (!(fFlags->fProtoTOF)) {
+            hTDCbar = new TH1D("hTdcBar","TDC channel occupancy;Channel number",128,-0.5,127.5);
+         }
       }
 
       // Loads BV and protoTOF maps
@@ -172,7 +175,8 @@ public:
          }
 
       // Delete histograms
-      delete hTDCbar;
+      if (fFlags->fDiag)
+         delete hTDCbar;
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -281,7 +285,8 @@ public:
             }
 
             // Fills occupancy histogram
-            hTDCbar->Fill(barID);
+            if (fFlags->fDiag)
+               hTDCbar->Fill(barID);
 
             // Writes tdc data to SimpleTdcHit to add back into the flow
             barEvt->AddTdcHit(barID,calib_time);
@@ -472,6 +477,8 @@ public:
             Help();
          if (args[i] == "--bscprint")
             fFlags.fPrint = true; 
+         if (args[i] == "--bscdiag")
+            fFlags.fDiag = true; 
          if( args[i] == "--bscpulser" )
             fFlags.fPulser = true;
          if( args[i] == "--bscProtoTOF" )

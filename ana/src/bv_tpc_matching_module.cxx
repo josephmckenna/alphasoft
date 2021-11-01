@@ -26,6 +26,7 @@ class MatchingModuleFlags
 public:
    double fMagneticField = -1.;
    bool fPrint = false;
+   bool fDiag = false;
    AnaSettings* ana_settings=0;
 
    MatchingModuleFlags() // ctor
@@ -122,6 +123,7 @@ public:
       delete analyzed_event;
       analyzed_event=NULL;
       
+       if (fFlags->fDiag) {
       gDirectory->mkdir("bv_tpc_matching_module")->cd();
 
       // Histogramm setup
@@ -156,6 +158,7 @@ public:
             runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
             gDirectory->cd("bv_tpc_matching_module");
          }
+      }
    }
 
 
@@ -163,6 +166,7 @@ public:
    {
       runinfo->fRoot->fOutputFile->Write();
       // Delete histos
+      if (fFlags->fDiag) {
       delete hdPhiMatch;
       delete hdZMatch;
       delete hDTvZTPC;
@@ -188,6 +192,7 @@ public:
       for (int i=0;i<N_names;i++) delete h_exp_TOF_TOF[i];
       for (int i=0;i<N_names;i++) delete h_exp_TOF_spread[i];
       for (int i=0;i<N_names;i++) delete h_exp_TOF_check[i];
+      }
 
    }
 
@@ -243,6 +248,9 @@ public:
          if (fFlags->fPrint) {printf("matchingmodule: TStoreEvent not found!");}
          return flow;
       }
+
+      if (!(fFlags->fDiag)) return flow;
+
       const TObjArray* LineArray = e->GetLineArray();
       const TObjArray* HelixArray = e->GetHelixArray();
       
@@ -592,6 +600,8 @@ public:
             }
          if( args[i] == "--bscprint")
             fFlags.fPrint = true;
+         if( args[i] == "--bscdiag")
+            fFlags.fDiag = true;
          if( args[i] == "--anasettings" ) 
             json=args[i+1];
          }
