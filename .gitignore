@@ -76,3 +76,5 @@ callgrind.out.*
 simulation/geant4_vmc/
 simulation/vgm/
 simulation/vmc/
+AutoSISPlots/
+AutoChronoPlots/

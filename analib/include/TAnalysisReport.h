@@ -185,6 +185,8 @@ private:
     double LastVF48TimeStamp;
     int SVD_Verts_Sum;
     int SVD_PassCut_Sum;
+    TH1I* fHybridNSideOccupancy;
+    TH1I* fHybridPSideOccupancy;
 
  public:
     TA2AnalysisReport();
@@ -201,7 +203,14 @@ private:
         return SVD_Verts_Sum;
     }
     void FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t& raw_hits, const Int_t& hits, const Int_t& tracks, const Int_t& verts, int pass, double time);
+    void FillHybridNSideOccupancy(const int module);
+    void FillHybridPSideOccupancy(const int module);
+    void FillOccupancy(const int module, const int nHits);
     void Flush();
+    
+    //Zeroth bin is the underflow
+    int GetHybridNSideOccupancy(const int module) const { return fHybridNSideOccupancy->GetBinContent(module + 1); }
+    int GetHybridPSideOccupancy(const int module) const { return fHybridPSideOccupancy->GetBinContent(module + 1); }
 
     using TObject::Print;
     virtual void Print();

@@ -173,8 +173,6 @@ int VF48_HaveHit(const VF48channel *chan, int16_t threshold, int Navg, bool last
    {
       if (fTrace)
          printf("ZeroSuppModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -182,9 +180,6 @@ int VF48_HaveHit(const VF48channel *chan, int16_t threshold, int Navg, bool last
    {
       if (fTrace)
          printf("ZeroSuppModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
-
    }
 
    void EndRun(TARunInfo* runinfo)

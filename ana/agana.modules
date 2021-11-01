@@ -5,7 +5,9 @@
 unpack_module.o
 
 #Full reconstruction (development branch style):
-eos_module.o handle_sequencer.o chrono_module.o
+eos_module.o handle_sequencer.o cb_module.o
+handle_dumps.o
+spill_log_module.o
 
 # AC
 bsc_adc_module.o     
@@ -26,5 +28,4 @@ calib_module.o
 # PH
 display_module.o
 # JTKM
-official_time_module.o
 AnalysisReport_module.o

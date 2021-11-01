@@ -41,12 +41,13 @@ public:
    HandleSequencerFlags* fFlags;
    TSeq_Event* fSeqEvent;
    TSequencerState* fSeqState;
-   TTree* SequencerTree;
+   TTree* fSequencerEventTree;
+   TTree* fSequencerStateTree;
    bool fTrace = false;
 
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
-        fSeqEvent(0), fSeqState(0), SequencerTree(0)
+        fSeqEvent(nullptr), fSeqState(nullptr), fSequencerEventTree(nullptr), fSequencerStateTree(nullptr)
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="Handle Sequencer";
@@ -65,16 +66,15 @@ public:
    {
       if (fTrace)
          printf("HandleSequencer::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       fSeqEvent = new TSeq_Event;
-      SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
-      SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
+      fSequencerEventTree = new TTree("SequencerEventTree", "SequencerEventTree");
+      fSequencerEventTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
 
       fSeqState = new TSequencerState;
-      SequencerTree->Branch("TSequencerState",&fSeqState, 32000, 0);
+      fSequencerStateTree = new TTree("SequencerStateTree", "SequencerStateTree");
+      fSequencerStateTree->Branch("TSequencerState",&fSeqState, 32000, 0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -82,9 +82,13 @@ public:
       if (fTrace)
          printf("HandleSequencer::EndRun, run %d\n", runinfo->fRunNo);
       gDirectory->cd("/");
-      SequencerTree->Write();
-      delete SequencerTree;
+
+      fSequencerEventTree->Write();
+      delete fSequencerEventTree;
       if (fSeqEvent) delete fSeqEvent;
+
+      fSequencerStateTree->Write();
+      delete fSequencerStateTree;
       if (fSeqState) delete fSeqState;
    }
    
@@ -171,7 +175,7 @@ public:
             buf[i] = 'X';
          else if (buf[i] == 0x1D)
             buf[i] = 'X';
-
+      
       int parsecode = fParser->ParseBuffer(buf,bufLength);
     
       if (parsecode < 0 ) 
@@ -188,7 +192,10 @@ public:
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
+      {
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       driver->Parse(node);
+      }
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
@@ -241,7 +248,7 @@ public:
             fSeqEvent->SetonState( event->GetStateID() );
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
-             SequencerTree->Fill();
+            fSequencerEventTree->Fill();
             ((DumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
                 cSeq[iSeqType],
@@ -256,38 +263,19 @@ public:
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
          {
-            TSequencerState* SeqState = new TSequencerState();
-            SeqState->SetSeq( mySeq->getSequencerName() );
-            SeqState->SetSeqNum(cSeq[iSeqType]);
-            SeqState->SetID(sID[iSeqType]++);
-            SeqState->SetState( state->getID() );
-            SeqState->SetTime( state->getTime() );
+            fSeqState->Reset();
+            fSeqState->SetSeq( mySeq->getSequencerName() );
+            fSeqState->SetSeqNum(iSeqType);
+            fSeqState->SetID(sID[iSeqType]++);
 
-            //AO
-            if (state->GetAOi()->size())
-            {
-               AnalogueOut* AO=new AnalogueOut;
-               AO->steps=state->getLoopCnt();
-               AO->AOi=*state->GetAOi();
-               AO->AOf=*state->GetAOf();
-               AO->PrevState=-999;
-               SeqState->AddAO(AO);
-            }
-
-            //DO
-            if (state->GetDO()->size())
-            {
-               DigitalOut* DO=new DigitalOut;
-               DO->Channels=*state->GetDO();
-               SeqState->AddDO(DO);
-            }
+            fSeqState->Set(state);
 
             //Trigger unset for now
-            SeqState->SetComment(*state->getComment() );
-            ((DumpFlow*)flow)->AddStateEvent(SeqState);
+            fSeqState->SetComment(*state->getComment() );
+
+            ((DumpFlow*)flow)->AddStateEvent(*fSeqState);
             //SeqState->Print();
-            /*fSeqState=SeqState;*/
-            /*gSeqStateTree->Fill();*/
+            fSequencerStateTree->Fill();
          }
       }
       delete mySeq;

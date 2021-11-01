@@ -63,9 +63,9 @@ if(DEFINED ENV{MIDASSYS})
    message(STATUS "${PROJECT_NAME}: Building with MIDAS from $ENV{MIDASSYS}/lib/midas-targets.cmake")
    set(MIDAS_FOUND TRUE)
    set(MIDASSYS "$ENV{MIDASSYS}")
+   set(MIDAS_LIBRARY_DIRS "${MIDASSYS}/lib")
    set(MIDAS_LIBRARIES midas)
    message(STATUS "MIDAS found ${MIDASSYS}")
-   set(MIDAS_LIBRARY_DIRS "${MIDASSYS}/lib")
    message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
    message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARY_DIRS = ${MIDAS_LIBRARY_DIRS}")
 else()
@@ -76,7 +76,7 @@ endif()
 
 
 # SQLITE3
-find_package(SQLite3 REQUIRED)
+find_package(SQLite3)
 if(SQLite3_FOUND)
   message(STATUS "SQLite3 ${SQLite3_VERSION} found")
 else()
@@ -213,6 +213,7 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
+get_submodule(chronobox_software)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)

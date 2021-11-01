@@ -106,10 +106,13 @@ public:
                if (ColdDump)
                   delete ColdDump;
                ColdDump = new TA2Spill(*s);
-               std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
-               TA2Spill* eff = *ColdDump/(*ColdDump+HotDump);
-               //eff->Print();
-               SpillFlow->spill_events.push_back(eff);
+               if (HotDump)
+               {
+                  std::cout<<"catch_efficiency_module::CalculateCatchEfficiency"<<std::endl;
+                  TA2Spill* eff = *ColdDump/(*ColdDump+HotDump);
+                  //eff->Print();
+                  SpillFlow->spill_events.push_back(eff);
+               }
             }
             
          }

@@ -134,10 +134,28 @@ TSiliconModule* TSiliconEvent::GetSiliconModule( const  Int_t ModuleNumber )
   return NULL;
 }
 
+const TSiliconModule* TSiliconEvent::GetSiliconModule( const  Int_t ModuleNumber ) const
+{
+  TSiliconModule* SiliconModule = NULL;
+
+  //loop over SiliconModules
+  for( uint i=0; i<SiliconModules.size(); i++ )
+    {
+      SiliconModule = SiliconModules.at(i);
+      if (!SiliconModule) continue;
+      if( SiliconModule->GetModuleNumber() == ModuleNumber )
+        {
+          return SiliconModule;
+        }
+    }
+
+  return NULL;
+}
+
 Int_t TSiliconEvent::CompressSiliconVAs()
 {
-  Int_t SiliconModuleEntries = SiliconModules.size();
-  for( Int_t i=0; i<SiliconModuleEntries; i++ )
+  const size_t SiliconModuleEntries = SiliconModules.size();
+  for( size_t i=0; i<SiliconModuleEntries; i++ )
     {
       TSiliconModule* Module = SiliconModules.at(i);
       if( !Module ) continue;
@@ -152,8 +170,8 @@ Int_t TSiliconEvent::CompressSiliconVAs()
 
 Int_t TSiliconEvent::CompressSiliconModules()
 {
-  Int_t SiliconModuleEntries = SiliconModules.size();
-  for( Int_t i=0; i<SiliconModuleEntries; i++ )
+  const size_t SiliconModuleEntries = SiliconModules.size();
+  for( size_t i=0; i<SiliconModuleEntries; i++ )
     {
       TSiliconModule* Module = SiliconModules.at(i);
       if( !Module ) continue;

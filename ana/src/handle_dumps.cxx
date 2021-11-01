@@ -8,22 +8,23 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "TSISEvent.h"
 #include "TSpill.h"
 #include "AgFlow.h"
 #include "RecoFlow.h"
-#include "TChrono_Event.h"
+
+#include "cb_flow.h"
+#include "store_cb.h"
+
 #include "TChronoChannelName.h"
-#include "AnalysisTimer.h"
 #include "DumpHandling.h"
 #include <iostream>
+
+
 class DumpMakerModuleFlags
 {
 public:
    bool fPrint = false;
 };
-TString SeqNames[NUMSEQ]={"cat","rct","atm","pos","rct_botg","atm_botg","atm_topg","rct_topg","bml"};
-
 
 class DumpMakerModule: public TARunObject
 {
@@ -35,19 +36,28 @@ public:
    bool fTrace = false;
    std::deque<TAGSpill*> IncompleteDumps;
 
-   ChronoChannel DumpStartChannels[USED_SEQ];
-   ChronoChannel DumpStopChannels[USED_SEQ];
-   ChronoChannel detectorCh[MAXDET];
+   TChronoChannel DumpStartChannels[USED_SEQ];
+   TChronoChannel DumpStopChannels[USED_SEQ];
+   
+   TChronoChannel fADChannel = {-1, -1};
+   TChronoChannel fPreTriggerChannel = {-1, -1};
+   int fADCounter;
+   int fPreTriggerCounter;
+   
+   TChronoChannel detectorCh[MAXDET];
    TString detectorName[MAXDET];
    
    bool have_svd_events = false;
    
-   DumpList<TAGSpill,TStoreEvent,ChronoEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
+   DumpList<TAGSpill,TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Handle Dumps";
+#endif
       if (fTrace)
          printf("DumpMakerModule::ctor!\n");
    }
@@ -63,7 +73,10 @@ public:
       if (fTrace)
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       for (int j=0; j<USED_SEQ; j++) 
+      {
+         dumplist[j].SequencerID=j;
          dumplist[j].fRunNo=runinfo->fRunNo;
+      }
       //Save chronobox channel names
       TChronoChannelName* name[CHRONO_N_BOARDS];
       TString ChannelName;
@@ -71,41 +84,20 @@ public:
       for (int i=0; i<USED_SEQ; i++)
       {
          int iSeq=USED_SEQ_NUM[i];
+         
          std::cout<<i<<" is " << iSeq <<std::endl;
-         DumpStartChannels[iSeq].Channel=-1;
-         DumpStartChannels[iSeq].Board=-1;
-         DumpStopChannels[iSeq].Channel=-1;
-         DumpStopChannels[iSeq].Board=-1;
+         DumpStartChannels[iSeq].SetChannel(-1);
+         DumpStartChannels[iSeq].SetBoard(-1);
+         DumpStopChannels[iSeq].SetChannel(-1);
+         DumpStopChannels[iSeq].SetBoard(-1);
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
-      for (int board=0; board<CHRONO_N_BOARDS; board++)
+      for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
-         name[board]=new TChronoChannelName();
-         name[board]->SetBoardIndex(board+1);
-         for (int det=0; det<MAXDET; det++)
-         {
-            detectorCh[det].Channel=-1;
-            detectorCh[det].Board=-1;
-         }
-         for (int chan=0; chan<CHRONO_N_CHANNELS; chan++)
-         {
-            TString OdbPath="/Equipment/cbms0";
-            OdbPath+=board+1;
-            OdbPath+="/Settings/ChannelNames";
-            //std::cout<<runinfo->fOdb->odbReadString(OdbPath.Data(),chan)<<std::endl;
-            #ifdef INCLUDE_VirtualOdb_H
-            if (runinfo->fOdb->odbReadString(OdbPath.Data(),chan))
-               name[board]->SetChannelName(runinfo->fOdb->odbReadString(OdbPath.Data(),chan),chan);
-            #endif
-            #ifdef INCLUDE_MVODB_H
-            std::string tmp;
-            runinfo->fOdb->RSAI(OdbPath.Data(),chan,&tmp);
-            name[board]->SetChannelName(tmp.c_str(),chan);
-            #endif
-         }
-     }
-      for (int board=0; board<CHRONO_N_BOARDS; board++)
+         name[board]=new TChronoChannelName(runinfo->fOdb,board);
+      }
+      for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
          int channel=-1;
          for (int i=0; i<USED_SEQ; i++)
@@ -115,8 +107,8 @@ public:
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStartChannels[iSeq].Channel=channel;
-               DumpStartChannels[iSeq].Board=board;
+               DumpStartChannels[iSeq].SetChannel(channel);
+               DumpStartChannels[iSeq].SetBoard(board);
                std::cout<<"Start Channel:"<<channel<<std::endl;
             }
             
@@ -124,8 +116,8 @@ public:
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStopChannels[iSeq].Channel=channel;
-               DumpStopChannels[iSeq].Board=board;
+               DumpStopChannels[iSeq].SetChannel(channel);
+               DumpStopChannels[iSeq].SetBoard(board );
                std::cout<<"Stop Channel:"<<channel<<std::endl;
             }
             /*
@@ -138,19 +130,19 @@ public:
             }
             */
          }
-/*
+
          channel=name[board]->GetChannel("AD_TRIG");
          if (channel>0)
          {
-            gADSpillChannel.Channel=channel;
-            gADSpillChannel.Board=board;
+            fADChannel.SetChannel(channel);
+            fADChannel.SetBoard(board);
             std::cout<<"AD_TRIG:"<<channel<<" board:"<<board<<std::endl;
          }
-         channel=name[board]->GetChannel("POS_TRIG");
+         /*channel=name[board]->GetChannel("POS_TRIG");
          if (channel>0 )
          {
-            gPOSSpillChannel.Channel=channel;
-            gPOSSpillChannel.Board=board;
+            fPOSChannel.SetChannel(channel);
+            fPOSChannel.SetBoard(board);
          }*/
       }
    }
@@ -173,7 +165,11 @@ public:
       if (IncompleteDumps.size())
          printf("Error: Incomplete dumps!!!");
       for ( auto &spill :  IncompleteDumps )
+      {
+         std::cout<<"Deleting spill:"<<std::endl;
          spill->Print();
+         delete spill;
+      }
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -191,101 +187,114 @@ public:
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
       if( me->event_id != 8 ) // sequencer event id
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      AgDumpFlow* DumpFlow=flow->Find<AgDumpFlow>();
-      if (!DumpFlow)
+      }
+      DumpFlow* DumpsFlow=flow->Find<DumpFlow>();
+      if (!DumpsFlow)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      uint ndumps=DumpFlow->DumpMarkers.size();
+      }
+      const uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
          return flow;
-      int iSeq=DumpFlow->SequencerNum;
+      }
+      int iSeq=DumpsFlow->SequencerNum;
+      std::cout <<"iSeq"<<iSeq <<std::endl;
       {
       //Lock scope
       std::lock_guard<std::mutex> lock(SequencerLock[iSeq]);
       
       dumplist[iSeq].setup(me->time_stamp);
       
-      for(auto dump: DumpFlow->DumpMarkers)
+      for(auto dump: DumpsFlow->DumpMarkers)
       {
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpFlow->states);
+      dumplist[iSeq].AddStates(DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
-      dumplist[iSeq].check(DumpFlow->driver);
+      dumplist[iSeq].check(DumpsFlow->driver);
       
       }
       //dumplist[iSeq].Print();
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps(main thread)",timer_start);
-      #endif
       return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif
-      AgChronoFlow* ChronoFlow = flow->Find<AgChronoFlow>();
+      TCbFlow* FIFOFlow = flow->Find<TCbFlow>();
+      uint32_t midas_time = 0;
+      if (FIFOFlow)
+         midas_time = FIFOFlow->fMidasTime;
+
+      TCbFIFOEventFlow* ChronoFlow = flow->Find<TCbFIFOEventFlow>();
+      if (!FIFOFlow && !ChronoFlow)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags|=TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
       if (ChronoFlow)
       {
-         //Add timestamps to dumps
-         std::vector<ChronoEvent*>* ce=ChronoFlow->events;
-         //We need the start channel to come before the stop channel (issue unique to chronobox when start and stop have same timestamp)
-         std::sort (ce->begin(), ce->end(), ChronoEvent::SortByTimeThenByChannel);
-         //grep std::cout<<"SIZE:"<<ce->size()<<std::endl;
-         for (uint i=0; i<ce->size(); i++)
+         for (const std::pair<std::string,std::vector<TCbFIFOEvent>> hits: ChronoFlow->fCbHits)
          {
-            ChronoEvent* e=ce->at(i);
+            const std::string cbname = hits.first;
+            char number = cbname[3];
+            int ChronoBoard = number - '0' - 1;
             for (int a=0; a<USED_SEQ; a++)
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
-               //std::cout<<DumpStartChannels[a].Board<<" =="<< e->ChronoBoard<<std::endl;
-               if (DumpStartChannels[a].Channel==e->Channel)
-               if (DumpStartChannels[a].Board ==e->ChronoBoard)
+               if (DumpStartChannels[a].GetBoard() == ChronoBoard)
                {
-                  //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                  for (uint32_t nstarts=0; nstarts<e->Counts; nstarts++)
+                  for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     dumplist[a].AddStartTime(e->MidasTime, e->RunTime);
+                     if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
+                     {
+                        if (hit.IsLeadingEdge())
+                           dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
+                     }
                   }
                }
-               if (DumpStopChannels[a].Channel==e->Channel)
-               if (DumpStopChannels[a].Board  ==e->ChronoBoard)
+               if (DumpStopChannels[a].GetBoard() == ChronoBoard)
                {
-                  for (uint32_t nstops=0; nstops<e->Counts; nstops++)
+                  for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     dumplist[a].AddStopTime(e->MidasTime, e->RunTime);
+                     if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
+                     {
+                        if (hit.IsLeadingEdge())
+                           dumplist[a].AddStopTime(midas_time, hit.GetRunTime());
+                     }
                   }
                }
             }
-         }
-         //Add SIS counts to dumps
-         for (int a=0; a<USED_SEQ; a++)
-         {
-            std::lock_guard<std::mutex> lock(SequencerLock[a]);
-            //if (SISFlow->sis_events[j].size()
-            dumplist[a].AddScalerEvents(ce);
-            //dumplist[a].Print();
-         }
-      }
-      /*
-      SVDQODFlow* SVDFlow = flow->Find<SVDQODFlow>();
-      if (SVDFlow)
-      {
-         for (int a=0; a<USED_SEQ; a++)
-         {
-            std::lock_guard<std::mutex> lock(SequencerLock[a]);
-            dumplist[a].AddSVDEvents(&SVDFlow->SVDQODEvents);
+            //grep std::cout<<"SIZE:"<<ce->size()<<std::endl;
+
+
+            //This is pretty dumb... but I need a container that can handle addition. Joe, FIX THIS!
+            
+            for (int a=0; a<USED_SEQ; a++)
+            {
+               std::lock_guard<std::mutex> lock(SequencerLock[a]);
+               //if (SISFlow->sis_events[j].size()
+               dumplist[a].AddScalerEvents(hits.second);
+               //dumplist[a].Print();
+            }
          }
       }
-      */
-      AGSpillFlow* f=new AGSpillFlow(flow);
+      AGSpillFlow* f = new AGSpillFlow(flow);
       //Flush errors
       for (int a=0; a<USED_SEQ; a++)
       {
@@ -309,19 +318,16 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
-         std::vector<TAGSpill*> finished=dumplist[a].flushComplete();
-         for (size_t i=0; i<finished.size(); i++)
+         std::vector<TAGSpill*> finished = dumplist[a].flushComplete();
+         for (TAGSpill* spill: finished)
          {
-            f->spill_events.push_back(finished.at(i));
+            //spill->Print();
+            f->spill_events.push_back(spill);
+            std::cout<<"SPILL FINISHED"<<std::endl;
          }
       }
 
       flow=f;
-
-      #ifdef _TIME_ANALYSIS_
-         if (TimeModules) flow=new AgAnalysisReportFlow(flow,"handle_dumps",timer_start);
-      #endif
-
       return flow; 
    }
 

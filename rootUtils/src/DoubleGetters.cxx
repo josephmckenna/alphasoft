@@ -3,17 +3,18 @@
 #ifdef BUILD_AG
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
 {
-   Double_t OfficialTime;
-   TTree* t=Get_Chrono_Tree(runNumber,{Board,CHRONO_CLOCK_CHANNEL},OfficialTime);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
+   TTree* t=Get_Chrono_Tree(runNumber,TChronoChannel(Board,CHRONO_CLOCK_CHANNEL).GetBranchName());
+   if (!t)
+      return -1;
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
+   if (!t->GetEntries())
+      return -1;
    t->GetEntry(t->GetEntries()-1);
-   Double_t RunTime=e->GetRunTime();
-   std::cout<<"End time from CB0"<<Board<<" (official time):"<<RunTime<<" ("<<OfficialTime<<")"<<std::endl;
+   Double_t RunTime = e->GetRunTime();
+   std::cout << "End time from CB0" << Board << ":" << RunTime << std::endl;
    delete e;
-   if (RunTime>OfficialTime)
-      return RunTime;
-   return OfficialTime;
+   return RunTime;
 }
 #endif
 #ifdef BUILD_AG
@@ -21,7 +22,7 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
 {
    Double_t OfficialTime;
    TTree* t=Get_StoreEvent_Tree(runNumber, OfficialTime);
-   TStoreEvent* e=new TStoreEvent();
+   TStoreEvent* e = new TStoreEvent();
    t->SetBranchAddress("StoredEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetTimeOfEvent();
@@ -49,30 +50,23 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, Int_t Board, Int_t Channel, Int_t repetition, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t event_index)
 {
-   double official_time;
-   TTree* t=Get_Chrono_Tree(runNumber,{Board,Channel},official_time);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
-   if (repetition+offset>t->GetEntries()) return -1;
-   t->GetEntry(repetition-1+offset);
-   //Double_t RunTime=e->GetRunTime();
+   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress(chan.GetBranchName().c_str(), &e);
+   if (event_index > t->GetEntries()) return -1;
+   t->GetEntry(event_index);
+   Double_t RunTime = e->GetRunTime();
    delete e;
-   return official_time;
+   return RunTime;
 }
 #endif
 #ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t repetition, Int_t offset)
+Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t event_number)
 {
-   Int_t chan=-1;
-   Int_t board=-1;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
-   {
-       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
-       if (chan>-1) break;
-   }
-   return GetRunTimeOfChronoCount(runNumber, board, chan,  repetition,  offset);
+   TChronoChannel chan = Get_Chrono_Channel(runNumber, ChannelName);
+   return GetRunTimeOfChronoCount(runNumber, chan,  event_number);
 }
 #endif
 #ifdef BUILD_AG
@@ -80,29 +74,26 @@ Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
 {
    TString ChronoChannelName=Get_Chrono_Name(e);
    //   std::cout <<"Channel Name:"<<ChronoChannelName<<std::endl;
-   Int_t board=0;
-   Int_t chan=0;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
-   {
-      chan=Get_Chrono_Channel(runNumber,board,ChronoChannelName,kTRUE);
-      if (chan>-1) break;
-   }
+   TChronoChannel chan = Get_Chrono_Channel(runNumber,ChronoChannelName,kTRUE);
+   if (chan.IsValidChannel())
+      return GetRunTimeOfChronoCount(runNumber,  chan,e->GetID()+1 + offset);
+   else
+      return -1.;
    //   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
-   Double_t RunTime=GetRunTimeOfChronoCount(runNumber, board, chan,e->GetID()+1, offset);
-   return RunTime;
 }
 #endif
+
 #ifdef BUILD_AG
-Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
+Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
 {
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, repetition); //Creates new TSeq_Event
+   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, dumpIndex); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;
 }
-Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t repetition, Int_t offset)//, Bool_t ExactMatch)
+Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
 {
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, repetition); //Creates new TSeq_Event
+   TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, dumpIndex); //Creates new TSeq_Event
    Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
    delete e;
    return RunTime;
@@ -176,12 +167,17 @@ Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
 #if BUILD_A2
 Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
 {
-   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
-   if (!SISReader->GetTree())
-      return -1.;
-   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-   SISReader->SetEntry(SISReader->GetEntries(false) -1 );
-   double t = SISEvent->GetRunTime();
+   double t = -1;
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
+   {
+      TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      if (!SISReader->GetTree())
+         continue;
+      TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+      SISReader->SetEntry(SISReader->GetEntries(false) -1 );
+      if (SISEvent->GetRunTime() > t)
+         t = SISEvent->GetRunTime();
+   }
    return t;   
 }
 Double_t GetTotalRunTimeFromSVD(Int_t runNumber)

@@ -1,8 +1,7 @@
 #include "IntGetters.h"
 
-
 #ifdef BUILD_AG
-Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
+Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
@@ -13,40 +12,23 @@ Int_t Get_Chrono_Channel(Int_t runNumber, Int_t ChronoBoard, const char* Channel
    return Channel;
 }
 #endif
+
 #ifdef BUILD_AG
-ChronoChannel Get_Chrono_Channel(Int_t runNumber, const char* ChannelName, Bool_t ExactMatch)
-{
-   ChronoChannel c;
-   c.Channel=-1;
-   c.Board=-1;
-   for (int board=0; board<CHRONO_N_BOARDS; board++)
-   {
-      int chan=Get_Chrono_Channel(runNumber, board, ChannelName, ExactMatch);
-      if (chan>0)
-      {
-         c.Channel=chan;
-         c.Board=board;
-         return c;
-      }
-   }
-   return {-1, -1};
-}
-#endif
-#ifdef BUILD_AG
-Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Double_t tmin, Double_t tmax)
+Int_t GetCountsInChannel(Int_t runNumber,  TChronoChannel channel, Double_t tmin, Double_t tmax)
 {
    Int_t Counts=0;
-   double official_time;
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   TTree* t=Get_Chrono_Tree(runNumber,{ChronoBoard,Channel},official_time);
-   TChrono_Event* e=new TChrono_Event();
-   t->SetBranchAddress("ChronoEvent", &e);
+   TTree* t=Get_Chrono_Tree(runNumber,channel.GetBranchName());
+   TCbFIFOEvent* e = new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
    for (Int_t i = 0; i < t->GetEntries(); ++i)
    {
       t->GetEntry(i);
-      if (official_time<tmin) continue;
-      if (official_time>tmax) continue;
-      Counts+=e->GetCounts();
+      if (e->GetRunTime() < tmin) continue;
+      if (e->GetRunTime() > tmax) continue;
+      //Is leading edge pulse
+      if (! (e->GetFlag() & CB_HIT_FLAG_TE))
+         Counts++;
    }
    return Counts;
 }
@@ -54,14 +36,11 @@ Int_t GetCountsInChannel(Int_t runNumber,  Int_t ChronoBoard, Int_t Channel, Dou
 #ifdef BUILD_AG
 Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin, Double_t tmax)
 {
-   Int_t chan=-1;
-   Int_t board=-1;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
-   {
-       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
-       if (chan>-1) break;
-   }
-   return GetCountsInChannel( runNumber,  board, chan, tmin, tmax);
+   TChronoChannel chan = Get_Chrono_Channel(runNumber, ChannelName);
+   if (chan.IsValidChannel())
+      return GetCountsInChannel( runNumber, chan, tmin, tmax);
+   else
+      return -1;
 }
 #endif
 #ifdef BUILD_AG
@@ -102,14 +81,16 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
    delete e;
    return FirstEvent;
 }
-Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+Int_t GetTPCEventNoBeforeDump(Double_t runNumber, const char* description, Int_t dumpIndex)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
+   std::vector<TAGSpill> s = Get_AG_Spills(runNumber,{description},{dumpIndex});
+   Double_t tmin = s.front().GetStartTime();
    return  GetTPCEventNoBeforeOfficialTime(runNumber, tmin);
 }
-Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t repetition, Int_t offset)
+Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t dumpIndex)
 {
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   std::vector<TAGSpill> s = Get_AG_Spills(runNumber,{description},{dumpIndex});
+   Double_t tmax = s.front().GetStopTime();
    return  GetTPCEventNoBeforeOfficialTime(runNumber, tmax)+1;
 }
 #endif
@@ -132,6 +113,16 @@ std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>&
         channels.push_back(sisch.GetChannel(name.c_str()));
     }
     return channels;
+}
+
+
+int Count_SIS_Triggers(int runNumber, int ch, std::vector<double> tmin, std::vector<double> tmax)
+{
+   std::vector<std::pair<double,int>> counts = GetSISTimeAndCounts(runNumber, ch, tmin, tmax);
+   int total = 0;
+   for (const std::pair<double,int>& c: counts)
+      total += c.second;
+   return total;
 }
 #endif
 
@@ -166,7 +157,8 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
   std::cout<<"Ramp Duration "<<"\t"<<endRampTime<<" s"<<std::endl;
 
   // time "normalization"
-  //for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime;
+  //for(Int_t i=0; i<n; ++i) x[i] = x[i]-1; //For a ramp file off by 1s for whatever reason. 
+  for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime; //For a normal ramp file.
 
   return n;
 }

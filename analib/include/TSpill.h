@@ -17,7 +17,7 @@ class TSpillScalerData: public TObject
 
    //Chrono box support 2D array of values... (boards vs channels)
    //SIS only supports channels
-   std::vector<int>   DetectorCounts;
+   std::vector<int>   DetectorCounts; //Think about changing this to a double
    std::vector<bool>  ScalerFilled;
 
    int            FirstVertexEvent;
@@ -49,9 +49,9 @@ class TSpillScalerData: public TObject
       {
          //std::cout<<this->DetectorCounts[i] << " / "<< b->DetectorCounts[i] <<std::endl;
          if (b->DetectorCounts[i])
-            c->DetectorCounts[i]=100*(double)this->DetectorCounts[i]/(double)b->DetectorCounts[i];
+            c->DetectorCounts[i] = std::round(100.*(double)this->DetectorCounts[i]/(double)b->DetectorCounts[i]);
          else
-            c->DetectorCounts[i]=std::numeric_limits<int>::infinity();
+            c->DetectorCounts[i] = std::numeric_limits<int>::infinity();
       }
       if (b->VertexEvents)
          c->VertexEvents= 100*(double)this->VertexEvents / (double)b->VertexEvents;

@@ -109,7 +109,18 @@ class TSISPlotEvents: public TObject
       {
          return fRunNumber.size();
       }
-
+      
+      int CountTotalCountsInChannel(int ch) const
+      {
+         int events = 0;
+         const size_t range = fCounts.size();
+         for(size_t i = 0; i<fTime.size(); i++)
+         {
+            if (fSISChannel[i] == ch)
+               events += fCounts[i];
+         }
+         return events;
+      }
       ClassDef(TSISPlotEvents,1);
 };
 
@@ -153,11 +164,20 @@ class TA2Plot: public TAPlot
    
       //Setters and getters
       void SetSISChannels(int runNumber);
-
+      
+      int GetTrigNoBusyChannel(int runNumber)
+      {
+         return fTrigNobusy[runNumber];
+      }
+      int GetTrigChannel(int runNumber)
+      {
+         return fTrig[runNumber];
+      }
+      
       //Adding events and dumps
       void AddSVDEvent(TSVD_QOD* SVDEvent);
       void AddSISEvent(TSISEvent* SISEvent);
-      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
+      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex );
       void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
       //If spills are from one run, it is faster to call the function above
       void AddDumpGates(std::vector<TA2Spill> spills );

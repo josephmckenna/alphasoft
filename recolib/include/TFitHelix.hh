@@ -75,12 +75,12 @@ private:
   void Initialization(double* Ipar);
 
   // utilities to calculate internal helix parameters
-  double GetBeta      ( double r2, double Rc, double D );
+  double GetBeta      ( double r2, double Rc, double D ) const;
   double GetBetaPlus  ( double r2, double Rc, double D );
   double GetBetaMinus ( double r2, double Rc, double D );
 
-  double GetArcLength ( double r2, double Rc, double D );
-  double GetArcLength_( double r2, double Rc, double D );
+  double GetArcLength ( double r2, double Rc, double D ) const;
+  double GetArcLength_( double r2, double Rc, double D ) const;
 
   double GetArcLengthPlus ( double r2, double Rc, double D );
   double GetArcLengthPlus_( double r2, double Rc, double D );
@@ -191,14 +191,15 @@ public:
 
   // LS fit to helix canonical form
   virtual void Fit();
+  virtual void FitM2();
   void RadialFit(double* Ipar);
   void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
   Vector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
-  Vector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ); // +1 branch
+  Vector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ) const; // +1 branch
   Vector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
-  Vector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ); // -1 branch
+  Vector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ) const; // -1 branch
 
   // +1 branch, beta +ve root
   Vector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
@@ -213,7 +214,7 @@ public:
   Vector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
   Vector2 EvaluateMinus_( double r2, double Rc, double u0, double v0, double D );
 
-  double Evaluate   ( double s,  double l, double z0 );            // axial fit
+  double Evaluate   ( double s,  double l, double z0 ) const;            // axial fit
 
   // unused but useful
   // +1 branch
@@ -230,7 +231,7 @@ public:
   TVector3 EvaluateMinus_( double r2, double Rc, double phi, double D, double l, double z0  );
 
   // Radial arclength parameter for fitting/vertexing
-  double GetArcLength ( double r2 );
+  double GetArcLength ( double r2 ) const;
   double GetArcLengthB( double r2 );
 
   // Evaluate the function for plotting

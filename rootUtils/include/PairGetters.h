@@ -3,10 +3,7 @@
 #include "IntGetters.h"
 #include <utility>
 
-#ifdef BUILD_AG
-std::pair<Int_t,Int_t> GetChronoBoardChannel(Int_t runNumber, const char* ChannelName);
 
-#endif
 
 #ifdef BUILD_A2
 #include "TSISEvent.h"
