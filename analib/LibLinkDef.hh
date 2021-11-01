@@ -16,8 +16,12 @@
 #pragma link C++ class  TriggerIn+;
 #pragma link C++ class TChronoChannel+;
 
+
 #pragma link C++ class TCbFIFOEvent+;
 #pragma link C++ class  TChronoChannelName+;
+
+#pragma link C++ class TChronoBoardCounter+;
+
 #pragma link C++ class  TSeq_Dump+;
 #ifdef BUILD_AG
 #pragma link C++ class  TBarEvent+;

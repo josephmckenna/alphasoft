@@ -40,6 +40,7 @@
 #include "manalyzer.h"
 #include "midasio.h"
 #include "TChronoChannelName.h"
+#include "TChronoBoardCounter.h"
 
 #include "unpack_cb.h"
 #include <TH1D.h>
@@ -50,57 +51,42 @@
 #include "TTree.h"
 #include "store_cb.h"
 
-class TChron
-{
-   public:
-   int fBin;
-   double fRunTime;
-   std::vector<uint32_t> fCounts;
 
-   TChron(int _bin): fCounts(CHRONO_N_BOARDS * CHRONO_N_CHANNELS,0)
-   {
-      fBin = _bin;
-      fRunTime = fBin * INTEGRATION_TIME;
-   }
-   ~TChron()
-   {
 
-   }
-   void operator +=(const TCbFIFOEvent* cbFIFO)
-   {
-      fCounts[cbFIFO->fChannel] += cbFIFO->fCounts;
-   }
-   double GetRunTime() const
-   {
-      return fRunTime;
-   }
-};
-
-class ChronMonitor: public TARunObject
+class ChronoMonitor: public TARunObject
 {
 private:
    // Ring buffer would probably be quicker... but lets just get this working
-   std::deque<TChron> fFIFO;
+   std::deque<TChronoBoardCounter> fFIFO[CHRONO_N_BOARDS];
+   int                 fFIFOBin[CHRONO_N_BOARDS];
 
    TCanvas fLiveCanvas;
    std::vector<TH1I> fLiveHisto;
-   std::vector<int> fChronChannels;
+   std::vector<TChronoChannel> fChronChannels;
    TStyle* fChronStyle;
 public:
-   ChronMonitor(TARunInfo* runinfo): TARunObject(runinfo), fFIFO(std::deque<TChron>()), fLiveCanvas("LiveChron","LiveChron")
+   ChronoMonitor(TARunInfo* runinfo): TARunObject(runinfo), fLiveCanvas("LiveChron","LiveChron")
    {
-      fModuleName = "ChronMonitor";
-      for (int i = 0; i < BUFFER_DEPTH; i++)
+      fModuleName = "ChronoMonitor";
+      for (int b = 0; b < CHRONO_N_BOARDS; b++)
       {
-         fFIFO.emplace_back( TChron(i - BUFFER_DEPTH ) );
-         fChronStyle = new TStyle("ChronStyle","ChronStyle");
+         for (int i = 0; i < BUFFER_DEPTH; i++)
+         {
+            fFIFO[b].emplace_back(
+               TChronoBoardCounter(
+                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH),
+                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH + 1),
+                  b
+               )
+            );
+            fFIFOBin[b]++;
+            fChronStyle = new TStyle("ChronoStyle","ChronoStyle");
+         }
       }
-
-
    }
-   ~ChronMonitor()
+   ~ChronoMonitor()
    {
-      printf("ChronMonitor::dtor!\n");
+      printf("ChronoMonitor::dtor!\n");
    }
    
 
@@ -110,39 +96,49 @@ public:
       
       std::vector<std::string> channel_ID_string;
       std::vector<std::string> channel_display_name;
-         MVOdbError* error = new MVOdbError();
-
-         double board = 0;
-        TString OdbPath = "/Equipment/cb0";
-        OdbPath += board + 1; //TODO Get the correct board number.
-        OdbPath += "/Settings/names";
+      MVOdbError* error = new MVOdbError();
       
-      runinfo->fOdb->RSA(OdbPath,&channel_ID_string,false,60,32,error);
+      runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelIDName",&channel_ID_string,false,20,32,error);
       //Re-read and resize?
       int actual_size = 0;
       for (const std::string& s: channel_ID_string)
          if (s.size())
             actual_size++;
       
-      runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
-      
-      //Stolen from spill_log_module... should be upgraded to ODB reads
+      runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelDisplayName",&channel_display_name,false,20,32,error);
 
-        //Just for testing lets get only the first board. Since thats all we're pulling above.
-      //for (int i = 0; i < CHRONO_N_BOARDS * CHRONO_N_CHANNELS; i++)
-      for (int i = 0; i < 1 * CHRONO_N_CHANNELS; i++)
+      for (int b = 0; b < CHRONO_N_BOARDS; b++)
       {
-         TString name = std::to_string(i) + std::string("-") + channel_display_name.at(i);
-         
-         fLiveHisto.emplace_back(
-            TH1I(
-               name,
-               name,
-               BUFFER_DEPTH,
-               fFIFO.front().GetRunTime(),
-               fFIFO.back().GetRunTime()
-            )
-         );  
+         TString OdbPath = "/Equipment/cb0";
+         OdbPath += b + 1; //TODO Get the correct board number.
+         OdbPath += "/Settings/names";
+         std::vector<std::string> channel_list;
+         runinfo->fOdb->RSA(OdbPath,&channel_list,false,60,32,error);
+         for (int c = 0; c < channel_list.size(); c++)
+         {
+            for (int i = 0; i < channel_ID_string.size(); i++)
+               if (channel_ID_string.at(i) == channel_list.at(c) && channel_ID_string.size() )
+                  fChronChannels.at(i) = TChronoChannel(b,c);
+         }
+
+         runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
+
+         for (int c = 0; c < CHRONO_N_CHANNELS; c++)
+         {
+            TString name = std::string("cb0") + std::to_string(b) + 
+                           std::string("_") + std::to_string(c) + 
+                           std::string("-") + channel_display_name.at(c);
+
+            fLiveHisto.emplace_back(
+               TH1I(
+                  name,
+                  name,
+                  BUFFER_DEPTH,
+                  fFIFO[b].front().GetStartTime(),
+                  fFIFO[b].back().GetStopTime()
+               )
+            );  
+         }
       }
 
       fLiveCanvas.Divide(1,actual_size);
@@ -157,7 +153,7 @@ public:
   
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
-      //printf("ChronMonitor::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      //printf("ChronoMonitor::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
@@ -166,58 +162,80 @@ public:
    
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      TCbFIFOEvent* cbFIFO = flow->Find<TCbFIFOEvent>();
-      if (!cbFIFO)
+      TCbFIFOEventFlow* cbFIFOflow = flow->Find<TCbFIFOEventFlow>();
+      if (!cbFIFOflow)
          return flow;
-      std::cout << "WE HAVE CAUGHT A cbFIFO EVENT. This should mean live is working if we get here?" <<std::endl;
-      
+   
       // Obtain time range for incoming data
       double mostmax = 0;
-      //Again just doing the first board for now
-      //for ( int j = 0; j < CHRONO_N_BOARDS; j++ )
-      for ( int j = 0; j < 1; j++ )
+      for (const std::pair<std::string,std::vector<TCbFIFOEvent>>& cb: cbFIFOflow->fCbHits)
       {
-            if ( mostmax < cbFIFO->GetRunTime())
-               mostmax = cbFIFO->GetRunTime();
+         if ( mostmax < cb.second.back().GetRunTime())
+            mostmax = cb.second.back().GetRunTime();
       }
       // Reserve space for all incoming TSISEvents
-      int i = fFIFO.back().fBin;
-      while (fFIFO.back().GetRunTime() < mostmax)
+      for (int b = 0; b < CHRONO_N_BOARDS; b++)
       {
-         fFIFO.emplace_back(TChron(++i));
-         fFIFO.pop_front();
+         while (fFIFO[b].back().GetStopTime() < mostmax)
+         {
+            fFIFO[b].emplace_back(
+               TChronoBoardCounter(
+                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH),
+                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH + 1),
+                  b
+               )
+            );
+            fFIFO[b].pop_front();
+            fFIFOBin[b]++;
+         }
       }
 
-      //Find bin of the first event
-      //Again just doing the first board for now
-      //for ( int j = 0; j < CHRONO_N_BOARDS; j++ )
-      for ( int j = 0; j < 1; j++ )
+      for ( int b = 0; b < CHRONO_N_BOARDS; b++ )
       {
+         char CBNAME[5] = "CB00";
+         CBNAME[3] += b;
          int bin = 0;
-            while ( cbFIFO->GetRunTime() > fFIFO.at(bin).GetRunTime())
+         const std::vector<TCbFIFOEvent> & events = cbFIFOflow->fCbHits[CBNAME];
+         for (const TCbFIFOEvent& e: events)
+         {
+            while ( e.GetRunTime() > fFIFO[b].at(bin).GetStartTime())
                bin++;
-            fFIFO.at(bin) += cbFIFO;
+            fFIFO[b].at(bin) += e;
+         }
       }
+
       //Resise histograms
+      double tmin = 1E99;
+      double tmax = -1.;
+      for (int b = 0; b < CHRONO_N_BOARDS; b++)
+      {
+         if (tmin > fFIFO[b].front().GetStartTime())
+            tmin = fFIFO[b].front().GetStartTime();
+         if (tmax < fFIFO[b].back().GetStopTime())
+            tmax = fFIFO[b].back().GetStopTime();
+      }
+
       for (int i = 0; i < fLiveHisto.size(); i++)
       {
-         fLiveHisto[i].GetXaxis()->Set(BUFFER_DEPTH,fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime());
-
+         fLiveHisto[i].GetXaxis()->Set(BUFFER_DEPTH,tmin, tmax);
          fLiveHisto[i].Reset();
       }
       fChronStyle->SetPalette(kCool);
       //Update the histograms
-      for (TChron& s: fFIFO)
+
+      for ( int b = 0; b < CHRONO_N_BOARDS; b++ )
       {
-         for (int i = 0; i < fLiveHisto.size(); i++)
+         for (TChronoBoardCounter& s: fFIFO[b])
          {
-            if (s.fCounts[i])
+            for (int i = 0; i < fLiveHisto.size(); i++)
             {
-               fLiveHisto[i].Fill(s.fRunTime, s.fCounts[i]);
-               //std::cout<<s.fRunTime << "\t" << s.fCounts[i] << std::endl;
+               if (s.fCounts[i])
+               {
+                  fLiveHisto[i].Fill(s.GetStartTime(), s.fCounts[i]);
+                  //std::cout<<s.fRunTime << "\t" << s.fCounts[i] << std::endl;
+               }
             }
          }
-      }
       for (int i = 0; i < fChronChannels.size(); i++)
       {
          if (fChronChannels[i] > 0)
@@ -231,7 +249,7 @@ public:
 };
 
 
-static TARegister tar1(new TAFactoryTemplate<ChronMonitor>);
+static TARegister tar1(new TAFactoryTemplate<ChronoMonitor>);
 
 /* emacs
  * Local Variables:

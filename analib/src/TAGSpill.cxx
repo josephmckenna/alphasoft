@@ -168,8 +168,8 @@ TAGSpill* TAGSpill::operator/( TAGSpill* b)
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
 
-   assert(this->ScalerData->BVFilled);
-   assert(b->ScalerData->BVFilled);
+   //assert(this->ScalerData->BVFilled);
+   //assert(b->ScalerData->BVFilled);
    if (DumpHasMathSymbol())
       Name='('+Name+')';
    if (b->DumpHasMathSymbol())
@@ -196,8 +196,8 @@ TAGSpill* TAGSpill::operator+( TAGSpill* b)
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
 
-   assert(this->ScalerData->BVFilled);
-   assert(b->ScalerData->BVFilled);
+   //assert(this->ScalerData->BVFilled);
+   //assert(b->ScalerData->BVFilled);
 
    if (DumpHasMathSymbol())
       Name='('+Name+')';
