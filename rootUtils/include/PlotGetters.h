@@ -47,12 +47,28 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin=0., Double_t max=-1.);
 // Energy Analysis
 //*************************************************************
 #ifdef BUILD_AG
-TCanvas* Plot_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
-			  Double_t EnergyRangeFactor=10.);
-TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000, 
-                          const char* dumpFile="ana/macros/RCT_BOTg_rampfile.dump", 
                           Double_t EnergyRangeFactor=10.);
+
+
+
+TCanvas* Plot_AG_ColdDump(Int_t runNumber, Int_t dumpIndex, 
+                          Int_t binNumber, 
+                          const char* dumpFile, 
+                          Double_t EnergyRangeFactor,
+                          const char* Chrono_Channel_Name);
+
+TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber, Int_t dumpIndex = 0, 
+             Int_t binNumber = 1000, 
+             const char* dumpFile = "ana/macros/ColdDumpE4E5.dump", 
+             Double_t EnergyRangeFactor = 10);
+
+TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t dumpIndex = 0,
+             Int_t binNumber = 1000,
+             const char* dumpFile = "ana/macros/E4E5_rct_botg_dump_500ms.dump",
+             Double_t EnergyRangeFactor = 10);
+
 #endif
 
 #ifdef BUILD_A2
