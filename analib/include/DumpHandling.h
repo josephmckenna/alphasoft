@@ -683,11 +683,15 @@ public:
                                                    pair->StartDumpMarker->fMidasTime,
                                                    "XXXX Error... stop dump (%s) happened before start?",
                                                    ordered_stops.front()->fDescription.c_str()));
-               int BadSeq=ordered_starts.front()->fSequenceCount;
-              std::cout<<"Deleteing bad sequence:"<<BadSeq;
+               int BadSeq = -1;
+               if (ordered_starts.size())
+               {
+                  BadSeq = ordered_starts.front()->fSequenceCount;
+                  std::cout<<"Deleteing bad sequence:"<<BadSeq;
+               }
          for (size_t i=0; i<ordered_starts.size(); i++)
          {
-            if (ordered_starts.at(i))
+            if (ordered_starts.at(i) && BadSeq >= 0)
             if (ordered_starts.at(i)->fSequenceCount == BadSeq)
             {
                std::cout<<"REMOVING START:"<<ordered_starts.at(i)->fDescription.c_str()<<std::endl;
