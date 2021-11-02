@@ -53,17 +53,21 @@ private:
    TTree *tBSC                = NULL;
 
    int    event;
-   std::vector<int>     bar_id;
-   std::vector<int>     bar_tini;
-   std::vector<int>     bar_tend;
-   std::vector<int>     bar_base;
-   std::vector<double>  bar_amp;
-   std::vector<double>  bar_vmax;
-   std::vector<int>     bar_tmax;
-   std::vector<bool>    bar_pair_flag;
-   std::vector<bool>    bar_amp_flag;
-   std::vector<bool>    bar_time_flag;
-   std::vector<std::vector<int> > bar_waveforms; //! int
+   std::vector<int>     bar_id;                 ///< bar/SiPM
+   std::vector<int>     bar_tini;               ///< t start
+   std::vector<int>     bar_tend;               ///< t end
+   std::vector<int>     bar_base;               ///< amplitude baseline
+   std::vector<double>  bar_ampl;                ///< signal amplitude (max - baseline)
+   std::vector<double>  bar_vmax;               ///< maximum value (in V)
+   std::vector<int>     bar_tmax;               ///< time of maximum
+   std::vector<bool>    bar_pair_flag;          ///< is bar/SiPM coupled? (read by the two ends)
+   std::vector<bool>    bar_ampl_flag;          ///< is the amplitude above threshold?
+   std::vector<bool>    bar_time_flag;          ///< is the time in the correct window?
+   std::vector<std::vector<int> > bar_waveforms;///< waveforms (all bins)
+   std::vector<int>     fit_tini;               ///< [from fit] t start
+   std::vector<int>     fit_tend;               ///< [from fit] t end
+   std::vector<double>  fit_ampl;               ///< [from fit] signal amplitude (max - baseline)
+   std::vector<int>     fit_tmax;               ///< [from fit] time of maximum
 
    void ResetBarVectors()
    {
@@ -71,11 +75,11 @@ private:
       bar_tini.clear();
       bar_tend.clear();
       bar_base.clear();
-      bar_amp.clear();
+      bar_ampl.clear();
       bar_vmax.clear();
       bar_tmax.clear();
       bar_pair_flag.clear();
-      bar_amp_flag.clear();
+      bar_ampl_flag.clear();
       bar_time_flag.clear();
       std::vector<std::vector<int> >::iterator it;
       for (it = bar_waveforms.begin(); it != bar_waveforms.end(); it++) {
@@ -128,15 +132,17 @@ public:
       tBSC->Branch("bar_tini", "std::vector<int>", &bar_tini);
       tBSC->Branch("bar_tend", "std::vector<int>", &bar_tend);
       tBSC->Branch("bar_base", "std::vector<int>", &bar_base);
-      tBSC->Branch("bar_amp", "std::vector<double>", &bar_amp);
+      tBSC->Branch("bar_ampl", "std::vector<double>", &bar_ampl);
       tBSC->Branch("bar_vmax", "std::vector<double>", &bar_vmax);
       tBSC->Branch("bar_tmax", "std::vector<int>", &bar_tmax);
       tBSC->Branch("bar_pair_flag", "std::vector<bool>", &bar_pair_flag);
-      tBSC->Branch("bar_amp_flag", "std::vector<bool>", &bar_amp_flag);
+      tBSC->Branch("bar_ampl_flag", "std::vector<bool>", &bar_ampl_flag);
       tBSC->Branch("bar_time_flag", "std::vector<bool>", &bar_time_flag);
       tBSC->Branch("bar_waveforms",&bar_waveforms);
-
-      // tBSC->Branch("bar_waveforms", &bar_waveforms);
+      tBSC->Branch("fit_tini", "std::vector<int>", &fit_tini);
+      tBSC->Branch("fit_tend", "std::vector<int>", &fit_tend);
+      tBSC->Branch("fit_ampl", "std::vector<double>", &fit_ampl);
+      tBSC->Branch("fit_tmax", "std::vector<int>", &fit_tmax);
 
       gDirectory->mkdir("SampleWaveforms");
    }
@@ -280,23 +286,6 @@ public:
             else
                hWave->SetBinError(bin_num, 100);
          }
-         ///< Check if there is also the corresponding "top/bottom" pair
-         bool is_paired = false;
-         for(auto & id : bar_id) {
-            if(bar==(id+64)||bar==(id-64)) is_paired = true;
-         }
-         bar_id.push_back(bar);
-         bar_base.push_back(baseline);
-         bar_tini.push_back(start_time*10);
-         bar_tend.push_back(end_time*10);
-         bar_amp.push_back(amp);
-         bar_vmax.push_back(max);
-         bar_tmax.push_back(imax*10); ///< To have the time in ns (??? - to be checked)
-         ///< Flags
-         bar_pair_flag.push_back(is_paired);
-         if (start_time <= 0 or end_time <= 0) bar_time_flag.push_back(0); else bar_time_flag.push_back(1);
-         if (amp < amplitude_cut) bar_amp_flag.push_back(0); else bar_amp_flag.push_back(1);
-         bar_waveforms.push_back(wave);
          ///< ##########################
          ///< FITTING THE PULSE 
          ///< ##########################
@@ -341,6 +330,35 @@ public:
             }
             delete sgfit;
          }
+         ///< ###############################################
+         ///< FILLING THE BSC TTREE 
+         ///< ###############################################
+         ///< Check if there is also the corresponding "top/bottom" pair
+         bool is_paired = false;
+         for(unsigned int kk=0; kk<bar_id.size(); kk++) {
+            if(bar==(bar_id[kk]+64)||bar==(bar_id[kk]-64)) {
+               is_paired = true;
+               bar_pair_flag[kk] = true;
+               break;
+            }
+         }
+         bar_id.push_back(bar);
+         bar_base.push_back(baseline);
+         bar_tini.push_back(start_time*10);
+         bar_tend.push_back(end_time*10);
+         bar_ampl.push_back(amp);
+         bar_vmax.push_back(max);
+         bar_tmax.push_back(imax*10); ///< To have the time in ns (??? - to be checked)
+         ///< Flags
+         bar_pair_flag.push_back(is_paired);
+         if (start_time <= 0 or end_time <= 0) bar_time_flag.push_back(0); else bar_time_flag.push_back(1);
+         if (amp < amplitude_cut) bar_ampl_flag.push_back(0); else bar_ampl_flag.push_back(1);
+         bar_waveforms.push_back(wave);
+         ///< Fit values
+         fit_tini.push_back(fit_start_time*10);
+         fit_tend.push_back(fit_end_time*10);
+         fit_ampl.push_back(fit_amp);
+         fit_tmax.push_back(maximum_time*10); ///< To have the time in ns (??? - to be checked)
 
          // Fills histograms
          hBars->Fill(bar);
@@ -356,6 +374,10 @@ public:
          // Fills bar event
          BarEvent->AddADCHit(bar, fit_amp, fit_start_time * 10);
       } ///< Loop over the channels (bar/SiPM that fired?)
+      // std::cout << "event " << event << std::endl;
+      // for(unsigned int kk=0; kk<bar_id.size(); kk++) {
+      //    std::cout << bar_id[kk] << ": " << bar_pair_flag[kk] << std::endl;
+      // }
 
       hNumBars->Fill(num_bars);
       return BarEvent;
