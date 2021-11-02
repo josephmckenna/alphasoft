@@ -690,14 +690,14 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpF
 
   Int_t oldBinNumber = gNbin;
   gNbin=1.e4;
-  TH1D* dumpHisto=Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,"SiPM_B")}, {start_time}, {stop_time} ).front().front();
+  TH1D* dumpHisto=Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,"SiPM_E")}, {start_time}, {stop_time} ).front().front();
   gNbin=oldBinNumber;
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,{Get_Chrono_Channel(runNumber,"SiPM_B")},{start_time+startOffset},{stop_time}).front().front(); // this is a lower resolution histo to plot
+    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,{Get_Chrono_Channel(runNumber,"SiPM_E")},{start_time+startOffset},{stop_time}).front().front(); // this is a lower resolution histo to plot
 
   TString htitle = "Run ";
   htitle+=runNumber;
