@@ -309,7 +309,7 @@ public:
             int bar = int(endhit->GetBar());
     
             // Finds tdc hit
-            for (SimpleTdcHit* tdchit: tdchits)
+            for (const SimpleTdcHit* tdchit: tdchits)
                {
                   // Checks channel number
                   if (bar!=tdchit->GetBar()) continue;

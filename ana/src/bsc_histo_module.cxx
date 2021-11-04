@@ -374,7 +374,7 @@ public:
       return flow;
    }
 
-   void AdcHistos(std::vector<EndHit*> endhits)
+   void AdcHistos(const std::vector<EndHit*> endhits)
    {
       hAdcMultiplicity->Fill(endhits.size());
       for (EndHit* endhit: endhits) {
@@ -393,7 +393,7 @@ public:
       }
    }
 
-   void TdcHistos(std::vector<EndHit*> endhits)
+   void TdcHistos(const std::vector<EndHit*> endhits)
    {
       double ch0 = 0;
       for (EndHit* endhit: endhits) {
@@ -421,13 +421,13 @@ public:
       }
    }
 
-   void DirectTdcHistos(std::vector<SimpleTdcHit*> tdchits)
+   void DirectTdcHistos(const std::vector<SimpleTdcHit*> tdchits)
    {
       int max_chan=128;
       if (fFlags->fProtoTOF) max_chan=16;
       std::vector<int> counts(max_chan,0);
       std::vector<double> t0(max_chan,0);
-      for (SimpleTdcHit* tdchit: tdchits) {
+      for (const SimpleTdcHit* tdchit: tdchits) {
          int bar = tdchit->GetBar();
          double time = tdchit->GetTime();
          hTdcOccupancy->Fill(bar);
@@ -463,7 +463,7 @@ public:
       hTdcMultiplicity->Fill(bars);
    }
 
-   void BarHistos(std::vector<BarHit*> barhits)
+   void BarHistos(const std::vector<BarHit*> barhits)
    {
       for (BarHit* barhit: barhits) {
          hBarOccupancy->Fill(barhit->GetBar());
@@ -487,7 +487,7 @@ public:
       }
    }
 
-   void TOFHistos(std::vector<BarHit*> barhits)
+   void TOFHistos(const std::vector<BarHit*> barhits)
    {
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
