@@ -337,7 +337,6 @@ public:
    void CombineEnds(TBarEvent* barEvt)
    {
       std::vector<EndHit*> endhits = barEvt->GetEndHits();
-      printf("Found %d endhits\n",endhits.size());
       for (EndHit* tophit: endhits)
          {
             if (!(tophit->IsTDCMatched())) continue; // REQUIRE TDC MATCHING
