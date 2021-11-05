@@ -23,6 +23,7 @@
 #pragma link C++ class  TBarEvent+;
 #pragma link C++ class  EndHit+;
 #pragma link C++ class  BarHit+;
+#pragma link C++ class  SimpleTdcHit+;
 #endif
 //Spill parent classes
 #pragma link C++ class  TSpill+;

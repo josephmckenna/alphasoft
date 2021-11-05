@@ -34,6 +34,7 @@ class AlphaColourWheel
       {
          return (EColor)colour_list[position];
       }
+      void Reset() { position = 0; }
 };
 
 

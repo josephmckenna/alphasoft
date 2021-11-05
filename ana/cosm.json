@@ -65,5 +65,15 @@
         "TScale_NN": 0.4,
         "MaxIt_NN": 20,
         "ItThres_NN": 0.0005
-    }
+    },
+
+   "BscModule": {
+       "pulse_threshold": 1400,
+       "ADCamplitude": 2000,
+       "max_adc_tdc_diff": 4.0e-8,
+       "max_top_bot_diff": 1.0e-6,
+       "max_dz": 300.0,
+       "max_dphi": 0.3,
+       "min_dphi": 1.8325957
+   }
 }
