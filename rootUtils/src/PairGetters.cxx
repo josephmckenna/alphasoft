@@ -35,8 +35,16 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
+<<<<<<< HEAD
 
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
+=======
+   if(last_time < 0) last_time=GetTotalRunTimeFromSIS(runNumber);
+
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (SISReader->Next())
+>>>>>>> main
    {
       TTreeReader* SISReader=A2_SIS_Tree_Reader( runNumber, sis_module_no);
       TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
@@ -45,6 +53,7 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
       // so get multiple channels and multiple time windows in one pass
       while (SISReader->Next())
       {
+<<<<<<< HEAD
          double t = SISEvent->GetRunTime();
          if (t < first_time)
             continue;
@@ -54,6 +63,13 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
          {
              if (t > tmin[i])
                 if (t < tmax[i])
+=======
+          if (t > tmin[i])
+             if ( (t < tmax[i] && tmax[i]>0) || (tmax[i] < 0 && t < last_time) )
+             {
+                int counts = SISEvent->GetCountsInChannel(SIS_Channel);
+                if (counts)
+>>>>>>> main
                 {
                    int counts = SISEvent->GetCountsInChannel(SIS_Channel);
                    if (counts)

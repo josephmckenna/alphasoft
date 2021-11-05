@@ -4,6 +4,7 @@
 #include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
+#include "THStack.h"
 #include "TPaveText.h"
 
 #include "TAPlot.h"
@@ -51,6 +52,7 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber=1000,
 #endif
 
 #ifdef BUILD_A2
+<<<<<<< HEAD
 TCanvas* Plot_A2_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
                           Double_t EnergyRangeFactor=10., const char* SIS_Channel_Name = "SIS_PMT_CATCH_OR");
@@ -58,6 +60,18 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1
 TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
                           Double_t EnergyRangeFactor=10.);
+=======
+TCanvas* Plot_A2_CT_HotDump(Int_t runNumber,Int_t binNumber=1000, 
+                          const char* dumpFile="ana/macros/temp2.dump", 
+                          Double_t EnergyRangeFactor=10., int whichSpill = 0);
+
+TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
+                                std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, 
+                                std::string drawOption = "3dheat");
+
+void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegend* legend, std::vector<std::string> legendStrings);
+
+>>>>>>> main
 #endif
 
 Double_t FitEnergyDump(Double_t Emin, Double_t Emax,TH1D* fit=NULL);

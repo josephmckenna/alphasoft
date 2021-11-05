@@ -128,8 +128,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
    assert(tmin.size()==tmax.size());
-   double first_time = 1E99;
-   double last_time = 0;
+   double last_time=0;
    
    int n_times=tmin.size();
    
@@ -142,10 +141,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
          if (range<diff) range=diff;
       }
    }
-   for (auto& t: tmin)
-   {
-      if (t < first_time) first_time = t;
-   }
+
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
@@ -169,7 +165,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
       Title+=chans.GetDescription(SIS_Channel[i], runNumber);
 
       //Replace this is a data base call to get the channel name
-      TString name=chans.GetDescription(SIS_Channel[i], runNumber);
+      TString name=SIS_Channel[i];
       //Title+=name.Data();
 
       TH1D* h= new TH1D( name.Data(),
@@ -182,11 +178,19 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
    //More performance is maybe available if we use DataFrames...
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
+<<<<<<< HEAD
       TTreeReader* reader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
       TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
       // I assume that file IO is the slowest part of this function... 
       // so get multiple channels and multiple time windows in one pass
       while (reader->Next())
+=======
+      double t=SISEvent->GetRunTime();
+      if (t>last_time) break;
+      
+      //Loop over all time windows
+      for (int j=0; j<n_times; j++)
+>>>>>>> main
       {
          double t = SISEvent->GetRunTime();
          if (t < first_time) continue;
@@ -243,9 +247,6 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
    return Get_Summed_SIS( runNumber, SIS_Channel, spills);
 }
 #endif
-
-
-
 #ifdef BUILD_A2
 std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
 {
