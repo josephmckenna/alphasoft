@@ -103,7 +103,7 @@ Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_m
 {
    if (!exact_match)
    {
-      for (int i=0; i<CHRONO_N_CHANNELS; i++)
+      for (size_t i=0; i<CHRONO_N_CHANNELS; i++)
       {
          //std::cout <<fName[i]<<std::endl;
          //std::string doesn't have this functionality until C++20 :(
@@ -112,7 +112,7 @@ Int_t TChronoChannelName::GetChannel(std::string ChannelName, const bool exact_m
    }
    else
    {
-      for (int i=0; i < CHRONO_N_CHANNELS; i++)
+      for (size_t i=0; i < CHRONO_N_CHANNELS; i++)
       {
          //std::cout <<fName[i]<<std::endl;
          if ( i >= fName.size() )

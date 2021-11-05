@@ -247,7 +247,8 @@ public:
 
    void Finish()
    {
-      fFlags.AnalysisReport->Print();
+      if (fFlags.AnalysisReport)
+         fFlags.AnalysisReport->Print();
       //delete fFlags.AnalysisReport;
    }
 
