@@ -22,10 +22,7 @@ class DumpMarker
    void Print()
    {
       std::cout<<"SequencerID:"<<fSequencerID;
-      if (fSequencerID < 0)
-        std::cout <<"\tName:N/A";
-      else
-         std::cout <<"\tName:"<< SEQ_NAMES.at(fSequencerID);
+      std::cout <<"\tName:"<< GetSequencerName(fSequencerID);
       std::cout<<"\tSequenceCount:"<<fSequenceCount
                <<"\tDescription:"<<fDescription.c_str()
                <<"\tType:"<<fDumpType
@@ -233,7 +230,12 @@ public:
           if (!SISStartMarker->GetDigitalOut()->Channels[DumpStart])
           {
              char buf[100];
-             sprintf(buf,"Warning: Start dump %s has no SIS trigger yet!",StartDumpMarker->fDescription.c_str());
+             sprintf(
+                buf,
+                "Warning: Start dump %s (%s) has no SIS / ChronoBox trigger yet!",
+                StartDumpMarker->fDescription.c_str(),
+                GetSequencerName(StartDumpMarker->fSequencerID).c_str()
+             );
              errors.push_back(buf);
           }
           TSequencerState* SISStopMarker  =states.back();
@@ -242,12 +244,22 @@ public:
              char buf[100];
              if (StopDumpMarker)
              {
-                sprintf(buf,"Warning: Stop dump %s has no SIS trigger yet!",StopDumpMarker->fDescription.c_str());
+                sprintf(
+                   buf,
+                   "Warning: Stop dump %s (%s) has no SIS / ChronoBox trigger yet!",
+                   StopDumpMarker->fDescription.c_str(),
+                   GetSequencerName(StopDumpMarker->fSequencerID).c_str()
+                );
              }
              else
              {
                 if (StartDumpMarker)
-                    sprintf(buf,"Warning: Start dump %s has no stop dump yet!",StartDumpMarker->fDescription.c_str());
+                    sprintf(
+                       buf,
+                       "Warning: Start dump %s (%s) has no stop dump yet!",
+                       StartDumpMarker->fDescription.c_str(),
+                       GetSequencerName(StartDumpMarker->fSequencerID).c_str()
+                    );
                 else
                     sprintf(buf,"Warning: No start dump, no stop dump...!");
              }

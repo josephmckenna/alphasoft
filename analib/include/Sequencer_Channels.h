@@ -3,6 +3,7 @@
 #ifndef _SEQNAMES_
 #define _SEQNAMES_
 #include <vector>
+#include <string>
 #include "assert.h"
 #define NUMSEQ 9 
 #define USED_SEQ 9 
@@ -34,6 +35,8 @@ static const std::vector<std::string> SEQ_NAMES = {
    "RCT_TOPG",
    "BML",
 };
+
+std::string GetSequencerName(int seqID);
 
 const std::vector<std::string> SEQ_NAMES_SHORT = {
    "CAT",
