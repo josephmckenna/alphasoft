@@ -54,11 +54,25 @@ Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t eve
 {
    TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
    TCbFIFOEvent* e=new TCbFIFOEvent();
-   t->SetBranchAddress(chan.GetBranchName().c_str(), &e);
-   if (event_index > t->GetEntries()) return -1;
-   t->GetEntry(event_index);
-   Double_t RunTime = e->GetRunTime();
-   delete e;
+   t->SetBranchAddress("FIFOData", &e);
+   int index = 0;
+   double RunTime = -1;
+   for (int i = 0; i < t->GetEntries(); i++)
+   {
+      t->GetEntry(i);
+      if (e->IsLeadingEdge())
+      {
+         if (e->GetChannel() == chan.GetChannel())
+         {
+            if (index == event_index)
+            {
+               RunTime = e->GetRunTime();
+               break;
+            }
+            index++;
+         }
+      }
+   }
    return RunTime;
 }
 #endif
