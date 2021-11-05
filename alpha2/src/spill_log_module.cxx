@@ -303,7 +303,15 @@ public:
       for (auto c: sis_channels)
          std::cout<<"\t"<<c<<std::endl;
       SpillLogTitle="            Dump Time            | ";
-      std::string dump_names = "CAT RCT ATM POS";
+      //ALPHA 2 only had 4 sequencers... 
+      //std::string dump_names = "CAT RCT ATM POS";
+      //We can print them all to be clever and prepare for a future 'merged' DAQ
+      std::string dump_names = "";
+      for (int i = 0; i < NUMSEQ; i++)
+      {
+         dump_names += SEQ_NAMES_SHORT[i];
+         dump_names += " ";
+      }
       assert(dump_names.size() < DUMP_NAME_WIDTH - 1);
       //Pad to proper width
       dump_names.insert(dump_names.size(), DUMP_NAME_WIDTH - dump_names.size() - 1, ' ');
