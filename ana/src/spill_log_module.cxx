@@ -332,7 +332,12 @@ public:
       for (auto c: chrono_channels)
          std::cout<<"\t"<<c<<std::endl;
       SpillLogTitle="            Dump Time            | ";
-      std::string dump_names = "CAT RCT ATM POS";
+      std::string dump_names = "";
+      for (int i = 0; i < NUMSEQ; i++)
+      {
+         dump_names += SEQ_NAMES_SHORT[i];
+         dump_names += " ";
+      }
       assert(dump_names.size() < DUMP_NAME_WIDTH - 1);
       //Pad to proper width
       dump_names.insert(dump_names.size(), DUMP_NAME_WIDTH - dump_names.size() - 1, ' ');

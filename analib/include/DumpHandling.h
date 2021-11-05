@@ -2,11 +2,9 @@
 #define _DUMPHANDLING_
 
 #include "TSequencerState.h"
+#include "Sequencer_Channels.h"
 #include <deque>
-// yes, then we can have A2 and AG classes that do fancy things with chronobox / SIS data...
-//std::map? or just this vector
-static std::vector<std::string> SEQ_NAMES = {
-     "CAT", "RCT","ATM", "POS", "BML", "RCT_BOTG", "ATM_BOTG", "RCT_TOPG", "RCT_TOPG"};
+
 class DumpMarker
 {
    public:
