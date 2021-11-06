@@ -27,16 +27,16 @@ void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin=0
 void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex=0, Int_t offset=0);
 
 void PlotChronoScintillators(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);
-void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex=0, Int_t offset=0);
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex=0);
 
 TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin=0., Double_t tmax=-1., bool ApplyCuts = true);
-TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex=0, Int_t offset=0);
-TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex=0, Int_t offset=0);
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex=0);
+TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex=0);
 void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax);
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t dumpIndex=0, Int_t offset=0);
+			      Int_t dumpIndex=0);
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t dumpIndex=0, Int_t offset=0);
+			      Int_t dumpIndex=0);
 
 void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);
 void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin=0., Double_t tmax=-1.);

@@ -563,7 +563,7 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            TAGSpill* s=SpillFlow->spill_events.at(i);
+            TAGSpill* s = SpillFlow->spill_events.at(i);
 
             //Add spills that just have text data
             if (!s->IsDumpType && !s->IsInfoType)
@@ -593,7 +593,6 @@ public:
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(chrono_channels).Data());
 #ifdef HAVE_MIDAS
-std::cout<<"AAAAAAAAA"<<std::endl;
             fSpillLogPrinter.PrintLine(s->Content(chrono_channels).Data());
 #endif
             SaveToTree(runinfo,s);

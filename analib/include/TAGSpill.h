@@ -40,9 +40,9 @@ struct CbHitCounter
 class TAGSpillScalerData: public TSpillScalerData
 {
    public:
-   //TAGSpillScalerData();
+   TAGSpillScalerData();
    ~TAGSpillScalerData();
-   TAGSpillScalerData(int n_scaler_channels=CHRONO_N_BOARDS*CHRONO_N_CHANNELS);
+   TAGSpillScalerData(int n_scaler_channels);
    TAGSpillScalerData(const TAGSpillScalerData& a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
    TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);

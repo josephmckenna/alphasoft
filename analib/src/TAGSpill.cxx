@@ -2,10 +2,11 @@
 
 #ifdef BUILD_AG
 ClassImp(TAGSpillScalerData)
-/*TAGSpillScalerData::TAGSpillScalerData()
+TAGSpillScalerData::TAGSpillScalerData():
+   TSpillScalerData(CHRONO_N_BOARDS*CHRONO_N_CHANNELS)
 {
 
-}*/
+}
 
 TAGSpillScalerData::~TAGSpillScalerData()
 {
@@ -34,9 +35,9 @@ TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_
    }
 
    if (d->StartDumpMarker)
-      StartTime=d->StartDumpMarker->fRunTime;
+      StartTime = d->StartDumpMarker->fRunTime;
    if (d->StopDumpMarker)
-      StopTime=d->StopDumpMarker->fRunTime;
+      StopTime = d->StopDumpMarker->fRunTime;
 
    /*FirstVertexEvent  =d->IntegratedSVDCounts.FirstVF48Event;
    LastVertexEvent   =d->IntegratedSVDCounts.LastVF48Event;
@@ -307,10 +308,11 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
          else
             log += " ";
       }
-      sprintf(buf,"%9d ",ScalerData->PassCuts);
-      log += buf;
-      sprintf(buf,"%9d ",ScalerData->PassMVA);
-      log += buf;
+      //ALPHA G is not fast enought for vertex data yet
+      //sprintf(buf,"%9d ",ScalerData->PassCuts);
+      //log += buf;
+      //sprintf(buf,"%9d ",ScalerData->PassMVA);
+      //log += buf;
       log += "";
    }
    return log;

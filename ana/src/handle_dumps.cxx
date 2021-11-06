@@ -30,22 +30,18 @@ class DumpMakerModule: public TARunObject
 {
 private:
    double LastSISTS=0;
-   static const int MAXDET=10;
 public:
    DumpMakerModuleFlags* fFlags;
    bool fTrace = false;
    std::deque<TAGSpill*> IncompleteDumps;
 
-   TChronoChannel DumpStartChannels[USED_SEQ];
-   TChronoChannel DumpStopChannels[USED_SEQ];
+   std::array<TChronoChannel,USED_SEQ> DumpStartChannels;
+   std::array<TChronoChannel,USED_SEQ> DumpStopChannels;
    
    TChronoChannel fADChannel = {-1, -1};
    TChronoChannel fPreTriggerChannel = {-1, -1};
    int fADCounter;
    int fPreTriggerCounter;
-   
-   TChronoChannel detectorCh[MAXDET];
-   TString detectorName[MAXDET];
    
    bool have_svd_events = false;
    
@@ -77,47 +73,43 @@ public:
          dumplist[j].SequencerID=j;
          dumplist[j].fRunNo=runinfo->fRunNo;
       }
-      //Save chronobox channel names
-      TChronoChannelName* name[CHRONO_N_BOARDS];
-      TString ChannelName;
 
       for (int i=0; i<USED_SEQ; i++)
       {
          int iSeq=USED_SEQ_NUM[i];
          
          std::cout<<i<<" is " << iSeq <<std::endl;
-         DumpStartChannels[iSeq].SetChannel(-1);
-         DumpStartChannels[iSeq].SetBoard(-1);
-         DumpStopChannels[iSeq].SetChannel(-1);
-         DumpStopChannels[iSeq].SetBoard(-1);
+         DumpStartChannels.at(iSeq).SetChannel(-1);
+         DumpStartChannels.at(iSeq).SetBoard(-1);
+         DumpStopChannels.at(iSeq).SetChannel(-1);
+         DumpStopChannels.at(iSeq).SetBoard(-1);
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
       for (int board=0; board < CHRONO_N_BOARDS; board++)
       {
-         name[board]=new TChronoChannelName(runinfo->fOdb,board);
-      }
-      for (int board=0; board < CHRONO_N_BOARDS; board++)
-      {
+         TChronoChannelName name(runinfo->fOdb,board);
          int channel=-1;
-         for (int i=0; i<USED_SEQ; i++)
+         for (int i = 0; i < USED_SEQ; i++)
          {
-            int iSeq=USED_SEQ_NUM[i];
-            channel=name[board]->GetChannel(StartDumpName[i]);
+            int iSeq = USED_SEQ_NUM.at(i);
+            assert(iSeq >= 0);
+            assert(iSeq < USED_SEQ);
+            channel = name.GetChannel(StartDumpName[i]);
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStartChannels[iSeq].SetChannel(channel);
-               DumpStartChannels[iSeq].SetBoard(board);
+               DumpStartChannels.at(iSeq).SetChannel(channel);
+               DumpStartChannels.at(iSeq).SetBoard(board);
                std::cout<<"Start Channel:"<<channel<<std::endl;
             }
             
-            channel=name[board]->GetChannel(StopDumpName[i]);
+            channel = name.GetChannel(StopDumpName[i]);
             if (channel>0)
             {
                std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
-               DumpStopChannels[iSeq].SetChannel(channel);
-               DumpStopChannels[iSeq].SetBoard(board );
+               DumpStopChannels.at(iSeq).SetChannel(channel);
+               DumpStopChannels.at(iSeq).SetBoard(board );
                std::cout<<"Stop Channel:"<<channel<<std::endl;
             }
             /*
@@ -131,7 +123,7 @@ public:
             */
          }
 
-         channel=name[board]->GetChannel("AD_TRIG");
+         channel=name.GetChannel("AD_TRIG");
          if (channel>0)
          {
             fADChannel.SetChannel(channel);
@@ -249,7 +241,7 @@ public:
       }
       if (ChronoFlow)
       {
-         for (const std::pair<std::string,std::vector<TCbFIFOEvent>> hits: ChronoFlow->fCbHits)
+         for (const std::pair<const std::string,const std::vector<TCbFIFOEvent>>& hits: ChronoFlow->fCbHits)
          {
             const std::string cbname = hits.first;
             char number = cbname[3];
@@ -264,7 +256,9 @@ public:
                      if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
                      {
                         if (hit.IsLeadingEdge())
+                        {
                            dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
+                        }
                      }
                   }
                }
@@ -275,7 +269,9 @@ public:
                      if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
                      {
                         if (hit.IsLeadingEdge())
+                        {
                            dumplist[a].AddStopTime(midas_time, hit.GetRunTime());
+                          }
                      }
                   }
                }

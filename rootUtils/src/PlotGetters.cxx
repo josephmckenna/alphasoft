@@ -35,8 +35,8 @@ TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::
    if (min_height < 10 && min_height >= 0)
       min_height = 0;
    
-   for (int j=0; j<tmin.size(); j++)
-      for (int i=0; i<channel.size(); i++)
+   for (size_t j=0; j<tmin.size(); j++)
+      for (size_t i=0; i<channel.size(); i++)
       {
          legend->AddEntry(hh[i][j]);
          hh[i][j]->SetLineColor(colour.GetNewColour());
@@ -148,7 +148,7 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex, Int_t offset)
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex)
 {
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    return PlotChronoScintillators(runNumber, spills.front().GetStartTime(), spills.front().GetStopTime());
@@ -167,7 +167,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts
 }
 #endif
 #ifdef BUILD_AG
-TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, Int_t offset)
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex)
 {
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    double tmin = spills.front().GetStartTime();
@@ -180,7 +180,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, In
 }
 #endif
 #ifdef BUILD_AG
-TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex, Int_t offset)
+TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex)
 { 
    TAGPlot* p=new TAGPlot(0); //Cuts off  
    for( Int_t i=0; i<Nruns; ++i )
@@ -228,17 +228,17 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t dumpIndex, Int_t offset)
+			      Int_t dumpIndex)
 { 
   Int_t runList[]={runNumber};
   Int_t Nruns = 1;
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
-				   dumpIndex, offset);
+				   dumpIndex);
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t dumpIndex, Int_t offset)
+			      Int_t dumpIndex)
 { 
   TAGPlot* p=new TAGPlot(0); //Cuts off  
   p->SetPlotTracks();
