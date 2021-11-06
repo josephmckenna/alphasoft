@@ -23,7 +23,8 @@
 class HandleSequencerFlags
 {
 public:
-   bool fPrint = false;
+   bool fPrint = false; 
+   bool fPrintSEQ2 = false;
 };
 
 class HandleSequencer: public TARunObject
@@ -129,6 +130,8 @@ public:
       //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
       char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
+      if(fFlags->fPrintSEQ2)
+         std::cout<<bkptr<<std::endl;
 #if HANDLE_SEQ_IN_SIDE_THREAD
       if( bkptr ) 
       {
@@ -299,8 +302,10 @@ public:
       printf("HandleSequencerFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--print") 
             fFlags.fPrint = true;
+         if(args[i] == "--printSEQ2") 
+            fFlags.fPrintSEQ2 = true;
       }
    }
 
