@@ -22,7 +22,7 @@ void PrintSequences(int runNumber, int SeqNum)
                << "\t ID:" << seqEvent->GetID()
                << "\t Name:" << seqEvent->GetEventName()
                << "\t Description: " << seqEvent->GetDescription()
-               << "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
+               //<< "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
                << std::endl;
    }
    delete seqEvent;
@@ -218,7 +218,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       Sequencer[i]=seqEvent->GetSeq();
       Names[i] = seqEvent->GetEventName();
       //std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
-      runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent); //Turn off redundant timecheck for speed here
+      //runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent); //Turn off redundant timecheck for speed here
       //Get_RunTime_of_SequencerEvent(runNumber, seqEvent);
       //std::cout << "\t" << runTimes[i] <<std::endl;
       if (runTimes[i]<0.)
@@ -277,7 +277,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          Descriptions[DumpCount]=TString(CHRONO_FLAG_NAME);
          Sequencer[DumpCount]="CHRONO_";
          Sequencer[DumpCount]+=99;
-         runTimes[DumpCount]= GetRunTimeOfChronoCount(runNumber,CHRONO_FLAG_NAME, i+1);
+         //runTimes[DumpCount]= GetRunTimeOfChronoCount(runNumber,CHRONO_FLAG_NAME, i+1);
          DumpCount++;
       }
    }
@@ -325,7 +325,6 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
   Int_t shutterCloses=0;
   std::cout<<"\n";
  
-  Int_t nChannels=6;
   TChronoChannel channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
   
   TChronoChannel chan;
