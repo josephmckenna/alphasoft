@@ -25,6 +25,7 @@ class HandleSequencerFlags
 public:
    bool fPrint = false; 
    bool fPrintSEQ2 = false;
+   bool fPrintSeqDriver = false;
 };
 
 class HandleSequencer: public TARunObject
@@ -198,6 +199,8 @@ public:
       {
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       driver->Parse(node);
+      if(fFlags->fPrintSeqDriver)
+         driver->PrintDatamembers();
       }
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
@@ -306,6 +309,8 @@ public:
             fFlags.fPrint = true;
          if(args[i] == "--printSEQ2") 
             fFlags.fPrintSEQ2 = true;
+         if(args[i] == "--printSeqDriver") 
+            fFlags.fPrintSeqDriver = true;
       }
    }
 
