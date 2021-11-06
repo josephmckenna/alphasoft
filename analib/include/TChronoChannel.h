@@ -20,8 +20,8 @@ class TChronoChannel {
    public:   
    TChronoChannel()
    {
-      int fBoard = -1;
-      int fChannel = -1;
+      fBoard = -1;
+      fChannel = -1;
    }
    TChronoChannel(const int Board, const int Channel): fBoard(Board), fChannel(Channel)
    {

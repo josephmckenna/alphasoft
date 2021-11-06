@@ -9,6 +9,7 @@ TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
 {
    SetBoardIndex(b+1);
    std::string OdbPath="Equipment/cb0" + std::to_string( b + 1) + "/Settings/names";
+   fName.reserve(60);
    Odb->RSA(OdbPath.c_str(),&fName,true,60,16);
    for (const auto& n: fName)
        std::cout<<"\t"<<n<<std::endl;

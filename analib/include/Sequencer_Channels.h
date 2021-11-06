@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include "assert.h"
-#define NUMSEQ 9 
+#define NUMSEQ 9
 #define USED_SEQ 9 
 
 //Dont change the order of these please
@@ -28,12 +28,11 @@ static const std::vector<std::string> SEQ_NAMES = {
    "RCT",
    "ATM",
    "POS",
-   //"BRK",
    "RCT_BOTG",
    "ATM_BOTG",
    "ATM_TOPG",
    "RCT_TOPG",
-   "BML",
+   "BML"
 };
 
 std::string GetSequencerName(int seqID);
@@ -43,7 +42,6 @@ const std::vector<std::string> SEQ_NAMES_SHORT = {
    "RCT",
    "ATM",
    "POS",
-   //"BRK",
    "RCB",
    "ATB",
    "ATT",
@@ -57,7 +55,6 @@ const std::vector<std::string> SeqNames{
    "rct",
    "atm",
    "pos",
-   //"brk",
    "rct_botg",
    "atm_botg",
    "atm_topg",
