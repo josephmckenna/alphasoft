@@ -211,6 +211,19 @@ public:
           sprintf(buf,"Dump %d is a pair with no start dump... this should never happen",dumpID);
           errors.push_back(buf);
        }
+       else
+       {
+          if (StartDumpMarker->fDescription.front() != '"')
+          {
+             sprintf(buf,"Start dump %s doesn't start with a \"... ",StartDumpMarker->fDescription.c_str());
+             errors.push_back(buf);
+          }
+          if (StartDumpMarker->fDescription.back() != '"')
+          {
+             sprintf(buf,"Start dump %s doesn't end with a \"... look for whitespace?",StartDumpMarker->fDescription.c_str());
+             errors.push_back(buf);
+          }
+       }
        if (!StopDumpMarker)
        {
           if (!StartDumpMarker)
@@ -218,6 +231,19 @@ public:
           else
              sprintf(buf,"Dump %s is a pair with no stop dump... ",StartDumpMarker->fDescription.c_str());
           errors.push_back(buf);
+       }
+       else
+       {
+          if (StopDumpMarker->fDescription.front() != '"')
+          {
+             sprintf(buf,"Stop dump %s doesn't start with a \"... ",StopDumpMarker->fDescription.c_str());
+             errors.push_back(buf);
+          }
+          if (StopDumpMarker->fDescription.back() != '"')
+          {
+             sprintf(buf,"Stop dump %s doesn't end with a \"... look for whitespace?",StopDumpMarker->fDescription.c_str());
+             errors.push_back(buf);
+          }
        }
        //We need states to investigate the Digital output of the 
        //sequencer (to the SIS/ Chronoboxes)
