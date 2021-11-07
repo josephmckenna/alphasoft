@@ -24,6 +24,9 @@ void SaveAllDumps(int runNumber)
       "SiPM_A_AND_D",
       "SiPM_C_AND_F",
       "SiPM A_OR_C-AND-D_OR_F",
+      "aw16_mlu_trig",
+      "bsc64_mult_trig",
+      "trig_received"
    };
    std::vector<TChronoChannel> chans;
    std::vector<std::string> valid_channels;
@@ -114,8 +117,8 @@ void SaveAllDumps(int runNumber)
       for (int i = 0; i< valid_channels.size(); i++)
       {
          // List of channels for the 8 plot combined canvas
-         std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_OR_D","SiPM_E",
-                                           "SiPM_C","SiPM_F","SiPM_C_OR_F","ADC_TRG"};
+         std::vector<std::string> channels {"SiPM_A_OR_D","SiPM_E","SiPM_C_OR_F","SiPM_B",
+                                           "ADC_TRG","aw16_mlu_trig","bsc64_mult_trig","trig_received"};
          std::string channel_name = valid_channels.at(i);
          for ( int k = 0; k < channels.size(); k++ )
          {
