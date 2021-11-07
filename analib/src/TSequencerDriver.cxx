@@ -19,6 +19,33 @@ TSequencerDriver::TSequencerDriver()
   HVMap       = new TSequencerDriverMap();
 }
 
+void TSequencerDriver::PrintDatamembers()
+{
+  std::cout<<std::endl;
+  std::cout<<"======================== SequencerDriver ============================="<<std::endl;
+  std::cout<<"SeqNum    "<<SeqNum<<std::endl;
+  std::cout<<"SeqName   "<<SeqName<<std::endl;
+  std::cout<<"DriverVer "<<DriverVer<<std::endl<<std::endl;
+  std::cout<<"NumDO     "<<NumDO<<std::endl;
+  std::cout<<"NumTrig   "<<NumTrig<<std::endl;
+  std::cout<<"NumAO     "<<NumAO<<std::endl;
+  std::cout<<"NumHV     "<<NumHV<<std::endl<<std::endl;
+
+  std::cout<<"__________________________DigitalMap__________________________________"<<std::endl;
+  DigitalMap->PrintDriverMap();
+  std::cout<<std::endl;
+  std::cout<<"__________________________TriggerMap__________________________________"<<std::endl;
+  TriggerMap->PrintDriverMap();
+  std::cout<<std::endl;
+  std::cout<<"__________________________AnalogueMap_________________________________"<<std::endl;
+  AnalogueMap->PrintDriverMap();
+  std::cout<<std::endl;
+  std::cout<<"__________________________HVMap_______________________________________"<<std::endl;
+  HVMap->PrintDriverMap();
+  std::cout<<std::endl;
+  std::cout<<"======================================================================"<<std::endl<<std::endl; 
+}
+
 void TSequencerDriver::Parse(TXMLNode* node)
 {
   this->Parse(node,this->DigitalMap ,"DOConfig"    ,"DOCfg"     ,"BitNum"    ,"id");
