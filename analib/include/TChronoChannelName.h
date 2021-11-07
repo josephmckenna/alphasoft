@@ -15,6 +15,8 @@
 #include <iostream>
 
 #include "ChronoUtil.h"
+#include "TChronoChannel.h"
+
 
 
 #ifndef ROOT_TObject
@@ -31,25 +33,26 @@
 class TChronoChannelName : public TObject
 {
   private:
-  int fChronoBoardIndex;
+  std::string fChronoBoardName;
   std::vector<std::string> fName;
   public:
   
    TChronoChannelName();
-   TChronoChannelName(MVOdb* Odb, Int_t board);
+   TChronoChannelName(MVOdb* Odb, const std::string& board);
    
-   TChronoChannelName(TString json, Int_t b);
+   TChronoChannelName(TString json, const std::string& b);
 
    void DumpToJson(int runno);
 
    using TObject::Print;
    virtual void Print();
    virtual ~TChronoChannelName();
-   int GetBoardIndex() const                 { return fChronoBoardIndex; }
-   std::string GetChannelName(int Channel) const { return fName.at(Channel); }
+   int GetBoardIndex() const                 { return CBMAP.at(fChronoBoardName); }
+   const std::string GetBoardName() const { return fChronoBoardName; }
+   const std::string GetChannelName(int Channel) const { return fName.at(Channel); }
    int GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
 
-   void SetBoardIndex(Int_t index)      { fChronoBoardIndex = index; }
+   void SetBoard(const std::string& board)      { fChronoBoardName = board; }
    void SetChannelName(std::string name, size_t i) { fName.at(i)= name; }
    
   ClassDef( TChronoChannelName, 1 )

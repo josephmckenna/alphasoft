@@ -171,7 +171,7 @@ public:
   void AddToTAGPlot(TString file="plot.root");
   TAGPlot* LoadTAGPlot(TString file="plot.root");
 
-  void AddChronoEvent(TCbFIFOEvent *event, int board, Double_t StartOffset);
+  void AddChronoEvent(TCbFIFOEvent *event, const std::string& board, Double_t StartOffset);
 
   Int_t AddEvents(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex, Double_t Toffset = 0, Bool_t zeroTime = kTRUE);
   Int_t AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset = 0., Bool_t zeroTime = kTRUE);

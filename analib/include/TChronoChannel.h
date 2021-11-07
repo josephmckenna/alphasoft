@@ -7,6 +7,17 @@
 #include "TObject.h"
 #endif
 
+enum { CBTRG, CB01, CB02, CB03, CB04 };
+#include <map>
+
+static const std::map<std::string,int> CBMAP {
+   { "cbtrg", CBTRG },
+   { "cb01", CB01 },
+   { "cb02", CB02 },
+   { "cb03", CB03 },
+   { "cb04", CB04 }
+};
+
 #ifndef ROOT_TString
 #include "TString.h"
 #endif
@@ -15,48 +26,49 @@
 
 class TChronoChannel {
    private:
-      int fBoard;
+      std::string fBoardName;
       int fChannel;
    public:   
-   TChronoChannel()
+   TChronoChannel();
+   TChronoChannel(const std::string& Board, const int Channel);
+   TChronoChannel(const TChronoChannel& c);
+   const std::string GetBoard() const
    {
-      fBoard = -1;
-      fChannel = -1;
+      return fBoardName;
    }
-   TChronoChannel(const int Board, const int Channel): fBoard(Board), fChannel(Channel)
+
+   int GetBoardNumber() const
    {
+      return CBMAP.at(fBoardName);
    }
-   TChronoChannel(const TChronoChannel& c): fBoard(c.fBoard), fChannel(c.fChannel)
-   {
-   }
-   int GetBoard() const
-   {
-      return fBoard;
-   }
+
    int GetChannel() const
    {
       return fChannel;
    }
-   void SetBoard(int board) { fBoard = board; }
+   void SetBoard(const std::string board) { fBoardName = board; }
    void SetChannel(int channel) { fChannel = channel; }
-   void SetChannel (int channel, int board )   { fChannel = channel; fBoard = board; }
-   void SetChannel( const TChronoChannel& c)  { fChannel = c.GetChannel(); fBoard = c.GetBoard(); }
-   TChronoChannel GetTChronoChannel() { return *this; }
-   bool IsValidChannel() const
+   //void SetChannel (int channel, int board )   { fChannel = channel; fBoard = board; }
+   void SetChannel( const TChronoChannel& c)
    {
-      return (fBoard >= 0 && fChannel >= 0);
+      fChannel = c.GetChannel();
+      fBoardName =c.GetBoard();
    }
    int GetIndex() const
    {
-      return fBoard * CHRONO_N_CHANNELS + fChannel;
+      return CBMAP.at(fBoardName) * CHRONO_N_CHANNELS + fChannel;
    }
-   std::string GetBranchName() const
+   bool IsValidChannel() const
    {
-      return std::string("cb0") + std::to_string(fBoard + 1);
+      return (!fBoardName.empty() && fChannel >= 0);
+   }
+   const std::string GetBranchName() const
+   {
+      return fBoardName;
    }
    TChronoChannel& operator=(const TChronoChannel& other)
    {
-      fBoard = other.GetBoard();
+      fBoardName = other.GetBoard();
       fChannel = other.GetChannel();
       return *this;
    }
