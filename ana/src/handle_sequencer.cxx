@@ -26,6 +26,8 @@ public:
    bool fPrint = false; 
    bool fPrintSEQ2 = false;
    bool fPrintSeqDriver = false;
+   bool fPrintSeqState = false; 
+   bool fPrintSeqEvent = false; 
 };
 
 class HandleSequencer: public TARunObject
@@ -253,7 +255,13 @@ public:
             fSeqEvent->SetonCount( event->GetCount() );
             fSeqEvent->SetonState( event->GetStateID() );
             Int_t onState=event->GetStateID();
-            //fSeqEvent->Print();
+            if(fFlags->fPrintSeqEvent)
+            {
+               std::cout<<std::endl;
+               std::cout<<"============================= Sequencer Event =================================="<<std::endl;
+               fSeqEvent->Print();
+               std::cout<<"================================================================================"<<std::endl;
+            }
             fSequencerEventTree->Fill();
             ((DumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
@@ -280,7 +288,13 @@ public:
             fSeqState->SetComment(*state->getComment() );
 
             ((DumpFlow*)flow)->AddStateEvent(*fSeqState);
-            //SeqState->Print();
+            if(fFlags->fPrintSeqState)
+            {
+               std::cout<<std::endl;
+               std::cout<<"========================================================================= Sequencer State ========================================================================="<<std::endl;
+               fSeqState->Print();
+               std::cout<<"==================================================================================================================================================================="<<std::endl;
+            }
             fSequencerStateTree->Fill();
          }
       }
@@ -321,6 +335,10 @@ public:
             fFlags.fPrintSEQ2 = true;
          if(args[i] == "--printSeqDriver") 
             fFlags.fPrintSeqDriver = true;
+         if(args[i] == "--printSeqState") 
+            fFlags.fPrintSeqState = true;
+         if(args[i] == "--printSeqEvent") 
+            fFlags.fPrintSeqEvent = true;
       }
    }
 
