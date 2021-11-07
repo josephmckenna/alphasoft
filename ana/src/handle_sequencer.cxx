@@ -300,6 +300,16 @@ public:
    HandleSequencerFlags fFlags;
 
 public:
+
+
+   void Usage()
+   {
+      printf("HandleSequencerFactory Usage:\n");
+      printf("\t--printSEQ2 Display the full XML block the sequencer is sending\n");
+      printf("\t--printSeqDriver Display the drivers that sequencers are sending\n");
+      
+   }
+
    void Init(const std::vector<std::string> &args)
    {
       printf("HandleSequencerFactory::Init!\n");
