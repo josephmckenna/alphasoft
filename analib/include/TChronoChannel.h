@@ -8,15 +8,8 @@
 #endif
 
 enum { CBTRG, CB01, CB02, CB03, CB04 };
-#include <map>
 
-static const std::map<std::string,int> CBMAP {
-   { "cbtrg", CBTRG },
-   { "cb01", CB01 },
-   { "cb02", CB02 },
-   { "cb03", CB03 },
-   { "cb04", CB04 }
-};
+#include <map>
 
 #ifndef ROOT_TString
 #include "TString.h"
@@ -24,11 +17,15 @@ static const std::map<std::string,int> CBMAP {
 
 #include "ChronoUtil.h"
 
+
+
 class TChronoChannel {
    private:
       std::string fBoardName;
       int fChannel;
-   public:   
+   public:
+      static const std::map<std::string,int> CBMAP;
+
    TChronoChannel();
    TChronoChannel(const std::string& Board, const int Channel);
    TChronoChannel(const TChronoChannel& c);

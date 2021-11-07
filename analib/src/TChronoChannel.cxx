@@ -1,5 +1,13 @@
 #include "TChronoChannel.h"
 
+const std::map<std::string,int> TChronoChannel::CBMAP{
+   { "cbtrg", CBTRG },
+   { "cb01", CB01 },
+   { "cb02", CB02 },
+   { "cb03", CB03 },
+   { "cb04", CB04 }
+};
+
 TChronoChannel::TChronoChannel()
 {
    fBoardName = "";

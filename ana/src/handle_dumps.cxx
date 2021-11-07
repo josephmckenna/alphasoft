@@ -88,7 +88,7 @@ public:
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
-      for (const std::pair<std::string,int>& board: CBMAP)
+      for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
       {
          TChronoChannelName name(runinfo->fOdb,board.first);
          int channel = -1;

@@ -58,7 +58,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   for (const std::pair<std::string,int>& board: CBMAP)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       TTree* t = Get_Chrono_Tree(runNumber, TChronoChannel(board.first,CHRONO_CLOCK_CHANNEL).GetBranchName());
       if (!t)

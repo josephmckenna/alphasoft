@@ -6,7 +6,7 @@ Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, const std::string& ChronoBoar
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
    t->SetBranchAddress("ChronoChannel", &n);
-   t->GetEntry(CBMAP.at(ChronoBoard));
+   t->GetEntry(TChronoChannel::CBMAP.at(ChronoBoard));
    Int_t Channel=n->GetChannel(ChannelName, ExactMatch);
    delete n;
    return Channel;

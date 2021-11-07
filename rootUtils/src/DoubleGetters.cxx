@@ -39,7 +39,7 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 {
    double tmax=-999.;
    double tmp;
-   for (const std::pair<std::string,int>& board: CBMAP)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       tmp=GetTotalRunTimeFromChrono(runNumber, board.first);
       if (tmp>tmax) tmax=tmp;

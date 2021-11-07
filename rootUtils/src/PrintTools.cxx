@@ -33,7 +33,7 @@ void PrintChronoNames(int runNumber)
 {
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
 
-   for (const std::pair<std::string,int>& board: CBMAP)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {
@@ -58,7 +58,7 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    Int_t Counts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-   for (const std::pair<std::string,int>& board: CBMAP)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {

@@ -308,7 +308,7 @@ public:
       for (size_t i=0; i<channels.size(); i++)
       {
          bool found = false;
-         for (const std::pair<std::string, int>& board: CBMAP)
+         for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
          {
             TChronoChannelName name(runinfo->fOdb,board.first);
             int channel = name.GetChannel(channels.at(i));
