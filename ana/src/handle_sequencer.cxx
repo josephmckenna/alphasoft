@@ -321,7 +321,8 @@ public:
       printf("HandleSequencerFactory Usage:\n");
       printf("\t--printSEQ2 Display the full XML block the sequencer is sending\n");
       printf("\t--printSeqDriver Display the drivers that sequencers are sending\n");
-      
+      printf("\t--printSeqEvent Display the sequencers events\n");
+      printf("\t--printSeqState Display the states of the sequencers\n");
    }
 
    void Init(const std::vector<std::string> &args)
