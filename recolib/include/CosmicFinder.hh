@@ -86,7 +86,7 @@ public:
    inline const TCosmic* GetCosmic() const { return fLines.at(fIdx); }
    inline double GetResidual() const { return fRes2; }
    inline int GetStatus() const { return fStatus; }
-   inline const int GetNumberOfTracks() { return nTracks; }
+   inline int GetNumberOfTracks() const { return nTracks; }
 };
 
 #endif

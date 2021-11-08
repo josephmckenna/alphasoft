@@ -26,11 +26,11 @@ class TriggerIn: public TObject
    std::vector<int> Channels;
    TriggerIn(){}
    ~TriggerIn(){}
-   TriggerIn(const TriggerIn& t): InfWait(t.InfWait), waitTime(t.waitTime), Channels(t.Channels) {}
+   TriggerIn(const TriggerIn& t): TObject(), InfWait(t.InfWait), waitTime(t.waitTime), Channels(t.Channels) {}
    void Reset()
    {
       InfWait = 0;
-      double waitTime = 0.0;
+      waitTime = 0.0;
       Channels.clear();
    }
    ClassDef(TriggerIn, 1);
@@ -43,7 +43,7 @@ class DigitalOut: public TObject
     std::vector<bool> Channels;
     DigitalOut(){}
     ~DigitalOut(){}
-    DigitalOut(const DigitalOut& d): Channels(d.Channels) {}
+    DigitalOut(const DigitalOut& d): TObject(), Channels(d.Channels) {}
     void Reset()
     {
        Channels.clear();
@@ -61,7 +61,7 @@ class AnalogueOut: public TObject
 
     AnalogueOut(){}
     ~AnalogueOut(){}
-    AnalogueOut(const AnalogueOut& a): PrevState(a.PrevState), steps(a.steps), AOi(a.AOi), AOf(a.AOf) {}
+    AnalogueOut(const AnalogueOut& a): TObject(), PrevState(a.PrevState), steps(a.steps), AOi(a.AOi), AOf(a.AOf) {}
     void Reset()
     {
        PrevState = 0;
@@ -144,7 +144,7 @@ class TSequencerState : public TObject
        fSeq = "";
        fSeqNum = -1;
        fState = -1;
-       double fTime = 0.0;
+       fTime = 0.0;
        fDO.Reset();
        fAO.Reset();
        fTI.Reset();

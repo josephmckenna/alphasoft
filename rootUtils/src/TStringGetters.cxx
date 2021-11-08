@@ -9,7 +9,7 @@ TString Get_Chrono_Name(Int_t runNumber, TChronoChannel chan)
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
    t->SetBranchAddress("ChronoChannel", &n);
-   t->GetEntry(chan.GetBoard());
+   t->GetEntry(chan.GetBoardNumber());
    TString name=n->GetChannelName(chan.GetChannel());
    delete n;
    return name;

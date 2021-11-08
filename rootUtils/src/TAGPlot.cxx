@@ -15,10 +15,10 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   TMin=-1;
   TMax=-1;
 
-  top={-1,-1};
-  bottom={-1,-1};
-  TPC_TRIG={-1,-1};
-  Beam_Injection={-1,-1};
+  top={"",-1};
+  bottom={"",-1};
+  TPC_TRIG={"",-1};
+  Beam_Injection={"",-1};
   /*trig=-1;// = -1;
   trig_nobusy=-1; //Record of SIS channels
   atom_or=-1;
@@ -282,7 +282,7 @@ void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
 }
  
 
-void TAGPlot::AddChronoEvent(TCbFIFOEvent *event, int board, Double_t StartOffset)
+void TAGPlot::AddChronoEvent(TCbFIFOEvent *event, const std::string& board, Double_t StartOffset)
 {
   ChronoPlotEvent Event;
   Event.runNumber     =0;//event->GetRunNumber();

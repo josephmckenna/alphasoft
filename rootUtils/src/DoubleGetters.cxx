@@ -1,7 +1,7 @@
 #include "DoubleGetters.h"
 
 #ifdef BUILD_AG
-Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board)
 {
    TTree* t=Get_Chrono_Tree(runNumber,TChronoChannel(Board,CHRONO_CLOCK_CHANNEL).GetBranchName());
    if (!t)
@@ -39,65 +39,14 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 {
    double tmax=-999.;
    double tmp;
-   for (int i=0; i<CHRONO_N_BOARDS; i++)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
-      tmp=GetTotalRunTimeFromChrono(runNumber, i);
+      tmp=GetTotalRunTimeFromChrono(runNumber, board.first);
       if (tmp>tmax) tmax=tmp;
    }
    tmp=GetTotalRunTimeFromTPC(runNumber);
    if (tmp>tmax) tmax=tmp;
    return tmax;
-}
-#endif
-#ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t event_index)
-{
-   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
-   TCbFIFOEvent* e=new TCbFIFOEvent();
-   t->SetBranchAddress(chan.GetBranchName().c_str(), &e);
-   if (event_index > t->GetEntries()) return -1;
-   t->GetEntry(event_index);
-   Double_t RunTime = e->GetRunTime();
-   delete e;
-   return RunTime;
-}
-#endif
-#ifdef BUILD_AG
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t event_number)
-{
-   TChronoChannel chan = Get_Chrono_Channel(runNumber, ChannelName);
-   return GetRunTimeOfChronoCount(runNumber, chan,  event_number);
-}
-#endif
-#ifdef BUILD_AG
-Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset)
-{
-   TString ChronoChannelName=Get_Chrono_Name(e);
-   //   std::cout <<"Channel Name:"<<ChronoChannelName<<std::endl;
-   TChronoChannel chan = Get_Chrono_Channel(runNumber,ChronoChannelName,kTRUE);
-   if (chan.IsValidChannel())
-      return GetRunTimeOfChronoCount(runNumber,  chan,e->GetID()+1 + offset);
-   else
-      return -1.;
-   //   std::cout <<"Looking for TS in board:"<<board <<" channel: "<<chan<<" event: "<<e->GetID()<<std::endl;
-}
-#endif
-
-#ifdef BUILD_AG
-Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
-{
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, name, dumpIndex); //Creates new TSeq_Event
-   Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
-   delete e;
-   return RunTime;
-}
-Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t dumpIndex, Int_t offset)//, Bool_t ExactMatch)
-{
-   TSeq_Event* e=Get_Seq_Event(runNumber, description, IsStart, dumpIndex); //Creates new TSeq_Event
-   Double_t RunTime=GetRunTimeOfEvent(runNumber, e, offset);
-   delete e;
-   return RunTime;
-
 }
 #endif
 

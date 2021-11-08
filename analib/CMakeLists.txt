@@ -30,6 +30,7 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Event.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerState.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer_Channels.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TInfoSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx
@@ -38,7 +39,7 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoBoardCounter.cxx
     )
 if(BUILD_AG)
-  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx)
+  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/fitBV.cxx)
 endif()
 if(BUILD_A2)
   list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TA2Spill.cxx )

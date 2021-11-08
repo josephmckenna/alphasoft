@@ -26,19 +26,24 @@ void SaveAllDumps(int runNumber)
       "SiPM A_OR_C-AND-D_OR_F",
    };
    std::vector<TChronoChannel> chans;
+   std::vector<std::string> valid_channels;
    for (std::string channel_name: detector_channels)
    {
       TChronoChannel c = Get_Chrono_Channel(runNumber,channel_name.c_str());
-      chans.push_back(c);
+      if (c.IsValidChannel())
+      {
+         chans.push_back(c);
+         valid_channels.push_back(channel_name);
+      }
    }
 
    std::vector<std::vector<TH1D*>> Histos = Get_Chrono(runNumber,chans,all);
    std::cout<<Histos.size() <<"\t"<<Histos.at(0).size()<<std::endl;
    
    //All sis channels
-   for (int i = 0; i< detector_channels.size(); i++)
+   for (int i = 0; i< valid_channels.size(); i++)
    {
-      std::string channel_name = detector_channels.at(i);
+      std::string channel_name = valid_channels.at(i);
       
       std::map<std::string,int> dumpIndex_counter;
     
@@ -106,12 +111,12 @@ void SaveAllDumps(int runNumber)
       // Remove quote marks... they upset uploading to elog
       dump_name.erase(std::remove(dump_name.begin(), dump_name.end(), '"'), dump_name.end());
 
-      for (int i = 0; i< detector_channels.size(); i++)
+      for (int i = 0; i< valid_channels.size(); i++)
       {
          // List of channels for the 8 plot combined canvas
          std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_OR_D","SiPM_E",
                                            "SiPM_C","SiPM_F","SiPM_C_OR_F","ADC_TRG"};
-         std::string channel_name = detector_channels.at(i);
+         std::string channel_name = valid_channels.at(i);
          for ( int k = 0; k < channels.size(); k++ )
          {
             if (channels.at(k) == channel_name)
@@ -120,7 +125,7 @@ void SaveAllDumps(int runNumber)
                TH1D* h = Histos.at(i).at(j);
                h->GetXaxis()->SetTitle("Time [s]");
                h->GetYaxis()->SetTitle("Counts"); 
-              h->Draw("HIST");
+               h->Draw("HIST");
             }
          }
       }

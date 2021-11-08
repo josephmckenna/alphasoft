@@ -1,12 +1,12 @@
 #include "IntGetters.h"
 
 #ifdef BUILD_AG
-Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
+Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, const std::string& ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
    t->SetBranchAddress("ChronoChannel", &n);
-   t->GetEntry(ChronoBoard);
+   t->GetEntry(TChronoChannel::CBMAP.at(ChronoBoard));
    Int_t Channel=n->GetChannel(ChannelName, ExactMatch);
    delete n;
    return Channel;
@@ -137,7 +137,7 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
   while(fin.good())
     {
       fin>>x[n]>>y[n];
-      //std::cout<<n<<"\t"<<x[n]<<"\t"<<y[n]<<std::endl;
+      std::cout<<n<<"\t"<<x[n]<<"\t"<<y[n]<<std::endl;
       ++n;
     }
   fin.close();
@@ -156,9 +156,8 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
       }
   std::cout<<"Ramp Duration "<<"\t"<<endRampTime<<" s"<<std::endl;
 
-  // time "normalization"
-  //for(Int_t i=0; i<n; ++i) x[i] = x[i]-1; //For a ramp file off by 1s for whatever reason. 
-  for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime; //For a normal ramp file.
+  // time "normalization" to 1 second? Why would we ever need this?
+  //for(Int_t i=0; i<n; ++i) x[i] = x[i]/endRampTime;
 
   return n;
 }

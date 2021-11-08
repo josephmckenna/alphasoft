@@ -17,6 +17,7 @@ TSequencerState::TSequencerState()
 }
 
 TSequencerState::TSequencerState(const TSequencerState& State):
+   TObject(),
    fID(State.GetID()),
    fSeq(State.GetSeq()),
    fSeqNum(State.GetSeqNum()),
