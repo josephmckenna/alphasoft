@@ -65,7 +65,7 @@ private:
    std::vector<TChronoChannel> fChronChannels;
    TStyle* fChronStyle;
 public:
-   ChronoMonitor(TARunInfo* runinfo): TARunObject(runinfo), fLiveCanvas("LiveChron","LiveChron")
+   ChronoMonitor(TARunInfo* runinfo): TARunObject(runinfo), fLiveCanvas("LiveChrono","LiveChrono")
    {
       fModuleName = "ChronoMonitor";
       for (int b = 0; b < CHRONO_N_BOARDS; b++)
@@ -82,6 +82,7 @@ public:
             fFIFOBin[b]++;
             fChronStyle = new TStyle("ChronoStyle","ChronoStyle");
          }
+         fFIFOBin[b] = 0;
       }
    }
    ~ChronoMonitor()
@@ -98,18 +99,21 @@ public:
       std::vector<std::string> channel_display_name;
       MVOdbError* error = new MVOdbError();
       
+      
       runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelIDName",&channel_ID_string,false,20,32,error);
       //Re-read and resize?
       int actual_size = 0;
       for (const std::string& s: channel_ID_string)
          if (s.size())
             actual_size++;
-      
+
+      fChronChannels.resize(CHRONO_N_CHANNELS*CHRONO_N_BOARDS);
+
       runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelDisplayName",&channel_display_name,false,20,32,error);
       for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
-         TString OdbPath = "/Equipment/cb0";
-         OdbPath += board.first; //TODO Get the correct board number.
+         TString OdbPath = "/Equipment/";
+         OdbPath += board.first;
          OdbPath += "/Settings/names";
          std::vector<std::string> channel_list;
          runinfo->fOdb->RSA(OdbPath,&channel_list,false,60,32,error);
@@ -122,7 +126,7 @@ public:
 
          runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
 
-         for (int c = 0; c < CHRONO_N_CHANNELS; c++)
+         for (int c = 0; c < channel_list.size(); c++)
          {
             TString name = board.first + 
                            std::string("_") + std::to_string(c) + 
@@ -143,6 +147,13 @@ public:
       fLiveCanvas.Divide(1,actual_size);
    }
   
+   void EndRun(TARunInfo* runinfo)
+   {
+      // Save for testing...
+      for (size_t i = 0; i < fLiveHisto.size(); i++)
+         fLiveHisto[i].Write();
+   }
+  
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("ChronoMonitor::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
@@ -159,40 +170,49 @@ public:
          return flow;
    
       // Obtain time range for incoming data
-      double mostmax = 0;
-      for (const std::pair<std::string,std::vector<TCbFIFOEvent>>& cb: cbFIFOflow->fCbHits)
+      double mostmax = -99;
+      for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
       {
-         if ( mostmax < cb.second.back().GetRunTime())
-            mostmax = cb.second.back().GetRunTime();
+         const std::vector<TCbFIFOEvent> & events = cbFIFOflow->fCbHits[board.first];
+         if (events.size())
+         // TODO: Check events are in time order!
+         for (const TCbFIFOEvent& e: events)
+            if ( mostmax < e.GetRunTime())
+               mostmax = e.GetRunTime();
+         //std::cout<<events.back().GetRunTime() <<std::endl;
       }
       // Reserve space for all incoming TSISEvents
-      for (int b = 0; b < CHRONO_N_BOARDS; b++)
+      for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
       {
-         while (fFIFO[b].back().GetStopTime() < mostmax)
+         while (fFIFO[board.second].back().GetStopTime() < mostmax)
          {
-            fFIFO[b].emplace_back(
+            fFIFO[board.second].emplace_back(
                TChronoBoardCounter(
-                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH),
-                  INTEGRATION_TIME * ( fFIFOBin[b] - BUFFER_DEPTH + 1),
-                  b
+                  INTEGRATION_TIME * ( fFIFOBin[board.second] - BUFFER_DEPTH),
+                  INTEGRATION_TIME * ( fFIFOBin[board.second] - BUFFER_DEPTH + 1),
+                  board.second
                )
             );
-            fFIFO[b].pop_front();
-            fFIFOBin[b]++;
+            if (fFIFO[board.second].size() > BUFFER_DEPTH )
+               fFIFO[board.second].pop_front();
+            fFIFOBin[board.second]++;
          }
       }
 
-      for ( int b = 0; b < CHRONO_N_BOARDS; b++ )
+      for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
       {
-         char CBNAME[5] = "CB00";
-         CBNAME[3] += b;
+         const std::vector<TCbFIFOEvent> & events = cbFIFOflow->fCbHits[board.first];
          int bin = 0;
-         const std::vector<TCbFIFOEvent> & events = cbFIFOflow->fCbHits[CBNAME];
+         if (events.empty())
+            continue;
          for (const TCbFIFOEvent& e: events)
          {
-            while ( e.GetRunTime() > fFIFO[b].at(bin).GetStartTime())
+            while ( e.GetRunTime() > fFIFO[board.second].at(bin).GetStopTime() )
+            {
+               //std::cout<<fFIFO[board.second].at(bin).GetStopTime()<<std::endl;
                bin++;
-            fFIFO[b].at(bin) += e;
+            }
+            fFIFO[board.second].at(bin) += e;
          }
       }
 
@@ -224,7 +244,6 @@ public:
                if (s.fCounts[i])
                {
                   fLiveHisto[i].Fill(s.GetStartTime(), s.fCounts[i]);
-                  //std::cout<<s.fRunTime << "\t" << s.fCounts[i] << std::endl;
                }
             }
          }
@@ -234,7 +253,7 @@ public:
          if (fChronChannels[i].GetChannel() > 0)
          {
             fLiveCanvas.cd(i + 1);
-            fLiveHisto[i].Draw("HIST");
+            fLiveHisto[fChronChannels[i].GetIndex()].Draw("HIST");
          }
       }
       return flow;
