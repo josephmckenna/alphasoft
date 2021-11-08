@@ -106,11 +106,10 @@ public:
             actual_size++;
       
       runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelDisplayName",&channel_display_name,false,20,32,error);
-
-      for (int b = 0; b < CHRONO_N_BOARDS; b++)
+      for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
          TString OdbPath = "/Equipment/cb0";
-         OdbPath += b + 1; //TODO Get the correct board number.
+         OdbPath += board.first; //TODO Get the correct board number.
          OdbPath += "/Settings/names";
          std::vector<std::string> channel_list;
          runinfo->fOdb->RSA(OdbPath,&channel_list,false,60,32,error);
@@ -118,14 +117,14 @@ public:
          {
             for (int i = 0; i < channel_ID_string.size(); i++)
                if (channel_ID_string.at(i) == channel_list.at(c) && channel_ID_string.size() )
-                  fChronChannels.at(i) = TChronoChannel(b,c);
+                  fChronChannels.at(i) = TChronoChannel(board.first,c);
          }
 
          runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
 
          for (int c = 0; c < CHRONO_N_CHANNELS; c++)
          {
-            TString name = std::string("cb0") + std::to_string(b) + 
+            TString name = board.first + 
                            std::string("_") + std::to_string(c) + 
                            std::string("-") + channel_display_name.at(c);
 
@@ -134,21 +133,14 @@ public:
                   name,
                   name,
                   BUFFER_DEPTH,
-                  fFIFO[b].front().GetStartTime(),
-                  fFIFO[b].back().GetStopTime()
+                  fFIFO[board.second].front().GetStartTime(),
+                  fFIFO[board.second].back().GetStopTime()
                )
             );  
          }
       }
 
       fLiveCanvas.Divide(1,actual_size);
-
-      gDirectory->cd();
-      for (size_t i=0; i<channel_ID_string.size(); i++)
-      {
-         if (channel_ID_string.at(i).size())
-            fChronChannels.push_back(i); // just getting them all I guess...?
-      }
    }
   
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
@@ -236,12 +228,13 @@ public:
                }
             }
          }
+      }
       for (int i = 0; i < fChronChannels.size(); i++)
       {
-         if (fChronChannels[i] > 0)
+         if (fChronChannels[i].GetChannel() > 0)
          {
             fLiveCanvas.cd(i + 1);
-            fLiveHisto[fChronChannels[i]].Draw("HIST");
+            fLiveHisto[i].Draw("HIST");
          }
       }
       return flow;
