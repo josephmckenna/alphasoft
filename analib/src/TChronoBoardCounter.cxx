@@ -4,26 +4,35 @@ ClassImp(TChronoBoardCounter)
 
 //default constr.
 TChronoBoardCounter::TChronoBoardCounter():
-   fStartTime(-1), fStopTime(-1), fBoard(-1), fCounts{0}
+   fStartTime(-1), fStopTime(-1), fBoard(-1)
 {
+   for (int i = 0; fCounts.size(); i++)
+      fCounts[i] = 0;
 };
 
 //Copy constr.
 TChronoBoardCounter::TChronoBoardCounter(const TChronoBoardCounter& counter):
-   fStartTime(counter.fStartTime), fStopTime(counter.fStopTime), fBoard(counter.fBoard), fCounts(counter.fCounts)
+   fStartTime(counter.fStartTime), fStopTime(counter.fStopTime), fBoard(counter.fBoard)
 {
+   for (int i = 0; i < fCounts.size(); i++)
+      fCounts[i] = counter.fCounts[i];
+
 };
 
 //Constr. for the board and dump times (can populate counts later)
 TChronoBoardCounter::TChronoBoardCounter(double startTime, double stopTime, int board):
-   fStartTime(startTime), fStopTime(stopTime), fBoard(board), fCounts{0}
+   fStartTime(startTime), fStopTime(stopTime), fBoard(board)
 {
+   for (int i = 0; i < fCounts.size(); i++)
+      fCounts[i] = 0;
 };
 
 //Constr. for just the board (can populate times later)
 TChronoBoardCounter::TChronoBoardCounter(int board):
-   fStartTime(-1), fStopTime(-1), fBoard(board), fCounts{0}
+   fStartTime(-1), fStopTime(-1), fBoard(board)
 {
+   for (int i = 0; i < fCounts.size(); i++)
+      fCounts[i] = 0;
 };
 
 //=== Operator overloads ===
@@ -77,7 +86,8 @@ TChronoBoardCounter& TChronoBoardCounter::operator+=(const TCbFIFOEvent& cbFIFO)
    if (fStopTime < cbFIFO.GetRunTime())
       fStopTime = cbFIFO.GetRunTime();
 
-   fCounts[cbFIFO.fChannel] += cbFIFO.fCounts;
+   if (cbFIFO.IsLeadingEdge())
+      fCounts.at(cbFIFO.fChannel) += cbFIFO.fCounts;
 
    return *this;
 }
