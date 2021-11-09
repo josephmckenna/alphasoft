@@ -46,6 +46,24 @@ void TSequencerDriver::PrintDatamembers()
   std::cout<<"======================================================================"<<std::endl<<std::endl; 
 }
 
+void TSequencerDriver::FindSyncs()
+{
+  std::cout<<"__________________________DigitalMap__________________________________"<<std::endl;
+  DigitalMap->FindSyncs();
+  std::cout<<std::endl;
+  std::cout<<"__________________________TriggerMap__________________________________"<<std::endl;
+  TriggerMap->FindSyncs();
+  std::cout<<std::endl;
+  std::cout<<"__________________________AnalogueMap_________________________________"<<std::endl;
+  AnalogueMap->FindSyncs();
+  std::cout<<std::endl;
+  std::cout<<"__________________________HVMap_______________________________________"<<std::endl;
+  HVMap->FindSyncs();
+  std::cout<<std::endl;
+  std::cout<<"======================================================================"<<std::endl<<std::endl;
+
+}
+
 void TSequencerDriver::Parse(TXMLNode* node)
 {
   this->Parse(node,this->DigitalMap ,"DOConfig"    ,"DOCfg"     ,"BitNum"    ,"id");

@@ -28,6 +28,7 @@ public:
    bool fPrintSeqDriver = false;
    bool fPrintSeqState = false; 
    bool fPrintSeqEvent = false; 
+   bool fFindNsyncs = false;
 };
 
 class HandleSequencer: public TARunObject
@@ -40,6 +41,7 @@ private:
    int sID[NUMSEQ]={0}; 
    int dID[NUMSEQ]={0};//Sequencer event ID (for dump markers)
    int cIDextra=0;
+   int NSyncsTotal=0;
 
 public:
    HandleSequencerFlags* fFlags;
@@ -94,6 +96,14 @@ public:
       fSequencerStateTree->Write();
       delete fSequencerStateTree;
       if (fSeqState) delete fSeqState;
+
+      if(fFlags->fFindNsyncs)
+      {
+         std::cout<<std::endl;
+         std::cout<<"==================================="<<std::endl;
+         std::cout<<"   Total Number of Syncs "<<NSyncsTotal<<std::endl;
+         std::cout<<"==================================="<<std::endl<<std::endl;
+      }
    }
    
    void PauseRun(TARunInfo* runinfo)
@@ -204,6 +214,16 @@ public:
       if(fFlags->fPrintSeqDriver)
          driver->PrintDatamembers();
       }
+
+      std::vector<int> syncsvector;
+      if(fFlags->fFindNsyncs)
+      {
+         std::cout<<std::endl;
+         std::cout<<"______________________________________DigitalMap syncs_____________________________________"<<std::endl;
+         syncsvector = driver->DigitalMap->FindSyncs();
+         std::cout<<std::endl;
+      }
+      
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
@@ -273,6 +293,7 @@ public:
                 onState);
          }
 
+         int NumberSyncsSet=0;   
          SeqXML_State* state;
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
@@ -295,7 +316,17 @@ public:
                fSeqState->Print();
                std::cout<<"==================================================================================================================================================================="<<std::endl;
             }
+            
+            NumberSyncsSet += fSeqState->NsyncsSet(syncsvector);
+            
             fSequencerStateTree->Fill();
+         }
+         if(fFlags->fFindNsyncs)
+         {
+            std::cout<<std::endl;
+            std::cout<<"Number of Syncs Set "<<NumberSyncsSet<<std::endl;
+            std::cout<<"___________________________________________________________________________________________"<<std::endl<<std::endl;
+            NSyncsTotal+=NumberSyncsSet;
          }
       }
       delete mySeq;
@@ -323,6 +354,7 @@ public:
       printf("\t--printSeqDriver Display the drivers that sequencers are sending\n");
       printf("\t--printSeqEvent Display the sequencers events\n");
       printf("\t--printSeqState Display the states of the sequencers\n");
+      printf("\t--findNsyncs Display the number of times a sync digital line is set\n");
    }
 
    void Init(const std::vector<std::string> &args)
@@ -340,6 +372,8 @@ public:
             fFlags.fPrintSeqState = true;
          if(args[i] == "--printSeqEvent") 
             fFlags.fPrintSeqEvent = true;
+         if(args[i] == "--findNsyncs") 
+            fFlags.fFindNsyncs = true;
       }
    }
 

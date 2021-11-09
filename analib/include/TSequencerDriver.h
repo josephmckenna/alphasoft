@@ -40,9 +40,26 @@ struct TSequencerDriverMap
               << it->second    
               << std::endl;
       }
-
-      
     };
+
+    std::vector<int> FindSyncs()
+    {
+      std::vector<int> SyncChannels;
+      std::map<TString,int>::iterator it;
+      for (it = ChannelDescriptionMap.begin(); it != ChannelDescriptionMap.end(); it++)
+      {
+        if(it->first.EndsWith("sync",TString::kIgnoreCase))
+          {  
+            SyncChannels.push_back(it->second);
+            std::cout << it->first    
+              << ':'
+              << it->second    
+              << std::endl;
+          }   
+      }
+      return SyncChannels;
+    };
+
 };
 
 class TSequencerDriver : public TObject
@@ -64,6 +81,7 @@ class TSequencerDriver : public TObject
   
   TSequencerDriver();
   void PrintDatamembers();
+  void FindSyncs();
   void Parse(TXMLNode* node);
  /* TSequencerDriver(std::map<TString,int>* _DigitalMap,
                    std::map<TString,int>* _TriggerMap,

@@ -71,6 +71,21 @@ void TSequencerState::Print()
   std::cout<<"Comment:"<<GetComment()<<std::endl;
 }
 
+int TSequencerState::NsyncsSet(std::vector<int> syncchan)
+{
+  int nsyncs=0;
+  if (fDO.Channels.size())
+  {
+     for (size_t i=0; i<syncchan.size(); i++)
+        if(fDO.Channels[syncchan.at(i)]==1)
+          {
+            nsyncs++;
+            //std::cout<<1<<std::endl;
+          }
+  }
+  return nsyncs;
+}
+
 TSequencerState::~TSequencerState()
 {
 
