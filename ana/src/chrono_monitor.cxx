@@ -112,30 +112,23 @@ public:
       runinfo->fOdb->RSA("Equipment/alphagonline/Settings/ChannelDisplayName",&channel_display_name,false,20,32,error);
       for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
-         TString OdbPath = "/Equipment/";
-         OdbPath += board.first;
-         OdbPath += "/Settings/names";
-         std::vector<std::string> channel_list;
-         runinfo->fOdb->RSA(OdbPath,&channel_list,false,60,32,error);
-         for (int c = 0; c < channel_list.size(); c++)
+         TChronoChannelName name(runinfo->fOdb,board.first);
+
+         for (int c = 0; c < name.GetNumberOfChannels(); c++)
          {
             for (int i = 0; i < channel_ID_string.size(); i++)
-               if (channel_ID_string.at(i) == channel_list.at(c) && channel_ID_string.size() )
+               if (channel_ID_string.at(i) == name.GetChannelName(c) && channel_ID_string.size() )
                   fChronChannels.at(i) = TChronoChannel(board.first,c);
-         }
-
-         runinfo->fOdb->RSA(OdbPath,&channel_display_name,false,60,32,error);
-
-         for (int c = 0; c < channel_list.size(); c++)
-         {
-            TString name = board.first + 
+            //Read chrono channel names from ODB (default behaviour)
+            
+            TString histo_name = board.first + 
                            std::string("_") + std::to_string(c) + 
-                           std::string("-") + channel_display_name.at(c);
+                           std::string("-") + name.GetChannelName(c);
 
             fLiveHisto[board.second].emplace_back(
                TH1I(
-                  name,
-                  name,
+                  histo_name,
+                  histo_name,
                   BUFFER_DEPTH,
                   fFIFO[board.second].front().GetStartTime(),
                   fFIFO[board.second].back().GetStopTime()
