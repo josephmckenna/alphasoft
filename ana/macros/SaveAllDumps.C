@@ -26,7 +26,9 @@ void SaveAllDumps(int runNumber)
       "SiPM A_OR_C-AND-D_OR_F",
       "aw16_mlu_trig",
       "bsc64_mult_trig",
-      "trig_received"
+      "trig_received",
+      "trig_out",
+      "lemo_4"
    };
    std::vector<TChronoChannel> chans;
    std::vector<std::string> valid_channels;
@@ -106,7 +108,7 @@ void SaveAllDumps(int runNumber)
    for (int j = 0; j < all.size(); j++)
    {
       TCanvas* c = new TCanvas("cSiPM","cSiPM", 1800, 1500);
-      c->Divide(2,4);
+      c->Divide(2,5);
 
       const TAGSpill s = all.at(j);
 
@@ -118,7 +120,7 @@ void SaveAllDumps(int runNumber)
       {
          // List of channels for the 8 plot combined canvas
          std::vector<std::string> channels {"SiPM_A_OR_D","SiPM_E","SiPM_C_OR_F","SiPM_B",
-                                           "ADC_TRG","aw16_mlu_trig","bsc64_mult_trig","trig_received"};
+                                           "ADC_TRG","aw16_mlu_trig","bsc64_mult_trig","trig_received", "trig_out","lemo_4"};
          std::string channel_name = valid_channels.at(i);
          for ( int k = 0; k < channels.size(); k++ )
          {
@@ -130,6 +132,15 @@ void SaveAllDumps(int runNumber)
                h->GetYaxis()->SetTitle("Counts"); 
                h->Draw("HIST");
             }
+            /*if (channels[k] == "trig_out")
+            {
+               c->cd(k + 1);
+               TH1D* trig =  Get_Chrono(runNumber, {TChronoChannel("cbtrg",0)}, { s.GetStartTime() }, { s.GetStopTime() }).front().front();
+               TH1D* h = trig;
+               h->GetXaxis()->SetTitle("Time [s]");
+               h->GetYaxis()->SetTitle("Counts"); 
+               h->Draw("HIST");
+            }*/
          }
       }
       
