@@ -51,9 +51,9 @@ Int_t ApplyCuts(TStoreEvent* e)
    Double_t R=e->GetVertex().Perp();
    Int_t NTracks=e->GetNumberOfTracks();
    if (NTracks==2)
-      if (R<5) return 1;
+      if (R<50) return 1;
    if (NTracks>2)
-      if (R<4.5) return 1;
+      if (R<45) return 1;
    return 0;
 }
 #endif
