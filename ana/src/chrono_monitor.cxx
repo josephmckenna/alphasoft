@@ -61,7 +61,7 @@ private:
    int                 fFIFOBin[CHRONO_N_BOARDS];
 
    TCanvas fLiveCanvas;
-   std::vector<TH1I> fLiveHisto;
+   std::array<std::vector<TH1I>,CHRONO_N_BOARDS> fLiveHisto;
    std::vector<TChronoChannel> fChronChannels;
    TStyle* fChronStyle;
 public:
@@ -132,7 +132,7 @@ public:
                            std::string("_") + std::to_string(c) + 
                            std::string("-") + channel_display_name.at(c);
 
-            fLiveHisto.emplace_back(
+            fLiveHisto[board.second].emplace_back(
                TH1I(
                   name,
                   name,
@@ -150,8 +150,11 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       // Save for testing...
-      for (size_t i = 0; i < fLiveHisto.size(); i++)
-         fLiveHisto[i].Write();
+      for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
+      {
+         for (size_t i = 0; i < fLiveHisto[board.second].size(); i++)
+            fLiveHisto.at(board.second).at(i).Write();
+      }
    }
   
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
@@ -227,23 +230,25 @@ public:
             tmax = fFIFO[b].back().GetStopTime();
       }
 
-      for (int i = 0; i < fLiveHisto.size(); i++)
+      for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
-         fLiveHisto[i].GetXaxis()->Set(BUFFER_DEPTH,tmin, tmax);
-         fLiveHisto[i].Reset();
+         for (int i = 0; i < fLiveHisto[board.second].size(); i++)
+         {
+            fLiveHisto.at(board.second)[i].GetXaxis()->Set(BUFFER_DEPTH,tmin, tmax);
+            fLiveHisto.at(board.second)[i].Reset();
+         }
       }
       fChronStyle->SetPalette(kCool);
       //Update the histograms
-
-      for ( int b = 0; b < CHRONO_N_BOARDS; b++ )
+      for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
-         for (TChronoBoardCounter& s: fFIFO[b])
+         for (TChronoBoardCounter& s: fFIFO[board.second])
          {
-            for (int i = 0; i < fLiveHisto.size(); i++)
+            for (int i = 0; i < fLiveHisto[board.second].size(); i++)
             {
                if (s.fCounts[i])
                {
-                  fLiveHisto[i].Fill(s.GetStartTime(), s.fCounts[i]);
+                  fLiveHisto[board.second].at(i).Fill(s.GetStartTime(), s.fCounts[i]);
                }
             }
          }
@@ -253,7 +258,9 @@ public:
          if (fChronChannels[i].GetChannel() > 0)
          {
             fLiveCanvas.cd(i + 1);
-            fLiveHisto[fChronChannels[i].GetIndex()].Draw("HIST");
+            int board_index = fChronChannels[i].GetBoardNumber();
+            int histo_number = fChronChannels[i].GetChannel();
+            fLiveHisto.at( board_index ).at(histo_number).Draw("HIST");
          }
       }
       return flow;
