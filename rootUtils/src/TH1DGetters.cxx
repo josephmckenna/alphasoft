@@ -41,7 +41,9 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
    {
       TString Title="R";
       Title+=runNumber;
-      Title+=" Chrono Channel:";
+      Title+=" Chrono ";
+      Title+=chrono_chan[i].GetBoard();
+      Title+=" Channel:";
       Title+=chrono_chan[i].GetChannel();
       Title+=" - ";
       Title+=Get_Chrono_Name(runNumber, chrono_chan[i]);
@@ -70,7 +72,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
       {
          t->GetEntry(i);
          if (e->GetRunTime() < first_time) continue;
-         if (e->GetRunTime() > last_time) break;
+         if (e->GetRunTime() > last_time) continue;
          //Loop over all time windows
          for (int j = 0; j < n_times; j++)
          {
@@ -166,7 +168,9 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
             break;
          TString Title="R";
          Title+=runNumber;
-         Title+=" Chrono Channel:";
+         Title+=" Chrono ";
+         Title+=chrono_chan[i].GetBoard();
+         Title+=" Channel:";
          Title+=chrono_chan[i].GetChannel();
          Title+=" - ";
          Title+=Get_Chrono_Name(runNumber, chrono_chan[i]);
