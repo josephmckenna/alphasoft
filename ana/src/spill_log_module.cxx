@@ -313,7 +313,7 @@ public:
             TChronoChannelName name(runinfo->fOdb,board.first);
             int channel = name.GetChannel(channels.at(i));
             std::cout<<"CHANNEL"<<channel<<std::endl;
-            if (channel>0)
+            if (channel >= 0)
             {
                found = true;
                chrono_channels.emplace_back(TChronoChannel(board.first,channel));
