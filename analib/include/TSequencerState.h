@@ -72,6 +72,50 @@ class AnalogueOut: public TObject
     ClassDef(AnalogueOut, 1);
 };
 
+struct TSequencerStateSyncs 
+{
+   DigitalOut DO;
+   std::map<TString,int> syncs_Nsyncsset;
+
+   int NsyncsSet(std::map<TString,int> syncchan)
+   {
+      int nsyncs=0;
+      if (DO.Channels.size())
+      {
+         std::map<TString,int>::iterator it;
+         for (it = syncchan.begin(); it != syncchan.end(); it++)
+            {
+            if(DO.Channels[it->second]==1)
+               {
+                  nsyncs++;
+                  //std::cout<<1<<std::endl;
+                  std::map<TString,int>::iterator itSync = syncs_Nsyncsset.find(it->first);
+                  if(itSync!=syncs_Nsyncsset.end())
+                  itSync->second++;
+                  else
+                  syncs_Nsyncsset.insert({it->first,1}); 
+               }
+            }
+      }
+      return nsyncs;
+   };
+   
+   void PrintNsyncsSet()
+   {
+      std::cout<<std::endl;
+      std::cout<<"_______________Syncs set_________________"<<std::endl;;
+      std::map<TString,int>::iterator it;
+      for (it = syncs_Nsyncsset.begin(); it != syncs_Nsyncsset.end(); it++)
+            {
+            std::cout << it->first    
+                  << " : set "
+                  << it->second
+                  << " times" 
+                  << std::endl;
+            }
+   };
+};
+
 
 class TSequencerState : public TObject
 {
@@ -89,12 +133,12 @@ class TSequencerState : public TObject
   public:
     TSequencerState(const TSequencerState& Event);
     TSequencerState();
-    using TObject::Print;
-    virtual void Print();
-    int NsyncsSet(std::map<TString,int>);
-    void PrintNsyncsSet();    
-    std::map<TString,int> syncs_Nsyncsset;
+    using TObject::Print; 
+    virtual void Print();   
     virtual ~TSequencerState();
+    TSequencerStateSyncs* syncs_Nsyncsset_Digital = new TSequencerStateSyncs();
+    TSequencerStateSyncs* syncs_Nsyncsset_HV = new TSequencerStateSyncs();
+
     TString Clean(TString a) const { 
       TString b(a);
       b.ReplaceAll("\r","\n");//Fix windows' stupid miss use of return carriadge 
@@ -139,6 +183,9 @@ class TSequencerState : public TObject
        for (const bool& d: *s->GetDO())
           fDO.Channels.push_back(d);
 //       fDO.Channels(*s->GetDO());
+
+      syncs_Nsyncsset_Digital->DO=fDO;
+      syncs_Nsyncsset_HV->DO=fDO;
     }
 
     void Reset()
