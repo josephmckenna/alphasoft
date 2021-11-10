@@ -71,19 +71,42 @@ void TSequencerState::Print()
   std::cout<<"Comment:"<<GetComment()<<std::endl;
 }
 
-int TSequencerState::NsyncsSet(std::vector<int> syncchan)
+int TSequencerState::NsyncsSet(std::map<TString,int> syncchan)
 {
   int nsyncs=0;
   if (fDO.Channels.size())
   {
-     for (size_t i=0; i<syncchan.size(); i++)
-        if(fDO.Channels[syncchan.at(i)]==1)
+    std::map<TString,int>::iterator it;
+    for (it = syncchan.begin(); it != syncchan.end(); it++)
+      {
+        if(fDO.Channels[it->second]==1)
           {
             nsyncs++;
             //std::cout<<1<<std::endl;
+            std::map<TString,int>::iterator itSync = syncs_Nsyncsset.find(it->first);
+            if(itSync!=syncs_Nsyncsset.end())
+              itSync->second++;
+            else
+              syncs_Nsyncsset.insert({it->first,1}); 
           }
+      }
   }
   return nsyncs;
+}
+
+void TSequencerState::PrintNsyncsSet()
+{
+  std::cout<<std::endl;
+  std::cout<<"_______________Syncs set_________________"<<std::endl;;
+  std::map<TString,int>::iterator it;
+  for (it = syncs_Nsyncsset.begin(); it != syncs_Nsyncsset.end(); it++)
+      {
+        std::cout << it->first    
+              << " : set "
+              << it->second
+              << " times" 
+              << std::endl;
+      }
 }
 
 TSequencerState::~TSequencerState()

@@ -42,15 +42,15 @@ struct TSequencerDriverMap
       }
     };
 
-    std::vector<int> FindSyncs()
+    std::map<TString,int> FindSyncs()
     {
-      std::vector<int> SyncChannels;
+      std::map<TString,int> SyncChannels;
       std::map<TString,int>::iterator it;
       for (it = ChannelDescriptionMap.begin(); it != ChannelDescriptionMap.end(); it++)
       {
         if(it->first.EndsWith("sync",TString::kIgnoreCase))
           {  
-            SyncChannels.push_back(it->second);
+            SyncChannels.insert({it->first,it->second});
             std::cout << it->first    
               << ':'
               << it->second    

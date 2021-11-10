@@ -42,6 +42,7 @@ private:
    int dID[NUMSEQ]={0};//Sequencer event ID (for dump markers)
    int cIDextra=0;
    int NSyncsTotal=0;
+   std::vector<std::map<TString,int>> Seq_syncs_Nsyncsset;
 
 public:
    HandleSequencerFlags* fFlags;
@@ -100,9 +101,26 @@ public:
       if(fFlags->fFindNsyncs)
       {
          std::cout<<std::endl;
-         std::cout<<"==================================="<<std::endl;
-         std::cout<<"   Total Number of Syncs "<<NSyncsTotal<<std::endl;
-         std::cout<<"==================================="<<std::endl<<std::endl;
+         std::cout<<"========================================================================="<<std::endl;
+         std::cout<<"   Total Number of Syncs "<<NSyncsTotal<<std::endl<<std::endl;
+
+         for(int i=0; i<Seq_syncs_Nsyncsset.size(); i++)
+         {
+            std::cout<<std::endl;
+            std::cout<<"------------------------- Sequence "<<i<<" -------------------------"<<std::endl;
+            std::map<TString,int>::iterator it;
+            for (it = Seq_syncs_Nsyncsset.at(i).begin(); it != Seq_syncs_Nsyncsset.at(i).end(); it++)
+            {
+               std::cout << it->first    
+                  << " : set "
+                  << it->second
+                  << " times" 
+                  << std::endl;
+            }
+            std::cout<<std::endl;
+         }
+         std::cout<<"========================================================================="<<std::endl;
+         Seq_syncs_Nsyncsset.clear();
       }
    }
    
@@ -215,15 +233,16 @@ public:
          driver->PrintDatamembers();
       }
 
-      std::vector<int> syncsvector;
+      std::map<TString,int> syncsmap;
       if(fFlags->fFindNsyncs)
       {
          std::cout<<std::endl;
          std::cout<<"______________________________________DigitalMap syncs_____________________________________"<<std::endl;
-         syncsvector = driver->DigitalMap->FindSyncs();
+         syncsmap = driver->DigitalMap->FindSyncs();
          std::cout<<std::endl;
       }
-      
+      //driver->FindSyncs();
+
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
@@ -317,7 +336,7 @@ public:
                std::cout<<"==================================================================================================================================================================="<<std::endl;
             }
             
-            NumberSyncsSet += fSeqState->NsyncsSet(syncsvector);
+            NumberSyncsSet += fSeqState->NsyncsSet(syncsmap);
             
             fSequencerStateTree->Fill();
          }
@@ -325,9 +344,12 @@ public:
          {
             std::cout<<std::endl;
             std::cout<<"Number of Syncs Set "<<NumberSyncsSet<<std::endl;
+            fSeqState->PrintNsyncsSet();
             std::cout<<"___________________________________________________________________________________________"<<std::endl<<std::endl;
             NSyncsTotal+=NumberSyncsSet;
+            Seq_syncs_Nsyncsset.push_back(fSeqState->syncs_Nsyncsset);
          }
+         fSeqState->syncs_Nsyncsset.clear();
       }
       delete mySeq;
 #if HANDLE_SEQ_IN_SIDE_THREAD

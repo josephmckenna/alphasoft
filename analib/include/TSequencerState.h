@@ -91,7 +91,9 @@ class TSequencerState : public TObject
     TSequencerState();
     using TObject::Print;
     virtual void Print();
-    int NsyncsSet(std::vector<int>);
+    int NsyncsSet(std::map<TString,int>);
+    void PrintNsyncsSet();    
+    std::map<TString,int> syncs_Nsyncsset;
     virtual ~TSequencerState();
     TString Clean(TString a) const { 
       TString b(a);
