@@ -36,7 +36,9 @@ public:
 private:
 
    bool diagnostics;
-   double c = 0.2998; // m/ns
+   double c = 2.99792e-1; // m/ns
+   double refrac = 1.93; // From protoTOF tests with time walk correction applied
+   double factor = c/refrac * 0.5;
    int pulser_reference_chan = 40;
 
    // Container declaration
@@ -93,8 +95,24 @@ private:
    TH1D* hNBarDPhi;
    TH1D* hTwoBarDZed;
    TH1D* hNBarDZed;
+   TH2D* hTwoBarDPhiDZed;
+   TH2D* hNBarDPhiDZed;
    TH1D* hTwoBarExpectedTOF;
    TH2D* hTwoBarExpectedTOFvsTOF;
+   TH1D* hNBarExpectedTOF;
+   TH2D* hNBarExpectedTOFvsTOF;
+   TH1D* hTwoBarExpectedTOFminusTOF;
+   TH1D* hNBarExpectedTOFminusTOF;
+
+   // Matching
+   TH1D* hTPCMatched;
+   TH1D* hMatchingDZ;
+   TH2D* hMatchingDZbyBar;
+   TH2D* hMatchingDZbyZed;
+   TH1D* hMatchingDPhi;
+   TH2D* hMatchingDPhibyBar;
+   TH1D* hMatchingD;
+   TH2D* hMatchingDbyBar;
 
 
 
@@ -249,10 +267,31 @@ public:
             hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (degrees)",32,0,180);
             hTwoBarDZed = new TH1D("hTwoBarDZed","Zed separation for events with N=2 bars;Delta zed (m)",200,-6,6);
             hNBarDZed = new TH1D("hNBarDZed","Zed separation for any permutation of two hits;Delta zed (m)",200,-6,6);
-           hTwoBarExpectedTOF = new TH1D("hTwoBarExpectedTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns)",200,0,30);
-           hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,30,200,0,30);
+            hTwoBarDPhiDZed = new TH2D("hTwoBarDPhiDZed","Angular separation vs zed separation for events with N=2 bars;Delta phi (degrees);Delta zed (m)",32,0,180,200,-6,6);
+            hNBarDPhiDZed = new TH2D("hNBarDPhiDZed","Angular separation vs zed separation for any permutation of two hits;Delta phi (degrees);Delta zed (m)",32,0,180,200,-6,6);
+           hTwoBarExpectedTOF = new TH1D("hTwoBarExpectedTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns)",200,0,10);
+           hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
+           hNBarExpectedTOF = new TH1D("hNBarExpectedTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns)",200,0,10);
+           hNBarExpectedTOFvsTOF = new TH2D("hNBarExpectedTOFvsTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
+           hTwoBarExpectedTOFminusTOF = new TH1D("hTwoBarExpectedTOFminusTOF","Geometric distance - speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
+           hNBarExpectedTOFminusTOF = new TH1D("hNBarExpectedTOFminusTOF","Geometric distance - speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
          }
          gDirectory->cd("..");
+
+         // TPC matching
+         if ( !(fFlags->fPulser) ) {
+           gDirectory->mkdir("tpc_matching_histos")->cd();
+           hTPCMatched = new TH1D("hTPCMatched","Number of hits sucessfully matched to tracks;Bar number;Counts",64,-0.5,63.5);
+           hMatchingDZ = new TH1D("hMatchingDZ","Zed distance between BV and TPC hit;Delta Zed (m);Counts",200,-2,2);
+           hMatchingDZbyBar = new TH2D("hMatchingDZbyBar","Zed distance between BV and TPC hit;Bar number;Delta Zed (m)",64,-0.5,63.5,200,-2,2);
+           hMatchingDZbyZed = new TH2D("hMatchingDZbyZed","Zed distance between BV and TPC hit;Zed position;Delta Zed (m)",200,-3,3,200,-2,2);
+           hMatchingDPhi = new TH1D("hMatchingDPhi","Phi distance between BV and TPC hit;Delta Phi (rad);Counts",200,-2,2);
+           hMatchingDPhibyBar = new TH2D("hMatchingDPhibyBar","Phi distance between BV and TPC hit;Bar number;Delta Phi (rad)",64,-0.5,63.5,200,-2,2);
+           hMatchingD = new TH1D("hMatchingD","Geometric distance between BV and TPC hit;Geometric distance (m);Counts",200,0,2);
+           hMatchingDbyBar = new TH2D("hMatchingDbyBar","Geometric distance between BV and TPC hit;Bar number;Geometric distance (m)",64,-0.5,63.5,200,0,2);
+            gDirectory->cd("..");
+         }
+
       }
 
 
@@ -368,6 +407,7 @@ public:
       }
       BarHistos(barhits);
       TOFHistos(barhits);
+      MatchingHistos(barhits);
 
       ++fCounter;
       if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent complete\n");
@@ -505,25 +545,85 @@ public:
             double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
             if (angle>180) angle = 360 - angle;
             hTwoBarDPhi->Fill(angle);
+            hTwoBarDPhiDZed->Fill(angle,z0-z1);
             double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
             hTwoBarExpectedTOF->Fill(expTOF);
             hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+            hTwoBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime())));
          }
       }
       if (!(fFlags->fProtoTOF)) {
          for (BarHit* barhit: barhits) {
             for (BarHit* barhit2: barhits) {
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
-               if (TOF==0) continue;
+               if (TOF<=0) continue;
                hNBarTOF->Fill(TOF);
                hNBarTOF2d->Fill(barhit->GetBar(),TOF);
                double angle = (180/TMath::Pi())*TMath::Abs(barhit->GetPhi()-barhit2->GetPhi());
                if (angle>180) angle = 360 - angle;
                hNBarDPhi->Fill(angle);
-               hNBarDZed->Fill(barhit->GetTDCZed()-barhit2->GetTDCZed());
+               double x0,y0,x1,y1,z0,z1;
+               barhit->GetXY(x0,y0);
+               barhit2->GetXY(x1,y1);
+               z0 = barhit->GetTDCZed();
+               z1 = barhit2->GetTDCZed();
+               hNBarDZed->Fill(z0-z1);
+               hNBarDPhiDZed->Fill(angle,z0-z1);
+               double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+               hNBarExpectedTOF->Fill(expTOF);
+               hNBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()));
+               hNBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime())));
             }
          }
       }
+   }
+   void MatchingHistos(const std::vector<BarHit*> barhits)
+   {
+      if (fFlags->fPulser) return;
+      if (fFlags->fProtoTOF) return;
+      for (BarHit* barhit: barhits) {
+         if (!(barhit->IsTPCMatched())) continue;
+         TVector3 tpc_point = barhit->GetTPC();
+         TVector3 bv_point = Get3VectorBV(barhit);
+         double dz = GetDZ(tpc_point,bv_point);
+         double dphi = GetDPhi(tpc_point,bv_point);
+         double diff = GetGeometricDistance(tpc_point,bv_point);
+         int bar = barhit->GetBar();
+         double z = barhit->GetTDCZed();
+         hTPCMatched->Fill(bar);
+         hMatchingDZ->Fill(dz/1000);
+         hMatchingDZbyBar->Fill(bar,dz/1000);
+         hMatchingDZbyZed->Fill(z,dz/1000);
+         hMatchingDPhi->Fill(dphi);
+         hMatchingDPhibyBar->Fill(bar,dphi);
+         hMatchingD->Fill(diff/1000);
+         hMatchingDbyBar->Fill(bar,diff/1000);
+      }
+   }
+
+   // Helper functions
+
+   double GetDZ(TVector3 p1, TVector3 p2)
+   {
+      return p2.z() - p1.z();
+   }
+   double GetDPhi(TVector3 p1, TVector3 p2)
+   {
+      return p2.DeltaPhi(p1);
+   }
+   TVector3 Get3VectorBV(BarHit* hit)
+   {
+      double xbv,ybv;
+      hit->GetXY(xbv,ybv);
+      double dt = (hit->GetTDCBot() - hit->GetTDCTop())*1e9;
+      double zbv = factor*dt;
+      TVector3 bv_point = TVector3(xbv*1000,ybv*1000,zbv*1000); // to mm
+      return bv_point;
+   }
+   double GetGeometricDistance(TVector3 p1, TVector3 p2)
+   {
+      TVector3 diff = p2-p1;
+      return diff.Mag();
    }
 
 
