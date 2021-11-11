@@ -532,9 +532,9 @@ public:
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
       if (barhits.size()==2) {
-         if (!(fFlags->fProtoTOF)) {
+         /*if (!(fFlags->fProtoTOF)) {
             if (!(barhits[0]->IsTPCMatched()) or !(barhits[0]->IsTPCMatched())) continue;
-         }
+         }*/
          hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
          double x0,y0,x1,y1,z0,z1;
          barhits[0]->GetXY(x0,y0);
