@@ -39,6 +39,8 @@ fi
 
 cd $AGRELEASE
 
+sleep 4
+
 echo "Waiting for analysis to finish and close the root file"
 for i in `seq 1 100`; do
    root -l -q root_output_files/output0${RUNNO}.root 1> /dev/null 2> errout
@@ -50,7 +52,7 @@ for i in `seq 1 100`; do
    sleep 1
 done
 
-
+sleep 1
 
 echo "Generating Chrono plots..."
 echo ".L ana/macros/SaveAllDumps.C
