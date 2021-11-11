@@ -29,7 +29,10 @@ public:
    bool fPulser = false;
    std::string fOffsetFile = ""; 
    bool fNoDelayCorrection = false;
-   double ftwA = 0;
+   double ftwA = -999;
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
    AnaSettings* ana_settings=0;
 };
 
@@ -211,6 +214,20 @@ public:
 #endif
          return flow;
       }
+      if (fFlags->fTimeCut) {
+         if (age->time<fFlags->start_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+         if (age->time>fFlags->stop_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+      }
       
       // Unpack tdc data from event
       TdcEvent* tdc = age->tdc;
@@ -268,6 +285,9 @@ public:
             if (!(fFlags->fProtoTOF)) barID = BVFindBarID(int(tdchit->fpga),int(tdchit->chan));
             if (fFlags->fProtoTOF) barID = protoTOFFindBarID(tdchit->chan);
 
+            // Skips channels 0-7, 48-55, 64-71, 112-119 FIXME remember to change this backa once they are time calibrated
+            if ((0<=barID and barID<=7) or (64<=barID and barID<=71) or (48<=barID and barID<=55) or (112<=barID and barID<=119)) continue;
+
             // Calculates hit time
             double tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
             
@@ -324,7 +344,7 @@ public:
             // Corrects for time walk
             double amp = endhit->GetAmp();
             double tw_correction = twA/TMath::Sqrt(amp);
-            if (fFlags->ftwA!=0) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
+            if (fFlags->ftwA!=-999) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
             double correct_time = tdc_time - tw_correction;
 
             // Writes tdc data to endhit
@@ -462,6 +482,7 @@ public:
       printf("\t--bscprint\t\t\tverbose mode\n");
       printf("\t--twA float\t\t\tsets the parameter used in the time-walk correction. 0=no correction\n");
       printf("\t--nodelaycorr\t\t\tdisables the channel-by-channel tdc time delay correction\n");
+      printf("\t--usetimerange 123.4 567.8\t\tLimit analysis to a time range\n");
    }
    void Usage()
    {
@@ -488,6 +509,16 @@ public:
             fFlags.fNoDelayCorrection = true;
          if( args[i] == "--anasettings" ) 
             json=args[i+1];
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
       }
       fFlags.ana_settings=new AnaSettings(json.Data());
    }
