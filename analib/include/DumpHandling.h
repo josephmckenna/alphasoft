@@ -149,8 +149,7 @@ public:
       StopDumpMarker=NULL;
       for (int i=0; i<NumScalers; i++)
       {
-         IntegratedSISCounts.emplace_back(ScalerType());
-         IntegratedSISCounts.at(i).SetScalerModuleNo(i);
+         IntegratedSISCounts.emplace_back(i);
          SIS_Filled.push_back(NO_EQUIPMENT);
       }
       SVD_Filled=NO_EQUIPMENT;
@@ -392,11 +391,17 @@ public:
       }
       if (StopDumpMarker)
          if (StopDumpMarker->fRunTime > 0)
-            if (t > StopDumpMarker->fRunTime)
+         {
+            //Dump is definitely filled, return that we can break parent loop
+            if (t > StopDumpMarker->fRunTime + 2 )
             {
                SIS_Filled.at(ScalerModule) = FILLED;
                return 1;
             }
+            //Event is after dump, but this dump might not yet be filled (TChronoEvents aren't in exact order)
+            if (t > StopDumpMarker->fRunTime  )
+               return 0;
+         }  
       //s.Print();
       IntegratedSISCounts.at(ScalerModule) += s;
       return 0;
@@ -815,7 +820,8 @@ public:
          if (!pair) continue;
          for ( const ScalerType &s : events )
          {
-            if (pair->AddScalerEvent(s)>0) break;
+            pair->AddScalerEvent(s);
+            //if (pair->AddScalerEvent(s)>0) break;
          }
       }
    }

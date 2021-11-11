@@ -23,6 +23,8 @@ class TChronoBoardCounter: public TObject
    //Copy constr.
    TChronoBoardCounter(const TChronoBoardCounter& counter);
 
+   TChronoBoardCounter(const TCbFIFOEvent& cbFIFO, int board);
+
    //Constr. for the board and dump times (can populate counts later)
    TChronoBoardCounter(double startTime, double stopTime, int board);
 
@@ -44,11 +46,25 @@ class TChronoBoardCounter: public TObject
    void SetStopTime(double stopTime)                       { fStopTime = stopTime; };
    void SetBoard(double board)                             { fBoard = board; };
    void AddCountsToChannel(int channel, int counts)        { fCounts.at(channel) += counts; };
+   
+   // DumpHandling functions... (should be pure virtual functions of a parent)
+   int GetScalerModuleNo() const { return fBoard; };
+    int GetScalerModule() const { return fBoard; };
+   void SetScalerModuleNo( int m ) { fBoard =m; };
+   double GetRunTime() const { return this->GetStartTime(); }
 
    TChronoBoardCounter& operator+=(const TChronoBoardCounter& rhs);
    TChronoBoardCounter& operator+=(const TCbFIFOEvent& cbFIFO);
 
    virtual ~TChronoBoardCounter();
+   virtual void Print() const
+   {
+      std::cout <<"Board: "<< fBoard << "\n";
+      std::cout<< fStartTime << " - " << fStopTime << "s\n";
+      for (int i = 0; i < fCounts.size(); i++)
+         std::cout << fCounts[i] <<"\t";
+      std::cout << std::endl;
+   }
 
    ClassDef(TChronoBoardCounter,1)
 };

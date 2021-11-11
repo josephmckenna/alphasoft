@@ -35,6 +35,14 @@ TChronoBoardCounter::TChronoBoardCounter(int board):
       fCounts[i] = 0;
 };
 
+TChronoBoardCounter::TChronoBoardCounter(const TCbFIFOEvent& cbFIFO, int board):
+   fStartTime(cbFIFO.GetRunTime()), fStopTime(cbFIFO.GetRunTime()), fBoard(board)
+{
+   for (int i = 0; i < fCounts.size(); i++)
+      fCounts[i] = 0;
+   fCounts.at(cbFIFO.fChannel) = cbFIFO.fCounts;
+}
+
 //=== Operator overloads ===
 TChronoBoardCounter operator+(const TChronoBoardCounter& lhs, const TChronoBoardCounter& rhs)
 {
@@ -85,6 +93,9 @@ TChronoBoardCounter& TChronoBoardCounter::operator+=(const TCbFIFOEvent& cbFIFO)
    
    if (fStopTime < cbFIFO.GetRunTime())
       fStopTime = cbFIFO.GetRunTime();
+
+   //if (cbFIFO.IsLeadingEdge())
+   //   std::cout << "C:"<< cbFIFO.fChannel<< "\t"<< fCounts.at(cbFIFO.fChannel) << "+=" << cbFIFO.fCounts <<std::endl;
 
    if (cbFIFO.IsLeadingEdge())
       fCounts.at(cbFIFO.fChannel) += cbFIFO.fCounts;

@@ -9,6 +9,7 @@
 #include "store_cb.h"
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
+#include "TChronoBoardCounter.h"
 
 #define DUMP_NAME_WIDTH 40
 
@@ -45,7 +46,7 @@ class TAGSpillScalerData: public TSpillScalerData
    TAGSpillScalerData(int n_scaler_channels);
    TAGSpillScalerData(const TAGSpillScalerData& a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
-   TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillScalerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
    using TObject::Print;
    virtual void Print();
 
@@ -58,7 +59,7 @@ class TAGSpillSequencerData: public TSpillSequencerData
    TAGSpillSequencerData();
    ~TAGSpillSequencerData();
    TAGSpillSequencerData(const TAGSpillSequencerData& s);
-   TAGSpillSequencerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpillSequencerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
 
 
    ClassDef(TAGSpillSequencerData,1);
@@ -72,7 +73,7 @@ public:
    TAGSpill();
    TAGSpill(int runno, uint32_t unixtime);
    TAGSpill(int runno, uint32_t unixtime, const char* format, ...);
-   TAGSpill(int runno, DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d);
+   TAGSpill(int runno, DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
    TAGSpill* operator/( TAGSpill* b);
    TAGSpill* operator+( TAGSpill* b);
    TAGSpill(const TAGSpill& a);
