@@ -1,7 +1,7 @@
 #include "DoubleGetters.h"
 
 #ifdef BUILD_AG
-Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board)
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board)
 {
    TTree* t=Get_Chrono_Tree(runNumber,TChronoChannel(Board,CHRONO_CLOCK_CHANNEL).GetBranchName());
    if (!t)
@@ -39,9 +39,9 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
 {
    double tmax=-999.;
    double tmp;
-   for (int i=0; i<CHRONO_N_BOARDS; i++)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
-      tmp=GetTotalRunTimeFromChrono(runNumber, i);
+      tmp=GetTotalRunTimeFromChrono(runNumber, board.first);
       if (tmp>tmax) tmax=tmp;
    }
    tmp=GetTotalRunTimeFromTPC(runNumber);

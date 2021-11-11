@@ -169,8 +169,8 @@ TAGSpill* TAGSpill::operator/( TAGSpill* b)
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
 
-   assert(this->ScalerData->BVFilled);
-   assert(b->ScalerData->BVFilled);
+   //assert(this->ScalerData->BVFilled);
+   //assert(b->ScalerData->BVFilled);
    if (DumpHasMathSymbol())
       Name='('+Name+')';
    if (b->DumpHasMathSymbol())
@@ -197,8 +197,8 @@ TAGSpill* TAGSpill::operator+( TAGSpill* b)
    assert(this->ScalerData->ScalerFilled.size());
    assert(b->ScalerData->ScalerFilled.size());
 
-   assert(this->ScalerData->BVFilled);
-   assert(b->ScalerData->BVFilled);
+   //assert(this->ScalerData->BVFilled);
+   //assert(b->ScalerData->BVFilled);
 
    if (DumpHasMathSymbol())
       Name='('+Name+')';
@@ -299,7 +299,7 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
       {
          int counts=-1;
          //If valid channel number:
-         if (c.GetChannel() > 0)
+         if (c.GetChannel() >= 0)
             counts = ScalerData->DetectorCounts[c.GetIndex()];
          sprintf(buf,"%9d",counts);
          log += buf;

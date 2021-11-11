@@ -29,6 +29,7 @@ std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChr
   for (int i = 0; i < t->GetEntries(); i++)
     {
       t->GetEntry(i);
+      //e->Print();
       if (e->IsLeadingEdge())
 	{
 	  if (e->GetChannel() == chan.GetChannel())

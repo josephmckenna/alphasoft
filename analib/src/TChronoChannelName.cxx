@@ -5,10 +5,10 @@ ClassImp(TChronoChannelName)
 
 #ifdef INCLUDE_MVODB_H
 //New manalyzer uses VirtualODB (after Jan 2020)
-TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
+TChronoChannelName::TChronoChannelName(MVOdb* Odb, const std::string& board)
 {
-   SetBoardIndex(b+1);
-   std::string OdbPath="Equipment/cb0" + std::to_string( b + 1) + "/Settings/names";
+   SetBoard(board);
+   std::string OdbPath="Equipment/" + board  + "/Settings/names";
    fName.reserve(60);
    Odb->RSA(OdbPath.c_str(),&fName,true,60,16);
    for (const auto& n: fName)
@@ -21,10 +21,10 @@ TChronoChannelName::TChronoChannelName(MVOdb* Odb, Int_t b)
 #endif
 TChronoChannelName::TChronoChannelName(): fName(CHRONO_N_CHANNELS)
 {
-   fChronoBoardIndex=-1;
+   fChronoBoardName = "";
 }
 
-TChronoChannelName::TChronoChannelName(TString json, Int_t b): fName(CHRONO_N_CHANNELS)
+TChronoChannelName::TChronoChannelName(TString json, const std::string& b): fName(CHRONO_N_CHANNELS)
 {
    TString ChannelJSON;
    int last;
@@ -60,7 +60,7 @@ TChronoChannelName::TChronoChannelName(TString json, Int_t b): fName(CHRONO_N_CH
    #endif
    for (int i=0; i<CHRONO_N_CHANNELS; i++)
       fName[i]=me->GetChannelName(i);
-   fChronoBoardIndex=me->GetBoardIndex();
+   fChronoBoardName = me->GetBoardName();
    //me->Print();
    delete me;
    //Print();
@@ -68,6 +68,7 @@ TChronoChannelName::TChronoChannelName(TString json, Int_t b): fName(CHRONO_N_CH
 
 TChronoChannelName::~TChronoChannelName()
 {
+   fName.clear();
 }
 
 void TChronoChannelName::DumpToJson(int runno)
@@ -78,7 +79,7 @@ void TChronoChannelName::DumpToJson(int runno)
    TString fname="chrono/R";
    fname+=runno;
    fname+=".";
-   fname+=fChronoBoardIndex-1;
+   fname+=fChronoBoardName;
    fname+=".json";
    stream.open(fname);
    if( !stream )
@@ -95,7 +96,7 @@ void TChronoChannelName::DumpToJson(int runno)
 
 void TChronoChannelName::Print()
 {
-   std::cout<<"Board Index:\t"<<fChronoBoardIndex<<std::endl;
+   std::cout<<"Board Index:\t"<<fChronoBoardName<<std::endl;
    for (int i = 0; i < CHRONO_N_CHANNELS; i++)
       std::cout<<i<<": "<<fName[i] <<std::endl;
 }

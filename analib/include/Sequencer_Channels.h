@@ -62,7 +62,7 @@ const std::vector<std::string> SeqNames{
    "bml"
 };
 
-const std::vector<uint> USED_SEQ_NUM{
+const std::vector<int> USED_SEQ_NUM{
    PBAR,
    RECATCH,
    ATOM,

@@ -366,6 +366,12 @@ public:
          std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
          return 0;
       }
+      if (IntegratedSISCounts.size() < ScalerModule)
+      {
+         std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
+         return 0;
+      }
+      
       //std::cout<<"MODULE:"<<SISModule<<std::endl;
       //Record that there are SIS events...
 //JOE! LUKAS! PUT THIS BACK AFTER REFACTOR

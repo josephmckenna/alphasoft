@@ -11,6 +11,8 @@ extern Int_t gNbin;
 // Significant duplication of code between this and Plot_SIS...
 TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax)
 {
+   for (const TChronoChannel& c: channel)
+      std::cout << c << std::endl;
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
    TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);

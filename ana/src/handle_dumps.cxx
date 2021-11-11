@@ -15,10 +15,12 @@
 #include "cb_flow.h"
 #include "store_cb.h"
 
+#include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 #include "DumpHandling.h"
 #include <iostream>
 
+#include <array>
 
 class DumpMakerModuleFlags
 {
@@ -38,8 +40,8 @@ public:
    std::array<TChronoChannel,USED_SEQ> DumpStartChannels;
    std::array<TChronoChannel,USED_SEQ> DumpStopChannels;
    
-   TChronoChannel fADChannel = {-1, -1};
-   TChronoChannel fPreTriggerChannel = {-1, -1};
+   TChronoChannel fADChannel = {"", -1};
+   TChronoChannel fPreTriggerChannel = {"", -1};
    int fADCounter;
    int fPreTriggerCounter;
    
@@ -80,36 +82,34 @@ public:
          
          std::cout<<i<<" is " << iSeq <<std::endl;
          DumpStartChannels.at(iSeq).SetChannel(-1);
-         DumpStartChannels.at(iSeq).SetBoard(-1);
+         DumpStartChannels.at(iSeq).SetBoard("");
          DumpStopChannels.at(iSeq).SetChannel(-1);
-         DumpStopChannels.at(iSeq).SetBoard(-1);
+         DumpStopChannels.at(iSeq).SetBoard("");
          //StartSeqChannel[iSeq].Channel=-1;
          //StartSeqChannel[iSeq].Board=-1;
       }
-      for (int board=0; board < CHRONO_N_BOARDS; board++)
+      for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
       {
-         TChronoChannelName name(runinfo->fOdb,board);
-         int channel=-1;
+         TChronoChannelName name(runinfo->fOdb,board.first);
+         int channel = -1;
          for (int i = 0; i < USED_SEQ; i++)
          {
-            int iSeq = USED_SEQ_NUM.at(i);
-            assert(iSeq >= 0);
-            assert(iSeq < USED_SEQ);
+            int iSeq=USED_SEQ_NUM.at(i);
             channel = name.GetChannel(StartDumpName[i]);
             if (channel>0)
             {
-               std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
+               std::cout<<"Sequencer["<<iSeq<<"]:"<<StartDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board.first << "("<<board.second<<")"<<std::endl;
                DumpStartChannels.at(iSeq).SetChannel(channel);
-               DumpStartChannels.at(iSeq).SetBoard(board);
+               DumpStartChannels.at(iSeq).SetBoard(board.first);
                std::cout<<"Start Channel:"<<channel<<std::endl;
             }
             
             channel = name.GetChannel(StopDumpName[i]);
             if (channel>0)
             {
-               std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board<<std::endl;
+               std::cout<<"Sequencer["<<iSeq<<"]:"<<StopDumpName[iSeq]<<" on channel:"<<channel<< " board:"<<board.first << "("<<board.second<<")"<<std::endl;
                DumpStopChannels.at(iSeq).SetChannel(channel);
-               DumpStopChannels.at(iSeq).SetBoard(board );
+               DumpStopChannels.at(iSeq).SetBoard(board.first);
                std::cout<<"Stop Channel:"<<channel<<std::endl;
             }
             /*
@@ -123,12 +123,12 @@ public:
             */
          }
 
-         channel=name.GetChannel("AD_TRIG");
+         channel = name.GetChannel("AD_TRIG");
          if (channel>0)
          {
             fADChannel.SetChannel(channel);
-            fADChannel.SetBoard(board);
-            std::cout<<"AD_TRIG:"<<channel<<" board:"<<board<<std::endl;
+            fADChannel.SetBoard(board.first);
+            std::cout<<"AD_TRIG:"<<channel<<" board:"<<board.first << "("<<board.second<<")"<<std::endl;
          }
          /*channel=name[board]->GetChannel("POS_TRIG");
          if (channel>0 )
@@ -243,35 +243,28 @@ public:
       {
          for (const std::pair<const std::string,const std::vector<TCbFIFOEvent>>& hits: ChronoFlow->fCbHits)
          {
-            const std::string cbname = hits.first;
-            char number = cbname[3];
-            int ChronoBoard = number - '0' - 1;
             for (int a=0; a<USED_SEQ; a++)
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
-               if (DumpStartChannels[a].GetBoard() == ChronoBoard)
+               if (DumpStartChannels[a].GetBoard() == hits.first)
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
                      if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
                      {
                         if (hit.IsLeadingEdge())
-                        {
                            dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
-                        }
                      }
                   }
                }
-               if (DumpStopChannels[a].GetBoard() == ChronoBoard)
+               if (DumpStopChannels[a].GetBoard() == hits.first)
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
                      if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
                      {
                         if (hit.IsLeadingEdge())
-                        {
                            dumplist[a].AddStopTime(midas_time, hit.GetRunTime());
-                          }
                      }
                   }
                }
@@ -311,7 +304,7 @@ public:
       }
 
       //Flush completed dumps as TA2Spill objects and put into flow
-      for (int a=0; a<USED_SEQ; a++)
+      for (int a = 0; a < USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
          std::vector<TAGSpill*> finished = dumplist[a].flushComplete();
@@ -319,7 +312,6 @@ public:
          {
             //spill->Print();
             f->spill_events.push_back(spill);
-            std::cout<<"SPILL FINISHED"<<std::endl;
          }
       }
 
