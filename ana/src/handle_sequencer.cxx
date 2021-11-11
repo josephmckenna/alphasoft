@@ -43,10 +43,9 @@ private:
    int cIDextra=0;
    int NSyncsTotal_Digital=0;
    int NSyncsTotal_HV=0;
-   void PrintTotalNSyncs(std::vector<std::map<TString,int>> Seq_syncs_Nsyncsset, int NSyncsTotal)
+   void PrintTotalNSyncs(std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset, int NSyncsTotal)
    {
       std::cout<<std::endl;
-            std::cout<<"========================================================================="<<std::endl;
             std::cout<<"   Total Number of Syncs "<<NSyncsTotal<<std::endl<<std::endl;
 
             for(int i=0; i<Seq_syncs_Nsyncsset.size(); i++)
@@ -65,10 +64,10 @@ private:
                std::cout<<std::endl;
             }
             std::cout<<"========================================================================="<<std::endl;
-            Seq_syncs_Nsyncsset.clear();
+            //Seq_syncs_Nsyncsset.clear();
    };
-   std::vector<std::map<TString,int>> Seq_syncs_Nsyncsset_Digital; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
-   std::vector<std::map<TString,int>> Seq_syncs_Nsyncsset_HV; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
+   std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset_Digital; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
+   std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset_HV; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
 
 public:
    HandleSequencerFlags* fFlags;
@@ -126,7 +125,9 @@ public:
 
       if(fFlags->fFindNsyncs)
       {
+         std::cout<<"============================== Digital Map =============================="<<std::endl;
          PrintTotalNSyncs(Seq_syncs_Nsyncsset_Digital, NSyncsTotal_Digital);
+         std::cout<<"================================= HV Map ================================"<<std::endl;
          PrintTotalNSyncs(Seq_syncs_Nsyncsset_HV, NSyncsTotal_HV);
       }
    }
@@ -346,8 +347,8 @@ public:
                std::cout<<"==================================================================================================================================================================="<<std::endl;
             }
             
-            NumberSyncsSet_Digital += fSeqState->syncs_Nsyncsset_Digital->NsyncsSet(syncsmap_Digital);
-            NumberSyncsSet_HV += fSeqState->syncs_Nsyncsset_HV->NsyncsSet(syncsmap_HV);
+            NumberSyncsSet_Digital += fSeqState->syncs_Nsyncsset_Digital->AddSyncs(syncsmap_Digital);
+            NumberSyncsSet_HV += fSeqState->syncs_Nsyncsset_HV->AddSyncs(syncsmap_HV);
             
             fSequencerStateTree->Fill();
          }
@@ -355,19 +356,19 @@ public:
          {
             std::cout<<std::endl;
             std::cout<<"Number of Syncs Set "<<NumberSyncsSet_Digital<<std::endl;
-            fSeqState->syncs_Nsyncsset_Digital->PrintNsyncsSet();
+            fSeqState->syncs_Nsyncsset_Digital->Print();
             std::cout<<"______________________________________"<<std::endl;
             std::cout<<std::endl;
             std::cout<<"Number of Syncs Set "<<NumberSyncsSet_HV<<std::endl;
-            fSeqState->syncs_Nsyncsset_HV->PrintNsyncsSet();
+            fSeqState->syncs_Nsyncsset_HV->Print();
             std::cout<<"___________________________________________________________________________________________"<<std::endl<<std::endl;
             NSyncsTotal_Digital+=NumberSyncsSet_Digital;
             NSyncsTotal_HV+=NumberSyncsSet_HV;
-            Seq_syncs_Nsyncsset_Digital.push_back(fSeqState->syncs_Nsyncsset_Digital->syncs_Nsyncsset);
-            Seq_syncs_Nsyncsset_HV.push_back(fSeqState->syncs_Nsyncsset_HV->syncs_Nsyncsset);
+            Seq_syncs_Nsyncsset_Digital[iSeqType]=fSeqState->syncs_Nsyncsset_Digital->map;
+            Seq_syncs_Nsyncsset_HV[iSeqType]=fSeqState->syncs_Nsyncsset_HV->map;
          }
-         fSeqState->syncs_Nsyncsset_Digital->syncs_Nsyncsset.clear();
-         fSeqState->syncs_Nsyncsset_HV->syncs_Nsyncsset.clear();
+         fSeqState->syncs_Nsyncsset_Digital->map.clear();
+         fSeqState->syncs_Nsyncsset_HV->map.clear();
       }
       delete mySeq;
 #if HANDLE_SEQ_IN_SIDE_THREAD

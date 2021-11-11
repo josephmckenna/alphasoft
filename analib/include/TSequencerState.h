@@ -75,9 +75,9 @@ class AnalogueOut: public TObject
 struct TSequencerStateSyncs 
 {
    DigitalOut DO;
-   std::map<TString,int> syncs_Nsyncsset;
+   std::map<TString,int> map;
 
-   int NsyncsSet(std::map<TString,int> syncchan)
+   int AddSyncs(std::map<TString,int> syncchan)
    {
       int nsyncs=0;
       if (DO.Channels.size())
@@ -89,23 +89,23 @@ struct TSequencerStateSyncs
                {
                   nsyncs++;
                   //std::cout<<1<<std::endl;
-                  std::map<TString,int>::iterator itSync = syncs_Nsyncsset.find(it->first);
-                  if(itSync!=syncs_Nsyncsset.end())
+                  std::map<TString,int>::iterator itSync = map.find(it->first);
+                  if(itSync!=map.end())
                   itSync->second++;
                   else
-                  syncs_Nsyncsset.insert({it->first,1}); 
+                  map.insert({it->first,1}); 
                }
             }
       }
       return nsyncs;
    };
    
-   void PrintNsyncsSet()
+   void Print()
    {
       std::cout<<std::endl;
       std::cout<<"_______________Syncs set_________________"<<std::endl;;
       std::map<TString,int>::iterator it;
-      for (it = syncs_Nsyncsset.begin(); it != syncs_Nsyncsset.end(); it++)
+      for (it = map.begin(); it != map.end(); it++)
             {
             std::cout << it->first    
                   << " : set "
