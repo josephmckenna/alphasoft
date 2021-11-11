@@ -1,4 +1,5 @@
 #Modules needed to build a spill log (Sequencer xml and chronobox timing)
+handle_sequencer.o
 handle_sequencer_SyncCheck.o
 cb_module.o
 
