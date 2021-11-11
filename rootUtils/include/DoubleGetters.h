@@ -10,7 +10,7 @@
 #include "TChronoChannelGetters.h"
 
 #ifdef BUILD_AG
-Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board);
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board);
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
 Double_t GetAGTotalRunTime(Int_t runNumber);
 #endif

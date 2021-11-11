@@ -7,7 +7,7 @@
 #include "DoubleGetters.h"
 
 #ifdef BUILD_AG
-Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch=kFALSE);
+Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, const std::string& ChronoBoard, const char* ChannelName, Bool_t ExactMatch=kFALSE);
 Int_t GetCountsInChannel(Int_t runNumber,  TChronoChannel channel, Double_t tmin=0., Double_t tmax=-1.);
 Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
 Int_t ApplyCuts(TStoreEvent* e);
