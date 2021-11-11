@@ -174,11 +174,13 @@ public:
          {
             std::vector<TVector3> helix_points = GetHelices(HelixArray);
             MatchPoints(barEvt, helix_points);
+            CalculateTOF(barEvt);
          }
       else
          {
             std::vector<TVector3> line_points = GetLines(LineArray);
             MatchPoints(barEvt, line_points);
+            CalculateTOF(barEvt);
          }
 
       // Saves all the BarEvents to a tree
@@ -248,6 +250,18 @@ public:
          if (min_dist!=99999.) {
             // Match!
             best_barhit->SetTPCHit(tpc_point);
+         }
+      }
+   }
+   void CalculateTOF(TBarEvent* barEvt) {
+      std::vector<BarHit*> barhits = barEvt->GetBars();
+      for (BarHit* barhit: barhits) {
+         for (BarHit* barhit2: barhits) {
+            if (!(barhit->IsTPCMatched())) continue;
+            if (!(barhit2->IsTPCMatched())) continue;
+            double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
+            if (TOF<=0) continue;
+            barEvt->AddTOF(TOF);
          }
       }
    }

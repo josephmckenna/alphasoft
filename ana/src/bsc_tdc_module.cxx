@@ -438,16 +438,6 @@ public:
          }
    }
 
-   void CalculateTOF(TBarEvent* barEvt) {
-      std::vector<BarHit*> barhits = barEvt->GetBars();
-      for (BarHit* barhit: barhits) {
-         for (BarHit* barhit2: barhits) {
-            double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
-            if (TOF<=0) continue;
-            barEvt->AddTOF(TOF);
-         }
-      }
-   }
 
 
    //________________________________
