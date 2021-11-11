@@ -160,6 +160,7 @@ private:
   std::vector<BarHit*> fBarHit;
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
+  std::vector<double> fTOF;
 
 public:
   TBarEvent(); //ctor
@@ -181,6 +182,7 @@ public:
     fBarHit.clear();
     for (auto hit: fTdcHit) delete hit;
     fTdcHit.clear();
+    fTOF.clear();
   }
   void AddEndHit(EndHit* e)
   {
@@ -220,12 +222,18 @@ public:
      hit->SetADCHit( fBarID, fAmp, fAmp, fADCTime);
      AddEndHit(hit);
   }
+  void AddTOF(double TOF)
+  {
+     fTOF.push_back(TOF);
+  }
 
   int GetNBars() { return fBarHit.size(); }
   int GetNEnds() { return fEndHit.size(); }
+  int GetNTOF() { return fTOF.size(); } // Number of TOF values
   std::vector<BarHit*> GetBars() { return fBarHit; }
   std::vector<EndHit*> GetEndHits() { return fEndHit; }
   std::vector<SimpleTdcHit*> GetTdcHits() { return fTdcHit; }
+  std::vector<double> GetTOF() { return fTOF;}
 
   ClassDef(TBarEvent, 1);
 };
