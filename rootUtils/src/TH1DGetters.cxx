@@ -70,7 +70,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
       {
          t->GetEntry(i);
          if (e->GetRunTime() < first_time) continue;
-         if (e->GetRunTime() > last_time) break;
+         if (e->GetRunTime() > last_time) continue;
          //Loop over all time windows
          for (int j = 0; j < n_times; j++)
          {
@@ -84,7 +84,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
                }
                //This event has been written to the array... so I dont need
                //to check the other winodws... break! Move to next SISEvent
-               break;
+               continue;
             }
          }
          delete e;
