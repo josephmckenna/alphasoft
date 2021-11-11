@@ -1,12 +1,12 @@
 #include "IntGetters.h"
 
 #ifdef BUILD_AG
-Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, Int_t ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
+Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, const std::string& ChronoBoard, const char* ChannelName, Bool_t ExactMatch)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
    t->SetBranchAddress("ChronoChannel", &n);
-   t->GetEntry(ChronoBoard);
+   t->GetEntry(TChronoChannel::CBMAP.at(ChronoBoard));
    Int_t Channel=n->GetChannel(ChannelName, ExactMatch);
    delete n;
    return Channel;
@@ -51,9 +51,9 @@ Int_t ApplyCuts(TStoreEvent* e)
    Double_t R=e->GetVertex().Perp();
    Int_t NTracks=e->GetNumberOfTracks();
    if (NTracks==2)
-      if (R<5) return 1;
+      if (R<50) return 1;
    if (NTracks>2)
-      if (R<4.5) return 1;
+      if (R<45) return 1;
    return 0;
 }
 #endif

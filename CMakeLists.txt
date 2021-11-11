@@ -9,6 +9,8 @@ else()
 endif()
 
 project(alphasoft)
+set (CMAKE_MACOSX_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)

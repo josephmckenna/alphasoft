@@ -23,7 +23,9 @@
 class HandleSequencerFlags
 {
 public:
-   bool fPrint = false;
+   bool fPrint = false; 
+   bool fPrintSEQ2 = false;
+   bool fPrintSeqDriver = false;
 };
 
 class HandleSequencer: public TARunObject
@@ -129,6 +131,8 @@ public:
       //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
       char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
+      if(fFlags->fPrintSEQ2)
+         std::cout<<bkptr<<std::endl;
 #if HANDLE_SEQ_IN_SIDE_THREAD
       if( bkptr ) 
       {
@@ -195,6 +199,8 @@ public:
       {
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       driver->Parse(node);
+      if(fFlags->fPrintSeqDriver)
+         driver->PrintDatamembers();
       }
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
@@ -294,13 +300,27 @@ public:
    HandleSequencerFlags fFlags;
 
 public:
+
+
+   void Usage()
+   {
+      printf("HandleSequencerFactory Usage:\n");
+      printf("\t--printSEQ2 Display the full XML block the sequencer is sending\n");
+      printf("\t--printSeqDriver Display the drivers that sequencers are sending\n");
+      
+   }
+
    void Init(const std::vector<std::string> &args)
    {
       printf("HandleSequencerFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--print") 
             fFlags.fPrint = true;
+         if(args[i] == "--printSEQ2") 
+            fFlags.fPrintSEQ2 = true;
+         if(args[i] == "--printSeqDriver") 
+            fFlags.fPrintSeqDriver = true;
       }
    }
 

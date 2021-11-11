@@ -10,16 +10,10 @@
 #include "TChronoChannelGetters.h"
 
 #ifdef BUILD_AG
-Double_t GetTotalRunTimeFromChrono(Int_t runNumber, Int_t Board);
+Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board);
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
 Double_t GetAGTotalRunTime(Int_t runNumber);
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, Int_t event_index);
-Double_t GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, Int_t event_index=0);
-Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* e, Int_t offset = 0);
 #endif
-
-//Double_t MatchEventToTime(Int_t runNumber,const char* description, const char* name, Int_t dumpIndex=0, Int_t offset=0);//, Bool_t ExactMatch=true);
-//Double_t MatchEventToTime(Int_t runNumber,const char* description, Bool_t IsStart, Int_t dumpIndex=0, Int_t offset=0);//, Bool_t ExactMatch)
 
 #ifdef BUILD_AG
 

@@ -21,6 +21,10 @@ class AlphaColourWheel
       int position;
    public:
       AlphaColourWheel() { position = 0;}
+      void Reset()
+      {
+         position =0;
+      }
       EColor GetNewColour()
       {
          ++position;
@@ -30,7 +34,6 @@ class AlphaColourWheel
       {
          return (EColor)colour_list[position];
       }
-      void Reset() { position = 0; }
 };
 
 

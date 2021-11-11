@@ -30,6 +30,7 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Event.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerState.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer_Channels.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TInfoSpill.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx
