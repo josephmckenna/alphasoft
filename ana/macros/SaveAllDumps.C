@@ -27,8 +27,11 @@ void SaveAllDumps(int runNumber)
       "aw16_mlu_trig",
       "bsc64_mult_trig",
       "trig_received",
+      "trig_scaledown",
+      "trig_drift",
       "trig_out",
-      "lemo_4"
+      "lemo_4",
+      
    };
    std::vector<TChronoChannel> chans;
    std::vector<std::string> valid_channels;
@@ -120,7 +123,8 @@ void SaveAllDumps(int runNumber)
       {
          // List of channels for the 8 plot combined canvas
          std::vector<std::string> channels {"SiPM_A_OR_D","SiPM_E","SiPM_C_OR_F","SiPM_B",
-                                           "ADC_TRG","aw16_mlu_trig","bsc64_mult_trig","trig_received", "trig_out","lemo_4"};
+                                           "aw16_mlu_trig","bsc64_mult_trig","trig_received",
+                                           "trig_out","trig_drift", "lemo_4"};
          std::string channel_name = valid_channels.at(i);
          for ( int k = 0; k < channels.size(); k++ )
          {
@@ -130,6 +134,8 @@ void SaveAllDumps(int runNumber)
                TH1D* h = Histos.at(i).at(j);
                h->GetXaxis()->SetTitle("Time [s]");
                h->GetYaxis()->SetTitle("Counts"); 
+               double height = h->GetMaximum();
+               h->GetYaxis()->SetRangeUser(0., height);
                h->Draw("HIST");
             }
             /*if (channels[k] == "trig_out")
