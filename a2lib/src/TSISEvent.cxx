@@ -16,6 +16,13 @@ TSISEvent::TSISEvent():  fSISModule(0), fClock(0), fVF48Clock(0), fRunTime(-1), 
 {
 
 }
+
+TSISEvent::TSISEvent(int SISModule):  fSISModule(SISModule), fClock(0), fVF48Clock(0), fRunTime(-1), fRunNumber(-1),fMidasTime(0), fMidasEventID(0), fCounts(32,0)
+{
+
+}
+
+
 //Default Destructor
 TSISEvent::~TSISEvent()
 {
