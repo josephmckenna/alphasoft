@@ -116,8 +116,8 @@ public:
 
          for (int c = 0; c < name.GetNumberOfChannels(); c++)
          {
-            for (int i = 0; i < channel_ID_string.size(); i++)
-               if (channel_ID_string.at(i) == name.GetChannelName(c) && channel_ID_string.size() )
+            for (size_t i = 0; i < channel_ID_string.size(); i++)
+               if (channel_ID_string.at(i) == name.GetChannelName(c) && channel_ID_string.size() && name.GetChannelName(c).size() )
                   fChronChannels.at(i) = TChronoChannel(board.first,c);
             //Read chrono channel names from ODB (default behaviour)
             
@@ -225,7 +225,7 @@ public:
 
       for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
       {
-         for (int i = 0; i < fLiveHisto[board.second].size(); i++)
+         for (size_t i = 0; i < fLiveHisto[board.second].size(); i++)
          {
             fLiveHisto.at(board.second)[i].GetXaxis()->Set(BUFFER_DEPTH,tmin, tmax);
             fLiveHisto.at(board.second)[i].Reset();
@@ -237,7 +237,7 @@ public:
       {
          for (TChronoBoardCounter& s: fFIFO[board.second])
          {
-            for (int i = 0; i < fLiveHisto[board.second].size(); i++)
+            for (size_t i = 0; i < fLiveHisto[board.second].size(); i++)
             {
                if (s.fCounts[i])
                {
@@ -246,9 +246,9 @@ public:
             }
          }
       }
-      for (int i = 0; i < fChronChannels.size(); i++)
+      for (size_t i = 0; i < fChronChannels.size(); i++)
       {
-         if (fChronChannels[i].GetChannel() > 0)
+         if (fChronChannels[i].GetChannel() >= 0)
          {
             fLiveCanvas.cd(i + 1);
             int board_index = fChronChannels[i].GetBoardNumber();
