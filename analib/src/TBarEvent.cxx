@@ -39,15 +39,15 @@ TBarEvent::~TBarEvent()
    //   Reset();
    fEventID=-1;
    fEventTime=-1.;
-  for(BarHit* barhit: fBarHit)  {
-    delete barhit;
-  }
-  for(EndHit* endhit: fEndHit) {
-    delete endhit;
-  }
-  for(SimpleTdcHit* tdchit: fTdcHit) {
-    delete tdchit;
-  }
+//  for(BarHit* barhit: fBarHit)  {
+//    delete barhit;
+//  }
+//  for(EndHit* endhit: fEndHit) {
+//    delete endhit;
+//  }
+//  for(SimpleTdcHit* tdchit: fTdcHit) {
+//    delete tdchit;
+//  }
    fEndHit.clear();
    fBarHit.clear();
    fTdcHit.clear();
@@ -169,10 +169,10 @@ void BarHit::Print()
 
 BarHit::~BarHit()
 {
-   if (fTopHit)
-      delete fTopHit;
-   if (fBotHit)
-      delete fBotHit;
+//   if (fTopHit)
+//      delete fTopHit;
+//   if (fBotHit)
+//      delete fBotHit;
 }
 #endif
 /* emacs
