@@ -46,8 +46,8 @@ private:
    // BV geometry
    const double inner_diameter = 446.0; // mm
    const double outer_diameter = 486.0; // mm
-   //double radius = (inner_diameter+outer_diameter)/4.; // Use centre of BV
-   const double radius = inner_diameter*0.5; // Use inner edge of BV
+   const double radius = (inner_diameter+outer_diameter)/4.; // Use centre of BV
+   //const double radius = inner_diameter*0.5; // Use inner edge of BV
    const double length = 2604.; // mm
    double c = 2.99792e8*1e-9; // m/ns
    double refrac = 1.93; // From protoTOF tests with time walk correction applied
