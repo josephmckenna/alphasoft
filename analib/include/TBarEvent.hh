@@ -20,6 +20,7 @@ private:
 
 public:
    SimpleTdcHit(); //ctor
+   SimpleTdcHit(SimpleTdcHit &h); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
@@ -49,6 +50,7 @@ private:
 
 public:
   EndHit(); // ctor
+  EndHit(EndHit &h); // copy constructor
   using TObject::Print;
   virtual void Print();
   virtual ~EndHit(); // dtor
@@ -98,6 +100,7 @@ private:
 
 public:
   BarHit(); // ctor
+  BarHit(BarHit &h); //copy constructor
   using TObject::Print;
   virtual void Print();
   virtual ~BarHit(); // dtor
@@ -130,7 +133,7 @@ public:
      double theta=fBarID*2.*TMath::Pi()/64;
      return theta+offset_angle;
   }
-  double GetAverageTDCTime()
+  double GetAverageTDCTime() const
   {
      double t_top = fTopHit->GetTDCTime();
      double t_bot = fBotHit->GetTDCTime();
@@ -164,14 +167,15 @@ private:
 
 public:
   TBarEvent(); //ctor
+  TBarEvent(TBarEvent &barEvt); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~TBarEvent(); //dtor
   
   void SetID(int ID){ fEventID=ID;}
   void SetRunTime(double time){ fEventTime=time;}
-  int GetID(){ return fEventID;}
-  double GetRunTime(){ return fEventTime;}
+  int GetID() const { return fEventID;}
+  double GetRunTime() const { return fEventTime;}
   void Reset()
   {
     fEventID=-1;
@@ -227,13 +231,14 @@ public:
      fTOF.push_back(TOF);
   }
 
-  int GetNBars() { return fBarHit.size(); }
-  int GetNEnds() { return fEndHit.size(); }
-  int GetNTOF() { return fTOF.size(); } // Number of TOF values
-  std::vector<BarHit*> GetBars() { return fBarHit; }
-  std::vector<EndHit*> GetEndHits() { return fEndHit; }
-  std::vector<SimpleTdcHit*> GetTdcHits() { return fTdcHit; }
-  std::vector<double> GetTOF() { return fTOF;}
+  int GetNBars() const { return fBarHit.size(); }
+  int GetNEnds() const { return fEndHit.size(); }
+  int GetNTDC() const { return fTdcHit.size(); }
+  int GetNTOF() const { return fTOF.size(); } // Number of TOF values
+  std::vector<BarHit*> GetBars() const { return fBarHit; }
+  std::vector<EndHit*> GetEndHits() const { return fEndHit; }
+  std::vector<SimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
+  std::vector<double> GetTOF() const { return fTOF;}
 
   ClassDef(TBarEvent, 1);
 };
