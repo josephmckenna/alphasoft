@@ -49,6 +49,7 @@ class TChronoChannelName : public TObject
    virtual ~TChronoChannelName();
    int GetBoardIndex() const                 { return TChronoChannel::CBMAP.at(fChronoBoardName); }
    const std::string GetBoardName() const { return fChronoBoardName; }
+   int GetNumberOfChannels() const { return fName.size(); }
    const std::string GetChannelName(int Channel) const { return fName.at(Channel); }
    int GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
 

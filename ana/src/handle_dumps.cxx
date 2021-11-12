@@ -17,6 +17,7 @@
 
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
+#include "TChronoBoardCounter.h"
 #include "DumpHandling.h"
 #include <iostream>
 
@@ -47,7 +48,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TAGSpill,TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
+   DumpList<TAGSpill,TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -278,7 +279,13 @@ public:
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
                //if (SISFlow->sis_events[j].size()
-               dumplist[a].AddScalerEvents(hits.second);
+               //JOE! This copy constructor is pretty ugly!
+               int board_no = TChronoChannel::CBMAP.at(hits.first);
+               std::vector<TChronoBoardCounter> counters;
+               //hits.reserve(hits.second.size());
+               for (const TCbFIFOEvent& e: hits.second)
+                  counters.emplace_back(e,board_no);
+               dumplist[a].AddScalerEvents(counters);
                //dumplist[a].Print();
             }
          }
