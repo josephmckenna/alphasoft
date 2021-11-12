@@ -63,8 +63,8 @@ private:
 
 
 public:
-   TBarEvent *analyzed_event;
-   TTree *BscTree;
+//   TBarEvent *analyzed_event;
+//   TTree *BscTree;
 
 
 public:
@@ -91,10 +91,11 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       if (fFlags->fPrint) { printf("matchingmodule::begin!"); }
 
-      analyzed_event = new TBarEvent();
-      BscTree = new TTree("BscEventTree", "BscEventTree");
-      BscTree->Branch("BarrelEvent", &analyzed_event, 32000, 0);
-      delete analyzed_event;
+//      analyzed_event = new TBarEvent();
+//      BscTree = new TTree("BscEventTree", "BscEventTree");
+//      BscTree->Branch("BarrelEvent", &analyzed_event, 32000, 0);
+//      delete analyzed_event;
+//      analyzed_event = NULL;
       
    }
 
@@ -163,11 +164,6 @@ public:
       const TObjArray* HelixArray = e->GetHelixArray();
       
       AgEvent* age = ef->fEvent;
-      // prepare event to store in TTree
-      TBarEvent* analyze_event = new TBarEvent();
-      analyze_event->Reset();
-      analyze_event->SetID( age->counter );
-      analyze_event->SetRunTime( age->time );
 
       // Main functions
       if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
@@ -186,18 +182,12 @@ public:
       // Saves all the BarEvents to a tree
       if( barEvt )
          {
-            for(int i=0; i<barEvt->GetNBars(); ++i)
-               analyze_event->AddBarHit(barEvt->GetBars().at(i));
-
-            for(int i=0; i<barEvt->GetNEnds(); ++i)
-               analyze_event->AddEndHit(barEvt->GetEndHits().at(i));
-            for(int i=0; i<barEvt->GetNTOF(); ++i)
-               analyze_event->AddTOF(barEvt->GetTOF().at(i));
-            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            BscTree->SetBranchAddress("BarrelEvent", &analyze_event);
-            BscTree->Fill();}
+            //TBarEvent* analyze_event = new TBarEvent(*barEvt);
+//            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+//            BscTree->SetBranchAddress("BarrelEvent", &barEvt);
+            //BscTree->SetBranchAddress("BarrelEvent", &analyze_event);
+//            BscTree->Fill();}
          }
-         delete analyze_event;
 
       
       //AgBarEventFlow 
