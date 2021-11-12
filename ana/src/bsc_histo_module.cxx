@@ -542,7 +542,7 @@ public:
       double bigexpTOF = -2;
       if (barhits.size()==2) {
          if (!(fFlags->fProtoTOF)) {
-            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched() and (!(fFlags->fRecOff))) {
+            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched() or (fFlags->fRecOff)) {
                double TOF = 1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime());
                hTwoBarTOF->Fill(TOF);
                double x0,y0,x1,y1,z0,z1;
