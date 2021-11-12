@@ -164,6 +164,7 @@ private:
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
   std::vector<double> fTOF;
+  std::vector<double> fTOFM;
 
 public:
   TBarEvent(); //ctor
@@ -187,6 +188,7 @@ public:
     for (auto hit: fTdcHit) delete hit;
     fTdcHit.clear();
     fTOF.clear();
+    fTOFM.clear();
   }
   void AddEndHit(EndHit* e)
   {
@@ -230,15 +232,21 @@ public:
   {
      fTOF.push_back(TOF);
   }
+  void AddTOFMatched(double TOF)
+  {
+     fTOFM.push_back(TOF);
+  }
 
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }
   int GetNTDC() const { return fTdcHit.size(); }
   int GetNTOF() const { return fTOF.size(); } // Number of TOF values
+  int GetNTOFMatched() const { return fTOFM.size(); } // Number of TOF values matched to TPC
   std::vector<BarHit*> GetBars() const { return fBarHit; }
   std::vector<EndHit*> GetEndHits() const { return fEndHit; }
   std::vector<SimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
   std::vector<double> GetTOF() const { return fTOF;}
+  std::vector<double> GetTOFMatched() const { return fTOFM;}
 
   ClassDef(TBarEvent, 1);
 };
