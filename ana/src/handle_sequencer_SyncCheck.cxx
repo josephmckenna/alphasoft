@@ -68,6 +68,8 @@ private:
    };
    std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset_Digital; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
    std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset_HV; //std::array<std::map<TString,int>,NUMSEQ> Seq_syncs_Nsyncsset;
+   TSequencerStateSyncs* syncs_Nsyncsset_Digital = new TSequencerStateSyncs();
+   TSequencerStateSyncs* syncs_Nsyncsset_HV = new TSequencerStateSyncs();
 
 public:
    bool fTrace = false;
@@ -136,7 +138,7 @@ public:
       //Grab data from the flow (from the handle_sequencer module)
       const int iSeqType = df->SequencerNum;
       const std::vector<DumpMarker>& DumpMarkers = df->DumpMarkers;
-      const std::vector<TSequencerState>& states = df->states;
+      std::vector<TSequencerState> states = df->states;
       TSequencerDriver* driver= df->driver;
 
       if(fFlags->fPrintSeqDriver)
@@ -151,14 +153,21 @@ public:
          std::cout<<std::endl;
          std::cout<<"______________________________________DigitalMap syncs_____________________________________"<<std::endl;
          syncsmap_Digital = driver->DigitalMap->FindSyncs();
+         std::cout<<"______________________________________HVMap syncs_____________________________________"<<std::endl;
          syncsmap_HV = driver->HVMap->FindSyncs();
          std::cout<<std::endl;
       }
+      //driver->FindSyncs();
 
-      for (const TSequencerState& state: states)
+      int count=0;
+      int NumberSyncsSet_Digital=0;   
+      int NumberSyncsSet_HV=0;   
+      for (TSequencerState state: states)
       {
-         int NumberSyncsSet_Digital=0;   
-         int NumberSyncsSet_HV=0;   
+         //std::cout<<"(((((((((((((((((("<<++count<<")))))))))))))))))))))"<<std::endl;
+         syncs_Nsyncsset_Digital->DO = *(state.GetDigitalOut());
+         syncs_Nsyncsset_HV->DO = *(state.GetDigitalOut());
+            
          if(fFlags->fPrintSeqState)
          {
             std::cout<<std::endl;
@@ -167,27 +176,27 @@ public:
             std::cout<<"==================================================================================================================================================================="<<std::endl;
          }
 
-         NumberSyncsSet_Digital += state.syncs_Nsyncsset_Digital->AddSyncs(syncsmap_Digital);
-         NumberSyncsSet_HV += state.syncs_Nsyncsset_HV->AddSyncs(syncsmap_HV);
-
-         if(fFlags->fFindNsyncs)
-         {
-            std::cout<<std::endl;
-            std::cout<<"Number of Syncs Set "<<NumberSyncsSet_Digital<<std::endl;
-            state.syncs_Nsyncsset_Digital->Print();
-            std::cout<<"______________________________________"<<std::endl;
-            std::cout<<std::endl;
-            std::cout<<"Number of Syncs Set "<<NumberSyncsSet_HV<<std::endl;
-            state.syncs_Nsyncsset_HV->Print();
-            std::cout<<"___________________________________________________________________________________________"<<std::endl<<std::endl;
-            NSyncsTotal_Digital+=NumberSyncsSet_Digital;
-            NSyncsTotal_HV+=NumberSyncsSet_HV;
-            Seq_syncs_Nsyncsset_Digital[iSeqType]=state.syncs_Nsyncsset_Digital->map;
-            Seq_syncs_Nsyncsset_HV[iSeqType]=state.syncs_Nsyncsset_HV->map;
-         }
-         state.syncs_Nsyncsset_Digital->map.clear();
-         state.syncs_Nsyncsset_HV->map.clear();
+         NumberSyncsSet_Digital += syncs_Nsyncsset_Digital->AddSyncs(syncsmap_Digital);
+         NumberSyncsSet_HV += syncs_Nsyncsset_HV->AddSyncs(syncsmap_HV);
       }
+      if(fFlags->fFindNsyncs)
+      {
+         std::cout<<std::endl;
+         std::cout<<"Number of Syncs Set "<<NumberSyncsSet_Digital<<std::endl;
+         syncs_Nsyncsset_Digital->Print();
+         std::cout<<"______________________________________"<<std::endl;
+         std::cout<<std::endl;
+         std::cout<<"Number of Syncs Set "<<NumberSyncsSet_HV<<std::endl;
+         syncs_Nsyncsset_HV->Print();
+         std::cout<<"___________________________________________________________________________________________"<<std::endl<<std::endl;
+         NSyncsTotal_Digital+=NumberSyncsSet_Digital;
+         NSyncsTotal_HV+=NumberSyncsSet_HV;
+         Seq_syncs_Nsyncsset_Digital[iSeqType]=syncs_Nsyncsset_Digital->map;
+         Seq_syncs_Nsyncsset_HV[iSeqType]=syncs_Nsyncsset_HV->map;
+      }
+      syncs_Nsyncsset_Digital->map.clear();
+      syncs_Nsyncsset_HV->map.clear();
+      
       return flow;
    }
 
