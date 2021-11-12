@@ -569,7 +569,7 @@ public:
       if (!(fFlags->fProtoTOF)) {
          for (BarHit* barhit: barhits) {
             for (BarHit* barhit2: barhits) {
-               if ((!(barhit->IsTPCMatched()) and (!(fFlags->fRecOff))) continue;
+               if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
                if ((!(barhit2->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
                if (TOF<=0) continue;
