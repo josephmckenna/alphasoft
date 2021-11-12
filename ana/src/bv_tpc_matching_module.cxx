@@ -53,7 +53,6 @@ private:
    double refrac = 1.93; // From protoTOF tests with time walk correction applied
    double factor = c/refrac * 0.5;
 
-
    // Matching parameters
    double max_dz; // mm
    double max_dphi; // rad
