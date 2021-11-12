@@ -53,6 +53,7 @@ private:
    double refrac = 1.93; // From protoTOF tests with time walk correction applied
    double factor = c/refrac * 0.5;
 
+
    // Matching parameters
    double max_dz; // mm
    double max_dphi; // rad
@@ -154,15 +155,12 @@ public:
          return flow;
       }
 
+      //if (!(fFlags->fDiag)) return flow;
+
       const TObjArray* LineArray = e->GetLineArray();
       const TObjArray* HelixArray = e->GetHelixArray();
       
       AgEvent* age = ef->fEvent;
-      // prepare event to store in TTree
-      TBarEvent* analyze_event = new TBarEvent();
-      analyze_event->Reset();
-      analyze_event->SetID( age->counter );
-      analyze_event->SetRunTime( age->time );
 
       // Main functions
       if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
@@ -178,32 +176,21 @@ public:
             CalculateTOF(barEvt);
          }
 
-      // Saves all the BarEvents to a tree
-      if( barEvt )
-         {
-            for(int i=0; i<barEvt->GetNBars(); ++i)
-               analyze_event->AddBarHit(barEvt->GetBars().at(i));
-
-            for(int i=0; i<barEvt->GetNEnds(); ++i)
-               analyze_event->AddEndHit(barEvt->GetEndHits().at(i));
-            for(int i=0; i<barEvt->GetNTOF(); ++i)
-               analyze_event->AddTOF(barEvt->GetTOF().at(i));
-         }
-
-      TBarEvent* eventCopy = barEvt; //Copy the bar event.
-      eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
-      fCompleteEvent = eventCopy; //Point our event that will be written to the copy.
+	TBarEvent* eventCopy = barEvt; //Copy the bar event.
+	eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
+ 	fCompleteEvent = eventCopy; //Point our event that will be written to the copy.
 
 
-      //Write the event to tree
-      if (fCompleteEvent)
-      {
-         std::cout << "Writing event " << fCompleteEvent->GetID() << " to tree." << std::endl;
-         {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
-         fBSCEventTree->Fill();}
-      }
-
+	//Write the event to tree
+	if (fCompleteEvent)
+	{
+		std::cout << "Writing event " << fCompleteEvent->GetID() << " to tree." << std::endl;
+		{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+		fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
+		fBSCEventTree->Fill();}
+	}
+      
+      //AgBarEventFlow 
       return flow;
    }
 

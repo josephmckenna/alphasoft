@@ -133,7 +133,7 @@ public:
      double theta=fBarID*2.*TMath::Pi()/64;
      return theta+offset_angle;
   }
-  double GetAverageTDCTime()
+  double GetAverageTDCTime() const
   {
      double t_top = fTopHit->GetTDCTime();
      double t_bot = fBotHit->GetTDCTime();
