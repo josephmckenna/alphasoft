@@ -61,10 +61,8 @@ private:
    // TOF parameters
    double min_dphi;
 
-
-public:
-   TBarEvent *analyzed_event;
-   TTree *BscTree;
+   TTree* fBSCEventTree;
+   TBarEvent* fCompleteEvent;
 
 
 public:
@@ -88,19 +86,21 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      if (fFlags->fPrint) { printf("matchingmodule::begin!"); }
+      //Set up root tree and branch.
+      fCompleteEvent = new TBarEvent;
+      fBSCEventTree = new TTree("BSCEventTree", "BSCEventTree");
+      fBSCEventTree->Branch("BSCEvent", &fCompleteEvent, 32000, 0);
+      delete fCompleteEvent;
+      fCompleteEvent=NULL;
 
-      analyzed_event = new TBarEvent();
-      BscTree = new TTree("BscEventTree", "BscEventTree");
-      BscTree->Branch("BarrelEvent", &analyzed_event, 32000, 0);
-      delete analyzed_event;
-      
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      if (fFlags->fPrint) { printf("matchingmodule::begin!"); };
    }
 
 
    void EndRun(TARunInfo* runinfo)
    {
+      fBSCEventTree->Write();
       runinfo->fRoot->fOutputFile->Write();
    }
 
@@ -117,8 +117,6 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-   
-
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -157,8 +155,6 @@ public:
          return flow;
       }
 
-      if (!(fFlags->fDiag)) return flow;
-
       const TObjArray* LineArray = e->GetLineArray();
       const TObjArray* HelixArray = e->GetHelixArray();
       
@@ -193,14 +189,22 @@ public:
                analyze_event->AddEndHit(barEvt->GetEndHits().at(i));
             for(int i=0; i<barEvt->GetNTOF(); ++i)
                analyze_event->AddTOF(barEvt->GetTOF().at(i));
-            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            BscTree->SetBranchAddress("BarrelEvent", &analyze_event);
-            BscTree->Fill();}
          }
-         delete analyze_event;
 
-      
-      //AgBarEventFlow 
+      TBarEvent* eventCopy = barEvt; //Copy the bar event.
+      eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
+      fCompleteEvent = eventCopy; //Point our event that will be written to the copy.
+
+
+      //Write the event to tree
+      if (fCompleteEvent)
+      {
+         std::cout << "Writing event " << fCompleteEvent->GetID() << " to tree." << std::endl;
+         {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
+         fBSCEventTree->Fill();}
+      }
+
       return flow;
    }
 

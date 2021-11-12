@@ -20,6 +20,7 @@ private:
 
 public:
    SimpleTdcHit(); //ctor
+   SimpleTdcHit(SimpleTdcHit &tdchit);
   using TObject::Print;
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
@@ -49,6 +50,7 @@ private:
 
 public:
   EndHit(); // ctor
+  EndHit(EndHit &endhit); //Copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~EndHit(); // dtor
@@ -98,6 +100,7 @@ private:
 
 public:
   BarHit(); // ctor
+  BarHit(BarHit &barhit); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~BarHit(); // dtor
@@ -145,6 +148,11 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
+  void ClearEndHits() //This isn't ideal but this function deletes data that we don't want to write to the .root.
+  {
+    fTopHit = NULL; 
+    fBotHit = NULL;
+  }
 //  double GetTDCZed() { // This should probably not be done here. The value of the speed of light should be put into the analysis settings, and this should be done in the tdc module.
 //      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
 //  }
@@ -164,6 +172,7 @@ private:
 
 public:
   TBarEvent(); //ctor
+  TBarEvent(TBarEvent &barEvent); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~TBarEvent(); //dtor
@@ -225,6 +234,13 @@ public:
   void AddTOF(double TOF)
   {
      fTOF.push_back(TOF);
+  }
+  void ClearBarHits() //Clears end hits in each bar hit so we can write to a root file without trying to write unassigned memory. 
+  {
+    for(auto barhit: fBarHit)
+    {
+      barhit->ClearEndHits();
+    }
   }
 
   int GetNBars() { return fBarHit.size(); }
