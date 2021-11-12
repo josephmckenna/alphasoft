@@ -583,7 +583,14 @@ class TAPlot: public TObject
       TString GetListOfRuns();
 
       //Adders.
-      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex ) {assert(!"Child class must have this");};
+      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex )
+      {
+         assert(!"Child class must have this");
+         //Suppress compiler warnings:
+         std::cout << runNumber << "\t";
+         std::cout << description.size() << "\t";
+         std::cout << dumpIndex.size() << std::endl;
+      }
       void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
       void AddStopDumpMarker(double time)                {  fDumpStops.push_back(time); }
       void AddInjection(double time)                     {  fInjections.push_back(time);}
@@ -605,7 +612,13 @@ class TAPlot: public TObject
       // Hmm the add operators prevent this being a pure virtual function (ie
       // the add operator can't return TAPlot if TAPlot is an abstract class...
       // one to think about Joe)
-      virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
+      virtual void LoadRun(int runNumber, double firstTime, double lastTime)
+      {
+         assert(!"Must be implemented by child class");
+         std::cout << runNumber << "\t";
+         std::cout << firstTime << "\t";
+         std::cout << lastTime << std::endl;
+      }
       void LoadData();
 
       

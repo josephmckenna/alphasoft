@@ -6,45 +6,46 @@ ClassImp(TChronoBoardCounter)
 TChronoBoardCounter::TChronoBoardCounter():
    fStartTime(-1), fStopTime(-1), fBoard(-1)
 {
-   for (int i = 0; fCounts.size(); i++)
+   for (size_t i = 0; fCounts.size(); i++)
       fCounts[i] = 0;
-};
+}
 
 //Copy constr.
 TChronoBoardCounter::TChronoBoardCounter(const TChronoBoardCounter& counter):
-   fStartTime(counter.fStartTime), fStopTime(counter.fStopTime), fBoard(counter.fBoard)
+   TObject(counter), fStartTime(counter.fStartTime), fStopTime(counter.fStopTime), fBoard(counter.fBoard)
 {
-   for (int i = 0; i < fCounts.size(); i++)
+   for (size_t i = 0; i < fCounts.size(); i++)
       fCounts[i] = counter.fCounts[i];
 
-};
+}
 
 //Constr. for the board and dump times (can populate counts later)
 TChronoBoardCounter::TChronoBoardCounter(double startTime, double stopTime, int board):
    fStartTime(startTime), fStopTime(stopTime), fBoard(board)
 {
-   for (int i = 0; i < fCounts.size(); i++)
+   for (size_t i = 0; i < fCounts.size(); i++)
       fCounts[i] = 0;
-};
+}
 
 //Constr. for just the board (can populate times later)
 TChronoBoardCounter::TChronoBoardCounter(int board):
    fStartTime(-1), fStopTime(-1), fBoard(board)
 {
-   for (int i = 0; i < fCounts.size(); i++)
+   for (size_t i = 0; i < fCounts.size(); i++)
       fCounts[i] = 0;
-};
+}
 
 TChronoBoardCounter::TChronoBoardCounter(const TCbFIFOEvent& cbFIFO, int board):
    fStartTime(cbFIFO.GetRunTime()), fStopTime(cbFIFO.GetRunTime()), fBoard(board)
 {
-   for (int i = 0; i < fCounts.size(); i++)
+   for (size_t i = 0; i < fCounts.size(); i++)
       fCounts[i] = 0;
    
-   if (cbFIFO.fChannel < 0)
-      std::cout << board << ":" << cbFIFO.fChannel << std::endl;
    if (cbFIFO.fChannel > fCounts.size() )
-      std::cout << board << ":" << cbFIFO.fChannel << ">" << fCounts.size() << std::endl;
+   {
+      std::cerr <<"BAD HIT DATA!\t"<< board << ":" << cbFIFO.fChannel << ">" << fCounts.size() << std::endl;
+      return;
+   }
    fCounts.at(cbFIFO.fChannel) = cbFIFO.fCounts;
 }
 
@@ -68,7 +69,7 @@ TChronoBoardCounter operator+(const TChronoBoardCounter& lhs, const TChronoBoard
    assert (lhs.GetBoard() == rhs.GetBoard());
    ans.SetBoard( lhs.GetBoard() );
 
-   for (int i = 0; i < ans.fCounts.size(); i++)
+   for (size_t i = 0; i < ans.fCounts.size(); i++)
       ans.fCounts[i] = lhs.GetCount(i) + rhs.GetCount(i);
    return ans;
 }
@@ -84,7 +85,7 @@ TChronoBoardCounter& TChronoBoardCounter::operator+=(const TChronoBoardCounter& 
    //You may only add events from the same board
    assert (this->GetBoard() == rhs.GetBoard());
 
-   for (int i = 0; i < fCounts.size(); i++)
+   for (size_t i = 0; i < fCounts.size(); i++)
       fCounts[i] += rhs.GetCount(i);
 
    return *this;

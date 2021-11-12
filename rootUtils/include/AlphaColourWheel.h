@@ -10,7 +10,11 @@ static int colour_list[] = {
       };
 static int colour_list_size = 12;
 
-static EColor GetColour(int i) 
+//Suppress warning that this static function isn't used (its only used sometimes
+#ifdef __GNUC__
+ __attribute__((unused)) 
+#endif
+static EColor GetColour(int i)
 {
     return (EColor)colour_list[i % colour_list_size];
 }

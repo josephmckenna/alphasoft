@@ -61,7 +61,7 @@ class TChronoBoardCounter: public TObject
    {
       std::cout <<"Board: "<< fBoard << "\n";
       std::cout<< fStartTime << " - " << fStopTime << "s\n";
-      for (int i = 0; i < fCounts.size(); i++)
+      for (size_t i = 0; i < fCounts.size(); i++)
          std::cout << fCounts[i] <<"\t";
       std::cout << std::endl;
    }
