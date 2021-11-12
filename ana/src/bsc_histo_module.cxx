@@ -533,26 +533,27 @@ public:
       if (fFlags->fPulser) return;
       if (barhits.size()==2) {
          if (!(fFlags->fProtoTOF)) {
-            if (!(barhits[0]->IsTPCMatched()) or !(barhits[0]->IsTPCMatched())) continue;
-         }
-         hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-         double x0,y0,x1,y1,z0,z1;
-         barhits[0]->GetXY(x0,y0);
-         barhits[1]->GetXY(x1,y1);
-         z0 = barhits[0]->GetTDCZed();
-         z1 = barhits[1]->GetTDCZed();
-         hTwoBarDZed->Fill(z0-z1);
-         if (!(fFlags->fProtoTOF)) {
-            hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-            hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
-            double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
-            if (angle>180) angle = 360 - angle;
-            hTwoBarDPhi->Fill(angle);
-            hTwoBarDPhiDZed->Fill(angle,z0-z1);
-            double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
-            hTwoBarExpectedTOF->Fill(expTOF);
-            hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-            hTwoBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime())));
+            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched()) {
+               hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+               double x0,y0,x1,y1,z0,z1;
+               barhits[0]->GetXY(x0,y0);
+               barhits[1]->GetXY(x1,y1);
+               z0 = barhits[0]->GetTDCZed();
+               z1 = barhits[1]->GetTDCZed();
+               hTwoBarDZed->Fill(z0-z1);
+               if (!(fFlags->fProtoTOF)) {
+                  hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+                  hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
+                  double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
+                  if (angle>180) angle = 360 - angle;
+                  hTwoBarDPhi->Fill(angle);
+                  hTwoBarDPhiDZed->Fill(angle,z0-z1);
+                  double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+                  hTwoBarExpectedTOF->Fill(expTOF);
+                  hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+                  hTwoBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime())));
+               }
+            }
          }
       }
       if (!(fFlags->fProtoTOF)) {

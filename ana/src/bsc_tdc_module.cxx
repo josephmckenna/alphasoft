@@ -246,7 +246,6 @@ public:
                   MatchTDCtoADC(barEvt);
                   CombineEnds(barEvt);
                   CalculateZ(barEvt);
-                  CalculateTOF(barEvt);
 
                   if( fFlags->fPrint ) printf("tdcmodule::AnalyzeFlowEvent comlpete\n");
                }
