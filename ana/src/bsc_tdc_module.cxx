@@ -437,7 +437,7 @@ public:
          }
    }
 
-   void CalculateTOF(TBarEvent* barEvt) {
+   /*void CalculateTOF(TBarEvent* barEvt) {
       std::vector<BarHit*> barhits = barEvt->GetBars();
       for (BarHit* barhit: barhits) {
          for (BarHit* barhit2: barhits) {
@@ -448,7 +448,7 @@ public:
             barEvt->AddTOF(TOF);
          }
       }
-   }
+   }*/
 
 
 

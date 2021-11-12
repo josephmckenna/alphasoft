@@ -176,9 +176,13 @@ public:
             CalculateTOF(barEvt);
          }
 
+   barEvt->CopyTOF();
 	TBarEvent* eventCopy = barEvt; //Copy the bar event.
 	eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
  	fCompleteEvent = eventCopy; //Point our event that will be written to the copy.
+    //Just a test
+    std::cout << "Sanity check (copy)  : TOF size = " << fCompleteEvent->GetTOF().size() << ". TVector size = " << fCompleteEvent->GetTVector().GetNoElements() << std::endl;
+    std::cout << "Sanity check (barEvt): TOF size = " << barEvt->GetTOF().size() << ". TVector size = " << barEvt->GetTVector().GetNoElements() << std::endl;
 
 
 	//Write the event to tree
@@ -247,8 +251,8 @@ public:
       std::vector<BarHit*> barhits = barEvt->GetBars();
       for (BarHit* barhit: barhits) {
          for (BarHit* barhit2: barhits) {
-            if (!(barhit->IsTPCMatched())) continue;
-            if (!(barhit2->IsTPCMatched())) continue;
+            //if (!(barhit->IsTPCMatched())) continue;
+            //if (!(barhit2->IsTPCMatched())) continue;
             double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
             if (TOF<=0) continue;
             barEvt->AddTOF(TOF);

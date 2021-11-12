@@ -16,6 +16,7 @@ TBarEvent::TBarEvent(TBarEvent &barEvt)
 // copy ctor
   fEventID = barEvt.GetID();
   fEventTime = barEvt.GetRunTime();
+  fTOFForRoot = barEvt.fTOFForRoot;
   for(BarHit* barhit: barEvt.GetBars())  {
     if(barhit)
     {
