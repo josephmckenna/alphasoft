@@ -26,5 +26,7 @@ bsc_histo_module.o
 calib_module.o
 # PH
 display_module.o
+# LG
+write_to_tree_module.o
 # JTKM
 AnalysisReport_module.o

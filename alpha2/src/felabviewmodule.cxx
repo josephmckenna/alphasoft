@@ -1,7 +1,7 @@
 //
 // Print MIDAS event to ROOT Tree
 //
-// Lukas Golino
+// L GOLINO
 //
 
 #include <stdio.h>
