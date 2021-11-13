@@ -75,9 +75,12 @@ public:
    {
        AgAnalysisFlow *ef = flow->Find<AgAnalysisFlow>();
 
-        if(ef->fEvent)
+        if(ef)
         {
-            fCompleteEvent = ef->fEvent;
+            if(ef->fEvent)
+            {
+                fCompleteEvent = ef->fEvent;
+            }
         }
       {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       fTStoreEventTree->SetBranchAddress("StoredEvent", &fCompleteEvent);
