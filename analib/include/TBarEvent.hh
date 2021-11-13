@@ -93,8 +93,8 @@ class BarHit: public TObject
 {
 private:
   int fBarID=-1;
-  EndHit* fTopHit;
-  EndHit* fBotHit;
+  EndHit* fTopHit = NULL;
+  EndHit* fBotHit = NULL;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;
@@ -170,8 +170,6 @@ private:
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
   std::vector<double> fTOF;
-  TVectorD fTOFForRoot;
-
 public:
   TBarEvent(); //ctor
   TBarEvent(TBarEvent &barEvent); //copy ctor
@@ -183,7 +181,6 @@ public:
   void SetRunTime(double time){ fEventTime=time;}
   int GetID(){ return fEventID;}
   double GetRunTime(){ return fEventTime;}
-  TVectorD GetTVector() { return fTOFForRoot; }
   void Reset()
   {
     fEventID=-1;
@@ -244,10 +241,6 @@ public:
     {
       barhit->ClearEndHits();
     }
-  }
-  void CopyTOF()
-  {
-    fTOFForRoot = TVectorD(fTOF.size(), &fTOF[0]);
   }
 
   int GetNBars() { return fBarHit.size(); }

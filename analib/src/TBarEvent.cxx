@@ -16,7 +16,6 @@ TBarEvent::TBarEvent(TBarEvent &barEvt)
 // copy ctor
   fEventID = barEvt.GetID();
   fEventTime = barEvt.GetRunTime();
-  fTOFForRoot = barEvt.fTOFForRoot;
   for(BarHit* barhit: barEvt.GetBars())  {
     if(barhit)
     {
@@ -157,8 +156,11 @@ ClassImp(BarHit)
 BarHit::BarHit()
 {
   fBarID=-1;
-  fTopHit = new EndHit; //Empty end hit
-  fBotHit = new EndHit;
+  //fTopHit = new EndHit; //Empty end hit
+  //fBotHit = new EndHit;
+  fTopHit = NULL; //Empty end hit
+  fBotHit = NULL;
+  fTPCMatched=false;
   fTPCMatched=false;
   fTPC = TVector3(); //Empty vector
   fZed=-9999;
