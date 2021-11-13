@@ -22,6 +22,7 @@
 class WriteToTree: public TARunObject
 {
 public:
+ bool fTrace = false;
    TStoreEvent *fCompleteEvent;
    TTree *fTStoreEventTree;
 
