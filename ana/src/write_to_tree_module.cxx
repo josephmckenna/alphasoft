@@ -80,11 +80,11 @@ public:
             if(ef->fEvent)
             {
                 fCompleteEvent = ef->fEvent;
+                {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+                fTStoreEventTree->SetBranchAddress("StoredEvent", &fCompleteEvent);
+                fTStoreEventTree->Fill();}
             }
         }
-      {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      fTStoreEventTree->SetBranchAddress("StoredEvent", &fCompleteEvent);
-      fTStoreEventTree->Fill();}
                
 
       return flow;
