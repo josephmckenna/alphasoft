@@ -41,8 +41,11 @@ private:
   double fPattRecEff;
 
   std::vector<BarHit*> fBarHit; //Barrel hits
+
+
   
 public:
+  TBarEvent *fBarEvent;
   TStoreEvent();
   TStoreEvent(const TStoreEvent&);
   virtual ~TStoreEvent();  // destructor

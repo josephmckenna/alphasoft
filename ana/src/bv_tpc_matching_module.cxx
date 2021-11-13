@@ -61,8 +61,8 @@ private:
    // TOF parameters
    double min_dphi;
 
-   TTree* fBSCEventTree;
-   TBarEvent* fCompleteEvent;
+   //TTree* fBSCEventTree;
+   //TBarEvent* fCompleteEvent;
 
 
 public:
@@ -87,11 +87,11 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       //Set up root tree and branch.
-      fCompleteEvent = new TBarEvent;
+      /*fCompleteEvent = new TBarEvent;
       fBSCEventTree = new TTree("BSCEventTree", "BSCEventTree");
       fBSCEventTree->Branch("BSCEvent", &fCompleteEvent, 32000, 0);
       delete fCompleteEvent;
-      fCompleteEvent=NULL;
+      fCompleteEvent=NULL;*/
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       if (fFlags->fPrint) { printf("matchingmodule::begin!"); };
@@ -100,7 +100,7 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      fBSCEventTree->Write();
+      //fBSCEventTree->Write();
       runinfo->fRoot->fOutputFile->Write();
    }
 
@@ -176,6 +176,10 @@ public:
             CalculateTOF(barEvt);
          }
 
+   anaflow->fEvent->fBarEvent = barEvt;
+   return anaflow;
+
+   /*
    barEvt->CopyTOF();
 	TBarEvent* eventCopy = barEvt; //Copy the bar event.
 	eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
@@ -183,8 +187,6 @@ public:
     //Just a test
     std::cout << "Sanity check (copy)  : TOF size = " << fCompleteEvent->GetTOF().size() << ". TVector size = " << fCompleteEvent->GetTVector().GetNoElements() << std::endl;
     std::cout << "Sanity check (barEvt): TOF size = " << barEvt->GetTOF().size() << ". TVector size = " << barEvt->GetTVector().GetNoElements() << std::endl;
-
-
 	//Write the event to tree
 	if (fCompleteEvent)
 	{
@@ -192,10 +194,10 @@ public:
 		{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
 		fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
 		fBSCEventTree->Fill();}
-	}
+	}*/
       
       //AgBarEventFlow 
-      return flow;
+      //return flow;
    }
 
    //________________________________
