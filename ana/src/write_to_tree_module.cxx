@@ -46,7 +46,8 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       fCompleteEvent = new TStoreEvent;
       fTStoreEventTree = new TTree("StoreEventTree", "StoreEventTree");
-      fTStoreEventTree->Branch("StoredEvent", &fCompleteEvent, 32000, 0);
+      //fTStoreEventTree->Branch("StoredEvent", &fCompleteEvent, 32000, 0);
+      fTStoreEventTree->Branch("StoredEvent", &fCompleteEvent);
       delete fCompleteEvent;
       fCompleteEvent=NULL;
    }
@@ -79,7 +80,9 @@ public:
         {
             if(ef->fEvent)
             {
-                fCompleteEvent = ef->fEvent;
+               TStoreEvent* eventCopy = ef->fEvent;
+                fCompleteEvent = eventCopy;
+                fCompleteEvent->Print();
                 {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                 fTStoreEventTree->SetBranchAddress("StoredEvent", &fCompleteEvent);
                 fTStoreEventTree->Fill();}

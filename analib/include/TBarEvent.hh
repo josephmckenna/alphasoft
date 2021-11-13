@@ -170,7 +170,7 @@ private:
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
   std::vector<double> fTOF;
-  TVectorD fTOFForRoot;
+  //TVectorD fTOFForRoot;
 
 public:
   TBarEvent(); //ctor
@@ -183,7 +183,7 @@ public:
   void SetRunTime(double time){ fEventTime=time;}
   int GetID(){ return fEventID;}
   double GetRunTime(){ return fEventTime;}
-  TVectorD GetTVector() { return fTOFForRoot; }
+  //TVectorD GetTVector() { return fTOFForRoot; }
   void Reset()
   {
     fEventID=-1;
@@ -245,10 +245,10 @@ public:
       barhit->ClearEndHits();
     }
   }
-  void CopyTOF()
+  /*void CopyTOF() //LMG DELETE
   {
     fTOFForRoot = TVectorD(fTOF.size(), &fTOF[0]);
-  }
+  }*/
 
   int GetNBars() { return fBarHit.size(); }
   int GetNEnds() { return fEndHit.size(); }

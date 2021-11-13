@@ -16,7 +16,7 @@ TBarEvent::TBarEvent(TBarEvent &barEvt)
 // copy ctor
   fEventID = barEvt.GetID();
   fEventTime = barEvt.GetRunTime();
-  fTOFForRoot = barEvt.fTOFForRoot;
+  //fTOFForRoot = barEvt.fTOFForRoot;
   for(BarHit* barhit: barEvt.GetBars())  {
     if(barhit)
     {
@@ -77,15 +77,26 @@ void TBarEvent::Print()
    std::cout << "TBarEvent::Print() -------------"<<std::endl;
    std::cout <<"EventID:\t"<< fEventID      <<std::endl;
    std::cout <<"RunTime:\t"  << fEventTime    <<std::endl;
+
    std::cout <<"End Hits:\t"     << fEndHit.size()<<std::endl;
    std::cout <<"Bar Hits:\t"     << fBarHit.size()<<std::endl;
+   std::cout <<"TDC Hits:\t"     << fTdcHit.size()<<std::endl;
+   
    for (size_t i=0; i<fEndHit.size(); i++)
       fEndHit.at(i)->Print();
+
    for (size_t i=0; i<fBarHit.size(); i++)
       fBarHit.at(i)->Print();
+
+   /*for (size_t i=0; i<fTdcHit.size(); i++)
+      fTdcHit.at(i)->Print();*/
+
    std::cout <<"TOF values:"<<std::endl;
    for (size_t i=0; i<fTOF.size(); i++)
       std::cout <<fTOF.at(i)<<std::endl;
+
+
+
 }
 
 ClassImp(EndHit)
@@ -185,10 +196,18 @@ void BarHit::Print()
          std::cout<<"Bot hit: vvv"<<std::endl;
          fBotHit->Print();
       }
+      else
+      {
+        std::cout<<"BOT HIT EMPTY"<<std::endl;
+      }
    if (fTopHit)
       {
          std::cout<<"Top hit: vvv"<<std::endl;
          fTopHit->Print();
+      }
+            else
+      {
+        std::cout<<"TOP HIT EMPTY"<<std::endl;
       }
    std::cout<<"Time Diff:"<<fTopHit->GetTDCTime()-fBotHit->GetTDCTime()<<std::endl;
   std::cout<<"TPC Matched? "<<fTPCMatched;
