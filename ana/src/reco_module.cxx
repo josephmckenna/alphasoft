@@ -128,11 +128,11 @@ public:
 
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
-      analyzed_event = new TStoreEvent;
+      /*analyzed_event = new TStoreEvent;
       EventTree = new TTree("StoreEventTree", "StoreEventTree");
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
       delete analyzed_event;
-      analyzed_event=NULL;
+      analyzed_event=NULL;*/
 
       if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
   
@@ -192,9 +192,9 @@ public:
 
       if( fFlags->fRecOff )
          {
-            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+            /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-            EventTree->Fill();}
+            EventTree->Fill();}*/
             flow = new AgAnalysisFlow(flow, analyzed_event);
             return flow;
          }
@@ -203,17 +203,17 @@ public:
          {
             if (age->time<fFlags->start_time)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
+                  EventTree->Fill();}*/
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->time>fFlags->stop_time)
                {
-                  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);{
+                  /*std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);{
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
+                  EventTree->Fill();}*/
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
@@ -223,17 +223,17 @@ public:
          {
             if (age->counter<fFlags->start_event)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
+                  EventTree->Fill();}*/
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->counter>fFlags->stop_event)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
                   EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
+                  EventTree->Fill();}*/
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
@@ -323,9 +323,9 @@ public:
          }
  
       {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         /*std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-         EventTree->Fill();
+         EventTree->Fill();*/
       }
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
