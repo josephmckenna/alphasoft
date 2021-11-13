@@ -35,8 +35,8 @@ TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
   
   BarMultiplicityCut=3;
 
-  fTotalTime = -1.;
-  fTotalVert = -1.;
+  fTotalTime = 0.;
+  fTotalVert = 0.;
 
   fVerbose=false;
 
