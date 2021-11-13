@@ -215,6 +215,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
   if( fPlotTracks )
     {
       ProcessHelices(event->GetHelixArray());
+      if( gApplyCuts && Event.CutsResult > 0 )
       ProcessUsedHelices(event->GetUsedHelices());
     }
 
@@ -288,6 +289,8 @@ void TAGPlot::AddChronoEvent(TCbFIFOEvent *event, const std::string& board, Doub
   Event.runNumber     =0;//event->GetRunNumber();
   if (event->IsLeadingEdge())
     Event.Counts++;
+  else
+    return;
   Event.Chrono_Channel= TChronoChannel(board, event->GetChannel());
   Event.RunTime       = event->GetRunTime();
   Event.t             = event->GetRunTime() - StartOffset;
@@ -403,9 +406,9 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
 {
    top      = Get_Chrono_Channel( runNumber, "SiPM_B");
    bottom   = Get_Chrono_Channel( runNumber, "SiPM_E");
-   sipmad   = Get_Chrono_Channel( runNumber, "SiPM_A_AND_D");
-   sipmcf   = Get_Chrono_Channel( runNumber, "SiPM_C_AND_F");
-   TPC_TRIG = Get_Chrono_Channel( runNumber, "TPC_TRIG");
+   sipmad   = Get_Chrono_Channel( runNumber, "SiPM_A_OR_D");
+   sipmcf   = Get_Chrono_Channel( runNumber, "SiPM_C_OR_F");
+   TPC_TRIG = Get_Chrono_Channel( runNumber, "ADC_TRG");
    Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIG");
 /*
   TSISChannels *sisch = new TSISChannels(runNumber);
