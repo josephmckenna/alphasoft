@@ -169,7 +169,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts
 }
 #endif
 #ifdef BUILD_AG
-TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex)
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, bool ApplyCuts)
 {
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    double tmin = spills.front().GetStartTime();
@@ -178,7 +178,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex)
   double ttmin = GetTrigTimeBefore(runNumber,tmin),
     ttmax = GetTrigTimeAfter(runNumber,tmax);
   std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-  return Plot_TPC(runNumber,tmin,tmax);
+  return Plot_TPC(runNumber,tmin,tmax, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
@@ -204,9 +204,9 @@ TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t 
 }
 #endif
 #ifdef BUILD_AG
-void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
+void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax, bool ApplyCuts)
 {
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   int total_number_events = p->AddEvents(runNumber,tmin,tmax);
 
@@ -230,19 +230,19 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t dumpIndex)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
   Int_t runList[]={runNumber};
   Int_t Nruns = 1;
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
-				   dumpIndex);
+				   dumpIndex, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t dumpIndex)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
