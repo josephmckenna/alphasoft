@@ -100,6 +100,7 @@ public:
   
   // default class member functions
   TSISEvent( );
+  TSISEvent( int SISModule );
   TSISEvent( TSISBufferEvent* event );
   TSISEvent( ULong64_t clock, Double_t time);
   TSISEvent& operator+=(const TSISEvent& b);
