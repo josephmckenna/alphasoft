@@ -41,6 +41,8 @@ private:
   double fPattRecEff;
 
   std::vector<BarHit*> fBarHit; //Barrel hits
+
+  TBarEvent* fBarEvent = NULL;
   
 public:
   TStoreEvent();
@@ -119,6 +121,8 @@ public:
 
   inline void SetVertexStatus(int status)  {fVertexStatus = status; }
   inline int GetVertexStatus() const       {return fVertexStatus;}
+
+  inline void SetBarEvent(TBarEvent* barevent)  { fBarEvent = barevent; }
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   

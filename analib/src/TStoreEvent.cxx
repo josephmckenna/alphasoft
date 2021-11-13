@@ -23,7 +23,8 @@ TStoreEvent::TStoreEvent():TObject(),fID(-1),
 			   fUsedHelices(20),
 			   fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
 			   fVertexStatus(-3),
-			   fPattRecEff(-1.)
+			   fPattRecEff(-1.),
+         fBarEvent(NULL)
 {}
 
 TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID),
@@ -36,7 +37,8 @@ TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID
 						   fUsedHelices(right.fUsedHelices),
 						   fVertex(right.fVertex),fVertexStatus(right.fVertexStatus),
 						   fPattRecEff(right.fPattRecEff),
-						   fBarHit(right.fBarHit)
+						   fBarHit(right.fBarHit),
+               fBarEvent(right.fBarEvent)
 {}
 
 TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
@@ -53,6 +55,7 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
   fVertexStatus = right.fVertexStatus;
   fPattRecEff = right.fPattRecEff;
   fBarHit = right.fBarHit;
+  fBarEvent = right.fBarEvent;
   return *this;
 }
 
