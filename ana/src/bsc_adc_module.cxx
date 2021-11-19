@@ -16,6 +16,8 @@
 
 #include "TMath.h"
 #include "TH1D.h"
+#include "TH2D.h"
+#include "TTree.h"
 #include "TF1.h"
 
 #include "TBarEvent.hh"
@@ -33,6 +35,7 @@ public:
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
    bool fFitAll = false; // If false, fits only saturated waveforms
+   bool fBackground = false;
    AnaSettings* ana_settings=0;
 };
 
@@ -56,6 +59,65 @@ private:
    std::map<int,TH1D*> hSampleWaveforms;
    std::map<int,TF1*> hSampleWaveformFits;
 
+// Initialize histograms
+   TH1D * hBars               = NULL;
+   TH1D * hBsc_Time           = NULL;
+   TH2D * hBsc_TimeVsBar      = NULL;
+   TH1D * hBsc_Amplitude      = NULL;
+   TH2D * hBsc_AmplitudeVsBar = NULL;
+   TH2D * hBsc_SaturatedVsBar = NULL;
+   TH1D * hWave               = NULL;
+   TH2D * hFitAmp             = NULL;
+   TH2D * hFitStartTime       = NULL;
+   TH2D * hFitEndTime         = NULL;
+   TH1D * hNumBars            = NULL;
+   TTree *tBSC                = NULL;
+
+   int    event;
+   std::vector<int>     bar_id;                 ///< bar/SiPM
+   std::vector<int>     bar_tini;               ///< t start
+   std::vector<int>     bar_tend;               ///< t end
+   std::vector<int>     bar_base;               ///< amplitude baseline
+   std::vector<double>  bar_ampl;                ///< signal amplitude (max - baseline)
+   std::vector<double>  bar_vmax;               ///< maximum value (in V)
+   std::vector<int>     bar_tmax;               ///< time of maximum
+   std::vector<bool>    bar_pair_flag;          ///< is bar/SiPM coupled? (read by the two ends)
+   std::vector<bool>    bar_ampl_flag;          ///< is the amplitude above threshold?
+   std::vector<bool>    bar_time_flag;          ///< is the time in the correct window?
+   std::vector<std::vector<int> > bar_waveforms;///< waveforms (all bins)
+   std::vector<double>  fit_ampl;               ///< [from fit] signal amplitude (p0-baseline) 
+   std::vector<double>     fit_par0;               ///< [from fit] t end
+   std::vector<double>     fit_par1;               ///< [from fit] t start
+   std::vector<double>     fit_par2;               ///< [from fit] t end
+   std::vector<double>     fit_par3;               ///< [from fit] t end
+   
+   //std::vector<int>     fit_tmax;               ///< [from fit] time of maximum
+
+   void ResetBarVectors()
+   {
+      bar_id.clear();
+      bar_tini.clear();
+      bar_tend.clear();
+      bar_base.clear();
+      bar_ampl.clear();
+      bar_vmax.clear();
+      bar_tmax.clear();
+      bar_pair_flag.clear();
+      bar_ampl_flag.clear();
+      bar_time_flag.clear();
+      std::vector<std::vector<int> >::iterator it;
+      for (it = bar_waveforms.begin(); it != bar_waveforms.end(); it++) {
+         (*it).clear();
+      }
+      bar_waveforms.clear();
+      fit_par0.clear();
+      fit_par1.clear();
+      fit_par2.clear();
+      fit_par3.clear();
+      fit_ampl.clear();
+      //fit_tmax.clear();
+   }
+
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
@@ -78,6 +140,50 @@ public:
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       if (fFlags->fDiag) {
          gDirectory->mkdir("bsc")->cd();
+         hBars     = new TH1D("hBars", "Bar ends hit;Bar end number", 128, -0.5, 127.5);
+         hBsc_Time = new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200, 0, 2000);
+         hBsc_TimeVsBar =
+            new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128, -0.5, 127.5, 200, 0, 2000);
+         hBsc_Amplitude      = new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000, 0., 50000.);
+         hBsc_AmplitudeVsBar = new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5,
+                                        127.5, 2000, 0., 50000.);
+         hBsc_SaturatedVsBar = new TH2D(
+            "hBsc_SaturatedVsBar", "Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",
+            128, -0.5, 127.5, 2, -0.5, 1.5);
+         hWave   = new TH1D("hWave", "ADC Waveform", 700, 0, 700);
+         hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude", 2000, 0, 35000, 2000, 0, 80000);
+         hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",
+                                  200, 1000, 1400, 200, 1000, 1400);
+         hFitEndTime   = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]", 400,
+                                1000, 1800, 400, 1000, 1800);
+         hNumBars      = new TH1D("hNumBars", "Number of bar ends hit;Number of channels", 16, -0.5, 15.5);
+         tBSC          = new TTree("tBSC", "BSC output tree");
+         // event number
+         // Set object pointer
+         // Set branch addresses and branch pointers
+
+
+         tBSC->Branch("event", &event);
+         // info about the scintillator bars (BCS) that fired (bar == SiPM channel)
+         tBSC->Branch("bar_id", "std::vector<int>", &bar_id);
+         tBSC->Branch("bar_tini", "std::vector<int>", &bar_tini);
+         tBSC->Branch("bar_tend", "std::vector<int>", &bar_tend);
+         tBSC->Branch("bar_base", "std::vector<int>", &bar_base);
+         tBSC->Branch("bar_ampl", "std::vector<double>", &bar_ampl);
+         tBSC->Branch("bar_vmax", "std::vector<double>", &bar_vmax);
+         tBSC->Branch("bar_tmax", "std::vector<int>", &bar_tmax);
+         tBSC->Branch("bar_pair_flag", "std::vector<bool>", &bar_pair_flag);
+         tBSC->Branch("bar_ampl_flag", "std::vector<bool>", &bar_ampl_flag);
+         tBSC->Branch("bar_time_flag", "std::vector<bool>", &bar_time_flag);
+         tBSC->Branch("bar_waveforms",&bar_waveforms);
+         tBSC->Branch("fit_ampl", "std::vector<double>", &fit_ampl);
+         tBSC->Branch("fit_par0", "std::vector<double>", &fit_par0);
+         tBSC->Branch("fit_par1", "std::vector<double>", &fit_par1);
+         tBSC->Branch("fit_par2", "std::vector<double>", &fit_par2);
+         tBSC->Branch("fit_par3", "std::vector<double>", &fit_par3);
+         //tBSC->Branch("fit_tmax", "std::vector<int>", &fit_tmax);
+
+
          gDirectory->mkdir("SampleWaveforms")->cd();
          for (int ii=0;ii<128;ii++)
             {
@@ -144,6 +250,10 @@ public:
       BarEvent->SetID(e->counter);
       BarEvent->SetRunTime(e->time);
 
+      ///< Filling the tBSC TTree
+      event = e->counter;
+      tBSC->Fill();
+
       if( fFlags->fPrint )
          printf("BscModule::AnalyzeFlowEvent(...) has %d hits\n",BarEvent->GetNBars());
 
@@ -155,6 +265,8 @@ public:
 
    TBarEvent* AnalyzeBars(const Alpha16Event* data, TARunInfo* runinfo)
    {
+      ResetBarVectors();
+
       std::vector<Alpha16Channel*> channels = data->hits;
       TBarEvent* BarEvent = new TBarEvent();
 
@@ -193,12 +305,25 @@ public:
                   // Pulse end time is the first time it goes back below threshold
                   if (ch->adc_samples.at(ii) - baseline < threshold && start_time!=0) { end_time = ii; break; }
                }
-                  
-            // Exit if there is no pulse
-            if (start_time<=0 or end_time<=0) continue;
 
-            // Exit if the pulse is too small
-            if (amp<amplitude_cut) continue;
+            
+            if(!(fFlags->fBackground))
+            {
+               // Exit if there is no pulse
+               if (start_time<=0 or end_time<=0) continue; 
+               //    bar_time_flag.push_back(0); 
+               // else 
+               //    bar_time_flag.push_back(1); 
+
+               // Exit if the pulse is too small
+               if (amp<amplitude_cut)  continue;
+               //    bar_ampl_flag.push_back(0); 
+               // else 
+               //    bar_ampl_flag.push_back(1);
+            }else{
+               if (start_time>0 && end_time>0) continue; 
+               if (amp>amplitude_cut)  continue;
+            }
 
             // Exit if bad bar
             if (bar<0 or bar>128) continue;
@@ -206,102 +331,164 @@ public:
             // Count 1 pulse in the event
             counter++;
 
+            double amp_raw = amp;  
+            double amp_fit=-999; 
+            double par0 = -999;
+            double par1 = -999;
+            double par2 = -999;
+            double par3 = -999;
+            if(start_time>0 && end_time>0 && amp>=amplitude_cut)    
             {
+               if( !(fFlags->fPulser) )  // Normal run
+                  {
+                     // Converts amplitude to volts
+                     amp_fit=amp;
+                     double amp_volts = amp*adc_conversion;
+                     double amp_volts_raw = amp*adc_conversion;
 
-            if( !(fFlags->fPulser) )  // Normal run
-               {
-                  // Converts amplitude to volts
-                  double amp_volts = amp*adc_conversion;
-                  double amp_volts_raw = amp*adc_conversion;
-
-
-                  // Sets weights of saturated bins to zero
-                  std::vector<double> weights(ch->adc_samples.size(),1.);
-                  bool saturated = false;
-                  for (int ii=0;ii<ch->adc_samples.size();ii++) {
-                     if (ch->adc_samples.at(ii) > 32750) {
-                        weights[ii] = 0.;
-                        saturated = true;
+                     // Sets weights of saturated bins to zero
+                     std::vector<double> weights(ch->adc_samples.size(),1.);
+                     bool saturated = false;
+                     for (int ii=0;ii<ch->adc_samples.size();ii++) {
+                        if (ch->adc_samples.at(ii) > 32750) {
+                           weights[ii] = 0.;
+                           saturated = true;
+                        }
                      }
-                  }
 
-                  if (fFlags->fFitAll or saturated) {
+                     if (fFlags->fFitAll or saturated) {
 
-                     // Creates fitting FCN
-                     SkewGaussFcn theFCN(ch->adc_samples, weights);
+                        // Creates fitting FCN
+                        SkewGaussFcn theFCN(ch->adc_samples, weights);
 
-                     // Initial fitting parameters
-                     std::vector<double> init_params = {max, double(imax), (end_time-start_time)/4., 0.2};
-                     std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
+                        // Initial fitting parameters
+                        std::vector<double> init_params = {max, double(imax), (end_time-start_time)/4., 0.2};
+                        std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
 
-                     // Creates minimizer
-                     ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
-                     theMinimizer.Builder().SetPrintLevel(0);
-                     int error_level_save = gErrorIgnoreLevel;
-                     gErrorIgnoreLevel = kFatal;
+                        // Creates minimizer
+                        ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
+                        theMinimizer.Builder().SetPrintLevel(0);
+                        int error_level_save = gErrorIgnoreLevel;
+                        gErrorIgnoreLevel = kFatal;
 
-                     // Minimize to fit waveform
-                     ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
-                     gErrorIgnoreLevel = error_level_save;
+                        // Minimize to fit waveform
+                        ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
+                        gErrorIgnoreLevel = error_level_save;
 
-                     // Gets minimized parameters
-                     ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
-                     double new_fit_amp = the_state.Value(0) - baseline;
+                        // Gets minimized parameters
+                        ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
+                        double new_fit_amp = the_state.Value(0) - baseline;
+                        par0 = the_state.Value(0);
+                        par1 = the_state.Value(1);
+                        par2 = the_state.Value(2);
+                        par3 = the_state.Value(3);
+
+                        if (fFlags->fDiag) {
+                           if (!(sample_plotted.at(bar)))
+                              hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                        }
+
+                        // Saves fit voltage
+                        amp_fit = new_fit_amp;
+                     }
+
+                     // Copies histogram to sample histogram
                      if (fFlags->fDiag) {
                         if (!(sample_plotted.at(bar)))
-                           hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                           {
+                              for (int ii=0;ii<ch->adc_samples.size();ii++)
+                                 { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
+                              if (saturated) {
+                                 hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
+                                 hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                              }
+                              sample_plotted.at(bar)=true;
+                           }
                      }
 
-                     // Saves fit voltage
-                     amp_volts = new_fit_amp*adc_conversion;
+                     // Writes bar event
+                     if (saturated) {
+                        if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
+                        if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
+                     }
+                     if (!saturated) {
+                        if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts_raw,start_time*10);
+                        if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts_raw,start_time*10);
+                     }
+
+
                   }
 
-                  // Copies histogram to sample histogram
-                  if (fFlags->fDiag) {
+               if( fFlags->fPulser ) // Pulser run
+                  {
+
+                     // Converts amplitude to volts
+                     double amp_volts = amp*adc_conversion;
+
+                     // Writes bar event
+                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
+                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
+                     // Copies histogram to sample histogram
                      if (!(sample_plotted.at(bar)))
                         {
                            for (int ii=0;ii<ch->adc_samples.size();ii++)
                               { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
-                           if (saturated) {
-                              hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
-                              hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
-                           }
                            sample_plotted.at(bar)=true;
                         }
                   }
-      
-                  // Writes bar event
-                  if (saturated) {
-                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
-                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
-                  }
-                  if (!saturated) {
-                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts_raw,start_time*10);
-                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts_raw,start_time*10);
-                  }
+            
+            }
 
+            std::vector<int> wave;
+            for (int ii = 0; ii < ch->adc_samples.size(); ii++) {
+               wave.push_back(ch->adc_samples.at(ii));
+            }
 
-               }
-
-            if( fFlags->fPulser ) // Pulser run
-               {
-
-                  // Converts amplitude to volts
-                  double amp_volts = amp*adc_conversion;
-      
-                  // Writes bar event
-                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
-                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
-                  // Copies histogram to sample histogram
-                  if (!(sample_plotted.at(bar)))
-                     {
-                        for (int ii=0;ii<ch->adc_samples.size();ii++)
-                           { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
-                        sample_plotted.at(bar)=true;
-                     }
+            ///< ###############################################
+            ///< FILLING THE BSC TTREE 
+            ///< ###############################################
+            ///< Check if there is also the corresponding "top/bottom" pair
+            bool is_paired = false;
+            for(unsigned int kk=0; kk<bar_id.size(); kk++) {
+               if(bar==(bar_id[kk]+64)||bar==(bar_id[kk]-64)) {
+                  is_paired = true;
+                  bar_pair_flag[kk] = true;
+                  break;
                }
             }
+            ///< Flags
+            bar_pair_flag.push_back(is_paired);
+            bar_id.push_back(bar);
+            bar_base.push_back(baseline);
+            bar_tini.push_back(start_time*10);
+            bar_tend.push_back(end_time*10);
+            bar_ampl.push_back(amp_raw); //amp_volts_raw
+            bar_vmax.push_back(max);
+            bar_tmax.push_back(imax*10); ///< To have the time in ns (??? - to be checked)
+            bar_waveforms.push_back(wave);
+            ///< Fit values
+            fit_ampl.push_back(amp_fit);
+            fit_par0.push_back(par0);//(fit_start_time*10); 
+            fit_par1.push_back(par1);//(fit_start_time*10);
+            fit_par2.push_back(par2);//(fit_end_time*10);
+            fit_par3.push_back(par3);//(fit_end_time*10);
+   
+            // Fills histograms
+            hBars->Fill(bar);
+            hBsc_Time->Fill(start_time * 10);
+            hBsc_TimeVsBar->Fill(bar, start_time * 10);
+            if(amp_fit>=0){
+               hFitAmp->Fill(amp_raw, amp_fit);
+               hBsc_Amplitude->Fill(amp_fit);
+               hBsc_AmplitudeVsBar->Fill(bar, amp_fit);
+            }
+            hBsc_SaturatedVsBar->Fill(bar, (max > 32000));
+            //hFitStartTime->Fill(start_time * 10, fit_start_time * 10);
+            //hFitEndTime->Fill(end_time * 10, fit_end_time * 10);
+            
          }
+      
+      hNumBars->Fill(counter);
       return BarEvent;
    }
 
@@ -346,6 +533,8 @@ public:
             json=args[i+1];
          if( args[i] == "--bscfitall")
             fFlags.fFitAll = true;
+         if( args[i] == "--bscbkg")
+            fFlags.fBackground = true;
       }
       fFlags.ana_settings=new AnaSettings(json.Data());
    }
