@@ -170,6 +170,7 @@ private:
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
   std::vector<double> fTOF;
+
 public:
   TBarEvent(); //ctor
   TBarEvent(TBarEvent &barEvent); //copy ctor
@@ -179,8 +180,8 @@ public:
   
   void SetID(int ID){ fEventID=ID;}
   void SetRunTime(double time){ fEventTime=time;}
-  int GetID(){ return fEventID;}
-  double GetRunTime(){ return fEventTime;}
+  int GetID() const { return fEventID;}
+  double GetRunTime() const { return fEventTime;}
   void Reset()
   {
     fEventID=-1;
@@ -192,6 +193,7 @@ public:
     for (auto hit: fTdcHit) delete hit;
     fTdcHit.clear();
     fTOF.clear();
+    fTOFM.clear();
   }
   void AddEndHit(EndHit* e)
   {
@@ -243,13 +245,16 @@ public:
     }
   }
 
-  int GetNBars() { return fBarHit.size(); }
-  int GetNEnds() { return fEndHit.size(); }
-  int GetNTOF() { return fTOF.size(); } // Number of TOF values
-  std::vector<BarHit*> GetBars() { return fBarHit; }
-  std::vector<EndHit*> GetEndHits() { return fEndHit; }
-  std::vector<SimpleTdcHit*> GetTdcHits() { return fTdcHit; }
-  std::vector<double> GetTOF() { return fTOF;}
+  int GetNBars() const { return fBarHit.size(); }
+  int GetNEnds() const { return fEndHit.size(); }
+  int GetNTDC() const { return fTdcHit.size(); }
+  int GetNTOF() const { return fTOF.size(); } // Number of TOF values
+  int GetNTOFMatched() const { return fTOFM.size(); } // Number of TOF values matched to TPC
+  std::vector<BarHit*> GetBars() const { return fBarHit; }
+  std::vector<EndHit*> GetEndHits() const { return fEndHit; }
+  std::vector<SimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
+  std::vector<double> GetTOF() const { return fTOF;}
+  std::vector<double> GetTOFMatched() const { return fTOFM;}
 
   ClassDef(TBarEvent, 1);
 };

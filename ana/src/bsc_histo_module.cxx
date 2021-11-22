@@ -18,6 +18,7 @@ public:
    bool fProtoTOF = false;
    bool fBscDiag = false;
    bool fWriteOffsetFile = false;
+   bool fRecOff = false;
 
 public:
    BscHistoFlags() // ctor
@@ -103,6 +104,9 @@ private:
    TH2D* hNBarExpectedTOFvsTOF;
    TH1D* hTwoBarExpectedTOFminusTOF;
    TH1D* hNBarExpectedTOFminusTOF;
+   TH1D* hBigTOF;
+   TH2D* hBigExpectedTOFvsTOF;
+   TH1D* hBigExpectedTOFminusTOF;
 
    // Matching
    TH1D* hTPCMatched;
@@ -202,7 +206,7 @@ public:
             hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",2,-0.5,1.5,200,-10,10);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-2,2);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",2,-0.5,1.5,200,-2,2);
-            hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,-20,20);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,0,20);
             hTwoBarDZed = new TH1D("hTwoBarDZed","Zed difference between two bars;Delta Zed (m)",200,-2,2);
          }
          gDirectory->cd("..");
@@ -259,10 +263,10 @@ public:
             hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",64,-0.5,63.5,200,-30,30);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-3,3);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",64,-0.5,63.5,200,-2,2);
-            hTwoBarTOF = new TH1D("hTwoBarTOF","TOF for events with N=2 bars;TOF (ns)",200,-20,20);
-            hTwoBarTOF2d = new TH2D("hTwoBarTOF2d","TOF for events with N=2 bars;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
-            hNBarTOF = new TH1D("hNBarTOF","TOF for any permutation of two hits;TOF (ns)",200,-20,20);
-            hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","TOF for events with N=2 bars;TOF (ns)",200,0,10);
+            hTwoBarTOF2d = new TH2D("hTwoBarTOF2d","TOF for events with N=2 bars;Bar number;TOF (ns)",64,-0.5,63.5,200,0,10);
+            hNBarTOF = new TH1D("hNBarTOF","TOF for any permutation of two hits;TOF (ns)",200,0,10);
+            hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,0,10);
             hTwoBarDPhi = new TH1D("hTwoBarDPhi","Angular separation for events with N=2 bars;Delta phi (degrees)",32,0,180);
             hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (degrees)",32,0,180);
             hTwoBarDZed = new TH1D("hTwoBarDZed","Zed separation for events with N=2 bars;Delta zed (m)",200,-6,6);
@@ -273,8 +277,11 @@ public:
            hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
            hNBarExpectedTOF = new TH1D("hNBarExpectedTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns)",200,0,10);
            hNBarExpectedTOFvsTOF = new TH2D("hNBarExpectedTOFvsTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
-           hTwoBarExpectedTOFminusTOF = new TH1D("hTwoBarExpectedTOFminusTOF","Geometric distance - speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
-           hNBarExpectedTOFminusTOF = new TH1D("hNBarExpectedTOFminusTOF","Geometric distance - speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
+           hTwoBarExpectedTOFminusTOF = new TH1D("hTwoBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
+           hNBarExpectedTOFminusTOF = new TH1D("hNBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
+           hBigTOF = new TH1D("hBigTOF","Largest TOF value in event (TPC matched);TOF (ns)",200,0,10);
+           hBigExpectedTOFvsTOF = new TH2D("hBigExpectedTOFvsTOF","Geometric distance/speed of light for largest TOF value in event;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
+           hBigExpectedTOFminusTOF = new TH1D("hBigExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for largest TOF value in event;(Distance between hits)/c (ns);Measured TOF (ns)",200,-5,5);
          }
          gDirectory->cd("..");
 
@@ -531,10 +538,13 @@ public:
    {
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
+      double bigTOF = -2;
+      double bigexpTOF = -2;
       if (barhits.size()==2) {
          if (!(fFlags->fProtoTOF)) {
-            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched()) {
-               hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched() or (fFlags->fRecOff)) {
+               double TOF = 1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime());
+               hTwoBarTOF->Fill(TOF);
                double x0,y0,x1,y1,z0,z1;
                barhits[0]->GetXY(x0,y0);
                barhits[1]->GetXY(x1,y1);
@@ -542,16 +552,16 @@ public:
                z1 = barhits[1]->GetTDCZed();
                hTwoBarDZed->Fill(z0-z1);
                if (!(fFlags->fProtoTOF)) {
-                  hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-                  hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
+                  hTwoBarTOF2d->Fill(barhits[0]->GetBar(),TOF);
+                  hTwoBarTOF2d->Fill(barhits[1]->GetBar(),TOF);
                   double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
                   if (angle>180) angle = 360 - angle;
                   hTwoBarDPhi->Fill(angle);
                   hTwoBarDPhiDZed->Fill(angle,z0-z1);
                   double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
                   hTwoBarExpectedTOF->Fill(expTOF);
-                  hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-                  hTwoBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime())));
+                  hTwoBarExpectedTOFvsTOF->Fill(expTOF,TOF);
+                  hTwoBarExpectedTOFminusTOF->Fill(expTOF-TOF);
                }
             }
          }
@@ -559,8 +569,8 @@ public:
       if (!(fFlags->fProtoTOF)) {
          for (BarHit* barhit: barhits) {
             for (BarHit* barhit2: barhits) {
-               if (!(barhit->IsTPCMatched())) continue;
-               if (!(barhit2->IsTPCMatched())) continue;
+               if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
+               if ((!(barhit2->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
                if (TOF<=0) continue;
                hNBarTOF->Fill(TOF);
@@ -576,10 +586,19 @@ public:
                hNBarDZed->Fill(z0-z1);
                hNBarDPhiDZed->Fill(angle,z0-z1);
                double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+               if (TOF>bigTOF) {
+                  bigTOF = TOF;
+                  bigexpTOF = expTOF;
+               }
                hNBarExpectedTOF->Fill(expTOF);
                hNBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()));
                hNBarExpectedTOFminusTOF->Fill(expTOF-(1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime())));
             }
+         }
+         if (bigTOF>-2) {
+            hBigTOF->Fill(bigTOF);
+            hBigExpectedTOFvsTOF->Fill(bigexpTOF,bigTOF);
+            hBigExpectedTOFminusTOF->Fill(bigexpTOF-bigTOF);
          }
       }
    }
@@ -588,7 +607,7 @@ public:
       if (fFlags->fPulser) return;
       if (fFlags->fProtoTOF) return;
       for (BarHit* barhit: barhits) {
-         if (!(barhit->IsTPCMatched())) continue;
+         if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
          TVector3 tpc_point = barhit->GetTPC();
          TVector3 bv_point = Get3VectorBV(barhit);
          double dz = GetDZ(tpc_point,bv_point);
@@ -666,6 +685,8 @@ public:
             fFlags.fProtoTOF = true;
          if( args[i] == "--bscWriteOffsetFile" )
             fFlags.fWriteOffsetFile = true;
+         if( args[i] == "--recoff" )
+            fFlags.fRecOff = true;
 
       }
    }

@@ -46,8 +46,8 @@ private:
    // BV geometry
    const double inner_diameter = 446.0; // mm
    const double outer_diameter = 486.0; // mm
-   //double radius = (inner_diameter+outer_diameter)/4.; // Use centre of BV
-   const double radius = inner_diameter*0.5; // Use inner edge of BV
+   const double radius = (inner_diameter+outer_diameter)/4.; // Use centre of BV
+   //const double radius = inner_diameter*0.5; // Use inner edge of BV
    const double length = 2604.; // mm
    double c = 2.99792e8*1e-9; // m/ns
    double refrac = 1.93; // From protoTOF tests with time walk correction applied
@@ -117,6 +117,8 @@ public:
    // Main function
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
+   
+
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
@@ -155,7 +157,7 @@ public:
          return flow;
       }
 
-      //if (!(fFlags->fDiag)) return flow;
+      if (!(fFlags->fDiag)) return flow;
 
       const TObjArray* LineArray = e->GetLineArray();
       const TObjArray* HelixArray = e->GetHelixArray();
@@ -253,11 +255,11 @@ public:
       std::vector<BarHit*> barhits = barEvt->GetBars();
       for (BarHit* barhit: barhits) {
          for (BarHit* barhit2: barhits) {
-            //if (!(barhit->IsTPCMatched())) continue;
-            //if (!(barhit2->IsTPCMatched())) continue;
             double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
             if (TOF<=0) continue;
             barEvt->AddTOF(TOF);
+            if ((barhit->IsTPCMatched()) and (barhit2->IsTPCMatched()))
+               barEvt->AddTOFMatched(TOF);
          }
       }
    }
