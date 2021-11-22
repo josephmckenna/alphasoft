@@ -192,6 +192,8 @@ public:
 		{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
 		fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
 		fBSCEventTree->Fill();}
+      if(eventCopy)
+         e->SetBarEvent(new TBarEvent(*eventCopy));
 	}
       
       //AgBarEventFlow 

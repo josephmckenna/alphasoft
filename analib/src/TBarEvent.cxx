@@ -99,7 +99,7 @@ EndHit::EndHit()
   fTDCMatched=false;
 }
 
-EndHit::EndHit(EndHit &h)
+EndHit::EndHit(const EndHit &h)
 {
 // copy ctor
   fBarID=h.GetBar();
@@ -131,7 +131,7 @@ SimpleTdcHit::SimpleTdcHit()
 // ctor
 }
 
-SimpleTdcHit::SimpleTdcHit(SimpleTdcHit &h)
+SimpleTdcHit::SimpleTdcHit(const SimpleTdcHit &h)
 {
 // copy ctor
 
@@ -168,12 +168,15 @@ BarHit::BarHit()
 
 }
 
-BarHit::BarHit(BarHit &h)
+BarHit::BarHit(const BarHit &h)
 {
 // copy ctor
   fBarID=h.GetBar();
-  fTopHit= new EndHit(*(h.GetTopHit()));
-  fBotHit= new EndHit(*(h.GetBotHit()));
+  if(h.GetTopHit())
+    fTopHit= new EndHit(*(h.GetTopHit()));
+  
+  if(h.GetBotHit())
+    fBotHit= new EndHit(*(h.GetBotHit()));
   fTPCMatched=h.IsTPCMatched();
   fTPC=h.GetTPC();
   fZed=h.GetTDCZed();

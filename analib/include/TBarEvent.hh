@@ -21,7 +21,7 @@ private:
 
 public:
    SimpleTdcHit(); //ctor
-   SimpleTdcHit(SimpleTdcHit &tdchit);
+   SimpleTdcHit(const SimpleTdcHit &tdchit);
   using TObject::Print;
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
@@ -51,7 +51,7 @@ private:
 
 public:
   EndHit(); // ctor
-  EndHit(EndHit &endhit); //Copy ctor
+  EndHit(const EndHit &endhit); //Copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~EndHit(); // dtor
@@ -101,7 +101,7 @@ private:
 
 public:
   BarHit(); // ctor
-  BarHit(BarHit &barhit); //copy ctor
+  BarHit(const BarHit &barhit); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~BarHit(); // dtor

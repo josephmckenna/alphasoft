@@ -40,11 +40,13 @@ private:
 
   double fPattRecEff;
 
-  std::vector<BarHit*> fBarHit; //Barrel hits
+  std::vector<BarHit> fBarHit; //Barrel hits
 
   TBarEvent* fBarEvent = NULL;
   
 public:
+
+
   TStoreEvent();
   TStoreEvent(const TStoreEvent&);
   virtual ~TStoreEvent();  // destructor
@@ -110,6 +112,10 @@ public:
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
   inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+  void ClearUsedHelices()
+  {
+    fUsedHelices.Clear();
+  }
 
   int AddLine(TFitLine* l);
   int AddHelix(TFitHelix* h);
@@ -123,10 +129,11 @@ public:
   inline int GetVertexStatus() const       {return fVertexStatus;}
 
   inline void SetBarEvent(TBarEvent* barevent)  { fBarEvent = barevent; }
+  TBarEvent* GetBarEvent()  { return fBarEvent; }
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   
-  void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
+  //void AddBarrelHits(TBarEvent* b) { fBarHit=b.GetBars();}
   Int_t GetBarMultiplicity() { return fBarHit.size(); }
   virtual void Print(Option_t *option="") const;
   virtual void Reset();

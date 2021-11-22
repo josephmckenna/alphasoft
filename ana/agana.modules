@@ -23,7 +23,8 @@ phspectrum_module.o
 bv_tpc_matching_module.o
 bsc_histo_module.o
 # LG
-write_to_tree_module.o
+# reco_write.o
+ write_to_tree_module.o
 # LM
 calib_module.o
 # PH

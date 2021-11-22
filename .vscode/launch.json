@@ -32,7 +32,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/ana/agana.exe",
-            "args": ["-e3000", "${workspaceFolder}/run05933sub00*", "--", "--mt", "--anasettings", "${workspaceFolder}/ana/cern2021_2.json", "--bscprint"],
+            "args": ["-e3000", "${workspaceFolder}/run05933sub00*", "--", "--anasettings", "${workspaceFolder}/ana/cern2021_2.json", "--bscprint"],
             //"args": ["${workspaceFolder}/runs/run58453sub00000.mid.gz"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

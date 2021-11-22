@@ -23,8 +23,8 @@ TStoreEvent::TStoreEvent():TObject(),fID(-1),
 			   fUsedHelices(20),
 			   fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
 			   fVertexStatus(-3),
-			   fPattRecEff(-1.),
-         fBarEvent(NULL)
+         fBarEvent(NULL),
+			   fPattRecEff(-1.)
 {}
 
 TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID),
@@ -37,8 +37,8 @@ TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID
 						   fUsedHelices(right.fUsedHelices),
 						   fVertex(right.fVertex),fVertexStatus(right.fVertexStatus),
 						   fPattRecEff(right.fPattRecEff),
-						   fBarHit(right.fBarHit),
-               fBarEvent(right.fBarEvent)
+               fBarEvent(right.fBarEvent),
+						   fBarHit(right.fBarHit)
 {}
 
 TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
@@ -115,13 +115,56 @@ void TStoreEvent::Print(Option_t* o) const
       std::cout<<"EventTime: "<< fEventTime <<std::endl;
       std::cout<<"Number of Points: "<<fNpoints
          <<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
-      std::cout<<"*** Vertex Position ***"<<std::endl;
       fVertex.Print();
+      std::cout<<"Vertex Status: "<< fVertexStatus <<std::endl;
       std::cout<<"***********************"<<std::endl;
-      // for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
-      //   {
-      //     ((TFitLine*)fStoreLineArray.At(i))->Print();
-      //   }
+      std::cout<<"fPattRecEff: "<< fPattRecEff <<std::endl;
+
+      std::cout<<"*** Bar Hits ***"<<std::endl;
+      std::cout<<"fBarHit: "<< fBarHit.size() <<std::endl;
+       for(int i=0; i<fBarHit.size(); ++i)
+         {
+           fBarHit.at(i).Print();
+         }
+      std::cout<<"***********************"<<std::endl;
+
+      std::cout<<"*** TObj Arrays ***"<<std::endl;
+      std::cout<<"fStoreHelixArray***********************"<<std::endl;
+      std::cout<<"fStoreHelixArray: "<< fStoreHelixArray.GetEntries() <<std::endl;
+       //for(int i=0; i<fStoreHelixArray.GetEntries(); ++i)
+       for(int i=0; i<std::min(1,fStoreHelixArray.GetEntries()) ; ++i)
+         {
+           ((TFitLine*)fStoreHelixArray.At(i))->Print();
+         }
+      std::cout<<"***********************"<<std::endl;
+      
+      std::cout<<"fStoreLineArray***********************"<<std::endl;
+      std::cout<<"fStoreLineArray: "<< fStoreLineArray.GetEntries() <<std::endl;
+       //for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
+       for(int i=0; i<std::min(1,fStoreLineArray.GetEntries()); ++i)
+         {
+           ((TFitLine*)fStoreLineArray.At(i))->Print();
+         }
+      std::cout<<"***********************"<<std::endl;
+      
+      std::cout<<"fSpacePoints***********************"<<std::endl;
+      std::cout<<"fSpacePoints: "<< fSpacePoints.GetEntries() <<std::endl;
+       //for(int i=0; i<fSpacePoints.GetEntries(); ++i)
+       for(int i=0; i<std::min(1,fSpacePoints.GetEntries()); ++i)
+         {
+           ((TFitLine*)fSpacePoints.At(i))->Print();
+         }
+      std::cout<<"***********************"<<std::endl;
+
+      std::cout<<"fUsedHelices***********************"<<std::endl;
+      std::cout<<"fUsedHelices: "<< fUsedHelices.GetEntries() <<std::endl;
+       //for(int i=0; i<fSpacePoints.GetEntries(); ++i)
+       /*for(int i=0; i<std::min(1,fUsedHelices.GetEntries()); ++i)
+         {
+           ((TFitLine*)fUsedHelices.At(i))->Print();
+         }*/
+      std::cout<<"***********************"<<std::endl;
+      
       std::cout<<"======================================="<<std::endl;
    }
 }
@@ -148,9 +191,14 @@ void TStoreEvent::Reset()
   fStoreLineArray.Delete();
   fStoreHelixArray.SetOwner(kTRUE);
   fStoreHelixArray.Delete();
+  
+  //Already Off
   //fUsedHelices.SetOwner(kTRUE);
   //fUsedHelices.Delete();
+  // fCosmicCosineAngle = -99.;
+  
   fUsedHelices.Clear();
+  
   fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
 
@@ -159,7 +207,8 @@ void TStoreEvent::Reset()
   fPattRecEff = -1.;
   
   fBarHit.clear();
-  // fCosmicCosineAngle = -99.;
+
+  
 }
 
 ClassImp(TStoreEvent)

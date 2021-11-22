@@ -192,9 +192,8 @@ public:
 
       if( fFlags->fRecOff )
          {
-            /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-            EventTree->Fill();}*/
+            std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+            analyzed_event->Print();
             flow = new AgAnalysisFlow(flow, analyzed_event);
             return flow;
          }
@@ -203,17 +202,15 @@ public:
          {
             if (age->time<fFlags->start_time)
                {
-                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}*/
+                  std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+                  analyzed_event->Print();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->time>fFlags->stop_time)
                {
-                  /*std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);{
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}*/
+                  std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+                  analyzed_event->Print();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
@@ -223,17 +220,15 @@ public:
          {
             if (age->counter<fFlags->start_event)
                {
-                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}*/
+                  std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+                  analyzed_event->Print();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->counter>fFlags->stop_event)
                {
-                  /*{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}*/
+                  std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+                  analyzed_event->Print();
                   flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
@@ -322,12 +317,9 @@ public:
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
  
-      {
-         /*std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-         EventTree->Fill();*/
-      }
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
+      std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
+      analyzed_event->Print();
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
       //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
