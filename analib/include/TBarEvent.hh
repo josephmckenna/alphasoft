@@ -170,6 +170,7 @@ private:
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
   std::vector<double> fTOF;
+  std::vector<double> fTOFM;
 
 public:
   TBarEvent(); //ctor
@@ -244,6 +245,12 @@ public:
       barhit->ClearEndHits();
     }
   }
+
+  void AddTOFMatched(double TOF)
+  {
+    fTOFM.push_back(TOF);
+  }
+
 
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }

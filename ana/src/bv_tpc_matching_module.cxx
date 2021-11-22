@@ -157,7 +157,7 @@ public:
          return flow;
       }
 
-      if (!(fFlags->fDiag)) return flow;
+      //if (!(fFlags->fDiag)) return flow;
 
       const TObjArray* LineArray = e->GetLineArray();
       const TObjArray* HelixArray = e->GetHelixArray();
