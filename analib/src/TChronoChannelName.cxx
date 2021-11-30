@@ -2,6 +2,8 @@
 
 ClassImp(TChronoChannelName)
 
+#include "mvodb.h"
+
 #ifdef INCLUDE_VirtualOdb_H
 //Old manalyzer uses VirtualODB (before Jan 2020)
 TChronoChannelName::TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex)
