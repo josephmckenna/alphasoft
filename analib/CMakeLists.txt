@@ -42,21 +42,13 @@ endif()
 
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 
-if(BUILD_MANALYZER)
-  target_include_directories(analib PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer)
-elseif(MIDAS_FOUND)
-  target_include_directories(analib PUBLIC ${MIDAS_INCLUDE_DIRS} $ENV{MIDASSYS}/manalyzer)
-else()
-  message(FATAL_ERROR "Configuration failed for target analib")
-endif()
-
 if(BUILD_AG)
    target_link_libraries(analib PUBLIC agtpc)
 endif()
 if(BUILD_A2)
    target_link_libraries(analib PUBLIC sqlite3)
 endif()
-target_link_libraries(analib PUBLIC XMLParser Core RIO Hist)
+target_link_libraries(analib PUBLIC manalyzer XMLParser Core RIO Hist)
 add_dependencies(analib gitinfo)
 
 install(TARGETS analib DESTINATION lib)
