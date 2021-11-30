@@ -74,22 +74,13 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/aged/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
-    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    if( MIDAS_FOUND )
-      link_directories(${bin} PUBLIC ${MIDAS_LIBRARY_DIRS})
-      target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
-    endif()
-
-    if(BUILD_MANALYZER)
-      target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer ${CMAKE_SOURCE_DIR}/midasio ${CMAKE_SOURCE_DIR}/mvodb ${CMAKE_SOURCE_DIR}/mjson ${CMAKE_SOURCE_DIR}/mxml)   
-    endif()
 
     target_link_libraries( ${bin} ${AG_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            ${ROOT_LIBRARIES}
                            ${ZLIB_LIBRARIES}
 			   manalyzer manalyzer_main
-			   ${MIDAS_LIBRARIES}) 
+			 ) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )
