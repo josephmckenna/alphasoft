@@ -66,14 +66,26 @@ public:
    void EndRun(TARunInfo* runinfo)
    {
       if (fFirstFifthDump)
+      {
          delete fFirstFifthDump;
+         fFirstFifthDump = NULL;
+      }
       if (fSecondFifthDump)
+      {
          delete fSecondFifthDump;
+         fSecondFifthDump = NULL;
+      }
       if (fColdDump)
+      {
          delete fColdDump;
+         fColdDump = NULL;
+      }
       if (fLifetime)
+      {
          delete fLifetime;
-
+         fLifetime = NULL;
+      }
+      
       if(fLifetime && !HaveAllDumps())
          printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected but not enough cold and/or fifth dumps found for the calculation. This module requires 2xCold Dumps, 2xFifth Dumps, and 1xLifetime Dump to automate the calculation.", runinfo->fRunNo);
       if(fLifetime && HaveAllDumps() && !fFlags->fLifetimeDone)
@@ -121,8 +133,9 @@ public:
                if(fFirstFifthDump && fSecondFifthDump)
                {
                   //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.  
-                    fFirstFifthDump = new TA2Spill(*fSecondFifthDump);
-                    fSecondFifthDump = new TA2Spill(*s);
+                  delete fFirstFifthDump;
+                  fFirstFifthDump = fSecondFifthDump;
+                  fSecondFifthDump = new TA2Spill(*s);
                }
                else if(fFirstFifthDump)
                {
@@ -151,7 +164,9 @@ public:
                else
                {
                   //Else save the cold dump for later and wait until we have everything we need.
-                   fColdDump = new TA2Spill(*s);
+                  if (fColdDump)
+                  delete fColdDump;
+                  fColdDump = new TA2Spill(*s);
                }
             }
 
@@ -187,7 +202,7 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   bool HaveAllDumps()
+   bool HaveAllDumps() const
    {
        return (fFirstFifthDump && fSecondFifthDump && fLifetime && fColdDump);
    }
@@ -200,27 +215,27 @@ public:
        // We could just do it on every channel and let the user decide which is useful like the efficiency module but I prefer this.
          //Note: To do this we would require a function that takes all our dumps as an input and returns lifetime dump. It would go where the / operator overload in CE module goes.
        // Searching over so many channels could be a major cause of slowdown. Also saving 5 dumps in memory is non ideal. 
-      TSISChannels* channels = new TSISChannels(runinfo->fRunNo);
+      TSISChannels channels(runinfo->fRunNo);
       std::vector<int> channelsToCheck
       {
          42, //??
-         channels->GetChannel("SIS_PMT_ATOM_OR"),
-         channels->GetChannel("SIS_PMT_CATCH_OR"), 
-         channels->GetChannel("SIS_PMT_5_AND_6"), 
-         channels->GetChannel("SIS_PMT_7_AND_8"), 
-         channels->GetChannel("PMT_12_AND_13"), 
-         channels->GetChannel("CT_SiPM_OR"), 
-         channels->GetChannel("SiPM_A"), //AlphaG channels?
-         channels->GetChannel("SiPM_B"), 
-         channels->GetChannel("SiPM_C"), 
-         channels->GetChannel("SiPM_D"), 
-         channels->GetChannel("SiPM_E"), 
-         channels->GetChannel("SiPM_F"), 
-         channels->GetChannel("PMT_10_AND_PMT_11")
+         channels.GetChannel("SIS_PMT_ATOM_OR"),
+         channels.GetChannel("SIS_PMT_CATCH_OR"), 
+         channels.GetChannel("SIS_PMT_5_AND_6"), 
+         channels.GetChannel("SIS_PMT_7_AND_8"), 
+         channels.GetChannel("PMT_12_AND_13"), 
+         channels.GetChannel("CT_SiPM_OR"), 
+         channels.GetChannel("SiPM_A"), //AlphaG channels?
+         channels.GetChannel("SiPM_B"), 
+         channels.GetChannel("SiPM_C"), 
+         channels.GetChannel("SiPM_D"), 
+         channels.GetChannel("SiPM_E"), 
+         channels.GetChannel("SiPM_F"), 
+         channels.GetChannel("PMT_10_AND_PMT_11")
       }; 
       int bestChannel = -1;
       int bestCount = 0;
-      for(auto i: channelsToCheck)
+      for(const auto i: channelsToCheck) //Maybe even best to loop over an int.
       {
          if(fColdDump->ScalerData->DetectorCounts[i] > bestCount)
          {
@@ -235,8 +250,19 @@ public:
    {
       std::cout<<"lifetime_module::CalculateLifetime"<<std::endl;
       int bestChannel = FindBestChannel(runinfo);
+
+      size_t smallestChannelsSize = std::min({fFirstFifthDump->ScalerData->DetectorCounts.size(), fSecondFifthDump->ScalerData->DetectorCounts.size(),  
+         fColdDump->ScalerData->DetectorCounts.size(), finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size()});
       
-      //Step by step - good for debugging, potentially worse for performance.
+      //smallestChannelsSize = std::min(smallestChannelsSize, finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size());
+
+      if(bestChannel < 0 || bestChannel > smallestChannelsSize)
+      {
+         std::cout << "Error in lifetime module. Either bad counts or bad channels." <<std::endl;
+         return -1;
+      }
+      
+      //Step by step - good for debugging, potentially worse for performance. - No need to use .at() due to the checks above?
       double lifetimeHold = fLifetime->GetStopTime() - fLifetime->GetStartTime();
       double countsFD0 = fFirstFifthDump->ScalerData->DetectorCounts[bestChannel];
       double countsFD1 = fSecondFifthDump->ScalerData->DetectorCounts[bestChannel];
