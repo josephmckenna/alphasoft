@@ -24,6 +24,11 @@ add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc)
 target_include_directories(agtpc PUBLIC include)
 target_link_libraries(agtpc ${ROOT_LIBRARIES})
 
+if( MINUIT2TRACK )
+  target_compile_definitions(agtpc PUBLIC __MINUIT2FIT__)
+  message(STATUS "${PROJECT_NAME}: Using Minuit2")
+endif( MINUIT2TRACK )
+
 install(TARGETS agtpc DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libagtpc.rootmap DESTINATION lib)

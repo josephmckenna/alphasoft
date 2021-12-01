@@ -251,7 +251,7 @@ public:
          std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
          if( SigFlow->combinedPads )
             {
-               //if( fTrace )
+               if( fTrace )
                   printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
                SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
                SigFlow->AddPadSignals( SigFlow->combinedPads );
