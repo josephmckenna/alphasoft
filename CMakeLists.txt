@@ -28,12 +28,6 @@ endif()
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
-endif()
-
-
-
 # IDentify OS (linux, windows, etc.)
 string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
 string(TOLOWER ${OS_TYPE} OS_TYPE)
@@ -67,7 +61,7 @@ if(DEFINED ENV{MIDASSYS})
    set(MIDAS_FOUND TRUE)
 else()
    message(STATUS "${PROJECT_NAME}: Building with standalone local manalyzer")
-   add_subdirectory(manalyzer)
+   set(BUILD_MANALYZER TRUE)
    unset(MIDAS_FOUND)
 endif()
 
@@ -79,19 +73,6 @@ if(SQLite3_FOUND)
 else()
   message(FATAL "SQLite3 NOT FOUND")
 endif()
-
-# Zlib
-set(HAVE_LIBZ 0)
-find_package(ZLIB)
-if(ZLIB_FOUND)
-    # TODO: rename HAVE_LIBZ to HAVE_ZLIB
-    # (original rename was introduced in midasio commit f185f999
-    # for compatibility with autotools which is not used)
-    set(HAVE_LIBZ 1)
-    set(HAVE_ZLIB 1)
-    add_compile_definitions(HAVE_LIBZ HAVE_ZLIB)
-endif()
-
 
 # Find ROOT
 if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
@@ -150,6 +131,23 @@ include_directories(SYSTEM ${ROOT_INCLUDE_DIRS})
 
 # Directories
 set( _AGANA_STATIC TRUE)
+
+if(BUILD_MANALYZER)
+  message(STATUS "Cloning submoduels")
+  # get midas-analyzer submodules
+  get_submodule(midasio)
+  get_submodule(mvodb)
+  get_submodule(mjson)
+  get_submodule(mxml)
+  get_submodule(manalyzer)
+  add_subdirectory(manalyzer)
+  message(STATUS "Ready to build manalyzer")
+endif()
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
+endif()
+
+
 
 #Send these settings as precompiler flags (mostly used in rootUtils)
 if (BUILD_AG)
@@ -215,16 +213,6 @@ add_subdirectory(analib)
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
 
-if(BUILD_MANALYZER)
-  message(STATUS "Cloning submoduels")
-  # get midas-analyzer submodules
-  get_submodule(midasio)
-  get_submodule(mvodb)
-  get_submodule(mjson)
-  get_submodule(mxml)
-  get_submodule(manalyzer)
-  message(STATUS "Ready to build manalyzer")
-endif()
 
 #AG libraries
 if (BUILD_AG)
