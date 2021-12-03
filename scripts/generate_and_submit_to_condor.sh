@@ -128,13 +128,14 @@ executable              = ${AGRELEASE}/bin/${EXECUTABLE}
 #transfer_input_files    = ${MIDAS_FILE_LIST}
 #should_transfer_files = yes
 
-arguments               = \"-D${OUTPUT_PATH} ${MIDAS_FILE_LIST} -- --anasettings ${AGRELEASE}/ana/cern2021_1.json\"
+arguments               = \"-D${OUTPUT_PATH} ${MIDAS_FILE_LIST} -- --anasettings ${AGRELEASE}/ana/cern2021_2.json\"
 
 output       = ${LOG_PATH}/${JOBNAME}.out.log
 error        = ${LOG_PATH}/${JOBNAME}.err.log
 log                     = ${LOG_PATH}/${JOBNAME}.log
 
-
+batch_runtime = 172800
++JobFlavour = \"nextweek\"
 request_cpus   = 1
 request_memory = 2048
 #request_disk   = ${DISK_SPACE}
