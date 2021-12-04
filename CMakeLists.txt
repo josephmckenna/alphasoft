@@ -85,7 +85,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom RHTTP)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
-message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
+separate_arguments(ROOT_CXX_FLAGS UNIX_COMMAND "${ROOT_CXX_FLAGS}")
+message(STATUS "Found ROOT: flags: ${ROOT_CXX_FLAGS} and includes: ${ROOT_INCLUDE_DIRS}")
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
 # The parameter is based on compiler ID as it's not standardised
