@@ -19,8 +19,8 @@ class LifetimeModuleFlags
 {
 public:
    bool fPrint = false;
-
 };
+
 class LifetimeModule: public TARunObject
 {
 private:
@@ -58,9 +58,10 @@ public:
       if (fTrace)
          printf("LifetimeModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fLifetimeDone = false;
-    }
+      ResetStoredDumps();
+   }
 
-   void EndRun(TARunInfo* runinfo)
+   void ResetStoredDumps()
    {
       if (fFirstFifthDump)
       {
@@ -82,12 +83,16 @@ public:
          delete fLifetime;
          fLifetime = NULL;
       }
-      
+   }
+
+   void EndRun(TARunInfo* runinfo)
+   {
       if(fLifetime && !HaveAllDumps())
          printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected but not enough cold and/or fifth dumps found for the calculation. This module requires 2xCold Dumps, 2xFifth Dumps, and 1xLifetime Dump to automate the calculation.", runinfo->fRunNo);
-      if(fLifetime && HaveAllDumps() && !fLifetimeDone)
+      if(fLifetime && HaveAllDumps())
          printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected plus all conditions, but for some reason not calculated. Please alert Lukas.", runinfo->fRunNo);
 
+      ResetStoredDumps();
 
       if (fTrace)
          printf("LifetimeModule::EndRun, run %d\n", runinfo->fRunNo);
@@ -105,17 +110,8 @@ public:
          printf("LifetimeModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if(fLifetimeDone)
-      {
-         //This ensures we only calculate the lifetime once.
-#ifdef HAVE_MANALYZER_PROFILER
-         *flags|=TAFlag_SKIP_PROFILE;
-#endif
-         return flow;;
-      }
       A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
       if (!SpillFlow)
       {
@@ -153,7 +149,7 @@ public:
                fFirstFifthDump = new TA2Spill(*s);
             }
          }
-         else if (strcmp(s->Name.c_str(),"\"Lifetime\"")==0)
+         if (strcmp(s->Name.c_str(),"\"Lifetime\"")==0)
          {
             //If lifetime found, save for later. 
             fLifetime = new TA2Spill(*s);
@@ -165,13 +161,14 @@ public:
             {
                //Once we have all the conditions to calculate a lifetime dump, lets do it in this AnalyzeFlowEvent(). 
                //Do lifetime calc. 
-               double lifetimeInMins = CalculateLifetime(runinfo, s);
-
+               const double lifetimeInMins = CalculateLifetime(runinfo, s);
                std::ostringstream lifetimeStream;
                lifetimeStream << "Lifetime measurment detected... Normalised to fifth dumps the lifetime = " << lifetimeInMins << "m.";
                TA2Spill* lifetimeSpill = new TA2Spill(runinfo->fRunNo,fLifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
                SpillFlow->spill_events.push_back(lifetimeSpill);
-               fLifetimeDone = true;
+               // We've finished with all the dumps... lets get ready for another (in case users 
+               // decide to run a lifetime multiple times)
+               ResetStoredDumps();
             }
             else
             {
@@ -184,7 +181,6 @@ public:
       }
       return flow; 
    }
-
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
