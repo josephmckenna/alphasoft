@@ -107,89 +107,86 @@ public:
 
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-  {
-     if(fFlags->fLifetimeDone)
-     {
-        //This ensures we only calculate the lifetime once.
-        return flow;;
-     }
-      A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
-      if (SpillFlow)
+   {
+      if(fFlags->fLifetimeDone)
       {
-         for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
-         {
-            TA2Spill* s=SpillFlow->spill_events.at(i);
-            //s->Print();
-            if (!s->SeqData) continue;
-            int thisSeq=s->SeqData->fSequenceNum;
-            if (thisSeq==0) //Catching trap
-            //if (strcmp(s->SeqName.c_str(),"cat")==0)
-            if (strcmp(s->Name.c_str(),"\"Fifth Dump\"")==0)
-            {
-               //If fifth dump found, check whether its first or second and save.
-               if(fFirstFifthDump && fSecondFifthDump)
-               {
-                  //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.  
-                  delete fFirstFifthDump;
-                  fFirstFifthDump = fSecondFifthDump;
-                  fSecondFifthDump = new TA2Spill(*s);
-               }
-               else if(fFirstFifthDump)
-               {
-                  //If we have one, save the other.
-                   fSecondFifthDump = new TA2Spill(*s);
-               }
-               else
-               {
-                  //If we have none, save the first.
-                   fFirstFifthDump = new TA2Spill(*s);
-               }
-            }
-            if (strcmp(s->Name.c_str(),"\"Lifetime\"")==0)
-            {
-               //If lifetime found, save for later. 
-               fLifetime = new TA2Spill(*s);
-               std::cout << "Lifetime run detected..." <<std::endl; //We announce detection of lifetime dump here. If the user does not run the sequence with required dumps the end run will let you know. 
-            }
-            if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
-            {
-               if (HaveAllDumps())
-               {
-                  //Once we have all the conditions to calculate a lifetime dump, lets do it in this AnalyzeFlowEvent(). 
-                  fFlags->fLifetimeReady = true;
-               }
-               else
-               {
-                  //Else save the cold dump for later and wait until we have everything we need.
-                  if (fColdDump)
-                  delete fColdDump;
-                  fColdDump = new TA2Spill(*s);
-               }
-            }
-
-            if (fFlags->fLifetimeReady)
-            {
-                
-                //Do lifetime calc. 
-                double lifetimeInMins = CalculateLifetime(runinfo, s);
-            
-                std::ostringstream lifetimeStream;
-                lifetimeStream << "Lifetime measurment detected... Normalised to fifth dumps the lifetime = " << lifetimeInMins << "m.";
-                TA2Spill* lifetimeSpill = new TA2Spill(runinfo->fRunNo,fLifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
-                SpillFlow->spill_events.push_back(lifetimeSpill);
-                fFlags->fLifetimeDone=true;
-            }
-            
-         }
+         //This ensures we only calculate the lifetime once.
+         return flow;;
       }
-      else
+      A2SpillFlow* SpillFlow= flow->Find<A2SpillFlow>();
+      if (!SpillFlow)
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
 #endif
       }
-      return flow; 
-  }
+
+      for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
+      {
+         TA2Spill* s=SpillFlow->spill_events.at(i);
+         //s->Print();
+         if (!s->SeqData) continue;
+         int thisSeq=s->SeqData->fSequenceNum;
+         if (thisSeq==0) //Catching trap
+         //if (strcmp(s->SeqName.c_str(),"cat")==0)
+         if (strcmp(s->Name.c_str(),"\"Fifth Dump\"")==0)
+         {
+            //If fifth dump found, check whether its first or second and save.
+            if(fFirstFifthDump && fSecondFifthDump)
+            {
+               //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.  
+               delete fFirstFifthDump;
+               fFirstFifthDump = fSecondFifthDump;
+               fSecondFifthDump = new TA2Spill(*s);
+            }
+            else if(fFirstFifthDump)
+            {
+               //If we have one, save the other.
+               fSecondFifthDump = new TA2Spill(*s);
+            }
+            else
+            {
+               //If we have none, save the first.
+               fFirstFifthDump = new TA2Spill(*s);
+            }
+         }
+         if (strcmp(s->Name.c_str(),"\"Lifetime\"")==0)
+         {
+            //If lifetime found, save for later. 
+            fLifetime = new TA2Spill(*s);
+            std::cout << "Lifetime run detected..." <<std::endl; //We announce detection of lifetime dump here. If the user does not run the sequence with required dumps the end run will let you know. 
+         }
+         if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
+         {
+            if (HaveAllDumps())
+            {
+               //Once we have all the conditions to calculate a lifetime dump, lets do it in this AnalyzeFlowEvent(). 
+               fFlags->fLifetimeReady = true;
+            }
+            else
+            {
+               //Else save the cold dump for later and wait until we have everything we need.
+               if (fColdDump)
+               delete fColdDump;
+               fColdDump = new TA2Spill(*s);
+            }
+         }
+
+         if (fFlags->fLifetimeReady)
+         {
+            //Do lifetime calc. 
+            double lifetimeInMins = CalculateLifetime(runinfo, s);
+
+            std::ostringstream lifetimeStream;
+            lifetimeStream << "Lifetime measurment detected... Normalised to fifth dumps the lifetime = " << lifetimeInMins << "m.";
+            TA2Spill* lifetimeSpill = new TA2Spill(runinfo->fRunNo,fLifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
+            SpillFlow->spill_events.push_back(lifetimeSpill);
+            fFlags->fLifetimeDone=true;
+         }   
+      }
+   return flow; 
+   }
 
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
