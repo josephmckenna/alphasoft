@@ -26,8 +26,6 @@ public:
 class LifetimeModule: public TARunObject
 {
 private:
-   clock_t fStartTime;
-   uint32_t fFirstEvent=0;
    //Once all of these exist and we see another cold dump. We add the lifetime measurment to spill log.
    TA2Spill* fFirstFifthDump=NULL;
    TA2Spill* fSecondFifthDump=NULL;
@@ -60,7 +58,6 @@ public:
    {
       if (fTrace)
          printf("LifetimeModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      fStartTime=clock();
     }
 
    void EndRun(TARunInfo* runinfo)
