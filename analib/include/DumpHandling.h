@@ -365,7 +365,7 @@ public:
          std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
          return 0;
       }
-      if (IntegratedSISCounts.size() < ScalerModule)
+      if ( int( IntegratedSISCounts.size() ) < ScalerModule)
       {
          std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
          return 0;

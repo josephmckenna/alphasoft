@@ -3,7 +3,7 @@
 #include "TAGPlot.h"
 #define SCALECUT 0.6
 
-ClassImp(TAGPlot);
+ClassImp(TAGPlot)
 
 //Default Constructor
 TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)

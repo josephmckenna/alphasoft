@@ -16,22 +16,25 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
    //If range is not set, calcualte it
    if (range<0)
    {
-      for (int i=0; i<n_times; i++)
+      for (size_t i = 0; i < n_times; i++)
       {
          double diff=tmax[i]-tmin[i];
-         if (range<diff) range=diff;
+         if (range < diff)
+            range = diff;
       }
    }
    for (auto& t: tmin)
    {
-      if (t < first_time) first_time = t;
+      if (t < first_time)
+         first_time = t;
    }
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
       if (t < 0) t = 1E99; //FIXME: Get total run time!
       //Find the latest tmax time
-      if (last_time < t ) last_time = t;
+      if (last_time < t )
+         last_time = t;
    }
 
    int n_chans=chrono_chan.size();
@@ -74,7 +77,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
          if (e->GetRunTime() < first_time) continue;
          if (e->GetRunTime() > last_time) continue;
          //Loop over all time windows
-         for (int j = 0; j < n_times; j++)
+         for (size_t j = 0; j < n_times; j++)
          {
             if (e->GetRunTime() > tmin[j] && e->GetRunTime() < tmax[j])
             {
@@ -139,22 +142,25 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    //If range is not set, calculate it
    if (range<0)
    {
-      for (int i=0; i<n_times; i++)
+      for (size_t i = 0; i < n_times; i++)
       {
-         double diff=tmax[i]-tmin[i];
-         if (range<diff) range=diff;
+         double diff = tmax[i] - tmin[i];
+         if (range < diff)
+            range = diff;
       }
    }
    for (auto& t: tmin)
    {
-      if (t < first_time) first_time = t;
+      if (t < first_time)
+         first_time = t;
    }
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
       if (t < 0) t = 1E99; //FIXME: Get total run time!
       //Find the latest tmax time
-      if (last_time < t ) last_time = t;
+      if (last_time < t )
+         last_time = t;
    }
 
 
@@ -162,7 +168,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    for (int i=0; i<n_chans; i++)
    {
       std::vector<TH1D*> times;
-      for (int j = 0; j < n_times; j++)
+      for (size_t j = 0; j < n_times; j++)
       {
          if (!chrono_chan[i].IsValidChannel())
             break;
@@ -189,7 +195,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   for (int i = 0; i < chrono_chan.size(); i++)
+   for (size_t i = 0; i < chrono_chan.size(); i++)
    {
       if (!chrono_chan[i].IsValidChannel())
          continue;
@@ -202,12 +208,12 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
       for (Int_t event_n = 0; event_n < t->GetEntries(); ++event_n)
       {
          t->GetEntry(event_n);
-         if (e->GetChannel() != chrono_chan[i].GetChannel())
+         if ( int(e->GetChannel()) != chrono_chan[i].GetChannel())
             continue;
          //if (official_time < first_time) continue;
          //if (official_time > last_time) break;
          //Loop over all time windows
-         for (int j = 0; j < n_times; j++)
+         for (size_t j = 0; j < n_times; j++)
          {
             //Increase efficiency by breaking this look when we are outside of range
             if (e->GetRunTime() > tmin[j] && e->GetRunTime() < tmax[j])

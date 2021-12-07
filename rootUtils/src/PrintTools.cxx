@@ -195,7 +195,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
    TSeq_Event* seqEvent = new TSeq_Event();
    sequencerTree->SetBranchAddress("SequencerEvent", &seqEvent);
    //  sprintf(search_string, "\"%s", description); // add a " before the name
-   Double_t runTimes[100000];
+   Double_t runTimes[100000] = {0};
    TString Names[100000];
    TString Descriptions[100000];
    TString Sequencer[100000];

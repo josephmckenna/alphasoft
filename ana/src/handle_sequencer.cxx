@@ -106,7 +106,7 @@ public:
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze( __attribute__((unused)) TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       //std::cout<<"HandleSequencer::Analyze   Event # "<<me->serial_number<<std::endl;

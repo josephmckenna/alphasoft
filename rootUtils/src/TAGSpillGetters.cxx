@@ -10,9 +10,7 @@ std::vector<TAGSpill> Get_AG_Spills(int runNumber, std::vector<std::string> desc
    TTreeReaderValue<TAGSpill> spill(*reader, "TAGSpill");
 
    assert(description.size()==repetition.size());
-   int match_counter[description.size()];
-   for (size_t i=0; i<description.size(); i++)
-      match_counter[i]=0;
+   std::vector<int> match_counter(description.size(),0);
 
    std::vector<TAGSpill> spills;
 

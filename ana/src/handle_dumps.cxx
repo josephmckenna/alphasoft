@@ -178,7 +178,7 @@ public:
    }
 
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze(  __attribute__((unused)) TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       if( me->event_id != 8 ) // sequencer event id
       {
@@ -225,7 +225,7 @@ public:
       return flow;
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent( __attribute__((unused)) TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       TCbFlow* FIFOFlow = flow->Find<TCbFlow>();
       uint32_t midas_time = 0;
@@ -251,7 +251,7 @@ public:
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
+                     if (DumpStartChannels[a].GetChannel() == int( hit.GetChannel() ))
                      {
                         if (hit.IsLeadingEdge())
                            dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
@@ -262,7 +262,7 @@ public:
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
+                     if (DumpStopChannels[a].GetChannel() == int( hit.GetChannel() ))
                      {
                         if (hit.IsLeadingEdge())
                            dumplist[a].AddStopTime(midas_time, hit.GetRunTime());

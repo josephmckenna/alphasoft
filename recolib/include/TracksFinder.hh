@@ -54,7 +54,7 @@ public:
    inline void SetNpointsCut(int cut)       { fNpointsCut=cut; }
    inline int GetNpointsCut() const         { return fNpointsCut; }
 
-   virtual void Clear(Option_t* option="");
+   virtual void Clear();
    inline int GetNumberOfTracks() const {return fNtracks;}
    inline const std::vector<track_t>* GetTrackVector() const { return &fTrackVector; }
 

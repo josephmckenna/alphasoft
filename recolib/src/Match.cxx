@@ -372,8 +372,8 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
-  double peakx[nfound];
-  double peaky[nfound];
+  std::vector<double> peakx(nfound);
+  std::vector<double> peaky(nfound);
 
   for(int i = 0; i < nfound; ++i)
     {

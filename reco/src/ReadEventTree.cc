@@ -908,7 +908,7 @@ void ReadEventTree::ProcessVertex(TVector3* v)
 void ReadEventTree::FillCosmicsHisto()
 {
    int cf_status = fCosmicFinder->Process();
-   // std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
+   std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
    // fCosmicFinder->Status();
    if( fCosmicFinder->GetStatus() ) 
       {
@@ -1139,7 +1139,6 @@ void ReadEventTree::GetSignalHistos()
                   for( int s=0; s<8; ++s )
                      {
                         if( hpadcol->GetEntries() == 0 ) break;
-                        double bc = hpadcol->GetBinContent(b);
                         // std::cout<<b-1<<"\t";
                         for( int s=0; s<8; ++s )
                            {

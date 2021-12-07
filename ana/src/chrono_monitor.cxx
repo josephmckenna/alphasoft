@@ -150,15 +150,6 @@ public:
       }
    }
   
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
-   {
-      //printf("ChronoMonitor::Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-#ifdef HAVE_MANALYZER_PROFILER
-         *flags|=TAFlag_SKIP_PROFILE;
-#endif
-      return flow;
-   }
-   
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       TCbFIFOEventFlow* cbFIFOflow = flow->Find<TCbFIFOEventFlow>();

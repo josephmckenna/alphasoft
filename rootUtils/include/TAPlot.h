@@ -629,7 +629,7 @@ class TAPlot: public TObject
       TAPlot& operator=(const TAPlot& rhs);
       friend TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs);
       TAPlot& operator+=(const TAPlot &rhs);
-      void Print(Option_t* option="") const;
+      void Print() const;
       virtual void PrintFull();
       
       //Histogram functions

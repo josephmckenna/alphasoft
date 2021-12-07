@@ -266,7 +266,7 @@ public:
       std::vector<std::string> tmpnames(channel_names);
       channels.clear();
       channel_names.clear();
-      for (int i = 0; i < tmpchan.size(); i++)
+      for (size_t i = 0; i < tmpchan.size(); i++)
       {
          if (tmpchan.at(i).size() || tmpnames.at(i).size())
          {
@@ -276,7 +276,7 @@ public:
       }
       //Print channel list into spill log
       std::string channel_summary = "Channel List: ";
-      for (int i = 0; i < channels.size(); i++)
+      for (size_t i = 0; i < channels.size(); i++)
       {
          if (channels.at(i).empty()) continue;
          channel_summary += channels.at(i);

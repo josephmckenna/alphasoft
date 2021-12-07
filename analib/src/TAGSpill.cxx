@@ -30,7 +30,7 @@ TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TChronoBoardCounter,
    for (int i=0; i<CHRONO_N_BOARDS; i++)
    {
       const TChronoBoardCounter& e = d->IntegratedSISCounts[i];
-      for (int j = 0; j < e.fCounts.size(); j++)
+      for (size_t j = 0; j < e.fCounts.size(); j++)
          DetectorCounts.at(i*CHRONO_N_CHANNELS + j) = e.fCounts[j];
       ScalerFilled[i] = true;
    }
@@ -79,11 +79,11 @@ void TAGSpillScalerData::Print()
       std::cout<<ScalerFilled.at(i);
    }
    std::cout  << " BVFilled: "<<VertexFilled <<std::endl;
-   int sum=0;
-   for (int i = 0; i <  DetectorCounts.size(); i++)
+   int sum = 0;
+   for (size_t i = 0; i <  DetectorCounts.size(); i++)
       sum+=DetectorCounts[i];
    std::cout<<"ChronoEntries:"<< sum <<std::endl;
-   for (int i = 0; i < DetectorCounts.size(); i++)
+   for (size_t i = 0; i < DetectorCounts.size(); i++)
    {
       std::cout<<DetectorCounts[i]<<"\t";
    }
