@@ -12,6 +12,11 @@
 #include "A2Flow.h"
 #include "TSISEvent.h"
 
+#include "TStyle.h"
+#include "TColor.h"
+#include "TF2.h"
+#include "TExec.h"
+#include "TCanvas.h"
 
 #define SECONDS_TO_BUFFER 60
 
@@ -66,7 +71,7 @@ private:
    TCanvas fLiveCanvas;
    std::vector<TH1I> fLiveHisto;
    std::vector<int> fSISChannel;
-
+   TStyle* fSISStyle;
 public:
    SisMonitor(TARunInfo* runinfo)
       : TARunObject(runinfo),
@@ -83,6 +88,7 @@ public:
                   i - BUFFER_DEPTH 
                )
             );
+         fSISStyle = new TStyle("SVDStyle","SVDStyle");
       }
 
 
@@ -95,19 +101,20 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-
-   std::vector<std::string> channel_ID_string;
+      //Spill log monitor set these ODB entries, set create to false
+      
+      std::vector<std::string> channel_ID_string;
       std::vector<std::string> channel_display_name;
          MVOdbError* error = new MVOdbError();
       
-      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelIDName",&channel_ID_string,true,20,32,error);
+      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelIDName",&channel_ID_string,false,20,32,error);
       //Re-read and resize?
       int actual_size = 0;
       for (const std::string& s: channel_ID_string)
          if (s.size())
             actual_size++;
       
-      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelDisplayName",&channel_display_name,true,20,32,error);
+      runinfo->fOdb->RSA("Equipment/alpha2online/Settings/ChannelDisplayName",&channel_display_name,false,20,32,error);
       
       //Stolen from spill_log_module... should be upgraded to ODB reads
       TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
@@ -158,27 +165,26 @@ public:
       for ( int j = 0; j < NUM_SIS_MODULES; j++ )
       {
          if (sf->sis_events[0].size())
-            if ( mostmax < sf->sis_events[j].back()->GetRunTime())
-               mostmax = sf->sis_events[j].back()->GetRunTime();
+            if ( mostmax < sf->sis_events[j].back().GetRunTime())
+               mostmax = sf->sis_events[j].back().GetRunTime();
       }
       // Reserve space for all incoming TSISEvents
       int i = fFIFO.back().fBin;
       while (fFIFO.back().GetRunTime() < mostmax)
       {
-         fFIFO.emplace_back(TSIS(i));
+         fFIFO.emplace_back(TSIS(++i));
          fFIFO.pop_front();
-         i++;
       }
 
       //Find bin of the first event
       for (int j = 0; j < NUM_SIS_MODULES; j++)
       {
          int bin = 0;
-         for (TSISEvent* e: sf->sis_events[j]) 
+         for (const TSISEvent& e: sf->sis_events[j]) 
          {
-            while ( e->GetRunTime() > fFIFO.at(bin).GetRunTime())
+            while ( e.GetRunTime() > fFIFO.at(bin).GetRunTime())
                bin++;
-            fFIFO.at(bin) += *e;
+            fFIFO.at(bin) += e;
          }
       }
       //Resise histograms
@@ -188,7 +194,7 @@ public:
 
          fLiveHisto[i].Reset();
       }
-
+      fSISStyle->SetPalette(kCool);
       //Update the histograms
       for (TSIS& s: fFIFO)
       {

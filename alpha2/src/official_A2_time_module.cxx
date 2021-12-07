@@ -35,6 +35,8 @@ private:
    
    // int SVD_channel=-1; Unused
 
+   std::mutex fTimeStampLock;
+
    std::deque<double> SISEventRunTime;
 
    std::deque<ULong64_t> SISClock;
@@ -158,11 +160,13 @@ public:
    }
    void CleanOldTimestamps(double TimeBufferSize)
    {
+      std::lock_guard<std::mutex> lock(fTimeStampLock);
       if (SISEventRunTime.empty()) return;
-      double LatestTime=SISEventRunTime.back();
-      double tcut=LatestTime-TimeBufferSize;
+      const double LatestTime = SISEventRunTime.back();
+      const double tcut= LatestTime - TimeBufferSize;
 
-      int nSIS=SISEventRunTime.size();
+      const int nSIS = SISEventRunTime.size();
+      
       for (int i=0; i<nSIS; i++)
       {
          if (SISEventRunTime.front()<tcut)
@@ -186,13 +190,13 @@ public:
    }
    std::vector<TSVD_QOD*> GetFinishedEvents(TARunInfo* runinfo)
    {
-       int nSVD=SVDEvents.size();
+       const int nSVD = SVDEvents.size();
        std::vector<TSVD_QOD*> finished_QOD_events;
        for ( int j=0; j<nSVD; j++)
        {
-          int n=SISEventRunTime.size();
-          TSVD_QOD* QOD=SVDEvents.front();
-          for ( int i =0; i<n; i++)
+          const int n = SISEventRunTime.size();
+          TSVD_QOD* QOD = SVDEvents.front();
+          for ( int i =0; i < n; i++)
           {
              //There is no clock!!!
              //if (SISClock[i]==0) continue;
@@ -250,13 +254,14 @@ public:
       if (SISFlow)
       {
          //VF48 clock is on SIS0
-         std::vector<TSISEvent*>* ce=&SISFlow->sis_events[0];
-         for (uint i=0; i<ce->size(); i++)
+         const std::vector<TSISEvent>* ce = SISFlow->sis_events;
+         std::lock_guard<std::mutex> lock(fTimeStampLock);
+         for (uint i = 0; i < ce->size(); i++)
          {
-            TSISEvent* e=ce->at(i);
-            SISEventRunTime.push_back(e->GetRunTime());
-            SISClock.push_back(e->GetClock());
-            VF48Clock.push_back(e->GetVF48Clock());
+            const TSISEvent& e = ce->at(i);
+            SISEventRunTime.push_back(e.GetRunTime());
+            SISClock.push_back(e.GetClock());
+            VF48Clock.push_back(e.GetVF48Clock());
             //if (e->Channel==CHRONO_SYNC_CHANNEL)
          }
       }

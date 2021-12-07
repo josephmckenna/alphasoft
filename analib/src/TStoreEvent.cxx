@@ -109,6 +109,7 @@ void TStoreEvent::Print(Option_t* o) const
    {
       std::cout<<"=============== TStoreEvent "<<std::setw(5)
          <<fID<<" ==============="<<std::endl;
+      std::cout<<"EventTime: "<< fEventTime <<std::endl;
       std::cout<<"Number of Points: "<<fNpoints
          <<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
       std::cout<<"*** Vertex Position ***"<<std::endl;

@@ -9,6 +9,8 @@ else()
 endif()
 
 project(alphasoft)
+set (CMAKE_MACOSX_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -209,6 +211,7 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
+get_submodule(chronobox_software)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)

@@ -43,7 +43,9 @@ public:
    int DumpStopChannels[USED_SEQ]  ={-1};
    
    int fADChannel = -1;
+   int fPreTriggerChannel = -1;
    int fADCounter;
+   int fPreTriggerCounter;
    
    int detectorCh[MAXDET];
    TString detectorName[MAXDET];
@@ -77,13 +79,17 @@ public:
       for (int j=0; j<USED_SEQ; j++) 
       {
          dumplist[j].SequencerID=j;
+         dumplist[j].fRunNo=runinfo->fRunNo;
          DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
          DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
       }
       fADChannel = SISChannels->GetChannel("SIS_AD", runinfo->fRunNo);
+      fPreTriggerChannel = SISChannels->GetChannel("SIS_DIX_ALPHA", runinfo->fRunNo);
       delete SISChannels;
 
       fADCounter = 0;
+      fPreTriggerCounter = 0;
+
       for (int j=0; j<USED_SEQ; j++) 
          dumplist[j].fRunNo=runinfo->fRunNo;
    }
@@ -143,7 +149,7 @@ public:
 #endif
          return flow;
       }
-      uint ndumps=DumpsFlow->DumpMarkers.size();
+      const uint ndumps=DumpsFlow->DumpMarkers.size();
       if (!ndumps)
       {
 #ifdef HAVE_MANALYZER_PROFILER
@@ -163,7 +169,7 @@ public:
          dumplist[iSeq].AddDump( &dump);
       }
       //Copy states into dumps
-      dumplist[iSeq].AddStates(&DumpsFlow->states);
+      dumplist[iSeq].AddStates(DumpsFlow->states);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
       dumplist[iSeq].check(DumpsFlow->driver);
       
@@ -196,29 +202,34 @@ public:
          //Add timestamps to dumps
          for (int j=0; j<NUM_SIS_MODULES; j++)
          {
-            std::vector<TSISEvent*>* ce=&SISFlow->sis_events[j];
+            const std::vector<TSISEvent>* ce = SISFlow->sis_events;
             for (uint i=0; i<ce->size(); i++)
             {
-              TSISEvent* e=ce->at(i);
+              const TSISEvent& e = ce->at(i);
               for (int a=0; a<USED_SEQ; a++)
               {
                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
                  if (DumpStartChannels[a]>0)
                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                    for (int nstarts=0; nstarts < e->GetCountsInChannel(DumpStartChannels[a]); nstarts++)
+                    for (int nstarts=0; nstarts < e.GetCountsInChannel(DumpStartChannels[a]); nstarts++)
                     {
-                       dumplist[a].AddStartTime(e->GetMidasUnixTime(), e->GetRunTime());
+                       dumplist[a].AddStartTime(e.GetMidasUnixTime(), e.GetRunTime());
                     }
                  if (DumpStopChannels[a]>0)
-                    for (int nstops=0; nstops<e->GetCountsInChannel(DumpStopChannels[a]); nstops++)
+                    for (int nstops=0; nstops<e.GetCountsInChannel(DumpStopChannels[a]); nstops++)
                     {
-                       dumplist[a].AddStopTime(e->GetMidasUnixTime(),e->GetRunTime());
+                       dumplist[a].AddStopTime(e.GetMidasUnixTime(),e.GetRunTime());
                     }
                }
-               if (e->GetCountsInChannel(fADChannel))
+               if (e.GetCountsInChannel(fADChannel))
                {
-                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e->GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
+                 TA2Spill* beam = new TA2Spill(runinfo->fRunNo,e.GetMidasUnixTime(),"Beam %d ------------------------------------------------------->	",fADCounter++);
                  f->spill_events.push_back(beam);
+               }
+               if (e.GetCountsInChannel(fPreTriggerChannel))
+               {
+                 TA2Spill* pretrigger = new TA2Spill(runinfo->fRunNo,e.GetMidasUnixTime(),"----- Pre Trigger %d------->",fPreTriggerCounter++);
+                 f->spill_events.push_back(pretrigger);
                }
             }
 
@@ -230,7 +241,7 @@ public:
             for (int j=0; j<NUM_SIS_MODULES; j++)
             {
                //if (SISFlow->sis_events[j].size())
-                  dumplist[a].AddScalerEvents(&SISFlow->sis_events[j]);
+                  dumplist[a].AddScalerEvents(SISFlow->sis_events[j]);
             }
          }
       }
@@ -339,6 +350,50 @@ public:
             //TInfoSpill = new TInfoSpill(padt, 0 ,unixtime, padt.c_str());
             TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CsI.str().c_str());
             f->spill_events.push_back(lv);
+         }
+         // Check pattern XRWX
+         else if ( strncmp(LabVIEWFlow->GetBankName().c_str() + 1, "RW", 2) == 0)
+         {
+            //Catching trap
+            if (LabVIEWFlow->GetBankName().at(0) == 'C')
+            {
+               std::ostringstream CTRW;
+               CTRW << "[" << LabVIEWFlow->GetBankName() << "]: ";
+               
+               // This is a clunky handling of the frequency units
+               double StartSweep = LabVIEWFlow->GetData()->at(2);
+               double StopSweep = LabVIEWFlow->GetData()->at(3);
+               //If units should be kHz
+               if ( StartSweep > 1000 && StopSweep > 1000)
+               {
+                   StartSweep /= 1000;
+                   StopSweep /= 1000;
+                   //If units should be MHz
+                   if ( StartSweep > 1000 && StopSweep > 1000)
+                   {
+                      StartSweep /= 1000;
+                      StopSweep /= 1000;
+                      CTRW << StartSweep << "-" << StopSweep <<"MHz\t";
+                   }
+                   else // Am kHz
+                   {
+                      CTRW << StartSweep << "-" << StopSweep <<"kHz\t";
+                   }
+               }
+               else // Am Hz
+               {
+                  CTRW << StartSweep << "-" << StopSweep << "Hz\t";
+               }
+               CTRW << "Total "<< LabVIEWFlow->GetData()->at(4) <<"s (" << LabVIEWFlow->GetData()->at(5) <<" fade ms)\t";
+               CTRW << LabVIEWFlow->GetData()->at(6) <<"-"<< LabVIEWFlow->GetData()->at(7) << "V";
+               TA2Spill* lv = new TA2Spill(runinfo->fRunNo,unixtime,CTRW.str().c_str());
+               f->spill_events.push_back(lv);
+            }
+            //Atom trap
+            else if (LabVIEWFlow->GetBankName().at(0) == 'A')
+            {
+               
+            }
          }
       }
 

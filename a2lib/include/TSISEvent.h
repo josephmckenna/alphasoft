@@ -85,24 +85,25 @@ public:
         return fCounts[i];
      }
   }
-  int    GetSISModule()          { return fSISModule; }
-  int    GetScalerModule()          { return fSISModule; }
-  ULong64_t GetClock()				{ return fClock; }
-  ULong64_t GetVF48Clock()          { return fVF48Clock; }
-  Double_t  GetRunTime()		    { return fRunTime; }
+  int    GetSISModule() const          { return fSISModule; }
+  int    GetScalerModule() const          { return fSISModule; }
+  ULong64_t GetClock() const				{ return fClock; }
+  ULong64_t GetVF48Clock() const         { return fVF48Clock; }
+  Double_t  GetRunTime() const		    { return fRunTime; }
 
-  Int_t     GetRunNumber()     	    { return fRunNumber; }
-  Double_t  GetMidasUnixTime()		    { return fMidasTime; }
-  unsigned long GetMidasEventID()            { return fMidasEventID; }
+  Int_t     GetRunNumber() const     	    { return fRunNumber; }
+  Double_t  GetMidasUnixTime() const		    { return fMidasTime; }
+  unsigned long GetMidasEventID() const            { return fMidasEventID; }
 
   using TObject::Print;
   virtual void Print();
   
   // default class member functions
   TSISEvent( );
+  TSISEvent( int SISModule );
   TSISEvent( TSISBufferEvent* event );
   TSISEvent( ULong64_t clock, Double_t time);
-  TSISEvent* operator+=(TSISEvent* b);
+  TSISEvent& operator+=(const TSISEvent& b);
 
   virtual ~TSISEvent(); 
   

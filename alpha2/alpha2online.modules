@@ -2,7 +2,7 @@
 # uncomment and define analyzer modules here
 
 #Full reconstruction (development branch style):
-eos_module.o handle_sequencer.o 
+handle_sequencer.o 
 felabviewmodule.o
 feGEM_module.o
 #Legacy reconstruction modules
@@ -27,5 +27,6 @@ catch_efficiency_module.o
 spill_log_module.o
 #Generate online display of histograms
 sis_monitor.o
+svd_monitor.o
 
 AnalysisReport_module.o

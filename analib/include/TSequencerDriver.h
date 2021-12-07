@@ -22,6 +22,27 @@ struct TSequencerDriverMap
 {
     std::map<TString,int> ChannelNameMap;
     std::map<TString,int> ChannelDescriptionMap;
+    void PrintDriverMap()
+    {
+      std::map<TString,int>::iterator it;
+      for (it = ChannelNameMap.begin(); it != ChannelNameMap.end(); it++)
+      {
+        std::cout << it->first    
+              << ':'
+              << it->second    
+              << std::endl;
+      }
+      std::cout<<"------------------------------------------------------------"<<std::endl;
+      for (it = ChannelDescriptionMap.begin(); it != ChannelDescriptionMap.end(); it++)
+      {
+        std::cout << it->first    
+              << ':'
+              << it->second    
+              << std::endl;
+      }
+
+      
+    };
 };
 
 class TSequencerDriver : public TObject
@@ -42,6 +63,7 @@ class TSequencerDriver : public TObject
     TSequencerDriverMap* HVMap;
   
   TSequencerDriver();
+  void PrintDatamembers();
   void Parse(TXMLNode* node);
  /* TSequencerDriver(std::map<TString,int>* _DigitalMap,
                    std::map<TString,int>* _TriggerMap,

@@ -63,12 +63,19 @@ public:
       else
          return -1;
    }
+   std::string GetSequenceName() const
+   {
+      if (SeqData)
+         return SeqData->fSeqName;
+      else
+         return "none";
+   }
    using TObject::Print;
    virtual void Print();
 
 
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   TString Content(std::vector<int>*, int& );
+   TString Content(const std::vector<int>);
    std::string ContentCSVTitle(std::vector<std::string> ChannelNames = {}) const
    {
       std::string title = TSpill::ContentCSVTitle();

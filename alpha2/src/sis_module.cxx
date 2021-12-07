@@ -8,9 +8,8 @@
 
 #include "TTree.h"
 #include "TMath.h"
-#include "TChrono_Event.h"
+
 #include <iostream>
-#include "TChronoChannelName.h"
 
 #include <TBufferJSON.h>
 #include <fstream>
@@ -41,7 +40,7 @@ private:
    //Used in 
    uint64_t gVF48Clock;
    Int_t ID;
-   TTree* SISEventTree   = NULL;
+   TTree* SISEventTree[NUM_SIS_MODULES]   = {nullptr};
    
    std::deque<TSISBufferEvent*> unmatched_buffer[NUM_SIS_MODULES];
 
@@ -62,8 +61,6 @@ public:
    //Variables to catch the start of good data from the SISboxes
    int Overflows[NUM_SIS_MODULES]={0};
    uint LastTS[NUM_SIS_MODULES]={0};
-   
-   TTree* SISTree;
 
    bool fTrace = true;
 
@@ -148,16 +145,21 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
    void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
    {
          if (!fFlags->fSaveSIS) return;
+         int i = s->GetSISModule();
+         assert(i >= 0 && i < NUM_SIS_MODULES);
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
-         if (!SISEventTree)
-            SISEventTree = new TTree("SISEventTree","SISEventTree");
-         TBranch* b_variable = SISEventTree->GetBranch("TSISEvent");
+         if (!SISEventTree[i])
+         {
+            std::string TreeName = "SIS" + std::to_string(i) + std::string("Tree");
+            SISEventTree[i] = new TTree(TreeName.c_str(),TreeName.c_str());
+         }
+         TBranch* b_variable = SISEventTree[i]->GetBranch("TSISEvent");
          if (!b_variable)
-            SISEventTree->Branch("TSISEvent","TSISEvent",&s,16000,1);
+            SISEventTree[i]->Branch("TSISEvent","TSISEvent",&s,16000,1);
          else
-            SISEventTree->SetBranchAddress("TSISEvent",&s);
-         SISEventTree->Fill();
+            SISEventTree[i]->SetBranchAddress("TSISEvent",&s);
+         SISEventTree[i]->Fill();
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
@@ -203,13 +205,14 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
                                   std::to_string(gSISdiff/NUM_SIS_CHANNELS);
             std::cout << warning << "\n";
             gBadSisCounter++;
-            TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
+            // Dont report this in the spill log
+            //TInfoSpill* WarningSpill = new TInfoSpill(runinfo->fRunNo, midas_start_time, event->time_stamp, warning.c_str());
 
-            TInfoSpillFlow* f = new TInfoSpillFlow(flow);
-            f->spill_events.push_back(WarningSpill);
-            //Return flow here to disable unpaired SIS events recovery (added Sept 2021)
-            //return f;
-            flow = f;
+            //TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+            //f->spill_events.push_back(WarningSpill);
+            ////Return flow here to disable unpaired SIS events recovery (added Sept 2021)
+            ////return f;
+            //flow = f;
          }
          SISdiffPrev+=SISdiff; 
       }
@@ -274,7 +277,8 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
-           TSISEvent* s = new TSISEvent(event);
+           sf->sis_events[j].emplace_back(TSISEvent(event));
+           TSISEvent* s = &sf->sis_events[j].back();
            s->SetMidasUnixTime(mf->MidasTime);
            s->SetMidasEventID(mf->MidasEventID);
            s->SetRunNumber(runinfo->fRunNo);
@@ -287,7 +291,6 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
               s->SetVF48Clock(gVF48Clock);
            }
            // s->Print();
-           sf->sis_events[j].push_back(s);
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
       }
@@ -299,7 +302,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       {
          for (size_t i=0; i<sf->sis_events[j].size(); i++)
          {
-            SaveToTree(runinfo,sf->sis_events[j].at(i));
+            SaveToTree(runinfo,&sf->sis_events[j].at(i));
          }
       }
       return flow;

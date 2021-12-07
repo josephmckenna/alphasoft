@@ -2,7 +2,7 @@
 #ifndef _RootUtils_
 #define _RootUtils_
 #include "TSeq_Event.h"
-#include "TChrono_Event.h"
+#include "TChronoChannel.h"
 #include "TStoreEvent.hh"
 //#include "TChronoChannelName.h"
 #include "ChronoUtil.h"
@@ -13,8 +13,11 @@
 #include "TTreeReaderValue.h"
 #include "TGraph.h"
 
-#include "TSpill.h"
-#include "TA2Spill.h"
+
+#include "TA2SpillGetters.h"
+#include "TAGSpillGetters.h"
+
+#include "TChronoChannelGetters.h"
 
 #include "TAnalysisReport.h"
 
@@ -32,6 +35,7 @@
 #include "PrintTools.h"
 #include "TH1DGetters.h"
 #include "TSeqEventGetters.h"
+#include "TSequencerStateGetters.h"
 #include "TStringGetters.h"
 #include "TreeGetters.h"
 #include "TGraphGetters.h"

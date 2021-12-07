@@ -136,7 +136,7 @@ class SpillLogPrinter
       {
         cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", fSpillLogTitle.Data());
       }
-      cm_msg1(MINFO, "SpillLog", "alpha2online", string);
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s", string);
    }
    
 };
@@ -182,41 +182,9 @@ public:
 #endif
       if (fTrace)
          printf("SpillLog::ctor!\n");
-      
-      // load the sqlite3 db
-      TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
-      std::vector<std::pair<std::string,std::string>> channels=
-      {
-         {"SIS_PMT_CATCH_OR", "Catch OR"},
-         {"SIS_PMT_CATCH_AND","Catch AND"},
-         {"CT_SiPM1",         "CT SiPM1"},
-         {"CT_SiPM2",         "CT SiPM2"},
-         {"CT_SiPM_OR",       "CT SiOR"},
-         {"CT_SiPM_AND",      "CT SiAND"},
-         {"PMT_12_AND_13",    "CT Stick"},
-         //{"IO32_TRIG_NOBUSY","IO32_TRIG"},
-         //{"PMT_10","PMT 10"},
-         //{"ATOMSTICK","Atom Stick"}
-      };
+
+ //RSA(const char* varname, std::vector<std::string> *value, bool create = false, int create_size = 0, int create_string_length = 0, MVOdbError* error = NULL) = 0;
   
-      for (size_t i=0; i<channels.size(); i++)
-         sis_channels.push_back(sisch->GetChannel(channels.at(i).first.c_str()));
-      SpillLogTitle="            Dump Time            | ";
-      std::string dump_names = "CAT RCT ATM POS";
-      assert(dump_names.size() < DUMP_NAME_WIDTH - 1);
-      //Pad to proper width
-      dump_names.insert(dump_names.size(), DUMP_NAME_WIDTH - dump_names.size() - 1, ' ');
-      SpillLogTitle += dump_names + std::string("|");
-      char buf[200];
-      for (size_t i=0; i<channels.size(); i++)
-      {
-         sprintf(buf,"%9s ",channels.at(i).second.c_str());
-         SpillLogTitle+=buf;
-      }
-      sprintf(buf,"%9s %9s ","Cuts","MVA");
-      SpillLogTitle+=buf;
-      n_sis_channels=sis_channels.size();
-      delete sisch;
    }
 
    ~SpillLog()
@@ -245,6 +213,98 @@ public:
       if (fTrace)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //if (fFlags->fOnlineSpillLog && runinfo->fRunNo)
+
+
+      std::vector<std::string> channels = 
+      {
+         "SIS_PMT_CATCH_OR",
+         "SIS_PMT_CATCH_AND",
+         "CT_SiPM_OR",
+         "CT_SiPM_AND",
+         "SIS_PMT_ATOM_OR",
+         "IO32_TRIG_NOBUSY",
+         "PMT_10",
+         "ATOMSTICK"
+      };
+      
+      std::vector<std::string> channel_names = 
+      {
+         "Catch OR",
+         "Catch AND",
+         "CT SiOR",
+         "CT SiAND",
+         "ATM OR",
+         "IO32_TRIG",
+         "PMT 10",
+         "Atom Stick"
+      };
+      MVOdb* channel_settings = runinfo->fOdb->Chdir("Equipment/alpha2online/Settings", true);
+      channel_settings->RSA("ChannelIDName",&channels, true, 20, 32);
+      channel_settings->RSA("ChannelDisplayName",&channel_names, true, 20, 32);
+      
+      //Print channel list into spill log
+      std::string channel_summary = "Channel List: ";
+      for (int i = 0; i < channels.size(); i++)
+      {
+         if (channels.at(i).empty()) continue;
+         channel_summary += channels.at(i);
+         channel_summary += " = ";
+         channel_summary += channel_names.at(i);
+         if (i != channels.size() - 1)
+         channel_summary +=", ";
+      }
+#if HAVE_MIDAS
+      cm_msg1(MINFO, "SpillLog", "alpha2online", channel_summary.c_str());
+      //Check the number of Channels and Channel names match
+      int n_chans = 0;
+      int n_names = 0;
+      for (const std::string& s: channels)
+      {
+         if (s.size())
+            n_chans++;
+      }
+      for (const std::string& s: channel_names)
+      {
+         if (s.size())
+            n_names++;
+      }
+      if (n_chans != n_names)
+         cm_msg1(MERROR, "SpillLog", "alpha2online", "ChannelIDName entires (%d) does not match ChannelDisplayName entires (%d)",n_chans, n_names);
+#endif
+
+      //Convert strings into channel numbers
+      TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
+      sis_channels.clear();
+      for ( const std::string& s: channels)
+      {   
+         if (s.empty()) continue;
+         bool contains_alpha = std::find_if(s.begin(), s.end(),
+                   [](char c) { return std::isalpha(c); }) != s.end();
+         if (contains_alpha) // Contants letters... so its a string...
+            sis_channels.push_back(sisch->GetChannel(s.c_str()));
+         else //No letters, just use the channel number directly
+            sis_channels.push_back(atoi(s.c_str()));
+      }
+      for (auto c: sis_channels)
+         std::cout<<"\t"<<c<<std::endl;
+      SpillLogTitle="            Dump Time            | ";
+      std::string dump_names = "CAT RCT ATM POS";
+      assert(dump_names.size() < DUMP_NAME_WIDTH - 1);
+      //Pad to proper width
+      dump_names.insert(dump_names.size(), DUMP_NAME_WIDTH - dump_names.size() - 1, ' ');
+      SpillLogTitle += dump_names + std::string("|");
+      char buf[200];
+      for (size_t i=0; i<channel_names.size(); i++)
+      {
+         if (channels.at(i).empty()) continue;
+         sprintf(buf,"%9s ",channel_names.at(i).c_str());
+         SpillLogTitle+=buf;
+      }
+      sprintf(buf,"%9s %9s ","Cuts","MVA");
+      SpillLogTitle+=buf;
+      n_sis_channels=sis_channels.size();
+      delete sisch;
+      
 #ifdef HAVE_MIDAS
       if (runinfo->fRunNo)
       {
@@ -352,7 +412,7 @@ public:
 
       InMemorySpillTable.push_back("End run");
       InMemorySpillTable.push_back(std::string(SpillLogTitle.Length(),'-'));
-      size_t lines=InMemorySpillTable.size();
+      const size_t lines = InMemorySpillTable.size();
       unsigned long byte_size=0;
       for (size_t i=0; i<lines; i++)
          byte_size+=InMemorySpillTable[i].size()*sizeof(char);
@@ -440,7 +500,7 @@ public:
       LogSpills();
       Spill_List.clear();
 
-      #endif
+#endif
    }
 
    void PauseRun(TARunInfo* runinfo)
@@ -488,22 +548,22 @@ public:
             if (s->IsInfoType)
             {
                 //s->Print();
-                InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+                InMemorySpillTable.push_back(s->Content(sis_channels).Data());
 #ifdef HAVE_MIDAS
-                fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
+                fSpillLogPrinter.PrintLine(s->Content(sis_channels).Data());
 #endif
                 continue;
             }
             if (!s->SeqData) continue;
 
             if (fFlags->fWriteSpillTxt)
-               LiveSpillLog<<s->Content(&sis_channels,n_sis_channels);
+               LiveSpillLog << s->Content(sis_channels);
             if (fFlags->fWriteSpillDB)
                s->AddToDatabase(ppDb,stmt);
             if (!fFlags->fNoSpillSummary)
-               InMemorySpillTable.push_back(s->Content(&sis_channels,n_sis_channels).Data());
+               InMemorySpillTable.push_back(s->Content(sis_channels).Data());
 #ifdef HAVE_MIDAS
-            fSpillLogPrinter.PrintLine(s->Content(&sis_channels,n_sis_channels).Data());
+            fSpillLogPrinter.PrintLine(s->Content(sis_channels).Data());
 #endif
             SaveToTree(runinfo,s);
          }
