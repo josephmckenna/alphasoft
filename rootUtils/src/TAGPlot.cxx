@@ -364,7 +364,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
     else
       AddStoreEvent(store_event, Toffset);
     ++processed_events;
-    if( (processed_events%1000) == 0 ) std::cout<<"TAGPlot::AddEvents StoreEvents: "<<processed_events<<std::endl;
+    if( ((processed_events%1000) == 0) && fVerbose ) std::cout<<"TAGPlot::AddEvents StoreEvents: "<<processed_events<<std::endl;
   }
   if (store_event) delete store_event;
   delete t0;
@@ -394,7 +394,7 @@ Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t
         AddChronoEvent(e,ChronoChannels[j].GetBoard(), Toffset);
 
       ++processed_ts;
-      if( (processed_ts%1000) == 0 ) std::cout<<"TAGPlot::AddEvents Chrono Events: "<<processed_ts<<std::endl;
+      if( ((processed_ts%1000) == 0) && fVerbose ) std::cout<<"TAGPlot::AddEvents Chrono Events: "<<processed_ts<<std::endl;
     }
     delete e;
     delete t;

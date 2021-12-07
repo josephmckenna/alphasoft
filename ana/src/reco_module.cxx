@@ -293,29 +293,28 @@ public:
                r.AddSpacePoint( SigFlow->matchSig );
             else
                r.AddSpacePoint( SigFlow->matchSig, z_fid );
-      
-            if( fVerb ) 
+
+            if( fTrace )
                printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
             r.FindTracks(fFlags->finder);
-            if( fVerb ) 
+            if( fTrace )
                printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 
             if( fFlags->fMagneticField == 0. )
                {
                   int nlin = r.FitLines();
-                  if( fVerb )                  
-                     std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
                }
 
             int nhel = r.FitHelix();
-            if( fVerb ) 
+            if( fTrace )
                std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
 
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status = r.RecVertex( &theVertex );
-            if( fTrace ) 
+            if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
             analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
@@ -326,11 +325,8 @@ public:
                   analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
                   if( fTrace ) theVertex.Print("rphi");
                }
-            else
-               {
-                  if( fVerb ) 
-                     std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
-               }
+            else if( fTrace )
+               std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
  
       {
