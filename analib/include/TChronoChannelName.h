@@ -38,9 +38,8 @@ class TChronoChannelName : public TObject
   public:
   
    TChronoChannelName();
-   TChronoChannelName(VirtualOdb* Odb, Int_t b, Int_t BoxIndex=-1);
-   TChronoChannelName(MVOdb* Odb, Int_t b, Int_t BoxIndex=-1);
-   TChronoChannelName(TString json, Int_t b);
+   TChronoChannelName(MVOdb* Odb, const std::string& board);
+   TChronoChannelName(TString json, const std::string& b);
 
    void DumpToJson(int runno);
 
