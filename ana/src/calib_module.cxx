@@ -242,14 +242,15 @@ public:
       
       if( SigFlow->awSig->size() > 0 )
          {
-            printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
+            if(fTrace)
+               printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
             AnalyzeSignals(SigFlow->awSig);
             if (fTrace)
                printf("CalibRun::Analysis DONE\n");
             ++fCounter;
          }
-      else
-         printf("CalibRun::Analyze, No signals to Analyze\n");
+      // else
+      //    printf("CalibRun::Analyze, No signals to Analyze\n");
 
       return flow;
    }

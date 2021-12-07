@@ -163,13 +163,16 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
 }
 
 #include <TRegexp.h>
+#include <TObjString.h>
 int GetRunNumber( TString fname )
 {
-   //  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-  TRegexp re("[0-9][0-9][0-9][0-9]");
-  int pos = fname.Index(re);
+  TString the_name = ((TObjString*)fname.Tokenize("/")->Last())->GetString();
+  // TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  // TRegexp re("[0-9][0-9][0-9][0-9]");
+  TRegexp re("[0-9][0-9][0-9]+");
+  int pos = the_name.Index(re);
   //  int run = TString(fname(pos,5)).Atoi();
-  int run = TString(fname(pos,6)).Atoi();
+  int run = TString(the_name(pos,6)).Atoi();
   return run;
 }
 

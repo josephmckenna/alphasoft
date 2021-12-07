@@ -189,7 +189,9 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   std::vector< std::vector<ALPHAg::signal> > comb;
   if( int(padsignals->size()) > fNpadsCut )
     {
-      std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()<<" exceeds its limit "<<fNpadsCut<<std::endl;
+      if( fTrace )
+	std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()
+		 <<" exceeds its limit "<<fNpadsCut<<std::endl;
       comb.resize(0);
       return comb;
     }
@@ -756,9 +758,9 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::MatchElectrodes(
 	    }
 	}
     }
-  //  if( fTrace )
+  if( fTrace )
   //std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
-  std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
+    std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   return spacepoints;
@@ -783,7 +785,8 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*  Match::FakePads(std::v
     }
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
-  std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
   return spacepoints;
 }
 
@@ -1007,6 +1010,6 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
     std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
   }
-  std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
+  //std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
   return spacepoints;
 }
