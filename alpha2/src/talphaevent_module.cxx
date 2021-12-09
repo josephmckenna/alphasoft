@@ -215,8 +215,8 @@ public:
             gVF48SiMap->GetVF48( isil,1, m, c, ttcchannel); // check that the mapping exists
             if( m == -1 ) continue; // if not, continue
 
-            Char_t * name = (Char_t*)gVF48SiMap->GetSilName(isil).c_str();
-            TAlphaEventSil *sil = new TAlphaEventSil(name,AlphaEvent,fAlphaEventMap);
+            const std::string name = gVF48SiMap->GetSilName(isil).c_str();
+            TAlphaEventSil *sil = new TAlphaEventSil((Char_t*)name.c_str(),AlphaEvent,fAlphaEventMap);
 
             AlphaEvent->AddSil(sil);
             for( int iASIC = 1; iASIC <= 4; iASIC++ ) 
