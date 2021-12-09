@@ -9,6 +9,8 @@ else()
 endif()
 
 project(alphasoft)
+set (CMAKE_MACOSX_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -27,12 +29,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
-endif()
-
-
 
 # IDentify OS (linux, windows, etc.)
 string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
@@ -62,16 +58,12 @@ endif()
 if(DEFINED ENV{MIDASSYS})
    include($ENV{MIDASSYS}/lib/midas-targets.cmake)
    message(STATUS "${PROJECT_NAME}: Building with MIDAS from $ENV{MIDASSYS}/lib/midas-targets.cmake")
+   include($ENV{MIDASSYS}/lib/manalyzer-targets.cmake)
+   message(STATUS "${PROJECT_NAME}: Building with manalyzer from $ENV{MIDASSYS}/lib/manalyzer-targets.cmake")
    set(MIDAS_FOUND TRUE)
-   set(MIDASSYS "$ENV{MIDASSYS}")
-   set(MIDAS_LIBRARY_DIRS "${MIDASSYS}/lib")
-   set(MIDAS_LIBRARIES midas)
-   message(STATUS "MIDAS found ${MIDASSYS}")
-   message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARIES = ${MIDAS_LIBRARIES}")
-   message(STATUS "[${PROJECT_NAME}] MIDAS_LIBRARY_DIRS = ${MIDAS_LIBRARY_DIRS}")
 else()
-   message(STATUS "${PROJECT_NAME}: Building without MIDAS")
-   set(BUILD_MANALYZER ON)
+   message(STATUS "${PROJECT_NAME}: Building with standalone local manalyzer")
+   set(BUILD_MANALYZER TRUE)
    unset(MIDAS_FOUND)
 endif()
 
@@ -84,19 +76,6 @@ else()
   message(FATAL "SQLite3 NOT FOUND")
 endif()
 
-# Zlib
-set(HAVE_LIBZ 0)
-find_package(ZLIB)
-if(ZLIB_FOUND)
-    # TODO: rename HAVE_LIBZ to HAVE_ZLIB
-    # (original rename was introduced in midasio commit f185f999
-    # for compatibility with autotools which is not used)
-    set(HAVE_LIBZ 1)
-    set(HAVE_ZLIB 1)
-    add_compile_definitions(HAVE_LIBZ HAVE_ZLIB)
-endif()
-
-
 # Find ROOT
 if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
     if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
@@ -108,7 +87,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
 find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom RHTTP)
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
-message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
+separate_arguments(ROOT_CXX_FLAGS UNIX_COMMAND "${ROOT_CXX_FLAGS}")
+message(STATUS "Found ROOT: flags: ${ROOT_CXX_FLAGS} and includes: ${ROOT_INCLUDE_DIRS}")
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
 # The parameter is based on compiler ID as it's not standardised
@@ -154,6 +134,23 @@ include_directories(SYSTEM ${ROOT_INCLUDE_DIRS})
 
 # Directories
 set( _AGANA_STATIC TRUE)
+
+if(BUILD_MANALYZER)
+  message(STATUS "Cloning submoduels")
+  # get midas-analyzer submodules
+  get_submodule(midasio)
+  get_submodule(mvodb)
+  get_submodule(mjson)
+  get_submodule(mxml)
+  get_submodule(manalyzer)
+  add_subdirectory(manalyzer)
+  message(STATUS "Ready to build manalyzer")
+endif()
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
+endif()
+
+
 
 #Send these settings as precompiler flags (mostly used in rootUtils)
 if (BUILD_AG)
@@ -214,21 +211,12 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
+get_submodule(chronobox_software)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
 
-if(BUILD_MANALYZER)
-  message(STATUS "Cloning submoduels")
-  # get midas-analyzer submodules
-  get_submodule(midasio)
-  get_submodule(mvodb)
-  get_submodule(mjson)
-  get_submodule(mxml)
-  get_submodule(manalyzer)
-  message(STATUS "Ready to build manalyzer")
-endif()
 
 #AG libraries
 if (BUILD_AG)

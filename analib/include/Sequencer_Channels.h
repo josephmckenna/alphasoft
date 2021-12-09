@@ -3,11 +3,10 @@
 #ifndef _SEQNAMES_
 #define _SEQNAMES_
 #include <vector>
+#include <string>
 #include "assert.h"
-#define NUMSEQ 9 
+#define NUMSEQ 9
 #define USED_SEQ 9 
-
-//Dont change the order of these please
 
 //Dont change the order of these please
 enum {
@@ -27,20 +26,20 @@ static const std::vector<std::string> SEQ_NAMES = {
    "RCT",
    "ATM",
    "POS",
-   //"BRK",
    "RCT_BOTG",
    "ATM_BOTG",
    "ATM_TOPG",
    "RCT_TOPG",
-   "BML",
+   "BML"
 };
+
+std::string GetSequencerName(int seqID);
 
 const std::vector<std::string> SEQ_NAMES_SHORT = {
    "CAT",
    "RCT",
    "ATM",
    "POS",
-   //"BRK",
    "RCB",
    "ATB",
    "ATT",
@@ -54,7 +53,6 @@ const std::vector<std::string> SeqNames{
    "rct",
    "atm",
    "pos",
-   //"brk",
    "rct_botg",
    "atm_botg",
    "atm_topg",
@@ -62,7 +60,7 @@ const std::vector<std::string> SeqNames{
    "bml"
 };
 
-const std::vector<uint> USED_SEQ_NUM{
+const std::vector<int> USED_SEQ_NUM{
    PBAR,
    RECATCH,
    ATOM,

@@ -12,29 +12,31 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    }
    return tree;
 }
+
+
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel)
+
+TTreeReader* Get_AGSpillTree(Int_t runNumber)
 {
-   TString Name="chrono/ChronoEventTree_";
-           Name+=ChronoBoardChannel.first;
-           Name+="_";
-           Name+=ChronoBoardChannel.second;
-           Name+="OfficialTime";
-   return Get_Tree_By_Name(runNumber,Name.Data());
+   TFile* f=Get_File(runNumber);
+   TTreeReader* t=new TTreeReader("AGSpillTree", f);
+   return t;
 }
+
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Tree(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel, double &official_time)
+TTree* Get_Chrono_Tree(const int runNumber, const std::string ChronoBoardChannel)
 {
-   TString Name="chrono/ChronoEventTree_";
-           Name+=ChronoBoardChannel.first;
-           Name+="_";
-           Name+=ChronoBoardChannel.second;
-   TTree* t=Get_Tree_By_Name(runNumber,Name.Data());
-   Name+="OfficialTime";
-   TTree* tf=Get_Tree_By_Name(runNumber,Name.Data());
-   tf->SetBranchAddress("OfficialTime",&official_time);
-   t->AddFriend(tf);
+   std::string Name="ChronoBox_" + ChronoBoardChannel;
+   std::cout<<"Loading "<<Name<<std::endl;
+
+   if (ChronoBoardChannel == "cb01")
+   {
+      std::cout<<"AT TIME OF WRITING cb01 is not useful for FIFO analysis.... skipping"<<std::endl;
+      return NULL;
+   }
+
+   TTree* t=Get_Tree_By_Name(runNumber,Name.c_str());
    return t;
 }
 #endif
@@ -78,9 +80,9 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber)
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
 {
    TTree* t=Get_StoreEvent_Tree(runNumber);
-   TTree* tf=Get_Tree_By_Name(runNumber,"StoreEventOfficialTime");
-   tf->SetBranchAddress("OfficialTime",&time);
-   t->AddFriend(tf);
+   //TTree* tf=Get_Tree_By_Name(runNumber,"StoreEventOfficialTime");
+   // tf->SetBranchAddress("OfficialTime",&time);
+  // t->AddFriend(tf);
    return t;
 }
 #endif
@@ -114,6 +116,19 @@ TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber)
    TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
    return t;
 }
+
+#endif
+
+#ifdef BUILD_AG
+
+TTreeReader* Get_TAGAnalysisReport_Tree(Int_t runNumber)
+{
+   TFile* f = Get_File(runNumber);
+   TDirectory* d=f->GetDirectory("AnalysisReport");
+   TTreeReader* t = new TTreeReader("AnalysisReport", f->GetDirectory("/AnalysisReport"));
+   return t;
+}
+
 #endif
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname)

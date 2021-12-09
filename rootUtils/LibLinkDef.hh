@@ -23,4 +23,6 @@
 #pragma link C++ function A2RootUtils+;
 #endif
 
+#pragma link C++ class HistoStacker;
+
 #endif

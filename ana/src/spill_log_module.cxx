@@ -101,7 +101,7 @@ class SpillLogPrinter
       std::string logo_indent(indent,' ');
       //For readability make a large break from the last run
       cm_msg1(MINFO, "SpillLog", "alphagonline","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
-      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ |___/___/___/");
       cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
       cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
 
@@ -184,10 +184,10 @@ public:
    // Int_t SequencerNum[4];
    Int_t gADSpillNumber;
    TSpill* gADSpill;
-   TChronoChannel gADSpillChannel={-1,-1};
+   TChronoChannel gADSpillChannel={"",-1};
    
    Int_t gPOSSpillNumber;
-   TChronoChannel gPOSSpillChannel={-1,-1};
+   TChronoChannel gPOSSpillChannel={"",-1};
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
    sqlite3_stmt * stmt;
@@ -229,7 +229,6 @@ public:
    {
       if (fTrace)
          printf("SpillLog::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      
 
       std::vector<std::string> channels =
       {
@@ -268,7 +267,7 @@ public:
       std::vector<std::string> tmpnames(channel_names);
       channels.clear();
       channel_names.clear();
-      for (int i = 0; i < tmpchan.size(); i++)
+      for (size_t i = 0; i < tmpchan.size(); i++)
       {
          if (tmpchan.at(i).size() || tmpnames.at(i).size())
          {
@@ -278,7 +277,7 @@ public:
       }
       //Print channel list into spill log
       std::string channel_summary = "Channel List: ";
-      for (int i = 0; i < channels.size(); i++)
+      for (size_t i = 0; i < channels.size(); i++)
       {
          if (channels.at(i).empty()) continue;
          channel_summary += channels.at(i);
@@ -306,25 +305,24 @@ public:
          cm_msg1(MERROR, "SpillLog", "alphagonline", "ChannelIDName entires (%d) does not match ChannelDisplayName entires (%d)",n_chans, n_names);
 #endif
 
-      TChronoChannelName* name[CHRONO_N_BOARDS];
-      for (int i = 0; i < CHRONO_N_BOARDS; i++)
-         name[i] = new TChronoChannelName(runinfo->fOdb,i);
+
       for (size_t i=0; i<channels.size(); i++)
       {
          bool found = false;
-         for (int board = 0; board < CHRONO_N_BOARDS; board++)
+         for (const std::pair<std::string, int>& board: TChronoChannel::CBMAP)
          {
-            int channel=name[board]->GetChannel(channels.at(i));
+            TChronoChannelName name(runinfo->fOdb,board.first);
+            int channel = name.GetChannel(channels.at(i));
             std::cout<<"CHANNEL"<<channel<<std::endl;
-            if (channel>0)
+            if (channel >= 0)
             {
                found = true;
-               chrono_channels.emplace_back(TChronoChannel(board,channel));
+               chrono_channels.emplace_back(TChronoChannel(board.first,channel));
                break;
             }
          }
          if (!found)
-            chrono_channels.emplace_back(TChronoChannel(-1,-1));
+            chrono_channels.emplace_back(TChronoChannel("",-1));
       }
 
       n_chrono_channels=chrono_channels.size();
@@ -349,8 +347,6 @@ public:
          sprintf(buf,"%9s ",channel_names.at(i).c_str());
          SpillLogTitle+=buf;
       }
-      for (int i = 0; i < CHRONO_N_BOARDS; i++)
-         delete name[i];
 
 #ifdef HAVE_MIDAS
       if (runinfo->fRunNo)
@@ -563,7 +559,7 @@ public:
       {
          for (size_t i=0; i<SpillFlow->spill_events.size(); i++)
          {
-            TAGSpill* s=SpillFlow->spill_events.at(i);
+            TAGSpill* s = SpillFlow->spill_events.at(i);
 
             //Add spills that just have text data
             if (!s->IsDumpType && !s->IsInfoType)
@@ -593,7 +589,6 @@ public:
             if (!fFlags->fNoSpillSummary)
                InMemorySpillTable.push_back(s->Content(chrono_channels).Data());
 #ifdef HAVE_MIDAS
-std::cout<<"AAAAAAAAA"<<std::endl;
             fSpillLogPrinter.PrintLine(s->Content(chrono_channels).Data());
 #endif
             SaveToTree(runinfo,s);

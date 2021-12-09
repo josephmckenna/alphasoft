@@ -25,7 +25,7 @@ protected:
   int fStatus;
   int fParticle;
 
-  unsigned fPointsCut;
+  int fPointsCut;
 
   TVector3 fResidual;
   std::vector<double> fResiduals;

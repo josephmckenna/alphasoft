@@ -5,7 +5,9 @@
 unpack_module.o
 
 #Full reconstruction (development branch style):
-eos_module.o handle_sequencer.o chrono_module.o
+eos_module.o handle_sequencer.o cb_module.o
+handle_dumps.o
+spill_log_module.o
 
 # AC
 bsc_adc_module.o     
@@ -13,16 +15,15 @@ bsc_adc_module.o
 bsc_tdc_module.o
 # rTPC tracking chain
 deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
-# GS
-bv_tpc_matching_module.o
 # AC
 wf_persistency_module.o
 histo_module.o
 phspectrum_module.o
+# GS
+bsc_histo_module.o
 # LM
 calib_module.o
 # PH
 display_module.o
 # JTKM
-official_time_module.o
 AnalysisReport_module.o

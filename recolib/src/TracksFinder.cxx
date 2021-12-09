@@ -37,7 +37,7 @@ TracksFinder::~TracksFinder()
    Clear();
 }
 
-void TracksFinder::Clear(Option_t *option)
+void TracksFinder::Clear()
 {
    fPointsArray.clear();
 #if BUILD_EXCLUSION_LIST

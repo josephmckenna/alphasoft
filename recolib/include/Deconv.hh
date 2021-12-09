@@ -98,15 +98,14 @@ private:
 
    void SubtractAW(ALPHAg::wfholder* hist1,
                    std::vector<ALPHAg::wfholder*>* wfmap,
-                   const unsigned b,
+                   const int b,
                    const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                   std::vector<double> &fResponse, const unsigned theBin);
+                   std::vector<double> &fResponse, const int theBin);
    
    void SubtractPAD(ALPHAg::wfholder* hist1,
-                    std::vector<ALPHAg::wfholder*>* wfmap,
-                    const unsigned b,
+                    const int b,
                     const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                    std::vector<double> &fResponse, const unsigned theBin);
+                    std::vector<double> &fResponse, const int theBin);
    
    ALPHAg::comp_hist_t wf_comparator;
    std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b);

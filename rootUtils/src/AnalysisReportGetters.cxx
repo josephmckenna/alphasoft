@@ -15,3 +15,19 @@ TA2AnalysisReport Get_A2Analysis_Report(int runNumber, bool force)
    return TA2AnalysisReport(*AnalysisReport);
 }
 #endif
+
+#ifdef BUILD_AG
+TAGAnalysisReport Get_AGAnalysis_Report(int runNumber, bool force)
+{
+    TTreeReader* t=Get_TAGAnalysisReport_Tree(runNumber);
+    if (t->GetEntries(force)>1)
+    {
+        std::cout<<"Warning! More than one analysis report in run?!?! What?"<<std::endl;
+    }
+    TTreeReaderValue<TAGAnalysisReport> AnalysisReport(*t, "TAGAnalysisReport");
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   t->Next();
+   return TAGAnalysisReport(*AnalysisReport);
+}
+#endif

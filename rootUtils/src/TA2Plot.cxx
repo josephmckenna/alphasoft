@@ -209,9 +209,9 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    }
 }
 
-void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition )
+void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex )
 {
-   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, repetition);
+   std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return AddDumpGates(runNumber, spills);
 }
 

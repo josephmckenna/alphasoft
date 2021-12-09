@@ -26,60 +26,6 @@ if(BUILD_A2)
   set(A2_LINK_LIBS alpha2 analib GEM)
 endif()
 
-if( BUILD_AG )
-  set(manalyzer_lib_dir ${CMAKE_BINARY_DIR}/ana)
-elseif(BUILD_MANALYZER)
-  set(manalyzer_objs
-    ${CMAKE_SOURCE_DIR}/midasio/midasio.cxx
-    ${CMAKE_SOURCE_DIR}/midasio/lz4frame.c
-    ${CMAKE_SOURCE_DIR}/midasio/lz4.c
-    ${CMAKE_SOURCE_DIR}/midasio/lz4hc.c
-    ${CMAKE_SOURCE_DIR}/midasio/xxhash.c
-    ${CMAKE_SOURCE_DIR}/mvodb/mvodb.cxx
-    ${CMAKE_SOURCE_DIR}/mvodb/nullodb.cxx
-    ${CMAKE_SOURCE_DIR}/mvodb/mjsonodb.cxx
-    ${CMAKE_SOURCE_DIR}/mvodb/mxmlodb.cxx
-    ${CMAKE_SOURCE_DIR}/mjson/mjson.cxx
-    ${CMAKE_SOURCE_DIR}/mxml/mxml.cxx
-    )
-
-
-  add_library(manalyzer      STATIC ${CMAKE_SOURCE_DIR}/manalyzer/manalyzer ${manalyzer_objs})
-  add_library(manalyzer_main STATIC ${CMAKE_SOURCE_DIR}/manalyzer/manalyzer_main)
-  
-  target_include_directories(manalyzer      PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer)
-  target_include_directories(manalyzer_main PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer)
-  
-  target_compile_features(manalyzer      PUBLIC cxx_std_11)
-  target_compile_features(manalyzer_main PUBLIC cxx_std_11)
-
-  if(MIDAS_FOUND)
-    target_compile_definitions(manalyzer      PUBLIC -DHAVE_MIDAS -DHAVE_TMFE)
-    target_compile_definitions(manalyzer_main PUBLIC -DHAVE_MIDAS -DHAVE_TMFE)
-    target_link_libraries(manalyzer      PUBLIC midas)
-    target_link_libraries(manalyzer_main PUBLIC midas)
-  else()
-    target_include_directories(manalyzer      PUBLIC ${CMAKE_SOURCE_DIR}/midasio ${CMAKE_SOURCE_DIR}/mvodb ${CMAKE_SOURCE_DIR}/mjson ${CMAKE_SOURCE_DIR}/mxml)
-    target_include_directories(manalyzer_main PUBLIC ${CMAKE_SOURCE_DIR}/midasio ${CMAKE_SOURCE_DIR}/mvodb)
-  endif()
-
-  target_include_directories(manalyzer      PUBLIC ${ROOT_INCLUDE_DIRS})
-  target_include_directories(manalyzer_main PUBLIC ${ROOT_INCLUDE_DIRS})
-if(ZLIB_FOUND)
-  target_link_libraries(manalyzer PUBLIC ${ZLIB_LIBRARIES})
-  target_link_libraries(manalyzer_main PUBLIC ${ZLIB_LIBRARIES})
-endif()
-  target_compile_definitions(manalyzer      PUBLIC ${ROOT_CCX_FLAGS} -DHAVE_ROOT)
-  target_compile_definitions(manalyzer_main PUBLIC ${ROOT_CCX_FLAGS} -DHAVE_ROOT)
-  target_compile_definitions(manalyzer      PUBLIC -DHAVE_ROOT_HTTP -DHAVE_THTTP_SERVER)
-  target_compile_definitions(manalyzer_main PUBLIC -DHAVE_ROOT_HTTP -DHAVE_THTTP_SERVER)
-  target_link_libraries(manalyzer PUBLIC RHTTP Gui)
-  target_link_libraries(manalyzer_main PUBLIC RHTTP Gui)
-endif()
-
-
-
-
 #message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
@@ -121,14 +67,6 @@ foreach( LIST_FILE ${BINS} )
       target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
     endif()
     
-    if(BUILD_MANALYZER)
-      target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer ${CMAKE_SOURCE_DIR}/midasio ${CMAKE_SOURCE_DIR}/mvodb ${CMAKE_SOURCE_DIR}/mjson ${CMAKE_SOURCE_DIR}/mxml)   
-    endif()
-
-    if( BUILD_AG )
-      link_directories(${bin} PUBLIC ${manalyzer_lib_dir})
-    endif()
-   
     target_link_libraries( ${bin} ${A2_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            ${ROOT_LIBRARIES}

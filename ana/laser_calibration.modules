@@ -6,7 +6,7 @@ unpack_module.o
 adc_module.o pwb_module.o
 
 # sequencer modules
-eos_module.o handle_sequencer.o chrono_module.o
+eos_module.o handle_sequencer.o cb_module.o
 
 # rTPC tracking chain
 deconv_aw_module.o deconv_pad_module.o match_module.o
@@ -18,5 +18,5 @@ tpc_tree_module.o
 # PH
 display_module.o
 # JTKM
-official_time_module.o
+
 AnalysisReport_module.o

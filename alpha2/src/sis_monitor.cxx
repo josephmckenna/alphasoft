@@ -165,8 +165,8 @@ public:
       for ( int j = 0; j < NUM_SIS_MODULES; j++ )
       {
          if (sf->sis_events[0].size())
-            if ( mostmax < sf->sis_events[j].back()->GetRunTime())
-               mostmax = sf->sis_events[j].back()->GetRunTime();
+            if ( mostmax < sf->sis_events[j].back().GetRunTime())
+               mostmax = sf->sis_events[j].back().GetRunTime();
       }
       // Reserve space for all incoming TSISEvents
       int i = fFIFO.back().fBin;
@@ -180,11 +180,11 @@ public:
       for (int j = 0; j < NUM_SIS_MODULES; j++)
       {
          int bin = 0;
-         for (TSISEvent* e: sf->sis_events[j]) 
+         for (const TSISEvent& e: sf->sis_events[j]) 
          {
-            while ( e->GetRunTime() > fFIFO.at(bin).GetRunTime())
+            while ( e.GetRunTime() > fFIFO.at(bin).GetRunTime())
                bin++;
-            fFIFO.at(bin) += *e;
+            fFIFO.at(bin) += e;
          }
       }
       //Resise histograms

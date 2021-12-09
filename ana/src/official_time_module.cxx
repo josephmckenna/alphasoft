@@ -106,7 +106,7 @@ public:
          //
          
          
-         TString SyncName="CHRONO_SYNC";
+         std::string SyncName="CHRONO_SYNC";
          //Exact name:
          //SyncName+="_";
          //SyncName+=board+1;

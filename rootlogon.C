@@ -24,11 +24,15 @@
 
 
 
-  TString libname("libagtpc");
+  TString libname;
+  int s=-1;
+#ifdef BUILD_AG
+  libname="libagtpc";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
-  int s=gSystem->Load( libname );
+  s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
+#endif
 
   libname="libanalib";
   libname=gSystem->FindDynamicLibrary(libname);
@@ -36,11 +40,13 @@
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
+#ifdef BUILD_A2
   libname="libalpha2";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
+#endif 
  
   libname="librootUtils";
   libname=gSystem->FindDynamicLibrary(libname);

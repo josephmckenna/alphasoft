@@ -178,7 +178,7 @@ public:
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent( __attribute__((unused)) TARunInfo* runinfo, __attribute__((unused)) TAFlags* flags, TAFlowEvent* flow)
    {
       //Clocks unfold backwards... 
       std::vector<TAFlowEvent*> flowArray;
@@ -247,7 +247,8 @@ public:
 
    void Finish()
    {
-      fFlags.AnalysisReport->Print();
+      if (fFlags.AnalysisReport)
+         fFlags.AnalysisReport->Print();
       //delete fFlags.AnalysisReport;
    }
 

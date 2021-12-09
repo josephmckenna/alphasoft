@@ -4,15 +4,16 @@
 #include "FileGetters.h"
 #include "TSystem.h"
 
-
-
 TTree* Get_Tree_By_Name(Int_t runNumber,const char* name);
 
 #ifdef BUILD_AG
-#include "TChrono_Event.h"
 
-TTree* Get_Chrono_Tree_OfficialTime(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel);
-TTree* Get_Chrono_Tree(Int_t runNumber, std::pair<Int_t,Int_t> ChronoBoardChannel, double &official_time);
+TTreeReader* Get_AGSpillTree(Int_t runNumber);
+
+#include "TChronoChannel.h"
+#include "store_cb.h"
+
+TTree* Get_Chrono_Tree(const int runNumber, const std::string ChronoBoardChannel);
 //TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time);
 TTree* Get_Chrono_Name_Tree(Int_t runNumber);
 
@@ -34,6 +35,12 @@ TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
 
 TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber);
+#endif
+
+#ifdef BUILD_AG
+
+TTreeReader* Get_TAGAnalysisReport_Tree(Int_t runNumber);
+
 #endif
 
 TTreeReader* Get_feGEM_Tree(Int_t runNumber, const std::string& Category, const std::string& Varname);

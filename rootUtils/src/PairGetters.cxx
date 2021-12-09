@@ -1,19 +1,84 @@
 #include "PairGetters.h"
 
 #ifdef BUILD_AG
-std::pair<Int_t,Int_t> GetChronoBoardChannel(Int_t runNumber, const char* ChannelName)
+std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, std::vector<double> tmin, std::vector<double> tmax) 
 {
-   Int_t chan=-1;
-   Int_t board=-1;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
+   std::vector<std::pair<double,int>> TimeCounts;
+
+   assert(tmin.size() == tmax.size());
+   const int entries = tmin.size();
+
+   //Set broad range we are looking for
+   double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
+   double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
+
+   if(last_time < 0){
+      last_time=GetTotalRunTimeFromChrono(runNumber,chan.GetBoard());
+      for(size_t i = 0; i < tmax.size(); i++)
+      {
+         tmax[i]=last_time;
+      }
+   } 
+
+   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
+   double RunTime = -1;
+   int counts = 0;
+   for (int i = 0; i < t->GetEntries(); i++)
    {
-       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
-       if (chan>-1) break;
+      t->GetEntry(i);
+      //e->Print();
+      if (e->IsLeadingEdge())
+      {
+         if ( int(e->GetChannel()) == chan.GetChannel())
+         {
+            counts = 1;
+            RunTime = e->GetRunTime();
+            if (RunTime < first_time)
+               continue;
+            if (RunTime > last_time)
+               break;
+            for (int j = 0; j < entries; j++)
+            {
+               if (RunTime > tmin[j])
+                  if (RunTime < tmax[j])
+                  {
+                     TimeCounts.push_back(std::make_pair(RunTime, counts));
+                  }
+            }
+         }
+      }
    }
-   return {board,chan};
+   return TimeCounts;
 }
 
-#endif 
+std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, std::vector<double> tmin, std::vector<double> tmax)
+{
+  TChronoChannel chan = Get_Chrono_Channel(runNumber, ChannelName);
+  return GetRunTimeOfChronoCount(runNumber, chan,  tmin, tmax);
+}
+
+std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, const std::vector<TAGSpill>& spills)
+{
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  tmin.reserve(spills.size());
+  tmax.reserve(spills.size());
+  for (auto& s: spills)
+    {
+      tmin.push_back(s.GetStartTime());
+      tmax.push_back(s.GetStopTime());
+    }
+  return GetRunTimeOfChronoCount(runNumber, chan, tmin, tmax);
+}
+
+std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, const std::vector<TAGSpill>& spills)
+{
+    return GetRunTimeOfChronoCount(runNumber,Get_Chrono_Channel(runNumber,ChannelName),spills);
+}
+
+#endif
 
 
 #ifdef BUILD_A2
@@ -35,7 +100,13 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
-   if(last_time < 0) last_time = GetTotalRunTimeFromSIS(runNumber);
+   if(last_time < 0)
+   {
+      last_time = GetTotalRunTimeFromSIS(runNumber);
+      for(int i=0; i<tmax.size(); i++)
+         if (tmax[i] < 0)
+            tmax[i]=last_time;
+   }
 
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
