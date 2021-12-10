@@ -25,9 +25,10 @@ class LifetimeModule: public TARunObject
 {
 private:
    //Once all of these exist and we see another cold dump. We add the lifetime measurment to spill log.
-   TA2Spill* fFirstFifthDump=NULL;
-   TA2Spill* fSecondFifthDump=NULL;
+   TA2Spill* fFirstFifthDump=NULL; //These two need to be saved permanently I guess. 
    TA2Spill* fColdDump=NULL;
+   
+   TA2Spill* fSecondFifthDump=NULL;
    TA2Spill* fLifetime=NULL;
    bool fLifetimeDone = false;
 
@@ -58,10 +59,10 @@ public:
       if (fTrace)
          printf("LifetimeModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fLifetimeDone = false;
-      ResetStoredDumps();
+      ResetAllDumps();
    }
 
-   void ResetStoredDumps()
+   void ResetAllDumps()
    {
       if (fFirstFifthDump)
       {
@@ -85,6 +86,20 @@ public:
       }
    }
 
+   void ResetStoredDumps()
+   {
+      if (fSecondFifthDump)
+      {
+         delete fSecondFifthDump;
+         fSecondFifthDump = NULL;
+      }
+      if (fLifetime)
+      {
+         delete fLifetime;
+         fLifetime = NULL;
+      }
+   }
+
    void EndRun(TARunInfo* runinfo)
    {
       if(fLifetime && !HaveAllDumps())
@@ -92,7 +107,7 @@ public:
       if(fLifetime && HaveAllDumps())
          printf("LifetimeModule::EndRun, run %d\n. Lifetime run detected plus all conditions, but for some reason not calculated. Please alert Lukas.", runinfo->fRunNo);
 
-      ResetStoredDumps();
+      ResetAllDumps();
 
       if (fTrace)
          printf("LifetimeModule::EndRun, run %d\n", runinfo->fRunNo);
@@ -133,9 +148,11 @@ public:
             //If fifth dump found, check whether its first or second and save.
             if(fFirstFifthDump && fSecondFifthDump)
             {
-               //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.  
-               delete fFirstFifthDump;
-               fFirstFifthDump = fSecondFifthDump;
+               //If both are already saved we need to shuffle them forward in momery s.t. 2nd dump is the current, and the 1st was the one before.
+               //Instead if both are saved lets just update the newest one. This now means the first 5th and cold dumps we see will be saved throughout the entirety of the run as a baseline. 
+               //delete fFirstFifthDump;
+               //fFirstFifthDump = fSecondFifthDump;
+               delete fSecondFifthDump;
                fSecondFifthDump = new TA2Spill(*s);
             }
             else if(fFirstFifthDump)
@@ -157,13 +174,19 @@ public:
          }
          else if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
          {
+            //If we haven't saved the initial cold dump save it now, this should only happen once. 
+            if (!fColdDump)
+            {
+               //delete fColdDump;
+               fColdDump = new TA2Spill(*s);
+            }
             if (HaveAllDumps())
             {
                //Once we have all the conditions to calculate a lifetime dump, lets do it in this AnalyzeFlowEvent(). 
                //Do lifetime calc. 
                const double lifetimeInMins = CalculateLifetime(runinfo, s);
                std::ostringstream lifetimeStream;
-               lifetimeStream << "Lifetime measurment detected... Normalised to fifth dumps the lifetime = " << lifetimeInMins << "m.";
+               lifetimeStream << "Lifetime measurement detected... Normalized to fifth dumps the lifetime = " << lifetimeInMins << "m.";
                TA2Spill* lifetimeSpill = new TA2Spill(runinfo->fRunNo,fLifetime->ScalerData->GetStartTime(),lifetimeStream.str().c_str());
                SpillFlow->spill_events.push_back(lifetimeSpill);
                // We've finished with all the dumps... lets get ready for another (in case users 
@@ -173,9 +196,6 @@ public:
             else
             {
                //Else save the cold dump for later and wait until we have everything we need.
-               if (fColdDump)
-                  delete fColdDump;
-               fColdDump = new TA2Spill(*s);
             }
          }
       }
