@@ -1,9 +1,6 @@
 #include "TH1DGetters.h"
 
 extern Int_t gNbin;
-
-
-
 #ifdef BUILD_AG
 std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chrono_chan, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
@@ -326,7 +323,6 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
 #endif
 
 
-
 #ifdef BUILD_A2
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
@@ -345,7 +341,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
          if (range<diff) range=diff;
       }
    }
-   for (auto& t: tmin)
+   for (const auto& t: tmin)
    {
       if (t < first_time) first_time = t;
    }
@@ -372,7 +368,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
       Title+=chans.GetDescription(SIS_Channel[i], runNumber);
 
       //Replace this is a data base call to get the channel name
-      TString name=chans.GetDescription(SIS_Channel[i], runNumber);
+      TString name = chans.GetDescription(SIS_Channel[i], runNumber);
       //Title+=name.Data();
 
       TH1D* h= new TH1D( name.Data(),
@@ -385,7 +381,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
    //More performance is maybe available if we use DataFrames...
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      TTreeReader* reader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      TTreeReader* reader = A2_SIS_Tree_Reader(runNumber, sis_module_no);
       TTreeReaderValue<TSISEvent> SISEvent(*reader, "TSISEvent");
       // I assume that file IO is the slowest part of this function... 
       // so get multiple channels and multiple time windows in one pass
@@ -393,16 +389,16 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
       {
          double t = SISEvent->GetRunTime();
          if (t < first_time) continue;
-         if (t>last_time) break;
+         if (t > last_time) break;
 
          //Loop over all time windows
-         for (int j=0; j<n_times; j++)
+         for (int j = 0; j < n_times; j++)
          {
             if (t>tmin[j] && t< tmax[j])
             {
-               for (int i=0; i<n_chans; i++)
+               for (int i = 0; i < n_chans; i++)
                {
-                  int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
+                  int counts = SISEvent->GetCountsInChannel(SIS_Channel[i]);
                   if (counts)
                   {
                      //std::cout<<t<<"\t"<<tmin[j]<<"\t"<<t-tmin[j]<<std::endl;
@@ -509,18 +505,18 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Ch
       // so get multiple channels and multiple time windows in one pass
       while (reader->Next())
       {
-         double t=SISEvent->GetRunTime();
+         double t = SISEvent->GetRunTime();
          if (t < first_time) continue;
-         if (t>last_time) break;
+         if (t > last_time) break;
       
          //Loop over all time windows
-         for (int j=0; j<n_times; j++)
+         for (int j = 0; j < n_times; j++)
          {
-            if (t>tmin[j] && t< tmax[j])
+            if (t > tmin[j] && t < tmax[j])
             {
-               for (int i=0; i<n_chans; i++)
+               for (int i = 0; i < n_chans; i++)
                {
-                  int counts=SISEvent->GetCountsInChannel(SIS_Channel[i]);
+                  const int counts = SISEvent->GetCountsInChannel(SIS_Channel[i]);
                   if (counts)
                   {
                      hh.at(i).at(j)->Fill(t-tmin[j],counts);

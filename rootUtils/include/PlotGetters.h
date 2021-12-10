@@ -72,9 +72,13 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t dumpIndex = 0,
 #endif
 
 #ifdef BUILD_A2
-TCanvas* Plot_A2_CT_HotDump(Int_t runNumber,Int_t binNumber=1000, 
-                          const char* dumpFile="ana/macros/temp2.dump", 
-                          Double_t EnergyRangeFactor=10., int whichSpill = 0);
+TCanvas* Plot_A2_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
+                          const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
+                          Double_t EnergyRangeFactor=10., const char* SIS_Channel_Name = "SIS_PMT_CATCH_OR");
+
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
+                          const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
+                          Double_t EnergyRangeFactor=10.);
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
                                 std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, 

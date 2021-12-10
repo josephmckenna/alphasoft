@@ -100,17 +100,17 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
-   if(last_time < 0){
-     last_time=GetTotalRunTimeFromSIS(runNumber);
-     for(int i=0; i<tmax.size(); i++)
-       {
-	 tmax[i]=last_time;
-       }
-   } 
+   if(last_time < 0)
+   {
+      last_time = GetTotalRunTimeFromSIS(runNumber);
+      for(int i=0; i<tmax.size(); i++)
+         if (tmax[i] < 0)
+            tmax[i]=last_time;
+   }
 
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      TTreeReader* SISReader=A2_SIS_Tree_Reader( runNumber, sis_module_no);
+      TTreeReader* SISReader = A2_SIS_Tree_Reader( runNumber, sis_module_no);
       TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
 
       // I assume that file IO is the slowest part of this function... 
