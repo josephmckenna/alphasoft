@@ -354,7 +354,12 @@ Int_t TAlphaEventHelix::FitLineParameters()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  ROOT::Minuit2::FunctionMinimum min = mini(40);
+  int MaxNofIterations;
+  if(fFastMode) MaxNofIterations = 40;
+  else MaxNofIterations = 20;
+
+  ROOT::Minuit2::FunctionMinimum min = mini(MaxNofIterations);
+
   upar = min.UserParameters();
   // mini(40);
   // upar = mini.Parameters();

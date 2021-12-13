@@ -118,7 +118,11 @@ Double_t TAlphaEventVertex::MinimizeVertexMeanDCA()
   //minimdca.SetMaxIterations(10);
 
   // create Minimizer (default is Migrad)
-  ROOT::Minuit2::FunctionMinimum min = minimdca(10);
+  int MaxNofIterations;
+  if(fFastMode) MaxNofIterations = 10;
+  else MaxNofIterations = 100;
+  ROOT::Minuit2::FunctionMinimum min = minimdca(MaxNofIterations);
+  
   // minimdca(10);
   // upar =minimdca.Parameters();
   upar =min.UserParameters();
@@ -268,7 +272,12 @@ TVector3 *TAlphaEventVertex::FindDCA( TAlphaEventHelix * ha, TAlphaEventHelix * 
   
   // create Minimizer (default is Migrad)
   // minidca(100);
-  ROOT::Minuit2::FunctionMinimum min = minidca(100);
+  int MaxNofIterations;
+  if(fFastMode) MaxNofIterations = 100;
+  else MaxNofIterations = 50;
+  ROOT::Minuit2::FunctionMinimum min = minidca(MaxNofIterations);
+
+
   // upar =minidca.Parameters();
   upar = min.UserParameters();
   //int iret = minidca.Minimize();

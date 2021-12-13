@@ -36,6 +36,8 @@ class TAlphaEventHelix: public TObject
  private:
   std::vector<TAlphaEventHit*>  fHits;
 
+  Bool_t fFastMode = kFALSE; 
+
   Int_t           fParticleID;
   Double_t        fChi2;
 
@@ -117,6 +119,10 @@ class TAlphaEventHelix: public TObject
   void            Setfz0( Double_t z0 ) { fz0 = z0; }
   void            SetHelixStatus( Int_t status ) { fHelixStatus = status; }
   Int_t           SortHits();
+
+
+  void              SetFastMode(Bool_t fmode){fFastMode = fmode;}
+  Bool_t            GetFastMode(){return fFastMode;}
   
   virtual void    Print(const Option_t* = "") const;
   ClassDef(TAlphaEventHelix,1);
