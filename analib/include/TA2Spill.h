@@ -5,6 +5,7 @@
 
 #ifdef BUILD_A2
 #include "TSVD_QOD.h"
+#include "TSISChannel.h"
 #include "TSISEvent.h"
 
 #define DUMP_NAME_WIDTH 40
@@ -75,7 +76,7 @@ public:
 
 
    int AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt);
-   TString Content(const std::vector<int>);
+   TString Content(const std::vector<TSISChannel>);
    std::string ContentCSVTitle(std::vector<std::string> ChannelNames = {}) const
    {
       std::string title = TSpill::ContentCSVTitle();

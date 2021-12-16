@@ -14,6 +14,7 @@
 #pragma link C++ class  DigitalOut+;
 #pragma link C++ class  AnalogueOut+;
 #pragma link C++ class  TriggerIn+;
+
 #pragma link C++ class TChronoChannel+;
 
 

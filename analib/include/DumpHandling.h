@@ -393,7 +393,7 @@ public:
          if (StopDumpMarker->fRunTime > 0)
          {
             //Dump is definitely filled, return that we can break parent loop
-            if (t > StopDumpMarker->fRunTime + 2 )
+            if (t > StopDumpMarker->fRunTime + 2)
             {
                SIS_Filled.at(ScalerModule) = FILLED;
                return 1;
@@ -811,6 +811,59 @@ public:
       ordered_stops.pop_front();
       //pair->Print();
       return;
+   }
+
+   void AddAndSortScalerEvents(std::vector<std::vector<ScalerType>> events)
+   {
+      const size_t scaler_channels = events.size();
+      std::vector<int> front_event(scaler_channels,0);
+      std::vector<int> back_event(scaler_channels,0);
+      std::vector<std::vector<double>> runtime;
+
+      for (int i = 0; i < scaler_channels; i++)
+      {
+         if (events.at(i).empty())
+            continue;
+         runtime.emplace_back(std::vector<double>());
+         back_event.at(i) = events.at(i).size() - 1;
+         assert(back_event[i] == back_event[0]);
+         for ( const ScalerType &s : events[i] )
+         {
+            runtime[i].emplace_back(s.GetRunTime());
+         }
+      }
+      
+      for ( auto &pair : dumps )
+      {
+         
+         if (!pair) continue;
+         while (true)
+         //for ( const ScalerType &s : events )
+         //for ( ; *std::min_element(front_event.begin(), front_event.end()) < back_event[0]; )
+         {
+            ScalerType* s;
+            double tmin = 1E99;
+            int next_channel = -1;
+            for (int i = 0; i < scaler_channels; i++)
+            {
+               if (front_event[i] == back_event[i])
+                  continue;
+               if (runtime[i][front_event[i]] < tmin)
+               {
+                  tmin = runtime[i][front_event[i]];
+                  next_channel = i;
+               }
+            }
+            if (next_channel == -1)
+               break;
+            //std::cout<<next_channel<<"\t"<<events[next_channel][front_event[next_channel]].GetRunTime() <<std::endl;
+            pair->AddScalerEvent(events[next_channel][front_event[next_channel]]);
+            front_event[next_channel]++;
+            //if (pair->AddScalerEvent(s)>0) break;
+           
+         }
+
+      }
    }
 
    void AddScalerEvents(std::vector<ScalerType> events)

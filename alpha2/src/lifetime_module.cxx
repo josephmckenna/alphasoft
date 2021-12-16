@@ -214,7 +214,7 @@ public:
        return (fFirstFifthDump && fSecondFifthDump && fLifetime && fColdDump);
    }
 
-   int FindBestChannel(TARunInfo* runinfo) 
+   TSISChannel FindBestChannel(TARunInfo* runinfo) 
    {
        // AUTOMATICALLY FINDS THE GOOD CHANNEL
        // We use the cold dump numbers to see where this lifetime was done.
@@ -223,9 +223,9 @@ public:
          //Note: To do this we would require a function that takes all our dumps as an input and returns lifetime dump. It would go where the / operator overload in CE module goes.
        // Searching over so many channels could be a major cause of slowdown. Also saving 5 dumps in memory is non ideal. 
       TSISChannels channels(runinfo->fRunNo);
-      std::vector<int> channelsToCheck
+      std::vector<TSISChannel> channelsToCheck
       {
-         42, //??
+         TSISChannel(42), //??
          channels.GetChannel("SIS_PMT_ATOM_OR"),
          channels.GetChannel("SIS_PMT_CATCH_OR"), 
          channels.GetChannel("SIS_PMT_5_AND_6"), 
@@ -240,14 +240,15 @@ public:
          channels.GetChannel("SiPM_F"), 
          channels.GetChannel("PMT_10_AND_PMT_11")
       }; 
-      int bestChannel = -1;
+      TSISChannel bestChannel = -1;
       int bestCount = 0;
-      for(const auto i: channelsToCheck) //Maybe even best to loop over an int.
+      for(const auto i: channelsToCheck)
       {
-         if(fColdDump->ScalerData->DetectorCounts[i] > bestCount)
+         // toInt() isn't a great solution... do we want a operator overload for [] and TSISChannel / TChronoChannel
+         if(fColdDump->ScalerData->DetectorCounts[i.toInt()] > bestCount)
          {
             bestChannel = i;
-            bestCount = fColdDump->ScalerData->DetectorCounts[i];
+            bestCount = fColdDump->ScalerData->DetectorCounts[i.toInt()];
          }
       }
        return bestChannel;
@@ -256,14 +257,14 @@ public:
    double CalculateLifetime(TARunInfo* runinfo, const TA2Spill* finalColdDump)
    {
       std::cout<<"lifetime_module::CalculateLifetime"<<std::endl;
-      int bestChannel = FindBestChannel(runinfo);
+      TSISChannel bestChannel = FindBestChannel(runinfo);
 
       size_t smallestChannelsSize = std::min({fFirstFifthDump->ScalerData->DetectorCounts.size(), fSecondFifthDump->ScalerData->DetectorCounts.size(),  
          fColdDump->ScalerData->DetectorCounts.size(), finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size()});
       
       //smallestChannelsSize = std::min(smallestChannelsSize, finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size());
 
-      if(bestChannel < 0 || bestChannel > smallestChannelsSize)
+      if(!bestChannel.IsValid())
       {
          std::cout << "Error in lifetime module. Either bad counts or bad channels." <<std::endl;
          return -1;
@@ -271,11 +272,12 @@ public:
       
       //Step by step - good for debugging, potentially worse for performance. - No need to use .at() due to the checks above?
       double lifetimeHold = fLifetime->GetStopTime() - fLifetime->GetStartTime();
-      double countsFD0 = fFirstFifthDump->ScalerData->DetectorCounts[bestChannel];
-      double countsFD1 = fSecondFifthDump->ScalerData->DetectorCounts[bestChannel];
-      double countsCD0 = fColdDump->ScalerData->DetectorCounts[bestChannel];
-      double countsCD1 = finalColdDump->ScalerData->DetectorCounts[bestChannel];
-      double countslifetime = fLifetime->ScalerData->DetectorCounts[bestChannel];
+      // I am not totally happy with toInt() as a solution. the Scaler data should maybe have an overload for the [] operator with a TSISChannel / TChronoChannel?
+      double countsFD0 = fFirstFifthDump->ScalerData->DetectorCounts[bestChannel.toInt()];
+      double countsFD1 = fSecondFifthDump->ScalerData->DetectorCounts[bestChannel.toInt()];
+      double countsCD0 = fColdDump->ScalerData->DetectorCounts[bestChannel.toInt()];
+      double countsCD1 = finalColdDump->ScalerData->DetectorCounts[bestChannel.toInt()];
+      double countslifetime = fLifetime->ScalerData->DetectorCounts[bestChannel.toInt()];
       double normalised0 = countsCD0/countsFD0;
       double normalised1 = countsCD1/countsFD1;
       double logfactor = ( normalised0 / normalised1 );

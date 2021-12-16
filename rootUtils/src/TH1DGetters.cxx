@@ -154,7 +154,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
-      if (t < 0) t = 1E99; //FIXME: Get total run time!
+      if (t < 0) t = GetA2TotalRunTime(runNumber);
       //Find the latest tmax time
       if (last_time < t )
          last_time = t;
@@ -324,11 +324,15 @@ TH1D* Get_Delta_Chrono(Int_t runNumber,const char* ChannelName, const char* desc
 
 
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
    assert(tmin.size()==tmax.size());
-   double first_time = 1E99;
-   double last_time = 0;
+   double first_time = *std::min_element(tmin.begin(), tmin.end());
+   double last_time;
+   if ( *std::min_element(tmax.begin(), tmax.end()) < 0)
+      last_time = GetA2TotalRunTime(runNumber);
+   else
+      last_time = *std::max_element(tmax.begin(), tmax.end());
    
    int n_times=tmin.size();
    
@@ -341,17 +345,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
          if (range<diff) range=diff;
       }
    }
-   for (const auto& t: tmin)
-   {
-      if (t < first_time) first_time = t;
-   }
-   for (auto& t: tmax)
-   {
-      //Replace negative tmax times with the end of run...
-      if (t < 0) t = 1E99; //FIXME: Get total run time!
-      //Find the latest tmax time
-      if (last_time < t ) last_time = t;
-   }
+
 
    int n_chans=SIS_Channel.size();
    std::vector<TH1D*> hh;
@@ -416,7 +410,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -436,7 +430,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
 }
 #endif
 #ifdef BUILD_A2
-std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
+std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return Get_Summed_SIS( runNumber, SIS_Channel, spills);
@@ -444,25 +438,19 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel,
 #endif
 
 #ifdef BUILD_A2
-std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax )
 {
    assert(tmin.size()==tmax.size());
-   double first_time = 1E99;
-   double last_time = 0;
+   double first_time = *std::min_element(tmin.begin(), tmin.end());
+   double last_time;
+   if ( *std::min_element(tmax.begin(), tmax.end()) < 0)
+      last_time = GetA2TotalRunTime(runNumber);
+   else
+      last_time = *std::max_element(tmax.begin(), tmax.end());
    
    int n_times=tmin.size();
 
-   for (auto& t: tmin)
-   {
-      if (t < first_time) first_time = t;
-   }
-   for (auto& t: tmax)
-   {
-      //Replace negative tmax times with the end of run...
-      if (t < 0) t = 1E99; //FIXME: Get total run time!
-      //Find the latest tmax time
-      if (last_time < t ) last_time = t;
-   }
+   std::cout<< first_time << "\t" << last_time <<std::endl;
 
    int n_chans=SIS_Channel.size();
 
@@ -533,7 +521,7 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Ch
 }
 #endif
 #ifdef BUILD_A2
-std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -553,7 +541,7 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Ch
 }
 #endif
 #ifdef BUILD_A2
-std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
+std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return Get_SIS( runNumber, SIS_Channel, spills);

@@ -165,8 +165,7 @@ public:
    //List of active dumps
    std::ofstream LiveSequenceLog[NUMSEQ];
    
-   std::vector<int> sis_channels;
-   int n_sis_channels;
+   std::vector<TSISChannel> sis_channels;
 
 private:
    sqlite3 *ppDb; //SpillLogDatabase handle
@@ -310,7 +309,6 @@ public:
       }
       sprintf(buf,"%9s %9s ","Cuts","MVA");
       SpillLogTitle+=buf;
-      n_sis_channels=sis_channels.size();
       delete sisch;
       
 #ifdef HAVE_MIDAS

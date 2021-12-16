@@ -82,11 +82,11 @@ std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, cons
 
 
 #ifdef BUILD_A2
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
-   assert(SIS_Channel > 0 );
+   assert(SIS_Channel.IsValid() );
    std::vector<std::pair<double,int>> TimeCounts;
-   if (SIS_Channel<0)
+   if (!SIS_Channel.IsValid())
    {
       std::cout<<"Unkown SIS channel!"<<std::endl;
       return TimeCounts;
@@ -144,9 +144,9 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
    return GetSISTimeAndCounts(runNumber,GetSISChannel(runNumber,ChannelName),tmin,tmax);
 }
 
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, const std::vector<TA2Spill>& spills)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel, const std::vector<TA2Spill>& spills)
 {
-    assert(SIS_Channel > 0 );
+    assert(SIS_Channel.IsValid());
     std::vector<double> tmin;
     std::vector<double> tmax;
     tmin.reserve(spills.size());

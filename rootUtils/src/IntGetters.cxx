@@ -95,28 +95,9 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 }
 #endif
 
-#ifdef BUILD_A2
+#if BUILD_A2
 
-Int_t GetSISChannel(int runNumber, const char* ChannelName)
-{
-   int chan=-1;
-   TSISChannels sisch(runNumber);
-   chan=sisch.GetChannel(ChannelName);
-   return chan;
-}
-std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames)
-{
-    std::vector<Int_t> channels;
-    TSISChannels sisch(runNumber);
-    for (auto& name: ChannelNames)
-    {
-        channels.push_back(sisch.GetChannel(name.c_str()));
-    }
-    return channels;
-}
-
-
-int Count_SIS_Triggers(int runNumber, int ch, std::vector<double> tmin, std::vector<double> tmax)
+int Count_SIS_Triggers(int runNumber, TSISChannel ch, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<std::pair<double,int>> counts = GetSISTimeAndCounts(runNumber, ch, tmin, tmax);
    int total = 0;
