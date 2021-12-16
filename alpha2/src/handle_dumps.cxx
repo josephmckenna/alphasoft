@@ -241,12 +241,12 @@ public:
 
          }
          //Add SIS counts to dumps
-         for (int a=0; a<USED_SEQ; a++)
+         /*for (int a=0; a<USED_SEQ; a++)
          {
             //if (SISFlow->sis_events[j].size())
             dumplist[a].AddAndSortScalerEvents(SISFlow->sis_events);
-         }
-         /*
+         }*/
+         
          for (int a=0; a<USED_SEQ; a++)
          {
             std::lock_guard<std::mutex> lock(SequencerLock[a]);
@@ -255,7 +255,7 @@ public:
                //if (SISFlow->sis_events[j].size())
                   dumplist[a].AddScalerEvents(SISFlow->sis_events[j]);
             }
-         }*/
+         }
       }
 
       if (SVDFlow)
