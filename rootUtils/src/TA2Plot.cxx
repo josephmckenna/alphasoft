@@ -331,7 +331,7 @@ void TA2Plot::SetUpHistograms()
    AddHistogram("zrvtx",zrHisto);
 
    TH2D* zphiHisto = new TH2D((GetTAPlotTitle() + "_zphivtx").c_str(), "Z-Phi Vertex;z [cm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
-   AddHistogram("zphivtx",phiHisto);
+   AddHistogram("zphivtx",zphiHisto);
    std::string units;
    if (GetMaxDumpLength()<SCALECUT) 
    {
@@ -368,6 +368,13 @@ void TA2Plot::SetUpHistograms()
    tHisto->SetMarkerColor(kMagenta);
    tHisto->SetMinimum(0);
    AddHistogram("tvtx",tHisto);
+
+   TH1D* tmHisto = new TH1D((GetTAPlotTitle() + "_tmva").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+   tmHisto->SetLineColor(kCyan);
+   tmHisto->SetMarkerColor(kCyan);
+   tmHisto->SetMinimum(0);
+   AddHistogram("tmva",tmHisto);
+   
 
    TH2D* ztHisto = new TH2D((GetTAPlotTitle() + "_ztvtx").c_str(), (std::string("Z-T Vertex;z [cm];t ") + units).c_str(), GetNBins(), -ZMAX, ZMAX, GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
    AddHistogram("ztvtx",ztHisto);
@@ -439,9 +446,9 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
          {
             FillHistogram("tvtx",time);
          }
-         if (cutsResult & 2)
+          if (cutsResult & 2) //Passed MVA result!
          {
-            FillHistogram("tvtx",time);
+            FillHistogram("tmva",time);
          }
          else
             continue; //Don't draw vertex if it tails MVA cut
@@ -466,7 +473,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
             else 
                continue;
          }
-         if(kVertexEvents->fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+         if(kVertexEvents->fVertexStatuses[i] <= 0) continue; //Don't draw invalid vertices
       }
       FillHistogram("phivtx",vertex.Phi());
       FillHistogram("zphivtx",vertex.Z(), vertex.Phi());
@@ -535,18 +542,18 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
    legend=AddLegendIntegral(legend,"Reads: %5.0lf","tIO32");
    DrawHistogram("tAtomOR","HIST SAME");
    DrawHistogram("tvtx","HIST SAME");
-   if (mode)
+   legend=AddLegendIntegral(legend,"Passed Cuts: %5.0lf","tvtx");
+   if (mode==2) {
       DrawHistogram("tmva","HIST SAME");
-   if (mode)
-   {
-      DrawHistogram("tvtx","HIST SAME");
+      legend=AddLegendIntegral(legend,"Passed MVA: %5.0lf","tmva");  
+   }
 #if 0
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
       snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
       #endif
-   }
+   
    else
    {
       if (GetCutsSettings())
@@ -596,7 +603,8 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 
    //Canvas 7
    canvas->cd(7);
-   DrawHistogram("tvtx","HIST SAME");
+   DrawHistogram("tvtx","HIST");
+   if(mode==2)  DrawHistogram("tmva","HIST SAME");
 #if 0 //Why are these blocks here? They also haven't been regestered as active code when using the F2 rename variable so they are still with old names...
   if (MVAMode) && HISTO_POSITION.count("tvtx"))
   {

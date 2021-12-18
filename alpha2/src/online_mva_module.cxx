@@ -13,7 +13,8 @@
 #include "TH1D.h"
 #include "TH2D.h"
 
-#include "../OnlineMVA/weights/alphaClassification_BDTF.class.C"
+//#include "../OnlineMVA/weights/alphaClassification_BDTF.class.C"
+#include "../LyAlphaAnd243_2018/weights/alphaClassification_BDT.class.C"
 class OnlineMVAFlags
 {
 public:
@@ -25,14 +26,14 @@ public:
 class OnlineMVA: public TARunObject
 {
 private:
-   ReadBDTF* r;
+   ReadBDT* r;
    TString gmethodName;
    TString gdir;
    double grfcut;
    
    std::vector<std::string> input_vars;
    std::vector<double>      input_vals;
-  //TString gVarList="nhits,residual,r,S0rawPerp,S0axisrawZ,phi_S0axisraw,nCT,nGT,tracksdca,curvemin,curvemean,lambdamin,lambdamean,curvesign,";
+  //TString gVarList="nhits,residual,r,S0rawPerp,S0axisrawZ,phi_S0axisraw,nCT,nGT,tracksdca,curvemin,curvemean,lambdamin,lambdamean,curvesign";
   
 public:
    OnlineMVAFlags* fFlags;
@@ -48,14 +49,18 @@ public:
       if (fTrace)
          printf("OnlineMVA::ctor!\n");
       
-      input_vars={ "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "r", "nCT", "nGT" };
-      r=new ReadBDTF(input_vars);
+      //      input_vars={ "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "r", "nCT", "nGT" };
+      input_vars={"nhits","residual","r","S0rawPerp","S0axisrawZ","phi_S0axisraw","nCT","nGT","tracksdca","curvemin","curvemean","lambdamin","lambdamean","curvesign"};
+      r=new ReadBDT(input_vars);
       //~4mHz Background (42% efficiency)
-      grfcut=0.398139;
+      // grfcut=0.398139;
       //45mHz Background (72% efficiency)
       //grfcut=0.230254;
       //100mHz Background (78% efficiency)
-      //grfcut=0.163; 
+      //grfcut=0.163;
+      //LyAlphaAnd243_2018 BDT
+      //8.5mz Background (70.3% efficiency) 
+      grfcut=0.1867;
    }
 
    ~OnlineMVA()
@@ -105,16 +110,30 @@ public:
 
       //    "phi_S0axisraw", "S0axisrawZ", "S0rawPerp", "residual", "nhits", "phi", "", "nCT", "nGT"
       input_vals.clear();
-      input_vals.push_back(OnlineVars->phi_S0axisraw);
-      input_vals.push_back(OnlineVars->S0axisrawZ);
-      input_vals.push_back(OnlineVars->S0rawPerp);
-      input_vals.push_back(OnlineVars->residual);
+      // input_vals.push_back(OnlineVars->phi_S0axisraw);
+      // input_vals.push_back(OnlineVars->S0axisrawZ);
+      // input_vals.push_back(OnlineVars->S0rawPerp);
+      // input_vals.push_back(OnlineVars->residual);
+      // input_vals.push_back(OnlineVars->nhits);
+      // input_vals.push_back(OnlineVars->phi);
+      // input_vals.push_back(OnlineVars->r);
+      // input_vals.push_back(OnlineVars->nCT);
+      // input_vals.push_back(OnlineVars->nGT);
+      
       input_vals.push_back(OnlineVars->nhits);
-      input_vals.push_back(OnlineVars->phi);
+      input_vals.push_back(OnlineVars->residual);
       input_vals.push_back(OnlineVars->r);
+      input_vals.push_back(OnlineVars->S0rawPerp);
+      input_vals.push_back(OnlineVars->phi_S0axisraw);
       input_vals.push_back(OnlineVars->nCT);
       input_vals.push_back(OnlineVars->nGT);
+      input_vals.push_back(OnlineVars->tracksdca);
+      input_vals.push_back(OnlineVars->curvemean);
+      input_vals.push_back(OnlineVars->lambdamin);
+      input_vals.push_back(OnlineVars->lambdamean);
+      input_vals.push_back(OnlineVars->curvesign);
 
+      
       double rfout=r->GetMvaValue(input_vals);
       dumper_flow->rfout=rfout;
       dumper_flow->pass_online_mva=(rfout>grfcut);
@@ -133,10 +152,10 @@ public:
    {
       printf("OnlineMVAFactory::Init!\n");
 
-      for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+      // for (unsigned i=0; i<args.size(); i++) {
+      //    if (args[i] == "--print")
             fFlags.fPrint = true;
-      }
+      // }
    }
 
    void Finish()
