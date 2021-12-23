@@ -17,6 +17,7 @@
 
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
+#include "TChronoBoardCounter.h"
 #include "DumpHandling.h"
 #include <iostream>
 
@@ -47,7 +48,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TAGSpill,TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS> dumplist[USED_SEQ];
+   DumpList<TAGSpill,TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -177,7 +178,7 @@ public:
    }
 
    //Catch sequencer flow in the main thread, so that we have expected dumps ASAP
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze(  __attribute__((unused)) TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       if( me->event_id != 8 ) // sequencer event id
       {
@@ -224,7 +225,7 @@ public:
       return flow;
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent( __attribute__((unused)) TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       TCbFlow* FIFOFlow = flow->Find<TCbFlow>();
       uint32_t midas_time = 0;
@@ -250,7 +251,7 @@ public:
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     if (DumpStartChannels[a].GetChannel() == hit.GetChannel())
+                     if (DumpStartChannels[a].GetChannel() == int( hit.GetChannel() ))
                      {
                         if (hit.IsLeadingEdge())
                            dumplist[a].AddStartTime(midas_time, hit.GetRunTime());
@@ -261,7 +262,7 @@ public:
                {
                   for (const TCbFIFOEvent& hit: hits.second)
                   {
-                     if (DumpStopChannels[a].GetChannel() == hit.GetChannel())
+                     if (DumpStopChannels[a].GetChannel() == int( hit.GetChannel() ))
                      {
                         if (hit.IsLeadingEdge())
                            dumplist[a].AddStopTime(midas_time, hit.GetRunTime());
@@ -278,7 +279,13 @@ public:
             {
                std::lock_guard<std::mutex> lock(SequencerLock[a]);
                //if (SISFlow->sis_events[j].size()
-               dumplist[a].AddScalerEvents(hits.second);
+               //JOE! This copy constructor is pretty ugly!
+               int board_no = TChronoChannel::CBMAP.at(hits.first);
+               std::vector<TChronoBoardCounter> counters;
+               //hits.reserve(hits.second.size());
+               for (const TCbFIFOEvent& e: hits.second)
+                  counters.emplace_back(e,board_no);
+               dumplist[a].AddScalerEvents(counters);
                //dumplist[a].Print();
             }
          }

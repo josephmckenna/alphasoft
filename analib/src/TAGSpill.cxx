@@ -24,13 +24,14 @@ TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScale
 
 }
 
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
    TAGSpillScalerData()
 {
-   for (int i=0; i<CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+   for (int i=0; i<CHRONO_N_BOARDS; i++)
    {
-      const TCbFIFOEvent& e = d->IntegratedSISCounts[i];
-      DetectorCounts.at(i) = e.fCounts;
+      const TChronoBoardCounter& e = d->IntegratedSISCounts[i];
+      for (size_t j = 0; j < e.fCounts.size(); j++)
+         DetectorCounts.at(i*CHRONO_N_CHANNELS + j) = e.fCounts[j];
       ScalerFilled[i] = true;
    }
 
@@ -57,7 +58,7 @@ TAGSpillSequencerData::TAGSpillSequencerData():
 TAGSpillSequencerData::~TAGSpillSequencerData()
 {
 }
-TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d)
+TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d)
 {
    fSequenceNum= d->StartDumpMarker->fSequencerID;
    fDumpID     = d->dumpID;
@@ -78,11 +79,11 @@ void TAGSpillScalerData::Print()
       std::cout<<ScalerFilled.at(i);
    }
    std::cout  << " BVFilled: "<<VertexFilled <<std::endl;
-   int sum=0;
-   for (int i = 0; i < CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+   int sum = 0;
+   for (size_t i = 0; i <  DetectorCounts.size(); i++)
       sum+=DetectorCounts[i];
    std::cout<<"ChronoEntries:"<< sum <<std::endl;
-   for (int i = 0; i < CHRONO_N_BOARDS*CHRONO_N_CHANNELS; i++)
+   for (size_t i = 0; i < DetectorCounts.size(); i++)
    {
       std::cout<<DetectorCounts[i]<<"\t";
    }
@@ -123,7 +124,7 @@ TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...):
    va_end(args);
 }
 
-TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,TCbFIFOEvent,CHRONO_N_BOARDS*CHRONO_N_CHANNELS>* d):
+TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
    TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
 {
    
@@ -300,7 +301,7 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
          int counts=-1;
          //If valid channel number:
          if (c.GetChannel() >= 0)
-            counts = ScalerData->DetectorCounts[c.GetIndex()];
+            counts = ScalerData->DetectorCounts.at(c.GetBoardNumber() * CHRONO_N_CHANNELS + c.GetChannel());
          sprintf(buf,"%9d",counts);
          log += buf;
          if (units.size())

@@ -169,7 +169,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts
 }
 #endif
 #ifdef BUILD_AG
-TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex)
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, bool ApplyCuts)
 {
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    double tmin = spills.front().GetStartTime();
@@ -178,7 +178,7 @@ TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex)
   double ttmin = GetTrigTimeBefore(runNumber,tmin),
     ttmax = GetTrigTimeAfter(runNumber,tmax);
   std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-  return Plot_TPC(runNumber,tmin,tmax);
+  return Plot_TPC(runNumber,tmin,tmax, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
@@ -204,9 +204,9 @@ TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t 
 }
 #endif
 #ifdef BUILD_AG
-void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
+void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax, bool ApplyCuts)
 {
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   int total_number_events = p->AddEvents(runNumber,tmin,tmax);
 
@@ -230,19 +230,19 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t dumpIndex)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
   Int_t runList[]={runNumber};
   Int_t Nruns = 1;
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
-				   dumpIndex);
+				   dumpIndex, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t dumpIndex)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
@@ -468,8 +468,8 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   gNbin=1.e4;
 
   TSISChannels chans(runNumber);
-  int channel = chans.GetChannel("SIS_PMT_CATCH_OR");
-  std::vector<int> SISChannels = {channel};
+  TSISChannel channel = chans.GetChannel("SIS_PMT_CATCH_OR");
+  std::vector<TSISChannel> SISChannels = {channel};
   
   std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time}).front();
   gNbin=oldBinNumber;
@@ -578,8 +578,8 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
 
     //These 3 lines find the SIS channel of the input. 
     TSISChannels channelFinder(run);
-    int channel = channelFinder.GetChannel(SISChannel.c_str());
-    std::vector<int> channels = {channel};
+    TSISChannel channel = channelFinder.GetChannel(SISChannel.c_str());
+    std::vector<TSISChannel> channels = {channel};
 
     //Get the spills from the data (should only be the range selected in the dumpNumbers) 
     std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {dumpNumbers.at(i)});
@@ -794,9 +794,9 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
 
    TSISChannels chans(runNumber);
 
-   int channel = chans.GetChannel(SIS_Channel_Name);
+   TSISChannel channel = chans.GetChannel(SIS_Channel_Name);
    std::cout<<"Plotting SIS Channel "<<channel<<std::endl;
-   std::vector<int> SISChannels = {channel};
+   std::vector<TSISChannel> SISChannels = {channel};
  
    std::vector<std::vector<TH1D*>> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
 
@@ -903,7 +903,7 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition, Int_t binNumber,
 #endif
 
 #ifdef BUILD_A2
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
@@ -953,7 +953,7 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_Summed_SIS(runNumber, chans, tmin, tmax);
 }
 
@@ -969,7 +969,7 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
    return Plot_Summed_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -983,11 +983,11 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_Summed_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_Summed_SIS(runNumber, SIS_Channel, s);
@@ -995,12 +995,12 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_Summed_SIS( runNumber, chans, description, dumpIndex);
 }
 
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
@@ -1051,11 +1051,11 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<dou
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -1069,11 +1069,11 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
    std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_SIS(runNumber, SIS_Channel, s);
@@ -1081,7 +1081,7 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS( runNumber, chans, description, dumpIndex);
 }
 

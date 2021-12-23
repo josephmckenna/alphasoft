@@ -70,7 +70,7 @@ private:
 
    TCanvas fLiveCanvas;
    std::vector<TH1I> fLiveHisto;
-   std::vector<int> fSISChannel;
+   std::vector<TSISChannel> fSISChannel;
    TStyle* fSISStyle;
 public:
    SisMonitor(TARunInfo* runinfo)
@@ -209,10 +209,10 @@ public:
       }
       for (int i = 0; i < fSISChannel.size(); i++)
       {
-         if (fSISChannel[i] > 0)
+         if (fSISChannel[i].IsValid())
          {
             fLiveCanvas.cd(i + 1);
-            fLiveHisto[fSISChannel[i]].Draw("HIST");
+            fLiveHisto[fSISChannel[i].toInt()].Draw("HIST");
          }
       }
       return flow;

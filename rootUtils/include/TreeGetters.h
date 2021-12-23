@@ -21,10 +21,6 @@ TTree* Get_StoreEvent_Tree(Int_t runNumber);
 TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time);
 
 
-// ALPHA 2 Getters:
-TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber, Int_t SIS_Module);
-TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
-TTreeReader* Get_A2SpillTree(Int_t runNumber);
 
 #endif
 TTree* Get_Seq_Event_Tree(Int_t runNumber);
@@ -32,9 +28,12 @@ TTree* Get_Seq_State_Tree(Int_t runNumber);
 
 // ALPHA 2 Getters:
 #ifdef BUILD_A2
-TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber);
+
+// ALPHA 2 Getters:
+TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber, Int_t SIS_Module);
 TTreeReader* Get_A2_SVD_Tree(Int_t runNumber);
 TTreeReader* Get_A2SpillTree(Int_t runNumber);
+
 TTreeReader* Get_TA2AnalysisReport_Tree(Int_t runNumber);
 #endif
 

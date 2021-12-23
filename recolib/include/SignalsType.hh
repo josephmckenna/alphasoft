@@ -58,6 +58,13 @@ public:
 
    electrode(const electrode &el):sec(el.sec),idx(el.idx),gain(el.gain)
    {}
+   electrode& operator=(const electrode &el)
+   {
+      sec = el.sec;
+      idx = el.idx;
+      gain = el.gain;
+      return *this;
+   }
 
    void setgain(double g) { if(g>0.) gain=g; };
 
@@ -128,6 +135,23 @@ public:
                              z(sig.z), errz(sig.errz),
                              phi(sig.phi), errphi(sig.errphi)
    {}
+
+   signal& operator=(const signal& sig)
+   {
+      //electrode members... can I be clever with calling the parent class's operator overload?
+      sec = sig.sec;
+      idx = sig.idx;
+      gain = sig.gain;
+
+      t = sig.t;
+      height = sig.height;
+      errh = sig.errh;
+      z = sig.z;
+      errz = sig.errz;
+      phi = sig.phi;
+      errphi = sig.errphi;
+      return *this;
+   }
 
    void SetAnodeCoords(){
       phi = ALPHAg::_anodepitch * ( double(idx) + 0.5 );

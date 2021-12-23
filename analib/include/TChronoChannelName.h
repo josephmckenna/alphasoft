@@ -9,8 +9,6 @@
 #ifndef _TChronoChannelName_
 #define _TChronoChannelName_
 
-#include "mvodb.h"
-
 #include <fstream>
 #include <iostream>
 
@@ -29,6 +27,8 @@
 
 #include "TBufferJSON.h"
 
+class MVOdb;
+class VirtualOdb;
 
 class TChronoChannelName : public TObject
 {
@@ -39,7 +39,6 @@ class TChronoChannelName : public TObject
   
    TChronoChannelName();
    TChronoChannelName(MVOdb* Odb, const std::string& board);
-   
    TChronoChannelName(TString json, const std::string& b);
 
    void DumpToJson(int runno);
@@ -49,6 +48,7 @@ class TChronoChannelName : public TObject
    virtual ~TChronoChannelName();
    int GetBoardIndex() const                 { return TChronoChannel::CBMAP.at(fChronoBoardName); }
    const std::string GetBoardName() const { return fChronoBoardName; }
+   int GetNumberOfChannels() const { return fName.size(); }
    const std::string GetChannelName(int Channel) const { return fName.at(Channel); }
    int GetChannel(std::string ChannelName, const bool exact_match=kTRUE) const;
 

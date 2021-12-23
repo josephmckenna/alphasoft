@@ -45,7 +45,7 @@ TString SequenceAGQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, 
    //std::cout <<tmin<<":"<<tmax<<std::endl;
    if (tmin<0 && tmax<0) return "\tINVALID TIME RANGE";
    //Add in SIS flags:
-   for (Int_t i=0; i<chans.size(); i++)
+   for (size_t i = 0; i < chans.size(); i++)
    {
       //std::cout <<i<<"\t"<<*boards[i]<<"-"<<*channels[i]<<std::endl;
       if (chans[i].IsValidChannel())

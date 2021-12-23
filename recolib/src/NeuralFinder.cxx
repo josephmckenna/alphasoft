@@ -102,7 +102,7 @@ int NeuralFinder::MakeNeurons()
    //    }
    // }
    return neurons.size();
-};
+}
 
 //==============================================================================================
 map<int,vector<int> > NeuralFinder::GetEndNeurons()
@@ -280,14 +280,14 @@ const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
       for(auto &n: neurons) nset.insert(&n);
    }
    return nset;
-};
+}
 //==============================================================================================
 const set<NeuralFinder::Neuron*> NeuralFinder::GetMetaNeurons()
 {
    set<NeuralFinder::Neuron*> nset;
    for(auto &n: metaNeurons) nset.insert(&n);
    return nset;
-};
+}
 //==============================================================================================
 double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder::Neuron &n2)
 {
@@ -322,7 +322,7 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
       return 0.;
    }
 
-};
+}
 
 //==============================================================================================
 void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
@@ -411,7 +411,7 @@ double NeuralFinder::CalcV(Neuron &n, double B, double T)
    n.SetActive(n.GetV() >= VThres);
    assert(n.GetV() >= 0 && n.GetV() <= 1);
    return n.GetV();
-};
+}
 
 //==============================================================================================
 double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
@@ -449,7 +449,7 @@ double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
    n.SetActive(n.GetV() >= VThres);
    assert(n.GetV() >= 0 && n.GetV() <= 1);
    return n.GetV();
-};
+}
 
 //==============================================================================================
 int NeuralFinder::CountActive(){
@@ -501,7 +501,7 @@ bool NeuralFinder::Run()
       cout << "EEEEEEEEE " << nneurons << " != " << neuronV.size() << " !=? " << neurons.size() << endl;
    assert(int(neuronV.size()) == nneurons);
    return converged;
-};
+}
 
 //==============================================================================================
 bool NeuralFinder::RunMeta()

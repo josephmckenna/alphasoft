@@ -241,7 +241,7 @@ void TA2Spill::Print()
    std::cout<<std::endl;
 }
 
-TString TA2Spill::Content(const std::vector<int> sis_channels)
+TString TA2Spill::Content(const std::vector<TSISChannel> sis_channels)
 {
    
    TString log;
@@ -296,12 +296,12 @@ TString TA2Spill::Content(const std::vector<int> sis_channels)
    if (ScalerData)
    {
       char buf[80];
-      for (const int& chan: sis_channels)
+      for (const TSISChannel& chan: sis_channels)
       {
          int counts=-1;
          //If valid channel number:
-         if (chan > 0)
-            counts=ScalerData->DetectorCounts[chan];
+         if (chan.IsValid())
+            counts=ScalerData->DetectorCounts[chan.toInt()]; //toInt is a pretty unclean / unsafe solution. Look for [] operator overload
          sprintf(buf,"%9d",counts);
          log += buf;
          if (units.size())

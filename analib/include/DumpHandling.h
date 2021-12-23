@@ -149,8 +149,7 @@ public:
       StopDumpMarker=NULL;
       for (int i=0; i<NumScalers; i++)
       {
-         IntegratedSISCounts.emplace_back(ScalerType());
-         IntegratedSISCounts.at(i).SetScalerModuleNo(i);
+         IntegratedSISCounts.emplace_back(i);
          SIS_Filled.push_back(NO_EQUIPMENT);
       }
       SVD_Filled=NO_EQUIPMENT;
@@ -366,7 +365,7 @@ public:
          std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
          return 0;
       }
-      if (IntegratedSISCounts.size() < ScalerModule)
+      if ( int( IntegratedSISCounts.size() ) < ScalerModule)
       {
          std::cout<<"JOE, this is an invalid module number!: " << ScalerModule<<std::endl;
          return 0;
@@ -392,11 +391,17 @@ public:
       }
       if (StopDumpMarker)
          if (StopDumpMarker->fRunTime > 0)
-            if (t > StopDumpMarker->fRunTime)
+         {
+            //Dump is definitely filled, return that we can break parent loop
+            if (t > StopDumpMarker->fRunTime + 2)
             {
                SIS_Filled.at(ScalerModule) = FILLED;
                return 1;
             }
+            //Event is after dump, but this dump might not yet be filled (TChronoEvents aren't in exact order)
+            if (t > StopDumpMarker->fRunTime  )
+               return 0;
+         }  
       //s.Print();
       IntegratedSISCounts.at(ScalerModule) += s;
       return 0;
@@ -808,6 +813,59 @@ public:
       return;
    }
 
+   void AddAndSortScalerEvents(std::vector<std::vector<ScalerType>> events)
+   {
+      const size_t scaler_channels = events.size();
+      std::vector<int> front_event(scaler_channels,0);
+      std::vector<int> back_event(scaler_channels,0);
+      std::vector<std::vector<double>> runtime;
+
+      for (int i = 0; i < scaler_channels; i++)
+      {
+         if (events.at(i).empty())
+            continue;
+         runtime.emplace_back(std::vector<double>());
+         back_event.at(i) = events.at(i).size() - 1;
+         assert(back_event[i] == back_event[0]);
+         for ( const ScalerType &s : events[i] )
+         {
+            runtime[i].emplace_back(s.GetRunTime());
+         }
+      }
+      
+      for ( auto &pair : dumps )
+      {
+         
+         if (!pair) continue;
+         while (true)
+         //for ( const ScalerType &s : events )
+         //for ( ; *std::min_element(front_event.begin(), front_event.end()) < back_event[0]; )
+         {
+            ScalerType* s;
+            double tmin = 1E99;
+            int next_channel = -1;
+            for (int i = 0; i < scaler_channels; i++)
+            {
+               if (front_event[i] == back_event[i])
+                  continue;
+               if (runtime[i][front_event[i]] < tmin)
+               {
+                  tmin = runtime[i][front_event[i]];
+                  next_channel = i;
+               }
+            }
+            if (next_channel == -1)
+               break;
+            //std::cout<<next_channel<<"\t"<<events[next_channel][front_event[next_channel]].GetRunTime() <<std::endl;
+            pair->AddScalerEvent(events[next_channel][front_event[next_channel]]);
+            front_event[next_channel]++;
+            //if (pair->AddScalerEvent(s)>0) break;
+           
+         }
+
+      }
+   }
+
    void AddScalerEvents(std::vector<ScalerType> events)
    {
       for ( auto &pair : dumps )
@@ -815,7 +873,8 @@ public:
          if (!pair) continue;
          for ( const ScalerType &s : events )
          {
-            if (pair->AddScalerEvent(s)>0) break;
+            pair->AddScalerEvent(s);
+            //if (pair->AddScalerEvent(s)>0) break;
          }
       }
    }

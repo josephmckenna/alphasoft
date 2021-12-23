@@ -123,9 +123,12 @@ Double_t GetTotalRunTimeFromSIS(Int_t runNumber)
       if (!SISReader->GetTree())
          continue;
       TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-      SISReader->SetEntry(SISReader->GetEntries(false) -1 );
+      SISReader->SetEntry(SISReader->GetEntries(false) - 1 );
+      std::cout <<"mod: " << sis_module_no << "\t" <<SISReader->GetEntries(true) -1 <<std::endl;
+      std::cout << SISEvent->GetRunTime() << std::endl;
       if (SISEvent->GetRunTime() > t)
          t = SISEvent->GetRunTime();
+      delete SISReader;
    }
    return t;   
 }

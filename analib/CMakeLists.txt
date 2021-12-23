@@ -8,14 +8,6 @@ include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
-if(BUILD_MANALYZER)
-  include_directories(${CMAKE_SOURCE_DIR}/mvodb)
-elseif(MIDAS_FOUND)
-  include_directories(${MIDASSYS}/mvodb)
-else()
-  message(FATAL_ERROR "analib: Include directories failed!")
-endif()
-
 
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h include/*.hh)
 ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
@@ -36,6 +28,7 @@ set(LIBRARY_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_cb.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/src/store_cb.cxx
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoBoardCounter.cxx
     )
 if(BUILD_AG)
   list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/fitBV.cxx)
@@ -46,21 +39,13 @@ endif()
 
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 
-if(BUILD_MANALYZER)
-  target_include_directories(analib PUBLIC ${CMAKE_SOURCE_DIR}/manalyzer)
-elseif(MIDAS_FOUND)
-  target_include_directories(analib PUBLIC ${MIDAS_INCLUDE_DIRS} $ENV{MIDASSYS}/manalyzer)
-else()
-  message(FATAL_ERROR "Configuration failed for target analib")
-endif()
-
 if(BUILD_AG)
    target_link_libraries(analib PUBLIC agtpc)
 endif()
 if(BUILD_A2)
    target_link_libraries(analib PUBLIC sqlite3)
 endif()
-target_link_libraries(analib PUBLIC XMLParser Core RIO Hist)
+target_link_libraries(analib PUBLIC manalyzer XMLParser Core RIO Hist)
 add_dependencies(analib gitinfo)
 
 install(TARGETS analib DESTINATION lib)

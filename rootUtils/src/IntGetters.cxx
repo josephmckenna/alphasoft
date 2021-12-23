@@ -95,28 +95,9 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 }
 #endif
 
-#ifdef BUILD_A2
+#if BUILD_A2
 
-Int_t GetSISChannel(int runNumber, const char* ChannelName)
-{
-   int chan=-1;
-   TSISChannels sisch(runNumber);
-   chan=sisch.GetChannel(ChannelName);
-   return chan;
-}
-std::vector<Int_t> GetSISChannels(int runNumber, const std::vector<std::string>& ChannelNames)
-{
-    std::vector<Int_t> channels;
-    TSISChannels sisch(runNumber);
-    for (auto& name: ChannelNames)
-    {
-        channels.push_back(sisch.GetChannel(name.c_str()));
-    }
-    return channels;
-}
-
-
-int Count_SIS_Triggers(int runNumber, int ch, std::vector<double> tmin, std::vector<double> tmax)
+int Count_SIS_Triggers(int runNumber, TSISChannel ch, std::vector<double> tmin, std::vector<double> tmax)
 {
    std::vector<std::pair<double,int>> counts = GetSISTimeAndCounts(runNumber, ch, tmin, tmax);
    int total = 0;
@@ -163,13 +144,16 @@ Int_t LoadRampFile(const char* filename, Double_t* x, Double_t* y)
 }
 
 #include <TRegexp.h>
+#include <TObjString.h>
 int GetRunNumber( TString fname )
 {
-   //  TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
-  TRegexp re("[0-9][0-9][0-9][0-9]");
-  int pos = fname.Index(re);
+  TString the_name = ((TObjString*)fname.Tokenize("/")->Last())->GetString();
+  // TRegexp re("[0-9][0-9][0-9][0-9][0-9]");
+  // TRegexp re("[0-9][0-9][0-9][0-9]");
+  TRegexp re("[0-9][0-9][0-9]+");
+  int pos = the_name.Index(re);
   //  int run = TString(fname(pos,5)).Atoi();
-  int run = TString(fname(pos,6)).Atoi();
+  int run = TString(the_name(pos,6)).Atoi();
   return run;
 }
 

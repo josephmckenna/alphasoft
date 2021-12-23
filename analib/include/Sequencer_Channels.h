@@ -9,8 +9,6 @@
 #define USED_SEQ 9 
 
 //Dont change the order of these please
-
-//Dont change the order of these please
 enum {
    PBAR,
    RECATCH,

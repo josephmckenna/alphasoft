@@ -19,6 +19,7 @@
 #include "RecoFlow.h"
 
 #include "store_cb.h"
+
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 #include "TROOT.h"
@@ -100,7 +101,7 @@ class SpillLogPrinter
       std::string logo_indent(indent,' ');
       //For readability make a large break from the last run
       cm_msg1(MINFO, "SpillLog", "alphagonline","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
-      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
+      cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ |___/___/___/");
       cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
       cm_msg1(MINFO, "SpillLog", "alphagonline", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
 
@@ -266,7 +267,7 @@ public:
       std::vector<std::string> tmpnames(channel_names);
       channels.clear();
       channel_names.clear();
-      for (int i = 0; i < tmpchan.size(); i++)
+      for (size_t i = 0; i < tmpchan.size(); i++)
       {
          if (tmpchan.at(i).size() || tmpnames.at(i).size())
          {
@@ -276,7 +277,7 @@ public:
       }
       //Print channel list into spill log
       std::string channel_summary = "Channel List: ";
-      for (int i = 0; i < channels.size(); i++)
+      for (size_t i = 0; i < channels.size(); i++)
       {
          if (channels.at(i).empty()) continue;
          channel_summary += channels.at(i);
@@ -323,7 +324,6 @@ public:
          if (!found)
             chrono_channels.emplace_back(TChronoChannel("",-1));
       }
-
 
       n_chrono_channels=chrono_channels.size();
 

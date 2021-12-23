@@ -189,7 +189,9 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   std::vector< std::vector<ALPHAg::signal> > comb;
   if( int(padsignals->size()) > fNpadsCut )
     {
-      std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()<<" exceeds its limit "<<fNpadsCut<<std::endl;
+      if( fTrace )
+	std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()
+		 <<" exceeds its limit "<<fNpadsCut<<std::endl;
       comb.resize(0);
       return comb;
     }
@@ -370,8 +372,8 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
-  double peakx[nfound];
-  double peaky[nfound];
+  std::vector<double> peakx(nfound);
+  std::vector<double> peaky(nfound);
 
   for(int i = 0; i < nfound; ++i)
     {
@@ -756,7 +758,7 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::MatchElectrodes(
 	    }
 	}
     }
-  //  if( fTrace )
+  if( fTrace )
   //std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
   std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
@@ -783,7 +785,8 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*  Match::FakePads(std::v
     }
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
-  std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
   return spacepoints;
 }
 
@@ -1003,10 +1006,11 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::
 	     <<"\t"<<m<<std::endl;
 
   spacepoints->assign( merged.begin(), merged.end() );
-  if( fTrace ) {
+  if( fDebug ) {
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
     std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
   }
-  std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
   return spacepoints;
 }

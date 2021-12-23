@@ -16,13 +16,20 @@ TSISEvent::TSISEvent():  fSISModule(0), fClock(0), fVF48Clock(0), fRunTime(-1), 
 {
 
 }
+
+TSISEvent::TSISEvent(int SISModule):  fSISModule(SISModule), fClock(0), fVF48Clock(0), fRunTime(-1), fRunNumber(-1),fMidasTime(0), fMidasEventID(0), fCounts(32,0)
+{
+
+}
+
+
 //Default Destructor
 TSISEvent::~TSISEvent()
 {
 
 }
 
-TSISEvent::TSISEvent( TSISBufferEvent* event ): fSISModule(0), fClock(0), fVF48Clock(0), fRunTime(-1), fRunNumber(-1),fMidasTime(0), fMidasEventID(0)
+TSISEvent::TSISEvent( TSISBufferEvent* event ): fSISModule(event->fSISModule), fClock(0), fVF48Clock(0), fRunTime(-1), fRunNumber(-1),fMidasTime(0), fMidasEventID(0)
 {
    fCounts = event->Move();
 }
@@ -50,11 +57,8 @@ TSISEvent& TSISEvent::operator+=( const TSISEvent& b)
    assert(this->GetSISModule()==b.GetSISModule());
    if (this->fCounts.size() == 0)
       fCounts = std::vector<uint32_t>(NUM_SIS_CHANNELS,0);
-   int i=0;
-   for (int j=GetSISModule()*32; j<(GetSISModule()+1)*NUM_SIS_CHANNELS; j++)
-   {
-     this->fCounts[i++]+=b.GetCountsInChannel(j);
-   }
+   for (int i = 0; i <  NUM_SIS_CHANNELS; i++)
+      this->fCounts[i] += b.fCounts[i];
    return *this;
 }
 void TSISEvent::Print()

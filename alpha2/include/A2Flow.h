@@ -154,7 +154,7 @@ class SISModuleFlow: public TAFlowEvent
       fSISBufferEvents[module].reserve(nevents);
       for ( int i = 0; i < nevents; i++ )
       {
-         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr));
+         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr,module));
          ptr += NUM_SIS_CHANNELS;
       }
       return;
@@ -175,9 +175,13 @@ class SISModuleFlow: public TAFlowEvent
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<TSISEvent> sis_events[NUM_SIS_MODULES];
+  std::vector<std::vector<TSISEvent>> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
+     for ( int i = 0; i < NUM_SIS_MODULES; i++)
+     {
+        sis_events.push_back(std::vector<TSISEvent>());
+     }
   }
   ~SISEventFlow()
   {

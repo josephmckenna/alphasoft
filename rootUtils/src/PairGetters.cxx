@@ -3,56 +3,54 @@
 #ifdef BUILD_AG
 std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, std::vector<double> tmin, std::vector<double> tmax) 
 {
-  std::vector<std::pair<double,int>> TimeCounts;
-   
-  assert(tmin.size() == tmax.size());
-  const int entries = tmin.size();
+   std::vector<std::pair<double,int>> TimeCounts;
 
-  //Set broad range we are looking for
-  double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
-  double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
+   assert(tmin.size() == tmax.size());
+   const int entries = tmin.size();
 
-  if(last_time < 0){
-    last_time=GetTotalRunTimeFromChrono(runNumber,chan.GetBoard());
-    for(int i=0; i<tmax.size(); i++)
+   //Set broad range we are looking for
+   double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
+   double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
+
+   if(last_time < 0){
+      last_time=GetTotalRunTimeFromChrono(runNumber,chan.GetBoard());
+      for(size_t i = 0; i < tmax.size(); i++)
       {
-	tmax[i]=last_time;
+         tmax[i]=last_time;
       }
-  } 
+   } 
 
-
-  TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
-  TCbFIFOEvent* e=new TCbFIFOEvent();
-  t->SetBranchAddress("FIFOData", &e);
-  double RunTime = -1;
-  int counts = 0;
-  for (int i = 0; i < t->GetEntries(); i++)
-    {
+   TTree* t=Get_Chrono_Tree(runNumber,chan.GetBranchName());
+   TCbFIFOEvent* e=new TCbFIFOEvent();
+   t->SetBranchAddress("FIFOData", &e);
+   double RunTime = -1;
+   int counts = 0;
+   for (int i = 0; i < t->GetEntries(); i++)
+   {
       t->GetEntry(i);
       //e->Print();
       if (e->IsLeadingEdge())
-	{
-	  if (e->GetChannel() == chan.GetChannel())
-	    {
-	      counts = 1;
-	      RunTime = e->GetRunTime();
-
-	      if (RunTime < first_time)
-		continue;
-	      if (RunTime > last_time)
-		break;
-	      for (int j=0; j<entries; j++)
-		{
-		  if (RunTime > tmin[j])
-		    if (RunTime < tmax[j])
-		      {
-			TimeCounts.push_back(std::make_pair(RunTime, counts));
-		      }
-		}
-	    }
-	}
-    }
-  return TimeCounts;
+      {
+         if ( int(e->GetChannel()) == chan.GetChannel())
+         {
+            counts = 1;
+            RunTime = e->GetRunTime();
+            if (RunTime < first_time)
+               continue;
+            if (RunTime > last_time)
+               break;
+            for (int j = 0; j < entries; j++)
+            {
+               if (RunTime > tmin[j])
+                  if (RunTime < tmax[j])
+                  {
+                     TimeCounts.push_back(std::make_pair(RunTime, counts));
+                  }
+            }
+         }
+      }
+   }
+   return TimeCounts;
 }
 
 std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, std::vector<double> tmin, std::vector<double> tmax)
@@ -84,11 +82,11 @@ std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, cons
 
 
 #ifdef BUILD_A2
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
-   assert(SIS_Channel > 0 );
+   assert(SIS_Channel.IsValid() );
    std::vector<std::pair<double,int>> TimeCounts;
-   if (SIS_Channel<0)
+   if (!SIS_Channel.IsValid())
    {
       std::cout<<"Unkown SIS channel!"<<std::endl;
       return TimeCounts;
@@ -102,17 +100,17 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_
    double first_time = *std::min_element( std::begin(tmin), std::end(tmin));
    double last_time = *std::max_element( std::begin(tmax), std::end(tmax));
 
-   if(last_time < 0){
-     last_time=GetTotalRunTimeFromSIS(runNumber);
-     for(int i=0; i<tmax.size(); i++)
-       {
-	 tmax[i]=last_time;
-       }
-   } 
+   if(last_time < 0)
+   {
+      last_time = GetTotalRunTimeFromSIS(runNumber);
+      for(int i=0; i<tmax.size(); i++)
+         if (tmax[i] < 0)
+            tmax[i]=last_time;
+   }
 
    for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      TTreeReader* SISReader=A2_SIS_Tree_Reader( runNumber, sis_module_no);
+      TTreeReader* SISReader = A2_SIS_Tree_Reader( runNumber, sis_module_no);
       TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
 
       // I assume that file IO is the slowest part of this function... 
@@ -146,9 +144,9 @@ std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const ch
    return GetSISTimeAndCounts(runNumber,GetSISChannel(runNumber,ChannelName),tmin,tmax);
 }
 
-std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, int SIS_Channel, const std::vector<TA2Spill>& spills)
+std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel, const std::vector<TA2Spill>& spills)
 {
-    assert(SIS_Channel > 0 );
+    assert(SIS_Channel.IsValid());
     std::vector<double> tmin;
     std::vector<double> tmax;
     tmin.reserve(spills.size());

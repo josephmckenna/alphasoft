@@ -243,7 +243,7 @@ void TAPlot::PrintFull()
    std::cout << std::endl << std::endl << std::endl;
 }
 
-void TAPlot::Print(Option_t *option) const
+void TAPlot::Print() const
 {
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();
@@ -809,6 +809,4 @@ void TAPlot::ExportCSV(std::string filename, bool PassedCutOnly)
       times << fTimeWindows.CSVLine(i);
    times.close();
    std::cout<< timeWindowFilename<< " saved\n";
-   
-
 }

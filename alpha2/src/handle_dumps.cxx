@@ -39,11 +39,11 @@ public:
    bool fTrace = false;
    std::deque<TA2Spill*> IncompleteDumps;
 
-   int DumpStartChannels[USED_SEQ] ={-1};
-   int DumpStopChannels[USED_SEQ]  ={-1};
+   std::array<TSISChannel,USED_SEQ> DumpStartChannels;
+   std::array<TSISChannel,USED_SEQ> DumpStopChannels;
    
-   int fADChannel = -1;
-   int fPreTriggerChannel = -1;
+   TSISChannel fADChannel;
+   TSISChannel fPreTriggerChannel;
    int fADCounter;
    int fPreTriggerCounter;
    
@@ -202,24 +202,30 @@ public:
          //Add timestamps to dumps
          for (int j=0; j<NUM_SIS_MODULES; j++)
          {
-            const std::vector<TSISEvent>* ce = SISFlow->sis_events;
-            for (uint i=0; i<ce->size(); i++)
+            const std::vector<TSISEvent>& ce = SISFlow->sis_events[j];
+            for (size_t i = 0; i < ce.size(); i++)
             {
-              const TSISEvent& e = ce->at(i);
-              for (int a=0; a<USED_SEQ; a++)
-              {
-                 std::lock_guard<std::mutex> lock(SequencerLock[a]);
-                 if (DumpStartChannels[a]>0)
-                    //if (e->GetCountsInChannel(DumpStartChannels[a]))
-                    for (int nstarts=0; nstarts < e.GetCountsInChannel(DumpStartChannels[a]); nstarts++)
-                    {
-                       dumplist[a].AddStartTime(e.GetMidasUnixTime(), e.GetRunTime());
-                    }
-                 if (DumpStopChannels[a]>0)
-                    for (int nstops=0; nstops<e.GetCountsInChannel(DumpStopChannels[a]); nstops++)
-                    {
-                       dumplist[a].AddStopTime(e.GetMidasUnixTime(),e.GetRunTime());
-                    }
+               const TSISEvent& e = ce.at(i);
+               for (int a = 0; a < USED_SEQ; a++)
+               {
+                  std::lock_guard<std::mutex> lock(SequencerLock[a]);
+                  if (DumpStartChannels.at(a).IsValid())
+                  {
+                     const int counts = e.GetCountsInChannel(DumpStartChannels[a]);
+                     //if (e->GetCountsInChannel(DumpStartChannels[a]))
+                     for (int nstarts = 0; nstarts < counts; nstarts++)
+                     {
+                        dumplist[a].AddStartTime(e.GetMidasUnixTime(), e.GetRunTime());
+                     }
+                  }
+                  if (DumpStopChannels.at(a).IsValid())
+                  {
+                     const int counts = e.GetCountsInChannel(DumpStopChannels[a]);
+                     for (int nstops = 0; nstops < counts; nstops++)
+                     {
+                        dumplist[a].AddStopTime(e.GetMidasUnixTime(),e.GetRunTime());
+                     }
+                  }
                }
                if (e.GetCountsInChannel(fADChannel))
                {
@@ -235,6 +241,12 @@ public:
 
          }
          //Add SIS counts to dumps
+         /*for (int a=0; a<USED_SEQ; a++)
+         {
+            //if (SISFlow->sis_events[j].size())
+            dumplist[a].AddAndSortScalerEvents(SISFlow->sis_events);
+         }*/
+         
          for (int a=0; a<USED_SEQ; a++)
          {
             std::lock_guard<std::mutex> lock(SequencerLock[a]);

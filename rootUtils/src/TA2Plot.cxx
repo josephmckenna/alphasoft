@@ -143,31 +143,31 @@ TA2Plot& TA2Plot::operator+=(const TA2Plot& rhs)
 void TA2Plot::SetSISChannels(int runNumber)
 {
   TSISChannels *sisChannels = new TSISChannels(runNumber);
-  fTrig.insert(             std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("IO32_TRIG")));
-  fTrigNobusy.insert(       std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("IO32_TRIG_NOBUSY")));
-  fAtomOr.insert(           std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PMT_ATOM_OR")));
-  fBeamInjection.insert(    std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_AD")));
-  fBeamEjection.insert(     std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_AD_2")));
-  fCATStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PBAR_DUMP_START")));
-  fCATStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_PBAR_DUMP_STOP")));
-  fRCTStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_RECATCH_DUMP_START")));
-  fRCTStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_RECATCH_DUMP_STOP")));
-  fATMStart.insert(         std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_ATOM_DUMP_START")));
-  fATMStop.insert(          std::pair<int,int>(runNumber, (int)sisChannels->GetChannel("SIS_ATOM_DUMP_STOP")));
+  fTrig.insert(             std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("IO32_TRIG")));
+  fTrigNobusy.insert(       std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("IO32_TRIG_NOBUSY")));
+  fAtomOr.insert(           std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_PMT_ATOM_OR")));
+  fBeamInjection.insert(    std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_AD")));
+  fBeamEjection.insert(     std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_AD_2")));
+  fCATStart.insert(         std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_PBAR_DUMP_START")));
+  fCATStop.insert(          std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_PBAR_DUMP_STOP")));
+  fRCTStart.insert(         std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_RECATCH_DUMP_START")));
+  fRCTStop.insert(          std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_RECATCH_DUMP_STOP")));
+  fATMStart.insert(         std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_ATOM_DUMP_START")));
+  fATMStop.insert(          std::pair<int,TSISChannel>(runNumber, sisChannels->GetChannel("SIS_ATOM_DUMP_STOP")));
 
   //Add all valid SIS channels to a list for later:
   fSISChannels.clear();
-  if (fTrig.find(runNumber)->second>0)           fSISChannels.push_back(fTrig.find(runNumber)->second);
-  if (fTrigNobusy.find(runNumber)->second>0)     fSISChannels.push_back(fTrigNobusy.find(runNumber)->second);
-  if (fAtomOr.find(runNumber)->second>0)         fSISChannels.push_back(fAtomOr.find(runNumber)->second);
-  if (fBeamInjection.find(runNumber)->second>0)  fSISChannels.push_back(fBeamInjection.find(runNumber)->second);
-  if (fBeamEjection.find(runNumber)->second>0)   fSISChannels.push_back(fBeamEjection.find(runNumber)->second);
-  if (fCATStart.find(runNumber)->second>0)       fSISChannels.push_back(fCATStart.find(runNumber)->second);
-  if (fCATStop.find(runNumber)->second>0)        fSISChannels.push_back(fCATStop.find(runNumber)->second);
-  if (fRCTStart.find(runNumber)->second>0)       fSISChannels.push_back(fRCTStart.find(runNumber)->second);
-  if (fRCTStop.find(runNumber)->second>0)        fSISChannels.push_back(fRCTStop.find(runNumber)->second);
-  if (fATMStart.find(runNumber)->second>0)       fSISChannels.push_back(fATMStart.find(runNumber)->second);
-  if (fATMStop.find(runNumber)->second>0)        fSISChannels.push_back(fATMStop.find(runNumber)->second);
+  if (fTrig.find(runNumber)->second.IsValid())           fSISChannels.push_back(fTrig.find(runNumber)->second);
+  if (fTrigNobusy.find(runNumber)->second.IsValid())     fSISChannels.push_back(fTrigNobusy.find(runNumber)->second);
+  if (fAtomOr.find(runNumber)->second.IsValid())         fSISChannels.push_back(fAtomOr.find(runNumber)->second);
+  if (fBeamInjection.find(runNumber)->second.IsValid())  fSISChannels.push_back(fBeamInjection.find(runNumber)->second);
+  if (fBeamEjection.find(runNumber)->second.IsValid())   fSISChannels.push_back(fBeamEjection.find(runNumber)->second);
+  if (fCATStart.find(runNumber)->second.IsValid())       fSISChannels.push_back(fCATStart.find(runNumber)->second);
+  if (fCATStop.find(runNumber)->second.IsValid())        fSISChannels.push_back(fCATStop.find(runNumber)->second);
+  if (fRCTStart.find(runNumber)->second.IsValid())       fSISChannels.push_back(fRCTStart.find(runNumber)->second);
+  if (fRCTStop.find(runNumber)->second.IsValid())        fSISChannels.push_back(fRCTStop.find(runNumber)->second);
+  if (fATMStart.find(runNumber)->second.IsValid())       fSISChannels.push_back(fATMStart.find(runNumber)->second);
+  if (fATMStop.find(runNumber)->second.IsValid())        fSISChannels.push_back(fATMStop.find(runNumber)->second);
   delete sisChannels;
   return;
 }
@@ -397,7 +397,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
          time = SISEvents.fOfficialTime[i];
       if (kMaxDumpLength<SCALECUT) 
          time=time*1000.;
-      int channel         = SISEvents.fSISChannel[i];
+      TSISChannel channel         = SISEvents.fSISChannel[i];
       int countsInChannel = SISEvents.fCounts[i];
       if (channel == fTrig.find(SISEvents.fRunNumber[i])->second)
          FillHistogram("tIO32",time,countsInChannel);
@@ -747,7 +747,7 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double timeOffset)
       event->x, event->y, event->z, tMinusOffset, event->VF48Timestamp, event->t, -1, event->NTracks);
 }
 
-void TA2Plot::AddEvent(TSISEvent* event, int channel, double timeOffset)
+void TA2Plot::AddEvent(TSISEvent* event, TSISChannel channel, double timeOffset)
 {
    SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - timeOffset, 
       event->GetRunTime(), event->GetCountsInChannel(channel), channel);

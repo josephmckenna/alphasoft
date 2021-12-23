@@ -53,8 +53,8 @@ public:
    int gSisCounter = 0;
    int gBadSisCounter = 0;
    
-   int clkchan[NUM_SIS_MODULES] = {-1};
-   int vf48clkchan=-1;
+   TSISChannel clkchan[NUM_SIS_MODULES];
+   TSISChannel vf48clkchan;
 
    uint32_t midas_start_time = -1 ;
    
@@ -109,7 +109,6 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
         gClock[j]=0;
         gExptStartClock[j]=0;
       }
-
       //Get the start time of the run (for TInfoSpill constructors)
       #ifdef INCLUDE_VirtualOdb_H
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
@@ -253,7 +252,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
 
          if(gExptStartClock[j]==0 && !unmatched_buffer[j].empty())
          {
-            gExptStartClock[j] = unmatched_buffer[j].front()->fCounts[clkchan[j]];  //first clock reading
+            gExptStartClock[j] = unmatched_buffer[j].front()->fCounts[clkchan[j].fChannel];  //first clock reading
          }
       }
       //Lets get the number of events in the shortest queue (these should be pairs of SIS events)
@@ -273,7 +272,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            TSISBufferEvent* event = unmatched_buffer[j].front();
            // event->Print();
            unmatched_buffer[j].pop_front();
-           unsigned long int clock = event->fCounts[clkchan[j]]; // num of 10MHz clks
+           unsigned long int clock = event->fCounts[clkchan[j].fChannel]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
@@ -284,7 +283,6 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
            s->SetRunNumber(runinfo->fRunNo);
            s->SetRunTime(runtime);
            s->SetClock(gClock[j]);
-           s->SetSISModuleNo(j);
            if (j==0)
            {
               gVF48Clock+=s->GetCountsInChannel(vf48clkchan);
