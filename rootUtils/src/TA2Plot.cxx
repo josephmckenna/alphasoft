@@ -272,7 +272,10 @@ void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
          continue;
       if (t > lastTime)
          break;
+
       AddSVDEvent(&(*SVDEvent));
+      // This code seems not to run
+      // printf("READER Ev# %d  EvPC %d EvMVA %d nvert %d  x %f runtime %f  \n", SVDEvent->VF48NEvent, SVDEvent->NPassedCuts, SVDEvent->MVA, SVDEvent->NVertices, SVDEvent->x, SVDEvent->t);
    }
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
@@ -550,14 +553,14 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 #if 0
       snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
       legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
-      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tmva")))->Integral());
+      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tmva")), line, "f");
       #endif
    
    else
    {
       if (GetCutsSettings())
-         legend=AddLegendIntegral(legend,"Pass Cuts: %5.0lf","tvtx");
+        legend=AddLegendIntegral(legend,"Pass MVA: %5.0lf","tmva");//wrong source 
       else
          legend=AddLegendIntegral(legend,"Vertices: %5.0lf","tvtx");
     legend=DrawLines(legend,"tIO32_nobusy");
@@ -753,6 +756,9 @@ void TA2Plot::AddEvent(TSVD_QOD* event, double timeOffset)
    double tMinusOffset = (event->t - timeOffset);
    AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, 
       event->x, event->y, event->z, tMinusOffset, event->VF48Timestamp, event->t, -1, event->NTracks);
+   //AO check MVA recorded
+   //   printf("Ev# %d  EvPC %d EvMVA %d nvert %d  x %f runtime %f tfromstart %f \n", event->VF48NEvent, event->NPassedCuts, event->MVA, event->NVertices, event->x, event->t, tMinusOffset);
+   
 }
 
 void TA2Plot::AddEvent(TSISEvent* event, TSISChannel channel, double timeOffset)
