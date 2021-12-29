@@ -156,12 +156,17 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
    std::vector<double> DarkCStateCounts;
    for (int i=0; i<9; i++)
    {
-      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedCuts());
-      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedCuts());
+      // DStateCounts.push_back(VertexPlot[i][0]->GetNPassedCuts());
+      // CStateCounts.push_back(VertexPlot[i][1]->GetNPassedCuts());
       
-      DarkDStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedCuts());
-      DarkCStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedCuts());
+      // DarkDStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedCuts());
+      // DarkCStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedCuts());
+      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
+      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
       
+      DarkDStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(2));
+      DarkCStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedType(2));
+       
       //hDState->Fill(i,VertexPlot[i][0]->GetNPassedCuts());
 
       //hCState->Fill(i,VertexPlot[i][1]->GetNPassedCuts());
