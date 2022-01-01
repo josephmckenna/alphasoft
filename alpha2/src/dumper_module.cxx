@@ -53,6 +53,8 @@ public:
    {
       if (fTrace)
          printf("Dumper::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -93,8 +95,9 @@ public:
       TVector3* vtx = siliconEvent->GetVertex();
       OnlineVars->r = vtx->Perp();
       OnlineVars->phi = vtx->Phi();
-      OnlineVars->tracksdca = siliconEvent->GetDCA();
-      //z = vtx->Z();
+      //      OnlineVars->tracksdca = siliconEvent->GetDCA();
+      OnlineVars->tracksdca=alphaEvent->GetVertex()->GetDCA();     
+//z = vtx->Z();
       std::vector<double> velxraw;
       std::vector<double> velyraw;
       std::vector<double> velzraw;
@@ -115,7 +118,7 @@ public:
       {
         TAlphaEventHelix* aehlx = alphaEvent->GetHelix(i);
         if (!aehlx) continue;
-        //Double_t fc = aehlx->Getfc();
+        Double_t fc = aehlx->Getfc();
         Double_t fphi0 = aehlx->Getfphi();
         Double_t fLambda = aehlx->Getflambda();
         //Double_t s=0.; // calculates velx,y,z at POCA
@@ -162,7 +165,7 @@ public:
       for (int i = 0; i< nGTL ; ++i)
       {
         TAlphaEventHelix* aehlx = aevtx->GetHelix(i);
-        //    if(aehlx->GetHelixStatus()<0) continue;
+        //if(aehlx->GetHelixStatus()<0) continue;
         Double_t fc = aehlx->Getfc();
         Double_t fphi0 = aehlx->Getfphi();
         Double_t fLambda = aehlx->Getflambda();
@@ -196,10 +199,10 @@ public:
       //Double_t S0rawl2 = -99.;
       //Unused
       //Double_t S0rawl3 = -99.;
-      //Unused
-      //Double_t S0axisrawX = -99.;
-      //Unused
-      //Double_t S0axisrawY = -99.;
+      //Unused in online_mva
+      Double_t S0axisrawX = -99.;
+      //Unused in online_mva
+      Double_t S0axisrawY = -99.;
       OnlineVars->S0axisrawZ = -99.;
 
       if(nraw>0)
@@ -216,12 +219,12 @@ public:
         //Unused
         //S0rawl3 = S0valuesraw->Z();
 
+        //Unused in online_mva
+        S0axisrawX = S0axisraw->X();
         //Unused
-        //S0axisrawX = S0axisraw->X();
-        //Unused
-        //S0axisrawY = S0axisraw->Y();
+        S0axisrawY = S0axisraw->Y();
         OnlineVars->S0axisrawZ = S0axisraw->Z();
-        //phi_S0axisraw = TMath::ACos(S0axisrawY/TMath::Sqrt(S0axisrawX*S0axisrawX+S0axisrawY*S0axisrawY));
+        OnlineVars->phi_S0axisraw = TMath::ACos(S0axisrawY/TMath::Sqrt(S0axisrawX*S0axisrawX+S0axisrawY*S0axisrawY));
         delete S0axisraw;
         delete S0valuesraw;
       }
