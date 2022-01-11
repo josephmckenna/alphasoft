@@ -154,7 +154,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
-      if (t < 0) t = GetA2TotalRunTime(runNumber);
+      if (t < 0) t = GetAGTotalRunTime(runNumber);
       //Find the latest tmax time
       if (last_time < t )
          last_time = t;
