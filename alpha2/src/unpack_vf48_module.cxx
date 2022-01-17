@@ -197,61 +197,55 @@ public:
    }
 
 
-   std::vector<VF48event*> UnpackVF48Flow(VF48DataFlow* data_flow)
+   std::vector<VF48event*> UnpackVF48Flow(const VF48data& d)
    {
       //Unpacked VF48 events
       std::vector<VF48event*> VF48eventQueue;
-
-      for (VF48data* d: data_flow->VF48dataQueue)
+      for (int i=0; i<NUM_VF48_MODULES; i++) 
       {
-         for (int i=0; i<NUM_VF48_MODULES; i++) 
+         //std::cout<<fe->size32[i]<<"\t";
+         if (d.data32[i].size())
+            vfu->UnpackStream(i, d.data32[i].data(),d.data32[i].size());
+         while (1)
          {
-            //std::cout<<fe->size32[i]<<"\t";
-            if (d->size32[i])
-               vfu->UnpackStream(i, d->data32[i], d->size32[i]);
-            while (1)
+            VF48event* e = vfu->GetEvent();
+            if (!e) break;
+            // check for errors
+            //int trigs = 0;
+            for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
             {
-               VF48event* e = vfu->GetEvent();
-               if (!e) break;
-               // check for errors
-               //int trigs = 0;
-               for( int imod = 0; imod < NUM_VF48_MODULES; imod++)
+               VF48module* the_Module = e->modules[imod];
+               // All modules should be present
+               // there is probably a problem with the event
+               // <<<< -----
+               if(  !the_Module )
                {
-                  VF48module* the_Module = e->modules[imod];
-                  // All modules should be present
-                  // there is probably a problem with the event
-                  // <<<< -----
-                  if(  !the_Module )
-                  {
-                     printf("Event %d: Error VF48 module %d not present\n", (int)e->eventNo, imod);
-                     //if(gVerbose)
-                     //   e->PrintSummary();
-                     //gBadVF48Events++;
-                     delete e;
-                     e=NULL;
-                     break;
-                  }
-   
-                  if( the_Module->error != 0 )
-                  {
-                     printf("Event %d: Found VF48 error, not using event\n", (int)e->eventNo);
-                     //if(gVerbose) e->PrintSummary();
-                     //   gBadVF48Events++;
-                     delete e;
-                     e=NULL;
-                     break;
-                  }
+                  printf("Event %d: Error VF48 module %d not present\n", (int)e->eventNo, imod);
+                  //if(gVerbose)
+                  //   e->PrintSummary();
+                  //gBadVF48Events++;
+                  delete e;
+                  e=NULL;
+                  break;
                }
-               //flow=new VF48EventFlow(flow,e);
-               if (e)
+               if( the_Module->error != 0 )
                {
-                  //e->PrintSummary();
-                  VF48eventQueue.push_back(e);
-                  //std::cout<<"size:"<<VF48eventQueue.size()<<std::endl;
+                  printf("Event %d: Found VF48 error, not using event\n", (int)e->eventNo);
+                  //if(gVerbose) e->PrintSummary();
+                  //   gBadVF48Events++;
+                  delete e;
+                  e=NULL;
+                  break;
                }
             }
+            //flow=new VF48EventFlow(flow,e);
+            if (e)
+            {
+               //e->PrintSummary();
+               VF48eventQueue.push_back(e);
+               //std::cout<<"size:"<<VF48eventQueue.size()<<std::endl;
+            }
          }
-         delete d;
       }
       return VF48eventQueue;
    }
@@ -276,8 +270,30 @@ public:
       }
 
       event->FindAllBanks();
-      VF48DataFlow* dataflow = NULL;
-      bool data_added=false;
+      bool HaveVF48data = false;
+      for (int i=0; i<NUM_VF48_MODULES; i++) 
+      {
+         char bankname[5];
+         bankname[0] = 'V';
+         bankname[1] = 'F';
+         bankname[2] = 'A';
+         bankname[3] = '0' + i;
+         bankname[4] = 0;
+         if (event->FindBank(bankname))
+         {
+            HaveVF48data = true;
+            break;
+         }
+      }
+      if (!HaveVF48data)
+      {
+#ifdef HAVE_MANALYZER_PROFILER
+         *flags |= TAFlag_SKIP_PROFILE;
+#endif
+         return flow;
+      }
+      VF48DataFlow* dataflow = new VF48DataFlow(flow);
+      flow = dataflow;
       for (int i=0; i<NUM_VF48_MODULES; i++) 
       {
          char bankname[5];
@@ -292,22 +308,8 @@ public:
          int size=vf48_bank->data_size/4;
          if (size>0)
          {
-            if (!dataflow)
-            {
-               dataflow = new VF48DataFlow(flow);
-               flow = dataflow;
-            }
-            VF48data* d = new VF48data();
-            d->AddVF48data(i,event->GetBankData(vf48_bank), size);
-            dataflow->AddData(d);
-            data_added=true;
+            dataflow->VF48dataQueue.AddVF48data(i, (uint32_t*)event->GetBankData(vf48_bank), size);
          }
-      }
-      if (!data_added)
-      {
-#ifdef HAVE_MANALYZER_PROFILER
-         *flags |= TAFlag_SKIP_PROFILE;
-#endif
       }
 #define ALLOW_MULTHITHREADED_UNPACK 1
 #if ALLOW_MULTHITHREADED_UNPACK
@@ -329,7 +331,7 @@ public:
       bool flow_queued = false;
       if (data_flow)
       {
-         std::vector<VF48event*> vf48events = UnpackVF48Flow(data_flow);
+         std::vector<VF48event*> vf48events = UnpackVF48Flow(data_flow->VF48dataQueue);
          if (vf48events.size())
             flow_queued = true;
          for (VF48event* event: vf48events)

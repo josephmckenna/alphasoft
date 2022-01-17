@@ -32,6 +32,55 @@ public:
    bool fSaveSIS = true;
 };
 
+class UnmatchedBuffer
+{
+   private:
+      std::deque<std::vector<TSISBufferEvent>> fBuffer;
+      int fPosition;
+   public:
+      UnmatchedBuffer()
+      {
+         fPosition = 0;
+      }
+      void AddData(std::vector<TSISBufferEvent>& data)
+      {
+         fBuffer.emplace_back(std::move(data));
+      }
+      const TSISBufferEvent* GetFront()
+      {
+         if (fPosition >= fBuffer.front().size())
+         {
+            gTSISBufferEventRecycleBin.RecycleVector(fBuffer.front());
+            fBuffer.pop_front();
+            fPosition = 0;
+            return GetFront();
+         }
+         return &fBuffer.front().at(fPosition);
+      }
+      void EventUsed()
+      {
+         fPosition++;
+      }
+      size_t size() const
+      {
+         size_t size = 0;
+         for (int i = 0; i < fBuffer.size(); i++)
+         {
+            size += fBuffer[i].size();
+         }
+         return size - fPosition;
+      }
+      bool empty() const
+      {
+         for (int i = 0; i < fBuffer.size(); i++)
+            if (!fBuffer[i].empty())
+               return false;
+         return true;
+      }
+};
+   
+
+
 class SIS: public TARunObject
 {
 private:
@@ -41,8 +90,6 @@ private:
    uint64_t gVF48Clock;
    Int_t ID;
    TTree* SISEventTree[NUM_SIS_MODULES]   = {nullptr};
-   
-   std::deque<TSISBufferEvent*> unmatched_buffer[NUM_SIS_MODULES];
 
 public:
    SISFlags* fFlags;
@@ -64,6 +111,8 @@ public:
 
    bool fTrace = true;
 
+   UnmatchedBuffer fUnmatchedBuffer[NUM_SIS_MODULES];
+
    SIS(TARunInfo* runinfo, SISFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
@@ -79,7 +128,6 @@ public:
       if (fTrace)
          printf("SIS::dtor!\n");
    }
-
 
 
 double clock2time(unsigned long int clock){
@@ -141,10 +189,11 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
    
-   void SaveToTree(TARunInfo* runinfo,TSISEvent* s)
+   void SaveToTree(TARunInfo* runinfo, TSISEvent& s)
    {
-         if (!fFlags->fSaveSIS) return;
-         int i = s->GetSISModule();
+         /*if (!fFlags->fSaveSIS) return;
+         s.Print();
+         int i = s.GetSISModule();
          assert(i >= 0 && i < NUM_SIS_MODULES);
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
@@ -155,10 +204,10 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          }
          TBranch* b_variable = SISEventTree[i]->GetBranch("TSISEvent");
          if (!b_variable)
-            SISEventTree[i]->Branch("TSISEvent","TSISEvent",&s,16000,1);
+            SISEventTree[i]->Branch("TSISEvent",&s);
          else
-            SISEventTree[i]->SetBranchAddress("TSISEvent",&s);
-         SISEventTree[i]->Fill();
+            b_variable->SetAddress(&s);
+         SISEventTree[i]->Fill();*/
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
@@ -243,25 +292,20 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       //Put TSISBufferEvent flow into a matching buffer
       for (int j=0; j<NUM_SIS_MODULES; j++)
       {
-/*         std::move(std::begin(mf->fSISBufferEvents[j]), std::end(mf->fSISBufferEvents[j]),unmatched_buffer[j]); */
-         // Can we std::move from std::vector to std::deque here instead of these next 4 lines?
-         for (TSISBufferEvent* e: mf->fSISBufferEvents[j])
-            unmatched_buffer[j].push_back(e);
-         //Ownership of pointers moved... lets clean up
-         mf->fSISBufferEvents[j].clear();
+         fUnmatchedBuffer[j].AddData(mf->fSISBufferEvents[j]);
 
-         if(gExptStartClock[j]==0 && !unmatched_buffer[j].empty())
+         if(gExptStartClock[j]==0 && !fUnmatchedBuffer[j].empty())
          {
-            gExptStartClock[j] = unmatched_buffer[j].front()->fCounts[clkchan[j].fChannel];  //first clock reading
+            gExptStartClock[j] = fUnmatchedBuffer[j].GetFront()->fCounts[clkchan[j].fChannel];  //first clock reading
          }
       }
       //Lets get the number of events in the shortest queue (these should be pairs of SIS events)
       int range = 0;
-      if (unmatched_buffer[0].size() < unmatched_buffer[1].size())
-         range = unmatched_buffer[0].size();
+      if (fUnmatchedBuffer[0].size() < fUnmatchedBuffer[1].size())
+         range = fUnmatchedBuffer[0].size();
       else
-         range = unmatched_buffer[1].size();
-      //std::cout<<"Buffer:" << unmatched_buffer[0].size() <<"\t"<< unmatched_buffer[1].size() << std::endl;
+         range = fUnmatchedBuffer[1].size();
+      //std::cout<<"Buffer:" << fUnmatchedBuffer[0].size() <<"\t"<< fUnmatchedBuffer[1].size() << std::endl;
          
       for (int j=0; j<NUM_SIS_MODULES; j++) // loop over databanks
       {
@@ -269,14 +313,14 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
         if (!range) continue;
         for (int i = 0; i < range; i++)
         {
-           TSISBufferEvent* event = unmatched_buffer[j].front();
+           const TSISBufferEvent* event = fUnmatchedBuffer[j].GetFront();
+          
            // event->Print();
-           unmatched_buffer[j].pop_front();
            unsigned long int clock = event->fCounts[clkchan[j].fChannel]; // num of 10MHz clks
            gClock[j] += clock;
            double runtime=clock2time(gClock[j],gExptStartClock[j]); 
            //SISModule* module=new SISModule(j,gClock[j],runtime);
-           sf->sis_events[j].emplace_back(TSISEvent(event));
+           sf->sis_events[j].emplace_back(*event);
            TSISEvent* s = &sf->sis_events[j].back();
            s->SetMidasUnixTime(mf->MidasTime);
            s->SetMidasEventID(mf->MidasEventID);
@@ -288,6 +332,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
               gVF48Clock+=s->GetCountsInChannel(vf48clkchan);
               s->SetVF48Clock(gVF48Clock);
            }
+           fUnmatchedBuffer[j].EventUsed();
            // s->Print();
            //runinfo->AddToFlowQueue(new SISEventFlow(NULL,SisEvent));
         }
@@ -300,7 +345,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       {
          for (size_t i=0; i<sf->sis_events[j].size(); i++)
          {
-            SaveToTree(runinfo,&sf->sis_events[j].at(i));
+            SaveToTree(runinfo,sf->sis_events[j].at(i));
          }
       }
       return flow;

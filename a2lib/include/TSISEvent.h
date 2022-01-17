@@ -19,16 +19,13 @@
 class TSISBufferEvent
 {
    public:
-      std::vector<uint32_t> fCounts;
       int fSISModule;
-      TSISBufferEvent(uint32_t* ptr, int m): fCounts(ptr,ptr+NUM_SIS_CHANNELS), fSISModule(m)
+      std::array<uint32_t,NUM_SIS_CHANNELS> fCounts;
+      TSISBufferEvent(const int mod, const uint32_t* data): fSISModule(mod)
       {
-
+         std::copy(data, data + NUM_SIS_CHANNELS,fCounts.begin());
       }
-      std::vector<uint32_t> Move(){
-         return std::move(fCounts);
-      }
-      void Print()
+      void Print() const
       {
          for (const uint32_t c: fCounts)
             std::cout << c <<"\t";
@@ -41,8 +38,8 @@ class TSISEvent : public TObject
 {
 private:
   
-  std::vector<uint32_t> fCounts;
   int fSISModule;
+  std::array<uint32_t,NUM_SIS_CHANNELS> fCounts;
      //counts in this channel
   ULong64_t     fClock;               //10 MHz clks
   ULong64_t     fVF48Clock;           //20 MHz clock from VF48?
@@ -56,6 +53,8 @@ private:
 public:
 
   // setters  
+  void Fill(TSISBufferEvent* event);
+
   void SetSISModuleNo(int module)                   { fSISModule = module;  }
   void SetScalerModuleNo(int module)                { fSISModule = module;  }
   void SetClock(ULong64_t clock)                    { fClock = clock; }
@@ -67,6 +66,10 @@ public:
   void SetMidasEventID(unsigned long id)            { fMidasEventID = id; }
 
   void ClearSISEvent();
+  void Reset()
+  {
+     ClearSISEvent();
+  }
   
   // getters
   uint32_t GetCountsInChannel( int i) const
@@ -113,7 +116,7 @@ public:
   // default class member functions
   TSISEvent( );
   TSISEvent( int SISModule );
-  TSISEvent( TSISBufferEvent* event );
+  TSISEvent( const TSISBufferEvent& event );
   TSISEvent( ULong64_t clock, Double_t time);
   TSISEvent& operator+=(const TSISEvent& b);
 

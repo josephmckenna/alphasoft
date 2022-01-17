@@ -14,60 +14,170 @@
 
 #include "AnalysisFlow.h"
 
+template<typename T>
+class PointerRecycler
+{
+   private:
+      const int fMaxBufferedEvents;
+      std::deque<T*> fRecycleBin;
+   private:
+      T* GrabObject()
+      {
+         T* newObject = fRecycleBin.front();
+         fRecycleBin.pop_front();
+         newObject->Reset();
+         return newObject;
+      }
+   public:
+      PointerRecycler(const int buffer_events): fMaxBufferedEvents(buffer_events)
+      {
+
+      }
+      ~PointerRecycler()
+      {
+          for (T* p: fRecycleBin)
+             delete p;
+          fRecycleBin.clear();
+      }
+      T* NewObject()
+      {
+         if (fRecycleBin.size())
+         {
+            return GrabObject();
+         }
+         else
+            return new T();
+      }
+      void RecycleObject(T* data)
+      {
+         if (fRecycleBin.size() < fMaxBufferedEvents)
+         {
+            fRecycleBin.push_back(data);
+         }
+         else
+         {
+            delete data;
+         }
+      }
+};
+
+
+template<typename T>
+class VectorRecycler
+{
+   private:
+      const int fMaxBufferedEvents;
+      std::deque<std::vector<T>> fRecycleBin;
+      std::mutex fMutex;
+   private:
+      std::vector<T> GrabVector()
+      {
+         while (fRecycleBin.front().capacity() == 0)
+         {
+            fRecycleBin.pop_front();
+            if (fRecycleBin.empty())
+               break;
+         }
+         std::lock_guard<std::mutex> guard(fMutex);
+         if (fRecycleBin.size())
+         {
+            std::vector<T> data = std::move(fRecycleBin.front());
+            return data;
+         }
+         else
+         {
+            return std::vector<T>();
+         }
+      }
+   public:
+      VectorRecycler(const int buffer_events): fMaxBufferedEvents(buffer_events)
+      {
+
+      }
+      ~VectorRecycler()
+      {
+          fRecycleBin.clear();
+      }
+      std::vector<T> NewVector()
+      {
+         if (fRecycleBin.size())
+            return GrabVector();
+         else
+            return std::vector<T>();
+      }
+      void RecycleVector(std::vector<T> data)
+      {
+         if (!data.capacity())
+            return;
+         if (fRecycleBin.size() < fMaxBufferedEvents)
+         {
+            data.clear();
+            std::lock_guard<std::mutex> guard(fMutex);
+            fRecycleBin.emplace_back(std::move(data));
+         }
+         else
+         {
+            std::cout << "VECTOR BUFFER FULL!" <<std::endl;
+data.clear();
+         }
+      }
+};
+
+static VectorRecycler<uint32_t> gVF48dataRecycler(1000);
+
 class VF48data
 {
   public:
-     int       size32[nVF48];
-     uint32_t *data32[nVF48];
-    //char* data[NUM_VF48_MODULES];
-    //int size[NUM_VF48_MODULES];
+     std::array<std::vector<uint32_t>,nVF48> data32;
   VF48data()
   {
     for (int i=0; i<nVF48; i++)
     {
-      size32[i]=0;
-      data32[i]=NULL;
+      data32[i] = gVF48dataRecycler.NewVector();
     }
   }
-  void AddVF48data(int unit, const void* _data, int _size)
+  /*void Reset()
+  {
+    for (int i=0; i<nVF48; i++)
+    {
+      data32[i].clear();
+    }
+  }*/
+  void AddVF48data(const int unit, const uint32_t* data, const int size)
   {
 
     //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
     //int       size32 = size;
-  //32const uint32_t *data32 = (const uint32_t*)data;
-    if (!_size) return;
-    size32[unit]=_size;
-    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
-    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
+    if (!size) return;
+    const size_t old_size = data32[unit].size();
+    data32[unit].resize(size + data32[unit].size() );
+    std::copy( data , data + size, data32[unit].begin() + old_size );
     return;
   }
   ~VF48data()
   {
      for (int i=0; i<nVF48; i++)
      {
-       // if (data32[i])
-           free( data32[i] );
+        gVF48dataRecycler.RecycleVector(data32[i]);
      }
   }
 };
 
+
 class VF48DataFlow: public TAFlowEvent
 {
    public:
-   std::deque<VF48data*> VF48dataQueue;
+   VF48data VF48dataQueue;
      public:
   VF48DataFlow(TAFlowEvent* flow)
        : TAFlowEvent(flow)
   {
+
   }
-  void AddData(VF48data* e)
-  {
-     VF48dataQueue.push_back(e);
-  }
-  //Do not delete the pointers... we don't own them
+
   ~VF48DataFlow()
   {
-     VF48dataQueue.clear();
+ 
   }
 };
 
@@ -91,6 +201,10 @@ class VF48EventFlow: public TAFlowEvent
 #include "TSiliconEvent.h"
 #include "TAlphaEvent.h"
 
+
+static PointerRecycler<TSiliconEvent> gTSiliconEventRecycleBin(1000);
+static PointerRecycler<TAlphaEvent> gTAlphaEventRecycleBin(1000);
+
 class SilEventFlow: public TAFlowEvent
 {
   public:
@@ -106,9 +220,9 @@ class SilEventFlow: public TAFlowEvent
   ~SilEventFlow()
   {
     if (silevent)
-      delete silevent;
+      gTSiliconEventRecycleBin.RecycleObject(silevent);
     if (alphaevent)
-      delete alphaevent;
+      gTAlphaEventRecycleBin.RecycleObject(alphaevent);
   }
 };
 
@@ -138,11 +252,14 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 
 #include "TSISEvent.h"
+
+static VectorRecycler<TSISBufferEvent> gTSISBufferEventRecycleBin(1000);
+
 //Flow for passing SIS data from Analyze function (main thread) to the AnalyzeFlowEvent (side thread)
 class SISModuleFlow: public TAFlowEvent
 {
   public:
-      std::vector<TSISBufferEvent*> fSISBufferEvents[NUM_SIS_MODULES];
+      std::vector<TSISBufferEvent> fSISBufferEvents[NUM_SIS_MODULES];
       unsigned long MidasEventID=0;
       uint32_t MidasTime=0;
 
@@ -154,16 +271,24 @@ class SISModuleFlow: public TAFlowEvent
       fSISBufferEvents[module].reserve(nevents);
       for ( int i = 0; i < nevents; i++ )
       {
-         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr,module));
+         fSISBufferEvents[module].emplace_back(module,ptr);
          ptr += NUM_SIS_CHANNELS;
       }
       return;
    }
    void Clear()
    {
+      for (int i = 0; i < NUM_SIS_MODULES; i++)
+      {
+         gTSISBufferEventRecycleBin.RecycleVector(fSISBufferEvents[i]);
+      }
    }
    SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
    {
+      for (int i = 0; i < NUM_SIS_MODULES; i++)
+      {
+         fSISBufferEvents[i] = gTSISBufferEventRecycleBin.NewVector();
+      }
    }
    ~SISModuleFlow()
    {
@@ -172,22 +297,24 @@ class SISModuleFlow: public TAFlowEvent
 };
 
 
+static VectorRecycler<TSISEvent> gTSISEventRecycleBin(1000);
+
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<std::vector<TSISEvent>> sis_events;
+  std::array<std::vector<TSISEvent>,NUM_SIS_MODULES> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
      for ( int i = 0; i < NUM_SIS_MODULES; i++)
      {
-        sis_events.push_back(std::vector<TSISEvent>());
+        sis_events[i] = gTSISEventRecycleBin.NewVector();
      }
   }
   ~SISEventFlow()
   {
      for (int j=0; j<NUM_SIS_MODULES; j++)
      {
-        sis_events[j].clear();
+        gTSISEventRecycleBin.RecycleVector(sis_events[j]);
      }
   }
 };
