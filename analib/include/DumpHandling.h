@@ -878,6 +878,18 @@ public:
          }
       }
    }
+   void AddScalerEvents(std::vector<ScalerType*> events)
+   {
+      for ( auto &pair : dumps )
+      {
+         if (!pair) continue;
+         for ( const ScalerType* s : events )
+         {
+            pair->AddScalerEvent(*s);
+            //if (pair->AddScalerEvent(s)>0) break;
+         }
+      }
+   }
 
    void AddSVDEvents(std::vector<VertexType*>* events)
    {
