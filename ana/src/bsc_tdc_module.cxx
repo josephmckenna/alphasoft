@@ -286,7 +286,8 @@ public:
             if (fFlags->fProtoTOF) barID = protoTOFFindBarID(tdchit->chan);
 
             // Skips channels 0-7, 48-55, 64-71, 112-119 FIXME remember to change this backa once they are time calibrated
-            if ((0<=barID and barID<=7) or (64<=barID and barID<=71) or (48<=barID and barID<=55) or (112<=barID and barID<=119)) continue;
+            //if ((0<=barID and barID<=7) or (64<=barID and barID<=71) or (48<=barID and barID<=55) or (112<=barID and barID<=119)) continue;
+            //if ((48<=barID and barID<=55) or (112<=barID and barID<=119) or (barID==0)) continue;
 
             // Calculates hit time
             double tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
