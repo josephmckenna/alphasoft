@@ -8,6 +8,7 @@
 #include "assert.h"
 #include "TMath.h"
 #include <TVector3.h>
+#include <TVector.h>
 #ifndef ROOT_TObject
 #include "TObject.h"
 #endif
@@ -20,7 +21,7 @@ private:
 
 public:
    SimpleTdcHit(); //ctor
-   SimpleTdcHit(SimpleTdcHit &h); //copy ctor
+   SimpleTdcHit(const SimpleTdcHit &tdchit);
   using TObject::Print;
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
@@ -50,7 +51,7 @@ private:
 
 public:
   EndHit(); // ctor
-  EndHit(EndHit &h); // copy constructor
+  EndHit(const EndHit &endhit); //Copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~EndHit(); // dtor
@@ -92,15 +93,15 @@ class BarHit: public TObject
 {
 private:
   int fBarID=-1;
-  EndHit* fTopHit;
-  EndHit* fBotHit;
+  EndHit* fTopHit = NULL;
+  EndHit* fBotHit = NULL;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;
 
 public:
   BarHit(); // ctor
-  BarHit(BarHit &h); //copy constructor
+  BarHit(const BarHit &barhit); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~BarHit(); // dtor
@@ -148,6 +149,11 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
+  void ClearEndHits() //This isn't ideal but this function deletes data that we don't want to write to the .root.
+  {
+    fTopHit = NULL; 
+    fBotHit = NULL;
+  }
 //  double GetTDCZed() { // This should probably not be done here. The value of the speed of light should be put into the analysis settings, and this should be done in the tdc module.
 //      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
 //  }
@@ -168,7 +174,7 @@ private:
 
 public:
   TBarEvent(); //ctor
-  TBarEvent(TBarEvent &barEvt); //copy ctor
+  TBarEvent(TBarEvent &barEvent); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~TBarEvent(); //dtor
@@ -232,10 +238,19 @@ public:
   {
      fTOF.push_back(TOF);
   }
+  void ClearBarHits() //Clears end hits in each bar hit so we can write to a root file without trying to write unassigned memory. 
+  {
+    for(auto barhit: fBarHit)
+    {
+      barhit->ClearEndHits();
+    }
+  }
+
   void AddTOFMatched(double TOF)
   {
-     fTOFM.push_back(TOF);
+    fTOFM.push_back(TOF);
   }
+
 
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }

@@ -17,16 +17,25 @@ TBarEvent::TBarEvent(TBarEvent &barEvt)
   fEventID = barEvt.GetID();
   fEventTime = barEvt.GetRunTime();
   for(BarHit* barhit: barEvt.GetBars())  {
-    BarHit* h = new BarHit(*(barhit));
-    fBarHit.push_back(h);
+    if(barhit)
+    {
+      BarHit* h = new BarHit(*(barhit));
+      fBarHit.push_back(h);
+    }
   }
   for(EndHit* endhit: barEvt.GetEndHits()) {
-    EndHit* h = new EndHit(*(endhit));
-    fEndHit.push_back(h);
+    if(endhit)
+    {
+      EndHit* h = new EndHit(*(endhit));
+      fEndHit.push_back(h);
+    }
   }
   for(SimpleTdcHit* tdchit: barEvt.GetTdcHits()) {
-    SimpleTdcHit* h = new SimpleTdcHit(*(tdchit));
-    fTdcHit.push_back(h);
+    if(tdchit)
+    {
+      SimpleTdcHit* h = new SimpleTdcHit(*(tdchit));
+      fTdcHit.push_back(h);
+    }
   }
   for(double TOF: barEvt.GetTOF())
     fTOF.push_back(TOF);
@@ -39,15 +48,24 @@ TBarEvent::~TBarEvent()
    //   Reset();
    fEventID=-1;
    fEventTime=-1.;
-//  for(BarHit* barhit: fBarHit)  {
-//    delete barhit;
-//  }
-//  for(EndHit* endhit: fEndHit) {
-//    delete endhit;
-//  }
-//  for(SimpleTdcHit* tdchit: fTdcHit) {
-//    delete tdchit;
-//  }
+   //Revisit this, potential source of leaks. Try this: for(int i) { if(fBarHit.at(i)) {only now delete it} }
+   //The at(i) insures we don't go out of scope, and the if(barhit) ensures its not empty. I have tried one or the other and they both seg fault. So either both, or even the changes to constructors might have changed something.
+  /*for(BarHit* barhit: fBarHit)  {
+    if(barhit) {
+      delete barhit;
+    }
+  }
+  for(EndHit* endhit: fEndHit) {
+    if(endhit) {
+      delete endhit;
+    }
+  }
+  for(SimpleTdcHit* tdchit: fTdcHit) {
+    if(tdchit) {
+      delete tdchit;
+    }
+  }*/
+
    fEndHit.clear();
    fBarHit.clear();
    fTdcHit.clear();
@@ -73,10 +91,15 @@ ClassImp(EndHit)
 
 EndHit::EndHit()
 {
-// ctor
+  fBarID=-1;
+  fTDCTime=-1;
+  fADCTime=-1;
+  fAmp=-1;
+  fAmpRaw=-1;
+  fTDCMatched=false;
 }
 
-EndHit::EndHit(EndHit &h)
+EndHit::EndHit(const EndHit &h)
 {
 // copy ctor
   fBarID=h.GetBar();
@@ -108,7 +131,7 @@ SimpleTdcHit::SimpleTdcHit()
 // ctor
 }
 
-SimpleTdcHit::SimpleTdcHit(SimpleTdcHit &h)
+SimpleTdcHit::SimpleTdcHit(const SimpleTdcHit &h)
 {
 // copy ctor
 
@@ -132,16 +155,28 @@ ClassImp(BarHit)
 
 BarHit::BarHit()
 {
+  fBarID=-1;
+  //fTopHit = new EndHit; //Empty end hit
+  //fBotHit = new EndHit;
+  fTopHit = NULL; //Empty end hit
+  fBotHit = NULL;
+  fTPCMatched=false;
+  fTPCMatched=false;
+  fTPC = TVector3(); //Empty vector
+  fZed=-9999;
 // ctor
 
 }
 
-BarHit::BarHit(BarHit &h)
+BarHit::BarHit(const BarHit &h)
 {
 // copy ctor
   fBarID=h.GetBar();
-  fTopHit= new EndHit(*(h.GetTopHit()));
-  fBotHit= new EndHit(*(h.GetBotHit()));
+  if(h.GetTopHit())
+    fTopHit= new EndHit(*(h.GetTopHit()));
+  
+  if(h.GetBotHit())
+    fBotHit= new EndHit(*(h.GetBotHit()));
   fTPCMatched=h.IsTPCMatched();
   fTPC=h.GetTPC();
   fZed=h.GetTDCZed();
@@ -169,10 +204,10 @@ void BarHit::Print()
 
 BarHit::~BarHit()
 {
-//   if (fTopHit)
-//      delete fTopHit;
-//   if (fBotHit)
-//      delete fBotHit;
+   if (fTopHit)
+      delete fTopHit;
+   if (fBotHit)
+      delete fBotHit;
 }
 #endif
 /* emacs
