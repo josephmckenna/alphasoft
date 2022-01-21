@@ -41,7 +41,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           int IsCState=0;
           if ((k>1)&&(runNumber!=57208))
             IsCState=1;
-          std::cout<<"Add all instances of dump:\t"<<buf<<"\t as Frequency "<<i;
+          std::cout<<"Add all instances of dump:\t"<<buf<<"\t as Frequency "<<i<<std::endl;
           spills = Get_A2_Spills(runNumber,{buf},{-1});
           // std::cout<<" 1st Light spill: "<<spills[0].GetStartTime()<<"\t"<<spills[0].GetStopTime()<<std::endl;
           VertexPlot[i][IsCState]->AddDumpGates(spills);
@@ -163,17 +163,17 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   std::vector<double> XErrors;
   for (int i=0; i<nfreq; i++)
     {
-      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(1));
-      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(1));
+      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
+      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
       
-      DarkStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(1));
-      DarkStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedType(1));
+      DarkStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(2));
+      DarkStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedType(2));
 
-      DStateErrors.push_back(sqrt(VertexPlot[i][0]->GetNPassedType(1)));
-      CStateErrors.push_back(sqrt(VertexPlot[i][1]->GetNPassedType(1)));
+      DStateErrors.push_back(sqrt(VertexPlot[i][0]->GetNPassedType(2)));
+      CStateErrors.push_back(sqrt(VertexPlot[i][1]->GetNPassedType(2)));
       
-      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][0]->GetNPassedType(1)));
-      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][1]->GetNPassedType(1)));
+      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][0]->GetNPassedType(2)));
+      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][1]->GetNPassedType(2)));
       XErrors.push_back( 0.);
     }
   
