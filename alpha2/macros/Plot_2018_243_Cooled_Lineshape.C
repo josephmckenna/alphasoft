@@ -43,7 +43,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
             IsCState=1;
           std::cout<<"Add all instances of dump:\t"<<buf<<"\t as Frequency "<<i;
           spills = Get_A2_Spills(runNumber,{buf},{-1});
-          std::cout<<" 1st Light spill: "<<spills[0].GetStartTime()<<"\t"<<spills[0].GetStopTime()<<std::endl;
+          // std::cout<<" 1st Light spill: "<<spills[0].GetStartTime()<<"\t"<<spills[0].GetStopTime()<<std::endl;
           VertexPlot[i][IsCState]->AddDumpGates(spills);
          
           //Find all dark times between the above light times
@@ -52,7 +52,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double last_tmax = -1;
 
           //Note the user of the wild card to get all dumps!
-          std::cout<<"Dark Time windows \n";
+          //std::cout<<"Dark Time windows \n";
          //Loop over our light windows
           for (const TA2Spill& s: spills)
             {
@@ -69,8 +69,8 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
                       assert ( last_tmax < tmax );
                       // Check the dark period is shorter than 100 seconds
                          assert (  all.GetStartTime() - tmax  < 100 );
-                         if(i==0)
-                           std::cout<<"\tAdding i "<<i<<"\t"<<tmax<<"\t"<<all.GetStartTime() << " Duration\t"<<all.GetStartTime()-tmax<< std::endl;
+                         //  if(i==0)
+                         //  std::cout<<"\tAdding i "<<i<<"\t"<<tmax<<"\t"<<all.GetStartTime() << " Duration\t"<<all.GetStartTime()-tmax<< std::endl;
                       DarkTimes[i].push_back({ tmax, all.GetStartTime()});
                       last_tmax = tmax;
                       break;
@@ -227,7 +227,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   const TVertexEvents* kVertexEvents= VertexPlot[0][0]->GetVertexEvents();
   double tstart= kVertexEvents->fRunTimes[0]-2;
   double tend=kVertexEvents->fRunTimes[kVertexEvents->size()-1]+25;
-  std::cout<<"\ntstart\t"<<tstart<<"\ttend "<<tend<<"\tendvertexindex\t"<<kVertexEvents->size()<<std::endl;
+  //std::cout<<"\ntstart\t"<<tstart<<"\ttend "<<tend<<"\tendvertexindex\t"<<kVertexEvents->size()<<std::endl;
   int nwindows=(runNumber==57208)?200:100;
   TString hTitle="Rep vs Freq_DStateR";
   hTitle+=runNumber;
@@ -255,9 +255,14 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
-            hFreqRepD->Fill(double(ifreq),GetRep1(time,LaserSpills,lastSpill,IsLight) );
+            if (runNumber==57208) { 
+              hFreqRepD->Fill(double(ifreq),GetRep(time,LaserSpills,lastSpill,IsLight) );
+            }
+            else {
+              hFreqRepD->Fill(double(ifreq),GetRep1(time,LaserSpills,lastSpill,IsLight) );
+            }
             hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
-          std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastspill "<<lastSpill<<" IsLight "<<IsLight<<" rep "<<GetRep1(time,LaserSpills,lastSpill,IsLight)<<std::endl;
+            // std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastspill "<<lastSpill<<" IsLight "<<IsLight<<" rep "<<GetRep1(time,LaserSpills,lastSpill,IsLight)<<std::endl;
           }
         }
      
@@ -268,9 +273,10 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           double time = kVertexEvents->fRunTimes[ivt];
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
+            if (!(runNumber==57208))
             hFreqRepC->Fill( double(ifreq),GetRep1(time,LaserSpills,lastSpill,IsLight) );
             hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
-            if (ifreq==4) std::cout<<" time "<<time<<" spill "<<lastSpill<<" IsLight "<<IsLight<<std::endl;         }
+          }
         }
       lastSpill=0;
       kVertexEvents =DarkVertexPlot[ifreq][0]->GetVertexEvents(); 
@@ -282,7 +288,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           if (cutsResult &2) {
             hDarkRep->Fill( double(ifreq),GetRep(time,LaserSpills,lastSpill,IsLight) );
             hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
-           std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<" lastSpill "<<lastSpill<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" rep "<<GetRep(time,LaserSpills,lastSpill,IsLight)<<" IsLight "<<IsLight<<std::endl;
+            // std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<" lastSpill "<<lastSpill<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" rep "<<GetRep(time,LaserSpills,lastSpill,IsLight)<<" IsLight "<<IsLight<<std::endl;
           }
         }
       lastSpill=0;
@@ -294,21 +300,21 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           if (cutsResult &2) {
             hDarkRep->Fill( double(ifreq),GetRep(time,LaserSpills,lastSpill,IsLight) );
             hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
-          std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" spill "<<lastSpill<<std::endl;
+            //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" spill "<<lastSpill<<std::endl;
           }
         }
-      
+ 
     }
   // create the cycle number Tgraphs here from the 2d projection.
-  TGraph* gkoutdd = new TGraph(hFreqRepD->ProjectionY());
+  TGraphErrors* gkoutdd = new TGraphErrors(hFreqRepD->ProjectionY());
   gkoutdd->SetName("gkoutdd");
   gkoutdd->GetXaxis()->SetTitle("Repetition");
   gkoutdd->Write();
-   TGraph* gkoutcc = new TGraph(hFreqRepC->ProjectionY());
+   TGraphErrors* gkoutcc = new TGraphErrors(hFreqRepC->ProjectionY());
   gkoutcc->SetName("gkoutcc");
   gkoutcc->GetXaxis()->SetTitle("Repetition");
   gkoutcc->Write();
-  TGraph* gkoutdark = new TGraph(hDarkRep->ProjectionY());
+  TGraphErrors* gkoutdark = new TGraphErrors(hDarkRep->ProjectionY());
   gkoutdark->SetName("gkoutdark");
   gkoutdark->GetXaxis()->SetTitle("Repetition");
   gkoutdark->Write();
