@@ -63,6 +63,7 @@ public:
    bool fPrint = false;
    bool SaveTAlphaEvent = false;
    bool SaveTSiliconEvent = false;
+   bool fFastMode = false;
    
    int gNHitsCut = 200;
    double nClusterSigma = 3.5;//nVASigma;
@@ -418,6 +419,7 @@ public:
       }
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->SetFastRecMode(fFlags->fFastMode);
       AlphaEvent->FitTrackCandidates(stride,offset);
       return flow;
    }
@@ -475,6 +477,7 @@ public:
       }
       TAlphaEvent* AlphaEvent=fe->alphaevent;
       //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+      AlphaEvent->SetFastRecMode(fFlags->fFastMode);
       AlphaEvent->RecVertex();
       return flow;
    }
@@ -530,6 +533,7 @@ public:
       }
       
       if (offset!=stride || stride==0)
+         AlphaEvent->SetFastRecMode(fFlags->fFastMode);
          AlphaEvent->ImproveVertexOnce(stride, offset);
       //Final loop
       if (offset==stride)
@@ -575,6 +579,7 @@ public:
 #endif
          return flow;
       }
+      AlphaEvent->SetFastRecMode(fFlags->fFastMode);
       AlphaEvent->ImproveVertex();
       return flow;
    }
@@ -748,6 +753,8 @@ public:
             fFlags.nClusterSigma = atof(args[++i].c_str());
          if (args[i] == "--pClusterSigma")
             fFlags.pClusterSigma = atof(args[++i].c_str());
+         if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
       }
    }
 
@@ -843,6 +850,12 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("AlphaEventModuleFactory_fittracks(%d/%d)::Init!\n",offset,stride);
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
+
+      }
    }
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
@@ -872,6 +885,11 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("AlphaEventModuleFactory_vertex::Init!\n");
+      for (unsigned i=0; i<args.size(); i++)
+      {
+          if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
+      }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
@@ -886,6 +904,13 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("AlphaEventModuleFactory_improvevertex::Init!\n");
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
+
+      }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
@@ -908,6 +933,13 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       printf("AlphaEventModuleFactory_improvevertex_1(%d)::Init!\n",fFlags.ImproveVertexInteration);
+
+      for (unsigned i=0; i<args.size(); i++)
+      {
+         if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
+
+      }
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
@@ -961,6 +993,8 @@ public:
             fFlags.SaveTAlphaEvent = true;
          if (args[i] == "--silevent")
             fFlags.SaveTSiliconEvent = true;
+         if (args[i] == "--fastmode")
+            fFlags.fFastMode = true;
 
       }
    }

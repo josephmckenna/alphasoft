@@ -86,6 +86,7 @@ private:
   TAlphaEventTrack   fCosmic;  // Set in CosmicTest -->
 
   Bool_t             fDebug;
+  Bool_t             fFastRecMode = kFALSE;
 
   //Improve vertex objects
   TObjArray *improved_vertices=NULL;
@@ -228,6 +229,9 @@ private:
   virtual void Print();
 
   void FlipZofHits();
+  void SetFastRecMode(Bool_t fmode){fFastRecMode = fmode;}
+  Bool_t GetFastRecMode(){return fFastRecMode;}
+
   ClassDef(TAlphaEvent,6);
   
 };

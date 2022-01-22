@@ -892,6 +892,7 @@ Int_t TAlphaEvent::FitTrackCandidates( const int stride, const int offset)
          //Stripe the for loop
          if (iTrack%stride - offset !=0) continue; 
       TAlphaEventHelix * helix = GetHelix( iTrack );
+      helix->SetFastMode(fFastRecMode);
       helix->FitHelix();
     }
 
@@ -924,6 +925,8 @@ Int_t TAlphaEvent::RecVertex()
 {
   // start by including all the helices
   TAlphaEventVertex * vertex = new TAlphaEventVertex();
+  vertex->SetFastMode(fFastRecMode);
+
   const int nhel=GetNHelices();
   for(Int_t ihelix=0; ihelix<nhel; ihelix++)
     {
@@ -943,6 +946,7 @@ Int_t TAlphaEvent::ImproveVertexOnce(const int stride, const int offset)
 {
   if (fVertexStopImproving) return fVertex->IsGood();
   TAlphaEventVertex * vertex = fVertex;
+  vertex->SetFastMode(fFastRecMode);
   Int_t totalNHelices = vertex->GetNHelices();
   // printf("totalNHelices: %d\n",totalNHelices);
  
@@ -962,6 +966,7 @@ Int_t TAlphaEvent::ImproveVertexOnce(const int stride, const int offset)
          if (excluded_helix%stride - offset !=0) continue;
       
       TAlphaEventVertex * tvertex = new TAlphaEventVertex();
+      tvertex->SetFastMode(fFastRecMode);
       const int nHelicies=vertex->GetNHelices();
       for(Int_t ihelix=0; ihelix<nHelicies; ihelix++)
       {
@@ -1061,6 +1066,7 @@ Int_t TAlphaEvent::ImproveVertex()
 	 vertex->Z());
   */
   TAlphaEventVertex * vertex = fVertex;
+  vertex->SetFastMode(fFastRecMode);
   Int_t totalNHelices = vertex->GetNHelices();
   // printf("totalNHelices: %d\n",totalNHelices);
 
@@ -1073,7 +1079,7 @@ Int_t TAlphaEvent::ImproveVertex()
       for(Int_t excluded_helix=0; excluded_helix<totalNHelices; excluded_helix++ )
 	{
 	  TAlphaEventVertex * tvertex = new TAlphaEventVertex();
-
+    tvertex->SetFastMode(fFastRecMode);
 	  for(Int_t ihelix=0; ihelix<vertex->GetNHelices(); ihelix++)
 	    {
 	      if( ihelix == excluded_helix ) continue;

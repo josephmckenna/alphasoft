@@ -32,6 +32,7 @@ class TAlphaEventVertex : public TObject
  private:
 
   Bool_t    fIsGood;
+  Bool_t fFastMode = kFALSE;
   std::vector<TAlphaEventHelix*> fHelices;
   std::vector<TVector3*> fDCAs;
   std::vector<TVector3*> fDCAa;
@@ -80,6 +81,9 @@ class TAlphaEventVertex : public TObject
   Double_t          X() { return fX; }
   Double_t          Y() { return fY; }
   Double_t          Z() { return fZ; }
+
+  void              SetFastMode(Bool_t fmode){fFastMode = fmode;}
+  Bool_t            GetFastMode(){return fFastMode;}
 
   virtual void      Clear(Option_t * /*option*/ ="");
   virtual void      Print(const Option_t* = "") const;
