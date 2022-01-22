@@ -150,78 +150,13 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   title+=runNumber;
   title+="_Lineshape";
    
-  //TH1D* hDState=new TH1D(title+"_DState",title+"_DState",9,0.,9.);
-  //TH1D* hCState=new TH1D(title+"_CState",title+"_CState",9,0.,9.);
-  std::vector<double> DStateCounts;
-  std::vector<double> CStateCounts;
 
-  std::vector<double> DarkStateCounts;
-  std::vector<double> DStateErrors;
-  std::vector<double> CStateErrors;
 
-  std::vector<double> DarkStateErrors;
-  std::vector<double> XErrors;
-  for (int i=0; i<nfreq; i++)
-    {
-      DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
-      CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
-      
-      DarkStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(2)
-      +DarkVertexPlot[i][1]->GetNPassedType(2));
-
-      DStateErrors.push_back(sqrt(VertexPlot[i][0]->GetNPassedType(2)));
-      CStateErrors.push_back(sqrt(VertexPlot[i][1]->GetNPassedType(2)));
-      
-      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][0]->GetNPassedType(2)
-      +DarkVertexPlot[i][1]->GetNPassedType(2)));
-      XErrors.push_back( 0.);
-    }
-  
-  std::cout<<"RunNumber: "<<runNumber<<std::endl;
-  std::cout <<"FrequencyOffset\tDState\tCState\tDark"<<std::endl;
-  int sumdl(0);
-  int sumdk(0);
-  int sumcl(0);
-  for (int i=0; i<nfreq; i++)
-    {  
-      sumdl +=DStateCounts[i];
-      sumdk+=DarkStateCounts[i];
-      sumcl +=CStateCounts[i];
-       std::cout<<ActualFreq[i];
-      std::cout<<"\t\t"<<DStateCounts[i]<<"\t\t"<<CStateCounts[i];
-      std::cout<<"\t\t"<<DarkStateCounts[i]<<std::endl;
-    }
-  std::cout<<"Total \t\t"<<sumdl<<"\t\t"<<sumcl<<"\t\t"<<sumdk<<"\t\t"<<std::endl;
   TString hfilename("hlaser");
   hfilename+=runNumber;
   hfilename+=".root";
   TFile* f=new TFile(hfilename,"RECREATE");
-  TString canvasTitle="R";
-  canvasTitle+=runNumber;
-  TCanvas* c=new TCanvas(canvasTitle);
-  c->Divide(1, 3);
-  c->cd(1);
-  TGraphErrors* DState=new TGraphErrors(nfreq,ActualFreq.data(),DStateCounts.data(), XErrors.data(),DStateErrors.data());
-  DState->SetNameTitle("gfreqdd",canvasTitle+" D_State");
-  DState->Draw("AP*");
-  DState->Write();
 
-  c->cd(3);
-  TGraphErrors* DarkState=new TGraphErrors(nfreq,ActualFreq.data(),DarkStateCounts.data(), XErrors.data(),DarkStateErrors.data());
-  DarkState->SetNameTitle("gdark",canvasTitle+" Dark Windows");
-  DarkState->Draw("AP*");
-  DarkState->Write();
-  //c->cd(2);
-  //hDState->Draw("HIST");
- 
-  c->cd(2);
-  TGraphErrors* CState=new TGraphErrors(nfreq,ActualFreq.data(),CStateCounts.data(), XErrors.data(),CStateErrors.data());
-  CState->SetNameTitle("gfreqcc",canvasTitle+" C_State");
-  CState->Draw("AP*");
-  CState->Write();   
-  c->Update();
-  c->SaveAs(title + ".png");
-  // scheme for freqvtime vertex plots
 
   // get tstart and Tstop from  VertexPlot[i][0] times
   const TVertexEvents* kVertexEvents= VertexPlot[0][0]->GetVertexEvents();
@@ -238,7 +173,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   hTitle="Rep vs Dark_StateR";
   hTitle+=runNumber;
   TH2D* hDarkRep = new TH2D("hFTDK",hTitle,nfreq,-0.5,nfreq-0.5,200,0.5,200+0.5);
-  TH1D* hLongDumps=new TH1D("hLong","DarkDumpTimes", 500,0.,10.4);
+  TH1D* hLongDumps=new TH1D("hLong","ExtendedDumpTimes", 500,0.,10.4);
   //Dark time durations histo
   TH2D* hDarkTimes= new TH2D("hDarkTimes","Dark Times vs freq vs cycle",nfreq,-.5, nfreq-.5,ncyc, .5,ncyc+.5);
   for (int i=0;i<LaserSpills.size()-1;i++)
@@ -261,7 +196,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
             else {
               hFreqRepD->Fill(double(ifreq),GetRep1(time,LaserSpills,lastSpill,IsLight) );
             }
-            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
+            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStartTime());
             // std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<"\tlastspill "<<lastSpill<<" IsLight "<<IsLight<<" rep "<<GetRep1(time,LaserSpills,lastSpill,IsLight)<<std::endl;
           }
         }
@@ -275,7 +210,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           if (cutsResult &2) {
             if (!(runNumber==57208))
             hFreqRepC->Fill( double(ifreq),GetRep1(time,LaserSpills,lastSpill,IsLight) );
-            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
+            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStartTime());
           }
         }
       lastSpill=0;
@@ -287,7 +222,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           //std::cout<< "time  "<<time<<"\t rep "<<GetRep(time,LaserSpills,lastSpill,IsLight)<<std::endl;
           if (cutsResult &2) {
             hDarkRep->Fill( double(ifreq),GetRep(time,LaserSpills,lastSpill,IsLight) );
-            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
+            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStartTime());
             // std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<" lastSpill "<<lastSpill<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" rep "<<GetRep(time,LaserSpills,lastSpill,IsLight)<<" IsLight "<<IsLight<<std::endl;
           }
         }
@@ -299,18 +234,33 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
           int cutsResult = kVertexEvents->fCutsResults[ivt];
           if (cutsResult &2) {
             hDarkRep->Fill( double(ifreq),GetRep(time,LaserSpills,lastSpill,IsLight) );
-            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStopTime());
+            hLongDumps->Fill(time-LaserSpills[lastSpill].GetStartTime());
             //std::cout<<"ifreq\t"<<ifreq<<"\t time "<<time<<"\tz\t"<<kVertexEvents->fZVertex[ivt]<<" spill "<<lastSpill<<std::endl;
           }
         }
  
     }
   // create the cycle number Tgraphs here from the 2d projection.
+  TGraphErrors* gfreqdd = new TGraphErrors(hFreqRepD->ProjectionX());
+  for (int i=0;i<nfreq;i++) gfreqdd->SetPointX(i, ActualFreq[i]);
+  gfreqdd->SetNameTitle("gfreqdd"," D_State");
+  gfreqdd->GetXaxis()->SetTitle("Detuning kHz");
+  gfreqdd->Write();
+  TGraphErrors* gfreqcc = new TGraphErrors(hFreqRepC->ProjectionX());
+  for (int i=0;i<nfreq;i++) gfreqcc->SetPointX(i, ActualFreq[i]);
+  gfreqcc->SetNameTitle("gfreqcc"," C_State");
+  gfreqcc->GetXaxis()->SetTitle("Detuning kHz");
+  gfreqcc->Write();
+  TGraphErrors* gfreqdark = new TGraphErrors(hDarkRep->ProjectionX());
+  for (int i=0;i<nfreq;i++) gfreqdark->SetPointX(i, ActualFreq[i]);
+  gfreqdark->SetNameTitle("gfreqdark"," Dark Windows");
+  gfreqdark->GetXaxis()->SetTitle("Detuning kHz");
+  gfreqdark->Write();
   TGraphErrors* gkoutdd = new TGraphErrors(hFreqRepD->ProjectionY());
   gkoutdd->SetName("gkoutdd");
   gkoutdd->GetXaxis()->SetTitle("Repetition");
   gkoutdd->Write();
-   TGraphErrors* gkoutcc = new TGraphErrors(hFreqRepC->ProjectionY());
+  TGraphErrors* gkoutcc = new TGraphErrors(hFreqRepC->ProjectionY());
   gkoutcc->SetName("gkoutcc");
   gkoutcc->GetXaxis()->SetTitle("Repetition");
   gkoutcc->Write();
@@ -320,7 +270,36 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   gkoutdark->Write();
   hLongDumps->Write();
   hDarkTimes->Write();
-
+  auto DState= gfreqdd->GetY();
+  auto CState= gfreqcc->GetY();
+  auto DarkState=gfreqdark->GetY();
+  Double_t Dsum(0.),Csum(0.),Darksum(0.);
+  std::cout<<"Frequency\tDState\tCState\tDark\n";
+  for(int i=0;i<nfreq;i++) {
+    std::cout<<ActualFreq[i]<<"\t\t"<<DState[i]<<"\t"<<CState[i]<<"\t"<<DarkState[i]<<std::endl;
+    Dsum+=DState[i];
+    Csum+=CState[i];
+    Darksum+=DarkState[i];
+  }
+  cout<<"Total\t\t"<<Dsum<<"\t"<<Csum<<"\t"<<Darksum<<std::endl;
+  TString canvasTitle="R";
+  canvasTitle+=runNumber;
+  canvasTitle+="_Lineshape";
+  TCanvas* c=new TCanvas(canvasTitle);
+  c->Divide(3, 2);
+  c->cd(1);
+  gfreqdd->Draw("AP");
+  c->cd(2);
+  gfreqcc->Draw("AP");
+  c->cd(3);
+  gfreqdark->Draw("AP");
+  c->cd(4);
+  gkoutdd->Draw("AP");
+   c->cd(5);
+  gkoutcc->Draw("AP");
+  c->cd(6);
+  gkoutdark->Draw("AP");
+  c->SaveAs(canvasTitle+".png");
   canvasTitle="FTR";
   canvasTitle+=runNumber;
   TCanvas* c3=new TCanvas(canvasTitle);
