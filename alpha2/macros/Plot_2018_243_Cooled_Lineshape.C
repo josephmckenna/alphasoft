@@ -43,7 +43,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
             IsCState=1;
           std::cout<<"Add all instances of dump:\t"<<buf<<"\t as Frequency "<<i<<std::endl;
           spills = Get_A2_Spills(runNumber,{buf},{-1});
-          // std::cout<<" 1st Light spill: "<<spills[0].GetStartTime()<<"\t"<<spills[0].GetStopTime()<<std::endl;
+          //std::cout<<" 1st Light spill: "<<spills[0].GetStartTime()<<"\t"<<spills[0].GetStopTime()<<std::endl;
           VertexPlot[i][IsCState]->AddDumpGates(spills);
          
           //Find all dark times between the above light times
@@ -58,7 +58,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
             {
               double tmin = s.GetStartTime();
               double tmax = s.GetStopTime();
-              //std::cout<<"Window: "<<Freq<<"\t"<<tmin<<"\t"<<tmax<<std::endl;
+              //std::cout<<"Window: "<<i<<" Freq "<<Freq<<"\t"<<tmin<<"\t"<<tmax<<std::endl;
 
               // The loop over all windows to find the first start dump after our light (to calculate the dark)
               for (const TA2Spill& all: LaserSpills)
@@ -70,14 +70,14 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
                       // Check the dark period is shorter than 100 seconds
                          assert (  all.GetStartTime() - tmax  < 100 );
                          //  if(i==0)
-                         //  std::cout<<"\tAdding i "<<i<<"\t"<<tmax<<"\t"<<all.GetStartTime() << " Duration\t"<<all.GetStartTime()-tmax<< std::endl;
+                         //std::cout<<"\tAdding i "<<i<<"\t"<<tmax<<"\t"<<all.GetStartTime() << " Duration\t"<<all.GetStartTime()-tmax<< std::endl;
                       DarkTimes[i].push_back({ tmax, all.GetStartTime()});
                       last_tmax = tmax;
                       break;
                     }
                 }
             }
-
+          //std::cout<<i<<" dark# "<<DarkTimes[i].size()<<std::endl;
           for (const std::pair<double,double>& d: DarkTimes[i])
             {
               // std::cout <<"DEBUG: index "<<i<<" Dark time:\t"<< d.first <<"\t"<<d.second<<"\t " << d.second - d.first <<std::endl;
@@ -166,14 +166,14 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
       DStateCounts.push_back(VertexPlot[i][0]->GetNPassedType(2));
       CStateCounts.push_back(VertexPlot[i][1]->GetNPassedType(2));
       
-      DarkStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(2));
-      DarkStateCounts.push_back(DarkVertexPlot[i][1]->GetNPassedType(2));
+      DarkStateCounts.push_back(DarkVertexPlot[i][0]->GetNPassedType(2)
+      +DarkVertexPlot[i][1]->GetNPassedType(2));
 
       DStateErrors.push_back(sqrt(VertexPlot[i][0]->GetNPassedType(2)));
       CStateErrors.push_back(sqrt(VertexPlot[i][1]->GetNPassedType(2)));
       
-      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][0]->GetNPassedType(2)));
-      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][1]->GetNPassedType(2)));
+      DarkStateErrors.push_back(sqrt(DarkVertexPlot[i][0]->GetNPassedType(2)
+      +DarkVertexPlot[i][1]->GetNPassedType(2)));
       XErrors.push_back( 0.);
     }
   
@@ -238,7 +238,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
   hTitle="Rep vs Dark_StateR";
   hTitle+=runNumber;
   TH2D* hDarkRep = new TH2D("hFTDK",hTitle,nfreq,-0.5,nfreq-0.5,200,0.5,200+0.5);
-  TH1D* hLongDumps=new TH1D("hLong","243LaserDumpTimes", 500,0.,10.4);
+  TH1D* hLongDumps=new TH1D("hLong","DarkDumpTimes", 500,0.,10.4);
   //Dark time durations histo
   TH2D* hDarkTimes= new TH2D("hDarkTimes","Dark Times vs freq vs cycle",nfreq,-.5, nfreq-.5,ncyc, .5,ncyc+.5);
   for (int i=0;i<LaserSpills.size()-1;i++)
@@ -382,34 +382,32 @@ double GetRep1(double time, const std::vector<TA2Spill>& LaserSpills, int& lastS
 }
 
 int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs, bool zeroTime)
-{
-   
-   
-   std::vector<TA2Plot*> R57181plots = Plot_243_Light_And_Dark_Lineshape(57181,DrawVerticecs, zeroTime);
+{   
+   std::vector<TA2Plot*> R57181plots = Plot_243_Light_And_Dark_Lineshape(57181, DrawVerticecs, zeroTime);
    std::vector<TA2Plot*> R57195plots = Plot_243_Light_And_Dark_Lineshape(57195,DrawVerticecs, zeroTime);
    std::vector<TA2Plot*> R57208plots = Plot_243_Light_And_Dark_Lineshape(57208,DrawVerticecs, zeroTime);
    
    //Example of summing all plots together (not sure why you might want to do it... but its possible)
-   TA2Plot Light(zeroTime);
-   TA2Plot Dark(zeroTime);
-   for ( size_t i = 0; i< R57181plots.size(); i++)
-   {
-      if ( i % 2 == 0)
-         // Operator overloads dont expect a pointer, de-reference the TA2Plot with *
-         Light += *R57181plots.at(i);
-      else
-         Dark += *R57181plots.at(i);
-   }
+   // TA2Plot Light(zeroTime);
+   // TA2Plot Dark(zeroTime);
+   // for ( size_t i = 0; i< R57181plots.size(); i++)
+   // {
+   //    if ( i % 2 == 0)
+   //       // Operator overloads dont expect a pointer, de-reference the TA2Plot with *
+   //       Light += *R57181plots.at(i);
+   //    else
+   //       Dark += *R57181plots.at(i);
+   // }
    
-   //Re-bin new histograms to desired granularity
-   Light.SetBinNumber(40);
-   Dark.SetBinNumber(40);
+   // //Re-bin new histograms to desired granularity
+   // Light.SetBinNumber(40);
+   // Dark.SetBinNumber(40);
 
-   TCanvas* c1 = Light.DrawCanvas("All Light Vertex for R57181");
-   c1->SaveAs("All_Light_Vertex_for_R57181.png");
+   // TCanvas* c1 = Light.DrawCanvas("All Light Vertex for R57181");
+   // c1->SaveAs("All_Light_Vertex_for_R57181.png");
 
-   TCanvas* c2 = Dark.DrawCanvas("All Dark Vertex for R57181");
-   c2->SaveAs("All_Dark_Vertex_for_R57181.png");
+   // TCanvas* c2 = Dark.DrawCanvas("All Dark Vertex for R57181");
+   // c2->SaveAs("All_Dark_Vertex_for_R57181.png");
    
 
    //Note: Missing in this macro:
