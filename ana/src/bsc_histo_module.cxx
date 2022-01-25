@@ -397,8 +397,11 @@ public:
 
       if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent start\n");
 
+      if( fFlags->fPrint ) printf("Filling ADC histos\n");
       AdcHistos(endhits);
+      if( fFlags->fPrint ) printf("Filling TDC histos\n");
       TdcHistos(endhits);
+      if( fFlags->fPrint ) printf("Filling more TDC histos\n");
       DirectTdcHistos(tdchits);
 
       std::vector<BarHit*> barhits = barEvt->GetBars();
@@ -406,8 +409,11 @@ public:
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no barhits\n");
          return flow;
       }
+      if( fFlags->fPrint ) printf("Filling bar histos\n");
       BarHistos(barhits);
+      if( fFlags->fPrint ) printf("Filling TOF histos\n");
       TOFHistos(barhits);
+      if( fFlags->fPrint ) printf("Filling BV/TPC matching histos\n");
       MatchingHistos(barhits);
 
       ++fCounter;
@@ -598,8 +604,9 @@ public:
    {
       if (fFlags->fPulser) return;
       if (fFlags->fProtoTOF) return;
+      if (fFlags->fRecOff) return;
       for (BarHit* barhit: barhits) {
-         if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
+         if (!(barhit->IsTPCMatched())) continue;
          TVector3 tpc_point = barhit->GetTPC();
          TVector3 bv_point = Get3VectorBV(barhit);
          double dz = GetDZ(tpc_point,bv_point);
