@@ -37,8 +37,6 @@ TBarEvent::TBarEvent(TBarEvent &barEvt)
       fTdcHit.push_back(h);
     }
   }
-  for(double TOF: barEvt.GetTOF())
-    fTOF.push_back(TOF);
 }
 
 
@@ -82,9 +80,6 @@ void TBarEvent::Print()
       fEndHit.at(i)->Print();
    for (size_t i=0; i<fBarHit.size(); i++)
       fBarHit.at(i)->Print();
-   std::cout <<"TOF values:"<<std::endl;
-   for (size_t i=0; i<fTOF.size(); i++)
-      std::cout <<fTOF.at(i)<<std::endl;
 }
 
 ClassImp(EndHit)
@@ -156,10 +151,12 @@ ClassImp(BarHit)
 BarHit::BarHit()
 {
   fBarID=-1;
-  //fTopHit = new EndHit; //Empty end hit
-  //fBotHit = new EndHit;
-  fTopHit = NULL; //Empty end hit
-  fBotHit = NULL;
+  fTopTDCTime=-1; 
+  fTopADCTime=-1;
+  fTopAmp=-1;
+  fBotTDCTime=-1;
+  fBotADCTime=-1;
+  fBotAmp=-1;
   fTPCMatched=false;
   fTPCMatched=false;
   fTPC = TVector3(); //Empty vector
@@ -172,11 +169,12 @@ BarHit::BarHit(const BarHit &h)
 {
 // copy ctor
   fBarID=h.GetBar();
-  if(h.GetTopHit())
-    fTopHit= new EndHit(*(h.GetTopHit()));
-  
-  if(h.GetBotHit())
-    fBotHit= new EndHit(*(h.GetBotHit()));
+  fTopTDCTime=h.GetTDCTop();
+  fTopADCTime=h.GetADCTop();
+  fTopAmp=h.GetAmpTop();
+  fBotTDCTime=h.GetTDCBot();
+  fBotADCTime=h.GetADCBot();
+  fBotAmp=h.GetAmpBot();
   fTPCMatched=h.IsTPCMatched();
   fTPC=h.GetTPC();
   fZed=h.GetTDCZed();
@@ -185,17 +183,11 @@ BarHit::BarHit(const BarHit &h)
 void BarHit::Print()
 {
    std::cout<<"BarHit::Print() -- Bar ID:"<<fBarID<<std::endl;
-   if (fBotHit)
-      {
-         std::cout<<"Bot hit: vvv"<<std::endl;
-         fBotHit->Print();
-      }
-   if (fTopHit)
-      {
-         std::cout<<"Top hit: vvv"<<std::endl;
-         fTopHit->Print();
-      }
-   std::cout<<"Time Diff:"<<fTopHit->GetTDCTime()-fBotHit->GetTDCTime()<<std::endl;
+   std::cout<<"Top TDC time: "<<fTopTDCTime<<std::endl;
+   std::cout<<"Bottom TDC time: "<<fBotTDCTime<<std::endl;
+   std::cout<<"Top Amplitude: "<<fTopAmp<<std::endl;
+   std::cout<<"Bottom Amplitude: "<<fBotAmp<<std::endl;
+   std::cout<<"Time Diff: "<<fTopTDCTime-fBotTDCTime<<std::endl;
   std::cout<<"TPC Matched? "<<fTPCMatched;
   if (fTPCMatched) {std::cout<<" TPC hit: "<<std::endl; fTPC.Print();}
   else std::cout<<std::endl;
@@ -204,10 +196,6 @@ void BarHit::Print()
 
 BarHit::~BarHit()
 {
-   if (fTopHit)
-      delete fTopHit;
-   if (fBotHit)
-      delete fBotHit;
 }
 #endif
 /* emacs

@@ -106,16 +106,21 @@ public:
 
       // prepare event to store in TTree
     TStoreEvent* analyzed_event = anaflow->fEvent;
-    std::cout << "The TStoreEvent I am WRITING to the TREE is the following:" << std::endl;
-    analyzed_event->Print();
+    if (fTrace) {
+      std::cout << "The TStoreEvent I am WRITING to the TREE is the following:" << std::endl;
+      analyzed_event->Print();
 
-    if(analyzed_event->GetBarEvent())
-    {
-        std::cout<< std::endl<< std::endl<< std::endl << "Do we have a populated TBarEvent?" << analyzed_event->GetBarEvent() << std::endl<< std::endl<< std::endl;
-    }
-    else
-    {
+      if(analyzed_event->GetBarEvent())
+      {
+           std::cout<< std::endl<< std::endl<< std::endl << "Do we have a populated TBarEvent?" << analyzed_event->GetBarEvent() << std::endl<< std::endl<< std::endl;
+      }
+      else
+      {
         std::cout<< std::endl<< std::endl<< std::endl << "No TBarEvent" << analyzed_event->GetBarEvent() << std::endl<< std::endl<< std::endl;
+      }
+      printf("Printing TBarEvent from TStoreEvent\n");
+      analyzed_event->GetBarEvent()->Print();
+      printf("Printed\n");
     }
 
     std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -123,8 +128,10 @@ public:
     analyzed_event->ClearUsedHelices();
     EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
     EventTree->Fill();}
+    if (fTrace)
+      printf("Written\n");
 
-      return flow;
+    return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)

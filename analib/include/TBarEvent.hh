@@ -93,8 +93,12 @@ class BarHit: public TObject
 {
 private:
   int fBarID=-1;
-  EndHit* fTopHit = NULL;
-  EndHit* fBotHit = NULL;
+  double fTopTDCTime=-1; // Fully calibrated time
+  double fTopADCTime=-1;
+  double fTopAmp=-1;
+  double fBotTDCTime=-1; // Fully calibrated time
+  double fBotADCTime=-1;
+  double fBotAmp=-1;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;
@@ -106,8 +110,16 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
 
-  void SetBotHit(EndHit* _fBotHit) { fBotHit=_fBotHit; }
-  void SetTopHit(EndHit* _fTopHit) { fTopHit=_fTopHit; }
+  void SetBotHit(EndHit* _fBotHit) { 
+     fBotTDCTime = _fBotHit->GetTDCTime();
+     fBotADCTime = _fBotHit->GetADCTime();
+     fBotAmp = _fBotHit->GetAmp();
+  }
+  void SetTopHit(EndHit* _fTopHit) { 
+     fTopTDCTime = _fTopHit->GetTDCTime();
+     fTopADCTime = _fTopHit->GetADCTime();
+     fTopAmp = _fTopHit->GetAmp();
+  }
   void SetBar(int _fBarID) { fBarID=_fBarID; }
   void SetZed(double _fZed) { fZed=_fZed; }
   void SetTPCHit(TVector3 _fTPC) {
@@ -115,14 +127,12 @@ public:
      fTPCMatched=true;
   }
   
-  EndHit* GetTopHit() const {return fTopHit;}
-  EndHit* GetBotHit() const {return fBotHit;}
-  double GetAmpTop() const {return fTopHit->GetAmp();}
-  double GetAmpBot() const {return fBotHit->GetAmp();}
-  double GetAmpRawTop() const {return fTopHit->GetAmpRaw();}
-  double GetAmpRawBot() const {return fBotHit->GetAmpRaw();}
-  double GetTDCTop() const {return fTopHit->GetTDCTime();}
-  double GetTDCBot() const {return fBotHit->GetTDCTime();}
+  double GetAmpTop() const {return fTopAmp;}
+  double GetAmpBot() const {return fBotAmp;}
+  double GetTDCTop() const {return fTopTDCTime;}
+  double GetTDCBot() const {return fBotTDCTime;}
+  double GetADCTop() const {return fTopADCTime;}
+  double GetADCBot() const {return fBotADCTime;}
   TVector3 GetTPC() const {return fTPC;}
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
@@ -136,9 +146,7 @@ public:
   }
   double GetAverageTDCTime() const
   {
-     double t_top = fTopHit->GetTDCTime();
-     double t_bot = fBotHit->GetTDCTime();
-     return (t_top + t_bot)/2.;
+     return (fTopTDCTime + fBotTDCTime)/2.;
   }
   void GetXY(double &x, double &y)
   {
@@ -149,14 +157,30 @@ public:
       y=r*TMath::Sin(theta + offset_angle);
       return;
   }
-  void ClearEndHits() //This isn't ideal but this function deletes data that we don't want to write to the .root.
+  TVector3 Get3Vector()
   {
-    fTopHit = NULL; 
-    fBotHit = NULL;
+     double x,y;
+     this->GetXY(x,y);
+     TVector3 bv_point = TVector3(x*1000,y*1000,fZed*1000); // to mm
+     return bv_point;
   }
-//  double GetTDCZed() { // This should probably not be done here. The value of the speed of light should be put into the analysis settings, and this should be done in the tdc module.
-//      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
-//  }
+  double GetDistToHit(BarHit* h)
+  {
+     TVector3 diff = this->Get3Vector() - h->Get3Vector();
+     return diff.Mag();
+  }
+  double GetDPhiToHit(BarHit* h)
+  {
+     return (h->Get3Vector()).DeltaPhi(this->Get3Vector());
+  }
+  double GetDZToHit(BarHit* h)
+  {
+     return h->GetTDCZed() - fZed;
+  }
+  double GetTOFToHit(BarHit* h)
+  {
+     return h->GetAverageTDCTime() - this->GetAverageTDCTime();
+  }
   ClassDef(BarHit,3);
 };
 
@@ -169,8 +193,6 @@ private:
   std::vector<BarHit*> fBarHit;
   std::vector<EndHit*> fEndHit;
   std::vector<SimpleTdcHit*> fTdcHit;
-  std::vector<double> fTOF;
-  std::vector<double> fTOFM;
 
 public:
   TBarEvent(); //ctor
@@ -193,8 +215,6 @@ public:
     fBarHit.clear();
     for (auto hit: fTdcHit) delete hit;
     fTdcHit.clear();
-    fTOF.clear();
-    fTOFM.clear();
   }
   void AddEndHit(EndHit* e)
   {
@@ -234,36 +254,40 @@ public:
      hit->SetADCHit( fBarID, fAmp, fAmp, fADCTime);
      AddEndHit(hit);
   }
-  void AddTOF(double TOF)
-  {
-     fTOF.push_back(TOF);
-  }
-  void ClearBarHits() //Clears end hits in each bar hit so we can write to a root file without trying to write unassigned memory. 
-  {
-    for(auto barhit: fBarHit)
-    {
-      barhit->ClearEndHits();
-    }
-  }
 
-  void AddTOFMatched(double TOF)
-  {
-    fTOFM.push_back(TOF);
-  }
 
 
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }
   int GetNTDC() const { return fTdcHit.size(); }
-  int GetNTOF() const { return fTOF.size(); } // Number of TOF values
-  int GetNTOFMatched() const { return fTOFM.size(); } // Number of TOF values matched to TPC
   std::vector<BarHit*> GetBars() const { return fBarHit; }
   std::vector<EndHit*> GetEndHits() const { return fEndHit; }
   std::vector<SimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
-  std::vector<double> GetTOF() const { return fTOF;}
-  std::vector<double> GetTOFMatched() const { return fTOFM;}
 
-  ClassDef(TBarEvent, 1);
+  std::vector<double> GetTOFs()
+  {
+     std::vector<double> TOFs;
+     if (fBarHit.size()<2) return TOFs;
+     for (int i=0; i<fBarHit.size()-1; i++) {
+        for (int j=i+1; j<fBarHit.size(); j++) {
+           TOFs.push_back( TMath::Abs( (fBarHit.at(i))->GetTOFToHit(fBarHit.at(j)) ));
+        }
+     }
+     return TOFs;
+  }
+  std::vector<double> GetDists()
+  {
+     std::vector<double> Dists;
+     if (fBarHit.size()<2) return Dists;
+     for (int i=0; i<fBarHit.size()-1; i++) {
+        for (int j=i+1; j<fBarHit.size(); j++) {
+           Dists.push_back( (fBarHit.at(i))->GetDistToHit(fBarHit.at(j)) );
+        }
+     }
+     return Dists;
+  }
+
+  ClassDef(TBarEvent, 2);
 };
 
 

@@ -61,9 +61,6 @@ private:
    // TOF parameters
    double min_dphi;
 
-   TTree* fBSCEventTree;
-   TBarEvent* fCompleteEvent;
-
 
 public:
 
@@ -86,13 +83,6 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      //Set up root tree and branch.
-      fCompleteEvent = new TBarEvent;
-      fBSCEventTree = new TTree("BSCEventTree", "BSCEventTree");
-      fBSCEventTree->Branch("BSCEvent", &fCompleteEvent, 32000, 0);
-      delete fCompleteEvent;
-      fCompleteEvent=NULL;
-
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       if (fFlags->fPrint) { printf("matchingmodule::begin!"); };
    }
@@ -100,7 +90,6 @@ public:
 
    void EndRun(TARunInfo* runinfo)
    {
-      fBSCEventTree->Write();
       runinfo->fRoot->fOutputFile->Write();
    }
 
@@ -169,36 +158,24 @@ public:
          {
             std::vector<TVector3> helix_points = GetHelices(HelixArray);
             MatchPoints(barEvt, helix_points);
-            CalculateTOF(barEvt);
          }
       else
          {
             std::vector<TVector3> line_points = GetLines(LineArray);
             MatchPoints(barEvt, line_points);
-            CalculateTOF(barEvt);
          }
-
-
-	TBarEvent* eventCopy = barEvt; //Copy the bar event.
-	eventCopy->ClearBarHits(); //Delete stuff from event that refuses to be written to the .root file.
- 	fCompleteEvent = eventCopy; //Point our event that will be written to the copy.
-    //Just a test
-    std::cout << "Sanity check (copy)  : TOF size = " << fCompleteEvent->GetTOF().size() << std::endl;
-    std::cout << "Sanity check (barEvt): TOF size = " << barEvt->GetTOF().size() << std::endl;
-
-
-	//Write the event to tree
-	if (fCompleteEvent)
-	{
-		std::cout << "Writing event " << fCompleteEvent->GetID() << " to tree." << std::endl;
-		{std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-		fBSCEventTree->SetBranchAddress("BSCEvent", &fCompleteEvent);
-		fBSCEventTree->Fill();}
-      if(eventCopy)
-         e->SetBarEvent(new TBarEvent(*eventCopy));
-	}
       
       //AgBarEventFlow 
+      if (fFlags->fPrint) {
+         printf("matchingmodule: Bar Event vvvvv\n");
+         barEvt->Print();
+         printf("matchingmodule: Store Event vvvvv\n");
+         e->SetBarEvent(barEvt);
+         printf("matchingmodule: Store Flow Event vvvvv\n");
+         if (e->GetBarEvent())
+            e->GetBarEvent()->Print();
+      }
+      e->Print();
       return flow;
    }
 
@@ -248,18 +225,6 @@ public:
          if (min_dist!=99999.) {
             // Match!
             best_barhit->SetTPCHit(tpc_point);
-         }
-      }
-   }
-   void CalculateTOF(TBarEvent* barEvt) {
-      std::vector<BarHit*> barhits = barEvt->GetBars();
-      for (BarHit* barhit: barhits) {
-         for (BarHit* barhit2: barhits) {
-            double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
-            if (TOF<=0) continue;
-            barEvt->AddTOF(TOF);
-            if ((barhit->IsTPCMatched()) and (barhit2->IsTPCMatched()))
-               barEvt->AddTOFMatched(TOF);
          }
       }
    }
