@@ -12,6 +12,8 @@
 #include "UnpackVF48.h"
 #include "SiMod.h"
 
+#include "AnalysisFlow.h"
+
 class VF48data
 {
   public:
@@ -152,7 +154,7 @@ class SISModuleFlow: public TAFlowEvent
       fSISBufferEvents[module].reserve(nevents);
       for ( int i = 0; i < nevents; i++ )
       {
-         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr));
+         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr,module));
          ptr += NUM_SIS_CHANNELS;
       }
       return;
@@ -173,39 +175,20 @@ class SISModuleFlow: public TAFlowEvent
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<TSISEvent*> sis_events[NUM_SIS_MODULES];
+  std::vector<std::vector<TSISEvent>> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
+     for ( int i = 0; i < NUM_SIS_MODULES; i++)
+     {
+        sis_events.push_back(std::vector<TSISEvent>());
+     }
   }
   ~SISEventFlow()
   {
      for (int j=0; j<NUM_SIS_MODULES; j++)
      {
-        for (size_t i=0; i<sis_events[j].size(); i++)
-        {
-           delete sis_events[j].at(i);
-        }
         sis_events[j].clear();
      }
-  }
-};
-
-//This should probably live somewhere else as its a A2 & Ag data type
-#include "TInfoSpill.h"
-
-class TInfoSpillFlow: public TAFlowEvent
-{
-  public:
-  std::vector<TInfoSpill*> spill_events;
-
-  TInfoSpillFlow(TAFlowEvent* flow): TAFlowEvent(flow)
-  {
-  }
-  ~TInfoSpillFlow()
-  {
-     for (size_t i=0; i<spill_events.size(); i++)
-        delete spill_events[i];
-     spill_events.clear();
   }
 };
 

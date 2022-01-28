@@ -44,25 +44,13 @@ include_directories(${CMAKE_SOURCE_DIR}/agana)
 include_directories(${CMAKE_SOURCE_DIR}/analib/include)
 include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
-if(BUILD_MANALYZER)
-  include_directories(${CMAKE_SOURCE_DIR}/manalyzer)
-  include_directories(${CMAKE_SOURCE_DIR}/midasio)
-  include_directories(${CMAKE_SOURCE_DIR}/mvodb)
-elseif(MIDAS_FOUND)
-  include_directories(${MIDASSYS}/manalyzer)
-  include_directories(${MIDASSYS}/midasio)
-  include_directories(${MIDASSYS}/mvodb)
-else()
-  message(FATAL_ERROR "aged: Include directories failed!")
-endif()
-
 
 # Create a shared library with geneated dictionary
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(aged SHARED ${LIBRARY_SOURCES})
 
 target_include_directories(aged PUBLIC include ${X11_INCLUDE_DIR} ) 
-target_link_libraries(aged PUBLIC ${ROOT_LIBRARIES} ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES})
+target_link_libraries(aged PUBLIC manalyzer ${ROOT_LIBRARIES} ${MOTIF_LIBRARIES} ${X11_X11_LIB} ${X11_Xrender_LIB} ${X11_Xmu_LIB} ${X11_Xft_LIB} ${X11_Xt_LIB} ${FREETYPE_LIBRARIES})
 
 # Xm is currently not C++17 compatible... so lets force this library back down to C++11
 #set_property(TARGET aged PROPERTY CXX_STANDARD 11)

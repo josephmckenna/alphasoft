@@ -325,7 +325,7 @@ public:
 
 
 
-TSeq_State* seqState=GetStateAfterDump(runNumber, description, repetition, offset);
+TSeq_State* seqState=GetStateAfterDump(runNumber, description, dumpIndex, offset);
   
   //How to clean up array:
   std::vector<double> init=seqState->GetAnalogueOut()->AOi;

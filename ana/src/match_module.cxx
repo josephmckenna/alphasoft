@@ -261,7 +261,8 @@ public:
             }
          else if( fFlags->fForceReco ) // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
             {
-               printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
+               if( fTrace )
+                  printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
    //delete match->GetCombinedPads();?
                spacepoints = match->FakePads( SigFlow->awSig );
             }

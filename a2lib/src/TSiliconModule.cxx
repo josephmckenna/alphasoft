@@ -61,12 +61,33 @@ TSiliconVA* TSiliconModule::GetASIC( const Int_t number )
 {
   TSiliconVA* ASIC = NULL;
 
-  Int_t ASICEntries=ASICs.size();
+  const size_t ASICEntries = ASICs.size();
   
   if( number > ASICEntries )
       return NULL;
 
-  for( Int_t i = 0; i < ASICEntries; i++ )
+  for( size_t i = 0; i < ASICEntries; i++ )
+    {
+      ASIC = (TSiliconVA*) ASICs.at(i);
+      if(!ASIC)
+        continue;
+      if( ASIC->GetASICNumber() == number )
+        return ASIC;
+    }
+  
+  return NULL;
+}
+
+const TSiliconVA* TSiliconModule::GetASIC( const Int_t number ) const
+{
+  TSiliconVA* ASIC = NULL;
+
+  const size_t ASICEntries = ASICs.size();
+  
+  if( number > ASICEntries )
+      return NULL;
+
+  for( size_t i = 0; i < ASICEntries; i++ )
     {
       ASIC = (TSiliconVA*) ASICs.at(i);
       if(!ASIC)

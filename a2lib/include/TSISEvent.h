@@ -10,15 +10,18 @@
 #include <vector>
 #include <iostream>
 #include "assert.h"
-#define NUM_SIS_MODULES 2
-#define NUM_SIS_CHANNELS 32
+
+
+#include "TSISChannel.h"
+
 
 // Very basic conainer for holding the SISEvent data
 class TSISBufferEvent
 {
    public:
       std::vector<uint32_t> fCounts;
-      TSISBufferEvent(uint32_t* ptr): fCounts(ptr,ptr+NUM_SIS_CHANNELS)
+      int fSISModule;
+      TSISBufferEvent(uint32_t* ptr, int m): fCounts(ptr,ptr+NUM_SIS_CHANNELS), fSISModule(m)
       {
 
       }
@@ -85,24 +88,34 @@ public:
         return fCounts[i];
      }
   }
-  int    GetSISModule()          { return fSISModule; }
-  int    GetScalerModule()          { return fSISModule; }
-  ULong64_t GetClock()				{ return fClock; }
-  ULong64_t GetVF48Clock()          { return fVF48Clock; }
-  Double_t  GetRunTime()		    { return fRunTime; }
+  uint32_t GetCountsInChannel( const TSISChannel& c) const
+  {
+     if (!c.IsValid())
+        return 0;
+     if ( c.fModule == fSISModule )
+        return fCounts[c.fChannel];
+     else
+        return 0;
+  }
+  int    GetSISModule() const          { return fSISModule; }
+  int    GetScalerModule() const          { return fSISModule; }
+  ULong64_t GetClock() const				{ return fClock; }
+  ULong64_t GetVF48Clock() const         { return fVF48Clock; }
+  Double_t  GetRunTime() const		    { return fRunTime; }
 
-  Int_t     GetRunNumber()     	    { return fRunNumber; }
-  Double_t  GetMidasUnixTime()		    { return fMidasTime; }
-  unsigned long GetMidasEventID()            { return fMidasEventID; }
+  Int_t     GetRunNumber() const     	    { return fRunNumber; }
+  Double_t  GetMidasUnixTime() const		    { return fMidasTime; }
+  unsigned long GetMidasEventID() const            { return fMidasEventID; }
 
   using TObject::Print;
   virtual void Print();
   
   // default class member functions
   TSISEvent( );
+  TSISEvent( int SISModule );
   TSISEvent( TSISBufferEvent* event );
   TSISEvent( ULong64_t clock, Double_t time);
-  TSISEvent* operator+=(TSISEvent* b);
+  TSISEvent& operator+=(const TSISEvent& b);
 
   virtual ~TSISEvent(); 
   

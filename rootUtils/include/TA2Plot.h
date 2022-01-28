@@ -18,7 +18,7 @@ class TSISPlotEvents: public TObject
       std::vector<double> fTime;  //Plot time (based off official time)
       std::vector<double> fOfficialTime;
       std::vector<int> fCounts;
-      std::vector<int> fSISChannel;
+      std::vector<TSISChannel> fSISChannel;
    public:
       //Std ctor and dtor
       TSISPlotEvents()
@@ -74,7 +74,7 @@ class TSISPlotEvents: public TObject
          outputplot.fSISChannel.insert(outputplot.fSISChannel.end(), rhs.fSISChannel.begin(), rhs.fSISChannel.end() );
          return outputplot;
       }
-      void AddEvent(int runNumber, double time, double officialTime, int counts, int channel)
+      void AddEvent(int runNumber, double time, double officialTime, int counts, TSISChannel channel)
       {
          fRunNumber.push_back(runNumber);
          fTime.push_back(time);  
@@ -89,7 +89,7 @@ class TSISPlotEvents: public TObject
          return std::string("Run Number,") + 
                 "Plot Time (Time axis of TAPlot)," +
                 "OfficialTime (run time)," +
-                "SIS Channel," +
+                "SIS Channel, SIS Module," +
                 "Counts\n";
       }
 
@@ -100,7 +100,7 @@ class TSISPlotEvents: public TObject
          line =std::string("") + fRunNumber.at(i) + "," +
                 fTime.at(i) + "," +
                 fOfficialTime.at(i) + "," +
-                fSISChannel.at(i) + "," +
+                fSISChannel.at(i).fChannel + "," + fSISChannel.at(i).fModule + "," +
                 fCounts.at(i) + "\n";
          return line;
       }
@@ -109,31 +109,41 @@ class TSISPlotEvents: public TObject
       {
          return fRunNumber.size();
       }
-
+      
+      int CountTotalCountsInChannel(int ch) const
+      {
+         int events = 0;
+         for(size_t i = 0; i<fTime.size(); i++)
+         {
+            if (fSISChannel[i] == ch)
+               events += fCounts[i];
+         }
+         return events;
+      }
       ClassDef(TSISPlotEvents,1);
 };
 
 class TA2Plot: public TAPlot
 {
    protected:
-      std::vector<int> fSISChannels;
+      std::vector<TSISChannel> fSISChannels;
 
       //Detector SIS channels
-      std::map<int, int> fTrig;
-      std::map<int, int> fTrigNobusy;
-      std::map<int, int> fAtomOr;
+      std::map<int, TSISChannel> fTrig;
+      std::map<int, TSISChannel> fTrigNobusy;
+      std::map<int, TSISChannel> fAtomOr;
 
       //Dump marker SIS channels:
-      std::map<int, int> fCATStart;
-      std::map<int, int> fCATStop;
-      std::map<int, int> fRCTStart;
-      std::map<int, int> fRCTStop;
-      std::map<int, int> fATMStart;
-      std::map<int, int> fATMStop;
+      std::map<int, TSISChannel> fCATStart;
+      std::map<int, TSISChannel> fCATStop;
+      std::map<int, TSISChannel> fRCTStart;
+      std::map<int, TSISChannel> fRCTStop;
+      std::map<int, TSISChannel> fATMStart;
+      std::map<int, TSISChannel> fATMStop;
    
       //Beam injection/ ejection markers:
-      std::map<int, int> fBeamInjection;
-      std::map<int, int> fBeamEjection;
+      std::map<int, TSISChannel> fBeamInjection;
+      std::map<int, TSISChannel> fBeamEjection;
       
       double fZMinCut;
       double fZMaxCut;
@@ -153,11 +163,20 @@ class TA2Plot: public TAPlot
    
       //Setters and getters
       void SetSISChannels(int runNumber);
-
+      
+      TSISChannel GetTrigNoBusyChannel(int runNumber)
+      {
+         return fTrigNobusy[runNumber];
+      }
+      TSISChannel GetTrigChannel(int runNumber)
+      {
+         return fTrig[runNumber];
+      }
+      
       //Adding events and dumps
       void AddSVDEvent(TSVD_QOD* SVDEvent);
       void AddSISEvent(TSISEvent* SISEvent);
-      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition );
+      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex );
       void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
       //If spills are from one run, it is faster to call the function above
       void AddDumpGates(std::vector<TA2Spill> spills );
@@ -170,7 +189,7 @@ class TA2Plot: public TAPlot
       void WriteEventList(std::string fileName, bool append = true);
       void ExportCSV(std::string filename, bool PassedCutOnly = true);
    private:
-      void AddEvent(TSISEvent* event, int channel,double timeOffset=0);
+      void AddEvent(TSISEvent* event, TSISChannel channel,double timeOffset=0);
       void AddEvent(TSVD_QOD* event,double timeOffset=0);
    
    ClassDef(TA2Plot, 1)

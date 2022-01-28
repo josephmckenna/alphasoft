@@ -7,51 +7,89 @@ extern Int_t gNbin;
 //Plots
 
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+
+// Significant duplication of code between this and Plot_SIS...
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax)
 {
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);
-  h->GetXaxis()->SetTitle("Time [s]");
-  h->GetYaxis()->SetTitle("Counts");
-  h->Draw();
-  return;  
-} 
+   for (const TChronoChannel& c: channel)
+      std::cout << c << std::endl;
+   TCanvas* c = new TCanvas();
+   AlphaColourWheel colour;
+   TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+
+   std::vector<std::vector<TH1D*>> hh=Get_Chrono(runNumber, channel,tmin, tmax);
+   double max_height = 0;
+   double min_height = 1E99;
+   for (auto times: hh)
+      for (TH1D* h: times)
+      {
+         double min, max;
+         h->GetMinimumAndMaximum(min, max);
+         if (max > max_height)
+         {
+            max_height = max;
+         }
+         if (min < min_height)
+         {
+            min_height = min;
+         }
+      }
+   if (min_height < 10 && min_height >= 0)
+      min_height = 0;
+   
+   for (size_t j=0; j<tmin.size(); j++)
+      for (size_t i=0; i<channel.size(); i++)
+      {
+         legend->AddEntry(hh[i][j]);
+         hh[i][j]->SetLineColor(colour.GetNewColour());
+         if (i ==0 && j == 0)
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST");
+         }
+         else
+         {
+            hh[i][j]->GetYaxis()->SetRangeUser(min_height,max_height);
+            hh[i][j]->Draw("HIST SAME");
+         }
+      }
+   //std::cout<<"min:"<< min_height <<"\tmax:"<<max_height <<std::endl;
+   legend->Draw();
+   c->Update();
+   c->Draw();
+   return c;
+}
+
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+
+TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<std::string> description, std::vector<int> index)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return Plot_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, description, index);
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  for (const TAGSpill& s: spills)
+  {
+    tmin.push_back( s.GetStartTime() );
+    tmax.push_back( s.GetStopTime() );
+  }
+  return Plot_Chrono(runNumber, channel, tmin, tmax);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, Double_t tmax)
+TCanvas* Plot_Chrono(Int_t runNumber, const char* ChannelName, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Chrono( runNumber, ChannelName, tmin, tmax);  
-  h->GetXaxis()->SetTitle("Time [s]");
-  h->GetYaxis()->SetTitle("Counts");
-  TString cname = TString::Format("c%s_%1.3f-%1.3f",ChannelName,tmin,tmax);
-  TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1000);
-  c->cd();
-  h->Draw();
-  return;  
-} 
-#endif
-#ifdef BUILD_AG
-void Plot_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
-{
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return Plot_Chrono(runNumber, ChannelName, tmin, tmax);
+  std::vector<TChronoChannel> chan;
+  chan.push_back( Get_Chrono_Channel(runNumber, ChannelName) );
+  return Plot_Chrono(runNumber, chan, description, dumpIndex);
 }
 #endif
+
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, Double_t tmin, Double_t tmax)
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TH1D* h=Get_Delta_Chrono( runNumber, Chronoboard, ChronoChannel, tmin, tmax);  
+  TH1D* h=Get_Delta_Chrono( runNumber, channel, tmin, tmax);  
   h->GetXaxis()->SetTitle("Time [s]");
   h->GetYaxis()->SetTitle("Counts");
   h->Draw();
@@ -59,11 +97,17 @@ void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, Int_t Chronoboard, Int_t ChronoChannel, const char* description, Int_t repetition, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, TChronoChannel channel, const char* description, Int_t dumpIndex)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return Plot_Delta_Chrono(runNumber, Chronoboard, ChronoChannel, tmin, tmax);
+  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+  std::vector<double> tmin;
+  std::vector<double> tmax;
+  for (const TAGSpill& s: spills)
+  {
+    tmin.push_back( s.GetStartTime() );
+    tmax.push_back( s.GetStopTime() );
+  }
+  return Plot_Delta_Chrono(runNumber, channel, tmin.front(), tmax.front());
 }
 #endif
 #ifdef BUILD_AG
@@ -76,11 +120,10 @@ void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, Double_t tmin, 
 } 
 #endif
 #ifdef BUILD_AG
-void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t repetition, Int_t offset)
+void Plot_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* description, Int_t dumpIndex)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return Plot_Delta_Chrono(runNumber, ChannelName, tmin, tmax);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   return Plot_Delta_Chrono(runNumber, ChannelName, spills.front().GetStartTime(), spills.front().GetStopTime());
 }
 #endif
 #ifdef BUILD_AG
@@ -88,15 +131,16 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
 
-  std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_AND_D","SiPM_E",
-      "SiPM_C","SiPM_F","SiPM_C_AND_F","SiPM_B"};
+  std::vector<std::string> channels {"SiPM_A","SiPM_D","SiPM_A_OR_D","SiPM_E",
+      "SiPM_C","SiPM_F","SiPM_C_OR_F","SiPM_B"};
   TString cname = TString::Format("cSiPM_%1.3f-%1.3f",tmin,tmax);
   TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1800, 1500);
   c->Divide(2,4);
   int i=0;
   for(auto it = channels.begin(); it!=channels.end(); ++it)
     {
-      TH1D* h=Get_Chrono( runNumber, it->c_str(), tmin, tmax);  
+      TChronoChannel chan = Get_Chrono_Channel(runNumber,it->c_str());
+      TH1D* h=Get_Chrono( runNumber, {chan}, {tmin}, {tmax}).front().front();
       h->GetXaxis()->SetTitle("Time [s]");
       h->GetYaxis()->SetTitle("Counts"); 
       c->cd(++i);
@@ -106,46 +150,48 @@ void PlotChronoScintillators(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t repetition, Int_t offset)
+void PlotChronoScintillators(Int_t runNumber, const char* description, Int_t dumpIndex)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
-  return PlotChronoScintillators(runNumber, tmin, tmax);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   return PlotChronoScintillators(runNumber, spills.front().GetStartTime(), spills.front().GetStopTime());
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax)
+TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts)
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TAGPlot* p=new TAGPlot(0); //Cuts off
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off
   p->SetTimeRange(0.,tmax-tmin);
   p->AddEvents(runNumber,tmin,tmax);
   TString cname = TString::Format("cVTX_R%d",runNumber);
   std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
-  p->Canvas(cname);
+  return p->Canvas(cname);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, bool ApplyCuts)
 {
-  Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-  Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   double tmin = spills.front().GetStartTime();
+   double tmax = spills.front().GetStopTime();
   std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
   double ttmin = GetTrigTimeBefore(runNumber,tmin),
     ttmax = GetTrigTimeAfter(runNumber,tmax);
   std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-  return Plot_TPC(runNumber,tmin,tmax);
+  return Plot_TPC(runNumber,tmin,tmax, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repetition, Int_t offset)
+TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t dumpIndex)
 { 
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
-  for( Int_t i=0; i<Nruns; ++i )
-    {
+   TAGPlot* p=new TAGPlot(0); //Cuts off  
+   for( Int_t i=0; i<Nruns; ++i )
+   {
       std::cout<<"Run"<<runNumber[i]<<std::endl;
-      Double_t tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
-      Double_t tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+      std::vector<TAGSpill> spills = Get_AG_Spills(runNumber[i], {description}, {dumpIndex});
+      double tmin = spills.front().GetStartTime();
+      double tmax = spills.front().GetStopTime();
+  
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
       ttmax = GetTrigTimeAfter(runNumber[i],tmax);
@@ -154,14 +200,13 @@ void Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t repe
       p->AddEvents(runNumber[i],tmin,tmax);
     }
   TString cname = TString::Format("cVTX_%s_Rlist",description);
-  p->Canvas(cname);
-  return;
+  return p->Canvas(cname);
 }
 #endif
 #ifdef BUILD_AG
-void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
+void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax, bool ApplyCuts)
 {
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   int total_number_events = p->AddEvents(runNumber,tmin,tmax);
 
@@ -185,19 +230,19 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax)
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description, 
-			      Int_t repetition, Int_t offset)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
   Int_t runList[]={runNumber};
   Int_t Nruns = 1;
   return Plot_Vertices_And_Tracks( runList, Nruns, description, 
-				   repetition, offset);
+				   dumpIndex, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
-			      Int_t repetition, Int_t offset)
+			      Int_t dumpIndex, bool ApplyCuts)
 { 
-  TAGPlot* p=new TAGPlot(0); //Cuts off  
+  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
   p->SetPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
@@ -217,8 +262,10 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
 	}
       else
 	{
-	  tmin=MatchEventToTime(runNumber[i], description,true,repetition, offset);
-	  tmax=MatchEventToTime(runNumber[i], description,false,repetition, offset);
+	   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber[i], {description}, {dumpIndex});
+     tmin = spills.front().GetStartTime();
+     tmax = spills.front().GetStopTime();
+  
 	}
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
       double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
@@ -256,85 +303,38 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   return;
 }
 #endif
-#ifdef BUILD_AG
-void Plot_ClockDrift_TPC(Int_t runNumber, Double_t tmin, Double_t tmax)
-{
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TCanvas* c=new TCanvas("ClockDrift","ClockDrift",1200,800);
-  c->Divide(1,3);
-  c->cd(1);
-  Get_TPC_EventTime_vs_OfficialTime(runNumber, tmin, tmax)->Draw();
-  c->cd(2);
-  Get_TPC_EventTime_vs_OfficialTime_Drift(runNumber,tmin,tmax)->Draw();
-  c->cd(3);
-  Get_TPC_EventTime_vs_OfficialTime_Matching(runNumber,tmin,tmax)->Draw();
-  c->Draw();
-}
-#endif
-#ifdef BUILD_AG
-void Plot_ClockDrift_Chrono(Int_t runNumber, Double_t tmin, Double_t tmax)
-{
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TCanvas* c=new TCanvas("ChronoClockDrift","ChronoClockDrift",1200,800);
-  c->Divide(CHRONO_N_BOARDS,3);
-  for (int i=0; i<CHRONO_N_BOARDS; i++)
-    {
-      c->cd(1 + i);
-      Get_Chrono_EventTime_vs_OfficialTime(runNumber, i, tmin, tmax)->Draw();
-      c->cd(3 + i);
-      Get_Chrono_EventTime_vs_OfficialTime_Drift(runNumber, i, tmin, tmax)->Draw();
-      c->cd(5 + i);
-      Get_Chrono_EventTime_vs_OfficialTime_Matching(runNumber, i, tmin, tmax)->Draw();
-    }
-  c->Draw();
-}
-#endif
-#ifdef BUILD_AG
-void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin, Double_t tmax)
-{
-  if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-  TCanvas* c=new TCanvas("ChronoClockSync","ChronoClockSync",1200,800);
-  c->Divide(CHRONO_N_BOARDS,2);
-  for (int i=0; i<CHRONO_N_BOARDS; i++)
-    {
-      c->cd(1 + (i*2));
-      Plot_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
-      c->cd(2 + (i*2));
-      Plot_Delta_Chrono(runNumber,i,Get_Chrono_Channel(runNumber,i,"CHRONO_SYNC",false), tmin,tmax);
-    }
-  c->Draw();
-}
-#endif
+
 //*************************************************************
 // Energy Analysis
 //*************************************************************
 TCanvas* gc;
 TH1D* gh;
 #ifdef BUILD_AG
-TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
+TCanvas* Plot_AG_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, const char* Chrono_Channel_Name)
 {  
-  Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
-  Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
-  if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {"Cold Dump"}, {dumpIndex});
+   double start_time = spills.front().GetStartTime();
+   double stop_time = spills.front().GetStopTime();
+   if (stop_time<0.) stop_time = GetAGTotalRunTime(runNumber);
 
-  Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
-  Double_t stopOffset = 0.; // dump finishes at trigger
-  
-  Double_t dumpDuration = stop_time-start_time-startOffset-stopOffset;
-  
-  std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
-  std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
+   double startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
+   double stopOffset = 0.; // dump finishes at trigger
 
-  Int_t oldBinNumber = gNbin;
-  gNbin=1.e4;
-  TH1D* dumpHisto=Get_Chrono( runNumber, "CATCH_OR", start_time, stop_time );
+   double dumpDuration = stop_time - start_time - startOffset - stopOffset;
+
+   std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
+   std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
+
+   Int_t oldBinNumber = gNbin;
+   gNbin=1.e4;
+   TH1D* dumpHisto = Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,Chrono_Channel_Name)}, {start_time}, {stop_time} ).front().front();
   gNbin=oldBinNumber;
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,"CATCH_OR",start_time+startOffset,stop_time); // this is a lower resolution histo to plot
+    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,{Get_Chrono_Channel(runNumber,Chrono_Channel_Name)},{start_time+startOffset},{stop_time}).front().front(); // this is a lower resolution histo to plot
 
   TString htitle = "Run ";
   htitle+=runNumber;
@@ -418,6 +418,17 @@ TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFi
   gh=hEnergy;
   return cEnergy;
 }
+
+TCanvas* Plot_AG_CT_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
+{
+   return Plot_AG_ColdDump( runNumber, dumpIndex, binNumber, dumpFile, EnergyRangeFactor,"PMT_CATCH_OR");
+}
+
+TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
+{
+   return Plot_AG_ColdDump(runNumber, dumpIndex, binNumber, dumpFile, EnergyRangeFactor,"SiPM_E");
+}
+
 #endif
 
 
@@ -457,8 +468,8 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   gNbin=1.e4;
 
   TSISChannels chans(runNumber);
-  int channel = chans.GetChannel("SIS_PMT_CATCH_OR");
-  std::vector<int> SISChannels = {channel};
+  TSISChannel channel = chans.GetChannel("SIS_PMT_CATCH_OR");
+  std::vector<TSISChannel> SISChannels = {channel};
   
   std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time}).front();
   gNbin=oldBinNumber;
@@ -567,8 +578,8 @@ TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISCha
 
     //These 3 lines find the SIS channel of the input. 
     TSISChannels channelFinder(run);
-    int channel = channelFinder.GetChannel(SISChannel.c_str());
-    std::vector<int> channels = {channel};
+    TSISChannel channel = channelFinder.GetChannel(SISChannel.c_str());
+    std::vector<TSISChannel> channels = {channel};
 
     //Get the spills from the data (should only be the range selected in the dumpNumbers) 
     std::vector<TA2Spill> spills = Get_A2_Spills(run, description, {dumpNumbers.at(i)});
@@ -673,116 +684,6 @@ void Generate3DTHStack(std::vector<TH1D*> allHistos, THStack* emptyStack, TLegen
 }
 
 
-#ifdef BUILD_AG
-TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor)
-{  
-  Double_t start_time=MatchEventToTime(runNumber, "Cold Dump",true,1,0);
-  Double_t stop_time=MatchEventToTime(runNumber, "Cold Dump",false,1,0);
-  if (stop_time<0.) stop_time=GetAGTotalRunTime(runNumber);
-
-  Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
-  Double_t stopOffset = 0.; // dump finishes at trigger
-  
-  Double_t dumpDuration = stop_time-start_time-startOffset-stopOffset;
-  
-  std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
-  std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
-
-  Int_t oldBinNumber = gNbin;
-  gNbin=1.e4;
-  TH1D* dumpHisto=Get_Chrono( runNumber, "SiPM_B", start_time, stop_time );
-  gNbin=oldBinNumber;
- 
-  if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
-  // and the voltage ramp function of time
-  TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
-  if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
-    TH1D* dumpHisto_toPlot =Get_Chrono(runNumber,"SiPM_B",start_time+startOffset,stop_time); // this is a lower resolution histo to plot
-
-  TString htitle = "Run ";
-  htitle+=runNumber;
-  htitle+=" : #bar{p} energy  Cold Dump;Energy [eV];counts";
-
-  // energy (temperature) histogram
-  Double_t RampTmin=dumpRamp->GetXmin();
-  Double_t RampTmax=dumpRamp->GetXmax();
-  if ( RampTmax<0.) {Error("PlotEnergyDump","Ramp invalid? Can't work out how long it was"); return 0; }
-  Double_t Emin=dumpRamp->Eval(RampTmax), Emax=dumpRamp->Eval(RampTmin);
-  TH1D* hEnergy = new TH1D("pbar_temperature", htitle.Data(), binNumber, Emin, Emax);
-  hEnergy->SetMarkerColor(kRed);
-  hEnergy->SetMarkerStyle(7);
-  hEnergy->SetLineColor(kBlack);
-
-  // calculate the energy resolution
-  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
-  char resolution[80];
-  sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
-  printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
-  // map time to energy
-  Double_t dt,energy,energy_max=0.;
-  Int_t counts=0.;
-  for(Int_t b=1; b<=dumpHisto->GetNbinsX(); ++b)
-    {
-      dt = (dumpHisto->GetBinCenter(b)/*-start_time*/-startOffset);//(dumpDuration);
-      energy = dumpRamp->Eval(dt);
-      //~ //if(energy<res) continue;
-      counts = dumpHisto->GetBinContent(b);
-      if(energy>energy_max && counts>10) energy_max=energy; // interesting bins only
-#if DEBUG > 1
-      std::cout<<b<<"\t"<<dt<<"\t"<<energy<<"\t"<<dumpHisto->GetBinContent(b)<<std::endl;
-#endif
-      hEnergy->Fill(energy, counts);
-
-    }
-
-  //hEnergy->GetXaxis()->SetRangeUser(Emin,energy_max);
-
-  // calculate the total number of counts in the intresting range
-  Int_t binmin = hEnergy->FindBin(Emin),
-    binmax = hEnergy->FindBin(energy_max);
-  Double_t total_counts = hEnergy->Integral(binmin,binmax);
-  char integral[80];
-  sprintf(integral,"Integral %1.01f",total_counts);
-
-  // information
-  TPaveText* tt = new TPaveText(0.1,0.5,0.9,0.9);
-  tt->SetFillColor(0);
-  tt->AddText(resolution);
-  tt->AddText(integral);
-
-  // plotting and wait for fitting
-  //  if (gLegendDetail>=1)
-  //    {
-      gStyle->SetOptStat(1011111);
-      //    }
-      //  else
-      //    {
-      //      gStyle->SetOptStat("ni");
-      //    }
-  delete gc;
-  TCanvas* cEnergy = new TCanvas("AntiprotonTemperature","AntiprotonTemperature",1800,1000);
-  cEnergy->Divide(2,2);
-  cEnergy->cd(1);
-  gPad->SetLogy(1);
-  dumpHisto_toPlot->Draw("HIST");
-  cEnergy->cd(2);
-  
-  hEnergy->GetXaxis()->SetRangeUser(0,EnergyRangeFactor*(hEnergy->GetMean()));
-  hEnergy->Draw("E1 HIST");
-  gPad->SetLogy(1);
-  cEnergy->cd(3);
-  dumpRamp->Draw();
-
-  cEnergy->cd(4);
-  tt->Draw();
-
-  //necessary for fitting
-  gc=cEnergy;
-  gh=hEnergy;
-  return cEnergy;
-}
-#endif
-
 Double_t Boltzmann_constant = 8.61733e-5; //eV/K
 
 Double_t FitEnergyDump( Double_t Emin, Double_t Emax,TH1D* h)
@@ -841,7 +742,10 @@ void SaveCanvas(Int_t runNumber, const char* Description)
 
 void SaveCanvas(TString Description)
 {
-  Description+=".pdf";
+  TSubString extension = Description(Description.Sizeof()-5,Description.Sizeof());
+  //If not a 3 char extension... add one
+  if (extension[0] != '.')
+     Description+=".png";
   gc->SaveAs(Description);
   std::cout << "File saved here:" << std::endl << Description << std::endl;
 }
@@ -853,10 +757,153 @@ void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription){
 	iSaveCanvas->SaveAs(Output);
 	
 }
+#ifdef BUILD_A2
+TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const char* dumpFile, Double_t EnergyRangeFactor, const char* SIS_Channel_Name)
+{  
 
+   std::vector<TA2Spill> spills = Get_A2_Spills(runNumber,{"Cold Dump"},{-1});
+   std::cout << "Spills size = " << spills.size() << std::endl;
+   std::vector<double> tmin;
+   std::vector<double> tmax;
+
+   std::cout << "tmin size = " << tmin.size() << std::endl;
+   std::cout << "tmax size = " << tmax.size() << std::endl;
+
+   for (TA2Spill& s: spills) {
+     tmin.push_back(s.GetStartTime());
+     tmax.push_back(s.GetStopTime());
+   }
+
+   std::cout << "tmin size = " << tmin.size() << std::endl;
+   std::cout << "tmax size = " << tmax.size() << std::endl;
+   Double_t start_time = tmin.at(repetition);
+   Double_t stop_time = tmax.at(repetition);
+
+   if (stop_time<0.) stop_time=GetA2TotalRunTime(runNumber);
+
+   Double_t startOffset = 0.002; // dump starts two milliseconds after the start dump trigger
+   Double_t stopOffset = 0.; // dump finishes at trigger
+ 
+   Double_t dumpDuration = stop_time-start_time-startOffset-stopOffset;
+ 
+   std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
+   std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
+
+   Int_t oldBinNumber = gNbin;
+   gNbin=1.e4;
+
+   TSISChannels chans(runNumber);
+
+   TSISChannel channel = chans.GetChannel(SIS_Channel_Name);
+   std::cout<<"Plotting SIS Channel "<<channel<<std::endl;
+   std::vector<TSISChannel> SISChannels = {channel};
+ 
+   std::vector<std::vector<TH1D*>> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
+
+   gNbin=oldBinNumber;
+
+   if(!dumpHisto.at(0).at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
+    // and the voltage ramp function of time
+   TSpline5* dumpRamp = InterpolateVoltageRamp(dumpFile);
+   if(!dumpRamp){Error("PlotEnergyDump","NO voltage ramp function"); return 0;}
+     std::vector<std::vector<TH1D*>> dumpHisto_toPlot = Get_SIS(runNumber, SISChannels, {start_time+startOffset}, {stop_time}); // this is a lower resolution histo to plot
+   TString htitle = "Run ";
+
+   htitle+=runNumber;
+   htitle+=" : #bar{p} energy  Hot Dump;Energy [eV];counts";
+
+   // energy (temperature) histogram
+
+   Double_t RampTmin=dumpRamp->GetXmin();
+   Double_t RampTmax=dumpRamp->GetXmax();
+
+   if ( RampTmax<0.) {Error("PlotEnergyDump","Ramp invalid? Can't work out how long it was"); return 0; }
+   Double_t Emin=dumpRamp->Eval(RampTmax), Emax=dumpRamp->Eval(RampTmin);
+   TH1D* hEnergy = new TH1D("pbar_temperature", htitle.Data(), binNumber, Emin, Emax);
+   hEnergy->SetMarkerColor(kRed);
+   hEnergy->SetMarkerStyle(7);
+   hEnergy->SetLineColor(kBlack);
+   // calculate the energy resolution
+   Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+   char resolution[80];
+   sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
+   printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
+
+   // map time to energy
+   Double_t dt,energy,energy_max=0.;
+   Int_t counts=0.;
+   for(Int_t b=1; b<=dumpHisto.at(0).at(0)->GetNbinsX(); ++b)
+   {
+      dt = (dumpHisto.at(0).at(0)->GetBinCenter(b)/*-start_time*/-startOffset);//(dumpDuration);
+      energy = dumpRamp->Eval(dt);
+      //~ //if(energy<res) continue;
+      counts = dumpHisto.at(0).at(0)->GetBinContent(b);
+      if(energy>energy_max && counts>10) energy_max=energy; // interesting bins only
+#if DEBUG > 1
+      std::cout<<b<<"\t"<<dt<<"\t"<<energy<<"\t"<<dumpHisto->GetBinContent(b)<<std::endl;
+#endif
+      hEnergy->Fill(energy, counts);
+   }
+   //hEnergy->GetXaxis()->SetRangeUser(Emin,energy_max);
+
+   // calculate the total number of counts in the intresting range
+   Int_t binmin = hEnergy->FindBin(Emin),
+   binmax = hEnergy->FindBin(energy_max);
+   Double_t total_counts = hEnergy->Integral(binmin,binmax);
+   char integral[80];
+   sprintf(integral,"Integral %1.01f",total_counts);
+
+   // information
+   TPaveText* tt = new TPaveText(0.1,0.5,0.9,0.9);
+   tt->SetFillColor(0);
+   tt->AddText(resolution);
+   tt->AddText(integral);
+
+   // plotting and wait for fitting
+   //if (gLegendDetail>=1)
+   //{
+   //   TStyle->SetOptStat(1011111);
+  //}
+   //else
+   //{
+   //   gStyle->SetOptStat("ni");
+  // }
+   delete gc;
+
+   TCanvas* cEnergy = new TCanvas("AntiprotonTemperature","AntiprotonTemperature",1800,1000);
+   cEnergy->Divide(2,2);
+   cEnergy->cd(1);
+   gPad->SetLogy(1);
+   dumpHisto_toPlot.at(0).at(0)->Draw("HIST");
+
+   cEnergy->cd(2);
+   hEnergy->GetXaxis()->SetRangeUser(0,EnergyRangeFactor*(hEnergy->GetMean()));
+   hEnergy->Draw("E1 HIST");
+   gPad->SetLogy(1);
+   cEnergy->cd(3);
+   dumpRamp->Draw();
+   cEnergy->cd(4);
+   tt->Draw();
+
+   //necessary for fitting
+   gc=cEnergy;
+   gh=hEnergy;
+   return cEnergy;
+
+}
+#endif
 
 #ifdef BUILD_A2
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition, Int_t binNumber, 
+                          const char* dumpFile,
+                          Double_t EnergyRangeFactor)
+                          {
+                            return Plot_A2_ColdDump(runNumber, repetition, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
+                          }
+#endif
+
+#ifdef BUILD_A2
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
@@ -906,7 +953,7 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_Summed_SIS(runNumber, chans, tmin, tmax);
 }
 
@@ -922,7 +969,7 @@ TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel
    return Plot_Summed_SIS(runNumber, SIS_Channel_Names, tmin, tmax);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -936,24 +983,24 @@ TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vec
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_Summed_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_Summed_SIS(runNumber, SIS_Channel, s);
 }
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_Summed_SIS( runNumber, chans, description, repetition);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   return Plot_Summed_SIS( runNumber, chans, description, dumpIndex);
 }
 
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax)
 {
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
@@ -1004,11 +1051,11 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<dou
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, tmin, tmax);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2Spill> spills)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills)
 {
    std::vector<double> tmin;
    std::vector<double> tmax;
@@ -1022,20 +1069,20 @@ TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<TA2
 
 TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
    return Plot_SIS(runNumber, chans, spills);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<int> SIS_Channel, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_SIS(runNumber, SIS_Channel, s);
 }
 
-TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> repetition)
+TCanvas* Plot_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<Int_t> chans = GetSISChannels(runNumber, SIS_Channel_Names);
-   return Plot_SIS( runNumber, chans, description, repetition);
+   std::vector<TSISChannel> chans = GetSISChannels(runNumber, SIS_Channel_Names);
+   return Plot_SIS( runNumber, chans, description, dumpIndex);
 }
 
 #endif
@@ -1069,9 +1116,9 @@ void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills)
    return Plot_SVD(runNumber,tmin,tmax);
 }
 
-void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> repetition)
+void Plot_SVD(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
-   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,repetition);
+   std::vector<TA2Spill> s=Get_A2_Spills(runNumber,description,dumpIndex);
    return Plot_SVD(runNumber,s);
 }
 #endif

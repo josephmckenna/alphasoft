@@ -184,7 +184,6 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
@@ -291,7 +290,27 @@ public:
                 se->GetPassedCuts(),
                 se->GetVF48Timestamp()
                 );
-    
+            //This is not proper occupancy... its a hit counters TODO JOE
+            for (int i = 0; i < nSil; i++)
+            {
+               const TSiliconModule* m = se->GetSiliconModule(i);
+               if (!m)
+                  continue;
+               if (!m->IsAHitModule())
+                  continue;
+               for (int j = 0; j < 4; j++)
+               {
+                  const TSiliconVA* v = m->GetASIC(j);
+                  if (!v) continue;
+                  if (v->IsAHitOR())
+                  {
+                     if (v->IsAPSide())
+                        fFlags->AnalysisReport->FillHybridNSideOccupancy(i);
+                     else
+                        fFlags->AnalysisReport->FillHybridPSideOccupancy(i);
+                  }
+               }
+            }
          }
          const A2SpillFlow* SpillFlow= dynamic_cast<A2SpillFlow*>(f);
          if (SpillFlow)

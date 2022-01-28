@@ -25,6 +25,7 @@
 #include "TH1DGetters.h"
 #include "TSeqEventGetters.h"
 #include "TStringGetters.h"
+#include "TSISChannelGetters.h"
 #include "TreeGetters.h"
 #include "TGraphGetters.h"
 #include "TSplineGetters.h"

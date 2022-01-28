@@ -4,13 +4,13 @@
 
 
 #ifdef BUILD_AG
-TString Get_Chrono_Name(Int_t runNumber, Int_t ChronoBoard, Int_t Channel)
+TString Get_Chrono_Name(Int_t runNumber, TChronoChannel chan)
 {
    TTree* t=Get_Chrono_Name_Tree(runNumber);
    TChronoChannelName* n=new TChronoChannelName();
    t->SetBranchAddress("ChronoChannel", &n);
-   t->GetEntry(ChronoBoard);
-   TString name=n->GetChannelName(Channel);
+   t->GetEntry(chan.GetBoardNumber());
+   TString name=n->GetChannelName(chan.GetChannel());
    delete n;
    return name;
 }
@@ -38,18 +38,18 @@ TString Get_SIS_Name(Int_t runNumber, Int_t SIS_Channel)
 #endif
 
 #ifdef BUILD_AG
-TString SequenceAGQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, Int_t* boards[], Int_t* channels[], Int_t nChannels)
+TString SequenceAGQODDetectorLine(Int_t runNumber,Double_t tmin, Double_t tmax, std::vector<TChronoChannel> chans)
 {
    if (runNumber<0) return "CATCH_OR\tTPC TRIG\tSiPM_B\tSiPM_E\tSiPM_A_AND_D\tSiPM_C_AND_F";
    TString line="\t";
    //std::cout <<tmin<<":"<<tmax<<std::endl;
    if (tmin<0 && tmax<0) return "\tINVALID TIME RANGE";
    //Add in SIS flags:
-   for (Int_t i=0; i<nChannels; i++)
+   for (size_t i = 0; i < chans.size(); i++)
    {
       //std::cout <<i<<"\t"<<*boards[i]<<"-"<<*channels[i]<<std::endl;
-      if (*channels[i]>-1)
-        line+=GetCountsInChannel(runNumber, *boards[i], *channels[i], tmin, tmax);
+      if (chans[i].IsValidChannel())
+        line+=GetCountsInChannel(runNumber, chans[i], tmin, tmax);
       else
          line+="N/A";
       line+="\t";

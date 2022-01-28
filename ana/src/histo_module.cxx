@@ -452,7 +452,7 @@ public:
          printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* AnalyzeFlowEvent( __attribute__((unused)) TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {      
       if(!diagnostics)
       {

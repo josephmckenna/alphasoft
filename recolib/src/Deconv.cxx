@@ -611,7 +611,7 @@ int Deconv::FindAnodeTimes(const Alpha16Event* anodeSignals)
    int nsig=-1;
    if(!sanode) nsig=0;
    else nsig = sanode->size();
-   //std::cout<<"Deconv::FindAnodeTimes "<<nsig<<" found"<<std::endl;
+   if( fTrace ) std::cout<<"Deconv::FindAnodeTimes "<<nsig<<" found"<<std::endl;
    // ===========================================
 
    if( fDiagnostic )
@@ -763,7 +763,7 @@ int Deconv::FindPadTimes(const FeamEvent* padSignals)
    int nsig=-1;
    if(!spad) nsig=0;
    else nsig = spad->size();
-   //std::cout<<"Deconv::FindPadTimes "<<nsig<<" found"<<std::endl;
+   if( fTrace ) std::cout<<"Deconv::FindPadTimes "<<nsig<<" found"<<std::endl;
    // ===========================================   
 
    if( fDiagnostic )
@@ -848,7 +848,7 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
                      if( isanode ) 
                         SubtractAW(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
                      else
-                        SubtractPAD(it,subtracted,b,ne,fElectrodeIndex,fResponse,theBin);
+                        SubtractPAD(it,b,ne,fElectrodeIndex,fResponse,theBin);
                      if( int(b-theBin) >= 0)
                         {
                            // time in ns of the bin b centre
@@ -865,18 +865,18 @@ std::vector<ALPHAg::signal>* Deconv::Deconvolution( std::vector<ALPHAg::wfholder
 
 void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                         std::vector<ALPHAg::wfholder*>* wfmap,
-                        const unsigned b,
+                        const int b,
                         const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                        std::vector<double> &fResponse,const unsigned theBin)
+                        std::vector<double> &fResponse,const int theBin)
 {
    std::vector<double> *wf1 = hist1->h;
-   size_t wf1size = wf1->size();
+   const int wf1size = wf1->size();
    unsigned int i1 = hist1->index;
    ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
-   uint AnodeSize=fAnodeFactors.size();
-   uint ElectrodeSize=fElectrodeIndex.size();
-   int AnodeResponseSize=(int)fAnodeResponse.size();
+   const size_t AnodeSize = fAnodeFactors.size();
+   const size_t ElectrodeSize = fElectrodeIndex.size();
+   const int AnodeResponseSize = (int)fAnodeResponse.size();
    int respsize=fResponse.size();
    for(unsigned int k = 0; k < ElectrodeSize; ++k)
       {
@@ -891,7 +891,7 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
                //Take advantage that there are 256 anode wires... use uint8_t
                //if( !IsNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
-               for(size_t bb = b - theBin; bb < wf1size; ++bb)
+               for(int bb = b - theBin; bb < wf1size; ++bb)
                   {
                      // the bin corresponding to bb in the response
                      int respBin = int (bb-b+theBin);
@@ -906,10 +906,10 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
             }// loop over factors
       }// loop all electrodes' signals looking for neighbours
 
-   for(size_t bb = b - theBin; bb < wf1size; ++bb)
+   for(int bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
-         int respBin = int ( bb - b + theBin );
+         const int respBin =  bb - b + theBin;
          if( respBin < respsize && respBin >= 0 )
             {
                // Remove signal tail for waveform we're currently working on
@@ -919,23 +919,22 @@ void Deconv::SubtractAW(ALPHAg::wfholder* hist1,
 }
 
 void Deconv::SubtractPAD(ALPHAg::wfholder* hist1,
-                         std::vector<ALPHAg::wfholder*>* wfmap,
-                         const unsigned b,
+                         const int b,
                          const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                         std::vector<double> &fResponse, const unsigned theBin)
+                         std::vector<double> &fResponse, const int theBin)
 {
    std::vector<double> *wf1 = hist1->h;
-   int wf1size=wf1->size();
+   const int wf1size = wf1->size();
    unsigned int i1 = hist1->index;
    ALPHAg::electrode wire1 = fElectrodeIndex.at( i1 ); // mis-name for pads
 
-   int respsize=fResponse.size();
+   const int respsize = fResponse.size();
      
      
-   for(size_t bb = b - theBin; bb < wf1size; ++bb)
+   for(int bb = b - theBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
-         int respBin = int(bb - b + theBin);
+         const int respBin = bb - b + theBin;
          if( respBin < respsize && respBin >= 0 )
             {
                // Remove signal tail for waveform we're currently working on

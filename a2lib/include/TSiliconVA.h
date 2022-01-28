@@ -40,25 +40,25 @@ public:
   virtual ~TSiliconVA();
 
   // getters
-  Int_t GetASICNumber(){ return ASICNumber; }
-  Int_t GetVF48ChannelNumber(){ return VF48ChannelNumber; }
-  Int_t GetNumberOfStrips(){ return nStrips; }
+  Int_t GetASICNumber() const { return ASICNumber; }
+  Int_t GetVF48ChannelNumber() const { return VF48ChannelNumber; }
+  Int_t GetNumberOfStrips() const { return nStrips; }
   //TSiliconStrip* GetStripNumber(Int_t i){ return &Strips[i];}
   //TSiliconStrip* GetStrip( Int_t i ){ return &Strips[i];}
 
-  Double_t GetRawADCMean(){ return RawADCMean; }
-  Double_t GetRawADCRms(){ return RawADCRms; }
-  Double_t GetFilteredADCMean(){ return FilteredADCMean; }
+  Double_t GetRawADCMean() const { return RawADCMean; }
+  Double_t GetRawADCRms() const { return RawADCRms; }
+  Double_t GetFilteredADCMean() const { return FilteredADCMean; }
 
-  Bool_t IsAPSide(){ return PSide; }
-  Bool_t IsAHitOR(){ return HitOR; }
+  Bool_t IsAPSide() const { return PSide; }
+  Bool_t IsAHitOR() const { return HitOR; }
   //std::vector<TSiliconStrip*> GetStrips(){ return Strips; }
 
   // setters
   void AddStrip(const int i, const int adc,const double rms);
   void Reset();
-  Bool_t NoStrips(){ return !nStrips; }
-  int GetNoStrips() { return nStrips; }
+  Bool_t NoStrips() const { return !nStrips; }
+  int GetNoStrips() const { return nStrips; }
   void SetPSide( Bool_t _PSide ){ PSide = _PSide; }
   void RemoveStrip( const Int_t i )
   {

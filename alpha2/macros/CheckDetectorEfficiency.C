@@ -3,7 +3,7 @@
 const double MIN_COUNTS = 1000;
 const double MIN_DUMP_LENGTH = 2;
 const double MAX_DUMP_LENGTH = 10;
-const double MIN_REPS = 3;
+const double MIN_REPS = 0;
 
 
 std::vector<std::pair<double, double>> CheckDetectorEfficiency(int runno, const char* det1, const char* det2, const char* dump_name)
