@@ -78,7 +78,10 @@ private:
    TH2D* hTdcSingleChannelHitTime2d;
    TH1D* hTdcTimeVsCh0;
    TH2D* hTdcTimeVsCh02d;
-   std::map<int,TH2D*> hTdcOffsetByRTM;
+   TH1D* hFineTimeCounter;
+   TH1D* hFineTime;
+   TH2D* hFineTimeCounter2d;
+   TH2D* hFineTime2d;
 
    // Bars
    TH1D* hBarMultiplicity;
@@ -183,6 +186,10 @@ public:
          hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",16,-0.5,15.5);
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",16,-0.5,15.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
+         hFineTime = new TH1D("hFineTime","Fine time;Fine time (s)",200,-1e-9,6e-9);
+         hFineTime2d = new TH2D("hFineTime2d","Fine time;TDC channel number;Fine time (s)",16,-0.5,15.5,200,-1e-9,6e-9);
+         hFineTimeCounter = new TH1D("hFineTimeCounter","Fine time counter;Fine time counter",1024,0,1024);
+         hFineTimeCounter2d = new TH2D("hFineTimeCounter2d","Fine time counter;TDC channel number;Fine time counter",16,-0.5,15.5,1024,0,1024);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",17,-0.5,16.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,201,-0.5,200.5);
@@ -232,6 +239,10 @@ public:
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",128,-0.5,127.5);
          hTdcCoincidence = new TH1D("hTdcCoincidence","TDC hits with corresponing hit on other end;Channel number",128,-0.5,127.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
+         hFineTime = new TH1D("hFineTime","Fine time;Fine time (s)",200,-1e-9,6e-9);
+         hFineTime2d = new TH2D("hFineTime2d","Fine time;TDC channel number;Fine time (s)",128,-0.5,127.5,200,-1e-9,6e-9);
+         hFineTimeCounter = new TH1D("hFineTimeCounter","Fine time counter;Fine time counter",1024,0,1024);
+         hFineTimeCounter2d = new TH2D("hFineTimeCounter2d","Fine time counter;TDC channel number;Fine time counter",128,-0.5,127.5,1024,0,1024);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",81,-0.5,80.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",11,-0.5,10.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,11,-0.5,10.5);
@@ -240,13 +251,6 @@ public:
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel forty;TDC time minus ch40 time (ns)",2000,-35,35);
             hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel forty;Channel number;TDC time minus ch40 time (ns)",128,-0.5,127.5,2000,-35,35);
-            gDirectory->mkdir("offsets")->cd();
-            for (int rtm=0;rtm<8;rtm++) {
-               TString hname = TString::Format("hOffsetRTM%d",rtm);
-               TString htitle = TString::Format("Time offset from channel 0 - RTM %d;Channel number;TDC time minus ch0 time (ns)",rtm);
-               hTdcOffsetByRTM[rtm] = new TH2D(hname.Data(),htitle.Data(),16,-0.5,15.5,2000,-35.,35.);
-            }
-            gDirectory->cd("..");
          }
          gDirectory->cd("..");
 
@@ -458,16 +462,6 @@ public:
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
          }
       }
-      if (fFlags->fPulser and !(fFlags->fProtoTOF)) {
-         for (EndHit* endhit: endhits) {
-            int end = endhit->GetBar();
-            if (end==pulser_reference_chan) continue;
-            //if (end%8==0 and end<63) continue;
-            int rtm = (end/8)%8;
-            int chan = end%8+(end/64)*8;
-            hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0));
-         }
-      }
    }
 
    void DirectTdcHistos(const std::vector<SimpleTdcHit*> tdchits)
@@ -479,7 +473,13 @@ public:
       for (const SimpleTdcHit* tdchit: tdchits) {
          int bar = tdchit->GetBar();
          double time = tdchit->GetTime();
+         int fine_count = tdchit->GetFineTimeCount();
+         double fine_time = tdchit->GetFineTime();
          hTdcOccupancy->Fill(bar);
+         hFineTime->Fill(fine_time);
+         hFineTime2d->Fill(bar,fine_time);
+         hFineTimeCounter->Fill(fine_count);
+         hFineTimeCounter2d->Fill(bar,fine_count);
          counts[bar]++;
          if (t0[bar]!=0) {
             hTdcSingleChannelHitTime->Fill(1e9*(time-t0[bar]));

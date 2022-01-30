@@ -18,6 +18,8 @@ class SimpleTdcHit: public TObject
 private:
    int fBarID=-1;
    double fTime=-1;
+   int fFineTimeCount=-1;
+   double fFineTime=-1;
 
 public:
    SimpleTdcHit(); //ctor
@@ -26,14 +28,18 @@ public:
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
 
-  void SetHit(int _fBarID, double _fTime) 
+  void SetHit(int _fBarID, double _fTime, int _fFineTimeCount, double _fFineTime) 
   {
      fBarID=_fBarID;
      fTime=_fTime;
+     fFineTimeCount=_fFineTimeCount;
+     fFineTime=_fFineTime;
   }
 
   int GetBar() const {return fBarID;}
   double GetTime() const {return fTime;}
+  int GetFineTimeCount() const {return fFineTimeCount;}
+  double GetFineTime() const {return fFineTime;}
 
   ClassDef(SimpleTdcHit, 3);
 };
@@ -236,10 +242,10 @@ public:
     b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
-  void AddTdcHit(int fBarID, double fTime)
+  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime)
   {
     SimpleTdcHit* hit = new SimpleTdcHit;
-    hit->SetHit(fBarID, fTime);
+    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime);
     AddTdcHit(hit);
   }
   void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)

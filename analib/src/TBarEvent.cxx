@@ -132,12 +132,15 @@ SimpleTdcHit::SimpleTdcHit(const SimpleTdcHit &h)
 
   fBarID=h.GetBar();
   fTime=h.GetTime();
+  fFineTimeCount=h.GetFineTimeCount();
+  fFineTime=h.GetFineTime();
 }
 
 void SimpleTdcHit::Print()
 {
   std::cout<<"SimpleTdcHit::Print() -- Bar ID:"<<fBarID<<std::endl;
-  std::cout<<" TDC time: "<<fTime;
+  std::cout<<" TDC time: "<<fTime<<std::endl;
+  std::cout<<" Fine time counter: "<<fFineTimeCount<<" Fine time: "<<fFineTime;
   std::cout<<std::endl;
 }
 
