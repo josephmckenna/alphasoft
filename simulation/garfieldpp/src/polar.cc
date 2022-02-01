@@ -20,11 +20,11 @@
 #include "Garfield/ViewField.hh"
 #include "Garfield/ViewCell.hh"
 
-int main(int argc, char * argv[]) { 
+int main(int argc, char * argv[]) {
 
   TApplication app("app", &argc, argv);
   Garfield::plottingEngine.SetDefaultStyle();
- 
+
   // Make a gas medium.
   Garfield::MediumMagboltz gas;
 
@@ -32,7 +32,8 @@ int main(int argc, char * argv[]) {
   constexpr double lZ = 115.2;
   constexpr double rRO = 19.03;
   Garfield::GeometrySimple geo;
-  Garfield::SolidTube tube(0, 0, 0, 0, rRO, lZ);
+  // Garfield::SolidTube tube(0, 0, 0, 0, rRO, lZ);
+  Garfield::SolidTube tube(0, 0, 0, rRO, lZ);
   geo.AddSolid(&tube, &gas);
 
   Garfield::ComponentAnalyticField cmp;
@@ -67,11 +68,11 @@ int main(int argc, char * argv[]) {
   for (unsigned int i = 0; i < 256; ++i) {
     const double phi = i * sphi;
     cmp.AddWire(rFW, phi, dFW, vFW, "f", 2 * lZ, tFW);
-    cmp.AddWire(rAW, phi + 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+    cmp.AddWire(rAW, phi + 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25);
   }
   */
   cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25);
   cmp.SetPeriodicityPhi(sphi);
   cmp.PrintCell();
 
@@ -94,4 +95,3 @@ int main(int argc, char * argv[]) {
 
   app.Run(true);
 }
-
