@@ -20,8 +20,8 @@ using namespace Garfield;
 
 #include "Helpers.hh"
 
-int main(int argc, char * argv[]) 
-{ 
+int main(int argc, char * argv[])
+{
   double //InitialPhi = 0., // rad
     InitialPhi = 40.*TMath::DegToRad(),
     InitialZed = 0., // cm
@@ -103,8 +103,8 @@ int main(int argc, char * argv[])
   constexpr double tAW = 40.;
 
   // Add the wires.
-  for (int i = 0; i < nWires; ++i) 
-    { 
+  for (int i = 0; i < nWires; ++i)
+    {
       // Field wires.
       cmp.AddWire(rFW, i * sphi, dFW, vFW, "f", 2 * lZ);
       // Anode wires.
@@ -123,15 +123,15 @@ int main(int argc, char * argv[])
   constexpr double pitchZ = 0.4;
   constexpr int nRows = int(2 * lZ / pitchZ);
   std::cout << "Number of pad rows: " << nRows << std::endl;
-  for (int j = 0; j < nRows; ++j) 
+  for (int j = 0; j < nRows; ++j)
     {
       const double z0 = -lZ + j * pitchZ;
       const double z1 = z0 + pitchZ;
       std::string row = std::string(TString::Format("%03d", j).Data());
-      for (int i = 0; i < nSecs; ++i) 
+      for (int i = 0; i < nSecs; ++i)
 	{
 	  std::string sec = std::string(TString::Format("%02d", i).Data());
-	  const double phi0 = i * pitchPhi * RadToDegree; 
+	  const double phi0 = i * pitchPhi * RadToDegree;
 	  const double phi1 = phi0 + pitchPhi * RadToDegree;
 	  std::string ename = "pad" + row + "_" + sec;
 	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
@@ -181,7 +181,9 @@ int main(int argc, char * argv[])
   // Avalanche MC
   Garfield::AvalancheMC eaval;
   eaval.SetSensor(&sensor);
+#ifdef OLD_AV_MC
   eaval.EnableMagneticField();
+#endif
   //  const double distanceStep = 2.e-3; // cm
   //  eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
@@ -191,7 +193,9 @@ int main(int argc, char * argv[])
   Garfield::AvalancheMC iaval;
   iaval.SetSensor(&sensor);
   iaval.EnableSignalCalculation();
-  iaval.EnableMagneticField();  
+#ifdef OLD_AV_MC
+  iaval.EnableMagneticField();
+#endif
   // const double distanceStep = 2.e-3; // cm
   // iaval.SetDistanceSteps(distanceStep);
   double np = 1.e5;
@@ -241,7 +245,7 @@ int main(int argc, char * argv[])
 	  return 1;
 	}
       // if (!ok) return 0;
-      if( ok ) 
+      if( ok )
 	std::cout<<"OK"<<std::endl;
       else
       	{
@@ -256,9 +260,9 @@ int main(int argc, char * argv[])
       //--------------- final state -------------------------------
       double xf,yf,zf,tf,phif;
       int status;
-      
+
       if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
-      eaval.GetElectronEndpoint(0, 
+      eaval.GetElectronEndpoint(0,
 				xi, yi, zi, ti,
 				xf, yf, zf, tf,
 				status);
@@ -267,7 +271,7 @@ int main(int argc, char * argv[])
       else return 1; //break;
 
       std::cout<<ie<<")\tend @ ("<<xf<<","<<yf<<","<<zf<<") cm @ "<<tf<<" ns"<<std::endl;
-	
+
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
       assert(ti==0.0);
@@ -308,7 +312,7 @@ int main(int argc, char * argv[])
 	  // loss = edrift.GetLoss();
 	}
       else return 1;// break;
-      
+
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
       lorentz_correction *= TMath::RadToDeg();
@@ -322,7 +326,7 @@ int main(int argc, char * argv[])
 	{
 	  ss <<"\tsigma_t: "<<spread
 	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<std::endl;
-	  if( t_d != tf ) 
+	  if( t_d != tf )
 	    {
 	      std::cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<std::endl;
 	      ss<<"* tf:"<<tf<<std::endl;
@@ -338,7 +342,7 @@ int main(int argc, char * argv[])
 
       //------------- signal generation ---------------------------
       double xx=xf,yy=yf,rr=sqrt(xf*xf+yf*yf),zz=zf;
-      ok=false; 
+      ok=false;
       //      int att=0;
       while(!ok)
 	{
@@ -356,11 +360,11 @@ int main(int argc, char * argv[])
 
       ri+=Rstep;
     }
-  
+
   std::cout<<"END"<<std::endl;
   std::cout<<"Number of Clusters: "<<ie<<std::endl;
   fout<<"Number of Clusters: "<<ie<<std::endl;
-  
+
   TString cname;
   fname = TString::Format("Outsignals_R%1.3fcm_phi%1.4f_Z%2.1fcm.root",
 			  InitialRad,InitialPhi,InitialZed);
@@ -369,7 +373,7 @@ int main(int argc, char * argv[])
 
   //  // pads have different readout
   //  Sensor ROsens(sensor);
- 
+
   bool doconv=false;
   if( doconv )
     {
@@ -377,13 +381,13 @@ int main(int argc, char * argv[])
       // ROsens.SetTransferFunction(Hpads);
       // if( ROsens.ConvoluteSignals() ) cout<<"Pad readout succcess!!"<<endl;
       // else cout<<"Pad signal convolution unsuccesfull"<<endl;
-      
+
       // AWB Response Function
       sensor.SetTransferFunction(Hands);
       if( sensor.ConvoluteSignals() ) std::cout<<"AW readout succcess!!"<<std::endl;
       else std::cout<<"AW signal convolution unsuccesfull"<<std::endl;
     }
-  
+
   TString plot_signal_name;
   if( aw >= 0 )
     {

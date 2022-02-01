@@ -87,7 +87,7 @@ int main(int argc, char * argv[])
     return -47;
   TString garfdata = TString::Format("%s/Data/IonMobility_Ar+_Ar.txt",
 				     getenv("GARFIELD_HOME"));
-  if(!gas->LoadIonMobility(garfdata.Data())) 
+  if(!gas->LoadIonMobility(garfdata.Data()))
     return -48;
 
   TPC drift_cell(CathodeVoltage,AnodeVoltage,FieldVoltage);
@@ -105,17 +105,17 @@ int main(int argc, char * argv[])
     }
   else
     {
-      if( !drift_cell.SetSymmetries("rz") ) 
+      if( !drift_cell.SetSymmetries("rz") )
 	{
 	  std::cerr<<"set symm failed"<<std::endl;
 	  return -46;
 	}
       // set scale parameter to convert Gauss to Tesla (or to go to 0.65T later)
-      if( !drift_cell.ReadMagneticFieldMap(BfieldMap.Data(), MagneticField*1.e-4) ) 
+      if( !drift_cell.ReadMagneticFieldMap(BfieldMap.Data(), MagneticField*1.e-4) )
 	{
 	  std::cerr<<"READ B-map failed"<<std::endl;
 	  return -49;
-	} 
+	}
       std::cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<std::endl;
     }
   drift_cell.SetGas(gas);
@@ -151,7 +151,7 @@ int main(int argc, char * argv[])
 
   // My Cell
   // This canvas will be used to display the drift lines
-  TString ccname = TString::Format("avalancheline_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_initR%1.2fcm_initPhi%1.2frad_initZ%1.2fcm", 
+  TString ccname = TString::Format("avalancheline_Cathode%4.0fV_Anode%4.0fV_Field%3.0fV_initR%1.2fcm_initPhi%1.2frad_initZ%1.2fcm",
 				   CathodeVoltage,AnodeVoltage,FieldVoltage,r0,phi0,z0);
 
   TCanvas cc(ccname.Data(),ccname.Data(), 1400, 1400);
@@ -192,7 +192,9 @@ int main(int argc, char * argv[])
   // MC Avalanche
   Garfield::AvalancheMC iaval;
   iaval.SetSensor(&sensor);
+#ifdef OLD_AV_MC
   iaval.EnableMagneticField();
+#endif
   iaval.EnableSignalCalculation();
   const double dist_step = 2.e-4;// cm = 2 um
   iaval.SetDistanceSteps(dist_step);
@@ -206,7 +208,7 @@ int main(int argc, char * argv[])
   std::cerr<<"\nBEGIN"<<std::endl;
   sensor.ClearSignal();
   sensor.NewSignal();
-  
+
   std::cerr<<"AvalancheElectron:";
   //  cerr<<"Drift Electron RKF:";
   //  double z0=0., // cm
@@ -255,7 +257,7 @@ int main(int argc, char * argv[])
 	}
       double exf,eyf,ezf,etf,eef;
       exf=eyf=ezf=etf=eef=-1.;
-   
+
       iaval.SetIonSignalScalingFactor(double(ni)/Nions);
 
       std::cerr<<"Tracking "<<Nions<<" out of "<<eaval.GetNumberOfElectronEndpoints()<<" ions..."<<std::endl;
@@ -265,7 +267,7 @@ int main(int argc, char * argv[])
 	    xf,yf,zf,tf,ef;
 	  int status;
 	  double ei;
-	  eaval.GetElectronEndpoint(i, 
+	  eaval.GetElectronEndpoint(i,
 				    xi, yi, zi, ti, ei,
 				    xf, yf, zf, tf, ef,
 				    status);

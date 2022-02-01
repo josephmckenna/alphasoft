@@ -20,8 +20,8 @@
 using namespace std;
 using namespace Garfield;
 
-int main(int argc, char * argv[]) 
-{ 
+int main(int argc, char * argv[])
+{
   double InitialPhi = 0., // rad
     InitialZed = 0.; // cm
   string tracking="driftMC";
@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
   constexpr int nWires = 256;
   // Phi periodicity.
   const double sphi = 360. / double(nWires);
- 
+
   // Field wires.
   // Radius [cm]
   constexpr double rFW = 17.4;
@@ -104,8 +104,8 @@ int main(int argc, char * argv[])
   constexpr double tAW = 40.;
 
   // Add the wires.
-  for (int i = 0; i < nWires; ++i) 
-    { 
+  for (int i = 0; i < nWires; ++i)
+    {
       // Field wires.
       cmp.AddWire(rFW, i * sphi, dFW, vFW, "f", 2 * lZ);
       // Anode wires.
@@ -122,15 +122,15 @@ int main(int argc, char * argv[])
   constexpr double pitchZ = 0.4;
   constexpr int nRows = int(2 * lZ / pitchZ);
   std::cout << "Number of pad rows: " << nRows << std::endl;
-  for (int j = 0; j < nRows; ++j) 
+  for (int j = 0; j < nRows; ++j)
     {
       const double z0 = -lZ + j * pitchZ;
       const double z1 = z0 + pitchZ;
       std::string row = std::string(TString::Format("%03d", j).Data());
-      for (int i = 0; i < nSecs; ++i) 
+      for (int i = 0; i < nSecs; ++i)
   	{
   	  std::string sec = std::string(TString::Format("%02d", i).Data());
-  	  const double phi0 = i * pitchPhi * RadToDegree; 
+  	  const double phi0 = i * pitchPhi * RadToDegree;
   	  const double phi1 = phi0 + pitchPhi * RadToDegree;
   	  std::string ename = "pad" + row + "_" + sec;
   	  cmp.AddPixelOnPlaneR(rRO, phi0, phi1, z0, z1, ename, gap);
@@ -146,14 +146,14 @@ int main(int argc, char * argv[])
   if( plot ) {
     TString cname = TString::Format("Polar_%s_Signal",tracking.c_str());
     cDrift.SetName(cname);
-   
+
     cellView.SetCanvas(&cDrift);
     cellView.SetComponent(&cmp);
     cellView.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
 		     1.1 * rRO,  1.1 * rRO,  1.);
     cellView.EnableWireMarkers(false);
-    
-    
+
+
     // Construct object to visualise drift lines
     viewdrift.SetCanvas(&cDrift);
     viewdrift.SetArea(-1.1 * rRO, -1.1 * rRO, -1.,
@@ -173,7 +173,9 @@ int main(int argc, char * argv[])
   // Avalanche MC
   AvalancheMC eaval;
   eaval.SetSensor(&sensor);
+#ifdef OLD_AV_MC
   eaval.EnableMagneticField();
+#endif
   // const double distanceStep = 2.e-3; // cm
   // eaval.SetDistanceSteps(distanceStep);
   if(plot) eaval.EnablePlotting(&viewdrift);
@@ -212,7 +214,7 @@ int main(int argc, char * argv[])
 	  break;
 	}
 
-      if( !ok ) 
+      if( !ok )
 	{
 	  cerr<<tracking<<" FAILED"<<endl;
 	  --ie;
@@ -222,16 +224,16 @@ int main(int argc, char * argv[])
 
       double xf,yf,zf,tf,phif;
       int status;
-      
+
       if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
-	eaval.GetElectronEndpoint(0, 
+	eaval.GetElectronEndpoint(0,
 				  xi, yi, zi, ti,
 				  xf, yf, zf, tf,
 				  status);
       else if( !tracking.compare("driftRKF") )
 	edrift.GetEndPoint(xf,yf,zf,tf,status);
       else break;
-	
+
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
       assert(ti==0.0);
@@ -267,10 +269,10 @@ int main(int argc, char * argv[])
 	  loss = edrift.GetLoss();
 	}
       else break;
-      
+
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
-      else if( lorentz_correction > TMath::Pi() ) 
+      else if( lorentz_correction > TMath::Pi() )
 	lorentz_correction = TMath::TwoPi() - lorentz_correction;
       lorentz_correction *= TMath::RadToDeg();
 
@@ -284,7 +286,7 @@ int main(int argc, char * argv[])
 	{
 	  ss <<"\tsigma_t: "<<spread
 	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
-	  if( t_d != tf ) 
+	  if( t_d != tf )
 	    {
 	      cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<endl;
 	      ss<<"* tf:"<<tf<<endl;

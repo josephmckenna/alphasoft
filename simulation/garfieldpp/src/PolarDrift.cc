@@ -20,8 +20,8 @@
 using namespace std;
 using namespace Garfield;
 
-int main(int argc, char * argv[]) 
-{ 
+int main(int argc, char * argv[])
+{
   double InitialPhi = 0., // rad
     InitialZed = 0.; // cm
 
@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
   constexpr int nWires = 256;
   // Phi periodicity.
   const double sphi = 360. / double(nWires);
- 
+
   // Field wires.
   // Radius [cm]
   constexpr double rFW = 17.4;
@@ -92,7 +92,7 @@ int main(int argc, char * argv[])
   constexpr double tAW = 40.;
 
   cmp.AddWire(rFW, 0, dFW, vFW, "f", 2 * lZ, tFW);
-  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25); 
+  cmp.AddWire(rAW, 0.5 * sphi, dAW, vAW, "a", 2 * lZ, tAW, 19.25);
   cmp.AddReadout("a");
   cmp.SetPeriodicityPhi(sphi);
   //cmp.PrintCell();
@@ -101,7 +101,7 @@ int main(int argc, char * argv[])
   TCanvas cDrift;
   TString cname = TString::Format("Polar_%s_Signal",tracking.c_str());
   cDrift.SetName(cname);
-   
+
   ViewCell cellView;
   cellView.SetCanvas(&cDrift);
   cellView.SetComponent(&cmp);
@@ -131,7 +131,9 @@ int main(int argc, char * argv[])
   // Avalanche MC
   AvalancheMC eaval;
   eaval.SetSensor(&sensor);
+#ifdef OLD_AV_MC
   eaval.EnableMagneticField();
+#endif
   // const double distanceStep = 2.e-3; // cm
   // eaval.SetDistanceSteps(distanceStep);
   eaval.EnablePlotting(&viewdrift);
@@ -170,7 +172,7 @@ int main(int argc, char * argv[])
 	  break;
 	}
 
-      if( !ok ) 
+      if( !ok )
 	{
 	  cerr<<tracking<<" FAILED"<<endl;
 	  --ie;
@@ -184,16 +186,16 @@ int main(int argc, char * argv[])
 
       double xf,yf,zf,tf,phif;
       int status;
-      
+
       if( !tracking.compare("driftMC") || !tracking.compare("avalMC") )
-	eaval.GetElectronEndpoint(0, 
+	eaval.GetElectronEndpoint(0,
 				  xi, yi, zi, ti,
 				  xf, yf, zf, tf,
 				  status);
       else if( !tracking.compare("driftRKF") )
 	edrift.GetEndPoint(xf,yf,zf,tf,status);
       else break;
-	
+
       assert(TMath::Abs(TMath::Sqrt(xi*xi+yi*yi)-ri)<2.e-3);
       assert(zi==InitialZed);
       assert(ti==0.0);
@@ -229,10 +231,10 @@ int main(int argc, char * argv[])
 	  loss = edrift.GetLoss();
 	}
       else break;
-      
+
       double lorentz_correction = (phif-InitialPhi);
       if( lorentz_correction < 0. ) lorentz_correction += TMath::TwoPi();
-      else if( lorentz_correction > TMath::Pi() ) 
+      else if( lorentz_correction > TMath::Pi() )
 	lorentz_correction = TMath::TwoPi() - lorentz_correction;
       lorentz_correction *= TMath::RadToDeg();
 
@@ -246,7 +248,7 @@ int main(int argc, char * argv[])
 	{
 	  ss <<"\tsigma_t: "<<spread
 	     <<" ns\tloss: "<<loss<<"\tgain: "<<gain<<endl;
-	  if( t_d != tf ) 
+	  if( t_d != tf )
 	    {
 	      cerr<<"Drift Time "<<t_d<<" ERROR: "<<tf<<endl;
 	      ss<<"* tf:"<<tf<<endl;
@@ -269,7 +271,7 @@ int main(int argc, char * argv[])
       cout<<"Plot Driftlines"<<endl;
       viewdrift.Plot(true,true);
       cellView.Plot2d();
-      
+
       TString cname = TString::Format("%s/polar_drift/drift_plots/PolarDrift_phi%1.4f_Z%2.1fcm.png",getenv("GARFIELDPP"),
 				      InitialPhi,InitialZed);
       cDrift.SaveAs(cname.Data());
@@ -279,4 +281,3 @@ int main(int argc, char * argv[])
 
   return 0;
 }
-
