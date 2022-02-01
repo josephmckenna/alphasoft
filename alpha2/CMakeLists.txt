@@ -54,7 +54,7 @@ list(REMOVE_ITEM MINI_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 # Prepending 'A2' is a hack to stop conflicts with the objects already build in $AGRELEASE/ana/
 foreach ( L ${MINI_LIBS})
-   message("L:" ${L})
+   #message("L:" ${L})
    add_library(A2${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
    target_include_directories(A2${L} PUBLIC include)
    #RecoFlow.h needs to move out of the ana path
@@ -67,7 +67,7 @@ endforeach()
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
-    message("alpha2 binary: " ${bin})
+    #message("alpha2 binary: " ${bin})
     
     #message(List file: ${LIST_FILE})
     execute_process( COMMAND grep -v "\#" ${LIST_FILE} 

@@ -53,7 +53,7 @@ list(REMOVE_DUPLICATES MINI_LIBS)
 list(REMOVE_ITEM MINI_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 foreach ( L ${MINI_LIBS})
-   message("L:" ${L})
+   #message("L:" ${L})
    add_library(${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
    target_include_directories(${L} PUBLIC include)
    target_link_libraries(${L} PUBLIC ${AG_LINK_LIBS})
@@ -64,7 +64,7 @@ endforeach()
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
-    message("agana binary: " ${bin})
+    #message("agana binary: " ${bin})
     
     #message(List file: ${LIST_FILE})
     execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
