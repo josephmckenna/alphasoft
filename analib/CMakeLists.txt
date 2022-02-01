@@ -39,6 +39,8 @@ endif()
 
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 
+target_include_directories(analib PUBLIC include)
+
 if(BUILD_AG)
    target_link_libraries(analib PUBLIC agtpc)
 endif()

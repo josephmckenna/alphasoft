@@ -22,9 +22,46 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
+# ALPHA 2 libraries
 if(BUILD_A2)
   set(A2_LINK_LIBS alpha2 analib GEM)
 endif()
+
+
+#set(MINILIBS "")
+foreach( LIST_FILE ${BINS} )
+   
+    #message(List file: ${LIST_FILE})
+    execute_process( COMMAND grep -v "\#" ${LIST_FILE} 
+                     OUTPUT_VARIABLE MODULES )
+    #Clean up any strange formatting choices
+    string( REPLACE "\n" " " MODULES ${MODULES} )
+    string( REPLACE "\t" " " MODULES ${MODULES} )
+    #.o files come from .cxx files... cmake wants this
+    string( REPLACE ".o" "" MODULES ${MODULES} )
+
+    #Turn string into list
+    separate_arguments(MODULES)
+    #Prepend path to source files
+    #list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+    foreach ( MODULE ${MODULES})
+       list(APPEND MINI_LIBS ${MODULE}) 
+    endforeach()
+endforeach( LIST_FILE ${BINS} )
+
+list(REMOVE_DUPLICATES MINI_LIBS)
+list(REMOVE_ITEM MINI_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+
+# Prepending 'A2' is a hack to stop conflicts with the objects already build in $AGRELEASE/ana/
+foreach ( L ${MINI_LIBS})
+   message("L:" ${L})
+   add_library(A2${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
+   target_include_directories(A2${L} PUBLIC include)
+   #RecoFlow.h needs to move out of the ana path
+   target_include_directories(A2${L} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
+   target_link_libraries(A2${L} PUBLIC ${A2_LINK_LIBS})
+endforeach()
+
 
 #message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
@@ -39,40 +76,33 @@ foreach( LIST_FILE ${BINS} )
     string( REPLACE "\n" " " MODULES ${MODULES} )
     string( REPLACE "\t" " " MODULES ${MODULES} )
     #.o files come from .cxx files... cmake wants this
-    string( REPLACE ".o" ".cxx" MODULES ${MODULES} )
+    string( REPLACE ".o" "" MODULES ${MODULES} )
 
     #Turn string into list
     separate_arguments(MODULES)
-    #Prepend path to source files
-    list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
-    add_executable( ${bin} ${MODULES} )
+    file(WRITE ${CMAKE_BINARY_DIR}/${bin}.cpp "")
+    add_executable( ${bin} ${CMAKE_BINARY_DIR}/${bin}.cpp)
     
-    add_dependencies(${bin} alpha2 analib GEM)
 
-    target_compile_definitions(${bin} PUBLIC ${ROOT_CCX_FLAGS} HAVE_ROOT HAVE_ROOT_HTTP HAVE_THTTP_SERVER)
-
-    # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
-    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/a2lib/include)
-    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/recolib/include)
-    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
-    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
-    target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/libGEM/include)
-    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
 
     if( MIDAS_FOUND )
       link_directories(${bin} PUBLIC ${MIDAS_LIBRARY_DIRS})
       target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
     endif()
-    
-    target_link_libraries( ${bin} ${A2_LINK_LIBS}
+
+    # A2 is a hack to not conflict with objects built by $AGRELEASE/ana... see above
+    list(TRANSFORM MODULES PREPEND A2)
+    list(REMOVE_ITEM MODULES A2)
+    target_link_libraries(${bin} PUBLIC ${MODULES})
+
+    target_link_libraries( ${bin} PUBLIC ${A2_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
                            ${ROOT_LIBRARIES}
                            ${ZLIB_LIBRARIES}
                            manalyzer manalyzer_main
-                           ${MIDAS_LIBRARIES} ) 
+                           ${MIDAS_LIBRARIES})# ${MODULES}) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )
