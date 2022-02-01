@@ -14,6 +14,9 @@
 
 #include "AnalysisFlow.h"
 
+
+#include <array>
+
 template<typename T>
 class PointerRecycler
 {

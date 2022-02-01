@@ -10,7 +10,7 @@
 #include <vector>
 #include <iostream>
 #include "assert.h"
-
+#include <array>
 
 #include "TSISChannel.h"
 
@@ -20,7 +20,7 @@ class TSISBufferEvent
 {
    public:
       int fSISModule;
-      std::array<uint32_t,NUM_SIS_CHANNELS> fCounts;
+      std::array<uint32_t,NUM_SIS_CHANNELS> fCounts = {0};
       TSISBufferEvent(const int mod, const uint32_t* data): fSISModule(mod)
       {
          std::copy(data, data + NUM_SIS_CHANNELS,fCounts.begin());
