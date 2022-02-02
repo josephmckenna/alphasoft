@@ -212,7 +212,6 @@ get_submodule(libGEM)
 add_subdirectory(libGEM)
 
 get_submodule(chronobox_software)
-add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
@@ -220,6 +219,7 @@ add_subdirectory(rootUtils)
 
 #AG libraries
 if (BUILD_AG)
+   add_subdirectory(aglib)
    add_subdirectory(recolib)
    get_submodule(agana)
    add_subdirectory(agana)
@@ -240,6 +240,9 @@ if (BUILD_A2)
    add_subdirectory(a2lib)
    add_subdirectory(alpha2)
 endif (BUILD_A2)
+
+#Depends on aglib and a2lib
+add_subdirectory(analib)
 
 if (BUILD_A2_SIM)
    add_subdirectory(simulation/a2mc)

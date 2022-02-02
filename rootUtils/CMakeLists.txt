@@ -8,7 +8,10 @@ include_directories(
    ${CMAKE_SOURCE_DIR}/libGEM/include
    ${CMAKE_SOURCE_DIR}/analib/include
    ${CMAKE_SOURCE_DIR}/recolib/include
-   ${CMAKE_SOURCE_DIR}/a2lib/include)
+   ${CMAKE_SOURCE_DIR}/a2lib/include
+   ${CMAKE_SOURCE_DIR}/aglib/include
+   )
+      
    
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h)
 ROOT_GENERATE_DICTIONARY(G__rootUtils ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
@@ -25,7 +28,7 @@ target_include_directories( rootUtils
 			    ${CMAKE_SOURCE_DIR}/analib/include
 			    ${CMAKE_SOURCE_DIR}/a2lib/include
 			    )
-target_link_libraries(rootUtils PUBLIC analib GEM ${ROOT_LIBRARIES})
+target_link_libraries(rootUtils PUBLIC analib GEM TreePlayer)
 
 if(BUILD_A2)
    target_link_libraries(rootUtils PUBLIC alpha2)

@@ -10,7 +10,7 @@ class TSVDQODIntegrator: public TSVD_QOD
    std::vector <double> WindowStart;
    std::vector <double> WindowStop;
    std::vector <int>    Runs;
-   int VF48Events=0;
+   int fVF48Events=0;
    TH1I* NRawHits_hist;     int NRawHitsBins=1000;
    TH1I* PRawHits_hist;     int PRawHitsBins=1000;
    TH1I* NHits_hist;        int NHitsBins=1000;
@@ -105,20 +105,20 @@ class TSVDQODIntegrator: public TSVD_QOD
       }
       return TotalTime;
    }
-   double VF48EventRate()         { return (double)VF48Events         / TotalRunTime(); }
+   double VF48EventRate()         { return (double)fVF48Events         / TotalRunTime(); }
    double CosmicTracksRate()      { return (double)CosmicTracks      / TotalRunTime(); }
    double ProjectedVerticesRate() { return (double)ProjectedVertices / TotalRunTime(); }
    double NVerticesRate()         { return (double)NVertices         / TotalRunTime(); }
    double NPassedCutsRate()       { return (double)NPassedCuts       / TotalRunTime(); }
    
-   int GetNEvent() { return VF48Events; }
-   double NRawHitsMean()          { return (double)NRawHits          / VF48Events; }
-   double PRawHitsMean()          { return (double)PRawHits          / VF48Events; }
-   double NHitsMean()             { return (double)NHits             / VF48Events; }
-   double NTracksMean()           { return (double)NTracks           / VF48Events; }
+   int GetNEvent() { return fVF48Events; }
+   double NRawHitsMean()          { return (double)NRawHits          / fVF48Events; }
+   double PRawHitsMean()          { return (double)PRawHits          / fVF48Events; }
+   double NHitsMean()             { return (double)NHits             / fVF48Events; }
+   double NTracksMean()           { return (double)NTracks           / fVF48Events; }
 
-   double NVerticesEfficiency()   { return (double)NVertices         / VF48Events; }
-   double NPassedCutsEfficiency() { return (double)NPassedCuts       / VF48Events; }
+   double NVerticesEfficiency()   { return (double)NVertices         / fVF48Events; }
+   double NPassedCutsEfficiency() { return (double)NPassedCuts       / fVF48Events; }
    
    double GetXVertMean();
    double GetYVertMean();

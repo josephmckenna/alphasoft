@@ -5,7 +5,7 @@ project(agtpc)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/agana)
-include_directories(${CMAKE_SOURCE_DIR}/analib/include)
+include_directories(${CMAKE_SOURCE_DIR}/aglib/include)
 include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
 
@@ -22,11 +22,25 @@ ROOT_GENERATE_DICTIONARY(G__agtpc ${LINK_HEADER_FILES} LINKDEF RecoLinkDef.hh)
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 add_library(agtpc SHARED ${LIBRARY_SOURCES} G__agtpc)
 target_include_directories(agtpc PUBLIC include)
-target_link_libraries(agtpc ${ROOT_LIBRARIES})
+target_link_libraries(agtpc PUBLIC 
+   Matrix # TMatrixBase
+   Spectrum # TSpectrum
+   MathMore # ROOT::Math::Interpolator
+   Core # TObject, _gErrorIgnoreLevel, _gInterpreterMutex
+   Graf3d # TPolyLine3D
+   Hist # TF1, TFitResultPtr
+   MathCore # Math::MinimizerOptions
+   RIO # TFile
+   Physics # TVector3
+   )
 
 if( MINUIT2TRACK )
-  target_compile_definitions(agtpc PUBLIC __MINUIT2FIT__)
-  message(STATUS "${PROJECT_NAME}: Using Minuit2")
+    target_compile_definitions(agtpc PUBLIC __MINUIT2FIT__)
+    message(STATUS "${PROJECT_NAME}: Using Minuit2")
+    target_link_libraries(agtpc PUBLIC Minuit2)
+else()
+    message(STATUS "${PROJECT_NAME}: Using Minuit. Yuk")    
+    target_link_libraries(agtpc PUBLIC Minuit)
 endif( MINUIT2TRACK )
 
 install(TARGETS agtpc DESTINATION lib)

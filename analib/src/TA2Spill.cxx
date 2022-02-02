@@ -1,105 +1,6 @@
 #include "TA2Spill.h"
 
 #ifdef BUILD_A2
-ClassImp(TA2SpillScalerData)
-/*TA2SpillScalerData::TA2SpillScalerData()
-{
-
-}*/
-
-TA2SpillScalerData::~TA2SpillScalerData()
-{
-
-}
-
-TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels):
-   TSpillScalerData(n_scaler_channels)
-{
-
-}
-
-TA2SpillScalerData::TA2SpillScalerData(const TA2SpillScalerData& a): TSpillScalerData(a)
-{
-
-}
-
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d):
-   TA2SpillScalerData()
-{
-   for (int i=0; i<NUM_SIS_MODULES; i++)
-   {
-      const TSISEvent& e = d->IntegratedSISCounts[i];
-      for (int j=i*NUM_SIS_CHANNELS; j<(i+1)*NUM_SIS_CHANNELS; j++)
-      {
-         DetectorCounts.at(j) = e.GetCountsInChannel(j);
-         ScalerFilled[j]=true;
-      }
-   }
-
-   if (d->StartDumpMarker)
-      StartTime=d->StartDumpMarker->fRunTime;
-   if (d->StopDumpMarker)
-      StopTime=d->StopDumpMarker->fRunTime;
-
-   FirstVertexEvent  =d->IntegratedSVDCounts.FirstVF48Event;
-   LastVertexEvent   =d->IntegratedSVDCounts.LastVF48Event;
-   VertexEvents      =d->IntegratedSVDCounts.VF48Events;
-   Verticies         =d->IntegratedSVDCounts.Verticies;
-   PassCuts          =d->IntegratedSVDCounts.PassCuts;
-   PassMVA           =d->IntegratedSVDCounts.PassMVA;
-   VertexFilled      =true;
-}
-
-ClassImp(TA2SpillSequencerData)
-
-TA2SpillSequencerData::TA2SpillSequencerData():
-   TSpillSequencerData()
-{
-}
-TA2SpillSequencerData::~TA2SpillSequencerData()
-{
-}
-TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d)
-{
-   fSequenceNum= d->StartDumpMarker->fSequencerID;
-   fDumpID     = d->dumpID;
-   if ( fSequenceNum < 0 )
-      fSeqName = "Sequencer Unknown";
-   else
-      fSeqName    = SeqNames.at(fSequenceNum);
-   fStartState = d->StartDumpMarker->fonState;
-   fStopState  = d->StopDumpMarker->fonState;
-}
-
-void TA2SpillScalerData::Print()
-{
-   std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
-   std::cout<<"SISFilled: ";
-   for (size_t i=0; i<ScalerFilled.size(); i++)
-   {
-      std::cout<<ScalerFilled.at(i);
-   }
-   std::cout  << " SVDFilled: "<<VertexFilled <<std::endl;
-   int sum=0;
-   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
-      sum+=DetectorCounts[i];
-   std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VertexEvents<<std::endl;
-   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
-   {
-      std::cout<<DetectorCounts[i]<<"\t";
-   }
-}
-
-
-TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a):
-   TSpillSequencerData(a)
-{
-   fSequenceNum  =a.fSequenceNum;
-   fDumpID       =a.fDumpID;
-   fSeqName      =a.fSeqName;
-   fStartState   =a.fStartState;
-   fStopState    =a.fStopState;
-}
 
 ClassImp(TA2Spill)
 
@@ -125,10 +26,10 @@ TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...):
    va_end(args);
 }
 
-TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
-   TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
+TA2Spill::TA2Spill(int runno,TDumpMarkerPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
+   TSpill(runno, d->fStartDumpMarker->fMidasTime, d->fStartDumpMarker->fDescription.c_str())
 {
-   if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
+   if (d->fStartDumpMarker && d->fStopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
    SeqData = new TA2SpillSequencerData(d);
    //Print();
@@ -261,9 +162,9 @@ TString TA2Spill::Content(const std::vector<TSISChannel> sis_channels)
    {
       char buf[200];
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
-                 ScalerData->StartTime,
-                 ScalerData->StopTime,
-                 ScalerData->StopTime-ScalerData->StartTime
+                 ScalerData->fStartTime,
+                 ScalerData->fStopTime,
+                 ScalerData->fStopTime-ScalerData->fStartTime
                  ); // timestamps 
       log += buf;
    }
@@ -301,7 +202,7 @@ TString TA2Spill::Content(const std::vector<TSISChannel> sis_channels)
          int counts=-1;
          //If valid channel number:
          if (chan.IsValid())
-            counts=ScalerData->DetectorCounts[chan.toInt()]; //toInt is a pretty unclean / unsafe solution. Look for [] operator overload
+            counts=ScalerData->fDetectorCounts[chan.toInt()]; //toInt is a pretty unclean / unsafe solution. Look for [] operator overload
          sprintf(buf,"%9d",counts);
          log += buf;
          if (units.size())
@@ -309,9 +210,9 @@ TString TA2Spill::Content(const std::vector<TSISChannel> sis_channels)
          else
             log += " ";
       }
-      sprintf(buf,"%9d ",ScalerData->PassCuts);
+      sprintf(buf,"%9d ",ScalerData->fPassCuts);
       log += buf;
-      sprintf(buf,"%9d ",ScalerData->PassMVA);
+      sprintf(buf,"%9d ",ScalerData->fPassMVA);
       log += buf;
       log += "";
    }
@@ -335,18 +236,18 @@ int TA2Spill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
    sqlstatement+= ",";
    sqlstatement+= Unixtime;
    sqlstatement+= ",";
-   sqlstatement+= ScalerData->StartTime;
+   sqlstatement+= ScalerData->fStartTime;
    sqlstatement+= ",";
-   sqlstatement+= ScalerData->StopTime;
+   sqlstatement+= ScalerData->fStopTime;
    for (int i=0;i<64; i++)
    {
       sqlstatement+= ",";
-      sqlstatement+=ScalerData->DetectorCounts[i];
+      sqlstatement+=ScalerData->fDetectorCounts[i];
    }
    sqlstatement+=",";
-   sqlstatement+=ScalerData->PassCuts;
+   sqlstatement+=ScalerData->fPassCuts;
    sqlstatement+=",";
-   sqlstatement+=ScalerData->PassMVA;
+   sqlstatement+=ScalerData->fPassMVA;
    sqlstatement+=");";
    std::cout<<"HELLO!!\t"<<sqlstatement<<std::endl;
    

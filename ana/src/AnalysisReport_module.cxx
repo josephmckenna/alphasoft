@@ -21,7 +21,7 @@
 #include "RecoFlow.h"
 #endif
 
-#include "TAnalysisReport.h"
+#include "TAGAnalysisReport.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;

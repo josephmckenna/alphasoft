@@ -224,8 +224,8 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills)
    {
       if (spill.ScalerData)
       {
-         minTime.push_back(spill.ScalerData->StartTime);
-         maxTime.push_back(spill.ScalerData->StopTime);
+         minTime.push_back(spill.ScalerData->fStartTime);
+         maxTime.push_back(spill.ScalerData->fStopTime);
       }
       else
       {
@@ -257,7 +257,7 @@ void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills)
 void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
 {
    //Something smarter for the future?
-   //TSVDQODIntegrator SVDCounts(TA2RunQOD* q,tmin[0], tmax[0]);
+   //TSVDQODIntegrator TDumpMarkerVertexCounts(TA2RunQOD* q,tmin[0], tmax[0]);
    
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...

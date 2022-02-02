@@ -332,7 +332,7 @@ public:
    {
       hNHits->Fill(barEvt->GetBars().size(),tpc_points.size());
       if (tpc_points.size()==0) return;
-      for (BarHit* hit: barEvt->GetBars())
+      for (TBarHit* hit: barEvt->GetBars())
          {
             int bar = hit->GetBar();
             if (bar<16) continue; // Cuts out the first 16 bars for now
@@ -367,7 +367,7 @@ public:
 
    void FillHistos(TBarEvent* barEvt)
    {
-      for (BarHit* hit: barEvt->GetBars())
+      for (TBarHit* hit: barEvt->GetBars())
          {
             int bar = hit->GetBar();
             double topamp = hit->GetTopHit()->GetAmp();
@@ -396,7 +396,7 @@ public:
 
    void TimeOfFlight(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
    {
-      std::vector<BarHit*> bars = barEvt->GetBars();
+      std::vector<TBarHit*> bars = barEvt->GetBars();
       int nbv = bars.size();
       int ntpc = tpc_points.size();
       int case_name = -1;
@@ -412,8 +412,8 @@ public:
                {
                   if (j==i) continue;
 
-                  BarHit* hit1;
-                  BarHit* hit2;
+                  TBarHit* hit1;
+                  TBarHit* hit2;
                   if (Ordered(bars.at(i),bars.at(j))) { hit1=bars.at(i); hit2=bars.at(j); }
                   else { hit1=bars.at(j); hit2=bars.at(i); }
 
@@ -526,11 +526,11 @@ public:
       //return std::min(TMath::Abs(p1.DeltaPhi(p2)),TMath::Abs(p2.DeltaPhi(p1)));
       return p2.DeltaPhi(p1);
    }
-   double GetTOF(BarHit* hit1, BarHit* hit2)
+   double GetTOF(TBarHit* hit1, TBarHit* hit2)
    {
       return hit2->GetAverageTDCTime() - hit1->GetAverageTDCTime();
    }
-   TVector3 Get3VectorBV(BarHit* hit)
+   TVector3 Get3VectorBV(TBarHit* hit)
    {
       double xbv,ybv;
       hit->GetXY(xbv,ybv);
@@ -544,19 +544,19 @@ public:
       TVector3 diff = p2-p1;
       return diff.Mag();
    }
-   double GetGeometricDistanceTPC(BarHit* hit1, BarHit* hit2)
+   double GetGeometricDistanceTPC(TBarHit* hit1, TBarHit* hit2)
    {
       TVector3 p1 = hit1->GetTPC();
       TVector3 p2 = hit2->GetTPC();
       return GetGeometricDistance(p1,p2);
    }
-   double GetGeometricDistanceBV(BarHit* hit1, BarHit* hit2)
+   double GetGeometricDistanceBV(TBarHit* hit1, TBarHit* hit2)
    {
       TVector3 p1 = Get3VectorBV(hit1);
       TVector3 p2 = Get3VectorBV(hit2);
       return GetGeometricDistance(p1,p2);
    }
-   bool Ordered(BarHit* hit1, BarHit* hit2)
+   bool Ordered(TBarHit* hit1, TBarHit* hit2)
    {
    /*   double phi1 = hit1->GetPhi();
       double phi2 = hit2->GetPhi();

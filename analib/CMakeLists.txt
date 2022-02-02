@@ -7,47 +7,28 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
+include_directories(${CMAKE_SOURCE_DIR}/aglib/include)
 include_directories(${CMAKE_SOURCE_DIR}/a2lib/include)
 
 file(GLOB LINK_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include include/*.h include/*.hh)
+list( REMOVE_ITEM LINK_HEADER_FILES "AnalysisFlow.h")
 ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 # Create a shared library with geneated dictionary
-set(LIBRARY_SOURCES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer2.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TAnalysisReport.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoChannel.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoChannelName.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Dump.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSeq_Event.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerDriver.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSequencerState.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Sequencer_Channels.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TSpill.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TInfoSpill.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLabVIEWEvent.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/unpack_cb.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/store_cb.cxx
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TChronoBoardCounter.cxx
-    )
-if(BUILD_AG)
-  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TAGSpill.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreHelix.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TStoreLine.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/TBarEvent.cxx ${CMAKE_CURRENT_SOURCE_DIR}/src/fitBV.cxx)
-endif()
-if(BUILD_A2)
-  list(APPEND LIBRARY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/TA2Spill.cxx )
-endif()
+
+file(GLOB LIBRARY_SOURCES src/*.cxx)
 
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 
 target_include_directories(analib PUBLIC include)
 
 if(BUILD_AG)
-   target_link_libraries(analib PUBLIC agtpc)
+   target_link_libraries(analib PUBLIC aglib)
 endif()
 if(BUILD_A2)
-   target_link_libraries(analib PUBLIC sqlite3)
+   target_link_libraries(analib PUBLIC alpha2) # sqlite and TSISEvent
 endif()
-target_link_libraries(analib PUBLIC manalyzer XMLParser Core RIO Hist)
+target_link_libraries(analib PUBLIC manalyzer Tree XMLParser Core RIO Hist)
 add_dependencies(analib gitinfo)
 
 install(TARGETS analib DESTINATION lib)

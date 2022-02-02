@@ -344,12 +344,12 @@ public:
       }
      
       
-      std::vector<EndHit*> endhits = barEvt->GetEndHits();
+      std::vector<TBarEndHit*> endhits = barEvt->GetEndHits();
       if (endhits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
          return flow;
       }
-      std::vector<SimpleTdcHit*> tdchits = barEvt->GetTdcHits();
+      std::vector<TBarSimpleTdcHit*> tdchits = barEvt->GetTdcHits();
       if (tdchits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no tdc hits\n");
          return flow;
@@ -361,7 +361,7 @@ public:
       TdcHistos(endhits);
       DirectTdcHistos(tdchits);
 
-      std::vector<BarHit*> barhits = barEvt->GetBars();
+      std::vector<TBarHit*> barhits = barEvt->GetBars();
       if (barhits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no barhits\n");
          return flow;
@@ -374,10 +374,10 @@ public:
       return flow;
    }
 
-   void AdcHistos(const std::vector<EndHit*> endhits)
+   void AdcHistos(const std::vector<TBarEndHit*> endhits)
    {
       hAdcMultiplicity->Fill(endhits.size());
-      for (EndHit* endhit: endhits) {
+      for (TBarEndHit* endhit: endhits) {
          int bar = endhit->GetBar();
          hAdcOccupancy->Fill(bar);
          hAdcTime->Fill(endhit->GetADCTime());
@@ -387,30 +387,30 @@ public:
          hAdcFitAmp->Fill(endhit->GetAmp());
          hAdcFitAmp2d->Fill(bar,endhit->GetAmp());
          hAdcFitting->Fill(endhit->GetAmpRaw(),endhit->GetAmp());
-         for (EndHit* endhit2: endhits) {
+         for (TBarEndHit* endhit2: endhits) {
             hAdcCorrelation->Fill(bar,endhit2->GetBar());
          }
       }
    }
 
-   void TdcHistos(const std::vector<EndHit*> endhits)
+   void TdcHistos(const std::vector<TBarEndHit*> endhits)
    {
       double ch0 = 0;
-      for (EndHit* endhit: endhits) {
+      for (TBarEndHit* endhit: endhits) {
          if (!(endhit->IsTDCMatched())) continue;
          int end = endhit->GetBar();
          if (end==pulser_reference_chan) ch0 = endhit->GetTDCTime();
          hAdcTdcOccupancy->Fill(end);
       }
       if (fFlags->fPulser and ch0!=0) {
-         for (EndHit* endhit: endhits) {
+         for (TBarEndHit* endhit: endhits) {
             if (endhit->GetBar()==0) continue;
             hTdcTimeVsCh0->Fill(1e9*(endhit->GetTDCTime()-ch0));
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
          }
       }
       if (fFlags->fPulser and !(fFlags->fProtoTOF)) {
-         for (EndHit* endhit: endhits) {
+         for (TBarEndHit* endhit: endhits) {
             int end = endhit->GetBar();
             if (end==pulser_reference_chan) continue;
             //if (end%8==0 and end<63) continue;
@@ -421,13 +421,13 @@ public:
       }
    }
 
-   void DirectTdcHistos(const std::vector<SimpleTdcHit*> tdchits)
+   void DirectTdcHistos(const std::vector<TBarSimpleTdcHit*> tdchits)
    {
       int max_chan=128;
       if (fFlags->fProtoTOF) max_chan=16;
       std::vector<int> counts(max_chan,0);
       std::vector<double> t0(max_chan,0);
-      for (const SimpleTdcHit* tdchit: tdchits) {
+      for (const TBarSimpleTdcHit* tdchit: tdchits) {
          int bar = tdchit->GetBar();
          double time = tdchit->GetTime();
          hTdcOccupancy->Fill(bar);
@@ -439,7 +439,7 @@ public:
          if (t0[bar]==0) t0[bar] = time;
          if (!(fFlags->fProtoTOF)) {
             bool matched = false;
-            for (SimpleTdcHit* tdchit2: tdchits) {
+            for (TBarSimpleTdcHit* tdchit2: tdchits) {
                if (tdchit2->GetBar()!=(bar+64) and tdchit2->GetBar()!=(bar-64)) continue;
                double time2 = tdchit2->GetTime();
                if (TMath::Abs(time-time2)>50*1e-9) continue;
@@ -463,14 +463,14 @@ public:
       hTdcMultiplicity->Fill(bars);
    }
 
-   void BarHistos(const std::vector<BarHit*> barhits)
+   void BarHistos(const std::vector<TBarHit*> barhits)
    {
-      for (BarHit* barhit: barhits) {
+      for (TBarHit* barhit: barhits) {
          hBarOccupancy->Fill(barhit->GetBar());
       }
       if (fFlags->fPulser) return;
       hBarMultiplicity->Fill(barhits.size());
-      for (BarHit* barhit: barhits) {
+      for (TBarHit* barhit: barhits) {
          int bar = barhit->GetBar();
          hTopBotDiff->Fill(1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
          hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
@@ -480,14 +480,14 @@ public:
             if (fFlags->fPrint) printf("BscHistoModule: weird bar hit: bar %d zed %f top %f bot %f diff %f \n",bar,barhit->GetTDCZed(),barhit->GetTDCTop(),barhit->GetTDCBot(),barhit->GetTDCTop()-barhit->GetTDCBot());
          }
          if (!(fFlags->fProtoTOF)) {
-            for (BarHit* barhit2: barhits) {
+            for (TBarHit* barhit2: barhits) {
                hBarCorrelation->Fill(bar,barhit2->GetBar());
             }
          }
       }
    }
 
-   void TOFHistos(const std::vector<BarHit*> barhits)
+   void TOFHistos(const std::vector<TBarHit*> barhits)
    {
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
@@ -511,8 +511,8 @@ public:
          }
       }
       if (!(fFlags->fProtoTOF)) {
-         for (BarHit* barhit: barhits) {
-            for (BarHit* barhit2: barhits) {
+         for (TBarHit* barhit: barhits) {
+            for (TBarHit* barhit2: barhits) {
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
                if (TOF==0) continue;
                hNBarTOF->Fill(TOF);

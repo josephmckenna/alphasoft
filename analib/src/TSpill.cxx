@@ -1,140 +1,5 @@
 #include "TSpill.h"
 
-ClassImp(TSpillScalerData)
-TSpillScalerData::TSpillScalerData()
-{
-   StartTime         =-1;
-   StopTime          =-1;
-   FirstVertexEvent  =-1;
-   LastVertexEvent   =-1;
-   VertexEvents      =-1;
-   Verticies         =0;
-   PassCuts          =0;
-   PassMVA           =0;
-   VertexFilled      =false;
-}
-
-TSpillScalerData::~TSpillScalerData()
-{
-
-}
-
-TSpillScalerData::TSpillScalerData(int n_scaler_channels) : DetectorCounts(n_scaler_channels,0),ScalerFilled(n_scaler_channels,0)
-{
-   StartTime         =-1;
-   StopTime          =-1;
-   FirstVertexEvent  =-1;
-   LastVertexEvent   =-1;
-   VertexEvents      =-1;
-   Verticies         =0;
-   PassCuts          =0;
-   PassMVA           =0;
-   VertexFilled      =false;
-}
-
-TSpillScalerData::TSpillScalerData(const TSpillScalerData& a) : TObject(a)
-{
-   StartTime         =a.StartTime;
-   StopTime          =a.StopTime;
-   DetectorCounts    =a.DetectorCounts;
-   ScalerFilled      =a.ScalerFilled;
-   
-   FirstVertexEvent  =a.FirstVertexEvent;
-   LastVertexEvent   =a.LastVertexEvent;
-   VertexEvents      =a.VertexEvents;
-   Verticies         =a.Verticies;
-   PassCuts          =a.PassCuts;
-   PassMVA           =a.PassMVA;
-   VertexFilled      =a.VertexFilled;
-}
-
-TSpillScalerData& TSpillScalerData::operator=(const TSpillScalerData& rhs)
-{
-   if (this == &rhs)
-      return *this;
-   StartTime         =rhs.StartTime;
-   StopTime          =rhs.StopTime;
-   DetectorCounts    =rhs.DetectorCounts;
-   ScalerFilled      =rhs.ScalerFilled;
-   
-   FirstVertexEvent  =rhs.FirstVertexEvent;
-   LastVertexEvent   =rhs.LastVertexEvent;
-   VertexEvents      =rhs.VertexEvents;
-   Verticies         =rhs.Verticies;
-   PassCuts          =rhs.PassCuts;
-   PassMVA           =rhs.PassMVA;
-   VertexFilled      =rhs.VertexFilled;
-   return *this;
-}
-
-
-bool TSpillScalerData::Ready(bool have_vertex_detector)
-{
-   bool SomeScalerFilled=false;
-   for (auto chan: ScalerFilled)
-   {
-      if (chan)
-      {
-         SomeScalerFilled=true;
-         break;
-      }
-   }
-   if (StartTime>0 &&
-        StopTime>0 &&
-        //Some SIS channels filled test
-       SomeScalerFilled )
-   {  
-      if ( VertexFilled || !have_vertex_detector)
-         return true;
-      //If there is no SVD data, then SVDFilled is false... 
-      //wait for the SIS data to be atleast 'data_buffer_time' seconds
-      //ahead to check there is no SVD data...
-      //if ( !SVDFilled && T>StopTime+data_buffer_time )
-      //   return true;
-      return false;
-   }
-   else
-   {
-      return false;
-   }
-}
-
-
-ClassImp(TSpillSequencerData)
-
-
-TSpillSequencerData::TSpillSequencerData()
-{
-   fSequenceNum=-1;
-   fDumpID     =-1;
-   fSeqName    ="";
-   fStartState =-1;
-   fStopState  =-1;
-}
-TSpillSequencerData::TSpillSequencerData(const TSpillSequencerData& a) : TObject(a)
-{
-   fSequenceNum  =a.fSequenceNum;
-   fDumpID       =a.fDumpID;
-   fSeqName      =a.fSeqName;
-   fStartState   =a.fStartState;
-   fStopState    =a.fStopState;
-}
-
-
-TSpillSequencerData::~TSpillSequencerData()
-{
-}
-
-void TSpillSequencerData::Print()
-{
-   std::cout<<"SeqName:"       <<fSeqName
-            <<"\tSeq:"         <<fSequenceNum
-            <<"\tDumpID:"      <<fDumpID
-            <<"\tstartState:"  <<fStartState
-            <<"\tstopState:"   <<fStopState
-            <<std::endl;
-}
-
 
 ClassImp(TSpill)
 TSpill::TSpill(): RunNumber(-1)
@@ -266,4 +131,26 @@ bool TSpill::DumpHasMathSymbol() const
 TSpill::~TSpill()
 {
 
+}
+
+
+std::string TSpill::ContentCSVTitle() const
+{
+   std::string title = "RunNumber, Sequencer Start Time (Unix Time), Dump Name, Is Dump Type, Is Info Type,";
+   return title;
+}
+std::string TSpill::ContentCSV() const
+{
+   std::string line = std::to_string(RunNumber) + "," +
+                      std::to_string(Unixtime) + "," +
+                      Name + ",";
+                      if (IsDumpType)
+                         line +="1,";
+                      else
+                         line +="0,";
+                      if (IsInfoType)
+                         line +="1,";
+                      else
+                         line +="0,";
+   return line;
 }

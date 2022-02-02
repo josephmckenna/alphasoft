@@ -198,7 +198,7 @@ public:
                //Fill array of doubles#
                
                double tmin=sc->StartTime;
-               double tmax=sc->StopTime;
+               double tmax=sc->fStopTime;
                int size=SpillFlow->SIS_Events[highest_channel].size();
                for (int i=0; i<size; i++)
                {

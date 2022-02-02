@@ -105,8 +105,8 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {
@@ -418,8 +418,8 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {
@@ -529,8 +529,8 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {

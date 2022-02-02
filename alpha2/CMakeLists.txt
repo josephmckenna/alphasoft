@@ -57,8 +57,6 @@ foreach ( L ${MINI_LIBS})
    #message("L:" ${L})
    add_library(A2${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
    target_include_directories(A2${L} PUBLIC include)
-   #RecoFlow.h needs to move out of the ana path
-   target_include_directories(A2${L} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
    target_link_libraries(A2${L} PUBLIC ${A2_LINK_LIBS})
 endforeach()
 
@@ -97,11 +95,7 @@ foreach( LIST_FILE ${BINS} )
     list(REMOVE_ITEM MODULES A2)
     target_link_libraries(${bin} PUBLIC ${MODULES})
 
-    target_link_libraries( ${bin} PUBLIC ${A2_LINK_LIBS}
-                           ${SQLite3_LIBRARIES}
-                           ${ROOT_LIBRARIES}
-                           ${ZLIB_LIBRARIES}
-                           manalyzer manalyzer_main
+    target_link_libraries( ${bin} PUBLIC  manalyzer_main
                            ${MIDAS_LIBRARIES})# ${MODULES}) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )

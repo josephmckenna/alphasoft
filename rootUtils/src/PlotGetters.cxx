@@ -1105,8 +1105,8 @@ void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills)
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {

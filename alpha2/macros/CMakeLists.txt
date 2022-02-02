@@ -14,8 +14,6 @@ foreach( MainMacro ${MainMacros} )
   target_include_directories(macro_${bin} PUBLIC ${CMAKE_SOURCE_DIR}/libGEM/include)
 
   target_link_libraries( macro_${bin} ${A2_LINK_LIBS} rootUtils
-     ${SQLite3_LIBRARIES}
-     ${ROOT_LIBRARIES}
      ${MIDAS_LIBRARIES} util) 
 
   install(TARGETS macro_${bin} DESTINATION "${CMAKE_INSTALL_PREFIX}" )
