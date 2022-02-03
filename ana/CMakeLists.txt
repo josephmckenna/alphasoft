@@ -24,7 +24,7 @@ file(GLOB BINS *.modules)
 
 # ALPHA-g libraries
 if(BUILD_AG)
-  set(AG_LINK_LIBS agana aged agtpc aglib analib)
+  set(AG_LINK_LIBS agana aged agtpc aglib analib ${SQLite3_LIBRARIES})
 endif()
 
 

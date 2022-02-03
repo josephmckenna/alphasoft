@@ -32,6 +32,7 @@ target_link_libraries(agtpc PUBLIC
    MathCore # Math::MinimizerOptions
    RIO # TFile
    Physics # TVector3
+   Minuit2 # Minuit2
    )
 
 if( MINUIT2TRACK )

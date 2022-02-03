@@ -18,6 +18,21 @@ ROOT_GENERATE_DICTIONARY(G__analib ${LINK_HEADER_FILES} LINKDEF LibLinkDef.hh)
 
 file(GLOB LIBRARY_SOURCES src/*.cxx)
 
+file(GLOB AG_LIBRARY_SOURCES src/TAG*.cxx)
+file(GLOB A2_LIBRARY_SOURCES src/TA2*.cxx)
+
+# If only building A2, remove AG library sources
+if (BUILD_A2 AND NOT BUILD_AG)
+   list( REMOVE_ITEM LIBRARY_SOURCES ${AG_LIBRARY_SOURCES})
+endif()
+
+# If only building AG, remove AG library sources
+if (BUILD_AG AND NOT BUILD_A2)
+   list( REMOVE_ITEM LIBRARY_SOURCES ${A2_LIBRARY_SOURCES})
+endif()
+
+
+
 add_library(analib SHARED ${LIBRARY_SOURCES} G__analib.cxx)
 
 target_include_directories(analib PUBLIC include)

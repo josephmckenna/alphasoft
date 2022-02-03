@@ -3,7 +3,9 @@
 #define _RootUtils_
 #include "TSeq_Event.h"
 #include "TChronoChannel.h"
+#if BUILD_AG
 #include "TStoreEvent.hh"
+#endif
 //#include "TChronoChannelName.h"
 #include "ChronoUtil.h"
 

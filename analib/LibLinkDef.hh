@@ -27,12 +27,12 @@
 //Generic child class
 #pragma link C++ class  TInfoSpill+;
 //Experiment specific Spill classes (child classses)
-#ifdef BUILD_A2
+#if BUILD_A2
   #pragma link C++ class  TA2Spill+;
   #pragma link C++ class  TA2SpillScalerData+;
   #pragma link C++ class  TA2SpillSequencerData+;
 #endif
-#ifdef BUILD_AG
+#if BUILD_AG
   #pragma link C++ class  TAGSpill+;
   #pragma link C++ class  TAGSpillScalerData+;
   #pragma link C++ class  TAGSpillSequencerData+;
@@ -54,10 +54,10 @@
 
 #pragma link C++ class TAnalysisReport+;
 
-#ifdef BUILD_A2
+#if BUILD_A2
 #pragma link C++ class TA2AnalysisReport+;
 #endif
-#ifdef BUILD_AG
+#if BUILD_AG
 #pragma link C++ class TAGAnalysisReport+;
 #endif
 #endif
