@@ -149,47 +149,50 @@ void TDumpList<SpillType, VertexType, ScalerType, NumScalers>::RemoveAndCleanAbo
    assert(fSequenceStartTimes.front().first< SequenceCount);
    //     for (int i=0; i<fSequenceStartTimes.size(); i++)
    while (1)
-if (fSequenceStartTimes.front().first>= SequenceCount) return;
-int badseq=fSequenceStartTimes.front().first;
-   fSequenceStartTimes.pop_front();
-   for ( auto &pair : fDumps )
    {
-      if (!pair) continue;
-      if (!pair->fStartDumpMarker) continue;
-      if (pair->fStartDumpMarker->fSequenceCount == badseq )
+      if (fSequenceStartTimes.front().first>= SequenceCount)
+        return;
+      int badseq=fSequenceStartTimes.front().first;
+      fSequenceStartTimes.pop_front();
+      for ( auto &pair : fDumps )
       {
-         fErrorQueue.push_back(new SpillType(fRunNo,
-                                             pair->fStartDumpMarker->fMidasTime,
-                                             "Delete pair %s", 
-                                             pair->fStartDumpMarker->fDescription.c_str()));
-  //            delete pair;
-         pair=NULL;
+         if (!pair) continue;
+         if (!pair->fStartDumpMarker) continue;
+         if (pair->fStartDumpMarker->fSequenceCount == badseq )
+         {
+            fErrorQueue.push_back(new SpillType(fRunNo,
+                                                pair->fStartDumpMarker->fMidasTime,
+                                                "Delete pair %s", 
+                                                pair->fStartDumpMarker->fDescription.c_str()));
+            // delete pair;
+            pair=NULL;
+         }
       }
-   }
-   for ( auto &start : fOrderedStarts )
-   {
-      if (!start) continue;
-      if (start->fSequenceCount == badseq )
+      for ( auto &start : fOrderedStarts )
       {
-         fErrorQueue.push_back(new SpillType(fRunNo,
-                                             start->fMidasTime,
-                                             "Delete start %s",
-                                             start->fDescription.c_str()));
-  //            delete start;
-         start=NULL;
+         if (!start) continue;
+         if (start->fSequenceCount == badseq )
+         {
+            fErrorQueue.push_back(new SpillType(fRunNo,
+                                                start->fMidasTime,
+                                                "Delete start %s",
+                                                start->fDescription.c_str()));
+            // delete start;
+            start=NULL;
+         }
       }
-   }
-   for (auto &stop : fOrderedStops )
-   {
-      if (!stop) continue;
-      if (stop->fSequenceCount == badseq )
+      for (auto &stop : fOrderedStops )
       {
-         fErrorQueue.push_back(new SpillType(fRunNo,
-                                             stop->fMidasTime,
-                                             "Delete stop %s",
-                                             stop->fDescription.c_str()));
-  //            delete stop;
-         stop=NULL;
+         if (!stop) continue;
+         if (stop->fSequenceCount == badseq )
+         {
+            fErrorQueue.push_back(new SpillType(fRunNo,
+                                                stop->fMidasTime,
+                                                "Delete stop %s",
+                                                stop->fDescription.c_str()));
+            // delete stop;
+            stop=NULL;
+         }
       }
    }
 }
