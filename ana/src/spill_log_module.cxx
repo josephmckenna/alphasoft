@@ -16,6 +16,7 @@
 #include <TEnv.h>
 
 #include "AgFlow.h"
+#include "AnalysisFlow.h"
 #include "RecoFlow.h"
 
 #include "store_cb.h"
@@ -520,7 +521,7 @@ public:
          int iSeqType=USED_SEQ_NUM[i];
          std::cout<<"Seq dumps (starts and stops)"<<iSeqType<<" - " << DumpMarkers[iSeqType][0].size()<<"+"<< DumpMarkers[iSeqType][1].size()<<std::endl;
          std::cout<<"Start triggers: "<< StartTime[iSeqType].size();
-         std::cout<< " - Stop Triggers: " << StopTime[iSeqType].size()<<std::endl;
+         std::cout<< " - Stop Triggers: " << fStopTime[iSeqType].size()<<std::endl;
       }
 
       LogSpills();

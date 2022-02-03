@@ -8,7 +8,7 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "RecoFlow.h"
+#include "AnalysisFlow.h"
 
 #include "TTree.h"
 #include "TSeq_Event.h"
@@ -229,7 +229,7 @@ public:
       TString s="Sequence ";
       s+=cSeq[iSeqType];
       s+=" loaded";
-      ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
+      ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),TDumpMarker::kDumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       gDirectory->cd();

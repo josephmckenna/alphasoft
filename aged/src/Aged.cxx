@@ -250,7 +250,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         if (barFlow)
         {
           //barFlow->BarEvent->Print();
-          std::vector<BarHit*> bars=barFlow->BarEvent->GetBars();
+          std::vector<TBarHit*> bars=barFlow->BarEvent->GetBars();
           if (bars.size())
           {
             int num = bars.size();
@@ -272,7 +272,7 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
             memset(barnode, 0, num*sizeof(Node));
             BarInfo *bi = data->barhits.bar_info;
             for (int i=0; i<num; ++i, ++barnode, ++bi) {
-                BarHit* bar=bars.at(i);
+                TBarHit* bar=bars.at(i);
                 double x,y;
                 bar->GetXY(x,y);
                 barnode->x3 = x;// /AG_SCALE;

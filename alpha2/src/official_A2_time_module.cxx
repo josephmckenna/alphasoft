@@ -10,7 +10,6 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "RecoFlow.h"
 #include "A2Flow.h"
 
 #include "TTree.h"
@@ -43,7 +42,7 @@ private:
    std::deque<ULong64_t> VF48Clock;
    std::deque<TSVD_QOD*> SVDEvents;
 
-   int VF48Events = 0;
+   int fVF48Events = 0;
 
 public:
    OfficialA2TimeFlags* fFlags;
@@ -95,7 +94,7 @@ public:
          printf("OfficialA2Time::EndRun, run %d\n", runinfo->fRunNo);
       //Flush out all un written timestamps
       //FlushSVDTime();
-      std::cout<<"Total VF48 events given an official time:"<<VF48Events<<std::endl;
+      std::cout<<"Total VF48 events given an official time:"<<fVF48Events<<std::endl;
       if (SVDOfficial)
          SVDOfficial->Write();
    }
@@ -214,7 +213,7 @@ public:
                 CleanSISEventsBefore(t-0.1);
                 finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
-                VF48Events++;
+                fVF48Events++;
                 break;
              }
              else

@@ -14,8 +14,6 @@
 
 #include "TAlphaDisplay.h"
 
-#include "TStoreEvent.hh"
-
 #define DELETE(x) if (x) { delete (x); (x) = NULL; }
 
 #define MEMZERO(p) memset((p), 0, sizeof(p))

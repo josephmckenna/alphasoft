@@ -15,6 +15,7 @@
 #include <fstream>
 
 #include "A2Flow.h"
+#include "AnalysisFlow.h"
 #include "TSISChannels.h"
 #include "TSISEvent.h"
 

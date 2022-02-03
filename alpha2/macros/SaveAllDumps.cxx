@@ -52,7 +52,7 @@ void SaveAllDumps(int runNumber)
             std::cout<<s.Name << " has no scaler data (its an information dump...) skipping plot" <<std::endl;
             continue;
          }
-         if (!s.ScalerData->DetectorCounts.at(ch))
+         if (!s.ScalerData->fDetectorCounts.at(ch))
          {
             std::cout<<s.Name << " has no counts in channel " << ch<<" ... skipping plot" <<std::endl;
             continue;

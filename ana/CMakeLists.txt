@@ -24,7 +24,7 @@ file(GLOB BINS *.modules)
 
 # ALPHA-g libraries
 if(BUILD_AG)
-  set(AG_LINK_LIBS agana aged agtpc analib)
+  set(AG_LINK_LIBS agana aged agtpc aglib analib)
 endif()
 
 
@@ -91,11 +91,9 @@ foreach( LIST_FILE ${BINS} )
 
     target_link_libraries(${bin} PUBLIC ${MODULES})
 
-    target_link_libraries( ${bin} PUBLIC ${AG_LINK_LIBS}
-                           ${SQLite3_LIBRARIES}
-                           ${ROOT_LIBRARIES}
+    target_link_libraries( ${bin} PUBLIC # ${AG_LINK_LIBS}
                            ${ZLIB_LIBRARIES}
-                           manalyzer manalyzer_main
+                           manalyzer_main
                            ${MIDAS_LIBRARIES})# ${MODULES}) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )

@@ -32,7 +32,7 @@ add_library(alpha2 SHARED ${LIBRARY_SOURCES} ${C_SOURCES} G__alpha2.cxx )
 
 target_include_directories(alpha2 PUBLIC include)
 target_include_directories(alpha2 PUBLIC ${SQLite3_INCLUDE_DIRS})
-target_link_libraries(alpha2 manalyzer ${ROOT_LIBRARIES} Minuit2 Geom ${SQLite3_LIBRARIES})
+target_link_libraries(alpha2 manalyzer Graf Matrix Tree Graf3d Physics Minuit2 Geom ${SQLite3_LIBRARIES})
 add_dependencies(alpha2 sis_database)
 
 install(TARGETS alpha2 DESTINATION lib)

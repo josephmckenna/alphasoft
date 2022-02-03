@@ -15,62 +15,9 @@
 
 #include "Sequencer2.h"
 
-class AnalogueOut;
-class DigitalOut;
-
-class TriggerIn: public TObject
-{
-  public:
-   int InfWait;
-   double waitTime;
-   std::vector<int> Channels;
-   TriggerIn(){}
-   ~TriggerIn(){}
-   TriggerIn(const TriggerIn& t): TObject(), InfWait(t.InfWait), waitTime(t.waitTime), Channels(t.Channels) {}
-   void Reset()
-   {
-      InfWait = 0;
-      waitTime = 0.0;
-      Channels.clear();
-   }
-   ClassDef(TriggerIn, 1);
-};
-
-class DigitalOut: public TObject
-{
-  public:
-    //I expect only bools, but lets get greedy and be ready for fuzzy logic
-    std::vector<bool> Channels;
-    DigitalOut(){}
-    ~DigitalOut(){}
-    DigitalOut(const DigitalOut& d): TObject(), Channels(d.Channels) {}
-    void Reset()
-    {
-       Channels.clear();
-    }
-    ClassDef(DigitalOut, 1);
-
-};
-class AnalogueOut: public TObject
-{
-  public:
-    int PrevState;
-    int steps;
-    std::vector<double> AOi;
-    std::vector<double> AOf;
-
-    AnalogueOut(){}
-    ~AnalogueOut(){}
-    AnalogueOut(const AnalogueOut& a): TObject(), PrevState(a.PrevState), steps(a.steps), AOi(a.AOi), AOf(a.AOf) {}
-    void Reset()
-    {
-       PrevState = 0;
-       steps = 0;
-       AOi.clear();
-       AOf.clear();
-    }
-    ClassDef(AnalogueOut, 1);
-};
+#include "TSequencerTriggerIn.h"
+#include "TSequencerDigitalOut.h"
+#include "TSequencerAnalogueOut.h"
 
 
 class TSequencerState : public TObject
@@ -81,9 +28,9 @@ class TSequencerState : public TObject
     Int_t fSeqNum;
     Int_t fState;
     double fTime;
-    DigitalOut fDO;
-    AnalogueOut fAO;
-    TriggerIn fTI;
+    TSequencerDigitalOut fDO;
+    TSequencerAnalogueOut fAO;
+    TSequencerTriggerIn fTI;
     TString fComment;
  
   public:
@@ -103,12 +50,12 @@ class TSequencerState : public TObject
     TString GetComment() const                { return Clean(fComment); }
     Int_t GetState() const                    { return fState; }
     Double_t GetDuration() const              { return fTime; }
-    DigitalOut* GetDigitalOut()               { return &fDO; }
-    AnalogueOut* GetAnalogueOut()             { return &fAO; }
-    TriggerIn* GetTriggerIn()                 { return &fTI; }
-    const DigitalOut* GetDigitalOut() const   { return &fDO; }
-    const AnalogueOut* GetAnalogueOut() const { return &fAO; }
-    const TriggerIn* GetTriggerIn() const     { return &fTI; }
+    TSequencerDigitalOut* GetDigitalOut()               { return &fDO; }
+    TSequencerAnalogueOut* GetAnalogueOut()             { return &fAO; }
+    TSequencerTriggerIn* GetTriggerIn()                 { return &fTI; }
+    const TSequencerDigitalOut* GetDigitalOut() const   { return &fDO; }
+    const TSequencerAnalogueOut* GetAnalogueOut() const { return &fAO; }
+    const TSequencerTriggerIn* GetTriggerIn() const     { return &fTI; }
     
     void SetSeq( TString Seq )		{ fSeq = Seq; }
     void SetSeqNum( Int_t SeqNum )	{ fSeqNum = SeqNum; }

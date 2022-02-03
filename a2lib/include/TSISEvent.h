@@ -20,7 +20,7 @@ class TSISBufferEvent
 {
    public:
       int fSISModule;
-      std::array<uint32_t,NUM_SIS_CHANNELS> fCounts = {0};
+      std::array<uint32_t,NUM_SIS_CHANNELS> fCounts;
       TSISBufferEvent(const int mod, const uint32_t* data): fSISModule(mod)
       {
          std::copy(data, data + NUM_SIS_CHANNELS,fCounts.begin());
@@ -47,9 +47,6 @@ private:
   Int_t         fRunNumber;           //MIDAS runnumber
   uint32_t      fMidasTime;           //MIDAS Unix Timestamp
   unsigned long fMidasEventID;
-  //Maybe I could have a vector of strings to label some SIS triggers
-  //std::vector<DumpMarker*> DumpEvents; //I do not own the DumpMarker pointer...
-
 public:
 
   // setters  

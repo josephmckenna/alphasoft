@@ -9,8 +9,6 @@
 #ifndef _RECOFLOW_
 #define _RECOFLOW_ 1
 
-#include "AnalysisFlow.h"
-
 #ifdef BUILD_AG
 
 #include "TBarEvent.hh"
@@ -66,64 +64,6 @@ class SEQTextFlow: public TAFlowEvent
   {
     Clear();
   }
-};
-#include "DumpHandling.h"
-#include "TSequencerState.h"
-#include "TSequencerDriver.h"
-class DumpFlow: public TAFlowEvent
-{
-  public:
-    int SequencerNum=-1;
-    std::vector<DumpMarker> DumpMarkers;
-    std::vector<TSequencerState> states;
-    TSequencerDriver* driver;
-  public:
-  DumpFlow(TAFlowEvent* flow) // ctor
-    : TAFlowEvent(flow)
-   {
-   }
-   ~DumpFlow()
-   {
-      if (driver)
-         delete driver;
-      states.clear();
-      DumpMarkers.clear();
-   }
-  void AddDumpEvent(Int_t _SequencerNum, Int_t _SeqCount, uint32_t SequenceStartTime, TString _Description, DumpMarker::DumpTypes _DumpType, Int_t _onCount, Int_t _onState) 
-   {
-      if (SequencerNum<0) SequencerNum=_SequencerNum;
-      else if (SequencerNum!=_SequencerNum)
-      {
-         std::cout<<"ERROR! Parsing sequencer data that has data for more than one sequencer... something went very wrong"<<std::endl;
-         exit(1);
-      }
-
-      DumpMarker Marker(
-         _Description,
-         _SequencerNum,
-         _SeqCount,
-         _DumpType,
-         _onCount,
-         _onState,
-         -1.,
-         SequenceStartTime
-         );
-      DumpMarkers.push_back(Marker);
-   }
-   void AddDumpEvent(Int_t _SequencerNum,Int_t _SeqCount, uint32_t _SequenceStartTime, TString _Description, const char* _DumpType, Int_t _onCount, Int_t _onState) 
-   {
-     DumpMarker::DumpTypes type= DumpMarker::DumpTypes::Other;
-     if (strcmp(_DumpType,"startDump")==0)
-        type=DumpMarker::DumpTypes::Start;
-     else if (strcmp(_DumpType,"stopDump")==0)
-        type=DumpMarker::DumpTypes::Stop;
-      AddDumpEvent(_SequencerNum, _SeqCount, _SequenceStartTime, _Description, type, _onCount, _onState);
-   }
-
-   void AddStateEvent(const TSequencerState& s )
-   {
-      states.push_back(s);
-   }
 };
 #ifdef BUILD_AG
 #include "TAGSpill.h"
