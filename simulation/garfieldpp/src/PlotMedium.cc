@@ -31,13 +31,21 @@ int main(int argc, char * argv[])
 
   // Create the medium
   Garfield::MediumMagboltz* gas = new Garfield::MediumMagboltz();
+  std::cout << "Medium created." << std::endl;
   // Gas file created with other software
-  if(!gas->LoadGasFile(path2gasfile.c_str())) return -2;
-
-  std::string ionfile(getenv("GARFIELD_HOME"));
-  ionfile+="/Data/IonMobility_Ar+_Ar.txt";
+  if(!gas->LoadGasFile(path2gasfile.c_str())) {
+     std::cerr << "Problem loading gas file" << std::endl;
+     return -2;
+  }
+  std::string ionfile(getenv("GARFIELD_INSTALL"));
+  if(ionfile.size()){
+     ionfile+="/share/Garfield/Data/IonMobility_Ar+_Ar.txt";
+  } else {
+     ionfile = getenv("GARFIELD_HOME");
+     ionfile+="/Data/IonMobility_Ar+_Ar.txt";
+  }
   if(!gas->LoadIonMobility(ionfile.c_str())) return -1;
-
+  std::cout << "Data loaded." << std::endl;
   gas->PrintGas();
 
   TString cname = TString::Format("magboltzgas_%s",gastag.c_str());
@@ -168,7 +176,7 @@ int main(int argc, char * argv[])
   mviewL->PlotElectronLorentzAngle('e');
   cLor->SaveAs(".png");
 
-  
+
   app.Run(kTRUE);
 
   fout->cd();

@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.3)
 project(gpp)
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 #----------------------------------------------------------------------------
 # Find ROOT (required package)
