@@ -38,7 +38,7 @@ class felabViewModuleWriter
    private:
       void BranchTreeFromData(TTree* tree, TStoreLabVIEWEvent* labviewEvent)
       {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+	//std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          TBranch* branch = tree->GetBranch("TStoreLabVIEWEvent");
          if (!branch)
             tree->Branch("TStoreLabVIEWEvent",&labviewEvent);
@@ -66,7 +66,7 @@ class felabViewModuleWriter
          }
          if(!treeAlreadyExists)
          {
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+	   //std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             runInfo->fRoot->fOutputFile->cd("felabview");
             currentTree = new TTree(name.c_str(), "Tree with vectors");
             fTrees.push_back(currentTree);
