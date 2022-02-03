@@ -224,7 +224,7 @@ if (BUILD_AG)
    get_submodule(agana)
    add_subdirectory(agana)
    add_subdirectory(aged)
-   add_subdirectory(ana)
+   add_subdirectory(alphag)
    add_subdirectory(reco)
 endif (BUILD_AG)
 

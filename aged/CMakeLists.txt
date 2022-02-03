@@ -46,7 +46,7 @@ add_library(aged SHARED ${LIBRARY_SOURCES})
 target_include_directories(aged PUBLIC
    include
    ${X11_INCLUDE_DIR}
-   ${CMAKE_SOURCE_DIR}/ana/include # Required for RecoFlow.h
+   ${CMAKE_SOURCE_DIR}/alphag/include # Required for RecoFlow.h
    ${CMAKE_SOURCE_DIR}/analib/include # Required for TInfoSpill.h
    ${CMAKE_SOURCE_DIR}/aglib/include # Required for TBarEvent.h TStoreEvent.hh
    ${CMAKE_SOURCE_DIR}/recolib/include # Required for TFitLine.hh
