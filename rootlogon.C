@@ -1,5 +1,10 @@
 {
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
+  if (!getenv("AGRELEASE"))
+  {
+     std::cout <<"$AGRELEASE not set... Please source agconfig.sh"<<std::endl;
+     exit(1);
+  }
   TString basedir(getenv("AGRELEASE"));
   if (basedir.Sizeof()<3)
   {
@@ -19,32 +24,38 @@
 
 
 
-  TString libname("libagtpc.so");
+  TString libname;
+  int s=-1;
+#ifdef BUILD_AG
+  libname="libagtpc";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
-  int s=gSystem->Load( libname );
+  s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
+#endif
 
-  libname="libanalib.so";
+  libname="libanalib";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
-  libname="libalpha2.so";
+#ifdef BUILD_A2
+  libname="libalpha2";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
+#endif 
  
-  libname="librootUtils.so";
+  libname="librootUtils";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );
   if(s==0) cout<<"... ok"<<endl;
 
 #ifdef BUILD_AG_SIM
-  libname="libG4out.so";
+  libname="libG4out";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );

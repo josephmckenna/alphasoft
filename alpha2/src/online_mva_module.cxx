@@ -42,8 +42,8 @@ public:
    OnlineMVA(TARunInfo* runinfo, OnlineMVAFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Online MVA Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Online MVA Module";
 #endif
       if (fTrace)
          printf("OnlineMVA::ctor!\n");
@@ -70,8 +70,6 @@ public:
    {
       if (fTrace)
          printf("OnlineMVA::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -98,7 +96,7 @@ public:
       A2OnlineMVAFlow* dumper_flow=flow->Find<A2OnlineMVAFlow>();
       if (!dumper_flow)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

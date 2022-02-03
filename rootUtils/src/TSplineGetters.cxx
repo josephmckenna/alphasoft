@@ -13,6 +13,11 @@ TSpline5* InterpolateVoltageRamp(const char* filename)
   TString lname = "Voltage Ramp : ";
   lname += filename;
   lname +=";dt [a.u.];Voltage [V]";
+  //for (int i = 0; i < nPoints; i++)
+  //{
+  //   std::cout<<"t: "<<t[i]<<"\tv:"<<V[i]<<std::endl;
+  //}
+  std::cout<<"nPoints: "<<nPoints<<std::endl;
   TSpline5* spline = new TSpline5(lname.Data(), t, V, nPoints);
   spline->SetLineColor(kBlue);
   delete[] t;

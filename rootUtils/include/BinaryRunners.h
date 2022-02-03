@@ -5,8 +5,12 @@
 #ifndef _BinaryRunners_
 #define _BinaryRunners_
 
-void RunEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax);
-void RunEventViewerInTime(Int_t runNumber,  const char* description, Int_t repetition=1, Int_t offset=0);
+#ifdef BUILD_AG
+
+void RunAGEventViewerInTime(Int_t runNumber, Double_t tmin, Double_t tmax);
+void RunAGEventViewerInTime(Int_t runNumber,  const char* description, Int_t dumpIndex=0, Int_t offset=0);
+
+#endif
 void AnnounceOnSpeaker(Int_t runNumber, TString Phrase);
 void AnnounceOnSpeaker(TString Phrase);
 #endif

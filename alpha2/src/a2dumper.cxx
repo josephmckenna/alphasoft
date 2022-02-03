@@ -47,7 +47,7 @@ public:
     {
         //printf("ctor, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
         fFlags = flags;
-        ModuleName="a2dumper";
+        fModuleName="a2dumper";
         
         //Setup the filename for the root file.
         std::string fileName = "dumperoutput";

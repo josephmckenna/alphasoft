@@ -142,8 +142,8 @@ public:
    HitModule(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="hybrid_hits_module";
 #endif
       if (fTrace)
          printf("HitModule::ctor!\n");
@@ -160,8 +160,8 @@ public:
    {
       if (fTrace)
          printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
+      if (runinfo->fRunNo && !fFlags->fUnpackOff)
+         fFlags->LoadAllStrips(runinfo->fRunNo);
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -169,8 +169,6 @@ public:
    {
       if (fTrace)
          printf("HitModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -205,7 +203,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -213,14 +211,14 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
       if (!fe->vf48event)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -263,10 +261,32 @@ public:
    HitModule_vf48(TARunInfo* runinfo, HitFlags* flags)
      : TARunObject(runinfo), fFlags(flags), nVASigma(fFlags->nVASigma), pVASigma(fFlags->pVASigma)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="hybrid_hits_module_vf48(" + std::to_string(fFlags->ProcessVF48) + ")";
 #endif
-      // load the sqlite3 db
+      SettingsDB = NULL;
+      gVF48SiMap = NULL;
+   }
+   ~HitModule_vf48(){ 
+      if (SettingsDB)
+      {
+         delete SettingsDB;
+         SettingsDB = NULL;
+      }
+      if (gVF48SiMap)
+      {
+         delete gVF48SiMap;
+         gVF48SiMap = NULL;
+      }
+   }
+   
+   void BeginRun(TARunInfo* runinfo)
+   {
+      //if (fTrace)
+         printf("HitModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if (!runinfo->fRunNo)
+         return;
+         // load the sqlite3 db
       SettingsDB = ALPHA2SettingsDatabase::GetTSettings(runinfo->fRunNo);
       const int m=fFlags->ProcessVF48;
       {
@@ -314,10 +334,6 @@ public:
             ++StripCount;
          }
       }
-   }
-   ~HitModule_vf48(){ 
-      delete SettingsDB;
-      delete gVF48SiMap;
    }
    
    TSiliconEvent* AddVF48Module(VF48event* e,const int vf48modnum, TSiliconEvent* SiliconEvent)
@@ -447,7 +463,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -455,7 +471,7 @@ public:
       VF48EventFlow* fe=flow->Find<VF48EventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -464,7 +480,7 @@ public:
       SilEventFlow* sf=flow->Find<SilEventFlow>();
       if (!sf)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -472,7 +488,7 @@ public:
       TSiliconEvent* SiliconEvent=sf->silevent;
       if (!SiliconEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -558,7 +574,6 @@ public:
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
       printf("HitModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      fFlags.LoadAllStrips(runinfo->fRunNo);
       return new HitModule(runinfo, &fFlags);
    }
 };

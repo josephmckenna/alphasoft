@@ -14,18 +14,28 @@
 #pragma link C++ class  DigitalOut+;
 #pragma link C++ class  AnalogueOut+;
 #pragma link C++ class  TriggerIn+;
-#pragma link C++ class  TChrono_Event+;
+
+#pragma link C++ class TChronoChannel+;
+
+
+#pragma link C++ class TCbFIFOEvent+;
 #pragma link C++ class  TChronoChannelName+;
+
+#pragma link C++ class TChronoBoardCounter+;
+
 #pragma link C++ class  TSeq_Dump+;
 #ifdef BUILD_AG
 #pragma link C++ class  TBarEvent+;
 #pragma link C++ class  EndHit+;
 #pragma link C++ class  BarHit+;
+#pragma link C++ class  SimpleTdcHit+;
 #endif
 //Spill parent classes
 #pragma link C++ class  TSpill+;
 #pragma link C++ class  TSpillScalerData+;
 #pragma link C++ class  TSpillSequencerData+;
+//Generic child class
+#pragma link C++ class  TInfoSpill+;
 //Experiment specific Spill classes (child classses)
 #ifdef BUILD_A2
   #pragma link C++ class  TA2Spill+;

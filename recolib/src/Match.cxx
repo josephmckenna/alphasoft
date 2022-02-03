@@ -37,7 +37,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
    fMT(mt),
    ana_settings(ana_set),
    fCoincTime(     ana_settings->GetDouble("MatchModule","coincTime")),
-   maxPadGroups(   ana_settings->GetDouble("MatchModule","maxPadGroups")),
+   maxPadGroups(   ana_settings->GetInt("MatchModule","maxPadGroups")),
    padsNmin(       ana_settings->GetInt("MatchModule","padsNmin")),
    padSigma(       ana_settings->GetDouble("MatchModule","padSigma")),
    padSigmaD(      ana_settings->GetDouble("MatchModule","padSigmaD")),
@@ -48,6 +48,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
    spectrum_width_min(ana_settings->GetDouble("MatchModule","spectrum_width_min")),
    grassCut(       ana_settings->GetDouble("MatchModule","grassCut")),
    goodDist(       ana_settings->GetDouble("MatchModule","goodDist")),
+   fNpadsCut(ana_settings->GetInt("MatchModule","NpadsCut")),
    charge_dist_scale(ana_settings->GetDouble("MatchModule","pad_charge_dist_scale")),
    padThr(         ana_settings->GetDouble("DeconvModule","PADthr"))// This DeconvModule setting is also needed here, for wire-dependent threshold
 {
@@ -185,6 +186,16 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   if( fTrace )
     std::cout<<"Match::CombPads!"<<std::endl;
 
+  std::vector< std::vector<ALPHAg::signal> > comb;
+  if( int(padsignals->size()) > fNpadsCut )
+    {
+      if( fTrace )
+	std::cout<<"Match::CombPads number of pads signals "<<padsignals->size()
+		 <<" exceeds its limit "<<fNpadsCut<<std::endl;
+      comb.resize(0);
+      return comb;
+    }
+
   // combine pads in the same column only
   std::vector< std::vector<ALPHAg::signal> > pad_bysec;
   std::set<short> secs;
@@ -193,7 +204,6 @@ std::vector<std::vector<ALPHAg::signal>> Match::CombPads(std::vector<ALPHAg::sig
   if( fTrace )
     std::cout<<"Match::CombPads # of secs: "<<secs.size()<<std::endl;
 
-  std::vector< std::vector<ALPHAg::signal> > comb;
   for( auto isec=secs.begin(); isec!=secs.end(); ++isec )
     {
       short sector = *isec;
@@ -362,8 +372,8 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 	std::cout<<"\tRMS is small: "<<hh->GetRMS()<<" set nfound to 1"<<std::endl;
     }
 
-  double peakx[nfound];
-  double peaky[nfound];
+  std::vector<double> peakx(nfound);
+  std::vector<double> peaky(nfound);
 
   for(int i = 0; i < nfound; ++i)
     {
@@ -492,7 +502,7 @@ void Match::CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPH
 std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHAg::signal> &sigs,
 							 int ifirst, int ilast)
 {
-  if(ilast < 0) ilast = sigs.size()-1;
+  if(ilast < 0) ilast = int(sigs.size())-1;
   std::vector<ALPHAg::signal>::const_iterator first = std::next(sigs.begin(),ifirst);
   std::vector<ALPHAg::signal>::const_iterator last = std::next(sigs.begin(),ilast);
   std::vector<std::pair<double, double> > blobs;
@@ -749,7 +759,8 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::MatchElectrodes(
 	}
     }
   if( fTrace )
-    std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  //std::cout<<"Match::MatchElectrodes Number of Matches: "<<Nmatch<<std::endl;
+  std::cout<<"Match::MatchElectrodes "<<Nmatch<<" found"<<std::endl;
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::MatchElectrodes ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
   return spacepoints;
@@ -774,7 +785,8 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*  Match::FakePads(std::v
     }
   if( int(spacepoints->size()) != Nmatch )
     std::cerr<<"Match::FakePads ERROR: number of matches differs from number of spacepoints: "<<spacepoints->size()<<std::endl;
-  std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
+  if( fTrace )
+    std::cout<<"Match::FakePads Number of Matches: "<<Nmatch<<std::endl;
   return spacepoints;
 }
 
@@ -994,9 +1006,11 @@ std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* Match::CombPoints(std::
 	     <<"\t"<<m<<std::endl;
 
   spacepoints->assign( merged.begin(), merged.end() );
-  if( fTrace ) {
+  if( fDebug ) {
     std::cout<<"Match::CombPoints() spacepoints merged size: "<<merged.size()<<" (diff: "<<m<<")"<<std::endl;
     std::cout<<"Match::CombPoints() spacepoints size (after merge): "<<spacepoints->size()<<std::endl;
   }
+  if( fTrace )
+    std::cout<<"Match::CombPoints() "<<spacepoints->size()<<" found"<<std::endl;
   return spacepoints;
 }

@@ -9,22 +9,6 @@ image: tmidas/root6
 pipelines:
   default:
      - step:
-        name: Build with Makefile
-        #caches:
-        #  - rootana-folders
-        script: # Modify the commands below to build your repository.
-            - git submodule update --init --recursive
-            - export ROOT_INCLUDE_PATH=/usr/include/root
-            - . agconfig.sh
-            - cd ${AGRELEASE}
-            - make
-            #We are running with limited CPU time per month... don't run RunChecker (run that on gitlab)
-            #- cd ..
-            #- . agconfig.sh clean
-            #- cd scripts/gitChecker
-            #- ./RunChecker.sh
-
-     - step:
         name: Build with CMake
         #caches:
         #  - rootana-folders

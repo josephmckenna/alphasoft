@@ -3,8 +3,9 @@
 ClassImp(TAnalysisReport)
 TAnalysisReport::TAnalysisReport():
    runNumber(-1),
-   GitBranch(GIT_BRANCH), 
    CompilationDate(COMPILATION_DATE), 
+   GitBranch(GIT_BRANCH), 
+   
    GitDate(GIT_DATE), 
    GitHash(GIT_REVISION),
    GitHashLong(GIT_REVISION_FULL),
@@ -14,9 +15,10 @@ TAnalysisReport::TAnalysisReport():
 }
 
 TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
+   TObject(r),
    runNumber(r.runNumber),
-   GitBranch(r.GitBranch), 
    CompilationDate(r.CompilationDate), 
+   GitBranch(r.GitBranch), 
    GitDate(r.GitDate), 
    GitHash(r.GitHash),
    GitHashLong(r.GitHashLong),
@@ -26,11 +28,12 @@ TAnalysisReport::TAnalysisReport(const TAnalysisReport& r):
    DoubleValue(r.DoubleValue),
    StringValue(r.StringValue)
 {
-    StartRunUnixTime = r.StartRunUnixTime;
-    StopRunUnixTime = r.StopRunUnixTime;
     ProgramName = r.ProgramName;
     ProgramPath = r.ProgramPath;
     ProgramPathFull = r.ProgramPathFull;
+
+    StartRunUnixTime = r.StartRunUnixTime;
+    StopRunUnixTime = r.StopRunUnixTime;
     Duration = r.Duration;
     AnalysisHost = r.AnalysisHost;
 }
@@ -43,8 +46,8 @@ TAnalysisReport TAnalysisReport::operator=(const TAnalysisReport& r)
 
 TAnalysisReport::TAnalysisReport(int runno):
     runNumber(runno), 
-    GitBranch(GIT_BRANCH), 
     CompilationDate(COMPILATION_DATE), 
+    GitBranch(GIT_BRANCH), 
     GitDate(GIT_DATE), 
     GitHash(GIT_REVISION),
     GitHashLong(GIT_REVISION_FULL),
@@ -126,14 +129,19 @@ ClassImp(TA2AnalysisReport)
 TA2AnalysisReport::TA2AnalysisReport()
 {
     //ctor
-
+   fHybridNSideOccupancy = new TH1I("HybridNSideOccupancy","HybridNSideOccupancy; HybridNumber; Count",72,0,72);
+   fHybridPSideOccupancy = new TH1I("HybridPSideOccupancy","HybridPSideOccupancy; HybridNumber; Count",72,0,72);
 }
 
 
-TA2AnalysisReport::TA2AnalysisReport(const TA2AnalysisReport& r): TAnalysisReport(r)
+TA2AnalysisReport::TA2AnalysisReport(const TA2AnalysisReport& r):
+   TAnalysisReport(r)
 {
-    nSVDEvents = r.nSVDEvents;
-    LastVF48TimeStamp = r.LastVF48TimeStamp;
+   nSVDEvents = r.nSVDEvents;
+   LastVF48TimeStamp = r.LastVF48TimeStamp;
+
+   fHybridNSideOccupancy = new TH1I(*r.fHybridNSideOccupancy);
+   fHybridPSideOccupancy = new TH1I(*r.fHybridPSideOccupancy);
 
     SVD_Verts_Sum      = r.SVD_Verts_Sum;
     SVD_PassCut_Sum    = r.SVD_PassCut_Sum;
@@ -145,8 +153,13 @@ TA2AnalysisReport TA2AnalysisReport::operator=(const TA2AnalysisReport& r)
     return TA2AnalysisReport(r);
 }
 
-TA2AnalysisReport::TA2AnalysisReport(int runno): TAnalysisReport(runno)
+TA2AnalysisReport::TA2AnalysisReport(int runno):
+   TAnalysisReport(runno)
 {
+
+   fHybridNSideOccupancy = new TH1I("HybridNSideOccupancy","HybridNSideOccupancy; HybridNumber; Count",72,0,72);
+   fHybridPSideOccupancy = new TH1I("HybridPSideOccupancy","HybridPSideOccupancy; HybridNumber; Count",72,0,72);
+
     nSVDEvents = 0;
     LastVF48TimeStamp = -1;
     SVD_Verts_Sum = 0;
@@ -173,6 +186,9 @@ TA2AnalysisReport::~TA2AnalysisReport()
     delete SVD_Tracks;
     delete SVD_Verts;
     delete SVD_Pass;
+    delete fHybridNSideOccupancy;
+    delete fHybridPSideOccupancy;
+    
 }
 
 void TA2AnalysisReport::FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t& raw_hits, const Int_t& hits, const Int_t& tracks, const Int_t& verts, int pass, double time)
@@ -194,6 +210,17 @@ void TA2AnalysisReport::FillSVD(const Int_t& nraw, const Int_t&praw, const Int_t
     nSVDEvents++;
     return;
 }
+
+void TA2AnalysisReport::FillHybridNSideOccupancy(const int module)
+{
+   fHybridNSideOccupancy->Fill(module);
+}
+
+void TA2AnalysisReport::FillHybridPSideOccupancy(const int module)
+{
+   fHybridPSideOccupancy->Fill(module);
+}
+
 void TA2AnalysisReport::Flush()
 {
     IntValue["SVD_N_RawHits_Mode"]    = SVD_N_RawHits->GetMaximumBin() - 1;

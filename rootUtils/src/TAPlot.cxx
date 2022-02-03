@@ -1,6 +1,6 @@
 #include "TAPlot.h"
 
-ClassImp(TAPlot);
+ClassImp(TAPlot)
 
 //Default Constructor
 TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
@@ -21,13 +21,12 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
    fMaxDumpLength = 0.;
 
    fTotalTime = -1.;
-   fTotalVert = -1.;
 
    fVerbose=false;
 }
 
 //Copy ctor
-TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
+TAPlot::TAPlot(const TAPlot& object) : TObject(object), kZeroTimeAxis(object.kZeroTimeAxis)
 {
    fCanvasTitle                  = object.fCanvasTitle ;
    fMVAMode                      = object.fMVAMode ;
@@ -42,7 +41,6 @@ TAPlot::TAPlot(const TAPlot& object) : kZeroTimeAxis(object.kZeroTimeAxis)
    fMaxDumpLength                = object.fMaxDumpLength ;
 
    fTotalTime                    = object.fTotalTime ;
-   fTotalVert                    = object.fTotalVert ;
    fVerbose                      = object.fVerbose ;
    fTimeFactor                   = object.fTimeFactor ;
 
@@ -88,7 +86,7 @@ TAPlot::~TAPlot()
 //Assignment.
 TAPlot& TAPlot::operator=(const TAPlot& rhs)
 {
-   std::cout << "TAPlot = operator" << std::endl;
+   //std::cout << "TAPlot = operator" << std::endl;
    this->fCanvasTitle = rhs.fCanvasTitle ;
    this->fMVAMode = rhs.fMVAMode ;
    this->fNumBins = rhs.fNumBins ; 
@@ -102,7 +100,6 @@ TAPlot& TAPlot::operator=(const TAPlot& rhs)
    this->fMaxDumpLength = rhs.fMaxDumpLength ;
    
    this->fTotalTime = rhs.fTotalTime ;
-   this->fTotalVert = rhs.fTotalVert ;
    this->fVerbose = rhs.fVerbose ;
    this->fTimeFactor = rhs.fTimeFactor ;
 
@@ -139,7 +136,7 @@ TAPlot& TAPlot::operator=(const TAPlot& rhs)
 //=+ Operator
 TAPlot& TAPlot::operator+=(const TAPlot &rhs) 
 {
-   std::cout << "TAPlot += operator" << std::endl;
+   //std::cout << "TAPlot += operator" << std::endl;
 
    //Vectors- need concating
    this->fEjections.insert(this->fEjections.end(), rhs.fEjections.begin(), rhs.fEjections.end() );
@@ -159,12 +156,11 @@ TAPlot& TAPlot::operator+=(const TAPlot &rhs)
    this->fLastTMax               = (this->fLastTMax > rhs.fLastTMax)?this->fLastTMax:rhs.fLastTMax;
    this->fBiggestTZero           = (this->fBiggestTZero > rhs.fBiggestTZero)?this->fBiggestTZero:rhs.fBiggestTZero;
    this->fMaxDumpLength          = (this->fMaxDumpLength > rhs.fMaxDumpLength)?this->fMaxDumpLength:rhs.fMaxDumpLength;
-   this->fTotalTime             = (this->fTotalTime > rhs.fTotalTime)?this->fTotalTime:rhs.fTotalTime;
+   this->fTotalTime             += rhs.fTotalTime;
    this->fObjectConstructionTime = (this->fObjectConstructionTime < rhs.fObjectConstructionTime)?this->fObjectConstructionTime:rhs.fObjectConstructionTime;
    this->fDataLoadedTime         = (this->fDataLoadedTime > rhs.fDataLoadedTime)?this->fDataLoadedTime:rhs.fDataLoadedTime;
    this->fTimeFactor                = (this->fTimeFactor < rhs.fTimeFactor)?this->fTimeFactor:rhs.fTimeFactor;
-   this->fTotalVert             += rhs.fTotalVert;
-
+   
    for(int i = 0; i < rhs.fHistos.GetSize(); i++)
    {
       this->fHistos.Add(rhs.fHistos.At(i));
@@ -180,7 +176,7 @@ TAPlot& TAPlot::operator+=(const TAPlot &rhs)
 //Addition
 TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
 {
-   std::cout << "TAPlot addition operator" << std::endl;
+   //std::cout << "TAPlot addition operator" << std::endl;
    TAPlot outputPlot(lhs); //Create new from copy
 
    //Vectors- need concacting
@@ -201,11 +197,10 @@ TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
    outputPlot.fLastTMax               = (outputPlot.fLastTMax > rhs.fLastTMax)?outputPlot.fLastTMax:rhs.fLastTMax;
    outputPlot.fBiggestTZero           = (outputPlot.fBiggestTZero > rhs.fBiggestTZero)?outputPlot.fBiggestTZero:rhs.fBiggestTZero;
    outputPlot.fMaxDumpLength          = (outputPlot.fMaxDumpLength > rhs.fMaxDumpLength)?outputPlot.fMaxDumpLength:rhs.fMaxDumpLength;
-   outputPlot.fTotalTime             = (outputPlot.fTotalTime > rhs.fTotalTime)?outputPlot.fTotalTime:rhs.fTotalTime;
+   outputPlot.fTotalTime             += rhs.fTotalTime;
    outputPlot.fObjectConstructionTime = (outputPlot.fObjectConstructionTime < rhs.fObjectConstructionTime)?outputPlot.fObjectConstructionTime:rhs.fObjectConstructionTime;
    outputPlot.fDataLoadedTime         = (outputPlot.fDataLoadedTime > rhs.fDataLoadedTime)?outputPlot.fDataLoadedTime:rhs.fDataLoadedTime;
    outputPlot.fTimeFactor                = (outputPlot.fTimeFactor < rhs.fTimeFactor)?outputPlot.fTimeFactor:rhs.fTimeFactor;
-   outputPlot.fTotalVert             += rhs.fTotalVert;
 
    //Histograms and maps, very posssible that these get overridden in the DrawCanvas function anyway.
    for(int i = 0; i < rhs.fHistos.GetSize(); i++)
@@ -235,11 +230,11 @@ void TAPlot::PrintFull()
    std::cout << "===========================" << std::endl;
    std::cout << "Title is " << fCanvasTitle << std::endl;
 
-   for(int i=0;i<fVertexEvents.fRunNumbers.size();i++)
+   for(size_t i=0; i<fVertexEvents.fRunNumbers.size(); i++)
    {
       std::cout << fVertexEvents.fRunNumbers.at(i) << std::endl;
    }
-   for(int i=0;i<fVertexEvents.fEventNos.size();i++)
+   for(size_t i=0; i<fVertexEvents.fEventNos.size(); i++)
    {
       std::cout << fVertexEvents.fEventNos.at(i) << std::endl;
    }
@@ -253,7 +248,7 @@ void TAPlot::Print(Option_t *option) const
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();
   std::cout <<""<<std::endl<<"Run(s): ";
-  for (UInt_t i=0; i<fRuns.size(); i++)
+  for (size_t i=0; i<fRuns.size(); i++)
   {
      if (i>1) std::cout <<", ";
      std::cout <<fRuns[i];
@@ -435,9 +430,22 @@ int TAPlot::GetNPassedType(const int kType)
    int n = 0;
    //for (auto& event: VertexEvents)
    //const TVertexEvents* event = GetVertexEvents();
-   for (int i = 0; i<fVertexEvents.fXVertex.size(); i++)
+   for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fCutsResults[i]&kType)
+         n++;
+   }
+   return n;
+}
+
+int TAPlot::GetNVertexType(const int kType)
+{
+   int n = 0;
+   //for (auto& event: VertexEvents)
+   //const TVertexEvents* event = GetVertexEvents();
+   for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
+   {
+      if (fVertexEvents.fVertexStatuses[i]&kType)
          n++;
    }
    return n;
@@ -788,4 +796,25 @@ void TAPlot::ClearHisto() //Destroy all histograms
 {
    fHistos.SetOwner(kTRUE);
    fHistos.Delete();
+}
+
+void TAPlot::ExportCSV(std::string filename, bool PassedCutOnly)
+{
+   std::string vertexFilename = filename + ".vertex.csv";
+   std::string timeWindowFilename = filename + ".timewindows.csv";
+   std::ofstream verts;
+   verts.open(vertexFilename);
+   verts << fVertexEvents.CSVTitleLine();
+   for (size_t i=0; i< fVertexEvents.size(); i++)
+      verts << fVertexEvents.CSVLine(i);
+   verts.close();
+   std::cout<< vertexFilename<< " saved\n";
+
+   std::ofstream times;
+   times.open(timeWindowFilename);
+   times << fTimeWindows.CSVTitleLine();
+   for (size_t i=0; i< fTimeWindows.size(); i++)
+      times << fTimeWindows.CSVLine(i);
+   times.close();
+   std::cout<< timeWindowFilename<< " saved\n";
 }

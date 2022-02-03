@@ -1,7 +1,7 @@
 #include "PrintTools.h"
 
 #include <fstream> 
-
+#ifdef BUILD_AG
 void PrintSequences(int runNumber, int SeqNum)
 {
    TTree *sequencerTree = Get_Seq_Event_Tree(runNumber);
@@ -22,21 +22,22 @@ void PrintSequences(int runNumber, int SeqNum)
                << "\t ID:" << seqEvent->GetID()
                << "\t Name:" << seqEvent->GetEventName()
                << "\t Description: " << seqEvent->GetDescription()
-               << "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
+               //<< "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
                << std::endl;
    }
    delete seqEvent;
    delete sequencerTree;
 }
-#ifdef BUILD_AG
+
 void PrintChronoNames(int runNumber)
 {
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-   for (int boards=0; boards<CHRONO_N_BOARDS; boards++)
+
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {
-         Names[boards][chans]=Get_Chrono_Name(runNumber, boards, chans);
+         Names[board.second][chans]=Get_Chrono_Name(runNumber, TChronoChannel(board.first, chans));
       }
    }
    std::cout<<"Name\tBoard\tChannel"<<std::endl;
@@ -57,12 +58,12 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
    TString Names[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
    Int_t Counts[CHRONO_N_BOARDS][CHRONO_N_CHANNELS];
-   for (int boards=0; boards<CHRONO_N_BOARDS; boards++)
+   for (const std::pair<std::string,int>& board: TChronoChannel::CBMAP)
    {
       for (int chans=0; chans<CHRONO_N_CHANNELS; chans++)
       {
-         Names[boards][chans]=Get_Chrono_Name(runNumber, boards, chans);
-         Counts[boards][chans]=GetCountsInChannel(runNumber,boards,chans,tmin,tmax);
+         Names[board.second][chans] = Get_Chrono_Name(runNumber, TChronoChannel(board.first, chans));
+         Counts[board.second][chans] = GetCountsInChannel(runNumber,TChronoChannel(board.first, chans),tmin,tmax);
       }
    }
    std::cout<<"Name\tBoard\tChannel\tCounts\tRate"<<std::endl;
@@ -122,10 +123,11 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 }
 #endif
 #ifdef BUILD_AG
-Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t repetition, Int_t offset)
+Int_t PrintTPCEvents(Int_t runNumber,  const char* description, Int_t dumpIndex)
 {
-   Double_t tmin=MatchEventToTime(runNumber, description,true,repetition, offset);
-   Double_t tmax=MatchEventToTime(runNumber, description,false,repetition, offset);
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
+   Double_t tmin = spills.front().GetStartTime();
+   Double_t tmax = spills.front().GetStopTime();
    return PrintTPCEvents(runNumber,tmin,tmax);
 }
 #endif
@@ -193,7 +195,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
    TSeq_Event* seqEvent = new TSeq_Event();
    sequencerTree->SetBranchAddress("SequencerEvent", &seqEvent);
    //  sprintf(search_string, "\"%s", description); // add a " before the name
-   Double_t runTimes[100000];
+   Double_t runTimes[100000] = {0};
    TString Names[100000];
    TString Descriptions[100000];
    TString Sequencer[100000];
@@ -217,7 +219,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       Sequencer[i]=seqEvent->GetSeq();
       Names[i] = seqEvent->GetEventName();
       //std::cout << Descriptions[i] << "\t" << Names[i] << "\t SeqEvent ID: " << seqEvent->GetID() << std::endl;
-      runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent, 0); //Turn off redundant timecheck for speed here
+      //runTimes[i] = GetRunTimeOfEvent(runNumber, seqEvent); //Turn off redundant timecheck for speed here
       //Get_RunTime_of_SequencerEvent(runNumber, seqEvent);
       //std::cout << "\t" << runTimes[i] <<std::endl;
       if (runTimes[i]<0.)
@@ -256,8 +258,8 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       if ( !ChronoboxesHaveChannel(runNumber, CHRONO_FLAG_NAME) )
          continue;
       std::cout << "Setting up " << CHRONO_FLAG_NAME << std::endl;
-      double ot;
-      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,GetChronoBoardChannel(runNumber, CHRONO_FLAG_NAME), ot );
+
+      TTree* trigger_tree =  Get_Chrono_Tree( runNumber,Get_Chrono_Channel(runNumber, CHRONO_FLAG_NAME).GetBranchName());
 
       if( trigger_tree == NULL )
          continue; //Error state?
@@ -276,7 +278,7 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          Descriptions[DumpCount]=TString(CHRONO_FLAG_NAME);
          Sequencer[DumpCount]="CHRONO_";
          Sequencer[DumpCount]+=99;
-         runTimes[DumpCount]= GetRunTimeOfChronoCount(runNumber,CHRONO_FLAG_NAME, i+1);
+         //runTimes[DumpCount]= GetRunTimeOfChronoCount(runNumber,CHRONO_FLAG_NAME, i+1);
          DumpCount++;
       }
    }
@@ -324,23 +326,16 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
   Int_t shutterCloses=0;
   std::cout<<"\n";
  
-  Int_t nChannels=6;
-  Int_t* channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
-  Int_t* boards[CHRONO_N_CHANNELS*CHRONO_N_BOARDS];
-  Int_t chan=0;
+  TChronoChannel channels[CHRONO_N_CHANNELS*CHRONO_N_BOARDS]; 
   
-   for (Int_t i=0; i<nChannels; i++)
-   {
-      channels[i]=new Int_t(-1);
-      boards[i]=new Int_t(-1);
-   }
+  TChronoChannel chan;
+  
    for (Int_t board=0; board<CHRONO_N_BOARDS; board++)
      {
-      chan=Get_Chrono_Channel(runNumber,board,"CATCH_OR");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"CATCH_OR");
+      if (chan.IsValidChannel())
       {
-        *channels[0]=chan;
-        *boards[0]=board;
+        channels[0]=chan;
       }
       // chan=Get_Chrono_Channel(runNumber,board,"CATCH_AND");
       // if (chan>-1)
@@ -372,35 +367,30 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       //   *channels[5]=chan;
       //   *boards[5]=board;
       // }
-      chan=Get_Chrono_Channel(runNumber,board,"TPC_TRIG");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"TPC_TRIG");
+      if (chan.IsValidChannel())
       {
-        *channels[1]=chan;
-        *boards[1]=board;
+        channels[1]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_B");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_B");
+      if (chan.IsValidChannel())
       {
-        *channels[2]=chan;
-        *boards[2]=board;
+        channels[2]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_E");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_E");
+      if (chan.IsValidChannel())
       {
-        *channels[3]=chan;
-        *boards[3]=board;
+        channels[3]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_A_AND_D");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_A_AND_D");
+      if (chan.IsValidChannel())
       {
-        *channels[4]=chan;
-        *boards[4]=board;
+        channels[4]=chan;
       }
-      chan=Get_Chrono_Channel(runNumber,board,"SiPM_C_AND_F");
-      if (chan>-1)
+      chan=Get_Chrono_Channel(runNumber,"SiPM_C_AND_F");
+      if (chan.IsValidChannel())
       {
-        *channels[5]=chan;
-        *boards[5]=board;
+        channels[5]=chan;
       }
      }
    
@@ -423,12 +413,13 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
       StopTriggers+=GetCountsInChannel(runNumber,"POS_STOP_DUMP");
     
    std::cout<<"\nStart Triggers: "<<StartTriggers<<"\tStop Triggers: "<<StopTriggers<<"\n"<<std::endl;
-
-   std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels) <<"\n";
+   // FIX ME!
+   //std::cout << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,TChronoChannel(boards,channels),nChannels) <<"\n";
    LogFile << "===================="<<"\n";
    LogFile << "Dump and CB trigger table: " <<"\n";
    LogFile << "===================="<<"\n";
-   LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
+   // FIX ME!
+   //LogFile << std::setw(25) << "Dump name" << "\t Start (s) \t Stop (s) \t Duration (s) \t"<<SequenceAGQODDetectorLine(-1,-1,-1,boards,channels,nChannels)<<"\n";
    for (Int_t i=0; i< DumpCount; i++)
    {
       //Pair start and Stop dump makers in table
@@ -437,22 +428,23 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << std::setw(10)<< runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t "<< std::setw(10) << runTimes[i];
          PrintedStarts++;
-         //Turn off repetition counting in SequenceQOD printing... just find the first matching stop after the start
-         /*Int_t repetition=0;
+         //Turn off dumpIndex counting in SequenceQOD printing... just find the first matching stop after the start
+         /*Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="startDump" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="startDump" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          */
          for (Int_t j=i; j< DumpCount; j++)
          {
-            if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {repetition--; }
+            if (strcmp(Names[j],"stopDump")==0 && strcmp(Descriptions[i],Descriptions[j])==0) // {dumpIndex--; }
             //if (Names[j]=="stopDump" && Descriptions[i]==Descriptions[j])
             {
-               TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
-               std::cout << " \t " << std::setw(10)<<runTimes[j] << " \t " <<std::setw(10)<< runTimes[j]-runTimes[i]<<DetectorData <<std::endl;
-               LogFile << " \t " << std::setw(10)<<runTimes[j] << " \t "<<std::setw(10) << runTimes[j]-runTimes[i]<<DetectorData <<"\n";
+               //FIX ME
+               //TString DetectorData=SequenceAGQODDetectorLine(runNumber,runTimes[i],runTimes[j],boards,channels,nChannels);
+               //std::cout << " \t " << std::setw(10)<<runTimes[j] << " \t " <<std::setw(10)<< runTimes[j]-runTimes[i]<<DetectorData <<std::endl;
+               //LogFile << " \t " << std::setw(10)<<runTimes[j] << " \t "<<std::setw(10) << runTimes[j]-runTimes[i]<<DetectorData <<"\n";
                PrintedStops++;
                break;
             }
@@ -468,15 +460,15 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          shutterOpens++;
-         Int_t repetition=0;
+         Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          {
-            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")  { repetition--; }
-            if (repetition==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")
+            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")  { dumpIndex--; }
+            if (dumpIndex==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="LASER_SHUTTER_CLOSE")
             {
                std::cout << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
                LogFile << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
@@ -490,15 +482,15 @@ Int_t PrintAGSequenceQOD(Int_t runNumber)
          std::cout <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          LogFile <<std::setw(25)  << Descriptions[i] << " \t " << runTimes[i];
          shutterOpens++;
-         Int_t repetition=0;
+         Int_t dumpIndex=0;
          for (Int_t j=0; j<= i; j++)
          {
-            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) repetition++;
+            if (Names[j]=="SIS_FLAG" && strcmp(Descriptions[i],Descriptions[j])==0) dumpIndex++;
          }
          for (Int_t j=0; j< DumpCount; j++)
          {
-            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")  { repetition--; }
-            if (repetition==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")
+            if (Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")  { dumpIndex--; }
+            if (dumpIndex==0 && Names[j]=="SIS_FLAG" && Descriptions[j]=="MIC_SYNTH_STEP_STOP")
             {
                std::cout << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;
                LogFile << " \t " << runTimes[j] << " \t " << runTimes[j]-runTimes[i]<< std::endl;

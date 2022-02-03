@@ -14,6 +14,8 @@
 #include "TTree.h"
 #include "TMVA/Reader.h"
 
+#include "AnalysisFlow.h"
+
 class VF48data
 {
   public:
@@ -138,59 +140,55 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 
 #include "TSISEvent.h"
+//Flow for passing SIS data from Analyze function (main thread) to the AnalyzeFlowEvent (side thread)
 class SISModuleFlow: public TAFlowEvent
 {
   public:
-  char* xdata[NUM_SIS_MODULES];
-  int xdata_size[NUM_SIS_MODULES]={0};
-  unsigned long MidasEventID=0;
-  uint32_t MidasTime=0;
+      std::vector<TSISBufferEvent*> fSISBufferEvents[NUM_SIS_MODULES];
+      unsigned long MidasEventID=0;
+      uint32_t MidasTime=0;
 
-
-  void AddData(int module, char* data, int size)
-  {
-    //std::cout<<"Module:"<< module<<" size:"<<size<<std::endl;
-    xdata_size[module]=size;
-    xdata[module]=(char*) malloc(size*4);
-    memcpy(xdata[module], data, size*4);
-    return;
-  }
-  void Clear()
-  {
-    for (int i=0; i<NUM_SIS_MODULES; i++)
-    {
-      if (xdata_size[i])
+   void AddData(const int module, char* data,const int size)
+   {
+      if (!size) return;
+      uint32_t* ptr = (uint32_t*) data;
+      const int nevents = size / 32;
+      fSISBufferEvents[module].reserve(nevents);
+      for ( int i = 0; i < nevents; i++ )
       {
-        free(xdata[i]);
-        xdata_size[i]=0;
+         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr,module));
+         ptr += NUM_SIS_CHANNELS;
       }
-    }
-  }
-  SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
-  {
-  }
-  ~SISModuleFlow()
-  {
-    Clear();
-  }
+      return;
+   }
+   void Clear()
+   {
+   }
+   SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
+   {
+   }
+   ~SISModuleFlow()
+   {
+      Clear();
+   }
 };
 
 
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<TSISEvent*> sis_events[NUM_SIS_MODULES];
+  std::vector<std::vector<TSISEvent>> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
+     for ( int i = 0; i < NUM_SIS_MODULES; i++)
+     {
+        sis_events.push_back(std::vector<TSISEvent>());
+     }
   }
   ~SISEventFlow()
   {
      for (int j=0; j<NUM_SIS_MODULES; j++)
      {
-        for (size_t i=0; i<sis_events[j].size(); i++)
-        {
-           delete sis_events[j].at(i);
-        }
         sis_events[j].clear();
      }
   }

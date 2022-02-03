@@ -1,6 +1,6 @@
 #include "TSpill.h"
 
-ClassImp(TSpillScalerData);
+ClassImp(TSpillScalerData)
 TSpillScalerData::TSpillScalerData()
 {
    StartTime         =-1;
@@ -19,7 +19,7 @@ TSpillScalerData::~TSpillScalerData()
 
 }
 
-TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scaler_channels,0),ScalerFilled(n_scaler_channels,0)
+TSpillScalerData::TSpillScalerData(int n_scaler_channels) : DetectorCounts(n_scaler_channels,0),ScalerFilled(n_scaler_channels,0)
 {
    StartTime         =-1;
    StopTime          =-1;
@@ -32,7 +32,7 @@ TSpillScalerData::TSpillScalerData(int n_scaler_channels):DetectorCounts(n_scale
    VertexFilled      =false;
 }
 
-TSpillScalerData::TSpillScalerData(const TSpillScalerData& a)
+TSpillScalerData::TSpillScalerData(const TSpillScalerData& a) : TObject(a)
 {
    StartTime         =a.StartTime;
    StopTime          =a.StopTime;
@@ -100,7 +100,7 @@ bool TSpillScalerData::Ready(bool have_vertex_detector)
 }
 
 
-ClassImp(TSpillSequencerData);
+ClassImp(TSpillSequencerData)
 
 
 TSpillSequencerData::TSpillSequencerData()
@@ -111,7 +111,7 @@ TSpillSequencerData::TSpillSequencerData()
    fStartState =-1;
    fStopState  =-1;
 }
-TSpillSequencerData::TSpillSequencerData(const TSpillSequencerData& a)
+TSpillSequencerData::TSpillSequencerData(const TSpillSequencerData& a) : TObject(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -136,7 +136,7 @@ void TSpillSequencerData::Print()
 }
 
 
-ClassImp(TSpill);
+ClassImp(TSpill)
 TSpill::TSpill(): RunNumber(-1)
 {
    IsDumpType =true; //By default, expect this to be a dump
@@ -207,11 +207,12 @@ void TSpill::InitByName(const char* format, va_list args)
    Print();
 }
 
-TSpill::TSpill(const TSpill& a)
+TSpill::TSpill(const TSpill& a) : TObject(a)
 {
    RunNumber    =a.RunNumber;
    Name         =a.Name;
    IsDumpType   =a.IsDumpType;
+   IsInfoType   =a.IsInfoType;
    Unixtime     =a.Unixtime;
 }
 
@@ -222,6 +223,7 @@ TSpill& TSpill::operator=(const TSpill& rhs)
    RunNumber    =rhs.RunNumber;
    Name         =rhs.Name;
    IsDumpType   =rhs.IsDumpType;
+   IsInfoType   =rhs.IsInfoType;
    Unixtime     =rhs.Unixtime;
    return *this;
 }
@@ -235,6 +237,9 @@ void TSpill::Print()
 
 int TSpill::AddToDatabase(sqlite3 *db, sqlite3_stmt * stmt)
 {
+   assert(!"Implement me!");
+   db = db;
+   stmt = stmt;
    return -1;
 }
 
@@ -262,4 +267,3 @@ TSpill::~TSpill()
 {
 
 }
-

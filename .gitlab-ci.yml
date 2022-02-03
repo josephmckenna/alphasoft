@@ -12,7 +12,6 @@ cache:
     - run*.mid.lz4
     - run*.mid.gz
     - alphaStrips*offline.root
-    - rootana
     - agana
     - agana/agcfmdb
     - BuildLog.txt
@@ -129,7 +128,7 @@ before_script:
 
 build-cc7-cmake-full:
   stage: build
-  image: tmidas/garfieldpp
+  image: jmckenna/alphadocker:garfieldpp
   script:
     - echo "Building"
     - cd scripts/gitChecker
@@ -179,9 +178,10 @@ build-cc7-cmake-ag:
 
 build-cc7-cmake-ag-sim:
   stage: build
-  image: tmidas/garfieldpp
+  image: jmckenna/alphadocker:garfieldpp
   script:
     - echo "Building"
+    - echo $GARFIELD_HOME
     - mkdir -p build
     - cd build
     - cmake3 ../ -DBUILD_AG_SIM=ON -DBUILD_A2=OFF
@@ -208,24 +208,9 @@ build-cc7-cmake-a2:
       - BuildLog.txt
       - ana/include/GitInfo.h
 
-build-cc7:
-  stage: build
-  script: 
-    - git submodule update --init --recursive
-    - echo "Building"
-    - make clean
-    - make 2>&1 | tee BuildLog.txt
-    - cd ..
-  cache: {}
-  artifacts:
-    when: on_failure
-    paths:
-      - BuildLog.txt
-      - ana/include/GitInfo.h
-
 AG_Simulation:
   stage: test
-  image: tmidas/garfieldpp
+  image: jmckenna/alphadocker:garfieldpp
   script:
     - . agconfig.sh install_sim | tee BuildSimLog.txt
     - cd scripts/gitChecker

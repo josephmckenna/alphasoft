@@ -1,7 +1,7 @@
 #include "TA2Spill.h"
 
 #ifdef BUILD_A2
-ClassImp(TA2SpillScalerData);
+ClassImp(TA2SpillScalerData)
 /*TA2SpillScalerData::TA2SpillScalerData()
 {
 
@@ -12,7 +12,8 @@ TA2SpillScalerData::~TA2SpillScalerData()
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels): TSpillScalerData(n_scaler_channels)
+TA2SpillScalerData::TA2SpillScalerData(int n_scaler_channels):
+   TSpillScalerData(n_scaler_channels)
 {
 
 }
@@ -22,14 +23,15 @@ TA2SpillScalerData::TA2SpillScalerData(const TA2SpillScalerData& a): TSpillScale
 
 }
 
-TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d): TA2SpillScalerData()
+TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d):
+   TA2SpillScalerData()
 {
    for (int i=0; i<NUM_SIS_MODULES; i++)
    {
-      TSISEvent* e=d->IntegratedSISCounts[i];
+      const TSISEvent& e = d->IntegratedSISCounts[i];
       for (int j=i*NUM_SIS_CHANNELS; j<(i+1)*NUM_SIS_CHANNELS; j++)
       {
-         DetectorCounts.at(j)=e->GetCountsInChannel(j);
+         DetectorCounts.at(j) = e.GetCountsInChannel(j);
          ScalerFilled[j]=true;
       }
    }
@@ -48,8 +50,10 @@ TA2SpillScalerData::TA2SpillScalerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODUL
    VertexFilled      =true;
 }
 
-ClassImp(TA2SpillSequencerData);
-TA2SpillSequencerData::TA2SpillSequencerData(): TSpillSequencerData()
+ClassImp(TA2SpillSequencerData)
+
+TA2SpillSequencerData::TA2SpillSequencerData():
+   TSpillSequencerData()
 {
 }
 TA2SpillSequencerData::~TA2SpillSequencerData()
@@ -66,6 +70,7 @@ TA2SpillSequencerData::TA2SpillSequencerData(DumpPair<TSVD_QOD,TSISEvent,NUM_SIS
    fStartState = d->StartDumpMarker->fonState;
    fStopState  = d->StopDumpMarker->fonState;
 }
+
 void TA2SpillScalerData::Print()
 {
    std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
@@ -76,17 +81,18 @@ void TA2SpillScalerData::Print()
    }
    std::cout  << " SVDFilled: "<<VertexFilled <<std::endl;
    int sum=0;
-   for (int i=0; i<64; i++)
+   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
       sum+=DetectorCounts[i];
    std::cout<<"SISEntries:"<< sum << "\tSVD Events:"<<VertexEvents<<std::endl;
-   for (int i=0; i<64; i++)
+   for (int i = 0; i < NUM_SIS_MODULES*NUM_SIS_CHANNELS; i++)
    {
       std::cout<<DetectorCounts[i]<<"\t";
    }
 }
 
 
-TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a)
+TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a):
+   TSpillSequencerData(a)
 {
    fSequenceNum  =a.fSequenceNum;
    fDumpID       =a.fDumpID;
@@ -95,7 +101,8 @@ TA2SpillSequencerData::TA2SpillSequencerData(const TA2SpillSequencerData& a)
    fStopState    =a.fStopState;
 }
 
-ClassImp(TA2Spill);
+ClassImp(TA2Spill)
+
 TA2Spill::TA2Spill()
 {
    SeqData    =NULL;
@@ -107,7 +114,8 @@ TA2Spill::TA2Spill(int runno, uint32_t unixtime): TSpill(runno, unixtime)
    ScalerData =NULL;
 }
 
-TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...): TSpill(runno,unixtime)
+TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...):
+   TSpill(runno,unixtime)
 {
    SeqData    =NULL;
    ScalerData =NULL;
@@ -118,7 +126,7 @@ TA2Spill::TA2Spill(int runno, uint32_t unixtime, const char* format, ...): TSpil
 }
 
 TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
-   TSpill(runno, d->StartDumpMarker->MidasTime, d->StartDumpMarker->Description.c_str())
+   TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
 {
    if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
    ScalerData = new TA2SpillScalerData(d);
@@ -126,7 +134,8 @@ TA2Spill::TA2Spill(int runno,DumpPair<TSVD_QOD,TSISEvent,NUM_SIS_MODULES>* d ):
    //Print();
 }
 
-TA2Spill::TA2Spill(const TA2Spill& a): TSpill(a)
+TA2Spill::TA2Spill(const TA2Spill& a):
+   TSpill(a)
 {
    if (a.ScalerData)
       ScalerData=new TA2SpillScalerData(*a.ScalerData);
@@ -137,6 +146,7 @@ TA2Spill::TA2Spill(const TA2Spill& a): TSpill(a)
    else
       SeqData=NULL;
 }
+
 TA2Spill::~TA2Spill()
 {
    if (ScalerData)
@@ -177,6 +187,7 @@ TA2Spill* TA2Spill::operator/( TA2Spill* b)
    c->IsDumpType=false;
    return c;
 }
+
 TA2Spill* TA2Spill::operator+( TA2Spill* b)
 {
    //c=a/b
@@ -218,6 +229,7 @@ bool TA2Spill::Ready( bool have_svd)
       return true;
    }
 }
+
 void TA2Spill::Print()
 {
    std::cout<<"Dump name:"<<Name<<"\t\tIsDumpType:"<<IsDumpType<<std::endl;
@@ -229,14 +241,14 @@ void TA2Spill::Print()
    std::cout<<std::endl;
 }
 
-TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
+TString TA2Spill::Content(const std::vector<TSISChannel> sis_channels)
 {
-   char buf[800];
+   
    TString log;
    //if (indent){
     log += "   "; // indentation     
    //}
-   TString units="";
+   std::string units="";
    {
       int open=Name.find_last_of('(');
       int close=Name.find_last_of(')');
@@ -247,6 +259,7 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    if (ScalerData)
    {
+      char buf[200];
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
                  ScalerData->StartTime,
                  ScalerData->StopTime,
@@ -258,6 +271,7 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    {
       if (Unixtime)
       {
+         char buf[80];
          struct tm * timeinfo = ( (tm*) &Unixtime);
          sprintf(buf,"[%d:%d:%d]", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec);
          log += buf;
@@ -265,35 +279,35 @@ TString TA2Spill::Content(std::vector<int>* sis_channels, int& n_chans)
    }
    if (SeqData)
    {
-      if (SeqData->fSequenceNum==0)
-        sprintf(buf," %-65s|",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==1)
-        sprintf(buf," %-16s%-49s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==2)
-        sprintf(buf," %-32s%-33s|","",Name.c_str()); // description 
-      else if (SeqData->fSequenceNum==3)
-        sprintf(buf," %-48s%-17s|","",Name.c_str()); // description 
-      log += buf;
+      std::string dump_name;
+      for (int i = 0; i < SeqData->fSequenceNum; i++)
+         dump_name += std::string(4,' ');
+      dump_name += Name; // dump description
+      if (dump_name.size() > DUMP_NAME_WIDTH)
+         dump_name = dump_name.substr(0,DUMP_NAME_WIDTH);
+      else if (dump_name.size() < DUMP_NAME_WIDTH)
+         dump_name.insert(dump_name.size(), DUMP_NAME_WIDTH - dump_name.size(), ' ');
+      log += dump_name + std::string("|");
    }
    else
    {
-      if (ScalerData)
-         sprintf(buf," %-65s|",Name.c_str());
-      else
-         sprintf(buf," %s",Name.c_str());
-      log += buf;
+      log += std::string(" ") + Name;
    }
    if (ScalerData)
    {
-      for (int iDet = 0; iDet<n_chans; iDet++)
+      char buf[80];
+      for (const TSISChannel& chan: sis_channels)
       {
          int counts=-1;
-         int chan=sis_channels->at(iDet);
          //If valid channel number:
-         if (chan>0)
-            counts=ScalerData->DetectorCounts[chan];
-         sprintf(buf,"%9d%s ",counts,units.Data());
+         if (chan.IsValid())
+            counts=ScalerData->DetectorCounts[chan.toInt()]; //toInt is a pretty unclean / unsafe solution. Look for [] operator overload
+         sprintf(buf,"%9d",counts);
          log += buf;
+         if (units.size())
+            log += units;
+         else
+            log += " ";
       }
       sprintf(buf,"%9d ",ScalerData->PassCuts);
       log += buf;

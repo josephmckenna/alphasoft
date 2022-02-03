@@ -23,7 +23,9 @@
 class HandleSequencerFlags
 {
 public:
-   bool fPrint = false;
+   bool fPrint = false; 
+   bool fPrintSEQ2 = false;
+   bool fPrintSeqDriver = false;
 };
 
 class HandleSequencer: public TARunObject
@@ -41,15 +43,16 @@ public:
    HandleSequencerFlags* fFlags;
    TSeq_Event* fSeqEvent;
    TSequencerState* fSeqState;
-   TTree* SequencerTree;
+   TTree* fSequencerEventTree;
+   TTree* fSequencerStateTree;
    bool fTrace = false;
 
    HandleSequencer(TARunInfo* runinfo, HandleSequencerFlags* flags)
       : TARunObject(runinfo), fFlags(flags),
-        fSeqEvent(0), fSeqState(0), SequencerTree(0)
+        fSeqEvent(nullptr), fSeqState(nullptr), fSequencerEventTree(nullptr), fSequencerStateTree(nullptr)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Handle Sequencer";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Handle Sequencer";
 #endif
       if (fTrace)
          printf("HandleSequencer::ctor!\n");
@@ -65,16 +68,15 @@ public:
    {
       if (fTrace)
          printf("HandleSequencer::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       fSeqEvent = new TSeq_Event;
-      SequencerTree = new TTree("SequencerEventTree", "SequencerEventTree");
-      SequencerTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
+      fSequencerEventTree = new TTree("SequencerEventTree", "SequencerEventTree");
+      fSequencerEventTree->Branch("SequencerEvent", &fSeqEvent, 32000, 0);
 
       fSeqState = new TSequencerState;
-      SequencerTree->Branch("TSequencerState",&fSeqState, 32000, 0);
+      fSequencerStateTree = new TTree("SequencerStateTree", "SequencerStateTree");
+      fSequencerStateTree->Branch("TSequencerState",&fSeqState, 32000, 0);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -82,9 +84,13 @@ public:
       if (fTrace)
          printf("HandleSequencer::EndRun, run %d\n", runinfo->fRunNo);
       gDirectory->cd("/");
-      SequencerTree->Write();
-      delete SequencerTree;
+
+      fSequencerEventTree->Write();
+      delete fSequencerEventTree;
       if (fSeqEvent) delete fSeqEvent;
+
+      fSequencerStateTree->Write();
+      delete fSequencerStateTree;
       if (fSeqState) delete fSeqState;
    }
    
@@ -100,20 +106,20 @@ public:
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
 
-   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
+   TAFlowEvent* Analyze( __attribute__((unused)) TARunInfo* runinfo, TMEvent* me, TAFlags* flags, TAFlowEvent* flow)
    {
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       //std::cout<<"HandleSequencer::Analyze   Event # "<<me->serial_number<<std::endl;
 
       if( me->event_id != 8 ) // sequencer event id
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
+#ifdef HAVE_MANALYZER_PROFILER
+      TAClock start_time = TAClockNow();
 #endif
       //
 
@@ -125,6 +131,8 @@ public:
       //if( b ) std::cout<<"HandleSequencer::Analyze   BANK NAME: "<<b->name<<std::endl;
       char* bkptr = me->GetBankData(b);
       int bklen = b->data_size;
+      if(fFlags->fPrintSEQ2)
+         std::cout<<bkptr<<std::endl;
 #if HANDLE_SEQ_IN_SIDE_THREAD
       if( bkptr ) 
       {
@@ -171,14 +179,14 @@ public:
             buf[i] = 'X';
          else if (buf[i] == 0x1D)
             buf[i] = 'X';
-
+      
       int parsecode = fParser->ParseBuffer(buf,bufLength);
     
       if (parsecode < 0 ) 
          {
          std::cerr << fParser->GetParseCodeMessage(parsecode) << std::endl;
-#ifdef MANALYZER_PROFILER
-         flow = new UserProfilerFlow(flow,"handle_sequencer(no parse)",timer_start);
+#ifdef HAVE_MANALYZER_PROFILER
+         flow = new TAUserProfilerFlow(flow,"handle_sequencer(no parse)",start_time);
 #endif
          return flow;
          }  
@@ -188,7 +196,12 @@ public:
       TXMLNode * node = fParser->GetXMLDocument()->GetRootNode();
       SeqXML* mySeq = new SeqXML(node);
       TSequencerDriver* driver=new TSequencerDriver();
+      {
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       driver->Parse(node);
+      if(fFlags->fPrintSeqDriver)
+         driver->PrintDatamembers();
+      }
       ((DumpFlow*)flow)->driver=driver;
       delete fParser;
   
@@ -218,9 +231,7 @@ public:
       s+=" loaded";
       ((DumpFlow*)flow)->AddDumpEvent(iSeqType,cSeq[iSeqType],me->time_stamp,s.Data(),DumpMarker::DumpTypes::Info,cSeq[iSeqType],0);
       cSeq[iSeqType]++;
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd();
 
       TIter myChains((TObjArray*)mySeq->getChainLinks(), true);
@@ -243,7 +254,7 @@ public:
             fSeqEvent->SetonState( event->GetStateID() );
             Int_t onState=event->GetStateID();
             //fSeqEvent->Print();
-             SequencerTree->Fill();
+            fSequencerEventTree->Fill();
             ((DumpFlow*)flow)->AddDumpEvent(
                 iSeqType,
                 cSeq[iSeqType],
@@ -258,38 +269,19 @@ public:
          TIter myStates(cl->getStates());
          while ((state= (SeqXML_State *) myStates.Next()))
          {
-            TSequencerState* SeqState = new TSequencerState();
-            SeqState->SetSeq( mySeq->getSequencerName() );
-            SeqState->SetSeqNum(cSeq[iSeqType]);
-            SeqState->SetID(sID[iSeqType]++);
-            SeqState->SetState( state->getID() );
-            SeqState->SetTime( state->getTime() );
+            fSeqState->Reset();
+            fSeqState->SetSeq( mySeq->getSequencerName() );
+            fSeqState->SetSeqNum(iSeqType);
+            fSeqState->SetID(sID[iSeqType]++);
 
-            //AO
-            if (state->GetAOi()->size())
-            {
-               AnalogueOut* AO=new AnalogueOut;
-               AO->steps=state->getLoopCnt();
-               AO->AOi=*state->GetAOi();
-               AO->AOf=*state->GetAOf();
-               AO->PrevState=-999;
-               SeqState->AddAO(AO);
-            }
-
-            //DO
-            if (state->GetDO()->size())
-            {
-               DigitalOut* DO=new DigitalOut;
-               DO->Channels=*state->GetDO();
-               SeqState->AddDO(DO);
-            }
+            fSeqState->Set(state);
 
             //Trigger unset for now
-            SeqState->SetComment(*state->getComment() );
-            ((DumpFlow*)flow)->AddStateEvent(SeqState);
+            fSeqState->SetComment(*state->getComment() );
+
+            ((DumpFlow*)flow)->AddStateEvent(*fSeqState);
             //SeqState->Print();
-            /*fSeqState=SeqState;*/
-            /*gSeqStateTree->Fill();*/
+            fSequencerStateTree->Fill();
          }
       }
       delete mySeq;
@@ -308,13 +300,27 @@ public:
    HandleSequencerFlags fFlags;
 
 public:
+
+
+   void Usage()
+   {
+      printf("HandleSequencerFactory Usage:\n");
+      printf("\t--printSEQ2 Display the full XML block the sequencer is sending\n");
+      printf("\t--printSeqDriver Display the drivers that sequencers are sending\n");
+      
+   }
+
    void Init(const std::vector<std::string> &args)
    {
       printf("HandleSequencerFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
-         if (args[i] == "--print")
+         if (args[i] == "--print") 
             fFlags.fPrint = true;
+         if(args[i] == "--printSEQ2") 
+            fFlags.fPrintSEQ2 = true;
+         if(args[i] == "--printSeqDriver") 
+            fFlags.fPrintSeqDriver = true;
       }
    }
 

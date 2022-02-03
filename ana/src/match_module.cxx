@@ -58,8 +58,8 @@ public:
    MatchModule(TARunInfo* runinfo, MatchFlags* f)
       : TARunObject(runinfo)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Match Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Match Module";
 #endif
       if (fTrace)
          printf("MatchModule::ctor!\n");
@@ -67,18 +67,18 @@ public:
       fFlags = f;
 
       //First thread
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
       if (fFlags->ThreadID < 0)
-        ModuleName="Match Module (CombPads)";
+        fModuleName="Match Module (CombPads)";
       //Multithreaded fitting
       else if ( fFlags->ThreadID < fFlags->TotalThreads ) 
-        ModuleName="Match Module (Combine " +
+        fModuleName="Match Module (Combine " +
           std::to_string(fFlags->ThreadID) + 
           "/" +
           std::to_string(fFlags->TotalThreads) +
           ")";
       else if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
-        ModuleName="Match Module (spacepoints)";
+        fModuleName="Match Module (spacepoints)";
 #endif
       diagnostic=fFlags->fDiag; // dis/en-able histogramming
       fTrace=fFlags->fTrace; // enable verbosity
@@ -139,7 +139,7 @@ public:
       // turn off recostruction
       if (fFlags->fRecOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -150,7 +150,7 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -160,14 +160,14 @@ public:
          {
             if (ef->fEvent->time<fFlags->start_time)
             {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
 #endif
                 return flow;
             }
             if (ef->fEvent->time>fFlags->stop_time)
             {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
 #endif
                return flow;
@@ -178,14 +178,14 @@ public:
          {
             if (ef->fEvent->counter<fFlags->start_event)
             {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
 #endif
                return flow;
             }
             if (ef->fEvent->counter>fFlags->stop_event)
             {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
                *flags|=TAFlag_SKIP_PROFILE;
 #endif
                return flow;
@@ -195,7 +195,7 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -203,7 +203,7 @@ public:
 
       if( ! SigFlow->awSig )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -261,7 +261,8 @@ public:
             }
          else if( fFlags->fForceReco ) // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
             {
-               printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
+               if( fTrace )
+                  printf("MatchModule::Analyze, NO combined pads, Set Z=0\n");
    //delete match->GetCombinedPads();?
                spacepoints = match->FakePads( SigFlow->awSig );
             }
@@ -340,10 +341,9 @@ public:
                   json=args[i];
                   i++;
                }
-         
-            fFlags.ana_settings=new AnaSettings(json);
-            //fFlags.ana_settings->Print();
          }
+            fFlags.ana_settings=new AnaSettings(json);
+            fFlags.ana_settings->Print();
    }
    
    MatchModuleFactory() {}

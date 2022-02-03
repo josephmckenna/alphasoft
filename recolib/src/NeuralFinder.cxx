@@ -23,6 +23,10 @@ NeuralFinder::Neuron::Neuron(const vector<TSpacePoint*> &pts, int start, int end
 
    weight = 20.*pointWeights[start]*pointWeights[end];
 }
+NeuralFinder::Neuron::Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(nullptr), startIdx(-1), endIdx(-1), startPt(NULL), endPt(NULL) // NOLINT the TVector3 doesn't explicitly call the TObject constructor so linter get upset
+{
+
+}
 
 //==============================================================================================
 NeuralFinder::NeuralFinder(std::vector<TSpacePoint*>* points):
@@ -47,7 +51,7 @@ int NeuralFinder::MakeNeurons()
    nneurons = 0;
    for(unsigned int i = 0; i < fPointsArray.size(); i++){
       for(unsigned int j = i+1; j < fPointsArray.size(); j++){
-         int startIdx(i), endIdx(j);
+         unsigned int startIdx(i), endIdx(j);
          if(fPointsArray[j]->Order(*fPointsArray[j],*fPointsArray[i])){
             startIdx = j;
             endIdx = i;
@@ -98,7 +102,7 @@ int NeuralFinder::MakeNeurons()
    //    }
    // }
    return neurons.size();
-};
+}
 
 //==============================================================================================
 map<int,vector<int> > NeuralFinder::GetEndNeurons()
@@ -276,14 +280,14 @@ const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
       for(auto &n: neurons) nset.insert(&n);
    }
    return nset;
-};
+}
 //==============================================================================================
 const set<NeuralFinder::Neuron*> NeuralFinder::GetMetaNeurons()
 {
    set<NeuralFinder::Neuron*> nset;
    for(auto &n: metaNeurons) nset.insert(&n);
    return nset;
-};
+}
 //==============================================================================================
 double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder::Neuron &n2)
 {
@@ -318,7 +322,7 @@ double NeuralFinder::MatrixT(const NeuralFinder::Neuron &n1, const NeuralFinder:
       return 0.;
    }
 
-};
+}
 
 //==============================================================================================
 void NeuralFinder::CalcMatrixT(NeuralFinder::Neuron &n)
@@ -407,7 +411,7 @@ double NeuralFinder::CalcV(Neuron &n, double B, double T)
    n.SetActive(n.GetV() >= VThres);
    assert(n.GetV() >= 0 && n.GetV() <= 1);
    return n.GetV();
-};
+}
 
 //==============================================================================================
 double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
@@ -445,7 +449,7 @@ double NeuralFinder::CalcV_meta(Neuron &n, double B, double T)
    n.SetActive(n.GetV() >= VThres);
    assert(n.GetV() >= 0 && n.GetV() <= 1);
    return n.GetV();
-};
+}
 
 //==============================================================================================
 int NeuralFinder::CountActive(){
@@ -497,7 +501,7 @@ bool NeuralFinder::Run()
       cout << "EEEEEEEEE " << nneurons << " != " << neuronV.size() << " !=? " << neurons.size() << endl;
    assert(int(neuronV.size()) == nneurons);
    return converged;
-};
+}
 
 //==============================================================================================
 bool NeuralFinder::RunMeta()

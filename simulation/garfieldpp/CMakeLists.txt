@@ -17,8 +17,10 @@ include_directories(${ROOT_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Garfield++
 #
+find_package(Garfield REQUIRED)
 include_directories(${GARFIELD_INCLUDE_DIRS})
 link_libraries(${GARFIELD_LIBRARIES})
+message(STATUS "Garfieldpp libs: ${GARFIELD_LIBRARIES}")
 
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
@@ -28,11 +30,21 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/ComponentBmap.cc ${PROJECT_SOURCE_DIR}/src/MagneticFieldMap.cc ${PROJECT_SOURCE_DIR}/src/TPCBase.cc ${PROJECT_SOURCE_DIR}/src/TPC.cc)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 
-set(BINS DriftGas.cc PlotMedium.cc ChamberField.cc CalculateGain.cc ChamberDrift.cc ElectronAvalanche.cc TrackElectronAvalanche.cc WireSag.cc polar.cc PolarDrift.cc PolarSignal.cc)
+set(OLDBINS ChamberField.cc CalculateGain.cc ChamberDrift.cc ElectronAvalanche.cc TrackElectronAvalanche.cc WireSag.cc)
+set(NEWBINS DriftGas.cc PlotMedium.cc polar.cc PolarDrift.cc PolarSignal.cc PolarDriftSignal.cc)
 
-foreach(target ${BINS})
+foreach(target ${OLDBINS})
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target} ${sources})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield )
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES})
   install(TARGETS ${bin} DESTINATION simulation)
-endforeach(target ${BINS})
+endforeach(target ${OLDBINS})
+
+foreach(target ${NEWBINS})
+  string( REPLACE ".cc" ".exe" bin ${target} )
+  add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target})
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES})
+  install(TARGETS ${bin} DESTINATION simulation)
+endforeach(target ${NEWBINS})
+
+

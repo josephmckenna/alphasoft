@@ -24,16 +24,8 @@ TSISChannels::TSISChannels( Int_t run_number )
    _io32=GetChannel("IO32_TRIG",run_number);
    _io32_nobusy=GetChannel("IO32_TRIG_NOBUSY",run_number);
    _20MHz_VF48clk=GetChannel("SIS_VF48_CLOCK",run_number);
-   _iadc = _io32 % NUM_SIS_CHANNELS;
-   _bnkadc = _io32 / NUM_SIS_CHANNELS;
   for (int j=0; j<NUM_SIS_MODULES; j++){
-    _10MHz_clk[j] = GetChannelInRange("SIS_10Mhz_CLK",run_number,j*NUM_SIS_CHANNELS,(j+1)*NUM_SIS_CHANNELS)%NUM_SIS_CHANNELS;
-    _seq_recatch_start[j] = GetChannelInRange("SIS_RECATCH_SEQ_START",run_number,j*NUM_SIS_CHANNELS,(j+1)*NUM_SIS_CHANNELS)%NUM_SIS_CHANNELS;
-    //printf("IO32 TRIG (%d,%d) SIS_RECATCH_SEQ_START  (%d,%d)\n", _bnkadc, _iadc,j,_seq_recatch_start[j]);  
-    _seq_atom_start[j] = GetChannelInRange("SIS_ATOM_SEQ_START",run_number,j*NUM_SIS_CHANNELS,(j+1)*NUM_SIS_CHANNELS)%NUM_SIS_CHANNELS;
-    //   printf("SIS_ATOM_SEQ_START  (%d,%d)\n",j, _seq_atom_start[j]);  
-    _seq_quench_start[j] = GetChannelInRange("QUENCH_FLAG",run_number,j*NUM_SIS_CHANNELS,(j+1)*NUM_SIS_CHANNELS)%NUM_SIS_CHANNELS;
-    //   printf("QUENCH_FLAG  (%d,%d)\n", j,_seq_quench_start[j]);  
+    _10MHz_clk[j] = GetChannelInRange("SIS_10Mhz_CLK",run_number,j*NUM_SIS_CHANNELS,(j+1)*NUM_SIS_CHANNELS);
   }
 }
 
@@ -44,7 +36,7 @@ TSISChannels::~TSISChannels()
 
 
 
-Int_t TSISChannels::GetChannelInRange( const char* channel_description, Int_t run_number , Int_t chmin, Int_t chmax){
+TSISChannel TSISChannels::GetChannelInRange( const char* channel_description, Int_t run_number , Int_t chmin, Int_t chmax){
 
   Char_t sql[200];
   TString  result;
@@ -55,13 +47,12 @@ Int_t TSISChannels::GetChannelInRange( const char* channel_description, Int_t ru
   if( result.IsNull() ) 
   {
     //	  printf("Couldn't match channel_description %s to a channel\n", channel_description);
-	  return -1;
+	  return TSISChannel(-1,-1);
   }
-  
-  return result.Atoi();
+  return TSISChannel( result.Atoi());
 }
 
-Int_t TSISChannels::GetChannel( const char* channel_description, Int_t run_number )
+TSISChannel TSISChannels::GetChannel( const char* channel_description, Int_t run_number )
 {
   Char_t sql[200];
   TString  result;
@@ -71,13 +62,14 @@ Int_t TSISChannels::GetChannel( const char* channel_description, Int_t run_numbe
   if( result.IsNull() ) 
   {
     //	  printf("Couldn't match channel_description %s to a channel\n", channel_description);
-	  return -1;
+	  return TSISChannel(-1,-1);
   }
   
-  return result.Atoi();
+  return TSISChannel(result.Atoi());
 }
 
-Int_t TSISChannels::GetChannel( const char* channel_description )
+
+TSISChannel TSISChannels::GetChannel( const char* channel_description )
 {
   return GetChannel( channel_description, _run_number );
 }
@@ -92,6 +84,11 @@ TString TSISChannels::GetDescription( Int_t channel, Int_t run_number )
   if( result.IsNull() ) result = "EMPTY";
 
   return result;
+}
+
+TString TSISChannels::GetDescription( TSISChannel channel, Int_t run_number)
+{
+  return GetDescription(channel.toInt(), run_number);
 }
 
 void TSISChannels::PrintSISMap( Int_t run_number )

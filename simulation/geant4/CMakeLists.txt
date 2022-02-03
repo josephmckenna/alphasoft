@@ -46,8 +46,7 @@ include_directories(${ROOT_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Garfield++
 #
-include_directories(${GARFIELD_INCLUDE_DIRS})
-link_libraries(${GARFIELD_LIBRARIES})
+find_package( Garfield REQUIRED)
 
 #----------------------------------------------------------------------------
 # include CRY (required package)

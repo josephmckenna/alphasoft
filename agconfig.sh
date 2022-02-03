@@ -18,7 +18,7 @@ export A2DATAPATH=${AGRELEASE}/alpha2
 # It can be used to tell the ROOTUTILS to fetch an output
 # rootfile somewhere different from the default location
 if [[ -z ${AGOUTPUT} ]]; then
-    export AGOUTPUT=${AGRELEASE} # this is the default location
+    export AGOUTPUT=${AGRELEASE}/root_output_files/ # this is the default location
 fi
 
 #Use EOS PUBLIC if not already set
@@ -44,8 +44,6 @@ alphaBeast()
 
 alphaCrunch()
 {
-  . ~/packages/rootana/thisrootana.sh
-
   . /cvmfs/sft.cern.ch/lcg/releases/gcc/4.8.4/x86_64-centos7/setup.sh
   . /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.06/x86_64-centos7-gcc48-opt/bin/root/thisroot.sh
 
@@ -62,7 +60,7 @@ acapra()
     echo -e " \e[91m Hi Andrea! \e[m"
     
     # export GARFIELDPP="$AGRELEASE/build/simulation/garfieldpp"
-    export PATH="$AGRELEASE/scripts/andrea":$PATH
+    export PATH="$AGRELEASE/scripts/andrea":"$AGRELEASE/simulation/garfieldpp/scripts":$PATH
 
     echo -e " \e[32m `gcc --version | head -1`\e[m"
     echo -e " \e[34m `git status | head -1`\e[m"
@@ -83,7 +81,12 @@ lxplus()
   fi
 }
 
-
+alphadaq()
+{
+   export ROOTANASYS=${AGRELEASE}/rootana
+   export MIDASSYS=/home/alpha/packages/midas-develop
+   export AGOUTPUT=${AGRELEASE}/root_output_files/
+}
 
 
 
@@ -94,6 +97,14 @@ echo "Hostname: " `hostname`
 echo "Username: " `whoami`
 echo "##################################################"
 
+if [ `echo "${GARFIELD_HOME}" | wc -c` -gt 1 ]; then
+   echo "GARFIELD_HOME set to ${GARFIELD_HOME}, configuring... "
+   echo "No I am not... we now use an old verion of garfield that doesnt have this file :s"
+   #cat ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+   #source ${GARFIELD_HOME}/install/share/Garfield/setupGarfield.sh
+else
+   echo "GARFIELD_HOME not set"
+fi
 
 #Setup LD_LIBRARY_PATH
 for AG_LIB_PATH in ana/obj {,build/}analib {,build/}aged {,build/}recolib {,build/}a2lib {,build/}rootUtils; do
@@ -121,7 +132,7 @@ echo "Adding $AGRELEASE/bin/include to ROOT_INCLUDE_PATH"
 export ROOT_INCLUDE_PATH=${AGRELEASE}/bin/include:${ROOT_INCLUDE_PATH}
 
 #Add scripts to BIN path
-for AG_BIN_PATH in scripts bin; do
+for AG_BIN_PATH in scripts bin bin/simulation; do
   if echo ${PATH} | grep "${AGRELEASE}/${AG_BIN_PATH}/" > /dev/null; then
     NOTHING_TO_DO=1
   else
@@ -132,32 +143,20 @@ done
 
 
 
-#Quit if ROOT and ROOTANA are setup...
-if [ "${1}" = "clean" ]; then
-  echo "Clean setup of environment variables"
-  echo "Now using rootana git submodule"
-  export ROOTANASYS="${AGRELEASE}/rootana"
+#Quit if ROOT is setup...
+if [ ${#ROOTSYS} -lt 3 ]; then
+    echo "Please setup root manually (or run . agconfig.sh"
 else
-  if [ ${#ROOTANASYS} -gt 3 ]; then
-    echo "ROOTANASYS set... not over writing: $ROOTANASYS"
-  else
-    echo "Using rootana git submodule"
-    export ROOTANASYS="${AGRELEASE}/rootana"
-  fi
-  if [ ${#ROOTSYS} -lt 3 ]; then
-    echo "Please setup root manually (or run . agconfig.sh clean)"
-  else
     echo "ROOTSYS set... not over writing: $ROOTSYS"
-  fi
 fi
 
-
-if [ "$ROOTANASYS" = "${AGRELEASE}/rootana" ]; then
-    echo "ROOTANA submodule enabled: " ` cd ${AGRELEASE}/rootana && git log -1 --format=%h`
+if [ -z ${MIDASSYS+x} ]; then
+    echo "MIDASSYS not set, continuing without MIDAS"
+else
+    echo "MIDASSYS set: $MIDASSYS"
 fi
 
-
-#Setup ROOT and ROOTANA if we havn't quit yet...
+#Setup ROOT if we havn't quit yet...
 case `hostname` in
 alphavme*  )
   echo "alphavme detected..."
@@ -166,11 +165,14 @@ alphavme*  )
   ;;
 alphagdaq* | alphadaq* )
   echo "DAQ computer detected..."
-  echo "DO NOT RUN ANALYSIS ON DAQ!!!"
+  alphadaq
+  echo "DO NOT RUN ANALYSIS ON DAQ!!! Just online tools"
   return
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
+  . ~/packages/root_6_22_02/bin/thisroot.sh
+  alphadaq
   export AGMIDASDATA="/alpha/agdaq/data"
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
@@ -184,7 +186,7 @@ alphacpc04* | alphacpc09*  )
   if [ `whoami` = "acapra" ] ; then
       export DATADIR=/daq/alpha_data0/acapra/alphag
       export MCDATA=${DATADIR}/MCdata
-      export GPPDATA=${DATADIR}/GPPdata
+      export GARFIELDPP=${DATADIR}/GPPdata
       export AGOUTPUT="/daq/alpha_data0/acapra/alphag/output"
       acapra
   fi
@@ -232,7 +234,6 @@ lxplus* )
   if [ `which root-config | wc -c` -gt 5 ]; then
   echo 'root      :' `root-config --version`
   fi
-  echo "ROOTANASYS: ${ROOTANASYS}"
   echo "AGRELEASE : ${AGRELEASE}"
   ;;
 esac

@@ -17,6 +17,7 @@
 #include "TStoreLabVIEWEvent.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
@@ -38,7 +39,7 @@ class TVertexEvents: public TObject
       std::vector<double> fXVertex;
       std::vector<double> fYVertex;
       std::vector<double> fZVertex;
-      std::vector<double> fTimes; //Plot time (based off offical time)
+      std::vector<double> fTimes; //Plot time (based off official time)
       std::vector<double> fEventTimes; //TPC time stamp
       std::vector<double> fRunTimes; //Official Time
       std::vector<int> fNumHelices; // helices used for vertexing
@@ -95,7 +96,7 @@ class TVertexEvents: public TObject
       //=+ Operator.
       TVertexEvents operator+=(const TVertexEvents &rhs) 
       {
-         std::cout << "TAVertexEvents += operator" << std::endl;
+         //std::cout << "TAVertexEvents += operator" << std::endl;
          this->fRunNumbers       .insert(this->fRunNumbers.end(),      rhs.fRunNumbers.begin(),     rhs.fRunNumbers.end());
          this->fEventNos         .insert(this->fEventNos.end(),        rhs.fEventNos.begin(),       rhs.fEventNos.end());
          this->fCutsResults      .insert(this->fCutsResults.end(),     rhs.fCutsResults.begin(),    rhs.fCutsResults.end()); 
@@ -109,6 +110,54 @@ class TVertexEvents: public TObject
          this->fNumHelices         .insert(this->fNumHelices.end(),        rhs.fNumHelices.begin(),       rhs.fNumHelices.end());
          this->fNumTracks          .insert(this->fNumTracks.end(),         rhs.fNumTracks.begin(),        rhs.fNumTracks.end());
          return *this;
+      }
+      std::string CSVTitleLine() const
+      {
+         return std::string("Run Number,") + 
+                "Event Number," +
+                "Plot Time (Time axis of TAPlot)," +
+                "Detector Time (detectors internal clock)," +
+                "OfficialTime (run time)," +
+                "Pass Cuts," +
+                "Pass MVA," +
+                "Vertex Status," +
+                "X," +
+                "Y," +
+                "Z," +
+                "Number of Helices," +
+                "Number of Tracks\n";
+         
+      }
+      std::string CSVLine(size_t i) const
+      {
+         //This is a little fugly
+         std::string line;
+         line =std::string("") + fRunNumbers.at(i) + "," +
+                fEventNos.at(i) + "," +
+                fTimes.at(i) + "," +
+                fEventTimes.at(i) + "," +
+                fRunTimes.at(i) + "," +
+                bool(fCutsResults.at(i)&1) + "," +
+                bool(fCutsResults.at(i)&2) + "," +
+                fVertexStatuses.at(i) + "," +
+                fXVertex.at(i) + "," +
+                fYVertex.at(i) + "," +
+                fZVertex.at(i) + "," +
+                fNumHelices.at(i) + "," +
+                fNumTracks.at(i) + "\n";
+         return line;
+      }
+      size_t size() const
+      {
+         return fRunNumbers.size();
+      }
+      int CountPassedCuts(int type = 1) const 
+      {
+         int i = 0;
+         for (const int& p: fCutsResults)
+            if (p & type)
+               i++;
+         return i;
       }
       ClassDef(TVertexEvents, 1);
 };
@@ -133,7 +182,7 @@ class TTimeWindows : public TObject
       //Copy ctor
       TTimeWindows(const TTimeWindows& timeWindows) : TObject(timeWindows)
       {
-         std::cout << "TTimeWindows copy ctor." << std::endl;
+         //std::cout << "TTimeWindows copy ctor." << std::endl;
          //Deep copy
          for(size_t i = 0; i<timeWindows.fMinTime.size(); i++)
          {
@@ -145,7 +194,7 @@ class TTimeWindows : public TObject
       }
       TTimeWindows& operator=(const TTimeWindows& rhs)
       {
-         std::cout << "TTimeWindows = operator." << std::endl;
+         //std::cout << "TTimeWindows = operator." << std::endl;
          for(size_t i = 0; i<rhs.fMinTime.size(); i++)
          {
             this->fRunNumber.push_back(rhs.fRunNumber[i]);
@@ -157,7 +206,7 @@ class TTimeWindows : public TObject
       }
       friend TTimeWindows operator+(const TTimeWindows& lhs, const TTimeWindows& rhs)
       {
-         std::cout << "TTimeWindows addition operator" << std::endl;
+         //std::cout << "TTimeWindows addition operator" << std::endl;
          TTimeWindows outputPlot(lhs); //Create new from copy
 
          //Vectors- need concacting
@@ -169,7 +218,7 @@ class TTimeWindows : public TObject
       }
       TTimeWindows operator+=(const TTimeWindows &rhs) 
       {
-         std::cout << "TTimeWindows += operator" << std::endl;
+         //std::cout << "TTimeWindows += operator" << std::endl;
          this->fRunNumber.insert(this->fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
          this->fMinTime.insert(this->fMinTime.end(), rhs.fMinTime.begin(), rhs.fMinTime.end() );
          this->fMaxTime.insert(this->fMaxTime.end(), rhs.fMaxTime.begin(), rhs.fMaxTime.end() );
@@ -264,6 +313,29 @@ class TTimeWindows : public TObject
          fZeroTime = reorder<double>(fZeroTime,idx);
   
          isSorted = true;
+      }
+      
+      std::string CSVTitleLine() const
+      {
+         return std::string("Run Number,") + 
+                "Min Time," +
+                "Max Time," +
+                "Zero Time\n";
+      }
+      std::string CSVLine(size_t i) const
+      {
+         //This is a little fugly
+         std::string line;
+         line =std::string("") + fRunNumber.at(i) + 
+         fMinTime.at(i) +
+         fMaxTime.at(i) +
+         fZeroTime.at(i);
+         return line;
+      }
+
+      size_t size() const
+      {
+         return fRunNumber.size();
       }
       ClassDef(TTimeWindows, 1);
 };
@@ -419,15 +491,13 @@ class TFELabVIEWData: public TEnvData
       void AddLVEvent(int runNumber, TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
-         double runStart = Get_A2Analysis_Report(runNumber).GetRunStartTime();
-         time = labviewEvent->GetMIDAS_TIME() - runStart;
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
          //Hopefully now better than On^2
          int index = timeWindows.GetValidWindowNumber(time);
          if(index>=0)
          {
             TEnvDataPlot* plot = GetPlot(index);
-            plot->AddPoint(time - timeWindows.fZeroTime[index], time, labviewEvent->GetArrayEntry(fArrayNumber));
+            plot->AddPoint( time - timeWindows.fZeroTime[index], time, labviewEvent->GetArrayEntry(fArrayNumber));
          }
          return;
       }
@@ -443,7 +513,6 @@ class TAPlot: public TObject
       int fNumBins; // 100;
       int fDrawStyle; //Switch between colour modes
       int fLegendDetail; // = 1;
-      int fTotalVert;
       double fClassifierCut;
       double fFirstTMin;
       double fLastTMax;
@@ -501,7 +570,7 @@ class TAPlot: public TObject
       double               GetLastTmax() const      {  return fLastTMax;      }
       double               GetBiggestTzero() const  {  return fBiggestTZero;  }
       int                  GetNBins() const         {  return fNumBins; }
-      int                  GetNVerticies()          {  return fTotalVert;   }
+      int                  GetNVerticies()          {  return GetNVertexType(1);  }
       int                  GetNPassedCuts()         {  return GetNPassedType(1);  }
       bool                 IsGEMData()              {  return (fFEGEM.size() != 0);   }
       bool                 IsLVData()               {  return (fFEGEM.size() != 0);   }
@@ -517,10 +586,18 @@ class TAPlot: public TObject
       std::pair<TLegend*,TMultiGraph*> GetLVGraphs();
       double GetApproximateProcessingTime();
       int GetNPassedType(const int type);
+      int GetNVertexType(const int type);
       TString GetListOfRuns();
 
       //Adders.
-      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> repetition ) {assert(!"Child class must have this");};
+      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex )
+      {
+         assert(!"Child class must have this");
+         //Suppress compiler warnings:
+         std::cout << runNumber << "\t";
+         std::cout << description.size() << "\t";
+         std::cout << dumpIndex.size() << std::endl;
+      }
       void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
       void AddStopDumpMarker(double time)                {  fDumpStops.push_back(time); }
       void AddInjection(double time)                     {  fInjections.push_back(time);}
@@ -539,7 +616,16 @@ class TAPlot: public TObject
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
-      virtual void LoadRun(int runNumber, double firstTime, double lastTime) {};
+      // Hmm the add operators prevent this being a pure virtual function (ie
+      // the add operator can't return TAPlot if TAPlot is an abstract class...
+      // one to think about Joe)
+      virtual void LoadRun(int runNumber, double firstTime, double lastTime)
+      {
+         assert(!"Must be implemented by child class");
+         std::cout << runNumber << "\t";
+         std::cout << firstTime << "\t";
+         std::cout << lastTime << std::endl;
+      }
       void LoadData(bool verbose = false);
 
       
@@ -570,6 +656,7 @@ class TAPlot: public TObject
       void ClearHisto();
       void SetUpHistograms();
       void PrintTimeRanges();
+      void ExportCSV(std::string filename, bool PassedCutOnly = true);
 
    ClassDef(TAPlot, 1);
 };

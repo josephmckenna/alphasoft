@@ -104,8 +104,9 @@ void ReadEventTree::MakeHistos()
    // used helices
    fHisto->Book("hNusedhel","Used Helices",10,0.,10.);
 
-   fHisto->Book("huhD","Used Hel D;[mm]",200,0.,200.);
-   fHisto->Book("huhc","Used Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+   //fHisto->Book("huhD","Used Hel D;[mm]",200,0.,200.);
+   fHisto->Book("huhD","Used Hel D;[mm]",500,-190.,190.);
+   fHisto->Book("huhc","Used Hel c;[mm^{-1}]",200,-0.02,0.02);
    fHisto->Book("huhchi2R","Used Hel #chi^{2}_{R}",100,0.,50.);
    fHisto->Book("huhchi2Z","Used Hel #chi^{2}_{Z}",100,0.,50.);
 
@@ -199,7 +200,7 @@ void ReadEventTree::MakeHistos()
    fHisto->Book("hhchi2Z","Hel #chi^{2}_{Z}",200,0.,1000.); // Z chi^2 of helix
    fHisto->Book("hhD","Hel D;[mm]",500,-190.,190.);
    fHisto->GetHisto("hhD")->SetMinimum(0);
-   fHisto->Book("hhc","Hel c;[mm^{-1}]",200,-1.e-1,1.e-1);
+   fHisto->Book("hhc","Hel c;[mm^{-1}]",200,-0.02,0.02);
 
    // reco vertex
    fHisto->Book("hvr","Vertex Radius;r [mm]",190,0.,190.);
@@ -207,7 +208,53 @@ void ReadEventTree::MakeHistos()
    fHisto->GetHisto("hvphi")->SetMinimum(0.);
    fHisto->Book("hvz","Vertex Z;z [mm]",1000,-1152.,1152.);
    fHisto->Book("hvxy","Vertex X-Y;x [mm];y [mm]",200,-190.,190.,200,-190.,190.);
- 
+
+
+   // cosmic finder
+   fHisto->Book("hDCAeq2","Distance of Closest Approach between Helices in =2-tracks Events;DCA [mm]",
+                      500,0.,50.);
+   fHisto->Book("hDCAgr2","Distance of Closest Approach between Helices in >2-tracks Events;DCA [mm]",
+                      500,0.,50.);
+	 
+   fHisto->Book("hAngeq2","Cosine of the Angle formed by Two Helices in =2-tracks Events;cos(angle)",
+                      1000,-1.,1.);
+   fHisto->Book("hAnggr2","Cosine of the Angle formed by Two Helices in >2-tracks Events;cos(angle)",
+                      1000,-1.,1.);
+
+   fHisto->Book("hAngDCAeq2","DCA and Cosine of Angle between Helices in =2-tracks Events;cos(angle);DCA [mm]",
+                         100,-1.,1.,100,0.,50.);
+   fHisto->Book("hAngDCAgr2","DCA and Cosine of Angle between Helices in >2-tracks Events;cos(angle);DCA [mm]",
+                         100,-1.,1.,100,0.,50.);
+
+   fHisto->Book("hcosaw","Occupancy per AW due to cosmics",256,-0.5,255.5);
+   fHisto->GetHisto("hcosaw")->SetMinimum(0.);
+   fHisto->Book("hcospad","Occupancy per PAD due to cosmics;Pads Row;Pads Sector",
+                      576,-0.5,575.5,32,-0.5,31.5);
+   fHisto->Book("hcosRes2min","Minimum Residuals Squared Divide by Number of Spacepoints from 2 Helices;#delta [mm^{2}]",1000,0.,2000.);
+   
+   fHisto->Book("hcosphi","Direction #phi;#phi [deg]",200,-180.,180.);
+   fHisto->GetHisto("hcosphi")->SetMinimum(0.);
+   fHisto->Book("hcostheta","Direction #theta;#theta [deg]",200,0.,180.);
+   fHisto->GetHisto("hcostheta")->SetMinimum(0.);
+
+   fHisto->Book("hcosthetaphi","Direction #theta Vs #phi;#theta [deg];#phi [deg]",
+                           200,0.,180.,200,-180.,180.);
+
+  // z axis intersection
+  fHisto->Book("hcoslr","Minimum Radius;r [mm]",200,0.,190.);
+  fHisto->Book("hcoslz","Z intersection with min rad;z [mm]",300,-1200.,1200.);
+  fHisto->Book("hcoslp","#phi intersection with min rad;#phi [deg]",100,0.,360.);
+  fHisto->GetHisto("hcoslp")->SetMinimum(0.);
+  fHisto->Book("hcoslzp","Z-#phi intersection with min rad;z [mm];#phi [deg]",
+		  100,-1200.,1200.,90,0.,360.);
+  fHisto->GetHisto("hcoslzp")->SetStats(kFALSE);
+  fHisto->Book("hcoslzr","Z-R intersection with min rad;z [mm];r [mm]",
+		  100,-1200.,1200.,100,0.,190.);
+  fHisto->Book("hcoslrp","R-#phi intersection with min rad;r [mm];#phi [deg]",
+		  100,0.,190.,90,0.,360.);
+  fHisto->Book("hcoslxy","X-Y intersection with min rad;x [mm];y [mm]",
+		  100,-190.,190.,100,-190.,190.);
+   
 }
 
 void ReadEventTree::DisplayHisto()
@@ -662,6 +709,58 @@ void ReadEventTree::DisplayHisto()
             chsp->SaveAs(savFolder+cname+TString(".pdf"));
             chsp->SaveAs(savFolder+cname+TString(".pdf"));}
       }
+
+   // cosmic finder
+   if(fHisto->GetHisto("hcosRes2min")->GetEntries())
+      {
+         cname ="ccosdca";
+         cname+=tag;
+         TCanvas* ccosdca = new TCanvas(cname.Data(),cname.Data(),1400,1400);
+         ccosdca->Divide(2,2);
+         ccosdca->cd(1);
+         fHisto->GetHisto("hcosRes2min")->Draw("hist");
+         TLegend* legcosdca = new TLegend(0.8,0.8,0.92,0.92);
+         ccosdca->cd(2);
+         fHisto->GetHisto("hDCAeq2")->SetLineColor(kBlue);
+         legcosdca->AddEntry(fHisto->GetHisto("hDCAeq2"),"=2","l");
+         fHisto->GetHisto("hDCAgr2")->SetLineColor(kRed);
+         legcosdca->AddEntry(fHisto->GetHisto("hDCAgr2"),">2","l");
+         fHisto->GetHisto("hDCAeq2")->Draw("hist");
+         fHisto->GetHisto("hDCAgr2")->Draw("histsame");
+         legcosdca->Draw("same");
+         ccosdca->cd(3);
+         fHisto->GetHisto("hAngeq2")->SetLineColor(kBlue);
+         fHisto->GetHisto("hAnggr2")->SetLineColor(kRed);
+         fHisto->GetHisto("hAngeq2")->Draw("hist");
+         fHisto->GetHisto("hAnggr2")->Draw("histsame");
+         ccosdca->cd(4);
+         fHisto->GetHisto("hAngDCAeq2")->SetMarkerColor(kBlue);
+         fHisto->GetHisto("hAngDCAgr2")->SetMarkerColor(kRed);
+         fHisto->GetHisto("hAngDCAeq2")->Draw();
+         fHisto->GetHisto("hAngDCAgr2")->Draw("same");
+         if(_save_plots){
+            ccosdca->SaveAs(savFolder+cname+TString(".pdf"));
+            ccosdca->SaveAs(savFolder+cname+TString(".pdf"));}
+         cname ="ccosang";
+         cname+=tag;
+         TCanvas* ccosang = new TCanvas(cname.Data(),cname.Data(),1800,1400);
+         ccosang->Divide(3,2);
+         ccosang->cd(1);
+         fHisto->GetHisto("hcosaw")->Draw("hist");
+         ccosang->cd(2);
+         fHisto->GetHisto("hcospad")->Draw("colz");
+         ccosang->cd(3);
+         fHisto->GetHisto("hcosphi")->Draw("hist");
+         ccosang->cd(4);
+         fHisto->GetHisto("hcostheta")->Draw("hist");
+         ccosang->cd(5);
+         fHisto->GetHisto("hcosthetaphi")->Draw("colz");
+         ccosang->cd(6);
+         fHisto->GetHisto("hcoslr")->Draw("hist");
+         if(_save_plots){
+            ccosang->SaveAs(savFolder+cname+TString(".pdf"));
+            ccosang->SaveAs(savFolder+cname+TString(".pdf"));}
+      }
 }
 
 void ReadEventTree::ProcessLine(TStoreLine* aLine)
@@ -806,6 +905,73 @@ void ReadEventTree::ProcessVertex(TVector3* v)
    fHisto->FillHisto("hvxy",v->X(),v->Y());
 }
 
+void ReadEventTree::FillCosmicsHisto()
+{
+   int cf_status = fCosmicFinder->Process();
+   std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
+   // fCosmicFinder->Status();
+   if( fCosmicFinder->GetStatus() ) 
+      {
+         fCosmicFinder->Reset();
+         return;
+      }
+   //  std::cout<<"Filling Cosmics Histo "<<std::endl;
+   double res2 = fCosmicFinder->GetResidual();
+   fHisto->FillHisto("hcosRes2min",res2);
+
+   const TCosmic* cosmic = fCosmicFinder->GetCosmic();
+   double dca = cosmic->GetDCA(), cosangle = cosmic->GetCosAngle();
+   int nTracks = fCosmicFinder->GetNumberOfTracks();
+   if( nTracks == 2 )
+      {
+         fHisto->FillHisto("hDCAeq2", dca );
+         fHisto->FillHisto("hAngeq2", cosangle );
+         fHisto->FillHisto("hAngDCAeq2", cosangle, dca );
+      }
+   else if( nTracks > 2 )
+      {
+         fHisto->FillHisto("hDCAgr2", dca );
+         fHisto->FillHisto("hAnggr2", cosangle );
+         fHisto->FillHisto("hAngDCAgr2", cosangle, dca );
+      }
+   else return;
+         
+   for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
+      {
+         TSpacePoint* p = (TSpacePoint*) cosmic->GetPointsArray()->at( i );
+         int aw = p->GetWire(), sec,row;
+         pmap->get( p->GetPad(), sec,row );
+         if( 0 )
+            {
+               double time = p->GetTime(),
+                  height = p->GetHeight();
+               std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
+            }
+         fHisto->FillHisto("hcosaw", double(aw) );
+         fHisto->FillHisto("hcospad", double(row), double(sec) );
+      }
+      
+   TVector3 u = cosmic->GetU();
+   fHisto->FillHisto("hcosphi",u.Phi()*TMath::RadToDeg());
+   fHisto->FillHisto("hcostheta",u.Theta()*TMath::RadToDeg());
+   fHisto->FillHisto("hcosthetaphi",u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
+
+   TVector3 zint = cosmic->Zintersection();
+   double zint_phi = zint.Phi();
+   if( zint_phi < 0. ) zint_phi+=TMath::TwoPi();
+   zint_phi*=TMath::RadToDeg();
+   fHisto->FillHisto("hcoslr", zint.Perp() );
+   fHisto->FillHisto("hcoslz", zint.Z() );
+   fHisto->FillHisto("hcoslp", zint_phi );
+   fHisto->FillHisto("hcoslzp", zint.Z(), zint_phi );
+   fHisto->FillHisto("hcoslzr", zint.Z(), zint.Perp() );
+   fHisto->FillHisto("hcoslrp", zint.Perp(), zint_phi);
+   fHisto->FillHisto("hcoslxy", zint.X(), zint.Y() );
+
+   fCosmicFinder->Reset();
+}
+
+
 void ReadEventTree::ProcessTree( )
 {
    std::cout<<"ProcessTree"<<std::endl;
@@ -817,7 +983,9 @@ void ReadEventTree::ProcessTree( )
       {
          if( e%100 == 0 ) printf("*** %d\r",e);//std::cout<<"*** "<<e<<std::endl;
          event->Reset();
-         tin->GetEntry(e);
+         tin->GetEntry(e); 
+         temp = event->GetTimeOfEvent();
+
          //      std::cout<<event->GetEventNumber()<<"\t"<<event->GetTimeOfEvent()<<std::endl;
 
          const TObjArray* points = event->GetSpacePoints();
@@ -891,7 +1059,6 @@ void ReadEventTree::ProcessTree( )
             {
                double delta = (event->GetTimeOfEvent() - temp)*1.e3;
                fHisto->FillHisto("hpois", delta );
-               temp = event->GetTimeOfEvent();
             }
          TVector3 vtx = event->GetVertex();
          if(event->GetVertexStatus()>0)
@@ -902,11 +1069,15 @@ void ReadEventTree::ProcessTree( )
                ProcessVertex(&vtx);
                ++Nvtx;
             }
+
+         // Perform Cosmic Analysis
+         fCosmicFinder->Create(event);
+         FillCosmicsHisto();
          //      std::cout<<"End of Event"<<std::endl;
-      }
+      }// event loop
    std::cout<<"Number of Events Processed: "<<tin->GetEntries()<<std::endl;
    std::cout<<"Number of Reconstructed Vertexes: "<<Nvtx<<std::endl;
-   std::cout<<"Total Runtime: "<<temp<<" s"<<std::endl;
+   std::cout<<"Time of Last Event Runtime: "<<temp<<" s"<<std::endl;
    std::cout<<"Cosmic Rate: "<<Nvtx/temp<<" s^-1"<<std::endl;
 }
 
@@ -968,7 +1139,6 @@ void ReadEventTree::GetSignalHistos()
                   for( int s=0; s<8; ++s )
                      {
                         if( hpadcol->GetEntries() == 0 ) break;
-                        double bc = hpadcol->GetBinContent(b);
                         // std::cout<<b-1<<"\t";
                         for( int s=0; s<8; ++s )
                            {
@@ -1138,14 +1308,19 @@ ReadEventTree::ReadEventTree(TString fname, bool s):tag("_R"),RunNumber(0),
    else
       std::cout<<"Settings string not found"<<std::endl;
 
+   fCosmicFinder = new CosmicFinder(1.0);
+
    tin = (TTree*) fin->Get("StoreEventTree");
    std::cout<<tin->GetTitle()<<" has "<<tin->GetEntries()<<" entries"<<std::endl;
    fout<<tin->GetTitle()<<"\t"<<tin->GetEntries()<<std::endl;
+
+   pmap = new ALPHAg::padmap;
 }
 
 ReadEventTree::~ReadEventTree()
 {
    delete fHisto;
+   delete fCosmicFinder;
 }
 
 

@@ -36,8 +36,8 @@ public:
    Dumper(TARunInfo* runinfo, DumperFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Dumper Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Dumper Module";
 #endif
       if (fTrace)
          printf("Dumper::ctor!\n");
@@ -53,8 +53,6 @@ public:
    {
       if (fTrace)
          printf("Dumper::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
@@ -81,7 +79,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

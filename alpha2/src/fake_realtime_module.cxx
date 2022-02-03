@@ -33,7 +33,7 @@ public:
    RealTimeModule(TARunInfo* runinfo, RealTimeModuleFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-      ModuleName="Fake Real Time Module";
+      fModuleName="Fake Real Time Module";
       if (fTrace)
          printf("RealTimeModule::ctor!\n");
    }

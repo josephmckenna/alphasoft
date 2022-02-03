@@ -44,8 +44,8 @@ public:
    A2DisplayRun(TARunInfo* runinfo, A2DisplayModuleFlags* flags)
       : TARunObject(runinfo), a2ed(NULL), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Display Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Display Module";
 #endif
       printf("A2DisplayRun::ctor!\n");
    }
@@ -65,7 +65,7 @@ public:
       run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &run_start_time);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &run_start_time);
       #endif
       printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       
@@ -82,7 +82,7 @@ public:
       run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary", (uint32_t*) &run_stop_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary", (uint32_t*) &run_stop_time);
       #endif
       printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
 
@@ -107,7 +107,7 @@ public:
    {
       if( fFlags->fBatch && fFlags->fAutoSave == 0 )
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -117,7 +117,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;

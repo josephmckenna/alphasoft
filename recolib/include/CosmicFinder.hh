@@ -8,9 +8,9 @@
 
 #include <vector>
 #include <TClonesArray.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include "SignalsType.hh"
+// #include <TH1D.h>
+// #include <TH2D.h>
+//#include "SignalsType.hh"
 #include "TStoreEvent.hh"
 
 class TCosmic;
@@ -29,35 +29,35 @@ private:
    double fLineChi2Cut;
    double fLineChi2Min;
 
-   TH1D* hDCAeq2;
-   TH1D* hDCAgr2;
+   // TH1D* hDCAeq2;
+   // TH1D* hDCAgr2;
   
-   TH1D* hAngeq2;
-   TH1D* hAnggr2;
+   // TH1D* hAngeq2;
+   // TH1D* hAnggr2;
 
-   TH2D* hAngDCAeq2;
-   TH2D* hAngDCAgr2;
+   // TH2D* hAngDCAeq2;
+   // TH2D* hAngDCAgr2;
 
-   TH1D* hcosaw;
-   TH2D* hcospad;
-   TH1D* hRes2min;
+   // TH1D* hcosaw;
+   // TH2D* hcospad;
+   // TH1D* hRes2min;
 
-   // double temp;
-   // TH1D* hpois;
+   // // double temp;
+   // // TH1D* hpois;
 
-   TH1D* hcosphi;
-   TH1D* hcostheta;
-   TH2D* hcosthetaphi;
+   // TH1D* hcosphi;
+   // TH1D* hcostheta;
+   // TH2D* hcosthetaphi;
 
-   TH1D* hlr;
-   TH1D* hlz;
-   TH1D* hlp;
-   TH2D* hlzp;
-   TH2D* hlzr;
-   TH2D* hlrp;
-   TH2D* hlxy;
+   // TH1D* hlr;
+   // TH1D* hlz;
+   // TH1D* hlp;
+   // TH2D* hlzp;
+   // TH2D* hlzr;
+   // TH2D* hlrp;
+   // TH2D* hlxy;
 
-   ALPHAg::padmap* pmap;
+   //   ALPHAg::padmap* pmap;
 
    int fIdx;
    double fRes2;
@@ -76,8 +76,8 @@ public:
    int Process();
   
    int Residuals();
-   void MakeOccupancyHisto();
-   void FillOccupancyHisto();
+   // void MakeOccupancyHisto();
+   // void FillOccupancyHisto();
 
    void Reset();
 
@@ -86,6 +86,7 @@ public:
    inline const TCosmic* GetCosmic() const { return fLines.at(fIdx); }
    inline double GetResidual() const { return fRes2; }
    inline int GetStatus() const { return fStatus; }
+   inline int GetNumberOfTracks() const { return nTracks; }
 };
 
 #endif

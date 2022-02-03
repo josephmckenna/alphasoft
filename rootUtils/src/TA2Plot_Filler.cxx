@@ -87,23 +87,26 @@ void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
    //More performance is maybe available if we use DataFrames...
-   TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber);
-   TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
-   // I assume that file IO is the slowest part of this function... 
-   // so get multiple channels and multiple time windows in one pass
-   for (auto& p: plots)
-      p->SetSISChannels(runNumber);
-   while (SISReader->Next())
+   for (int sis_module_no = 0; sis_module_no < NUM_SIS_MODULES; sis_module_no++)
    {
-      double t=SISEvent->GetRunTime();
-      //A rough cut on the time window is very fast... 
-      if (t<first_time)
-         continue;
-      if (t>last_time)
-         break;
-      //Fill the plot, a fine time cut is done inside
+      TTreeReader* SISReader=A2_SIS_Tree_Reader(runNumber, sis_module_no);
+      TTreeReaderValue<TSISEvent> SISEvent(*SISReader, "TSISEvent");
+      // I assume that file IO is the slowest part of this function... 
+      // so get multiple channels and multiple time windows in one pass
       for (auto& p: plots)
-         p->AddSISEvent(&(*SISEvent));
+         p->SetSISChannels(runNumber);
+      while (SISReader->Next())
+      {
+         double t=SISEvent->GetRunTime();
+         //A rough cut on the time window is very fast... 
+         if (t<first_time)
+            continue;
+         if (t>last_time)
+            break;
+         //Fill the plot, a fine time cut is done inside
+         for (auto& p: plots)
+            p->AddSISEvent(&(*SISEvent));
+      }
    }
 }
 void TA2Plot_Filler::LoadData()
@@ -131,7 +134,7 @@ void TA2Plot_Filler::LoadData()
    {
       //TTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
-      for (int t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
+      for (size_t t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
       {
          for (size_t i=0; i<UniqueRuns.size(); i++)
          if (plot->GetTimeWindows()->fRunNumber.at(t)==runNumbers[i])

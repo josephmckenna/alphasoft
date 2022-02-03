@@ -428,7 +428,11 @@ int Reco::FitLines()
          line->SetChi2Cut( fLineChi2Cut );
          line->SetChi2Min( fLineChi2Min );
          line->SetPointsCut( fNspacepointsCut );
+#ifdef __MINUIT2FIT__
+         line->FitM2();
+#else
          line->Fit();
+#endif
          if( line->GetStat() > 0 )
             {
                line->CalculateResiduals();
@@ -468,8 +472,11 @@ int Reco::FitHelix()
          helix->SetChi2RMin( fHelChi2RMin );
          helix->SetChi2ZMin( fHelChi2ZMin );
          helix->SetDCut( fHelDcut );
+#ifdef __MINUIT2FIT__
+         helix->FitM2();
+#else
          helix->Fit();
-
+#endif
          if( helix-> GetStatR() > 0 &&
              helix-> GetStatZ() > 0 )
             helix->CalculateResiduals();

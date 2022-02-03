@@ -6,28 +6,28 @@
 //Welp, this is broken in jupyter... why?
 //----> 4 ROOT.Get_A2_Spillsa(45000,["Mixing"],[0])
 //
-//SystemError: vector<TA2Spill> ::Get_A2_Spillsa(int runNumber, _object* description, _object* repetition) =>
+//SystemError: vector<TA2Spill> ::Get_A2_Spillsa(int runNumber, _object* description, _object* dumpIndex) =>
 //    problem in C++; program state has been reset
 
 #ifdef HAVE_PYTHON
-std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* repetition)
+std::vector<TA2Spill> Get_A2_Spills(int runNumber, PyObject* description, PyObject* dumpIndex)
 {
     std::vector<std::string> desc = listTupleToVector_String(description);
-    std::vector<int> reps= listTupleToVector_Int( repetition);
+    std::vector<int> reps= listTupleToVector_Int( dumpIndex);
     return Get_A2_Spills(runNumber,desc, reps);
 }
 #endif
 
-std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> repetition)
+std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex)
 {
 
    // The TA2Spill Tree is small... 
    TTreeReader* reader=Get_A2SpillTree(runNumber);
    TTreeReaderValue<TA2Spill> spill(*reader, "TA2Spill");
 
-   assert(description.size()==repetition.size());
+   assert(description.size()==dumpIndex.size());
    int match_counter[description.size()];
-   for (int i=0; i<description.size(); i++)
+   for (size_t i=0; i<description.size(); i++)
       match_counter[i]=0;
 
    std::vector<TA2Spill> spills;
@@ -44,10 +44,10 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
             //overload * is doing something special... so I need to 
             //dereference then get the pointer... then type cast it...
             //b->Print();
-            if (repetition.at(i)<0)
+            if (dumpIndex.at(i)<0)
                //Copy spill into returned vector
                spills.push_back(*spill); //This cast is sketchy...
-            else if (repetition.at(i)==match_counter[i]++)
+            else if (dumpIndex.at(i)==match_counter[i]++)
                spills.push_back(*spill);
             else
                continue;
@@ -55,6 +55,11 @@ std::vector<TA2Spill> Get_A2_Spills(int runNumber, std::vector<std::string> desc
       }
    }
    return spills;
+}
+
+std::vector<TA2Spill> Get_All_A2_Spills(int runNumber)
+{
+   return Get_A2_Spills(runNumber,{"*"},{-1});
 }
 
 #endif

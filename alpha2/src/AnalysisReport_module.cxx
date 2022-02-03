@@ -91,7 +91,7 @@ public:
        std::cout<<"VF48Events: "  << VF48Events << "\t";
        std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
        std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
-      std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
+       std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
     }
 };
 #endif
@@ -156,18 +156,19 @@ class AnalysisReportModule: public TARunObject
 public:
 
    bool fTrace = false;
+   bool fVersionReported = false;
 
    AnalysisReportFlags* fFlags;
 
    AnalysisReportModule(TARunInfo* runinfo, AnalysisReportFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="AnalysisReport";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="AnalysisReport";
 #endif
       if (fTrace)
          printf("AnalysisReportModule::ctor!\n");
-         
+      fFlags->AnalysisReport = NULL;
       if (!getenv("AGRELEASE"))
       {
          std::cerr<<"AGRELEASE not set! Did you mean to 'source agconfig.sh'?"<<std::endl;
@@ -183,24 +184,21 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      #ifdef HAVE_CXX11_THREADS
-      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       if (fFlags->fPrint)
          printf("AnalysisReportModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       gDirectory->mkdir("AnalysisReport")->cd();
-      fFlags->AnalysisReport=new TA2AnalysisReport(runinfo->fRunNo);
+      fFlags->AnalysisReport = new TA2AnalysisReport(runinfo->fRunNo);
       uint32_t midas_start_time = -1 ;
       #ifdef INCLUDE_VirtualOdb_H
       midas_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Start time binary",(uint32_t*) &midas_start_time);
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &midas_start_time);
       #endif
       fFlags->AnalysisReport->SetStartTime(midas_start_time);
+
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -212,7 +210,7 @@ public:
       midas_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
       #endif
       #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RU32("/Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
+      runinfo->fOdb->RU32("Runinfo/Stop time binary",(uint32_t*) &midas_stop_time);
       #endif
       runinfo->fRoot->fOutputFile->cd("AnalysisReport");
       fFlags->AnalysisReport->SetStopTime(midas_stop_time);
@@ -237,6 +235,27 @@ public:
    {
       if (fTrace)
          printf("AnalysisReportModule::ResumeRun, run %d\n", runinfo->fRunNo);
+   }
+
+   TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
+   {
+      if (!fVersionReported)
+      {
+         fVersionReported = true;
+         std::string VersionLine = fFlags->AnalysisReport->GetProgramName() + 
+                                std::string("\tGit version: ") + 
+                                fFlags->AnalysisReport->GetGitHash() + 
+                                std::string(" Build date: ") + 
+                                fFlags->AnalysisReport->GetCompilationDateString();
+         if (fFlags->AnalysisReport->GetGitDiff().size())
+            VersionLine += std::string(" with ") + fFlags->AnalysisReport->GetGitDiff();
+
+         TInfoSpill* versionSpill = new TInfoSpill(fFlags->AnalysisReport->GetRunNumber(), fFlags->AnalysisReport->GetRunStartTime(), fFlags->AnalysisReport->GetRunStartTime(), VersionLine.c_str());
+         TInfoSpillFlow* f = new TInfoSpillFlow(flow);
+         f->spill_events.push_back(versionSpill);
+         return f;
+      }
+      return flow;
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -271,7 +290,27 @@ public:
                 se->GetPassedCuts(),
                 se->GetVF48Timestamp()
                 );
-    
+            //This is not proper occupancy... its a hit counters TODO JOE
+            for (int i = 0; i < nSil; i++)
+            {
+               const TSiliconModule* m = se->GetSiliconModule(i);
+               if (!m)
+                  continue;
+               if (!m->IsAHitModule())
+                  continue;
+               for (int j = 0; j < 4; j++)
+               {
+                  const TSiliconVA* v = m->GetASIC(j);
+                  if (!v) continue;
+                  if (v->IsAHitOR())
+                  {
+                     if (v->IsAPSide())
+                        fFlags->AnalysisReport->FillHybridNSideOccupancy(i);
+                     else
+                        fFlags->AnalysisReport->FillHybridPSideOccupancy(i);
+                  }
+               }
+            }
          }
          const A2SpillFlow* SpillFlow= dynamic_cast<A2SpillFlow*>(f);
          if (SpillFlow)
@@ -331,7 +370,8 @@ public:
 #ifdef BUILD_A2
       fFlags.DumpLogs.Print();
 #endif
-      fFlags.AnalysisReport->Print();
+      if (fFlags.AnalysisReport)
+         fFlags.AnalysisReport->Print();
       //delete fFlags.AnalysisReport;
    }
 

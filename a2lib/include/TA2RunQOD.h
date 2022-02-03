@@ -1,7 +1,8 @@
 #ifndef _TA2RunQOD_
 #define _TA2RunQOD_
-#include "manalyzer.h"
-
+#include "TObject.h"
+#include "TString.h"
+class TARunInfo;
 class TA2RunQOD: public TObject
 {
    public:

@@ -15,17 +15,6 @@
 
 #include <TTree.h>
 
-#include "TPCconstants.hh"
-#include "LookUpTable.hh"
-#include "TSpacePoint.hh"
-#include "TracksFinder.hh"
-#include "AdaptiveFinder.hh"
-#include "NeuralFinder.hh"
-#include "TTrack.hh"
-#include "TFitLine.hh"
-#include "TFitHelix.hh"
-#include "TFitVertex.hh"
-
 #include "TStoreEvent.hh"
 
 #include "AnaSettings.hh"
@@ -72,6 +61,7 @@ public:
    bool do_plot = false;
    bool fTrace = false;
    //bool fTrace = true;
+   bool fVerb=false;
 
    RecoRunFlags* fFlags;
 
@@ -96,8 +86,8 @@ public:
                                                  r( f->ana_settings, f->fMagneticField,  
                                                     f->fLocation)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="RecoModule";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="RecoModule";
 #endif
       printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
@@ -185,13 +175,13 @@ public:
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-#ifdef MANALYZER_PROFILER
-      START_TIMER
+#ifdef HAVE_MANALYZER_PROFILER
+      TAClock start_time = TAClockNow();
 #endif
       AgEvent* age = ef->fEvent;
 
@@ -249,13 +239,13 @@ public:
                   return flow;
                }
          }
-      std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
+      //     std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
          delete analyzed_event;
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -275,18 +265,20 @@ public:
          }
       if (!SigFlow->matchSig)
       {
-          std::cout<<"RecoRun::No matched hits"<<std::endl;
+         if( fVerb ) 
+            std::cout<<"RecoRun::No matched hits"<<std::endl;
           skip_reco=true;
-#ifdef MANALYZER_PROFILER
-          flow = new UserProfilerFlow(flow,"reco_module(no matched hits)",timer_start);
+#ifdef HAVE_MANALYZER_PROFILER
+          flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
 #endif
       }
       else if( SigFlow->matchSig->size() > fNhitsCut )
          {
-            std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
+            if( fVerb ) 
+               std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
             skip_reco=true;
-#ifdef MANALYZER_PROFILER
-            flow = new UserProfilerFlow(flow,"reco_module(too many hits)",timer_start);
+#ifdef HAVE_MANALYZER_PROFILER
+            flow = new TAUserProfilerFlow(flow,"reco_module(too many hits)",start_time);
 #endif
          }
 
@@ -301,11 +293,13 @@ public:
                r.AddSpacePoint( SigFlow->matchSig );
             else
                r.AddSpacePoint( SigFlow->matchSig, z_fid );
-      
-            printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
+
+            if( fTrace )
+               printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
             r.FindTracks(fFlags->finder);
-            printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
+            if( fTrace )
+               printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 
             if( fFlags->fMagneticField == 0. )
                {
@@ -314,12 +308,14 @@ public:
                }
 
             int nhel = r.FitHelix();
-            std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+            if( fTrace )
+               std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
 
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status = r.RecVertex( &theVertex );
-            if( fTrace ) std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
+            if( fTrace )
+               std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
             analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
             analyzed_event->SetVertexStatus( status );
@@ -329,7 +325,7 @@ public:
                   analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
                   if( fTrace ) theVertex.Print("rphi");
                }
-            else
+            else if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
  

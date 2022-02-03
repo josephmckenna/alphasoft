@@ -16,12 +16,8 @@ endmacro()
 #Extra path for GitInfo.h file
 include_directories(${CMAKE_BINARY_DIR})
 
-if (BUILT_IN_ROOTANA)
-  message(STATUS "Using ROOTANA submodule for A2")
-else()
-  find_package(ROOTANA)
-endif(BUILT_IN_ROOTANA)
-message(STATUS "ROOTANA headers for A2: ${ROOTANA_INCLUDE_DIRS}")
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -50,16 +46,11 @@ foreach( LIST_FILE ${BINS} )
     #Prepend path to source files
     list(TRANSFORM MODULES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
-    if (BUILT_IN_ROOTANA)
-       add_executable( ${bin} ../rootana/manalyzer/manalyzer_main  ${MODULES} )
-       add_dependencies(${bin} rootana)
-    else ()
-       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
-    endif (BUILT_IN_ROOTANA)
+    add_executable( ${bin} ${MODULES} )
     
-    #add_dependencies(${bin} alpha2 agtpc analib GEM)
     add_dependencies(${bin} alpha2 analib GEM)
-    #add_dependencies(${bin} gitinfo)
+
+    target_compile_definitions(${bin} PUBLIC ${ROOT_CCX_FLAGS} HAVE_ROOT HAVE_ROOT_HTTP HAVE_THTTP_SERVER)
 
     # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
@@ -69,13 +60,19 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/ana/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/libGEM/include)
     target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
     target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
-   
+
+    if( MIDAS_FOUND )
+      link_directories(${bin} PUBLIC ${MIDAS_LIBRARY_DIRS})
+      target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
+    endif()
+    
     target_link_libraries( ${bin} ${A2_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
-                           rootana ${ROOT_LIBRARIES}
-			   ${MIDAS_LIBRARIES} util) 
+                           ${ROOT_LIBRARIES}
+                           ${ZLIB_LIBRARIES}
+                           manalyzer manalyzer_main
+                           ${MIDAS_LIBRARIES} ) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

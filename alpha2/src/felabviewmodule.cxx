@@ -38,6 +38,7 @@ class felabViewModuleWriter
    private:
       void BranchTreeFromData(TTree* tree, TStoreLabVIEWEvent* labviewEvent)
       {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          TBranch* branch = tree->GetBranch("TStoreLabVIEWEvent");
          if (!branch)
             tree->Branch("TStoreLabVIEWEvent",&labviewEvent);
@@ -65,6 +66,7 @@ class felabViewModuleWriter
          }
          if(!treeAlreadyExists)
          {
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
             runInfo->fRoot->fOutputFile->cd("felabview");
             currentTree = new TTree(name.c_str(), "Tree with vectors");
             fTrees.push_back(currentTree);
@@ -83,20 +85,14 @@ class felabViewModuleWriter
       public:
       void WriteTrees(TARunInfo* runInfo)
       {
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
-
          runInfo->fRoot->fOutputFile->cd("felabview");
          for (TTree* tree: fTrees)
             tree->Write();
       }
       void SaveToTree(TARunInfo* runInfo, felabviewFlowEvent* flowEvent)
       {
-         #ifdef HAVE_CXX11_THREADS
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
-
          TTree* tree = FindOrCreateTree(runInfo, flowEvent);
          TStoreLabVIEWEvent labviewEvent = CreateTAObjectFromFlow(runInfo, flowEvent);
          BranchTreeFromData(tree, &labviewEvent);  
@@ -123,11 +119,11 @@ public:
    std::vector<TTree*> fTrees;
    const double kUnixTimeOffset = 2082844800;
    
-   felabviewModule(TARunInfo* runInfo, felabModuleFlags* flags)
-      : TARunObject(runInfo), fFlags(flags)
+   felabviewModule(TARunInfo* runinfo, felabModuleFlags* flags)
+      : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="felabview Module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="felabview Module";
 #endif
       if (fTrace)
          printf("felabviewFlow::ctor!\n");
@@ -188,7 +184,7 @@ public:
          felabviewFlowEvent* flowEvent = flow->Find<felabviewFlowEvent>();
          if(flowEvent == 0x0)
          {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
             *flags |= TAFlag_SKIP_PROFILE;
 #endif
             //printf("DEBUG: felabviewModule::AnalyzeFlowEvent has recieved a standard  TAFlowEvent. Returning flow and not analysing this event.\n");
@@ -209,8 +205,8 @@ public:
             fInitTimeSaved = true;
          }
          
-         u32 timeStamp = midasEvent->time_stamp;
-         u32 dataOffset = midasEvent->data_offset;
+         //u32 timeStamp = midasEvent->time_stamp;
+         //u32 dataOffset = midasEvent->data_offset;
 
          midasEvent->FindAllBanks();
          if(midasEvent->banks.size()>1)
@@ -275,18 +271,18 @@ public:
       }
       else
       {  //No work done... skip profiler
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
       }
       return flow;
    }
 
-   void AnalyzeSpecialEvent(TARunInfo* runInfo, TMEvent* event)
+   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
        if (fTrace)
           printf("felabviewModule::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                 runInfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
@@ -314,10 +310,10 @@ public:
          printf("FelabViewFactory::Finish!\n");
    }
    
-   TARunObject* NewRunObject(TARunInfo* runInfo)
+   TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("FelabViewFactory::NewRunObject, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
-      return new felabviewModule(runInfo, &fFlags);
+      printf("FelabViewFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new felabviewModule(runinfo, &fFlags);
    }
 };
 

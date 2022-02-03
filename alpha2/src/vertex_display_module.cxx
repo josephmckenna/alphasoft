@@ -68,8 +68,8 @@ public:
    VertexDisplay(TARunInfo* runinfo, VertexDisplayFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="Vertex Display";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="Vertex Display";
 #endif
       if (fTrace)
          printf("VertexDisplay::ctor!\n");
@@ -120,17 +120,13 @@ public:
       if (fTrace)
          printf("VertexDisplay::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       if (!fFlags->fDraw) return; 
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       NQueues=0;
-      #ifdef HAVE_CXX11_THREADS
        if (runinfo->fMtInfo)
        {
          NQueues=runinfo->fMtInfo->fMtThreads.size();
          AnalysisQueue=new TH1D("AnalysisQueue","AnalysisQueue",NQueues,0,NQueues);
-       }  
-      #endif
+       }
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -155,7 +151,7 @@ public:
   {
       if (!fFlags->fDraw)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -163,7 +159,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -268,7 +264,6 @@ public:
                }
             }
          }
-         #ifdef HAVE_CXX11_THREADS
          int QueueZeroSize=0;
          { //gfLock scope
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -285,7 +280,6 @@ public:
               QueueZeroSize=j;
          }
          } //End gfLock
-         #endif
           
       //Draw histograms
       VertDisplay->cd(1);

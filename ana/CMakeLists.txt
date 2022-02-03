@@ -16,19 +16,14 @@ endmacro()
 #Extra path for GitInfo.h file
 include_directories(${CMAKE_BINARY_DIR})
 
-if (BUILT_IN_ROOTANA)
-  message(STATUS "Using ROOTANA submodule for AG")
-else()
-  find_package(ROOTANA REQUIRED)
-endif(BUILT_IN_ROOTANA)
-message(STATUS "ROOTANA headers for AG: ${ROOTANA_INCLUDE_DIRS} ")
-
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
+# ALPHA-g libraries
 set(AG_LINK_LIBS agana aged agtpc analib)
 
-#message(Binaries: ${BINS})
+# alphasoft 
+message(Binaries: ${BINS})
 foreach( LIST_FILE ${BINS} )
     string( REPLACE ".modules" ".exe" bin ${LIST_FILE} )
     get_filename_component(bin ${bin} NAME)
@@ -66,31 +61,26 @@ foreach( LIST_FILE ${BINS} )
         "../agana/adc_module.cxx"
     )
 
-    #message(Modules: ${MODULES})
-    if (BUILT_IN_ROOTANA)
-       add_executable( ${bin} ${CMAKE_SOURCE_DIR}/rootana/manalyzer/manalyzer_main  ${MODULES} )
-      add_dependencies(${bin} rootana)
-    else ()
-       add_executable( ${bin} $ENV{ROOTANASYS}/manalyzer/manalyzer_main  ${MODULES} )
-    endif (BUILT_IN_ROOTANA)
+    #########################################################
+    add_executable(${bin} ${MODULES})
+    #########################################################
     
     add_dependencies(${bin} agana analib agtpc aged)
+
+    target_compile_definitions(${bin} PUBLIC ${ROOT_CCX_FLAGS} HAVE_ROOT HAVE_ROOT_HTTP HAVE_THTTP_SERVER)
     
-    #add_dependencies(${bin} gitinfo)
-    # Make sure YourLib is linked to each app
     target_include_directories(${bin} PUBLIC include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/recolib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/aged/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
-    target_include_directories(${bin} PUBLIC ${ROOT_INCLUDE_DIRS})
-    target_include_directories(${bin} PUBLIC ${ROOTANA_INCLUDE_DIRS})
-    target_include_directories(${bin} PUBLIC ${MIDAS_INCLUDE_DIRS})
-   
+
     target_link_libraries( ${bin} ${AG_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
-                           rootana ${ROOT_LIBRARIES})
-			   #${MIDAS_LIBRARIES} util rt) 
+                           ${ROOT_LIBRARIES}
+                           ${ZLIB_LIBRARIES}
+			   manalyzer manalyzer_main
+			 ) 
     
     install(TARGETS ${bin}  DESTINATION "${CMAKE_INSTALL_PREFIX}" )
 endforeach( LIST_FILE ${BINS} )

@@ -1,45 +1,16 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(alphasoft)
 
-# Version numbering
-set (basicApp_VERSION_MAJOR 1)
-set (basicApp_VERSION_MAJOR 0)
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-            "Default build type: RelWithDebInfo" FORCE)
-endif()
-
-set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
-endif()
-
+# Stop CMAKE as soon as possible if AGRELEASE is not set
 if(DEFINED ENV{AGRELEASE})
    message("AGRELEASE set to " $ENV{AGRELEASE}) 
 else()
    message(FATAL_ERROR "AGRELEASE not set! source agconfig.sh please")
 endif()
 
-# IDentify OS (linux, windows, etc.)
-string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
-string(TOLOWER ${OS_TYPE} OS_TYPE)
-add_compile_definitions(OSTYPE="${OS_TYPE}")
-message(STATUS "OS: ${CMAKE_SYSTEM} : ${OS_TYPE}")
-
-find_package(Git REQUIRED)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-   option(GIT_SUBMODULE "Check submodules during build" ON)
-endif()
-
-set(PRE_CONFIG "" CACHE STRING "Pre-config script, used to build setup.{sh,py,C} (useful for external environment config scripts)")
-option(BUILD_AG "Build AG" ON)
-option(BUILD_AG_SIM "Build AG Simulation" OFF)
-option(BUILD_A2 "Build A2" ON)
-option(BUILD_A2_SIM "Build A2 Simulation" OFF)
-option(BUILT_IN_ROOTANA "Fetch and build rootana internally" ON)
-option(WARNINGS_ALL "Enable gcc warnings" OFF)
+project(alphasoft)
+set (CMAKE_MACOSX_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Enforce out-of-source builds 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" _insource)
@@ -48,6 +19,76 @@ if(_insource)
    message(FATAL_ERROR "Error: In-source build detected! Please create a build directory! And please delete: $ENV{AGRELEASE}/CMakeCache.txt")
    
 endif(_insource) 
+
+# Version numbering
+set(${PROJECT_NAME}_VERSION_MAJOR 1)
+set(${PROJECT_NAME}_VERSION_MAJOR 0)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+            "Default build type: RelWithDebInfo" FORCE)
+endif()
+
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# IDentify OS (linux, windows, etc.)
+string(REGEX MATCH ^[a-zA-Z]* OS_TYPE ${CMAKE_SYSTEM})
+string(TOLOWER ${OS_TYPE} OS_TYPE)
+add_compile_definitions(OSTYPE="${OS_TYPE}")
+message(STATUS "OS: ${CMAKE_SYSTEM} : ${OS_TYPE}")
+
+# Project specific option
+set(PRE_CONFIG "" CACHE STRING "Pre-config script, used to build setup.{sh,py,C} (useful for external environment config scripts)")
+option(BUILD_AG "Build AG" ON)
+option(BUILD_AG_SIM "Build AG Simulation" OFF)
+option(BUILD_A2 "Build A2" ON)
+option(BUILD_A2_SIM "Build A2 Simulation" OFF)
+option(BUILD_MANALYZER "Build MIDAS analyzer (manalyzer)" OFF)
+option(WARNINGS_ALL "Enable gcc warnings" OFF)
+option(LINTER "Enable clang-tidy to inspect C++ code" OFF)
+option(MINUIT2TRACK "Enable Minuit2 for track fitting" OFF)
+
+
+# Find Git
+find_package(Git REQUIRED)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+   option(GIT_SUBMODULE "Check submodules during build" ON)
+endif()
+
+# Find MIDAS
+if(DEFINED ENV{MIDASSYS})
+   include($ENV{MIDASSYS}/lib/midas-targets.cmake)
+   message(STATUS "${PROJECT_NAME}: Building with MIDAS from $ENV{MIDASSYS}/lib/midas-targets.cmake")
+   include($ENV{MIDASSYS}/lib/manalyzer-targets.cmake)
+   message(STATUS "${PROJECT_NAME}: Building with manalyzer from $ENV{MIDASSYS}/lib/manalyzer-targets.cmake")
+   set(MIDAS_FOUND TRUE)
+else()
+   message(STATUS "${PROJECT_NAME}: Building with standalone local manalyzer")
+   set(BUILD_MANALYZER TRUE)
+   unset(MIDAS_FOUND)
+endif()
+
+
+# SQLITE3
+find_package(SQLite3)
+if(SQLite3_FOUND)
+  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
+else()
+  message(FATAL "SQLite3 NOT FOUND")
+endif()
+
+# Find ROOT
+if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
+    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
+        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+    endif()
+endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
+# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
+find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom RHTTP)
+# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
+include(${ROOT_USE_FILE})
+separate_arguments(ROOT_CXX_FLAGS UNIX_COMMAND "${ROOT_CXX_FLAGS}")
+message(STATUS "Found ROOT: flags: ${ROOT_CXX_FLAGS} and includes: ${ROOT_INCLUDE_DIRS}")
 
 # Checks $CLICOLOR_FORCE variable to force compiler to emit coloured output
 # The parameter is based on compiler ID as it's not standardised
@@ -76,8 +117,40 @@ function(get_submodule MODULE_NAME)
     endif()
 endfunction()
 
+
+if (LINTER)
+   set(CMAKE_CXX_CLANG_TIDY
+      clang-tidy;
+      -header-filter=$ENV{AGREASE}/;
+      -format-style=file;
+      #In root 6.24.00, the TObject constructor triggers clang-tidy warnings
+      -line-filter=[{"name":"TStorage.h","lines":[[9999999,9999999]]}]
+      -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*,bugprone*,modernize-*';
+      #-warnings-as-errors=*;
+   )
+endif(LINTER)
+include_directories(SYSTEM ${ROOT_INCLUDE_DIRS})
+
+
 # Directories
 set( _AGANA_STATIC TRUE)
+
+if(BUILD_MANALYZER)
+  message(STATUS "Cloning submoduels")
+  # get midas-analyzer submodules
+  get_submodule(midasio)
+  get_submodule(mvodb)
+  get_submodule(mjson)
+  get_submodule(mxml)
+  get_submodule(manalyzer)
+  add_subdirectory(manalyzer)
+  message(STATUS "Ready to build manalyzer")
+endif()
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "$ENV{AGRELEASE}/bin" CACHE PATH "..." FORCE)
+endif()
+
+
 
 #Send these settings as precompiler flags (mostly used in rootUtils)
 if (BUILD_AG)
@@ -131,7 +204,6 @@ if(WARNINGS_ALL)
 endif(WARNINGS_ALL)
 
 add_compile_options(-DALPHASOFT_DB_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/db\")
-#file(APPEND ${CMAKE_BINARY_DIR}/BuildConfig.h "#define ALPHASOFT_DB_INSTALL_PATH \"${CMAKE_INSTALL_PREFIX}/db\"\n")
 install(FILES ${CMAKE_BINARY_DIR}/BuildConfig.h DESTINATION include)
 
 add_subdirectory(cmake_extras)
@@ -139,40 +211,12 @@ add_subdirectory(cmake_extras)
 get_submodule(libGEM)
 add_subdirectory(libGEM)
 
-# SQLITE3
-find_package(SQLite3 REQUIRED)
-if(SQLite3_FOUND)
-  message(STATUS "SQLite3 ${SQLite3_VERSION} found")
-else()
-  message(FATAL "SQLite3 NOT FOUND")
-endif()
-
-# You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
-#   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
-#   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-if(EXISTS $ENV{ROOTSYS}/ROOTConfig.cmake)
-    if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
-        list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-    endif()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{ROOTSYS}/cmake")
-# Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS MathMore Minuit Minuit2 XMLParser XMLIO Spectrum Gui Geom)
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-message(STATUS "ROOT headers: ${ROOT_INCLUDE_DIRS}")
-
-if (BUILT_IN_ROOTANA)
-   #Universal libraries (Include some flow and TSpill stuff)
-   get_submodule(rootana)
-   add_subdirectory(rootana)
-   set(ROOTANA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/rootana/manalyzer;${CMAKE_SOURCE_DIR}/rootana/midasio;${CMAKE_SOURCE_DIR}/rootana/mvodb;${CMAKE_BINARY_DIR}/rootana/include")
-endif(BUILT_IN_ROOTANA)
-
+get_submodule(chronobox_software)
 add_subdirectory(analib)
 
 #rootUtils is customised based on above arguments (BUILD_A2 / BUILD_AG)
 add_subdirectory(rootUtils)
+
 
 #AG libraries
 if (BUILD_AG)

@@ -58,6 +58,25 @@ EndHit::~EndHit()
 // dtor
 }
 
+ClassImp(SimpleTdcHit)
+
+SimpleTdcHit::SimpleTdcHit()
+{
+// ctor
+}
+
+void SimpleTdcHit::Print()
+{
+  std::cout<<"SimpleTdcHit::Print() -- Bar ID:"<<fBarID<<std::endl;
+  std::cout<<" TDC time: "<<fTime;
+  std::cout<<std::endl;
+}
+
+SimpleTdcHit::~SimpleTdcHit()
+{
+// dtor
+}
+
 ClassImp(BarHit)
 
 BarHit::BarHit()

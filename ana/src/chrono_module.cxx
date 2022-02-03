@@ -8,15 +8,14 @@
 #include "midasio.h"
 
 #include "RecoFlow.h"
+#include "TChronoChannelName.h"
 
 #include "TTree.h"
 #include "TMath.h"
-#include "TChrono_Event.h"
-#include <iostream>
-#include "chrono_module.h"
-#include "TChronoChannelName.h"
-
 #include <TBufferJSON.h>
+#include "TChrono_Event.h"
+
+#include <iostream>
 #include <fstream>
 
 class ChronoFlags
@@ -62,8 +61,8 @@ public:
    Chrono(TARunInfo* runinfo, ChronoFlags* flags)
       : TARunObject(runinfo), fFlags(flags)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="ChronoModule";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="ChronoModule";
 #endif
       if (fTrace)
          printf("Chrono::ctor!\n");
@@ -81,9 +80,7 @@ public:
          printf("Chrono::BeginRun, run %d\n", runinfo->fRunNo);
       //printf("Chrono::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       //runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
       
       //Save chronobox channel names
@@ -262,10 +259,11 @@ struct ChronoChannelEvent {
       else
       {
          gClock[b]=EventTime;
-         if (gClock[b]<LastTime[b])// && gClock[b]<100000)
+         if (gClock[b]<LastTime[b] && gClock[b]<100000)
          {
             NOverflows[b]++;
-            //std::cout <<"OVERFLOWING"<<std::endl;
+            std::cout <<"OVERFLOWING" << b<<std::endl;
+            std::cout<<gClock[b] << "<"<< LastTime[b]<<std::endl;
          }
          //      std::cout <<"TIME DIFF   "<<gClock[b]-LastTime[b] <<std::endl;
          LastTime[b]=gClock[b];
@@ -278,15 +276,12 @@ struct ChronoChannelEvent {
    }
    void SaveChronoScaler(ChronoChannelEvent* e, int b, uint32_t MidasTime)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
       
       Double_t RunTime=(Double_t)gClock[b]/CHRONO_CLOCK_FREQ;
       Int_t Chan=(Int_t)e->Channel;
       uint32_t counts=e->Counts;
-
       //Check for sync
       if (Chan==SyncChannel[b])
          if (FirstSyncTime[b]<0)
@@ -307,14 +302,14 @@ struct ChronoChannelEvent {
       //      std::cout<<"ScalerChannel:"<<Chan<<"("<<b+1<<")"<<": "<<counts<<" at "<<RunTime<<"s"<<std::endl;
       fChronoEvent[b][Chan]->SetID(ID);
       fChronoEvent[b][Chan]->SetTS(gClock[b]);
-      fChronoEvent[b][Chan]->SetBoardIndex(b+1);
       fChronoEvent[b][Chan]->SetRunTime(RunTime);
       //fChronoEvent[b][Chan]->SetOfficialTime(OT);
-      fChronoEvent[b][Chan]->SetChannel(Chan);
+      fChronoEvent[b][Chan]->SetChannel(Chan,b+1);
       fChronoEvent[b][Chan]->SetCounts(counts);
       ChronoEvent* CE=new ChronoEvent{MidasTime,RunTime,Chan,counts,b};
       ChronoEventsFlow->push_back(CE);
-      //fChronoEvent[b][Chan]->Print();
+      //if (Chan != 59)
+      //   fChronoEvent[b][Chan]->Print();
       ChronoTree[b][Chan]->Fill();
       LastCounts[b][Chan]=counts;
       ID++;
@@ -322,9 +317,7 @@ struct ChronoChannelEvent {
    }
    void SaveChronoTimeStamp(ChronoChannelEvent* e, int b)
    {
-      #ifdef HAVE_CXX11_THREADS
       std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-      #endif
       gDirectory->cd("/chrono");
 
       Int_t Chan=(Int_t)e->Channel-100;
@@ -342,9 +335,8 @@ struct ChronoChannelEvent {
       fChronoTS[b][Chan]->SetID(TSID);
       TSID++;
       fChronoTS[b][Chan]->SetTS(gFullTS[b]);
-      fChronoTS[b][Chan]->SetBoardIndex(b+1);
       fChronoTS[b][Chan]->SetRunTime(RunTime);
-      fChronoTS[b][Chan]->SetChannel(Chan);
+      fChronoTS[b][Chan]->SetChannel(Chan,b+1);
       ChronoTimeStampTree[b][Chan]->Fill();
       gLastTS[b]=gTS[b];
       TSEvents[b]++;
@@ -359,7 +351,7 @@ struct ChronoChannelEvent {
 
       if( me->event_id != 10 ) // sequencer event id
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -454,7 +446,7 @@ struct ChronoChannelEvent {
                         //Double check the right channel numbers?
                         //if (Chan<CHRONO_N_CHANNELS)
                         if (pos<0) break;
-                        if (cce[pos].Channel==CHRONO_CLOCK_CHANNEL) break;
+                        if (cce[pos].Channel == CHRONO_CLOCK_CHANNEL) break;
                         if (cce[pos].Counts>(uint32_t)-((uint16_t)-1)/2)
                         {
                            std::cout<<"Bad counts (probably underflow) in channel: "<<(int)cce[pos].Channel<<std::endl;

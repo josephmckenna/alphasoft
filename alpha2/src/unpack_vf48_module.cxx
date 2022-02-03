@@ -90,8 +90,8 @@ public:
    UnpackModule(TARunInfo* runinfo, UnpackFlags* flags)
       : TARunObject(runinfo)
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="unpack_module_stream";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="unpack_module_stream";
 #endif
       if (fTrace)
          printf("UnpackModule::ctor!\n");
@@ -110,7 +110,8 @@ public:
          {
             printf("PROBLEM: Unphysical VF48 sampling parameters:\n");
             printf("subsample = %f \t offset = %d \t soffset = %d \n", gSubSample[m], gOffset[m], gSOffset[m]);
-            exit(0);
+            if (runinfo->fRunNo != 0)
+               exit(0);
          }
       }
       delete SettingsDB;
@@ -138,8 +139,6 @@ public:
    {
       if (fTrace)
          printf("UnpackModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      //time_t run_start_time = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
-      //printf("ODB Run start time: %d: %s", (int)run_start_time, ctime(&run_start_time));
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       int module = 0;
@@ -151,8 +150,8 @@ public:
 #endif
 
 #ifdef INCLUDE_MVODB_H
-      runinfo->fOdb->RIAI("/equipment/VF48/Settings/VF48_NumSamples",module,&samples);
-      runinfo->fOdb->RIAI("/equipment/VF48/Settings/VF48_GroupEnable",module, &grpEnabled);
+      runinfo->fOdb->RIAI("Equipment/VF48/Settings/VF48_NumSamples",module,&samples);
+      runinfo->fOdb->RIAI("Equipment/VF48/Settings/VF48_GroupEnable",module, &grpEnabled);
 #endif
       printf("Module %d, samples: %d, grpEnable: 0x%x\n", module, samples, grpEnabled);
       vfu->SetFlushIncompleteThreshold(40);
@@ -170,8 +169,6 @@ public:
       //SendQueueToFlow(runinfo);
       if (fTrace)
          printf("UnpackModule::PreEndRun, run %d\n", runinfo->fRunNo);
-      //time_t run_stop_time = runinfo->fOdb->odbReadUint32("/Runinfo/Stop time binary", 0, 0);
-      //printf("ODB Run stop time: %d: %s", (int)run_stop_time, ctime(&run_stop_time));
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -264,7 +261,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -272,7 +269,7 @@ public:
 
       if (event->event_id != 11)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -308,7 +305,7 @@ public:
       }
       if (!data_added)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
       }
@@ -323,7 +320,7 @@ public:
       //printf("Analyze, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
       if (fFlags->fUnpackOff)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -342,7 +339,7 @@ public:
 
       if (!flow_queued)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags |= TAFlag_SKIP_PROFILE;
 #endif
          return flow;   

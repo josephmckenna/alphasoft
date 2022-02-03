@@ -1,0 +1,60 @@
+double GetMaxDriftTime_mavg(TH1D* h, double thr=0.9)
+{
+  double t,bc=0.,n=0.,mavg=1.,sum=0,td=-1.;
+  for(int b=1; b<=h->GetNbinsX(); ++b)
+    {
+      t=h->GetBinCenter(b);
+      if( t<300. ) continue; 
+      bc=h->GetBinContent(b);
+      if( bc < 1. ) continue; // skip empty bins 
+      if( bc/mavg < thr )
+	{
+	  td=(t+h->GetBinCenter(b-1))*.5;
+	  break;
+	}
+      ++n;
+      sum+=bc;
+      mavg=sum/n;
+      //cout<<b<<"\t"<<t<<"\t"<<bc<<"\t"<<mavg<<endl;
+    }
+  cout<<"-->\t"<<td<<"\t"<<bc<<endl;
+  return td;
+}
+
+#include <array>
+double GetMaxDriftTime(TH1D* h, const int Nsamples=10, double thr=0.9)
+{
+  if( Nsamples < 2 ) return -2.;
+  double t,bc=0.,td=-1.,mavg=1.,w=1./double(Nsamples);
+  array<double,10> samples;
+  unsigned int i=0;
+  for(int b=1; b<=h->GetNbinsX(); ++b)
+    {
+      t=h->GetBinCenter(b);
+      if( t<300. ) continue;
+  
+      bc=h->GetBinContent(b);
+      if( bc<1. ) continue; // skip empty bins
+      //cout<<b<<"\t"<<t<<"\t"<<bc<<"\t"<<mavg<<"\t"<<bc/mavg<<endl;
+      if( bc/mavg < thr )  // drop?
+	{
+	  //	  td=(t+h->GetBinCenter(b-1))*.5;
+	  break;
+	}
+      samples[i]=bc;
+      td=t;
+
+      double sum=0.;
+      for(int j=0; j<Nsamples; ++j) 
+	{
+	  sum+=samples[j];
+	}
+      mavg=sum*w;
+
+      ++i;
+      if(i==10) i=0;
+    }
+  cout<<"-->\t"<<td<<"\t"<<bc<<endl;
+  return td;
+}
+

@@ -62,6 +62,7 @@ LookUpTable::LookUpTable(double quencherFrac):finterpol_tdrad(0),finterpol_tdphi
 					      fMapBegin(700.),
 					      fMinTime(-1.),fMaxTime(0.)
 {  
+  std::cout<<"LookUpTable::LookUpTable garfield++ sim with field map"<<std::endl;
   frad.clear();
   fdrift.clear();
   flor.clear();
@@ -71,11 +72,14 @@ LookUpTable::LookUpTable(double quencherFrac):finterpol_tdrad(0),finterpol_tdphi
 
   unsigned idx=0;
   fZed.insert( std::pair<double,unsigned>(0.,idx) );
-  for( double zz=fMapBegin; zz<1160.; zz+=5. )
-    {
-      fZed.insert( std::pair<double,unsigned>(zz,idx) );
-      ++idx;
-    }
+  double zz=fMapBegin; 
+  while (zz<1160.)
+  {
+    fZed.insert( std::pair<double,unsigned>(zz,idx) );
+    ++idx;
+    //This is pretty ugly
+    zz+=5.;
+  }
   
   if( SetGas(quencherFrac) )
     {

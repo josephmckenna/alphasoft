@@ -4,6 +4,9 @@
 #include "AgFlow.h"
 #include "RecoFlow.h"
 
+#include "AnaSettings.hh"
+#include "json.hpp"
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -13,15 +16,24 @@
 
 #include "TMath.h"
 #include "TH1D.h"
-#include "TH2D.h"
 #include "TF1.h"
 
 #include "TBarEvent.hh"
+
+#include"fitBV.hh"
+#include"Minuit2/FunctionMinimum.h"
+#include"Minuit2/VariableMetricMinimizer.h"
+
 
 class BscFlags
 {
 public:
    bool fPrint = false;
+   bool fDiag = false;
+   bool fPulser = false; // Calibration pulser run
+   bool fProtoTOF = false; // TRIUMF prototype
+   bool fFitAll = false; // If false, fits only saturated waveforms
+   AnaSettings* ana_settings=0;
 };
 
 class BscModule: public TARunObject
@@ -30,37 +42,31 @@ private:
 
    // Set parameters
    int pedestal_length = 100;
-   int threshold = 1400; // Minimum ADC value to define start and end of pulse // Old = 800
-   double amplitude_cut = 5000; // Minimum ADC value for peak height
-   const static int sample_waveforms_to_plot = 10; // Saves a number of raw pulses for inspection
-   int hit_num=0;
+   int threshold; // Minimum ADC value to define start and end of pulse
+   double amplitude_cut; // Minimum ADC value for peak height
+   double adc_dynamic_range = 2.0; // ADC dynamic range of 2 volts
+   double adc_conversion = adc_dynamic_range/(TMath::Power(2,15)); // Conversion factor from 15 bit adc value to volts
+   std::vector<bool> sample_plotted;
 
 public:
    BscFlags* fFlags;
 
 private:
 
-   // Initialize histograms
-   TH1D* hBars = NULL;
-   TH1D *hBsc_Time=NULL;
-   TH2D *hBsc_TimeVsBar = NULL;
-   TH1D *hBsc_Amplitude = NULL;
-   TH2D *hBsc_AmplitudeVsBar = NULL;
-   TH2D *hBsc_SaturatedVsBar = NULL;
-   TH1D* hWave = NULL;
-   TH2D* hFitAmp = NULL;
-   TH2D* hFitStartTime = NULL;
-   TH2D* hFitEndTime = NULL;
-   TH1D* hNumBars = NULL;
+   std::map<int,TH1D*> hSampleWaveforms;
+   std::map<int,TF1*> hSampleWaveformFits;
 
 public:
 
    BscModule(TARunInfo* runinfo, BscFlags* flags)
-      : TARunObject(runinfo), fFlags(flags)
+      : TARunObject(runinfo), fFlags(flags),
+        threshold(flags->ana_settings->GetInt("BscModule","pulse_threshold")),
+        amplitude_cut(flags->ana_settings->GetDouble("BscModule","ADCamplitude"))
    {
-#ifdef MANALYZER_PROFILER
-      ModuleName="bsc adc module";
+#ifdef HAVE_MANALYZER_PROFILER
+      fModuleName="bsc adc module";
 #endif
+      
    }
 
    ~BscModule()
@@ -70,66 +76,49 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      gDirectory->mkdir("bsc")->cd();
-
-     
-       
-      hBars = new TH1D("hBars", "Bar ends hit;Bar end number",128,-0.5,127.5);
-      hBsc_Time=new TH1D("hBsc_Time", "ADC Time;ADC Time [ns]", 200,0,2000);
-      hBsc_TimeVsBar=new TH2D("hBsc_TimeVsBar", "ADC Time;Bar end number;ADC Time [ns]", 128,-0.5,127.5,200,0,2000);
-      hBsc_Amplitude=new TH1D("hBsc_Amplitude", "ADC Pulse Amplitude;Amplitude", 2000,0.,50000.);
-      hBsc_AmplitudeVsBar=new TH2D("hBsc_AmplitudeVsBar", "ADC Pulse Amplitude;Bar end number;Amplitude", 128, -0.5, 127.5, 2000,0.,50000.);
-      hBsc_SaturatedVsBar = new TH2D("hBsc_SaturatedVsBar","Count of events with saturated ADC channels;Bar end number;0=Unsaturated, 1=Saturated",128,-0.5,127.5,2,-0.5,1.5);
-      hWave = new TH1D("hWave","ADC Waveform",700,0,700);
-      hFitAmp = new TH2D("hFitAmp", "ADC Fit Amplitude;Real Amplitude;Fit Amplitude",2000,0,35000,2000,0,80000);
-      hFitStartTime = new TH2D("hFitStartTime", "ADC interpolated waveform start time;Real Time [ns];Fit Time [ns]",200,1000,1400,200,1000,1400);
-      hFitEndTime = new TH2D("hFitEndTime", "ADC interpolated waveform end time;Real Time [ns];Fit Time [ns]",400,1000,1800,400,1000,1800);
-      hNumBars = new TH1D("hNumBars", "Number of bar ends hit;Number of channels",16,-0.5,15.5);
-      gDirectory->mkdir("SampleWaveforms");
+      if (fFlags->fDiag) {
+         gDirectory->mkdir("bsc")->cd();
+         gDirectory->mkdir("SampleWaveforms")->cd();
+         for (int ii=0;ii<128;ii++)
+            {
+               TString hname = TString::Format("hSampleBar%d",ii);
+               TString htitle = TString::Format("Sample ADC Waveform Channel %d",ii);
+               hSampleWaveforms[ii] = new TH1D(hname,htitle,700,0,700);
+               sample_plotted.push_back(false);
+               if (!(fFlags->fPulser)) {
+                  TString fitname = TString::Format("fitSampleBar%d",ii);
+                  hSampleWaveformFits[ii] = new TF1(fitname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))");
+               }
+            }
+         gDirectory->cd("..");
+      }
 
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-
       // Write histograms
       runinfo->fRoot->fOutputFile->Write();
-
-      // Delete histograms
-      delete hBars;
-      delete hBsc_Time;
-      delete hBsc_TimeVsBar;
-      delete hBsc_Amplitude;
-      delete hBsc_AmplitudeVsBar;
-      delete hBsc_SaturatedVsBar;
-      delete hWave;
-      delete hFitAmp;
-      delete hFitStartTime;
-      delete hFitEndTime;
-      delete hNumBars;
-
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("PauseRun, run %d\n", runinfo->fRunNo);
+      if( fFlags->fPrint ) printf("PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("ResumeRun, run %d\n", runinfo->fRunNo);
+      if( fFlags->fPrint ) printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
-      if( fFlags->fPrint ) printf("BscModule::Analyze, run %d\n", runinfo->fRunNo);
-         
       const AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
       {
-#ifdef MANALYZER_PROFILER
+#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
@@ -159,32 +148,26 @@ public:
          printf("BscModule::AnalyzeFlowEvent(...) has %d hits\n",BarEvent->GetNBars());
 
       flow = new AgBarEventFlow(flow, BarEvent);
-
-#ifdef _TIME_ANALYSIS_
-      if (TimeModules) flow=new AgAnalysisReportFlow(flow,"bscint_adc_module",timer_start);
-#endif
-
       return flow;
    }
 
-// -------------- Main function ----------
+// -------------- Main function, called for each event ----------
 
    TBarEvent* AnalyzeBars(const Alpha16Event* data, TARunInfo* runinfo)
    {
-      
-
       std::vector<Alpha16Channel*> channels = data->hits;
       TBarEvent* BarEvent = new TBarEvent();
 
-      int num_bars = 0;
+      int counter = 0;
       for(unsigned int i = 0; i < channels.size(); ++i)
          {
             auto& ch = channels.at(i);   // Alpha16Channel*
-
-            // Cuts out adc channels and bad bar numbers
-            if( ch->adc_chan >= 16 ) continue; // it's AW
+            int chan = ch->adc_chan;
             int bar = ch->bsc_bar;
-            if( bar < 0 ) continue;
+
+            // Cuts out AW channels
+            if( chan >= 16 ) continue; // it's AW
+            if( !(fFlags->fProtoTOF) and ch->bsc_bar < 0 ) continue;
 
             // Calculates baseline
             double baseline(0.);
@@ -204,7 +187,7 @@ public:
             for (int ii=0; ii<sample_length; ii++)
                {
                   // Exit if the pulse starts by going negative, then positive (its noise)
-                  if (ch->adc_samples.at(ii) - baseline < -1*threshold && start_time==0) {start_time = -1; break;}
+                  //if (ch->adc_samples.at(ii) - baseline < -1*threshold && start_time==0) {start_time = -1; break;}
                   // Pulse start time is the first time it goes above threshold
                   if (ch->adc_samples.at(ii) - baseline > threshold && start_time==0) start_time = ii;
                   // Pulse end time is the first time it goes back below threshold
@@ -217,92 +200,112 @@ public:
             // Exit if the pulse is too small
             if (amp<amplitude_cut) continue;
 
-            // Count 1 pulse in event
-            num_bars++;
+            // Exit if bad bar
+            if (bar<0 or bar>128) continue;
 
-            // Plots pulse. Sets zero error for saturated pulses since fitter ignores zero error bins
-            hWave->Reset();
-            for (int ii=0;ii<ch->adc_samples.size();ii++)
+            // Count 1 pulse in the event
+            counter++;
+
+            {
+
+            if( !(fFlags->fPulser) )  // Normal run
                {
-                  int bin_num = hWave->Fill(ii,ch->adc_samples.at(ii));
-                  if (ch->adc_samples.at(ii) > 32000) hWave->SetBinError(bin_num,0);
-                  else hWave->SetBinError(bin_num,100);
+                  // Converts amplitude to volts
+                  double amp_volts = amp*adc_conversion;
+                  double amp_volts_raw = amp*adc_conversion;
+
+
+                  // Sets weights of saturated bins to zero
+                  std::vector<double> weights(ch->adc_samples.size(),1.);
+                  bool saturated = false;
+                  for (int ii=0;ii<ch->adc_samples.size();ii++) {
+                     if (ch->adc_samples.at(ii) > 32750) {
+                        weights[ii] = 0.;
+                        saturated = true;
+                     }
+                  }
+
+                  if (fFlags->fFitAll or saturated) {
+
+                     // Creates fitting FCN
+                     SkewGaussFcn theFCN(ch->adc_samples, weights);
+
+                     // Initial fitting parameters
+                     std::vector<double> init_params = {max, double(imax), (end_time-start_time)/4., 0.2};
+                     std::vector<double> init_errors = {1000, 2, 0.05, 0.002};
+
+                     // Creates minimizer
+                     ROOT::Minuit2::VariableMetricMinimizer theMinimizer; 
+                     theMinimizer.Builder().SetPrintLevel(0);
+                     int error_level_save = gErrorIgnoreLevel;
+                     gErrorIgnoreLevel = kFatal;
+
+                     // Minimize to fit waveform
+                     ROOT::Minuit2::FunctionMinimum min = theMinimizer.Minimize(theFCN, init_params, init_errors);
+                     gErrorIgnoreLevel = error_level_save;
+
+                     // Gets minimized parameters
+                     ROOT::Minuit2::MnUserParameterState the_state = min.UserState();
+                     double new_fit_amp = the_state.Value(0) - baseline;
+                     if (fFlags->fDiag) {
+                        if (!(sample_plotted.at(bar)))
+                           hSampleWaveformFits[bar]->SetParameters(the_state.Value(0),the_state.Value(1),the_state.Value(2),the_state.Value(3));
+                     }
+
+                     // Saves fit voltage
+                     amp_volts = new_fit_amp*adc_conversion;
+                  }
+
+                  // Copies histogram to sample histogram
+                  if (fFlags->fDiag) {
+                     if (!(sample_plotted.at(bar)))
+                        {
+                           for (int ii=0;ii<ch->adc_samples.size();ii++)
+                              { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
+                           if (saturated) {
+                              hSampleWaveformFits[bar]->SetRange(start_time-1,end_time+1);
+                              hSampleWaveforms[bar]->GetListOfFunctions()->Add(hSampleWaveformFits[bar]);
+                           }
+                           sample_plotted.at(bar)=true;
+                        }
+                  }
+      
+                  // Writes bar event
+                  if (saturated) {
+                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,amp_volts_raw,start_time*10);
+                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,amp_volts_raw,start_time*10);
+                  }
+                  if (!saturated) {
+                     if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts_raw,start_time*10);
+                     if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts_raw,start_time*10);
+                  }
+
+
                }
 
-            // Fits pulse
-            double fit_amp;
-            double maximum_time;
-            double fit_start_time;
-            double fit_end_time;
-            {           
-            //Root's fitting routines are often not thread safe, lock globally
-#ifdef MODULE_MULTITHREAD
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif
-            TString fname=TString::Format("sgfit_%d_%d",data->counter,i);
-            TF1 *sgfit = new TF1(fname,"[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))",start_time-1,end_time+1);
-            //TF1 *sgfit = new TF1(fname,sgfunc,start_time-1,end_time+1,4);
-            sgfit->SetParameters(max,imax,5,0.2);
-            sgfit->SetParLimits(0,0.9*max,100*max);
-            sgfit->SetParLimits(1,0,500);
-            sgfit->SetParLimits(2,0,100);
-            sgfit->SetParLimits(3,0,2);
-
-            //hWave->Fit("sgfit","RQ0");
-            hWave->Fit(fname,"RQ0");
-            //hWave->Fit(sgfit,"RQ0");
-            // Extrapolates amplitude and interpolates start and end times
-            fit_amp = sgfit->GetParameter(0) - baseline;
-            maximum_time = sgfit->GetMaximumX();
-            int error_level_save = gErrorIgnoreLevel;
-            gErrorIgnoreLevel = kFatal;
-            fit_start_time = sgfit->GetX(threshold+baseline,start_time-1,maximum_time);
-            fit_end_time = sgfit->GetX(threshold+baseline,maximum_time,end_time+1);
-            gErrorIgnoreLevel = error_level_save;
-
-            // Copies histogram to sample histogram
-            if (hit_num < sample_waveforms_to_plot)
+            if( fFlags->fPulser ) // Pulser run
                {
-                  runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-                  gDirectory->cd("bsc/SampleWaveforms");
-                  hWave->Clone(Form("Sample Waveform %d",(hit_num)));
-                  hit_num++;
+
+                  // Converts amplitude to volts
+                  double amp_volts = amp*adc_conversion;
+      
+                  // Writes bar event
+                  if (fFlags->fProtoTOF) BarEvent->AddADCHit(chan,amp_volts,start_time*10);
+                  if ( !(fFlags->fProtoTOF) ) BarEvent->AddADCHit(bar,amp_volts,start_time*10);
+                  // Copies histogram to sample histogram
+                  if (!(sample_plotted.at(bar)))
+                     {
+                        for (int ii=0;ii<ch->adc_samples.size();ii++)
+                           { hSampleWaveforms[bar]->Fill(ii,ch->adc_samples.at(ii)); }
+                        sample_plotted.at(bar)=true;
+                     }
                }
-            delete sgfit;
             }
-            
-            // Fills histograms
-            hBars->Fill(bar);
-            hBsc_Time->Fill(start_time*10);
-            hBsc_TimeVsBar->Fill(bar,start_time*10);
-            hFitAmp->Fill(amp,fit_amp);
-            hFitStartTime->Fill(start_time*10,fit_start_time*10);
-            hFitEndTime->Fill(end_time*10,fit_end_time*10);
-            hBsc_Amplitude->Fill(fit_amp);
-            hBsc_AmplitudeVsBar->Fill(bar,fit_amp);
-            hBsc_SaturatedVsBar->Fill(bar,(max>32000));
-          
-            // Fills bar event
-            BarEvent->AddADCHit(bar,fit_amp,fit_start_time*10);
-
          }
-
-       hNumBars->Fill(num_bars);
-       return BarEvent;
+      return BarEvent;
    }
 
-   static double sgfunc(double* x, double* p)
-    {
-            // "[0]*exp(-0.5*pow((x-[1])/([2]+(x<[1])*[3]*(x-[1])),2))"
-            double xx=x[0];
-            double skew=0.;
-            if( xx>p[1] ) skew = p[3]*(xx-p[1]);
-            double t=(xx-p[1])/(p[2]+skew);
-            return p[0]*exp(-0.5*pow(t,2.));
-    }
-
 };
-
 
 class BscModuleFactory: public TAFactory
 {
@@ -310,19 +313,41 @@ public:
    BscFlags fFlags;
 public:
    void Help()
-   {   }
+   {   
+      printf("BscModuleFactory::Help\n");
+      printf("\t--anasettings /path/to/settings.json\t\t load the specified analysis settings\n");
+      printf("\t--bscdiag\t\t\tenables analysis histograms\n");
+      printf("\t--bscpulser\t\t\tanalyze run with calibration pulser data instead of cosmics/hbar data\n");
+      printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
+      printf("\t--bscprint\t\t\tverbose mode\n");
+      printf("\t--bscfitall\t\t\tfits all bsc adc waveforms instead of only saturated waveforms\n");
+   }
    void Usage()
    {
       Help();
    }
    void Init(const std::vector<std::string> &args)
    {
+      TString json="default";
       printf("BscModuleFactory::Init!\n");
 
       for (unsigned i=0; i<args.size(); i++) {
+         if( args[i]=="-h" || args[i]=="--help" )
+            Help();
          if (args[i] == "--bscprint")
             fFlags.fPrint = true;
+         if (args[i] == "--bscdiag")
+            fFlags.fDiag = true;
+         if( args[i] == "--bscpulser")
+            fFlags.fPulser = true;
+         if (args[i] == "--bscProtoTOF")
+            fFlags.fProtoTOF = true;
+         if( args[i] == "--anasettings" ) 
+            json=args[i+1];
+         if( args[i] == "--bscfitall")
+            fFlags.fFitAll = true;
       }
+      fFlags.ana_settings=new AnaSettings(json.Data());
    }
 
    void Finish()
