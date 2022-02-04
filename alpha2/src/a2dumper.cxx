@@ -34,7 +34,7 @@ public:
     TFile *fRootFile;
 
     //The data we want to save is all in this object.
-    TA2MVAClassicDumper* fMVA = NULL;
+    std::vector<TMVADumper*> fMVADumpers;
 
     //Flags & counters.
     TA2DumperFlags* fFlags;
@@ -60,7 +60,8 @@ public:
             fTree = new TTree(fFlags->fTreeName.c_str(),"data from siliconEvent");
         else
             fTree = new TTree("UnnamedTree","data from siliconEvent");
-        fMVA = new TA2MVAClassicDumper(fTree);
+        fMVADumpers.push_back( new TA2MVAClassicDumper(fTree) );
+        fMVADumpers.push_back( new TXYZ(fTree) );
     }
 
     ~TA2Dumper()
@@ -100,15 +101,22 @@ public:
             //Update variables of the MVA class. This will check whether the eventnumbers match.
             //If they match this function will return true, if not: false. This allows us to know
             //whether to fill the tree and increment the EventIndex and EventNumber.
-            if(fMVA->UpdateVariables(flow, fCurrentEventNumber))
+            int good_flow = 0;
+            for ( TMVADumper* d: fMVADumpers)
             {
-                //Fill tree.
-                fMVA->Fill();
-            
-                //Update current event number to be checked against (remember everything here is in order).
-                fCurrentEventIndex++;
-                fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
+                if(d->UpdateVariables(flow, fCurrentEventNumber))
+                {
+                    good_flow++;
+                    //Fill tree.
+
+
+                }
             }
+            assert (good_flow == fMVADumpers.size());
+            //Update current event number to be checked against (remember everything here is in order).
+            fCurrentEventIndex++;
+            fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;            
+            fTree->Fill();
         }
         return flow;
     }
