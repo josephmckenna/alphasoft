@@ -15,7 +15,7 @@
 #include "A2Flow.h"
 #include "TTree.h"
 
-
+#include "TMVADumper.h"
 
 class TA2DumperFlags
 {
@@ -34,7 +34,7 @@ public:
     TFile *fRootFile;
 
     //The data we want to save is all in this object.
-    MVAFlowEvent fMVAFlow;
+    TA2MVAClassicDumper* fMVA = NULL;
 
     //Flags & counters.
     TA2DumperFlags* fFlags;
@@ -60,9 +60,7 @@ public:
             fTree = new TTree(fFlags->fTreeName.c_str(),"data from siliconEvent");
         else
             fTree = new TTree("UnnamedTree","data from siliconEvent");
-        
-        //Branch the tree based on our members.
-        fMVAFlow.LinkTree(fTree);
+        fMVA = new TA2MVAClassicDumper(fTree);
     }
 
     ~TA2Dumper()
@@ -102,10 +100,10 @@ public:
             //Update variables of the MVA class. This will check whether the eventnumbers match.
             //If they match this function will return true, if not: false. This allows us to know
             //whether to fill the tree and increment the EventIndex and EventNumber.
-            if(fMVAFlow.UpdateVariables(flow, fCurrentEventNumber))
+            if(fMVA->UpdateVariables(flow, fCurrentEventNumber))
             {
                 //Fill tree.
-                fTree->Fill();
+                fMVA->Fill();
             
                 //Update current event number to be checked against (remember everything here is in order).
                 fCurrentEventIndex++;
