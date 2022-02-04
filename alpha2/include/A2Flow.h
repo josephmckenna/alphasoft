@@ -269,67 +269,6 @@ public:
    }
 };
 
-class MVAFlowEvent/*: public TAFlowEvent*/ //Turning this thing being a flow event off, this may be an error but it can't be initialised outside of the flow otherwise. Which is what we want I think. Dont forget to change LINE-LMG01 when changing this back.
-{
-  public:
-  //Needs some data here, and the methods to populate the thing. 
-  //THen we need a way for this to interact with the offline MVA analysis. 
-  //For now lets assume we are interested in 3 variables. x, y, z.
-
-  Float_t fX;
-  Float_t fY;
-  Float_t fZ;
-
-  //We then need a way for these to be populated.
-
-  bool UpdateVariables(TAFlowEvent* flow, int currentEventNumber)
-  {
-    SilEventFlow* siliconEventFlow=flow->Find<SilEventFlow>();
-    if (siliconEventFlow)
-    {
-      TSiliconEvent* siliconEvent=siliconEventFlow->silevent;
-      Int_t eventNumber = siliconEvent->GetVF48NEvent();
-
-      if(eventNumber == currentEventNumber)
-      {
-        std::cout << "current event Number = " << currentEventNumber << ". Matched with found eventNumber " << eventNumber << std::endl;
-        std::cout << "(x, y, z) = (" << fX << ", " << fY << ", " << fZ << ", " << ")" << std::endl; 
-              
-        //Update members
-        fX = siliconEvent->GetVertexX();
-        fY = siliconEvent->GetVertexY();
-        fZ = siliconEvent->GetVertexZ();
-
-        return true;
-      }
-    }
-    return false;
-  };
-
-  void LinkTree(TTree *tree)
-  {
-    tree->Branch("x", &fX, "x/D");
-    tree->Branch("y", &fY, "y/D");
-    tree->Branch("z", &fZ, "z/D");
-  };
-
-  void LoadVariablesToReader(TMVA::Reader* reader)
-  {
-    reader->AddVariable( "x", &fX );
-    reader->AddVariable( "y", &fY );
-    reader->AddVariable( "z", &fZ );
-  }
-
-  void WriteToTree();
-
-  MVAFlowEvent()/*: TAFlowEvent(flow)*/ //LINE-LMG01 
-  {
-  }
-  ~MVAFlowEvent()
-  {
-  }
-};
-
 
 #endif
 
