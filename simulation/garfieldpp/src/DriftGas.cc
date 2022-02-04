@@ -175,7 +175,7 @@ int main(int argc, char * argv[]){
         case 9: T = atof(argv[i]); break;
         }
     }
-    makeGas(CO2frac, nEF, EFmax, nBF, BFmax, nTh, thetaMax);
+    makeGas(CO2frac, nEF, EFmax, nBF, BFmax, nTh, thetaMax, p, T);
     //makeGas(CO2frac, 25, 1000000., 1,0.,0.,0.);
     //makeContaminatedGas(3.0);
     return 0;
