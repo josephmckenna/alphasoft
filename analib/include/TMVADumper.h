@@ -48,7 +48,7 @@ class TA2MVAClassicDumper: public TMVADumper
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (!fe)
       {
-         return flow;
+         return false;
       }
       TAlphaEvent* alphaEvent=fe->alphaevent;
       TSiliconEvent* siliconEvent=fe->silevent;
@@ -189,6 +189,7 @@ class TA2MVAClassicDumper: public TMVADumper
          delete S0axisraw;
          delete S0valuesraw;
       }
+      return true;
    }
 
    void LoadVariablesToReader(TMVA::Reader* reader)
@@ -208,5 +209,41 @@ class TA2MVAClassicDumper: public TMVADumper
       reader->AddVariable("lambdamean", &lambdamean);
       reader->AddVariable("curvesign", &curvesign);
       reader->AddVariable("phi", &phi);
+   }
+};
+
+
+
+class TXYZ: public TMVADumper
+{
+   public:
+      float fX, fY, fZ;
+   
+   TXYZ(TTree* tree): TMVADumper(tree)
+   {
+      fTree->Branch("X", &fX, "X/F");
+      fTree->Branch("Y", &fY, "Y/F");
+      fTree->Branch("Z", &fZ, "Z/F");
+   }
+   
+   bool UpdateVariables(TAFlowEvent* flow, int currentEventNumber)
+   {
+      SilEventFlow* fe=flow->Find<SilEventFlow>();
+      if (!fe)
+      {
+         return flow;
+      }
+      TSiliconEvent* siliconEvent=fe->silevent;
+      TVector3* vtx = siliconEvent->GetVertex();
+      this->fX = vtx->X();
+      this->fY = vtx->Y();
+      this->fZ = vtx->Z();
+   }
+
+   void LoadVariablesToReader(TMVA::Reader* reader)
+   {
+      reader->AddVariable("X", &fX);
+      reader->AddVariable("Y", &fY);
+      reader->AddVariable("Z", &fZ);
    }
 };
