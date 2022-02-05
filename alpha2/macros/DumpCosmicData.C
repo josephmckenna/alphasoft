@@ -6,6 +6,14 @@ void DumpCosmicData(int runNumber = 57181, const char* list_name = "Cosmic")
       std::cout <<"File doesn't exist..."<<std::endl;
       return;
    }
+   
+   TTreeReader* t = A2_SIS_Tree_Reader(runNumber,0);
+   if (t->GetEntries() <= 0)
+   {
+      std::cout <<"No SIS data for some reason? Maybe re-run analysis?" << std::endl;
+      delete t;
+      return;
+   }
    std::vector<TA2Spill> spills = Get_A2_Spills(runNumber, {"*"},{-1});
    TSISChannels channels(runNumber);
    TSISChannel SVDTriggers = channels.GetChannel("IO32_TRIG_NOBUSY");
@@ -29,8 +37,8 @@ void DumpCosmicData(int runNumber = 57181, const char* list_name = "Cosmic")
    
    plot.LoadData();
    if (plot.GetNVertexEvents()) {
-      std::cout << "Adding "<< plot.GetNVertexEvents() << " Events to "<< list_name << ".list "<< std::endl;
-      plot.WriteEventList("Cosmic");
+      std::cout << "Adding "<< plot.GetNVertexEvents() << " Events from run " << runNumber << " to "<< list_name << ".list "<< std::endl;
+      plot.WriteEventList(list_name);
    } else {
       std::cout << "No events to save in " << runNumber << std::endl;
    }
