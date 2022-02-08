@@ -38,7 +38,7 @@ int main(int argc, char * argv[])
 
   double pressure=725.; // Torr @ CERN, it may be 735 Torr = 980 hPa, altitude 432 m
 
-  bool plot=false;
+  bool plot=true;
 
 
   if( argc == 3 )
@@ -60,7 +60,7 @@ int main(int argc, char * argv[])
       CathodeVoltage = atof(argv[3]);
       AnodeVoltage   = atof(argv[4]);
       FieldVoltage   = atof(argv[5]);
-    }  
+    }
   else if( argc == 7 )
     {
       InitialPhi     = atof(argv[1]);
@@ -69,7 +69,7 @@ int main(int argc, char * argv[])
       AnodeVoltage   = atof(argv[4]);
       FieldVoltage   = atof(argv[5]);
       QuenchFraction = atof(argv[6]);
-    }  
+    }
   else if( argc == 8 )
     {
       InitialPhi     = atof(argv[1]);
@@ -104,7 +104,7 @@ int main(int argc, char * argv[])
 
   // Create the medium
   MediumMagboltz *gas = new MediumMagboltz;
-  
+
   // Gas file created with other software
   TString gasfile = TString::Format("%s/simulation/common/gas_files/ar_%2.0f_co2_%2.0f_NTP_25E1000000_10B2.00.gas",
                                     getenv("AGRELEASE"),
@@ -112,7 +112,15 @@ int main(int argc, char * argv[])
   cerr<<gasfile<<endl;
   if(gas->LoadGasFile(gasfile.Data()))
      std::cerr << "Gas file: "<< gasfile << " loaded" << std::endl;
-  else return -47;
+  else{
+     gasfile = TString::Format("%s/simulation/common/gas_files/ar_%2.0f_co2_%2.0f_NTP_20E1000000_10B2.00.gas",
+                               getenv("AGRELEASE"),
+                               (1.-QuenchFraction)*1.e2,QuenchFraction*1.e2);
+     if(gas->LoadGasFile(gasfile.Data()))
+        std::cerr << "Gas file: "<< gasfile << " loaded" << std::endl;
+     else
+        return -47;
+  }
   if( pressure )
     gas->SetPressure(pressure);
 
@@ -131,27 +139,27 @@ int main(int argc, char * argv[])
     {
       // // Oxford field Map - 13 Feb 2016
       // TString BfieldMap("./fieldmaps/TPC_Field_Map.csv");
-      // Babcock field Map - 20 Sep 2017 
+      // Babcock field Map - 20 Sep 2017
       TString BfieldMap= TString::Format("%s/simulation/common/fieldmaps/Babcock_Field_Map.csv",
                                          getenv("AGRELEASE"));
       cerr<<"B map: "<<BfieldMap<<endl;
-      if( !drift_cell.SetSymmetries("rz") ) 
+      if( !drift_cell.SetSymmetries("rz") )
 	{
 	  cerr<<"set symm failed"<<endl;
 	  return -46;
 	}
       // set scale parameter to convert Gauss to Tesla (or to go to 0.65T later)
-      if( !drift_cell.ReadMagneticFieldMap(BfieldMap.Data(), TMath::Abs(MagneticField)*1.e-4) ) 
+      if( !drift_cell.ReadMagneticFieldMap(BfieldMap.Data(), TMath::Abs(MagneticField)*1.e-4) )
 	{
 	  cerr<<"READ B-map failed"<<endl;
 	  return -49;
-	} 
+	}
       cerr<<"Magnetic Field Map set (scaled to "<<MagneticField*1.e-4<<")"<<endl;
     }
   drift_cell.SetGas(gas);
   drift_cell.init();
 
- 
+
   // Finally assembling a Sensor object
   Sensor sensor;
   // Calculate the electric field
@@ -231,13 +239,13 @@ int main(int argc, char * argv[])
   TNtupleD ntefin("ntefin","e- endpoint","x:y:z:t:n");
 
   cerr<<"\nBEGIN"<<endl;
- 
+
   // Electron initial point
   double xi,yi,zi=InitialZed,
     ti=0.0;
   double phii = InitialPhi;
   double Rstep = 0.05; // cm
- 
+
   // Electron counter
   int ie = 0;
   for(double ri=drift_cell.GetCathodeRadius(); ri<drift_cell.GetROradius(); ri+=Rstep)
@@ -254,7 +262,7 @@ int main(int argc, char * argv[])
       double t_d=edrift.GetDriftTime();
       // gain
       double gain=edrift.GetGain();
-     
+
       double Xion,Yion,Zion,Tion;
       unsigned int NP = edrift.GetNumberOfDriftLinePoints();
       edrift.GetDriftLinePoint(NP-1,Xion,Yion,Zion,Tion);
@@ -265,7 +273,7 @@ int main(int argc, char * argv[])
       if( phiIon < 0. ) phiIon+=TMath::TwoPi();
 
       ftd<<xi<<"\t"<<yi<<"\t"<<phiIon<<"\t"<<t_d<<"\t"<<gain<<endl;
-    
+
 #if DEBUG>0
       cerr<<"\t"<<ie<<"\t"<<ri
 	  <<"\t"<<t_d<<"\t"<<phiIon*TMath::RadToDeg()<<"\t"<<gain<<endl;
@@ -290,7 +298,7 @@ int main(int argc, char * argv[])
 
         TString sname = TString::Format("%s/chamber_drift/drift_plots/%s.pdf",getenv("GARFIELDPP"),cc->GetName());
         cc->SaveAs(sname);
-        
+
         app.Run(true);
      }
   return 0;
