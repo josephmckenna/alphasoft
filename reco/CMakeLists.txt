@@ -63,7 +63,7 @@ if (BUILD_AG_SIM)
 
   message(STATUS "Building (Geant4) BSC analyzer")
   add_executable( baranalysis.exe baranalysis.cc )
-  add_dependencies(baranalysis.exe agtpc G4dict)
+  add_dependencies(baranalysis.exe agtpc G4out)
   target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include)
   target_link_libraries(baranalysis.exe ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS})
   install(TARGETS baranalysis.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
