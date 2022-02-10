@@ -11,8 +11,6 @@
 #define A2Flow_H
 #include "UnpackVF48.h"
 #include "SiMod.h"
-#include "TTree.h"
-#include "TMVA/Reader.h"
 
 #include "AnalysisFlow.h"
 
