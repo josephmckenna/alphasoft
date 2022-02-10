@@ -59,9 +59,10 @@ public:
         if(fFlags->fTreeName == "mixing" || fFlags->fTreeName == "cosmic")
             fTree = new TTree(fFlags->fTreeName.c_str(),"data from siliconEvent");
         else
-            fTree = new TTree("UnnamedTree","data from siliconEvent");
+            fTree = new TTree(fFlags->fTreeName.c_str(),"data from siliconEvent");
+        fMVADumpers.push_back( new TA2MVAEventIDDumper(fTree) );
         fMVADumpers.push_back( new TA2MVAClassicDumper(fTree) );
-        fMVADumpers.push_back( new TXYZ(fTree) );
+        fMVADumpers.push_back( new TA2MVAXYZ(fTree) );
     }
 
     ~TA2Dumper()
@@ -71,9 +72,20 @@ public:
     
     void BeginRun(TARunInfo* runInfo)
     {
+        fCurrentEventIndex = 0;
+        fCurrentEventNumber = -1;
         printf("BeginRun, run %d, file %s\n", runInfo->fRunNo, runInfo->fFileName.c_str());
         LoadEventIDs(); //Load event IDs we want to dump
-        fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second; //Initialise the current event number to the first in the list.
+        // Initialise the current event number to the first in the list.
+        for ( ; fCurrentEventIndex < fEventIDs.size(); fCurrentEventIndex++)
+        {
+            if (fEventIDs[fCurrentEventIndex].first == runInfo->fRunNo)
+            {
+               fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;
+               break;
+            }
+        }
+
     }
 
     void EndRun(TARunInfo* runInfo)
@@ -102,21 +114,33 @@ public:
             //If they match this function will return true, if not: false. This allows us to know
             //whether to fill the tree and increment the EventIndex and EventNumber.
             int good_flow = 0;
+            while (true)
+            {
+               if (fEventIDs[fCurrentEventIndex].first == runInfo->fRunNo)
+                  break;
+               else
+                  fCurrentEventIndex++;
+               if ( fCurrentEventIndex >= fEventIDs.size() )
+                  return flow;
+            }
             for ( TMVADumper* d: fMVADumpers)
             {
                 if(d->UpdateVariables(flow, fCurrentEventNumber))
                 {
                     good_flow++;
                     //Fill tree.
-
-
+                    
                 }
             }
-            assert (good_flow == fMVADumpers.size());
-            //Update current event number to be checked against (remember everything here is in order).
-            fCurrentEventIndex++;
-            fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;            
-            fTree->Fill();
+
+            if (good_flow)
+            {
+               assert (good_flow == fMVADumpers.size());
+               //Update current event number to be checked against (remember everything here is in order).
+               fCurrentEventIndex++;
+               fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;            
+               fTree->Fill();
+            }
         }
         return flow;
     }
@@ -128,7 +152,6 @@ public:
 
     void LoadEventIDs()
     {
-        //TODO Take runNumber as input and filter out all but current run. 0 = all
         std::ifstream myFile(fFlags->fFileName);
         std::string line;
         if (myFile.is_open())
@@ -146,6 +169,7 @@ public:
                 }
                 while(firstEvent <= lastEvent)
                 {
+                    //std::cout <<"Queue "<< firstEvent << std::endl;
                     fEventIDs.push_back( std::pair<int, int>(runNumber, firstEvent) );
                     firstEvent++;
                 }
@@ -161,7 +185,7 @@ public:
     {
         //Sort based on first (tmin) keeping idx in the same location
         std::sort(std::begin(fEventIDs), std::end(fEventIDs), 
-        [&](const std::pair<double,double>& lhs, const std::pair<double,double>& rhs)
+        [&](const std::pair<int,int>& lhs, const std::pair<int,int>& rhs)
         {
             if(lhs.first == rhs.first)
                 return lhs.second < rhs.second;
@@ -169,6 +193,8 @@ public:
                 return lhs.first < rhs.first;
         } );
         fEventsSorted = true;
+        //for (const std::pair<int,int>& a: fEventIDs)
+        //   std::cout<< "\t"<< a.first<<"-"<<a.second<<std::endl;
     }
 
     void PrintEventIDs()
