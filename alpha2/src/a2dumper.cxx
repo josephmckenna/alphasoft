@@ -15,7 +15,7 @@
 #include "A2Flow.h"
 #include "TTree.h"
 
-#include "TMVADumper.h"
+#include "TA2MVADumper.h"
 
 class TA2DumperFlags
 {
@@ -34,7 +34,7 @@ public:
     TFile *fRootFile;
 
     //The data we want to save is all in this object.
-    std::vector<TMVADumper*> fMVADumpers;
+    std::vector<TA2MVADumper*> fMVADumpers;
 
     //Flags & counters.
     TA2DumperFlags* fFlags;
@@ -108,39 +108,43 @@ public:
 
     TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runInfo, TAFlags* flags, TAFlowEvent* flow)
     {
-        if(flow) 
+        SilEventFlow* fe=flow->Find<SilEventFlow>();
+        if (!fe)
         {
-            //Update variables of the MVA class. This will check whether the eventnumbers match.
-            //If they match this function will return true, if not: false. This allows us to know
-            //whether to fill the tree and increment the EventIndex and EventNumber.
-            int good_flow = 0;
-            while (true)
-            {
-               if (fEventIDs[fCurrentEventIndex].first == runInfo->fRunNo)
-                  break;
-               else
-                  fCurrentEventIndex++;
-               if ( fCurrentEventIndex >= fEventIDs.size() )
-                  return flow;
-            }
-            for ( TMVADumper* d: fMVADumpers)
-            {
-                if(d->UpdateVariables(flow, fCurrentEventNumber))
-                {
-                    good_flow++;
-                    //Fill tree.
-                    
-                }
-            }
+            return flow;
+        }
+        TAlphaEvent* alphaEvent=fe->alphaevent;
+        TSiliconEvent* siliconEvent=fe->silevent;
 
-            if (good_flow)
+        //Update variables of the MVA class. This will check whether the eventnumbers match.
+        //If they match this function will return true, if not: false. This allows us to know
+        //whether to fill the tree and increment the EventIndex and EventNumber.
+        int good_flow = 0;
+        while (true)
+        {
+            if (fEventIDs[fCurrentEventIndex].first == runInfo->fRunNo)
+                break;
+            else
+                fCurrentEventIndex++;
+            if ( fCurrentEventIndex >= fEventIDs.size() )
+                return flow;
+        }
+        for ( TA2MVADumper* d: fMVADumpers)
+        {
+            if(d->UpdateVariables(siliconEvent, alphaEvent, fCurrentEventNumber))
             {
-               assert (good_flow == fMVADumpers.size());
-               //Update current event number to be checked against (remember everything here is in order).
-               fCurrentEventIndex++;
-               fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;            
-               fTree->Fill();
+                good_flow++;
+                //Fill tree.
+                
             }
+        }
+        if (good_flow)
+        {
+           assert (good_flow == fMVADumpers.size());
+           //Update current event number to be checked against (remember everything here is in order).
+           fCurrentEventIndex++;
+           fCurrentEventNumber = fEventIDs[fCurrentEventIndex].second;            
+           fTree->Fill();
         }
         return flow;
     }
