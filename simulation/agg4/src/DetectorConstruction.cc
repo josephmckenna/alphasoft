@@ -131,6 +131,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double AnodeWiresDiam   = TPCBase::TPCBaseInstance()->GetDiameterAnodeWires()*cm;
   G4double NanodeWires      = TPCBase::TPCBaseInstance()->GetNumberOfAnodeWires();
 
+  G4int    Nbars = 64;
   G4double barLength = gBarLength;
   G4double barThick = 20.0*mm;
   G4double barRadPos1 = 223.0*mm;
@@ -525,18 +526,38 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------------
 
-  // Scintillating Bars
-  G4Tubs* solidScintBars = new G4Tubs("bars_sol", barRadPos1,barRadPos2,
-				      0.5*barLength,0.,360.*deg);
-      
-  G4LogicalVolume* logicScintBars = new G4LogicalVolume(solidScintBars, 
+//  Scintillating Bars
+  G4Trd* solidScintBar = new G4Trd("bar_sol",	barRadPos2*sin(pi/Nbars), barRadPos1*sin(pi/Nbars),
+                                    0.5*barLength,  0.5*barLength, 
+                                    0.5*barThick*cos(pi/Nbars));
+
+
+  // G4Tubs* solidScintBars = new G4Tubs("bars_sol", barRadPos1,barRadPos2,
+	// 			      0.5*barLength,0.,360.*deg);
+
+
+  G4LogicalVolume* logicScintBar = new G4LogicalVolume(solidScintBar, 
 							Scint_mat,
-							"ScintBars_log");
+							"ScintBar_log");
+      
+  // G4LogicalVolume* logicScintBars = new G4LogicalVolume(solidScintBars, 
+	// 						Scint_mat,
+	// 						"ScintBars_log");
                
   if( !kProto )
-    new G4PVPlacement(0, G4ThreeVector(), logicScintBars, "ScintBars", logicAG,
-		      false, 0, checkOverlaps);
-  
+  {
+        // new G4PVPlacement(0, G4ThreeVector(), logicScintBars, "ScintBars", logicAG,
+		    //   false, 0, checkOverlaps);
+    G4double Radius = barRadPos1+0.5*barThick*cos(pi/Nbars);
+    for(int kk=0; kk<Nbars; kk++)
+    {
+      G4RotationMatrix* rotationMatrix = new G4RotationMatrix();
+      rotationMatrix->rotateX(-pi/2*rad); 
+      rotationMatrix->rotateY(kk*2*pi/Nbars*rad); 
+      new G4PVPlacement(rotationMatrix, G4ThreeVector(Radius*sin(kk*2*pi/Nbars), Radius*cos(kk*2*pi/Nbars) ,0.0), logicScintBar, "ScintBar", logicAG,
+		      true, kk, checkOverlaps);
+    }
+  }
   // outer TPC
   G4Tubs* solidTPCout = new G4Tubs("TPCout_sol", TPCout_radius, 
 				   TPCout_radius+TPCout_thick,
@@ -686,7 +707,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // define Scintillators as DETECTOR
   //--------------------------------------------------------------------
   ScintBarSD* theScintBarSD = new ScintBarSD("ScintSense");
-  logicScintBars->SetSensitiveDetector(theScintBarSD);
+ // logicScintBars->SetSensitiveDetector(theScintBarSD);
+  logicScintBar->SetSensitiveDetector(theScintBarSD);
   //  theScintBarSD->SetFilter(gammaFilter);
   if(SDman)
     {
@@ -747,10 +769,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   logicanodew->SetVisAttributes(AwVisAtt);
 
 //  G4VisAttributes* ScintVisAtt= new G4VisAttributes(G4Colour::Green());
-  G4VisAttributes* ScintVisAtt= new G4VisAttributes(G4Colour::Blue());
+  G4VisAttributes* ScintVisAtt= new G4VisAttributes(G4Colour::Red()); //Blue());
   ScintVisAtt->SetVisibility(true);
   //  ScintVisAtt->SetVisibility(false);
-  logicScintBars->SetVisAttributes(ScintVisAtt);
+    //logicScintBars->SetVisAttributes(ScintVisAtt);
+  logicScintBar->SetVisAttributes(ScintVisAtt);
 
   // logicChamber->SetVisAttributes(G4VisAttributes::Invisible);
   // logicTrap->SetVisAttributes(G4VisAttributes::Invisible);
