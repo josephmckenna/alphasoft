@@ -120,13 +120,13 @@ class VectorRecycler
          }
          else
          {
-            std::cout << "VECTOR BUFFER FULL!" <<std::endl;
-data.clear();
+            //std::cout << "VECTOR BUFFER FULL!" << typeid(T).name()<<std::endl;
+            data.clear();
          }
       }
 };
 
-static VectorRecycler<uint32_t> gVF48dataRecycler(1000);
+static VectorRecycler<uint32_t> gVF48dataRecycler(5000);
 
 class VF48data
 {
