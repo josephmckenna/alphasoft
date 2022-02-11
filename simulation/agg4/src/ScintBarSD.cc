@@ -53,6 +53,8 @@ void ScintBarSD::Initialize(G4HCofThisEvent* HCE)
 
 G4bool ScintBarSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
 {
+  G4TouchableHandle touchable = aStep->GetPreStepPoint()->GetTouchableHandle();
+  G4int BarNumber = touchable->GetVolume(0)->GetCopyNo();
   G4double edep = aStep->GetTotalEnergyDeposit();  
   if( edep == 0.) return false;
   //  if( edep < 0.3*keV ) return false;
@@ -67,6 +69,7 @@ G4bool ScintBarSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
     }
  
   ScintBarHit* newHit = new ScintBarHit();
+  newHit->SetbarID   ( BarNumber );
   newHit->SetEdep    ( edep );
   newHit->SetParentID( aStep->GetTrack()->GetParentID() );
   newHit->SetTrackID ( aStep->GetTrack()->GetTrackID() );

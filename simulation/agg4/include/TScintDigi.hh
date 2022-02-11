@@ -66,6 +66,7 @@ public:
   bool IsSameDigi(TScintDigi*);
   void PrintChannel();
 
+  void SetBarID(int barid) {fBar = barid;}
   ClassDef(TScintDigi,1)
 };
 

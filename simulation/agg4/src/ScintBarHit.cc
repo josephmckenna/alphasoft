@@ -44,6 +44,7 @@ ScintBarHit::~ScintBarHit()
 
 ScintBarHit::ScintBarHit(const ScintBarHit &right) : G4VHit()
 {
+  barID    = right.barID;
   edep     = right.edep;
   parentID = right.parentID;
   trackID  = right.trackID;
@@ -54,6 +55,7 @@ ScintBarHit::ScintBarHit(const ScintBarHit &right) : G4VHit()
 
 const ScintBarHit& ScintBarHit::operator=(const ScintBarHit &right)
 {
+  barID    = right.barID;
   edep     = right.edep;
   parentID = right.parentID;
   trackID  = right.trackID;
@@ -113,7 +115,8 @@ void ScintBarHit::PrintPolar()
 	<<G4BestUnit(position.phi(),"Angle")<<"\t"
 	<<G4BestUnit(position.z(),"Length")<<"\t"
 	<<G4BestUnit(time,"Time")<<"\t\t"
-	<<G4BestUnit(edep,"Energy")<<G4endl;
+	<<G4BestUnit(edep,"Energy")<<"\t\t"
+  <<G4BestUnit(barID,"Bar number")<<G4endl;
 }
 
 void ScintBarHit::Print()
@@ -123,5 +126,5 @@ void ScintBarHit::Print()
 	<<G4BestUnit(position.y(),"Length")<<"\t"
 	<<G4BestUnit(position.z(),"Length")<<"\t"
 	<<G4BestUnit(time,"Time")<<"\t\t"
-	<<G4BestUnit(edep,"Energy")<<G4endl;
+  <<G4BestUnit(barID,"Bar number")<<G4endl;
 }

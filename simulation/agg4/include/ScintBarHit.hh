@@ -53,6 +53,8 @@ public:
   void Print();
   void PrintPolar();
   
+  inline void          SetbarID(G4int bID)            { barID = bID; }
+  inline G4int         GetbarID()                     { return barID; }
   inline void          SetEdep(G4double de)           { edep = de; }
   inline G4double      GetEdep()                      { return edep; }
   inline void          SetParentID(G4int pID)         { parentID = pID; }
@@ -67,6 +69,7 @@ public:
   inline G4double      GetTime()                      { return time; }
 
 private:
+  G4int         barID; 
   G4double      edep;
   G4int         parentID;
   G4int         trackID;
