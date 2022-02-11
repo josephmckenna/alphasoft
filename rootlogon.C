@@ -47,7 +47,6 @@
          std::cout<<"...ERROR!"<<std::endl;
    }
 
-  gInterpreter->ProcessLine("#include \"RootUtils.h\"");
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
   //gStyle->SetPalette(kAurora);

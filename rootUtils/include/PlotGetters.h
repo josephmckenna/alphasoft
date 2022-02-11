@@ -1,7 +1,6 @@
 
 #ifndef _PlotGetters_
 #define _PlotGetters_
-#include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
 #include "THStack.h"
@@ -12,8 +11,19 @@
 #include "TAGPlot.h"
 
 #include "TChronoChannel.h"
+#include "TH1DGetters.h"
+#include "TStringGetters.h"
 
+#include "TSplineGetters.h"
+#include "RootUtilGlobals.h"
 #include <sstream>
+#if BUILD_A2
+#include "TSISChannelGetters.h"
+#include "TA2SpillGetters.h"
+#endif
+#if BUILD_AG
+#include "TAGSpillGetters.h"
+#endif
 
 #if BUILD_AG
 TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax);

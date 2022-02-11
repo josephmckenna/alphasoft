@@ -11,6 +11,8 @@
 #include "TA2Spill.h"
 #include "TA2SpillGetters.h"
 
+#include "TPaveText.h"
+
 #include "TA2PlotSISPlotEvents.h"
 
 class TA2Plot: public TAPlot

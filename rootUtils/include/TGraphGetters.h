@@ -1,9 +1,11 @@
-#include "RootUtils.h"
-#include "TGraph.h"
-#include "TTree.h"
 
 #ifndef _TGraphGetters_
 #define _TGraphGetters_
+
+#include "TGraph.h"
+#include "TTree.h"
+
+
 #ifdef BUILD_AG
 
 #endif

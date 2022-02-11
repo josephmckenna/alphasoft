@@ -1,8 +1,9 @@
-
-#ifdef BUILD_A2
-#include "RootUtils.h"
 #ifndef _TA2SpillGetters_
 #define _TA2SpillGetters_
+
+
+#ifdef BUILD_A2
+
 #include <vector>
 #include "TA2Spill.h"
 #include "TreeGetters.h"

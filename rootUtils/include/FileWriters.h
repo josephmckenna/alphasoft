@@ -10,6 +10,7 @@ std::vector<std::string> DumpFilesSavedInMIDAS(Int_t runNumber, const char* cate
 #ifdef BUILD_A2
 #include "TA2Spill.h"
 #include "TA2SpillGetters.h"
+#include "TSISChannels.h"
 void DumpSpillLogsToCSV(std::vector<TA2Spill> dumps, std::string filename);
 void DumpA2SpillLogToCSV(int runNumber);
 #endif 

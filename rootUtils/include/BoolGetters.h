@@ -1,9 +1,8 @@
-#include "RootUtils.h"
-//#include "Rtypes.h"
-#include <sys/stat.h>
-
 #ifndef _BoolGetters_
 #define _BoolGetters_
+
+#include <sys/stat.h>
+
 #include "TChronoChannelGetters.h"
 #ifdef BUILD_AG
 Bool_t ChronoboxesHaveChannel(Int_t runNumber, const char* Name);

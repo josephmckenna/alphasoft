@@ -7,8 +7,11 @@
 #endif
 #include "TreeGetters.h"
 #include "DoubleGetters.h"
+#include "PairGetters.h"
 
 #if BUILD_AG
+#include "TAGSpill.h"
+#include "TAGSpillGetters.h"
 Int_t Get_Chrono_Channel_In_Board(Int_t runNumber, const std::string& ChronoBoard, const char* ChannelName, Bool_t ExactMatch=kFALSE);
 Int_t GetCountsInChannel(Int_t runNumber,  TChronoChannel channel, Double_t tmin=0., Double_t tmax=-1.);
 Int_t GetCountsInChannel(Int_t runNumber,  const char* ChannelName, Double_t tmin=0., Double_t tmax=-1.);
@@ -20,6 +23,7 @@ Int_t GetTPCEventNoAfterDump(Double_t runNumber, const char* description, Int_t 
 #endif
 
 #if BUILD_A2
+#include "TSISChannel.h"
 
 int Count_SIS_Triggers(int runNumber, TSISChannel ch, std::vector<double> tmin, std::vector<double> tmax);
 

@@ -3,7 +3,6 @@
 
 #include "TStyle.h"
 
-extern Int_t gNbin;
 //Plots
 
 #ifdef BUILD_AG
@@ -325,10 +324,10 @@ TCanvas* Plot_AG_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, cons
    std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
    std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-   Int_t oldBinNumber = gNbin;
-   gNbin=1.e4;
+   Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+   rootUtils::SetDefaultBinNumber(1.e4);
    TH1D* dumpHisto = Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,Chrono_Channel_Name)}, {start_time}, {stop_time} ).front().front();
-  gNbin=oldBinNumber;
+   rootUtils::SetDefaultBinNumber(oldBinNumber);
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
@@ -351,7 +350,7 @@ TCanvas* Plot_AG_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, cons
   hEnergy->SetLineColor(kBlack);
 
   // calculate the energy resolution
-  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+  Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
   char resolution[80];
   sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
   printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
@@ -464,15 +463,15 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
   std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-  Int_t oldBinNumber = gNbin;
-  gNbin=1.e4;
+  Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+  rootUtils::SetDefaultBinNumber(1.e4);
 
   TSISChannels chans(runNumber);
   TSISChannel channel = chans.GetChannel("SIS_PMT_CATCH_OR");
   std::vector<TSISChannel> SISChannels = {channel};
   
   std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time}).front();
-  gNbin=oldBinNumber;
+  rootUtils::SetDefaultBinNumber(oldBinNumber);
  
   if(!dumpHisto.at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
@@ -495,7 +494,7 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   hEnergy->SetLineColor(kBlack);
 
   // calculate the energy resolution
-  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+  Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
   char resolution[80];
   sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
   printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
@@ -789,8 +788,8 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
    std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
    std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-   Int_t oldBinNumber = gNbin;
-   gNbin=1.e4;
+   Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+   rootUtils::SetDefaultBinNumber(1.e4);
 
    TSISChannels chans(runNumber);
 
@@ -800,7 +799,7 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
  
    std::vector<std::vector<TH1D*>> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
 
-   gNbin=oldBinNumber;
+   rootUtils::SetDefaultBinNumber(oldBinNumber);
 
    if(!dumpHisto.at(0).at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
     // and the voltage ramp function of time
@@ -824,7 +823,7 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
    hEnergy->SetMarkerStyle(7);
    hEnergy->SetLineColor(kBlack);
    // calculate the energy resolution
-   Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+   Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
    char resolution[80];
    sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
    printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);

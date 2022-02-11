@@ -24,17 +24,7 @@
 #include <fstream>
 
 #include "TStyle.h"
-
-#include "RootUtils.h"
-
-
-//using namespace TRootUtils;
-//extern Bool_t TRootUtils::gApplyCuts;
-
-
-//extern Bool_t gApplyCuts;
-//extern Double_t grfcut;
-
+#include "IntGetters.h" // ApplyCuts
 struct AGVertexEvent {
         Int_t runNumber; // I don't get set yet...
         Int_t EventNo;

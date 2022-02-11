@@ -1,8 +1,10 @@
-#include "RootUtils.h"
-#include "PairGetters.h"
-
 #ifndef _PrintTools_
 #define _PrintTools_
+#include "PairGetters.h"
+#include "TStringGetters.h"
+#include "BoolGetters.h"
+#include "TSeq_Event.h"
+#include "TreeGetters.h"
 
 #ifdef BUILD_AG
 void PrintSequences(int runNumber, int SeqNum=-1);

@@ -1,6 +1,5 @@
 
 #ifdef BUILD_AG
-#include "RootUtils.h"
 #ifndef _TAGSpillGetters_
 #define _TAGSpillGetters_
 #include <vector>
