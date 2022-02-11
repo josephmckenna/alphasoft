@@ -418,7 +418,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
 
    //Fill Vertex Histograms
    TVector3 vertex;
-   const TVertexEvents* kVertexEvents = GetVertexEvents();
+   const TAPlotVertexEvents* kVertexEvents = GetVertexEvents();
    //for (auto& vtxevent: GetVertexEvents())   
    for (size_t i=0; i<kVertexEvents->fXVertex.size(); i++)
    {

@@ -279,7 +279,7 @@ void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string 
          continue;
       std::cout<<"GEM Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
-   TFEGEMData newEntry;
+   TAPlotFEGEMData newEntry;
    newEntry.fVariableName = name;
    if (label.size() == 0)
       newEntry.fLabel = name;
@@ -293,7 +293,7 @@ void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string 
 void TAPlot::SetGEMChannel(const std::string& category, const std::string& varName, int arrayEntry, std::string title)
 {
    //Perhaps this line should be a function used everywhere
-   std::string name = TFEGEMData::CombinedName(category, varName);
+   std::string name = TAPlotFEGEMData::CombinedName(category, varName);
    return SetGEMChannel(name,arrayEntry,title);
 }
 
@@ -307,7 +307,7 @@ void TAPlot::SetLVChannel(const std::string& name, int arrayEntry, std::string t
          continue;
       std::cout<<"LV Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
-   TFELabVIEWData newEntry;
+   TAPlotFELabVIEWData newEntry;
    newEntry.fVariableName = name;
    if (title.size() == 0)
       newEntry.fLabel = name;
@@ -429,7 +429,7 @@ int TAPlot::GetNPassedType(const int kType)
 {
    int n = 0;
    //for (auto& event: VertexEvents)
-   //const TVertexEvents* event = GetVertexEvents();
+   //const TAPlotVertexEvents* event = GetVertexEvents();
    for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fCutsResults[i]&kType)
@@ -442,7 +442,7 @@ int TAPlot::GetNVertexType(const int kType)
 {
    int n = 0;
    //for (auto& event: VertexEvents)
-   //const TVertexEvents* event = GetVertexEvents();
+   //const TAPlotVertexEvents* event = GetVertexEvents();
    for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fVertexStatuses[i]&kType)
@@ -575,7 +575,7 @@ void TAPlot::AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vert
 
 //Load data functions
 template <typename T>
-void TAPlot::LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFEGEMData(TAPlotFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreGEMData<T>> gemEvent(*gemReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -623,7 +623,7 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFELVData(int runNumber, TAPlotFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreLabVIEWEvent> labviewEvent(*labviewReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -669,7 +669,7 @@ void TAPlot::LoadData(bool verbose)
       int runNumber = fRuns[i];
       //Calculate our list time... so we can stop early
       //for (auto& t: GetTimeWindows())
-      //TTimeWindows t = GetTimeWindows();
+      //TAPlotTimeWindows t = GetTimeWindows();
       for (size_t i=0; i<GetTimeWindows()->fMaxTime.size(); i++)
       {
          if (GetTimeWindows()->fRunNumber[i]==runNumber)

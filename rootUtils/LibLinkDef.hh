@@ -6,13 +6,13 @@
 
 #pragma link C++ class TAPlot+;
 
-#pragma link C++ class TTimeWindows;
-#pragma link C++ class TVertexEvents;
+#pragma link C++ class TAPlotTimeWindows;
+#pragma link C++ class TAPlotVertexEvents;
 
-#pragma link C++ class TEnvDataPlot;
-#pragma link C++ class TEnvData;
-#pragma link C++ class TFELabVIEWData;
-#pragma link C++ class TFEGEMData;
+#pragma link C++ class TAPlotEnvDataPlot;
+#pragma link C++ class TAPlotEnvData;
+#pragma link C++ class TAPlotFELabVIEWData;
+#pragma link C++ class TAPlotFEGEMData;
 
 
 
@@ -23,9 +23,7 @@
 #ifdef BUILD_A2
 #pragma link C++ class TA2Plot+;
 #pragma link C++ class TA2Plot_Filler;
-#pragma link C++ class TSISPlotEvents;
-#pragma link C++ class TFEGEMData;
-#pragma link C++ class TFELabVIEWData;
+#pragma link C++ class TA2PlotSISPlotEvents;
 #endif
 
 #ifdef BUILD_AG
