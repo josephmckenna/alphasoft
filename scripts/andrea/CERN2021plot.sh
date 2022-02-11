@@ -49,6 +49,8 @@ fi
 
 #MainEventTree.exe --rootfile $DATADIR/CERN2021/cosmics5151.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/reco5151.log
 #MainEventTree.exe --rootfile $DATADIR/CERN2021/cosmics5157.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/reco5157.log
+#MainEventTree.exe --rootfile $DATADIR/output/cosmics5131.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/reco5131.log
+MainEventTree.exe --rootfile $DATADIR/data/cosmics5131.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/reco5131M2.log
 
 #MainEventTree.exe --rootfile /z18Tb/andrea/output05692.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/tree5692.log
 MainEventTree.exe --rootfile /z18Tb/andrea/output05689.root --plot 1 --save 1 |& tee $AGRELEASE/RunLogs/tree5689.log
