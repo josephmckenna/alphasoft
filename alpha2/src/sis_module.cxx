@@ -190,11 +190,10 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
          printf("ResumeModule, run %d\n", runinfo->fRunNo);
    }
    
-   void SaveToTree(TARunInfo* runinfo, TSISEvent& s)
+   void SaveToTree(TARunInfo* runinfo, TSISEvent* s)
    {
-         /*if (!fFlags->fSaveSIS) return;
-         s.Print();
-         int i = s.GetSISModule();
+         if (!fFlags->fSaveSIS) return;
+         int i = s->GetSISModule();
          assert(i >= 0 && i < NUM_SIS_MODULES);
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          runinfo->fRoot->fOutputFile->cd();
@@ -208,7 +207,7 @@ double clock2time(unsigned long int clock, unsigned long int offset ){
             SISEventTree[i]->Branch("TSISEvent",&s);
          else
             b_variable->SetAddress(&s);
-         SISEventTree[i]->Fill();*/
+         SISEventTree[i]->Fill();
    }
    TAFlowEvent* Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* flags, TAFlowEvent* flow)
    {
@@ -346,7 +345,7 @@ TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* f
       {
          for (size_t i=0; i<sf->sis_events[j].size(); i++)
          {
-            SaveToTree(runinfo,sf->sis_events[j].at(i));
+            SaveToTree(runinfo,&sf->sis_events[j].at(i));
          }
       }
       return flow;
