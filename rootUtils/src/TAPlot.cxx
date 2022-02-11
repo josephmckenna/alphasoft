@@ -243,7 +243,7 @@ void TAPlot::PrintFull()
    std::cout << std::endl << std::endl << std::endl;
 }
 
-void TAPlot::Print() const
+void TAPlot::Print(Option_t *option) const
 {
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();
@@ -398,7 +398,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
             if (fTimeWindows.fRunNumber[i] == uniqueRuns.at(colourID))
                break;
          }
-         TGraph* graph = obj.BuildGraph(i,kZeroTimeAxis);
+         TGraph* graph = obj.BuildGraph(i, kZeroTimeAxis);
          graph->SetLineColor(GetColour(colourID + colourOffset));
          graph->SetMarkerColor(GetColour(colourID + colourOffset));
          uniqueLabels[obj.GetVariable()] = graph;
@@ -623,7 +623,7 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreLabVIEWEvent> labviewEvent(*labviewReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -636,7 +636,7 @@ void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReade
          continue;
       if (runTime > lastTime)
          break;
-      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows());
+      labviewData.AddLVEvent(runNumber, &(*labviewEvent), *GetTimeWindows());
    }
    return;
 }
@@ -654,13 +654,13 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
          continue;
       }
       if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
-         LoadFELVData(obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
+         LoadFELVData(runNumber, obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
       else
          std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
    }
 }
 
-void TAPlot::LoadData()
+void TAPlot::LoadData(bool verbose)
 {
    for (size_t i=0; i<fRuns.size(); i++)
    {
@@ -681,6 +681,10 @@ void TAPlot::LoadData()
             if (firstTime > GetTimeWindows()->fMinTime[i] )
                firstTime = GetTimeWindows()->fMinTime[i];
          }
+      }
+      if (verbose)
+      {
+         std::cout<<"Loading data from run " << runNumber << " from t="<< firstTime <<" to t="<<lastTime<<"\n";
       }
       LoadFEGEMData(runNumber, firstTime, lastTime);
       LoadFELVData(runNumber, firstTime, lastTime);

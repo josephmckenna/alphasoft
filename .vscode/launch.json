@@ -1,3 +1,5 @@
+
+//Standard launch for debuging our made exes
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -6,53 +8,35 @@
     "configurations": [
 
         {
-            "name": "alphaAnalysis",
+            "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
+
             "program": "${workspaceFolder}/build/alpha2/alphaAnalysis.exe",
-            "args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--mt", "--", "--summarize", "Mixing"],
-            //"args": ["${workspaceFolder}/runs/run58453sub00000.mid.gz"],
-            "stopAtEntry": true,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "logging": { "trace": true, "traceResponse": true },
-        },
+            "args": ["run53348sub0000*"],
+            //"args": ["run39993sub0000*"],
 
-        {
-            "name": "alphagonline - remote",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/alphagonline.exe",
-            "args": ["-Eagdaq", "-Halphagdaq.cern.ch"],
-            "stopAtEntry": true,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "logging": { "trace": true, "traceResponse": true },
-        },
+            //"program": "${workspaceFolder}/bin/macro_main_adiabatic_heating.exe",
+            //"args": ["--", "--listfile", "mixingList.list", "--mixing"],
 
-        {
-            "name": "macro_main_LyAlpha_demo",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
+            //"program": "${workspaceFolder}/build/alpha2/a2dumper.exe",
+            //"args": ["${workspaceFolder}/run39993sub00000.mid.gz", "--", "--eventlist", "eventlist39993.list", "--datalabel", "mixing"],
+            //"args": ["--", "--eventlist", "eventlist45000.list", "--datalabel", "mixing"],
+            
+            //"program": "${workspaceFolder}/bin/macro_main_merger.exe",
+            //"args": ["--", "--listfile", "mixingList.list", "--mixing"],
+            
+            //"program": "${workspaceFolder}/bin/macro_main_mva_classification.exe",
+
+            //"program": "${workspaceFolder}/bin/macro_main_eventlist_generator.exe",
+            //"args": ["--", "--runnumber", "37495"],
+
+            //"program": "${workspaceFolder}/bin/macro_main_adiabatic_heating.exe",
+
+
+            //"program": "${workspaceFolder}/bin/macro_main_LyAlpha_demo.exe",
+            //"args": ["${workspaceFolder}/runs/run39993sub00000.mid.gz", "--", "--datalabel", "mixing", "--eventlist", "testWithOutOfOrder.list"],
+            
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -66,6 +50,12 @@
                 }
             ],
             "logging": { "trace": true, "traceResponse": true },
+
+            /*"sourceFileMap": {
+                "${workspaceFolder}/build/alpha2/": "${workspaceFolder}/alpha2/",
+                "${workspaceFolder}/build/analib/": "${workspaceFolder}/analib/"
+            }*/   
+            
         }
     ]
 }

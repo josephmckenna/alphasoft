@@ -24,7 +24,7 @@ file(GLOB BINS *.modules)
 
 # ALPHA 2 libraries
 if(BUILD_A2)
-  set(A2_LINK_LIBS alpha2 analib GEM)
+  set(A2_LINK_LIBS alpha2 analib GEM TMVA)
 endif()
 
 

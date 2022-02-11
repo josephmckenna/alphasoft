@@ -67,7 +67,8 @@ Match::Match(const AnaSettings* ana_set, bool mt):
 
   if( fMT )
     {
-      std::cout<<"Match::Match MT-mode: selecting thread-safe CentreOfGravity_blobs"<<std::endl;
+      if(fTrace)
+	std::cout<<"Match::Match MT-mode: selecting thread-safe CentreOfGravity_blobs"<<std::endl;
       CentreOfGravityFunction=2;
     }
 
@@ -76,7 +77,7 @@ Match::Match(const AnaSettings* ana_set, bool mt):
       std::cout<<"Match::Match(json) No valid CentreOfGravityMethod function in json"<<std::endl;
       exit(1);
     }
-  else
+  else if(fTrace)
     std::cout<<"Match::Match(json) Using CentreOfGravity case "<<CentreOfGravityFunction<<": "<<CentreOfGravity<<std::endl;
 }
 

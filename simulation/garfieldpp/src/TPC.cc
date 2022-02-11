@@ -7,11 +7,11 @@
 #include "ComponentBmap.hh"
 #include "TPC.hh"
 
-TPC::TPC(double V_c, double V_a, double V_f): Garfield::ComponentBmap(true), 
+TPC::TPC(double V_c, double V_a, double V_f): Garfield::ComponentBmap(true),
 					      TPCBase(false),
-					      CathodeVoltage(V_c), 
-					      AnodeVoltage(V_a), 
-					      FieldVoltage(V_f), 
+					      CathodeVoltage(V_c),
+					      AnodeVoltage(V_a),
+					      FieldVoltage(V_f),
 					      medium(0), chamber(0)
 {}
 
@@ -125,18 +125,21 @@ void TPC::SetGas(Garfield::Medium *m)
   std::cout<<"TPC::SetGas Temperature: "<<medium->GetTemperature()
 	   <<" K\tPressure: "<<medium->GetPressure()<<" torr"<<std::endl;
   geo.Clear();
+  // chamber = new Garfield::SolidTube(0., 0., 0.,
+  //       		  CathodeRadius, ROradius,
+  //       		  FullLengthZ);
   chamber = new Garfield::SolidTube(0., 0., 0.,
-			  CathodeRadius, ROradius,
+			  ROradius,
 			  FullLengthZ);
   geo.AddSolid(chamber,medium);
- 
+
   std::vector<double> ef, bf, ang;
   double bmin, bmax;
   GetBRange(bmin, bmax);
   medium->GetFieldGrid(ef, bf, ang);
-  if(!( bmin >= bf.front() && bmax <= bf.back())) 
-    std::cerr << "TPC::init() B-Field " << bmin << ":" << bmax 
-	      << " outside of Magboltz file scope: " << bf.front() 
+  if(!( bmin >= bf.front() && bmax <= bf.back()))
+    std::cerr << "TPC::init() B-Field " << bmin << ":" << bmax
+	      << " outside of Magboltz file scope: " << bf.front()
 	      << " to " << bf.back() << std::endl;
   //    assert( bmin >= bf.front() && bmax <= bf.back());
 

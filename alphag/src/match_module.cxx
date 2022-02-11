@@ -343,7 +343,7 @@ public:
                }
          }
             fFlags.ana_settings=new AnaSettings(json);
-            fFlags.ana_settings->Print();
+            if(fFlags.fTrace) fFlags.ana_settings->Print();
    }
    
    MatchModuleFactory() {}
@@ -375,7 +375,8 @@ public:
 
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if(fFlags.fTrace)
+         printf("AlphaEventModuleFactory_cluster::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       return new MatchModule(runinfo, &fFlags);
    }
 };
