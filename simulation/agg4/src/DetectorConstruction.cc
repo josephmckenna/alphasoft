@@ -136,6 +136,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double barThick = 20.0*mm;
   G4double barRadPos1 = 223.0*mm;
   G4double barRadPos2 = barRadPos1 + barThick;
+  G4double baseTop = 23.9*mm;
+  G4double baseBot = 21.9*mm;
+
   gBarRadius = 0.5*(barRadPos1+barRadPos2)/mm;
 
   G4double MagnetOutID=124.*cm; 
@@ -158,7 +161,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double MagnetInOD=109.*cm;
   G4double MagnetInL=290.*cm;
 
-  G4double MagOffset=-12.*cm;
+  G4double MagOffset=0.0*cm;//-12.*cm;
 
   G4double world_X = 10.1*m;
   G4double world_Y = world_X;
@@ -527,9 +530,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //------------------------------------------------------------------------------------------
 
 //  Scintillating Bars
-  G4Trd* solidScintBar = new G4Trd("bar_sol",	barRadPos2*sin(pi/Nbars), barRadPos1*sin(pi/Nbars),
+  G4Trd* solidScintBar = new G4Trd("bar_sol",	0.5*baseTop, 0.5*baseBot,
                                     0.5*barLength,  0.5*barLength, 
-                                    0.5*barThick*cos(pi/Nbars));
+                                    0.5*barThick);
 
 
   // G4Tubs* solidScintBars = new G4Tubs("bars_sol", barRadPos1,barRadPos2,
@@ -548,14 +551,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   {
         // new G4PVPlacement(0, G4ThreeVector(), logicScintBars, "ScintBars", logicAG,
 		    //   false, 0, checkOverlaps);
-    G4double Radius = barRadPos1+0.5*barThick*cos(pi/Nbars);
+    G4double Radius = barRadPos1+0.5*barThick;
     for(int kk=0; kk<Nbars; kk++)
     {
       G4RotationMatrix* rotationMatrix = new G4RotationMatrix();
       rotationMatrix->rotateX(-pi/2*rad); 
       rotationMatrix->rotateY(kk*2*pi/Nbars*rad); 
-      new G4PVPlacement(rotationMatrix, G4ThreeVector(Radius*sin(kk*2*pi/Nbars), Radius*cos(kk*2*pi/Nbars) ,0.0), logicScintBar, "ScintBar", logicAG,
-		      true, kk, checkOverlaps);
+      new G4PVPlacement(rotationMatrix, G4ThreeVector(Radius*sin(kk*2*pi/Nbars), Radius*cos(kk*2*pi/Nbars) ,0.0), 
+                        logicScintBar, "ScintBar", logicAG, true, kk, checkOverlaps);
     }
   }
   // outer TPC

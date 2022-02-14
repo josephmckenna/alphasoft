@@ -67,6 +67,7 @@ public:
   void PrintChannel();
 
   void SetBarID(int barid) {fBar = barid;}
+  void SetEnergy(double energy) { fEnergy=energy; };
   ClassDef(TScintDigi,1)
 };
 
