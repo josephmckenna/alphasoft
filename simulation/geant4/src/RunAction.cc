@@ -93,7 +93,7 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
   G4cout << "### Run " << RunNumber << " start." << G4endl;
 
   TString fileName;
-  if(fTag.isNull())
+  if(fTag.empty())
     {
       fileName = TString::Format("%s/outAgTPC_%s_B%1.2fT_Q%1.0f.root",
 				 getenv("MCDATA"),
