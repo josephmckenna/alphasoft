@@ -19,6 +19,8 @@ private:
 
   double fPos; // digitized hit position = phi [rad]
   int fBar;    // bar hit
+  int fNhits; // number of hits in the bar
+  bool fMultiTrack; // number of tracks in the bar
   double fSigmaPhi; // [rad]
 
   double fz; // [mm]
@@ -67,6 +69,8 @@ public:
   void PrintChannel();
 
   void SetBarID(int barid) {fBar = barid;}
+  void SetNhits(int nhits) {fNhits = nhits;}
+  void SetMultitracks(bool bmultitrack) {fMultiTrack = bmultitrack;}
   void SetEnergy(double energy) { fEnergy=energy; };
   ClassDef(TScintDigi,1)
 };

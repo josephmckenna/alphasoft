@@ -131,13 +131,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4double AnodeWiresDiam   = TPCBase::TPCBaseInstance()->GetDiameterAnodeWires()*cm;
   G4double NanodeWires      = TPCBase::TPCBaseInstance()->GetNumberOfAnodeWires();
 
-  G4int    Nbars = 64;
+  const G4int    Nbars = 64;
   G4double barLength = gBarLength;
   G4double barThick = 20.0*mm;
   G4double barRadPos1 = 223.0*mm;
   G4double barRadPos2 = barRadPos1 + barThick;
-  G4double baseTop = 23.9*mm;
-  G4double baseBot = 21.9*mm;
+  G4double baseTop = 2*barRadPos2*tan(pi/Nbars)*mm;
+  G4double baseBot = 2*barRadPos1*tan(pi/Nbars)*mm;
 
   gBarRadius = 0.5*(barRadPos1+barRadPos2)/mm;
 

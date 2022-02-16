@@ -536,24 +536,25 @@ void EventAction::FillHisto(TPCHitsCollection* THC)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
 {
-  TClonesArray& digiarray   = *(fRunAction->GetScintBarsHitsArray());
+  TClonesArray& digiarray  = *(fRunAction->GetScintBarsHitsArray());
   TClonesArray& mchitarray = *(fRunAction->GetScintBarsMCHitsArray());
 
   // Add Scintillators Hits -- Digitization
-  bool barHitted[64]; 
-  // Inizializzare tutto a FALSE
+  int barHitted[64] = {0}; 
+  int barTrkID[64];
+  for (int i = 0; i < 64; i++)
+    barTrkID[i] = -1;
+  
+
   G4int kk = 0;
   for(G4int i=0;i<BHC->entries();++i)
     {
       ScintBarHit* aHit = (*BHC)[i];
       //      aHit->PrintPolar();
-      bool createNewDigi = true;
-
-      if(barHitted[aHit->GetbarID()]) {
-          createNewDigi = false;
-      } 
-
-      if(createNewDigi) {
+       
+      if(!barHitted[aHit->GetbarID()]) {
+        barHitted[aHit->GetbarID()] +=1;
+        barTrkID[aHit->GetbarID()] = aHit->GetTrackID();
       new(digiarray[kk]) TScintDigi(aHit->GetTrackID(),
                 aHit->GetPDGcode(),
                 aHit->GetPosition().phi(),
@@ -567,19 +568,25 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
             // 	    <<((TScintDigi*) digiarray.Last())->GetPhi()<<"\t";
             ((TScintDigi*) digiarray.Last())->Digi();
             ((TScintDigi*) digiarray.Last())->SetBarID((int)aHit->GetbarID());
+            ((TScintDigi*) digiarray.Last())->SetNhits(barHitted[aHit->GetbarID()]);
+            //((TScintDigi*) digiarray.Last())->Set
             // G4cout<<((TScintDigi*) digiarray.Last())->GetBar()<<"\t"
             // 	    <<((TScintDigi*) digiarray.Last())->GetPos()<<"\t"
             // 	    <<((TScintDigi*) digiarray.Last())->GetTime()<<"\t"
             // 	    <<((TScintDigi*) digiarray.Last())->GetZ()
             // 	    <<G4endl;
             kk++; 
-            barHitted[aHit->GetbarID()] = true;
+            
       } else {
         for(G4int j=0; j<kk; j++)
         {
           if(((TScintDigi*) digiarray[j])->GetBar()==(int)aHit->GetbarID())
           {
+            barHitted[aHit->GetbarID()] +=1;
+            if(barTrkID[aHit->GetbarID()]!= aHit->GetTrackID()) 
+              ((TScintDigi*) digiarray[j])->SetMultitracks(1);
             ((TScintDigi*) digiarray[j])->SetEnergy(((TScintDigi*) digiarray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
+            ((TScintDigi*) digiarray[j])->SetNhits(barHitted[aHit->GetbarID()]);
             break;
           }
         }
