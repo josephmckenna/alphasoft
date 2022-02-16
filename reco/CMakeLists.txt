@@ -62,9 +62,18 @@ if (BUILD_AG_SIM)
   install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
   message(STATUS "Building (Geant4) BSC analyzer")
+<<<<<<< HEAD
   add_executable( baranalysis.exe baranalysis.cc )
-  add_dependencies(baranalysis.exe agtpc G4out)
+  add_dependencies(baranalysis.exe agtpc)
   target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include)
   target_link_libraries(baranalysis.exe ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS})
+=======
+  add_executable( baranalysis.exe baranalysis.cc 
+    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc
+    ${CMAKE_SOURCE_DIR}/simulation/agg4/src/ElectronDrift.cc )
+  add_dependencies(baranalysis.exe agtpc G4dict)
+  target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include)
+  target_link_libraries(baranalysis.exe ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS}  ${CMAKE_BINARY_DIR}/simulation/agg4/libG4dict.so)
+>>>>>>> recocmakelist_fix
   install(TARGETS baranalysis.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)
