@@ -543,7 +543,7 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
   int barHitted[64] = {0}; 
   int barTrkID[64];
   for (int i = 0; i < 64; i++)
-    barTrkID[i] = -1;
+    barTrkID[i] = -999;
   
 
   G4int kk = 0;
@@ -552,7 +552,7 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
       ScintBarHit* aHit = (*BHC)[i];
       //      aHit->PrintPolar();
        
-      if(!barHitted[aHit->GetbarID()]) {
+      if(barTrkID[aHit->GetbarID()]!= aHit->GetTrackID()) {
         barHitted[aHit->GetbarID()] +=1;
         barTrkID[aHit->GetbarID()] = aHit->GetTrackID();
       new(digiarray[kk]) TScintDigi(aHit->GetTrackID(),
@@ -569,6 +569,11 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
             ((TScintDigi*) digiarray.Last())->Digi();
             ((TScintDigi*) digiarray.Last())->SetBarID((int)aHit->GetbarID());
             ((TScintDigi*) digiarray.Last())->SetNhits(barHitted[aHit->GetbarID()]);
+            ((TScintDigi*) digiarray.Last())->SetMotherID(aHit->GetParentID());
+            double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
+            if(aHit->GetIsWhere()==-1) ((TScintDigi*) digiarray.Last())->SetPos_in(position);
+            else if(aHit->GetIsWhere()==1) ((TScintDigi*) digiarray.Last())->SetPos_out(position);
+
             //((TScintDigi*) digiarray.Last())->Set
             // G4cout<<((TScintDigi*) digiarray.Last())->GetBar()<<"\t"
             // 	    <<((TScintDigi*) digiarray.Last())->GetPos()<<"\t"
@@ -583,10 +588,11 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
           if(((TScintDigi*) digiarray[j])->GetBar()==(int)aHit->GetbarID())
           {
             barHitted[aHit->GetbarID()] +=1;
-            if(barTrkID[aHit->GetbarID()]!= aHit->GetTrackID()) 
-              ((TScintDigi*) digiarray[j])->SetMultitracks(1);
             ((TScintDigi*) digiarray[j])->SetEnergy(((TScintDigi*) digiarray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
             ((TScintDigi*) digiarray[j])->SetNhits(barHitted[aHit->GetbarID()]);
+            double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
+            if(aHit->GetIsWhere()==-1) ((TScintDigi*) digiarray.Last())->SetPos_in(position);
+            else if(aHit->GetIsWhere()==1) ((TScintDigi*) digiarray.Last())->SetPos_out(position);
             break;
           }
         }

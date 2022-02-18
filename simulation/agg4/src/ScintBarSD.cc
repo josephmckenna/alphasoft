@@ -67,7 +67,13 @@ G4bool ScintBarSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
       G4String proc = aStep->GetTrack()->GetCreatorProcess()->GetProcessName();
       if(proc=="hIoni" || proc=="eIoni" || proc=="muIoni") return false;
     }
+
+  G4bool IsEnter = aStep->GetPreStepPoint()->GetStepStatus() == fGeomBoundary;
+  G4bool IsExit  = aStep->GetPostStepPoint()->GetStepStatus() == fGeomBoundary;
  
+  G4int iswhere = 0;  
+  IsEnter? iswhere = -1 : (IsExit?  iswhere = 1 : iswhere = 0); 
+
   ScintBarHit* newHit = new ScintBarHit();
   newHit->SetbarID   ( BarNumber );
   newHit->SetEdep    ( edep );
@@ -76,6 +82,7 @@ G4bool ScintBarSD::ProcessHits(G4Step* aStep, G4TouchableHistory*)
   newHit->SetPDGcode ( pdg );
   newHit->SetPosition( aStep->GetTrack()->GetPosition() );
   newHit->SetTime    ( aStep->GetTrack()->GetGlobalTime() );
+  newHit->SetIsWhere ( iswhere );
   ScintBarCollection->insert( newHit );
 
   return true;

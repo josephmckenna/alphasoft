@@ -51,6 +51,7 @@ ScintBarHit::ScintBarHit(const ScintBarHit &right) : G4VHit()
   PDGcode  = right.PDGcode;
   position = right.position;
   time     = right.time;
+  IsWhere  = right.IsWhere;
 }
 
 const ScintBarHit& ScintBarHit::operator=(const ScintBarHit &right)
@@ -62,6 +63,7 @@ const ScintBarHit& ScintBarHit::operator=(const ScintBarHit &right)
   PDGcode  = right.PDGcode;
   position = right.position;
   time     = right.time;
+  IsWhere  = right.IsWhere;
   return *this;
 }
 

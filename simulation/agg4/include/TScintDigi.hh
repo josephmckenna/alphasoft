@@ -18,14 +18,22 @@ private:
   double ft; // MC time [ns]
 
   double fPos; // digitized hit position = phi [rad]
+  
   int fBar;    // bar hit
-  int fNhits; // number of hits in the bar
-  bool fMultiTrack; // number of tracks in the bar
+  int fNhits; // number of hits in the track
+  bool fMultiTrack; // not used
+  int fMotherID;
+  double fpx_in; // [mm]
+  double fpy_in; // [mm]
+  double fpz_in; // [mm]
+  double fpx_out; // [mm]
+  double fpy_out; // [mm]
+  double fpz_out; // [mm]
+
+
   double fSigmaPhi; // [rad]
-
   double fz; // [mm]
-  double fr;
-
+  double fr;  
   double fSmearZ;
   double fSigmaZ;
   double fCentreR;
@@ -71,8 +79,17 @@ public:
   void SetBarID(int barid) {fBar = barid;}
   void SetNhits(int nhits) {fNhits = nhits;}
   void SetMultitracks(bool bmultitrack) {fMultiTrack = bmultitrack;}
-  void SetEnergy(double energy) { fEnergy=energy; };
-  ClassDef(TScintDigi,1)
+  void SetTrackID(int trkid) {fID = trkid;}
+  void SetMotherID(int mthrid) {fMotherID = mthrid;}
+  void SetEnergy(double energy) { fEnergy=energy; }
+  void SetPos_in(double p[3]) {fpx_in = p[0]; fpy_in = p[1]; fpz_in = p[2];}
+  void SetPos_out(double p[3]) {fpx_out = p[0]; fpy_out = p[1]; fpz_out = p[2];}
+
+  int GetNhits() {return fNhits;}
+  int GetMotherID() {return fMotherID;}
+  void GetPos_in(double* p) {p[0]=fpx_in; p[1]=fpy_in; p[2]=fpz_in; }
+  void GetPos_out(double* p) {p[0]=fpx_out; p[1]=fpy_out; p[2]=fpz_out;}
+   ClassDef(TScintDigi,1)
 };
 
 #endif

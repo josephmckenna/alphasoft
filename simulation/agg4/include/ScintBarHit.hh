@@ -67,6 +67,8 @@ public:
   inline G4ThreeVector GetPosition()                  { return position; }
   inline void          SetTime(G4double t)            { time = t; }
   inline G4double      GetTime()                      { return time; }
+  inline void          SetIsWhere(G4int where)        { IsWhere = where; }
+  inline G4int         GetIsWhere()                   { return IsWhere; }
 
 private:
   G4int         barID; 
@@ -76,6 +78,7 @@ private:
   G4int         PDGcode;
   G4ThreeVector position;
   G4double      time;
+  G4int         IsWhere; //-1  the particle is entering the volume, 0  inside, 1  it's exiting 
   static std::map<G4String,G4AttDef> fAttDefs;
 
 };
