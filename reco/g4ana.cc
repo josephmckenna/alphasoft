@@ -214,7 +214,10 @@ int main(int argc, char** argv)
             }
          else
             proc.Finish();  
-
+         if(aged){
+            TStoreEvent ev = proc.GetStoreEvent();
+            aged->ShowEvent(ev, AWsignals, PADsignals, nullptr); // FIXME: Change fourth arg. if bar signals get generated
+         }
       }// events loop
 
    proc.End();

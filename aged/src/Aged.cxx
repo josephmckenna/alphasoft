@@ -349,3 +349,9 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
     return flags;
 }
 
+int Aged::ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals)
+{
+    int status = 0;
+    // FIXME: Maybe create sigFlow and barFlow here? then use code above?
+    return status;
+}

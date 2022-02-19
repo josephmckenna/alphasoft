@@ -332,6 +332,10 @@ void ProcessEvents::Finish(TClonesArray* garfpp_hits, TClonesArray* aw_hits)
    r.Reset();
 }
 
+TStoreEvent ProcessEvents::GetStoreEvent()
+{
+   return u.CreateStoreEvent(r.GetPoints(), r.GetTracks(), r.GetHelices());
+}
 void ProcessEvents::End()
 {
    u.WriteHisto();

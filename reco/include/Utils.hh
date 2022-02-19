@@ -92,6 +92,8 @@ public:
    void WriteSettings(TObjString*);
    void WriteHisto();
 
+   TStoreEvent CreateStoreEvent(std::vector<TSpacePoint*>*, std::vector<TTrack*>*, std::vector<TFitHelix*>*);
+
    inline void SetTmax(double t) {tmax=t;}
 };
 

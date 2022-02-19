@@ -1270,6 +1270,11 @@ void Utils::WriteHisto()
 
 // ===============================================================================================
 
+void Utils::CreateStoreEvent(std::vector<TSpacePoint*>*, std::vector<TTrack*>*, std::vector<TFitHelix*>*)
+{
+   // FIXME: Write simulation event data into TStoreEvent
+}
+
 
 /* emacs
  * Local Variables:
