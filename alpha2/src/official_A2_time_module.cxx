@@ -285,12 +285,6 @@ public:
       return flow;
    }
 
-   void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
-   {
-      if (fTrace)
-         printf("OfficialA2Time::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", 
-                runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
-   }
 };
 
 class OfficialA2TimeFactory: public TAFactory
