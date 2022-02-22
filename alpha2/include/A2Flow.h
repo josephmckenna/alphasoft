@@ -81,7 +81,6 @@ class VectorRecycler
             if (fRecycleBin.empty())
                break;
          }
-         std::lock_guard<std::mutex> guard(fMutex);
          if (fRecycleBin.size())
          {
             std::vector<T> data = std::move(fRecycleBin.front());
@@ -103,6 +102,7 @@ class VectorRecycler
       }
       std::vector<T> NewVector()
       {
+         std::lock_guard<std::mutex> guard(fMutex);
          if (fRecycleBin.size())
             return GrabVector();
          else
@@ -110,12 +110,12 @@ class VectorRecycler
       }
       void RecycleVector(std::vector<T> data)
       {
+         std::lock_guard<std::mutex> guard(fMutex);
          if (!data.capacity())
             return;
          if (fRecycleBin.size() < fMaxBufferedEvents)
          {
             data.clear();
-            std::lock_guard<std::mutex> guard(fMutex);
             fRecycleBin.emplace_back(std::move(data));
          }
          else
