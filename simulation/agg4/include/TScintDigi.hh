@@ -16,6 +16,8 @@ private:
 
   double fp; // MC phi position [rad]
   double ft; // MC time [ns]
+  double ft_in; // MC time incoming hit [ns]
+  double ft_out; // MC time outgoing hit [ns]
 
   double fPos; // digitized hit position = phi [rad]
   
@@ -56,6 +58,9 @@ public:
 
   inline double GetPhi()  const { return fp; }
   inline double GetTime() const { return ft; }
+  inline double GetTimeIn() const { return ft_in; }
+  inline double GetTimeOut() const { return ft_out; }
+
   inline int GetBar()     const { return fBar; }
   inline double GetPos()  const { return fPos; }
   inline double GetSigmaPhi() const { return fSigmaPhi; }
@@ -84,6 +89,9 @@ public:
   void SetEnergy(double energy) { fEnergy=energy; }
   void SetPos_in(double p[3]) {fpx_in = p[0]; fpy_in = p[1]; fpz_in = p[2];}
   void SetPos_out(double p[3]) {fpx_out = p[0]; fpy_out = p[1]; fpz_out = p[2];}
+  void SetTimeIn(double tIN) { ft_in = tIN; }
+  void SetTimeOut(double tOUT) { ft_out = tOUT; }
+
 
   int GetNhits() {return fNhits;}
   int GetMotherID() {return fMotherID;}
