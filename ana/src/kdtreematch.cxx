@@ -227,7 +227,7 @@ public:
 #endif
 
 #if wiresFindPads
-      if (SigFlow->awSig)
+      if (SigFlow->awSig && pad_tree) 
       {
          spacepoints = new std::vector<std::pair<ALPHAg::signal, ALPHAg::signal>>();
          for (const ALPHAg::signal &s : *(SigFlow->awSig)) {
