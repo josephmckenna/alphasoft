@@ -15,7 +15,7 @@ bsc_adc_module.o
 bsc_tdc_module.o
 # rTPC tracking chain
 deconv_aw_module.o deconv_pad_module.o 
-trackymatch.o
+kdtreematch.o
 # match_module.o
 reco_module.o
 # AC
