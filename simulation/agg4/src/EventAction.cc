@@ -551,14 +551,8 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
     {
       ScintBarHit* aHit = (*BHC)[i];
       //      aHit->PrintPolar();
-      bool newHit =  0;
-      if(barTrkID[aHit->GetbarID()].size()==0) 
-      {
-        newHit=1;
-      }
-      else
-      {
-        for(Int_t j=0; j< barTrkID[aHit->GetbarID()].size(); j++)
+      bool newHit =  1;
+      for(Int_t j=0; j< barTrkID[aHit->GetbarID()].size(); j++)
         {
           if(barTrkID[aHit->GetbarID()].at(j)==aHit->GetTrackID()) //se c'è una traccia uguale nella barra in cui si trova l'hit
           {
@@ -566,8 +560,7 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
             break;
           }
         }
-      }
-
+      
       if(newHit) 
       {
         barHitted[aHit->GetbarID()] +=1;
