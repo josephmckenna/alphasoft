@@ -206,18 +206,7 @@ void DeconvPAD::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
 
 void DeconvPAD::Reset()
 { 
-   spad.clear();
    fbinsize = 1;
-   
-   if( fDiagnostic )
-   {
-      fPwbPeaks.clear();
-   }
-
-   if( fAged )
-   {
-      feamwaveforms.clear();
-   }
 }
 
 #ifdef BUILD_AG_SIM
@@ -405,19 +394,24 @@ int DeconvPAD::FindPadTimes(TClonesArray* PADsignals)
 }
 #endif
 
-int DeconvPAD::FindPadTimes(const FeamEvent* padSignals)
+void DeconvPAD::BuildWFContainer(
+    const FeamEvent* padSignals,
+    std::vector<ALPHAg::wfholder>& PadWaves,
+    std::vector<ALPHAg::electrode>& PadIndex,
+    std::vector<ALPHAg::wf_ref>& feamwaveforms,  // to use in aged display
+    std::vector<ALPHAg::TPadSignal>& PwbPeaks // waveform max
+) const
 {
    const std::vector<FeamChannel*> channels = padSignals->hits;
    // prepare vector with wf to manipulate
-   std::vector<ALPHAg::wfholder> PadWaves;
    PadWaves.reserve( channels.size() );
    // clear/initialize "output" vectors
-   fPadIndex.clear();
-   fPadIndex.reserve( channels.size() );
+   PadIndex.clear();
+   PadIndex.reserve( channels.size() );
 
    if( fDiagnostic ) 
    {
-      fPwbPeaks.reserve( channels.size() );
+      PwbPeaks.reserve( channels.size() );
    }
 
    if( fAged ) 
@@ -486,7 +480,7 @@ int DeconvPAD::FindPadTimes(const FeamEvent* padSignals)
                hPWBped->Fill(pad_index,ped);
                hPWBped_prox->Fill(pad_index,ped);
                double peak_t = GetPeakTime(ch->adc_samples);
-               fPwbPeaks.emplace_back(el,peak_t,peak_h,0.);
+               PwbPeaks.emplace_back(el,peak_t,peak_h,0.);
             }
             
 
@@ -508,7 +502,7 @@ int DeconvPAD::FindPadTimes(const FeamEvent* padSignals)
                waveform.massage(ped,fPwbRescale[pad_index]);
 
                // STORE electrode
-               fPadIndex.push_back( el );
+               PadIndex.push_back( el );
 
                if( fAged )
                   feamwaveforms.emplace_back(el,new std::vector<double>(waveform.h));
@@ -516,13 +510,71 @@ int DeconvPAD::FindPadTimes(const FeamEvent* padSignals)
                ++index;
             }// max > thres
       }// channels
+   }
 
-   // ============== DECONVOLUTION ==============
-   spad = Deconvolution(&PadWaves,fPadIndex,fPadResponse,thePadBin);
-   int nsig = spad.size();
-   if( fTrace ) std::cout<<"DeconvPAD::FindPadTimes "<<nsig<<" found"<<std::endl;
-   // ===========================================   
+void DeconvPAD::Deconvolution(
+    std::vector<ALPHAg::wfholder>& subtracted,
+    const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+    std::vector<ALPHAg::TPadSignal>& signals)
+{
+   if(subtracted.empty())
+      return;
 
+   size_t nsamples = subtracted.back().h.size();
+   assert(nsamples >= theBin);
+   
+   signals.clear();
+   signals.reserve(nsamples - thePadBin);
+   assert(nsamples < 1000);
+   if( fTrace )
+      std::cout<<"DeconvPAD::Deconvolution Subtracted Size: "<<subtracted.size()
+               <<"\t# samples: "<<nsamples<<"\ttheBin: "<<thePadBin<<std::endl;
+
+   const double t_delay = fPWBdelay;
+   const int fbinsize = fPADbinsize;
+   const double fAvalancheSize = fPWBpeak;
+
+   // if( fTrace )
+   //    std::cout<<"DeconvPAD::Deconvolution delay: "<<t_delay<<" ns"<<std::endl;
+
+   for(size_t b = thePadBin; b < nsamples; ++b)// b is the current bin of interest
+      {
+         // For each bin, order waveforms by size,
+         // i.e., start working on largest first
+         std::vector<ALPHAg::wfholder*> histset = wforder( subtracted, b );
+         // std::cout<<"DeconvPAD::Deconvolution bin of interest: "<<b
+         //          <<" workable wf: "<<histset.size()<<std::endl;
+         // this is useful to split deconv into the "Subtract" method
+         // map ordered wf to corresponding electrode
+         double neTotal = 0.0;
+         for (auto const it : histset)
+            {
+               unsigned int i = it->index;
+               const std::vector<double>& wf=it->h;
+               const ALPHAg::electrode &anElectrode = fElectrodeIndex[i];
+               // number of "electrons"
+               double ne = anElectrode.gain * fScale * wf[b] / fPadResponse[thePadBin];
+               if( ne >= fAvalancheSize )
+                  {
+                     neTotal += ne;
+                     // loop over all bins for subtraction
+                     SubtractPAD(it,b,ne,fElectrodeIndex);
+                     if( int( b - thePadBin) >= 0)
+                        {
+                           // time in ns of the bin b centre
+                           double t = ( double(b - thePadBin) + 0.5 ) * double(fbinsize) + t_delay;
+                           signals.emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val));
+                        }
+                  }// if deconvolution threshold Avalanche Size
+            }// loop set of ordered waveforms
+      }// loop bin of interest
+   return;
+}
+
+
+void DeconvPAD::LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& PadWaves )
+{
+    
    if( fDiagnostic )
       {
          // prepare control variable (deconv remainder) vector
@@ -543,114 +595,52 @@ int DeconvPAD::FindPadTimes(const FeamEvent* padSignals)
          if( mr != 0. ) r /= mr;
          hAvgRMSPad->Fill(r);
       }
-   PadWaves.clear();
-   return nsig;
-}
-
-std::vector<ALPHAg::TPadSignal> DeconvPAD::Deconvolution( std::vector<ALPHAg::wfholder>* subtracted,
-                                            std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                                            std::vector<double> &fResponse, unsigned theBin)
-{
-   std::vector<ALPHAg::TPadSignal> fSignals;
-   if(subtracted->size()==0)
-      return fSignals;
-
-   size_t nsamples = subtracted->back().h.size();
-   assert(nsamples >= theBin);
-
-   fSignals.reserve(nsamples-theBin);
-   assert(nsamples < 1000);
-   if( fTrace )
-      std::cout<<"DeconvPAD::Deconvolution Subtracted Size: "<<subtracted->size()
-               <<"\t# samples: "<<nsamples<<"\ttheBin: "<<theBin<<std::endl;
-
-   double t_delay = fPWBdelay;
-   int fbinsize = fPADbinsize;
-   double fAvalancheSize = fPWBpeak;
-
-   // if( fTrace )
-   //    std::cout<<"DeconvPAD::Deconvolution delay: "<<t_delay<<" ns"<<std::endl;
-
-   for(size_t b = theBin; b < nsamples; ++b)// b is the current bin of interest
-      {
-         // For each bin, order waveforms by size,
-         // i.e., start working on largest first
-         std::vector<ALPHAg::wfholder*>* histset = wforder( subtracted, b );
-         // std::cout<<"DeconvPAD::Deconvolution bin of interest: "<<b
-         //          <<" workable wf: "<<histset.size()<<std::endl;
-         // this is useful to split deconv into the "Subtract" method
-         // map ordered wf to corresponding electrode
-         double neTotal = 0.0;
-         for (auto const it : *histset)
-            {
-               unsigned int i = it->index;
-               const std::vector<double>& wf=it->h;
-               const ALPHAg::electrode &anElectrode = fElectrodeIndex[i];
-               // number of "electrons"
-               double ne = anElectrode.gain * fScale * wf[b] / fResponse[theBin];
-               if( ne >= fAvalancheSize )
-                  {
-                     neTotal += ne;
-                     // loop over all bins for subtraction
-                     SubtractPAD(it,b,ne,fElectrodeIndex,fResponse,theBin);
-                     if( int(b-theBin) >= 0)
-                        {
-                           // time in ns of the bin b centre
-                           double t = ( double(b-theBin) + 0.5 ) * double(fbinsize) + t_delay;
-                           fSignals.emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val));
-                        }
-                  }// if deconvolution threshold Avalanche Size
-            }// loop set of ordered waveforms
-         delete histset;
-         //delete histmap;
-      }// loop bin of interest
-   return fSignals;
 }
 
 void DeconvPAD::SubtractPAD(ALPHAg::wfholder* hist1,
                          const int b,
-                         const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                         std::vector<double> &fResponse, const int theBin)
+                         const double ne,
+                         const std::vector<ALPHAg::electrode> &fElectrodeIndex)
 {
    std::vector<double> &wf1 = hist1->h;
    const int wf1size = wf1.size();
    unsigned int i1 = hist1->index;
-   ALPHAg::electrode& wire1 = fElectrodeIndex[i1]; // mis-name for pads
+   const ALPHAg::electrode& wire1 = fElectrodeIndex[i1]; // mis-name for pads
 
-   const int respsize = fResponse.size();
+   const int respsize = fPadResponse.size();
 
-   for(int bb = b - theBin; bb < wf1size; ++bb)
+   for(int bb = b - thePadBin; bb < wf1size; ++bb)
       {
          // the bin corresponding to bb in the response
-         const int respBin = bb - b + theBin;
+         const int respBin = bb - b + thePadBin;
          if( respBin < respsize && respBin >= 0 )
             {
                // Remove signal tail for waveform we're currently working on
-               wf1[bb] -= ne/fScale/wire1.gain*fResponse[respBin];
+               wf1[bb] -= ne/fScale/wire1.gain*fPadResponse[respBin];
             }
       }// bin loop: subtraction
 }
 
-std::vector<ALPHAg::wfholder*>* DeconvPAD::wforder(std::vector<ALPHAg::wfholder>* subtracted, const unsigned b)
+std::vector<ALPHAg::wfholder*> DeconvPAD::wforder(std::vector<ALPHAg::wfholder> & subtracted, const unsigned b)
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
-   std::vector<ALPHAg::wfholder*>* histset=new std::vector<ALPHAg::wfholder*>;
-   size_t size = subtracted->size();
+   std::vector<ALPHAg::wfholder*> histset;
+   size_t size = subtracted.size();
    //   std::cout<<"DeconvPAD::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
-   histset->reserve(size);
+   histset.reserve(size);
    for(unsigned int i=0; i<size;++i)
       {
          //         std::cout<<"wf# "<<i;
-         ALPHAg::wfholder& mh=subtracted->at(i);
+         ALPHAg::wfholder& mh=subtracted[i];
          // std::cout<<"\twf index: "<<mh->index;
          // std::cout<<"\twf size: "<<mh->h->size();
          //std::cout<<"\twf bin: "<<b<<std::endl;
          mh.val = fScale*mh.h[b];
          //         std::cout<<"\twf val: "<<mh->val<<std::endl;
-         histset->push_back(&mh);
+         histset.push_back(&mh);
       }
-   std::sort(histset->begin(), histset->end(),wf_comparator);
+   std::sort(histset.begin(), histset.end(),wf_comparator);
    return histset;
 }
 

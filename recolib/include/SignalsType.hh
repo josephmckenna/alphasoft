@@ -258,7 +258,7 @@ struct wfholder
 
    ~wfholder() { h.clear(); }
 
-   void massage(double& ped, double& norm)
+   void massage(const double& ped, const double& norm)
    {
       //SUBTRACT PEDESTAL
       std::for_each(h.begin(), h.end(), [ped](double& d) { d-=ped;});
@@ -275,7 +275,7 @@ struct wfholder
 
 struct comp_hist_t
 {
-   bool operator() (wfholder* lhs, wfholder* rhs) const
+   bool operator() (const wfholder* lhs,const  wfholder* rhs) const
    {
       return lhs->val > rhs->val;
    }

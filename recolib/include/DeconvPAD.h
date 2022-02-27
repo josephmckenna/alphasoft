@@ -58,11 +58,7 @@ private:
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
-   // output
-   std::vector<ALPHAg::electrode> fPadIndex;
-
-   std::vector<ALPHAg::TPadSignal> spad;
-
+public:
 
    int ReadResponseFile( const int padbin);
    int ReadPADResponseFile( const int padbin );
@@ -70,40 +66,43 @@ private:
    int ReadRescaleFile();
    int ReadPWBRescaleFile();
 
-   std::vector<ALPHAg::TPadSignal> Deconvolution( std::vector<ALPHAg::wfholder>* subtracted,
-                                       std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                                       std::vector<double> &fResponse, unsigned theBin);
+
+   void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
+                       const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+                       std::vector<ALPHAg::TPadSignal>& signal );
+
+   void LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& PadWaves );
 
    void SubtractPAD(ALPHAg::wfholder* hist1,
                    const int b,
-                   const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                   std::vector<double> &fResponse, const int theBin);
+                   const double ne,
+                   const std::vector<ALPHAg::electrode> &fElectrodeIndex);
    
    ALPHAg::comp_hist_t wf_comparator;
-   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder>* subtracted, const unsigned b);
+   std::vector<ALPHAg::wfholder*> wforder(std::vector<ALPHAg::wfholder>& subtracted, const unsigned b);
    
    std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex);
 
    //Take advantage that there are 256 anode wires
-   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
+   inline bool IsAnodeNeighbour(const int w1, const int w2, int dist) const
    {
       uint8_t c=w1-w2;
       return (Min(c,256-c)==dist);
    }
 
-   inline uint8_t IsAnodeClose(int w1, int w2)
+   inline uint8_t IsAnodeClose(const int w1, const int w2) const
    {
       uint8_t c=w1-w2;
       return Min(c,256-c);
    }
    
-   inline uint8_t Min(uint8_t x, uint8_t y)
+   inline uint8_t Min(uint8_t x, uint8_t y) const
    {
       return (x < y)? x : y;
    }
 
-   inline bool MaskPads(short& sec, int& row)
+   inline bool MaskPads(short& sec, int& row) const
    {
       for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
          for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)
@@ -111,7 +110,7 @@ private:
       return false;
    }
 
-   inline double CalculatePedestal(const std::vector<int>& adc_samples)
+   inline double CalculatePedestal(const std::vector<int>& adc_samples) const
    {
       double ped(0.);
       for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples[b]);
@@ -123,30 +122,29 @@ private:
       return ped;
    }
    
-   inline double GetPeakHeight(std::vector<int>& adc_samples, int& i, double& ped)
+   inline double GetPeakHeight(const std::vector<int>& adc_samples,const int& i, const double& ped) const
    {
       auto minit = std::min_element(adc_samples.begin(), adc_samples.end());
-      double y=double(*minit);
+      const double y = double(*minit);
       return GetPWBpeak(i,y,ped);
    }
 
-   inline double GetPeakTime(std::vector<int>& adc_samples)
+   inline double GetPeakTime(const std::vector<int>& adc_samples) const
    {
       auto minit = std::min_element(adc_samples.begin(), adc_samples.end());
-      double peak_time = ( (double) std::distance(adc_samples.begin(),minit) + 0.5 );
-      peak_time*=double(fPADbinsize);
-      peak_time+=fPWBdelay;
+      int peak_time = ( (double) std::distance(adc_samples.begin(),minit) + 0.5 );
+      peak_time *= fPADbinsize;
+      peak_time += fPWBdelay;
       return peak_time;
    }
 
-  inline double GetPWBpeak(int& i, double& y, double& ped)
+  inline double GetPWBpeak(const int& i, const double& y, const double& ped) const
    {
-      double amp = fScale * y, max=-1.;
+      const double amp = fScale * y;
       if( amp < fPWBrange )
-         max =  fPwbRescale.at(i) * fScale * ( y - ped );
+         return fPwbRescale[i] * fScale * ( y - ped );
       else
-         max = fPWBmax;
-      return max;
+         return fPWBmax;
    }
 
    // Calculate deconvolution error from residual (may change)
@@ -166,10 +164,6 @@ private:
    //   static TH1D* hAvgRMSBot;
    static TH1D* hAvgRMSTop;
 
-   // to use in aged display
-   std::vector<ALPHAg::wf_ref> feamwaveforms;
-   // waveform max
-   std::vector<ALPHAg::TPadSignal> fPwbPeaks;
    // std::vector<signal>* fPwbRange;
 
 public:
@@ -185,16 +179,14 @@ public:
    int FindPadTimes(TClonesArray*);
 #endif
 
-   int FindPadTimes(const FeamEvent*);
-
-   inline std::vector<ALPHAg::TPadSignal> GetPadSignal()  { return spad; }
-//   inline const std::vector<ALPHAg::TPadSignal> GetPadSignal() const { return spad; }
-
-   inline std::vector<ALPHAg::TPadSignal> GetPWBPeaks() { return fPwbPeaks; }
-//   inline const std::vector<ALPHAg::TPadSignal> GetPWBPeaks() const { return fPwbPeaks; }
-
-   inline std::vector<ALPHAg::wf_ref> GetPADwaveforms() { return feamwaveforms; }
-//   inline const std::vector<ALPHAg::wf_ref> GetPADwaveforms() const  { return feamwaveforms; }
+void BuildWFContainer(
+    const FeamEvent* padSignals,
+    std::vector<ALPHAg::wfholder>& PadWaves,
+    std::vector<ALPHAg::electrode>& PadIndex,
+    std::vector<ALPHAg::wf_ref>& feamwaveforms,  // to use in aged display
+    std::vector<ALPHAg::TPadSignal>& PwbPeaks // waveform max
+) const;
+ 
 
    inline void SetTrace(bool t)      { fTrace=t; }
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }

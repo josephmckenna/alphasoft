@@ -36,6 +36,7 @@ public:
 };
 
 
+
 class DeconvPADModule: public TARunObject
 {
 public:
@@ -177,18 +178,17 @@ public:
          }
       else
          {
-             int stat = d.FindPadTimes(pwb);
-             if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
+             // We could transport this in the flow
+             std::vector<ALPHAg::wfholder> PadWaves;
+             std::vector<ALPHAg::electrode> PadIndex;
 
-             if( fFlags->fDiag )
-               {
-                  //d.PADdiagnostic();
-                  flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
-                  //                  flow_sig->pwbRange = d.GetPwbRange();
-               }
-
-             if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+             d.BuildWFContainer(pwb,PadWaves,PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
+             if (PadWaves.size())
+             {
+                d.Deconvolution(PadWaves, PadIndex, flow_sig->pdSig );
+             }
+             d.LogDeconvRemaineder(PadWaves);
+             //if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
          }
       ++fCounter;
       //d.Reset();
