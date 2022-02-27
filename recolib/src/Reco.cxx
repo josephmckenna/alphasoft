@@ -153,10 +153,10 @@ Reco::~Reco()
    delete fSTR;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->first.t, zed = sp->second.z;
@@ -196,10 +196,10 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double z_fid )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints, double z_fid )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->first.t, zed = sp->second.z;
@@ -250,12 +250,12 @@ void Reco::AddSpacePoint( const TObjArray* p )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
+void Reco::AddSpacePoint(const std::vector<ALPHAg::signal> spacepoints )
 {
    int n = 0;
    double zed = 0.,zerr=ALPHAg::_padpitch*ALPHAg::_sq12;
    int padidx=288,padsec=0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->t;

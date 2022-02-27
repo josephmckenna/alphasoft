@@ -167,7 +167,7 @@ public:
 #endif
          return flow;
       }
-      if( ! SigFlow->awSig )
+      if( SigFlow->awSig.empty() )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -175,14 +175,14 @@ public:
          return flow;
       }
       if( fTrace )
-         printf("SpacepointModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
+         printf("SpacepointModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
       
       if( fTrace )
-         printf("SpacepointModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+         printf("SpacepointModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
          
      match->Init();
-     std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
-     if( SigFlow->pdSig )
+     std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints;
+     if( SigFlow->pdSig.size() )
          {
             spacepoints =
                match->MatchElectrodes( SigFlow->awSig, SigFlow->pdSig );
@@ -195,12 +195,12 @@ public:
             spacepoints = match->FakePads( SigFlow->awSig );
          }
 
-      if( spacepoints )
-         printf("SpacepointModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
+      if( spacepoints.size() )
+         printf("SpacepointModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
       else
          printf("SpacepointModule::Analyze Spacepoints should exists at this point\n");
 
-      if( spacepoints->size() > 0 )
+      if( spacepoints.size() )
          SigFlow->AddMatchSignals( spacepoints );
 
       ++fCounter;

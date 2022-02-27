@@ -6,7 +6,7 @@
 
 #include "AnaSettings.hh"
 
-#include "Deconv.hh"
+#include "DeconvAW.h"
 
 class DeconvAwFlags
 {
@@ -25,6 +25,7 @@ public:
 
    bool fADCnorm=false;
    bool fPersEnabled=false;
+   bool fTrace = false;
    
 public:
    DeconvAwFlags() // ctor
@@ -44,7 +45,7 @@ public:
    int fCounter = 0;
 
 private:
-   Deconv d;
+   DeconvAW d;
     
 public:
 
@@ -70,7 +71,7 @@ public:
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-      
+
       d.SetupADCs( runinfo->fRoot->fOutputFile,
                    runinfo->fRunNo, 
                    fFlags->fADCnorm,   // dis/en-able normalization of WF
@@ -78,6 +79,8 @@ public:
       d.SetDisplay( !fFlags->fBatch || fFlags->fPersEnabled ); // dis/en-able wf storage for aged
 
       d.PrintADCsettings();
+
+      d.SetTrace(fFlags->fTrace);
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -120,7 +123,7 @@ public:
 #endif
          return flow;
       }
-      
+
       const AgEvent* e = ef->fEvent;
       if (fFlags->fTimeCut)
       {
@@ -149,6 +152,7 @@ public:
 #endif
             return flow;
          }
+      
          if (e->counter>fFlags->stop_event)
          {
 #ifdef HAVE_MANALYZER_PROFILER
@@ -255,6 +259,9 @@ public:
          if( args[i] == "--aged" )
             fFlags.fBatch = false;
 
+         if( args[i] == "--trace" )
+            fFlags.fTrace = true;
+
          if( args[i] == "--anasettings" ) json=args[i+1];
 
          if( args[i] == "--adcnorm" ) fFlags.fADCnorm=true;
@@ -264,7 +271,7 @@ public:
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
-      fFlags.ana_settings->Print();
+      if(fFlags.fTrace) fFlags.ana_settings->Print();
    }
 
    void Finish()

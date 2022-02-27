@@ -126,20 +126,20 @@ void findWaveforms(TStoreEvent *anEvent, AgSignalsFlow* sigFlow)
     for (int i=0; i<num; ++i) {
         int found = 0;
         TSpacePoint* spi = (TSpacePoint*)points->At(i);
-        if (!sigFlow->AWwf)
+        if (sigFlow->AWwf.empty())
            printf("Aged::No AWwf in flow\n");
         else
-           for (auto it=sigFlow->AWwf->begin(); it!=sigFlow->AWwf->end(); ++it) {
+           for (auto it=sigFlow->AWwf.begin(); it!=sigFlow->AWwf.end(); ++it) {
 	  //if (i==0) printf("Wire i=%d s=%d\n",it->i,it->sec);
                if (it->i == spi->GetWire()) {
                    found |= 0x01;
                    break;
                }
            }
-        if (!sigFlow->PADwf)
+        if (sigFlow->PADwf.empty())
            printf("Aged::No PADwf in flow\n");
         else
-           for (auto it=sigFlow->PADwf->begin(); it!=sigFlow->PADwf->end(); ++it) {
+           for (auto it=sigFlow->PADwf.begin(); it!=sigFlow->PADwf.end(); ++it) {
               int pad = it->sec+it->i*32;
                if (pad  == spi->GetPad()) {
                    found |= 0x02;

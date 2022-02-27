@@ -56,34 +56,34 @@ private:
    //std::vector<signal>* fCombinedPads;
    //std::vector< std::pair<signal,signal> >* spacepoints;
 
-   std::pair<std::set<short>,std::vector< std::vector<ALPHAg::signal> >> PartitionBySector(std::vector<ALPHAg::signal>* padsignals);
-   std::vector< std::vector<ALPHAg::signal> > PartitionByTime( std::vector<ALPHAg::signal>& sig );
+   std::pair<std::set<short>,std::vector< std::vector<ALPHAg::TPadSignal> >> PartitionBySector(std::vector<ALPHAg::TPadSignal> padsignals);
+   std::vector< std::vector<ALPHAg::TPadSignal> > PartitionByTime( std::vector<ALPHAg::TPadSignal>& sig );
 
-   void CentreOfGravity( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads ); // #1
-   void CentreOfGravity_blobs( std::vector<ALPHAg::signal> &vsig, std::vector<ALPHAg::signal>* combpads); // #2
+   void CentreOfGravity( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal> combpads ); // #1
+   void CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal> combpads); // #2
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
    void SortPointsAW(  const std::pair<double,int>& pos,
-                       std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
-                       std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw );
-   void SortPointsAW(  std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>& vec,
-                       std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw );
+                       std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>& vec,
+                       std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>,std::greater<int>>& spaw );
+   void SortPointsAW(  std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>& vec,
+                       std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>,std::greater<int>>& spaw );
 
    //  void SortPointsAW(  const std::pair<double,int>& pos,
    //		      std::vector<std::pair<signal,signal>*>& vec,
    //		      std::map<int,std::vector<std::pair<signal,signal>*>>& spaw );
-   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>,std::greater<int>>& spaw,
-                     std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger);
-   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& spaw,
-                     std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger);
+   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>,std::greater<int>>& spaw,
+                     std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>>& merger);
+   void CombPointsAW(std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>>& spaw,
+                     std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>>& merger);
 
-   uint MergePoints(std::map<int,std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>*>>& merger,
-                    std::vector<std::pair<ALPHAg::signal,ALPHAg::signal>>& merged,
+   uint MergePoints(std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>*>>& merger,
+                    std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>>& merged,
                     uint& number_of_merged);
 
  
-   std::vector<std::pair<double, double> > FindBlobs(const std::vector<ALPHAg::signal> &sigs,
+   std::vector<std::pair<double, double> > FindBlobs(const std::vector<ALPHAg::TPadSignal> &sigs,
                                                      int ifirst, int ilast);
 
 
@@ -116,17 +116,17 @@ public:
    void Init();
    void Setup(TFile* OutputFile);
 
-   std::vector<std::vector<ALPHAg::signal>> CombPads(std::vector<ALPHAg::signal>* padsignals);
-   std::vector<ALPHAg::signal>*  CombinePads(std::vector<ALPHAg::signal>* padsignals);
-   std::vector<ALPHAg::signal>* CombinePads(std::vector< std::vector<ALPHAg::signal> > *comb); // this is the used now  -- AC 27-08-2020
-   std::vector<ALPHAg::signal>* CombineAPad(std::vector< std::vector<ALPHAg::signal> > *comb,std::vector<ALPHAg::signal>* CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
+   std::vector<std::vector<ALPHAg::TPadSignal>> CombPads(std::vector<ALPHAg::TPadSignal> padsignals);
+   std::vector<ALPHAg::TPadSignal>  CombinePads(std::vector<ALPHAg::TPadSignal> padsignals);
+   std::vector<ALPHAg::TPadSignal> CombinePads(std::vector< std::vector<ALPHAg::TPadSignal> > comb); // this is the used now  -- AC 27-08-2020
+   std::vector<ALPHAg::TPadSignal> CombineAPad(std::vector< std::vector<ALPHAg::TPadSignal> > comb,std::vector<ALPHAg::TPadSignal> CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
 
-   void MatchElectrodes(std::vector<ALPHAg::signal>* awsignals);
-   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* MatchElectrodes(std::vector<ALPHAg::signal>* awsignals,
-                        std::vector<ALPHAg::signal>* padsignals);
-   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*  FakePads(std::vector<ALPHAg::signal>* awsignals);
-
-   std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* CombPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints);
+   void MatchElectrodes(std::vector<ALPHAg::TWireSignal> awsignals);
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > MatchElectrodes(std::vector<ALPHAg::TWireSignal> awsignals,
+                        std::vector<ALPHAg::TPadSignal> padsignals);
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >  FakePads(std::vector<ALPHAg::TWireSignal> awsignals);
+   
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > CombPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints);
 
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }

@@ -256,14 +256,14 @@ public:
          {
             int AW,PAD,SP=-1;
             AW=PAD=SP;
-            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            if (SigFlow->awSig.size()) AW=int(SigFlow->awSig.size());
             printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            if (SigFlow->pdSig.size()) PAD=int(SigFlow->pdSig.size());
             printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            if (SigFlow->matchSig.size()) SP=int(SigFlow->matchSig.size());
             printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
-      if (!SigFlow->matchSig)
+      if (SigFlow->matchSig.empty())
       {
          if( fVerb ) 
             std::cout<<"RecoRun::No matched hits"<<std::endl;
@@ -272,7 +272,7 @@ public:
           flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
 #endif
       }
-      else if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig.size() > fNhitsCut )
          {
             if( fVerb ) 
                std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;

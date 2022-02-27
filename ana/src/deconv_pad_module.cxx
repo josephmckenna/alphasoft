@@ -6,7 +6,7 @@
 
 #include "AnaSettings.hh"
 
-#include "Deconv.hh"
+#include "DeconvPAD.h"
 
 class DeconvPadFlags
 {
@@ -40,18 +40,17 @@ class DeconvPADModule: public TARunObject
 {
 public:
    DeconvPadFlags* fFlags = 0;
-   bool fTrace=false;
+   bool fTrace = false;
    int fCounter = 0;
 
 private:
-   Deconv d;
+   DeconvPAD d;
   
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvPadFlags* f): TARunObject(runinfo),
-                                                           fFlags(f),
-                                                           d( f->ana_settings )
-      
+                                                         fFlags(f),
+                                                         d( f->ana_settings )
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="DeconvPADModule";
@@ -214,6 +213,7 @@ public:
    {
       printf("DeconvPADModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--wfnorm     Normalize all waveforms from rescale file\n");
       printf("\t--pwbnorm    Normalize PWB waveforms from rescale file\n");
    }
    void Usage()

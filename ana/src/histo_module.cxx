@@ -483,33 +483,33 @@ public:
       
       if( fTrace )
          {
-            if( SigFlow->adc32max )
+            if( SigFlow->adc32max.size() )
                printf("HistoModule::Analyze, ADC # signals %d\n", 
-                      int(SigFlow->adc32max->size()));
+                      int(SigFlow->adc32max.size()));
             else
                printf("HistoModule::Analyze, NO ADC signals\n");
 
-            if( SigFlow->pwbMax )
+            if( SigFlow->pwbMax.size() )
                printf("HistoModule::Analyze, PWB # signals %d\n", 
-                      int(SigFlow->pwbMax->size()));
+                      int(SigFlow->pwbMax.size()));
             else
                printf("HistoModule::Analyze, NO PWB signals\n");
 
-            if( SigFlow->awSig )
+            if( SigFlow->awSig.size() )
                printf("HistoModule::Analyze, AW # signals %d\n", 
-                      int(SigFlow->awSig->size()));
+                      int(SigFlow->awSig.size()));
             else
                printf("HistoModule::Analyze, NO AW signals\n");
 
-            if( SigFlow->pdSig )
+            if( SigFlow->pdSig.size() )
                printf("HistoModule::Analyze, PAD # signals %d\n",
-                      int(SigFlow->pdSig->size()));
+                      int(SigFlow->pdSig.size()));
             else
                printf("HistoModule::Analyze, NO PAD signals\n");
             
-            if( SigFlow->matchSig )
+            if( SigFlow->matchSig.size() )
                printf("HistoModule::Analyze, SP # %d\n",
-                      int(SigFlow->matchSig->size()));
+                      int(SigFlow->matchSig.size()));
             else
                printf("HistoModule::Analyze, NO SP matches\n");
          }
@@ -518,7 +518,7 @@ public:
       // if( SigFlow->awSig->size() == 0 ) return flow;
 
 
-      if( SigFlow->adc32max )
+      if( SigFlow->adc32max.size() )
          {
 
             if( fTrace )
@@ -527,7 +527,7 @@ public:
             ADCdiagnostic(SigFlow->adc32max);
          }
 
-      if( SigFlow->pwbMax )
+      if( SigFlow->pwbMax.size() )
          {
             if( fTrace )
                printf("HistoModule::AnalyzeFlowEvent, PWB Diagnostic start\n");
@@ -538,22 +538,22 @@ public:
       if( fTrace )
          printf("HistoModule::AnalyzeFlowEvent, Analysis Diagnostic start\n");
 
-      if( SigFlow->awSig )
+      if( SigFlow->awSig.size() )
          AWdiagnostic(SigFlow->awSig);
 
-      if( SigFlow->pdSig )
+      if( SigFlow->pdSig.size() )
          PADdiagnostic(SigFlow->pdSig);
 
-      if( SigFlow->adc32max && SigFlow->awSig )
+      if( SigFlow->adc32max.size() && SigFlow->awSig.size() )
          AWDeconvDiag(SigFlow->adc32max,SigFlow->awSig);
       
-      if(  SigFlow->pwbMax && SigFlow->pdSig )
+      if(  SigFlow->pwbMax.size() && SigFlow->pdSig.size() )
          PWBDeconvDiag( SigFlow->pwbMax, SigFlow->pdSig );
 
-      if( SigFlow->pdSig && SigFlow->awSig )
+      if( SigFlow->pdSig.size() && SigFlow->awSig.size() )
          MatchDiagnostic(SigFlow->awSig,SigFlow->pdSig);
          
-      if( SigFlow->matchSig )
+      if( SigFlow->matchSig.size() )
          SigSpacePointsDiagnostic( SigFlow->matchSig );
 
       ++fCounter;
@@ -567,10 +567,10 @@ public:
                 runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 
-   void AWdiagnostic(std::vector<ALPHAg::signal> *sanode)
+   void AWdiagnostic(const std::vector<ALPHAg::TWireSignal> sanode)
    {
       int nbot=0,ntop=0;
-      for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
+      for( auto iSig=sanode.begin(); iSig!=sanode.end(); ++iSig )
          { 
             if( iSig->sec )
                {
@@ -605,11 +605,11 @@ public:
       std::cout<<"HistoModule::AWdiagnostic # hit top: "<<ntop<<" bot: "<<nbot<<std::endl;
    }
 
-   void ADCdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void ADCdiagnostic(const std::vector<ALPHAg::TWireSignal> wfamp/*, std::vector<signal> *wfrange*/)
    {
-      if( wfamp->size() > 0 )
+      if( wfamp.size() > 0 )
          {
-            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+            for( auto sig = wfamp.begin(); sig!=wfamp.end(); ++sig )
                {
                   hAdcAmp->Fill(sig->idx,sig->height);
                   hAdcAmp_prox->Fill(sig->idx,sig->height);
@@ -629,11 +629,11 @@ public:
       //    }
    }
 
-   void PWBdiagnostic(std::vector<ALPHAg::signal> *wfamp/*, std::vector<signal> *wfrange*/)
+   void PWBdiagnostic(std::vector<ALPHAg::TPadSignal> wfamp/*, std::vector<signal> *wfrange*/)
    {
-      if( wfamp->size() > 0 )
+      if( wfamp.size() > 0 )
          {
-            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+            for( auto sig = wfamp.begin(); sig!=wfamp.end(); ++sig )
                {
                   double pad_index = double(pmap->index(sig->sec,sig->idx));
                   hPwbAmp->Fill(pad_index,sig->height);
@@ -680,11 +680,11 @@ public:
       //    }
    }
 
-   void PADdiagnostic(std::vector<ALPHAg::signal> *spad)
+   void PADdiagnostic(const std::vector<ALPHAg::TPadSignal> spad)
    {
       int nhit=0;
       //std::cout<<"HistoModule::PADdiagnostic()"<<std::endl;
-      for( auto iSig=spad->begin(); iSig!=spad->end(); ++iSig )
+      for( auto iSig=spad.begin(); iSig!=spad.end(); ++iSig )
          { 
             hOccCol->Fill(iSig->sec);
             hOccRow->Fill(iSig->idx);
@@ -706,12 +706,12 @@ public:
       std::cout<<"HistoModule::PADdiagnostic # hit: "<<nhit<<std::endl;
    }
 
-   void AWDeconvDiag(std::vector<ALPHAg::signal> *wfamp, std::vector<ALPHAg::signal> *sanode)
+   void AWDeconvDiag(const std::vector<ALPHAg::TWireSignal> wfamp,const std::vector<ALPHAg::TWireSignal> sanode)
    {
-    for( auto iSig=sanode->begin(); iSig!=sanode->end(); ++iSig )
+    for( auto iSig=sanode.begin(); iSig!=sanode.end(); ++iSig )
          {  
             if( iSig->sec ) continue;
-            for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+            for( auto sig = wfamp.begin(); sig!=wfamp.end(); ++sig )
                {
                   if( sig->idx == iSig->idx && fabs(sig->t-iSig->t) < 20. )
                      {
@@ -722,13 +722,13 @@ public:
    }
 
 
-   void PWBDeconvDiag(std::vector<ALPHAg::signal> *wfamp,std::vector<ALPHAg::signal> *spad)
+   void PWBDeconvDiag(const std::vector<ALPHAg::TPadSignal> wfamp, const std::vector<ALPHAg::TPadSignal> spad)
    {
-      if( wfamp->size() > 0 )
+      if( wfamp.size() > 0 )
          {
-            for( auto iSig=spad->begin(); iSig!=spad->end(); ++iSig )
+            for( auto iSig=spad.begin(); iSig!=spad.end(); ++iSig )
                {
-                  for( auto sig = wfamp->begin(); sig!=wfamp->end(); ++sig )
+                  for( auto sig = wfamp.begin(); sig!=wfamp.end(); ++sig )
                      {
                         if( sig->idx == iSig->idx && sig->sec == iSig->sec && fabs(sig->t-iSig->t) < 20. )
                            {
@@ -740,13 +740,13 @@ public:
    }
                       
 
-   void MatchDiagnostic(std::vector<ALPHAg::signal>* awsignals, 
-                        std::vector<ALPHAg::signal>* padsignals)
+   void MatchDiagnostic(const std::vector<ALPHAg::TWireSignal> awsignals, 
+                        const std::vector<ALPHAg::TPadSignal> padsignals)
    {
-      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(), 
-                                                         awsignals->end());
-      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(), 
-                                                          padsignals->end());
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals.begin(), 
+                                                         awsignals.end());
+      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals.begin(), 
+                                                          padsignals.end());
       int Nmatch=0;
       for( auto iaw=aw_bytime.begin(); iaw!=aw_bytime.end(); ++iaw )
          {
@@ -807,11 +807,11 @@ public:
       if( Nmatch ) hNmatch->Fill( double(Nmatch) );
    }
 
-   void SigSpacePointsDiagnostic( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* sp )
+   void SigSpacePointsDiagnostic( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > sp )
    {
-      hNsp->Fill(sp->size());
+      hNsp->Fill(sp.size());
 
-      for(auto& ip: *sp )
+      for(auto& ip: sp )
          {
             hAWspAmp->Fill(ip.first.height);
             hAWspTime->Fill(ip.first.t);

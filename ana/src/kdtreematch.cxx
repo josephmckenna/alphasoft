@@ -115,19 +115,19 @@ public:
          return flow;
       }
 
-      if (!SigFlow->awSig) {
+      if (SigFlow->awSig.empty()) {
          *flags |= TAFlag_SKIP_PROFILE;
          return flow;
       }
       if (fTrace) {
-         printf("KDTreeMatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-         printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+         printf("KDTreeMatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+         printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       }
 
 //Only wiresFindPads works for now
 #define wiresFindPads 1
 
-      std::vector<std::pair<ALPHAg::signal, ALPHAg::signal>> *spacepoints = NULL;
+      std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>> spacepoints;
 #if wiresFindPads
       TKDTreeID* pad_tree = NULL;
       // Naive phi and t matching will have wrap around problems for phi
@@ -146,16 +146,16 @@ public:
       // std::vector<double> phi[2];
       // std::array<TKDTreeID*,2> pad_quadrant_trees = {NULL};
 #if wiresFindPads
-      if (SigFlow->pdSig) {
+      if (SigFlow->pdSig.size()) {
          //printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-         if (int(SigFlow->pdSig->size()) > fPadSignalsCut)
+         if (int(SigFlow->pdSig.size()) > fPadSignalsCut)
             return flow;
 
          // Roots generic kdtree wont understand cylindrical coordinates..
-         const int nPads = SigFlow->pdSig->size();
+         const int nPads = SigFlow->pdSig.size();
          pad_tree = new TKDTreeID(nPads, 2, 1);
          int i = 0;
-         for (const ALPHAg::signal &s : *(SigFlow->pdSig)) {
+         for (const ALPHAg::TPadSignal &s : SigFlow->pdSig) {
             if (1)
             { 
                /*if ( s.phi < M_PI + (M_2_PI / 32) || s.phi > 2.0 * M_PI - (M_2_PI / 32) )
@@ -227,10 +227,9 @@ public:
 #endif
 
 #if wiresFindPads
-      if (SigFlow->awSig && pad_tree) 
+      if (SigFlow->awSig.size() && pad_tree) 
       {
-         spacepoints = new std::vector<std::pair<ALPHAg::signal, ALPHAg::signal>>();
-         for (const ALPHAg::signal &s : *(SigFlow->awSig)) {
+         for (const ALPHAg::TWireSignal &s : SigFlow->awSig) {
             if (s.t > 0) {
                std::array<double, 2> data = {s.t,fPhiFactor * s.phi};// {s.t * sin(s.phi), s.t * cos(s.phi)};
                //std::array<double, 2> data = { (1/ s.t) * sin(s.phi), (1/ s.t) * cos(s.phi)};// {s.t * sin(s.phi), s.t * cos(s.phi)};
@@ -263,7 +262,7 @@ public:
                //std::cout <<"Dist: "<< distance << "\t"<< s.errphi<<std::endl;
                if (index < 0)
                   continue;
-               const ALPHAg::signal& pad = SigFlow->pdSig->at(index);
+               const ALPHAg::TPadSignal& pad = SigFlow->pdSig.at(index);
                //std::cout <<"\tIndex: "<< index << "\tDistance: " << distance  << " ( "<<sqrt( 20 * 20 + fPhiFactor * fPhiFactor * pad.errphi * pad.errphi )<<" )"<< std::endl;
                //std::cout  <<"\tPhi: "<< pad.phi << "\tDPhi: " <<pad.errphi <<std::endl;
                
@@ -274,7 +273,7 @@ public:
                   //std::cout <<"Delta phi:\t" << fabs(pad.phi - s.phi) <<"<"<< 3* pad.errphi<< "\n";
                   //std::cout <<"Delta t:\t" << fabs(pad.t - s.t) << "\t| "<< pad.t << " - " << s.t <<" |\n";
                
-                  spacepoints->emplace_back(
+                  spacepoints.emplace_back(
                           std::make_pair(
                               s,
                               pad
@@ -288,7 +287,6 @@ public:
 #else
        if (SigFlow->pdSig)
        {
-         spacepoints = new std::vector<std::pair<ALPHAg::signal, ALPHAg::signal>>();
          for (const ALPHAg::signal &s : *(SigFlow->pdSig)) {
             if (s.t > 0) {
                std::array<double, 2> data = {s.t, fPhiFactor * s.phi};// {s.t * sin(s.phi), s.t * cos(s.phi)};
@@ -314,7 +312,7 @@ public:
       }
 #endif
       // allow events without pwbs
-      if (SigFlow->combinedPads) {
+      if (SigFlow->combinedPads.size()) {
          // spacepoints = match->CombPoints(spacepoints);
       } else if (fFlags->fForceReco) // <-- this probably goes before, where there are no pad signals -- AC 2019-6-3
       {
@@ -323,9 +321,9 @@ public:
          //         spacepoints = match->FakePads( SigFlow->awSig );
       }
 
-      if (spacepoints) {
-         if (fFlags->fTrace) printf("KDTreeMatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
-         if (spacepoints->size() > 0) SigFlow->AddMatchSignals(spacepoints);
+      if (spacepoints.size() && SigFlow->pdSig.size() && SigFlow->awSig.size()) {
+         if (fFlags->fTrace) printf("KDTreeMatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
+         SigFlow->AddMatchSignals(spacepoints);
       } else
          printf("KDTreeMatchModule::Analyze Spacepoints should exists at this point\n");
 
@@ -336,7 +334,6 @@ public:
       if (wire_tree)
          delete wire_tree;
 #endif
-      delete spacepoints;
       return flow;
    }
 };
