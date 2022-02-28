@@ -28,7 +28,7 @@ private:
    bool fDiagnostic;
    bool fAged;
 
-   AnaSettings* ana_settings;
+   const AnaSettings* ana_settings;
 
    // input
    std::vector<double> fPadResponse;
@@ -39,11 +39,10 @@ private:
    std::vector<int> fPadSecMask;
    std::vector<int> fPadRowMask;
 
-   int fbinsize;
-   int fPADbinsize;
+   const int fPADbinsize;
 
-   double fPWBmax;
-   double fPWBrange;
+   const double fPWBmax;
+   const double fPWBrange;
 
    double fPWBdelay;
 
@@ -52,9 +51,9 @@ private:
 
    unsigned thePadBin;
 
-   double fPWBThres;
+   const double fPWBThres;
 
-   double fPWBpeak;
+   const double fPWBpeak;
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
@@ -69,17 +68,23 @@ public:
 
    void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
                        const std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                       std::vector<ALPHAg::TPadSignal>& signal );
+                       std::vector<ALPHAg::TPadSignal>& signal ) const;
+
+   void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
+                       const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+                       std::vector<ALPHAg::TPadSignal>& signals,
+                       const int start,
+                       const int stop) const;
 
    void LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& PadWaves );
 
    void SubtractPAD(ALPHAg::wfholder* hist1,
                    const int b,
                    const double ne,
-                   const std::vector<ALPHAg::electrode> &fElectrodeIndex);
+                   const std::vector<ALPHAg::electrode> &fElectrodeIndex) const;
    
    ALPHAg::comp_hist_t wf_comparator;
-   std::vector<ALPHAg::wfholder*> wforder(std::vector<ALPHAg::wfholder>& subtracted, const unsigned b);
+   std::vector<ALPHAg::wfholder*> wforder(std::vector<ALPHAg::wfholder>& subtracted, const unsigned b) const;
    
    std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
                                        std::vector<ALPHAg::electrode> &fElectrodeIndex);
@@ -148,7 +153,7 @@ public:
    }
 
    // Calculate deconvolution error from residual (may change)
-   inline double GetNeErr(double /*ne (number of electrons)*/, double res)
+   inline double GetNeErr(const double /*ne (number of electrons)*/, const double res) const
    {
       return sqrt(res);
    }

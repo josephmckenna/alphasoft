@@ -20,40 +20,46 @@ TH1D* DeconvPAD::hAvgRMSTop=0;
 
 DeconvPAD::DeconvPAD(double adc, double pwb,
 	       double aw, double pad): fTrace(false), fDiagnostic(false), fAged(false),
-                                       fbinsize(1), fPADbinsize(16),
+                                     fPADbinsize(16),
 				       fPWBdelay(0.), // to be guessed
 				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				       thePadBin(6),
 				       fPWBThres(pwb),
 				       fPWBpeak(pad),
-				       isalpha16(false),pmap()
+				       isalpha16(false),pmap(),
+                                     fPWBmax(pow(2.,12.)),
+                                     fPWBrange(fPWBmax*0.5-1.)
 {
    Setup();
 }
 
 DeconvPAD::DeconvPAD(std::string json):fTrace(false), fDiagnostic(false), fAged(false),
-                                 fbinsize(1), fPADbinsize(16),
+                               fPADbinsize(16),
 				 fPWBdelay(0.), // to be guessed
 				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				 thePadBin(6),
-				 isalpha16(false),pmap()
+				 isalpha16(false),pmap(),
+                               fPWBmax(pow(2.,12.)),
+                               fPWBrange(fPWBmax*0.5-1.),
+                               ana_settings(new AnaSettings(json.c_str())),
+                               fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
+                               fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
 {
-   ana_settings=new AnaSettings(json.c_str());
-   fPWBThres=ana_settings->GetDouble("DeconvModule","PWBthr");
-   fPWBpeak=ana_settings->GetDouble("DeconvModule","PADthr");
    Setup();
 }
 
 DeconvPAD::DeconvPAD(AnaSettings* s):fTrace(false), fDiagnostic(false), fAged(false),
-                               ana_settings(s), fbinsize(1),
+                               ana_settings(s), 
                                fPADbinsize(16),
                                fPWBdelay(0.), // to be guessed
                                pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                thePadBin(6),
-                               isalpha16(false),pmap()
+                               isalpha16(false),pmap(),
+                               fPWBmax(pow(2.,12.)),
+                               fPWBrange(fPWBmax*0.5-1.),
+                               fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
+                               fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
 {
-   fPWBThres=ana_settings->GetDouble("DeconvModule","PWBthr");
-   fPWBpeak=ana_settings->GetDouble("DeconvModule","PADthr");
    //   Setup();
 }
 
@@ -72,8 +78,6 @@ void DeconvPAD::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
    fPadSecMask.reserve(32);
    fPadRowMask.reserve(576);
  
-   fPWBmax = pow(2.,12.);
-   fPWBrange = fPWBmax*0.5-1.;
 
    int s = ReadPADResponseFile(fPADbinsize);
    std::cout<<"Deconv::SetupADCs() Response status: "<<s<<std::endl;
@@ -206,7 +210,7 @@ void DeconvPAD::SetupPWBs(TFile* fout, int run, bool norm, bool diag)
 
 void DeconvPAD::Reset()
 { 
-   fbinsize = 1;
+
 }
 
 #ifdef BUILD_AG_SIM
@@ -515,7 +519,7 @@ void DeconvPAD::BuildWFContainer(
 void DeconvPAD::Deconvolution(
     std::vector<ALPHAg::wfholder>& subtracted,
     const std::vector<ALPHAg::electrode> &fElectrodeIndex,
-    std::vector<ALPHAg::TPadSignal>& signals)
+    std::vector<ALPHAg::TPadSignal>& signals) const
 {
    if(subtracted.empty())
       return;
@@ -530,14 +534,16 @@ void DeconvPAD::Deconvolution(
       std::cout<<"DeconvPAD::Deconvolution Subtracted Size: "<<subtracted.size()
                <<"\t# samples: "<<nsamples<<"\ttheBin: "<<thePadBin<<std::endl;
 
-   const double t_delay = fPWBdelay;
-   const int fbinsize = fPADbinsize;
-   const double fAvalancheSize = fPWBpeak;
+   return Deconvolution( subtracted, fElectrodeIndex, signals, thePadBin,nsamples);
+}
 
-   // if( fTrace )
-   //    std::cout<<"DeconvPAD::Deconvolution delay: "<<t_delay<<" ns"<<std::endl;
+void DeconvPAD::Deconvolution(
+    std::vector<ALPHAg::wfholder>& subtracted,
+    const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+    std::vector<ALPHAg::TPadSignal>& signals, const int start, const int stop) const
+{
 
-   for(size_t b = thePadBin; b < nsamples; ++b)// b is the current bin of interest
+   for(size_t b = start; b < stop; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first
@@ -554,7 +560,7 @@ void DeconvPAD::Deconvolution(
                const ALPHAg::electrode &anElectrode = fElectrodeIndex[i];
                // number of "electrons"
                double ne = anElectrode.gain * fScale * wf[b] / fPadResponse[thePadBin];
-               if( ne >= fAvalancheSize )
+               if( ne >= fPWBpeak )
                   {
                      neTotal += ne;
                      // loop over all bins for subtraction
@@ -562,7 +568,7 @@ void DeconvPAD::Deconvolution(
                      if( int( b - thePadBin) >= 0)
                         {
                            // time in ns of the bin b centre
-                           double t = ( double(b - thePadBin) + 0.5 ) * double(fbinsize) + t_delay;
+                           double t = ( double(b - thePadBin) + 0.5 ) * double(fPADbinsize) + fPWBdelay;
                            signals.emplace_back(anElectrode,t,ne,GetNeErr(ne,it->val));
                         }
                   }// if deconvolution threshold Avalanche Size
@@ -600,7 +606,7 @@ void DeconvPAD::LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& PadWaves )
 void DeconvPAD::SubtractPAD(ALPHAg::wfholder* hist1,
                          const int b,
                          const double ne,
-                         const std::vector<ALPHAg::electrode> &fElectrodeIndex)
+                         const std::vector<ALPHAg::electrode> &fElectrodeIndex) const
 {
    std::vector<double> &wf1 = hist1->h;
    const int wf1size = wf1.size();
@@ -621,7 +627,7 @@ void DeconvPAD::SubtractPAD(ALPHAg::wfholder* hist1,
       }// bin loop: subtraction
 }
 
-std::vector<ALPHAg::wfholder*> DeconvPAD::wforder(std::vector<ALPHAg::wfholder> & subtracted, const unsigned b)
+std::vector<ALPHAg::wfholder*> DeconvPAD::wforder(std::vector<ALPHAg::wfholder> & subtracted, const unsigned b) const
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
