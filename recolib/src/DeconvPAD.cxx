@@ -27,23 +27,24 @@ DeconvPAD::DeconvPAD(double adc, double pwb,
 				       fPWBThres(pwb),
 				       fPWBpeak(pad),
 				       isalpha16(false),pmap(),
-                                     fPWBmax(pow(2.,12.)),
-                                     fPWBrange(fPWBmax*0.5-1.)
+                                      fPWBmax(pow(2.,12.)),
+                                      fPWBrange(fPWBmax*0.5-1.)
 {
    Setup();
 }
 
 DeconvPAD::DeconvPAD(std::string json):fTrace(false), fDiagnostic(false), fAged(false),
-                               fPADbinsize(16),
+                                fPADbinsize(16),
 				 fPWBdelay(0.), // to be guessed
 				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
 				 thePadBin(6),
-				 isalpha16(false),pmap(),
-                               fPWBmax(pow(2.,12.)),
-                               fPWBrange(fPWBmax*0.5-1.),
-                               ana_settings(new AnaSettings(json.c_str())),
-                               fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
-                               fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
+				 isalpha16(false),
+                                pmap(),
+                                fPWBmax(pow(2.,12.)),
+                                fPWBrange(fPWBmax*0.5-1.),
+                                ana_settings(new AnaSettings(json.c_str())),
+                                fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
+                                fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
 {
    Setup();
 }
@@ -577,30 +578,30 @@ void DeconvPAD::Deconvolution(
    return;
 }
 
-
 void DeconvPAD::LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& PadWaves )
 {
     
    if( fDiagnostic )
+   {
+      // prepare control variable (deconv remainder) vector
+      // resRMS_p.clear();
+      // resRMS_p.reserve( PadWaves.size() );
+      double mr=0.,r=0.;
+      // calculate remainder of deconvolution
+      for(const auto& s: PadWaves)
       {
-         // prepare control variable (deconv remainder) vector
-         // resRMS_p.clear();
-         // resRMS_p.reserve( PadWaves.size() );
-         double mr=0.,r=0.;
-         // calculate remainder of deconvolution
-         for(const auto& s: PadWaves)
-            {
-               r+=sqrt( std::inner_product(s.h.begin(), s.h.end(), s.h.begin(), 0.)
-                        / static_cast<double>(s.h.size()) );
-               // resRMS_p.push_back( sqrt(
-               //                          std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
-               //                          / static_cast<double>(s->h->size()) )
-               //                     );
-               ++mr;
-            }
-         if( mr != 0. ) r /= mr;
-         hAvgRMSPad->Fill(r);
+         r+=sqrt( std::inner_product(s.h.begin(), s.h.end(), s.h.begin(), 0.)
+                     / static_cast<double>(s.h.size()) );
+         // resRMS_p.push_back( sqrt(
+         //                          std::inner_product(s->h->begin(), s->h->end(), s->h->begin(), 0.)
+         //                          / static_cast<double>(s->h->size()) )
+         //                     );
+         ++mr;
       }
+      if( mr != 0. )
+         r /= mr;
+      hAvgRMSPad->Fill(r);
+   }
 }
 
 void DeconvPAD::SubtractPAD(ALPHAg::wfholder* hist1,
@@ -608,22 +609,24 @@ void DeconvPAD::SubtractPAD(ALPHAg::wfholder* hist1,
                          const double ne,
                          const std::vector<ALPHAg::electrode> &fElectrodeIndex) const
 {
-   std::vector<double> &wf1 = hist1->h;
-   const int wf1size = wf1.size();
    unsigned int i1 = hist1->index;
    const ALPHAg::electrode& wire1 = fElectrodeIndex[i1]; // mis-name for pads
 
    const int respsize = fPadResponse.size();
 
+
+   const double collectivegain = ne/fScale/wire1.gain;
+
+   std::vector<double> &wf1 = hist1->h;
+   const int wf1size = wf1.size();
+   int respBin = 0;
    for(int bb = b - thePadBin; bb < wf1size; ++bb)
       {
-         // the bin corresponding to bb in the response
-         const int respBin = bb - b + thePadBin;
-         if( respBin < respsize && respBin >= 0 )
-            {
-               // Remove signal tail for waveform we're currently working on
-               wf1[bb] -= ne/fScale/wire1.gain*fPadResponse[respBin];
-            }
+         if( respBin >= respsize )
+            break;
+         // Remove signal tail for waveform we're currently working on
+         wf1[bb] -= collectivegain * fPadResponse[respBin];
+         ++respBin;
       }// bin loop: subtraction
 }
 
@@ -631,11 +634,11 @@ std::vector<ALPHAg::wfholder*> DeconvPAD::wforder(std::vector<ALPHAg::wfholder> 
 {
    // For each bin, order waveforms by size,
    // i.e., start working on largest first
-   std::vector<ALPHAg::wfholder*> histset;
-   size_t size = subtracted.size();
+
+   const size_t size = subtracted.size();
+   std::vector<ALPHAg::wfholder*> histset(size,nullptr);
    //   std::cout<<"DeconvPAD::wforder subtracted size: "<<size<<" @ bin = "<<b<<std::endl;
-   histset.reserve(size);
-   for(unsigned int i=0; i<size;++i)
+   for(size_t i=0; i<size;++i)
       {
          //         std::cout<<"wf# "<<i;
          ALPHAg::wfholder& mh=subtracted[i];
@@ -644,28 +647,12 @@ std::vector<ALPHAg::wfholder*> DeconvPAD::wforder(std::vector<ALPHAg::wfholder> 
          //std::cout<<"\twf bin: "<<b<<std::endl;
          mh.val = fScale*mh.h[b];
          //         std::cout<<"\twf val: "<<mh->val<<std::endl;
-         histset.push_back(&mh);
+         histset[i] = &mh;
       }
    std::sort(histset.begin(), histset.end(),wf_comparator);
    return histset;
 }
 
-std::map<int,ALPHAg::wfholder*>* DeconvPAD::wfordermap(std::vector<ALPHAg::wfholder*>* histset,std::vector<ALPHAg::electrode> &fElectrodeIndex)
-{
-   std::map<int,ALPHAg::wfholder*>* wfmap=new std::map<int,ALPHAg::wfholder*>;
-   for(unsigned int k = 0; k < fElectrodeIndex.size(); ++k)
-      {
-         for (auto const it : *histset)
-            {
-               if( k == it->index )
-                  {
-                     wfmap->insert({k,it});
-                     break;
-                  }
-            }
-      }
-   return wfmap;
-}
 
 int DeconvPAD::ReadResponseFile(const int padbin)
 {

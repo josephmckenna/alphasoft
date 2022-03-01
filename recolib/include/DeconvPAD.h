@@ -85,9 +85,6 @@ public:
    
    ALPHAg::comp_hist_t wf_comparator;
    std::vector<ALPHAg::wfholder*> wforder(std::vector<ALPHAg::wfholder>& subtracted, const unsigned b) const;
-   
-   std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
-                                       std::vector<ALPHAg::electrode> &fElectrodeIndex);
 
    //Take advantage that there are 256 anode wires
    inline bool IsAnodeNeighbour(const int w1, const int w2, int dist) const
@@ -137,13 +134,13 @@ public:
    inline double GetPeakTime(const std::vector<int>& adc_samples) const
    {
       auto minit = std::min_element(adc_samples.begin(), adc_samples.end());
-      int peak_time = ( (double) std::distance(adc_samples.begin(),minit) + 0.5 );
-      peak_time *= fPADbinsize;
+      double peak_time = ( (double) std::distance(adc_samples.begin(),minit) + 0.5 );
+      peak_time *= double(fPADbinsize);
       peak_time += fPWBdelay;
       return peak_time;
    }
 
-  inline double GetPWBpeak(const int& i, const double& y, const double& ped) const
+   inline double GetPWBpeak(const int& i, const double& y, const double& ped) const
    {
       const double amp = fScale * y;
       if( amp < fPWBrange )
@@ -197,8 +194,6 @@ void BuildWFContainer(
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }
    inline void SetDisplay(bool a)    { fAged=a; }
 
-   // inline std::vector<double>* GetAnodeDeconvRemainder() { return &resRMS_a; }
-   // inline std::vector<double>* GetPadDeconvRemainder() { return & resRMS_p; }
 
    inline double GetPWBdelay() const { return fPWBdelay; }
    inline void SetPWBdelay(double d) { fPWBdelay = d; }
