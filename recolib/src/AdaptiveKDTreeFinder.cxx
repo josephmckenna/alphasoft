@@ -1,37 +1,54 @@
-// Tracks finder class implementation
+// Tracks finder class implementation based on AdaptiveKDTreeFinder
 // for ALPHA-g TPC analysis
-// Author: A.Capra
-// Date: Sep. 2016
+// Author: J. T. K. MCKENNA
+// Date: March 2022
 
 #include "TPCconstants.hh"
-#include "AdaptiveFinder.hh"
+#include "AdaptiveKDTreeFinder.hh"
 #include <iostream>
 
-AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
+AdaptiveKDTreeFinder::AdaptiveKDTreeFinder(std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
    TracksFinder(points),
    fLastPointRadCut(LastPointRadCut),
    fPointsRadCut(4.),
    fPointsPhiCut( ALPHAg::_anodepitch*2. ),
    fPointsZedCut( ALPHAg::_padpitch*1.1 ),
-   fMaxIncreseAdapt(maxIncrease)
+   fMaxIncreseAdapt(maxIncrease),
+   fPoints(points.size(), 3, 1)
+
 {
    // No inherent reason why these parameters should be the same as in base class
+   const npoints = points.size();
+   fX.reserve(npoints);
+   fY.reserve(npoints);
+   fZ.reserve(npoints);
+   for (const TSpacePoint* p: points)
+   {
+       fX.emplace_back(p->GetX());
+       fY.emplace_back(p->GetY());
+       fZ.emplace_back(p->GetZ());
+   }
+   fPoints.SetData(0, fX.data());
+   fPoints.SetData(1, fY.data());
+   fPoints.SetData(1, fZ.data());
+   fPoints.Build();
+
    fSeedRadCut = 150.;
    fPointsDistCut = 8.1;
    fSmallRad = ALPHAg::_cathradius;
    fNpointsCut = 7;
    if( debug )
-      std::cout<<"AdaptiveFinder::AdaptiveFinder ctor!"<<std::endl;
+      std::cout<<"AdaptiveKDTreeFinder::AdaptiveKDTreeFinder ctor!"<<std::endl;
 }
 
 //==============================================================================================
-int AdaptiveFinder::RecTracks()
+int AdaptiveKDTreeFinder::RecTracks()
 {
    int Npoints = fPointsArray.size();
    if( Npoints<=0 )
       return -1;
    if( debug )
-      std::cout<<"AdaptiveFinder::AdaptiveFinder() # of points: "<<Npoints<<std::endl;
+      std::cout<<"AdaptiveKDTreeFinder::AdaptiveKDTreeFinder() # of points: "<<Npoints<<std::endl;
 
    // Pattern Recognition algorithm
    for(int i=0; i<Npoints; ++i)
@@ -97,12 +114,12 @@ int AdaptiveFinder::RecTracks()
       }//i loop
 
    if( fNtracks != int(fTrackVector.size()) )
-      std::cerr<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
+      std::cerr<<"AdaptiveKDTreeFinder::AdaptiveKDTreeFinder(): Number of found tracks "<<fNtracks
                <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
    else if( debug )
       {
-         std::cout<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
-         std::cout<<"AdaptiveFinder::AdaptiveFinder() -- Reasons: Track Not Advancing "<<track_not_advancing
+         std::cout<<"AdaptiveKDTreeFinder::AdaptiveKDTreeFinder(): Number of found tracks "<<fNtracks<<std::endl;
+         std::cout<<"AdaptiveKDTreeFinder::AdaptiveKDTreeFinder() -- Reasons: Track Not Advancing "<<track_not_advancing
                   <<" Points Cut: ("<<fNpointsCut<<"): "<<points_cut
                   <<" Radius Cut ("<<fLastPointRadCut<<" mm): "<<rad_cut<<std::endl;
       }
@@ -110,11 +127,26 @@ int AdaptiveFinder::RecTracks()
    return fNtracks;
 }
 
-int AdaptiveFinder::NextPoint(TSpacePoint* SeedPoint, const int index, const int Npoints, double distcut, track_t& atrack) const
+int AdaptiveKDTreeFinder::NextPoint(TSpacePoint* SeedPoint, const int index, const int Npoints, double distcut, track_t& atrack) const
 {
    TSpacePoint* NextPoint = 0;
 
    int LastIndex = index;
+   TSpacePoint* NextPoint = index +1;
+   std::array<double,3> xyz = {NextPoint->GetX(),NextPoint->GetY(),NextPoint->GetZ()};
+   std::vector<int> index_in_range;
+   fPoints.FindInRange (xyz.begin(), distcut, index_in_range);
+   for (int i: index_in_range)
+   {
+       std::vector<int>::iterator f = std::find(atrack.begin(), atrack.end(),i);
+       // If this point isn't in list
+       if (f == atrack.end())
+       {
+          atrack.push_back(i);
+          NextPoint(NextPoint, i, Npoints, fPointsDistCut, atrack);
+       }
+   }
+
    for(int j = index+1; j < Npoints; ++j)
       {
          NextPoint = fPointsArray[j];
@@ -136,7 +168,7 @@ int AdaptiveFinder::NextPoint(TSpacePoint* SeedPoint, const int index, const int
    return LastIndex;
 }
 
-int AdaptiveFinder::NextPoint(const int index,
+int AdaptiveKDTreeFinder::NextPoint(const int index,
                               double radcut, double phicut, double zedcut,
                               track_t& atrack) const
 {

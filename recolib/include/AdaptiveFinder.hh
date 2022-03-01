@@ -15,25 +15,23 @@
 class AdaptiveFinder: public TracksFinder
 {
 private:
-   double fLastPointRadCut;
-   double fPointsRadCut;
-   double fPointsPhiCut;
-   double fPointsZedCut;
-   double fMaxIncreseAdapt;
+   const double fLastPointRadCut;
+   const double fPointsRadCut;
+   const double fPointsPhiCut;
+   const double fPointsZedCut;
+   const double fMaxIncreseAdapt;
 
 public:
-   AdaptiveFinder(std::vector<TSpacePoint*>*);
+   AdaptiveFinder(std::vector<TSpacePoint*>*, const double MaxIncrease, const double LastPointRadCut );
    ~AdaptiveFinder(){};
 
-   inline void SetMaxIncreseAdapt(double m) {fMaxIncreseAdapt = m;}
    inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}
-   inline void SetLastPointRadCut(double c) { fLastPointRadCut=c; }
    inline double GetLastPointRadCut() const { return fLastPointRadCut; }
 
    virtual int RecTracks();
 
-   int NextPoint( TSpacePoint*, int, int, double, track_t&);
-   int NextPoint( int, double, double, double, track_t&);
+   int NextPoint( TSpacePoint*, const int, const int, double, track_t&) const;
+   int NextPoint( const int, double, double, double, track_t&) const;
 };
 
 #endif
