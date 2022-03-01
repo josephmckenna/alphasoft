@@ -176,20 +176,19 @@ public:
          }
       else
          {
-            int stat = d.FindAnodeTimes( aw );
-            if(fTrace) printf("DeconvAWModule::AnalyzeFlowEvent() status: %d\n",stat);
+            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow);
 
-            AgSignalsFlow* flow_sig = new AgSignalsFlow(flow, d.GetAnodeSignal());
+             // We could transport this in the flow
+             std::vector<ALPHAg::wfholder> AnodeWaves;
+             std::vector<ALPHAg::electrode> AnodeIndex;
+
+             d.BuildWFContainer(aw, AnodeWaves,AnodeIndex, flow_sig->AWwf,flow_sig->adc32max);
+             if (AnodeWaves.size())
+             {
+                d.Deconvolution(AnodeWaves, AnodeIndex, flow_sig->awSig );
+             }
+             d.LogDeconvRemaineder(AnodeWaves);
              
-            if( fFlags->fDiag )
-               {
-                  //d.AWdiagnostic();
-                  flow_sig->AddAdcPeaks( d.GetAdcPeaks() );
-                  //               flow_sig->adc32range = d.GetAdcRange();
-               }
-            
-            if( !fFlags->fBatch || fFlags->fPersEnabled ) 
-               flow_sig->AddAWWaveforms( d.GetAWwaveforms() );
 
             flow = flow_sig;
          }

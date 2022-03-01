@@ -186,6 +186,12 @@ public:
    //  std::vector<ALPHAg::signal> pwbRange;
 
 public:
+  AgSignalsFlow(TAFlowEvent* flow):
+    TAFlowEvent(flow)
+  {
+
+  }
+  
   AgSignalsFlow(TAFlowEvent* flow,
 		std::vector<ALPHAg::TWireSignal> s):
     TAFlowEvent(flow)

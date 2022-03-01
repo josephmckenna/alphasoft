@@ -28,7 +28,7 @@ private:
    bool fDiagnostic;
    bool fAged;
 
-   AnaSettings* ana_settings;
+   const AnaSettings* ana_settings;
 
    // input
    std::vector<double> fAnodeFactors;
@@ -40,11 +40,10 @@ private:
    // anode mask
    std::vector<int> fAwMask;
 
-   int fbinsize;
-   int fAWbinsize;
+   int fAWbinsize; //const me please
 
-   double fADCmax;
-   double fADCrange;
+   const double fADCmax;
+   const double fADCrange;
 
    double fADCdelay;
 
@@ -53,17 +52,13 @@ private:
 
    unsigned theAnodeBin;
 
-   double fADCThres;
+   const double fADCThres;
 
-   // double fAvalancheSize; //Not used
-   double fADCpeak;
+   const double fADCpeak;
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
-   // output
-   std::vector<ALPHAg::electrode> fAnodeIndex;
-
-   std::vector<ALPHAg::TWireSignal> sanode;
+public:
 
    int ReadResponseFile(const int awbin);
    int ReadAWResponseFile( const int awbin );
@@ -71,51 +66,63 @@ private:
    int ReadRescaleFile();
    int ReadADCRescaleFile();
 
-   std::vector<ALPHAg::TWireSignal> Deconvolution( std::vector<ALPHAg::wfholder*>* subtracted,
-                                       std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                                       std::vector<double> &fResponse, unsigned theBin);
+   void BuildWFContainer(
+                       const Alpha16Event* anodeSignals,
+                       std::vector<ALPHAg::wfholder>& AnodeWaves,
+                       std::vector<ALPHAg::electrode>& AnodeIndex,
+                       std::vector<ALPHAg::wf_ref>& wirewaveforms,  // to use in aged display
+                       std::vector<ALPHAg::TWireSignal>& AdcPeaks // waveform max
+                       ) const;
+   void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
+                       const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+                       std::vector<ALPHAg::TWireSignal>& signal ) const;
+
+   void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
+                       const std::vector<ALPHAg::electrode> &fElectrodeIndex,
+                       std::vector<ALPHAg::TWireSignal>& signals,
+                       const int start,
+                       const int stop) const;
+
+   void LogDeconvRemaineder( std::vector<ALPHAg::wfholder>& WireWaves );
 
    void SubtractAW(ALPHAg::wfholder* hist1,
-                   std::vector<ALPHAg::wfholder*>* wfmap,
+                   std::vector<ALPHAg::wfholder>& wfmap,
                    const int b,
-                   const double ne,std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                   std::vector<double> &fResponse, const int theBin);
-   
-   ALPHAg::comp_hist_t wf_comparator;
-   std::vector<ALPHAg::wfholder*>* wforder(std::vector<ALPHAg::wfholder*>* subtracted, const unsigned b);
-   
-   std::map<int,ALPHAg::wfholder*>* wfordermap(std::vector<ALPHAg::wfholder*>* histset,
-                                       std::vector<ALPHAg::electrode> &fElectrodeIndex);
+                   const double ne,
+                   const std::vector<ALPHAg::electrode> &fElectrodeIndex) const;
 
+   ALPHAg::comp_hist_t wf_comparator;
+   std::vector<ALPHAg::wfholder*> wforder(std::vector<ALPHAg::wfholder>& subtracted, const unsigned b) const;
+   
    //Take advantage that there are 256 anode wires
-   inline bool IsAnodeNeighbour(int w1, int w2, int dist)
+   inline bool IsAnodeNeighbour(const int w1,const int w2, const int dist) const
    {
       uint8_t c=w1-w2;
       return (Min(c,256-c)==dist);
    }
 
-   inline uint8_t IsAnodeClose(int w1, int w2)
+   inline uint8_t IsAnodeClose(const int w1,const int w2) const
    {
       uint8_t c=w1-w2;
       return Min(c,256-c);
    }
    
-   inline uint8_t Min(uint8_t x, uint8_t y)
+   inline uint8_t Min(uint8_t x, uint8_t y) const
    {
       return (x < y)? x : y;
    }
 
-   inline bool MaskWires(int& aw)
+   inline bool MaskWires(int& aw) const
    {
       for(auto it=fAwMask.begin(); it!=fAwMask.end(); ++it)
          if( *it == aw ) return true;
       return false;
    }
 
-   inline double CalculatePedestal(std::vector<int>& adc_samples)
+   inline double CalculatePedestal(const std::vector<int>& adc_samples) const
    {
       double ped(0.);
-      for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples.at( b ));
+      for(int b = 0; b < pedestal_length; b++) ped += double(adc_samples[b]);
       if( pedestal_length > 0 )
          ped /= double(pedestal_length);
       // int temp=0;
@@ -124,34 +131,33 @@ private:
       return ped;
    }
    
-   inline double GetPeakHeight(std::vector<int>& adc_samples, int& i, double& ped)
+   inline double GetPeakHeight(const std::vector<int>& adc_samples,const int& i, const double& ped) const
    {
       auto minit = std::min_element(adc_samples.begin(), adc_samples.end());
-      double y=double(*minit);
+      const double y = double(*minit);
       return GetADCpeak(i,y,ped);
    }
 
-   inline double GetPeakTime(std::vector<int>& adc_samples)
+   inline double GetPeakTime(const std::vector<int>& adc_samples) const
    {
       auto minit = std::min_element(adc_samples.begin(), adc_samples.end());
       double peak_time = ( (double) std::distance(adc_samples.begin(),minit) + 0.5 );
-      peak_time*=double(fAWbinsize);
-      peak_time+=fADCdelay;
+      peak_time *= double(fAWbinsize);
+      peak_time += fADCdelay;
       return peak_time;
    }
 
-   inline double GetADCpeak(int& i, double& y, double& ped)
+   inline double GetADCpeak(const int& i,const double& y,const double& ped) const
    {
-      double amp = fScale * y, max=-1.;
+      const double amp = fScale * y;
       if( amp < fADCrange )
-         max =  fAdcRescale.at(i) * fScale * ( y - ped );
+         return  fAdcRescale[i] * fScale * ( y - ped );
       else
-         max = fADCmax;
-      return max;
+         return fADCmax;
    }
 
    // Calculate deconvolution error from residual (may change)
-   inline double GetNeErr(double /*ne (number of electrons)*/, double res)
+   inline double GetNeErr(const double /*ne (number of electrons)*/, const double res) const
    {
       return sqrt(res);
    }
@@ -165,10 +171,6 @@ private:
    //   static TH1D* hAvgRMSBot;
    static TH1D* hAvgRMSTop;
 
-   // to use in aged display
-   std::vector<ALPHAg::wf_ref> wirewaveforms;
-   // waveform max
-   std::vector<ALPHAg::TWireSignal> fAdcPeaks;
    //std::vector<signal>* fAdcRange;
 
 public:
@@ -185,12 +187,6 @@ public:
 #endif
 
    int FindAnodeTimes(const Alpha16Event*);
-
-   inline std::vector<ALPHAg::TWireSignal> GetAnodeSignal() { return sanode; }
-   
-   inline std::vector<ALPHAg::TWireSignal> GetAdcPeaks() { return fAdcPeaks; }
-  
-   inline std::vector<ALPHAg::wf_ref> GetAWwaveforms()  { return wirewaveforms; }
   
    inline void SetTrace(bool t)      { fTrace=t; }
    inline void SetDiagnostic(bool d) { fDiagnostic=d; }
