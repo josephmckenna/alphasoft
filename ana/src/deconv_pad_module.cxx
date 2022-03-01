@@ -101,67 +101,60 @@ public:
          printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
+   bool SkipAnalysis(const AgEvent* e) const
+   {
+      if (!e)
+         return true;
+      if (fFlags->fTimeCut)
+      {
+         if (e->time < fFlags->start_time)
+         {
+            return true;
+         }
+         if (e->time > fFlags->stop_time)
+         {
+            return true;
+         }
+      }
+
+      if (fFlags->fEventRangeCut)
+      {
+         if (e->counter < fFlags->start_event)
+         {
+            return true;
+         }
+      
+         if (e->counter > fFlags->stop_event)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       // turn off recostruction
       if (fFlags->fRecOff)
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
       if(fTrace)
          printf("DeconvPADModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
-
-      if (!ef || !ef->fEvent)
+      if (!ef )
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
-
       const AgEvent* e = ef->fEvent;
-      if (fFlags->fTimeCut)
+      if (SkipAnalysis(e))
       {
-         if (e->time<fFlags->start_time)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-         if (e->time>fFlags->stop_time)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
+            return flow;         
       }
-
-      if (fFlags->fEventRangeCut)
-      {
-         if (e->counter<fFlags->start_event)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-      
-         if (e->counter>fFlags->stop_event)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-      }
-
       AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
       if( !flow_sig ) 
          {
@@ -178,20 +171,16 @@ public:
          }
       else
          {
-             // We could transport this in the flow
-             std::vector<ALPHAg::wfholder> PadWaves;
-             std::vector<ALPHAg::electrode> PadIndex;
-
-             d.BuildWFContainer(pwb,PadWaves,PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
-             if (PadWaves.size())
+             flow_sig->PadWaves.clear();
+             flow_sig->PadIndex.clear();
+             d.BuildWFContainer(pwb,flow_sig->PadWaves,flow_sig->PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
+             if (flow_sig->PadWaves.size())
              {
-                d.Deconvolution(PadWaves, PadIndex, flow_sig->pdSig );
+                d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig );
              }
-             d.LogDeconvRemaineder(PadWaves);
-             //if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
+             d.LogDeconvRemaineder(flow_sig->PadWaves);
+             ++fCounter;
          }
-      ++fCounter;
-      //d.Reset();
       return flow;
    }
 
