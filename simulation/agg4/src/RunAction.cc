@@ -141,7 +141,7 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
      exit(1);
   }
   TString fileName;
-  if(fTag.isNull())
+  if(fTag.empty())
     {
       fileName = TString::Format("%s/outAgTPC_%s_AWtime%1.0fns_PADtime%1.0fns_B%1.2fT_Q%1.0f.root",
 				 getenv("MCDATA"),
