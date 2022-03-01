@@ -49,29 +49,7 @@
 #include "ElectronDrift.hh"
 #include "TPCBase.hh"
 
-int gmchit     = 1; // dis/en-able storing of MC hits (ionization points)
-int gdigi      = 1; // dis/en-able storing of digi
-int gdigicheat = 0; // dis/en-able storing of digi cheat
-
-int gmcbars = 0;
-
-double gMagneticField;
-double gQuencherFraction;
-
-double gPadZed;
-double gPadRphi;
-double gPadTime;
-
-double gAnodeTime;
-
-int gNbars;
-double gBarRadius;
-double gBarLength;
-
-bool kMat;
-bool kProto;
-
-int gVerb;
+#include "agg4globals.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -111,9 +89,6 @@ int main(int argc,char** argv)
   G4cout<<"TPC outer radius = "<<TPCBase::TPCBaseInstance()->GetROradius()<<" cm"<<G4endl;
   G4cout<<"AW radius = "<<TPCBase::TPCBaseInstance()->GetAnodeWiresRadius()<<" cm"<<G4endl;
 
-  gPadZed=4.0;//mm
-  gPadRphi=4.0;//mm
-
   G4cout<<"anode time bin: "<<gAnodeTime<<" ns"<<G4endl;
   G4cout<<"pad time bin: "<<gPadTime<<" ns"<<G4endl;
   G4cout<<"B = "<<gMagneticField<<" T"<<G4endl;
@@ -121,8 +96,7 @@ int main(int argc,char** argv)
 
   G4cout<<"Max Drift time: "<<ElectronDrift::ElectronDriftInstance()->GetTime( TPCBase::TPCBaseInstance()->GetCathodeRadius(true) )<<" ns"<<G4endl;
 
-  gNbars = 64;
-  gBarLength = 2.5*CLHEP::m;
+  //  gBarLength = 2.5*CLHEP::m;
 
   // Construct the default run manager
   G4RunManager * runManager = new G4RunManager;

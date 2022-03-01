@@ -23,8 +23,9 @@ TRandom3 rndm;
 
 #include "TScintDigi.hh"
 
-double gBarRadius = 230.;
-int gNbars = 64;
+//double gBarRadius = 230.;
+//int gNbars = 64;
+#include "agg4globals.hh"
 
 void rec(TString filename, 
 	 int pdgc,

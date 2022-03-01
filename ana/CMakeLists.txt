@@ -16,6 +16,9 @@ endmacro()
 #Extra path for GitInfo.h file
 include_directories(${CMAKE_BINARY_DIR})
 
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
 #Find all *.modules files
 file(GLOB BINS *.modules)
 
