@@ -187,6 +187,8 @@ public:
              {
                 d.Deconvolution(AnodeWaves, AnodeIndex, flow_sig->awSig );
              }
+             if (fFlags->fTrace)
+                std::cout <<"Deconv::FindAnodeTimes " << flow_sig->awSig.size() << " found\n";
              d.LogDeconvRemaineder(AnodeWaves);
              
 
