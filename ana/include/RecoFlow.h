@@ -172,6 +172,9 @@ public:
   std::vector<ALPHAg::TWireSignal> awSig;
   std::vector<ALPHAg::TPadSignal> pdSig;
 
+  std::vector<ALPHAg::wfholder> PadWaves; //Intermediary within deconv_pad_module
+  std::vector<ALPHAg::electrode> PadIndex; //Intermediary within deconv_pad_module
+
   std::vector< std::vector<ALPHAg::TPadSignal> > comb; //Intermediary within match_modules
   std::vector<ALPHAg::TPadSignal> combinedPads; //Intermediary within match_modules
 
