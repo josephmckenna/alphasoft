@@ -5,7 +5,6 @@
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
 #include "AdaptiveFinder.hh"
-#include "AdaptiveKDTreeFinder.hh"
 #include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
