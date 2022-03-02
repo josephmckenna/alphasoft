@@ -18,33 +18,31 @@ TH1D* DeconvPAD::hAvgRMSPad=0;
 // anodes
 TH1D* DeconvPAD::hAvgRMSTop=0;
 
-DeconvPAD::DeconvPAD(double adc, double pwb,
-	       double aw, double pad): fTrace(false), fDiagnostic(false), fAged(false),
+DeconvPAD::DeconvPAD( double pwb, double pad): fTrace(false), fDiagnostic(false), fAged(false),
                                      fPADbinsize(16),
-				       fPWBdelay(0.), // to be guessed
-				       pedestal_length(100),fScale(-1.), // values fixed by DAQ
-				       thePadBin(6),
-				       fPWBThres(pwb),
-				       fPWBpeak(pad),
-				       isalpha16(false),pmap(),
-                                      fPWBmax(pow(2.,12.)),
-                                      fPWBrange(fPWBmax*0.5-1.)
+                                     fPWBmax(pow(2.,12.)),
+                                     fPWBrange(fPWBmax*0.5-1.),
+                                     fPWBdelay(0.), // to be guessed
+                                     pedestal_length(100),fScale(-1.), // values fixed by DAQ
+                                     thePadBin(6),
+                                     fPWBThres(pwb),
+                                     fPWBpeak(pad),
+                                     isalpha16(false)
 {
    Setup();
 }
 
 DeconvPAD::DeconvPAD(std::string json):fTrace(false), fDiagnostic(false), fAged(false),
+                                ana_settings(new AnaSettings(json.c_str())),
                                 fPADbinsize(16),
-				 fPWBdelay(0.), // to be guessed
-				 pedestal_length(100),fScale(-1.), // values fixed by DAQ
-				 thePadBin(6),
-				 isalpha16(false),
-                                pmap(),
                                 fPWBmax(pow(2.,12.)),
                                 fPWBrange(fPWBmax*0.5-1.),
-                                ana_settings(new AnaSettings(json.c_str())),
+                                fPWBdelay(0.), // to be guessed
+                                pedestal_length(100),fScale(-1.), // values fixed by DAQ
+                                thePadBin(6),
                                 fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
-                                fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
+                                fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr")),
+				                    isalpha16(false)
 {
    Setup();
 }
@@ -52,21 +50,20 @@ DeconvPAD::DeconvPAD(std::string json):fTrace(false), fDiagnostic(false), fAged(
 DeconvPAD::DeconvPAD(AnaSettings* s):fTrace(false), fDiagnostic(false), fAged(false),
                                ana_settings(s), 
                                fPADbinsize(16),
+                               fPWBmax(pow(2.,12.)),
+                               fPWBrange(fPWBmax*0.5-1.),
                                fPWBdelay(0.), // to be guessed
                                pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                thePadBin(6),
-                               isalpha16(false),pmap(),
-                               fPWBmax(pow(2.,12.)),
-                               fPWBrange(fPWBmax*0.5-1.),
                                fPWBThres(ana_settings->GetDouble("DeconvModule","PWBthr")),
-                               fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr"))
+                               fPWBpeak(ana_settings->GetDouble("DeconvModule","PADthr")),
+                               isalpha16(false)
 {
    //   Setup();
 }
 
 DeconvPAD::~DeconvPAD()
 {
-   delete pmap;
 }
 
 void DeconvPAD::Setup()
@@ -448,7 +445,7 @@ void DeconvPAD::BuildWFContainer(
                         <<" pad row: "<<ch->pad_row
                         <<" PAD ROW EROOR"<<std::endl;
             }         
-         int pad_index = pmap->index(col,row);
+         int pad_index = pmap.index(col,row);
          assert(!std::isnan(pad_index));
          if( pad_index < 0 || pad_index >= (int)ALPHAg::_padchan )
             {
@@ -544,7 +541,7 @@ void DeconvPAD::Deconvolution(
     std::vector<ALPHAg::TPadSignal>& signals, const int start, const int stop) const
 {
 
-   for(size_t b = start; b < stop; ++b)// b is the current bin of interest
+   for(int b = start; b < stop; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first

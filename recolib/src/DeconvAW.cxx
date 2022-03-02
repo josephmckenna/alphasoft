@@ -18,32 +18,34 @@ TH1D* DeconvAW::hAvgRMSPad=0;
 // anodes
 TH1D* DeconvAW::hAvgRMSTop=0;
 
-DeconvAW::DeconvAW(double adc, double pwb,
-	       double aw, double pad): fTrace(false), fDiagnostic(false), fAged(false),
+DeconvAW::DeconvAW(double adc, 
+	       double aw): fTrace(false), fDiagnostic(false), fAged(false),
                                        fAWbinsize(16),
+                                       fADCmax(pow(2.,14.)),
+                                       fADCrange(fADCmax*0.5-1.),
                                        fADCdelay(0.), // to be guessed
                                        pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                        theAnodeBin(1),
                                        fADCThres(adc),
                                        fADCpeak(aw),
-                                       isalpha16(false),
-                                       fADCmax(pow(2.,14.)),
-                                       fADCrange(fADCmax*0.5-1.)
+                                       isalpha16(false)
+                                       
 {
    Setup();
 }
 
 DeconvAW::DeconvAW(std::string json):fTrace(false), fDiagnostic(false), fAged(false),
+                                ana_settings(new AnaSettings(json.c_str())),
                                 fAWbinsize(16),
+                                fADCmax(pow(2.,14.)),
+                                fADCrange(fADCmax*0.5-1.),
                                 fADCdelay(0.), // to be guessed
                                 pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                 theAnodeBin(1), 
-                                isalpha16(false),
-                                fADCmax(pow(2.,14.)),
-                                fADCrange(fADCmax*0.5-1.),
-                                ana_settings(new AnaSettings(json.c_str())),
                                 fADCThres(ana_settings->GetDouble("DeconvModule","ADCthr")),
-                                fADCpeak(ana_settings->GetDouble("DeconvModule","AWthr"))
+                                fADCpeak(ana_settings->GetDouble("DeconvModule","AWthr")),
+                                isalpha16(false)
+                                
 {
    Setup();
 }
@@ -51,14 +53,14 @@ DeconvAW::DeconvAW(std::string json):fTrace(false), fDiagnostic(false), fAged(fa
 DeconvAW::DeconvAW(AnaSettings* s):fTrace(false), fDiagnostic(false), fAged(false),
                                ana_settings(s),
                                fAWbinsize(16),
+                               fADCmax(pow(2.,14.)),
+                               fADCrange(fADCmax*0.5-1.),
                                fADCdelay(0.), // to be guessed
                                pedestal_length(100),fScale(-1.), // values fixed by DAQ
                                theAnodeBin(1), 
-                               isalpha16(false),
-                               fADCmax(pow(2.,14.)),
-                               fADCrange(fADCmax*0.5-1.),
                                fADCThres(ana_settings->GetDouble("DeconvModule","ADCthr")),
-                               fADCpeak(ana_settings->GetDouble("DeconvModule","AWthr"))
+                               fADCpeak(ana_settings->GetDouble("DeconvModule","AWthr")),
+                               isalpha16(false)
 {
    //   Setup();
 }
@@ -456,7 +458,7 @@ void DeconvAW::Deconvolution(
     std::vector<ALPHAg::TWireSignal>& signals, const int start, const int stop) const
 {
 
-   for(size_t b = start; b < stop; ++b)// b is the current bin of interest
+   for(int b = start; b < stop; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
          // i.e., start working on largest first

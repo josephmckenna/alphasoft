@@ -174,7 +174,7 @@ public:
    //std::vector<signal>* fAdcRange;
 
 public:
-   DeconvAW(double adc, double pwb, double aw, double pad);
+   DeconvAW(double adc,double aw);
    DeconvAW(std::string);
    DeconvAW(AnaSettings*);
    ~DeconvAW();

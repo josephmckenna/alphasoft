@@ -57,6 +57,19 @@ private:
 
    bool isalpha16; // flag to distinguish 100Ms/s from 62.5 Ms/s ADCs
 
+   ALPHAg::padmap pmap;
+
+   static TH2D* hPWBped;
+   static TProfile* hPWBped_prox;
+
+   // pads
+   static TH1D* hAvgRMSPad;
+   // anodes
+   //   static TH1D* hAvgRMSBot;
+   static TH1D* hAvgRMSTop;
+
+   // std::vector<signal>* fPwbRange;
+
 public:
 
    int ReadResponseFile( const int padbin);
@@ -155,21 +168,9 @@ public:
       return sqrt(res);
    }
 
-   ALPHAg::padmap* pmap;
-
-   static TH2D* hPWBped;
-   static TProfile* hPWBped_prox;
-
-   // pads
-   static TH1D* hAvgRMSPad;
-   // anodes
-   //   static TH1D* hAvgRMSBot;
-   static TH1D* hAvgRMSTop;
-
-   // std::vector<signal>* fPwbRange;
 
 public:
-   DeconvPAD(double adc, double pwb, double aw, double pad);
+   DeconvPAD( double pwb,  double pad);
    DeconvPAD(std::string);
    DeconvPAD(AnaSettings*);
    ~DeconvPAD();
