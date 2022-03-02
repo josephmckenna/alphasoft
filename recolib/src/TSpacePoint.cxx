@@ -173,28 +173,28 @@ TSpacePoint::TSpacePoint(double x, double y, double z,
     fr = TMath::Sqrt(fx*fx+fy*fy);
 }
 
-double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
+double TSpacePoint::MeasureRad(const TSpacePoint* aPoint) const
 {
-  return TMath::Abs(fr-aPoint->fr);
+  return TMath::Abs(fr - aPoint->fr);
 }
 
-double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
+double TSpacePoint::MeasurePhi(const TSpacePoint* aPoint) const
 {
   double dist=ALPHAg::kUnknown,
-    phi1=fphi,phi2=aPoint->fphi;
+    phi1 = fphi,phi2 = aPoint->fphi;
   if( phi1 < 0. )
-    phi1+=TMath::TwoPi();
+    phi1 += TMath::TwoPi();
   if( phi2 < 0. )
-    phi2+=TMath::TwoPi();
+    phi2 += TMath::TwoPi();
 
   if( phi1 >= 0. && phi2 >=0. ) dist = TMath::Abs(phi1-phi2);
 
   return dist;
 }
 
-double TSpacePoint::MeasureZed(TSpacePoint* aPoint) const
+double TSpacePoint::MeasureZed(const TSpacePoint* aPoint) const
 {
-  return TMath::Abs(fz-aPoint->fz);
+  return TMath::Abs(fz - aPoint->fz);
 }
 
 
@@ -212,7 +212,7 @@ int TSpacePoint::Compare(const TObject* aPoint) const
 //   else return 0;
 // }
 
-bool TSpacePoint::RadiusOrder(TSpacePoint* ip, TSpacePoint* jp)
+bool TSpacePoint::RadiusOrder(const TSpacePoint* ip,const  TSpacePoint* jp)
 {
   return ip->fr < jp->fr;
 }

@@ -99,12 +99,12 @@ public:
          dz = fz-aPoint->fz;
       return TMath::Sqrt(dx*dx+dy*dy+dz*dz);
    }
-   double MeasureRad(TSpacePoint*) const;
-   double MeasurePhi(TSpacePoint*) const;
-   double MeasureZed(TSpacePoint*) const;
-   double DistanceRphi(TSpacePoint*) const;
+   double MeasureRad(const TSpacePoint*) const;
+   double MeasurePhi(const TSpacePoint*) const;
+   double MeasureZed(const TSpacePoint*) const;
+   double DistanceRphi(const TSpacePoint*) const;
 
-   static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
+   static inline bool Order(const TSpacePoint LHS,const  TSpacePoint RHS )
    {
       bool greater = (LHS.fr > RHS.fr);
       if(greater || LHS.fr < RHS.fr){
@@ -122,7 +122,7 @@ public:
    inline bool IsSortable() const { return true; }
    int Compare(const TObject*) const;
 
-   static bool RadiusOrder(TSpacePoint*, TSpacePoint*);
+   static bool RadiusOrder(const TSpacePoint*,const  TSpacePoint*);
 
    bool IsGood(const double&, const double&) const;
    int Check(const double&, const double&) const;

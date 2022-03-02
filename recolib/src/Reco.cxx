@@ -5,6 +5,7 @@
 #include "TSpacePoint.hh"
 #include "TracksFinder.hh"
 #include "AdaptiveFinder.hh"
+#include "AdaptiveKDTreeFinder.hh"
 #include "NeuralFinder.hh"
 #include "TTrack.hh"
 #include "TFitLine.hh"
@@ -336,9 +337,7 @@ int Reco::FindTracks(finderChoice finder)
    switch(finder)
       {
       case adaptive:
-         pattrec = new AdaptiveFinder( &fPointsArray );
-         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
-         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
+         pattrec = new AdaptiveFinder( &fPointsArray, fMaxIncreseAdapt, fLastPointRadCut);
          break;
       case neural:
          pattrec = new NeuralFinder( &fPointsArray );
@@ -360,9 +359,7 @@ int Reco::FindTracks(finderChoice finder)
          pattrec = new TracksFinder( &fPointsArray ); 
          break;
       default:
-         pattrec = new AdaptiveFinder( &fPointsArray );
-         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
-         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
+         pattrec = new AdaptiveFinder( &fPointsArray , fMaxIncreseAdapt,fLastPointRadCut);
          break;
       }
    

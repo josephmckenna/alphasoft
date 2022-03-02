@@ -110,14 +110,12 @@ int AdaptiveFinder::RecTracks()
    return fNtracks;
 }
 
-int AdaptiveFinder::NextPoint(TSpacePoint* SeedPoint, const int index, const int Npoints, double distcut, track_t& atrack) const
+int AdaptiveFinder::NextPoint(const TSpacePoint* SeedPoint, const int index, const int Npoints, double distcut, track_t& atrack) const
 {
-   TSpacePoint* NextPoint = 0;
-
    int LastIndex = index;
    for(int j = index+1; j < Npoints; ++j)
       {
-         NextPoint = fPointsArray[j];
+         const TSpacePoint* NextPoint = fPointsArray[j];
          if (!NextPoint) continue;
          if( SeedPoint->Distance( NextPoint ) <= distcut )
             {
@@ -140,14 +138,13 @@ int AdaptiveFinder::NextPoint(const int index,
                               double radcut, double phicut, double zedcut,
                               track_t& atrack) const
 {
-   TSpacePoint* SeedPoint = fPointsArray.at( index );
-   TSpacePoint* NextPoint = 0;
+   const TSpacePoint* SeedPoint = fPointsArray.at( index );
 
    int LastIndex = index;
    int Npoints = fPointsArray.size();
    for(int j = index+1; j < Npoints; ++j)
       {
-         NextPoint = fPointsArray[j];
+         const TSpacePoint* NextPoint = fPointsArray[j];
          if (!NextPoint) continue;
          if( SeedPoint->MeasureRad( NextPoint ) <= radcut &&
              SeedPoint->MeasurePhi( NextPoint ) <= phicut &&

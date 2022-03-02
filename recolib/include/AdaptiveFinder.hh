@@ -30,7 +30,7 @@ public:
 
    virtual int RecTracks();
 
-   int NextPoint( TSpacePoint*, const int, const int, double, track_t&) const;
+   int NextPoint( const TSpacePoint*, const int, const int, double, track_t&) const;
    int NextPoint( const int, double, double, double, track_t&) const;
 };
 
