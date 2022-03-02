@@ -438,7 +438,7 @@ void DeconvAW::Deconvolution(
       return;
 
    size_t nsamples = subtracted.back().h.size();
-   assert(nsamples >= theBin);
+   assert(nsamples >= theAnodeBin);
    
    signals.clear();
    signals.reserve(nsamples - theAnodeBin);
@@ -534,7 +534,10 @@ void DeconvAW::SubtractAW(ALPHAg::wfholder* hist1,
    const size_t AnodeSize = fAnodeFactors.size();
    const size_t ElectrodeSize = fElectrodeIndex.size();
    const int AnodeResponseSize = (int)fAnodeResponse.size();
-   const int respsize = fAnodeResponse.size();
+
+   const int start = b - theAnodeBin;
+   const int range = std::min(wf1size - start, AnodeResponseSize );
+
    for(unsigned int k = 0; k < ElectrodeSize; ++k)
       {
          const ALPHAg::electrode& wire2 = fElectrodeIndex[ k ];
@@ -551,13 +554,8 @@ void DeconvAW::SubtractAW(ALPHAg::wfholder* hist1,
                if( !IsAnodeNeighbour(  wire1.idx, wire2.idx, int(l+1) ) ) continue;
                const double gainfactor = wiregain * fAnodeFactors[l];
                int respBin = 0;
-
-               for(int bb = b - theAnodeBin; bb < wf1size; ++bb)
+               for(int bb = start; bb < start + range; ++bb)
                   {
-                     if( respBin >= respsize )
-                        break;
-                     if (respBin >= AnodeResponseSize)
-                        break;
                      // remove neighbour induction
                      wf2[bb] += gainfactor * fAnodeResponse[respBin];
                      ++respBin;
@@ -567,11 +565,8 @@ void DeconvAW::SubtractAW(ALPHAg::wfholder* hist1,
    
 
    int respBin = 0;
-   for(int bb = b - theAnodeBin; bb < wf1size; ++bb)
+   for(int bb = start; bb < start + range; ++bb)
       {
-         // the bin corresponding to bb in the response
-         if ( respBin >= respsize )
-            break;
          // Remove signal tail for waveform we're currently working on
          wf1[bb] -= wiregain * fAnodeResponse[respBin];
          ++respBin;
