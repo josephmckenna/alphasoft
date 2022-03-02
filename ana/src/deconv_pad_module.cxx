@@ -178,6 +178,8 @@ public:
              {
                 d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig );
              }
+             if (fFlags->fTrace)
+                std::cout <<"Deconv::FindPadTimes " << flow_sig->pdSig.size() << " found\n";
              d.LogDeconvRemaineder(flow_sig->PadWaves);
              ++fCounter;
          }
