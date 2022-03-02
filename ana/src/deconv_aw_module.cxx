@@ -71,7 +71,7 @@ public:
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-
+      d.SetTrace(fFlags->fTrace);
       d.SetupADCs( runinfo->fRoot->fOutputFile,
                    runinfo->fRunNo, 
                    fFlags->fADCnorm,   // dis/en-able normalization of WF
