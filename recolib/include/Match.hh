@@ -56,11 +56,11 @@ private:
    //std::vector<signal>* fCombinedPads;
    //std::vector< std::pair<signal,signal> >* spacepoints;
 
-   std::pair<std::set<short>,std::vector< std::vector<ALPHAg::TPadSignal> >> PartitionBySector(std::vector<ALPHAg::TPadSignal> padsignals);
+   std::pair<std::set<short>,std::vector< std::vector<ALPHAg::TPadSignal> >> PartitionBySector(std::vector<ALPHAg::TPadSignal>& padsignals);
    std::vector< std::vector<ALPHAg::TPadSignal> > PartitionByTime( std::vector<ALPHAg::TPadSignal>& sig );
 
-   void CentreOfGravity( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal> combpads ); // #1
-   void CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal> combpads); // #2
+   void CentreOfGravity( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal>& combpads ); // #1
+   void CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal>& combpads); // #2
 
    std::vector<std::pair<double, double> > FindBlobs(TH1D *h);
 
@@ -116,17 +116,17 @@ public:
    void Init();
    void Setup(TFile* OutputFile);
 
-   std::vector<std::vector<ALPHAg::TPadSignal>> CombPads(std::vector<ALPHAg::TPadSignal> padsignals);
-   std::vector<ALPHAg::TPadSignal>  CombinePads(std::vector<ALPHAg::TPadSignal> padsignals);
-   std::vector<ALPHAg::TPadSignal> CombinePads(std::vector< std::vector<ALPHAg::TPadSignal> > comb); // this is the used now  -- AC 27-08-2020
-   std::vector<ALPHAg::TPadSignal> CombineAPad(std::vector< std::vector<ALPHAg::TPadSignal> > comb,std::vector<ALPHAg::TPadSignal> CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
+   std::vector<std::vector<ALPHAg::TPadSignal>> CombPads(std::vector<ALPHAg::TPadSignal>& padsignals);
+   std::vector<ALPHAg::TPadSignal>  CombinePads(std::vector<ALPHAg::TPadSignal>& padsignals);
+   std::vector<ALPHAg::TPadSignal> CombinePads(std::vector< std::vector<ALPHAg::TPadSignal> > &comb); // this is the used now  -- AC 27-08-2020
+   std::vector<ALPHAg::TPadSignal> CombineAPad(std::vector< std::vector<ALPHAg::TPadSignal> > &comb,std::vector<ALPHAg::TPadSignal>& CombinedPads, size_t PadNo); //this is the replacement for CombinePads -- Joe 12-10-2020
 
-   void MatchElectrodes(std::vector<ALPHAg::TWireSignal> awsignals);
-   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > MatchElectrodes(std::vector<ALPHAg::TWireSignal> awsignals,
-                        std::vector<ALPHAg::TPadSignal> padsignals);
-   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >  FakePads(std::vector<ALPHAg::TWireSignal> awsignals);
+   void MatchElectrodes(std::vector<ALPHAg::TWireSignal>& awsignals);
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > MatchElectrodes(std::vector<ALPHAg::TWireSignal>& awsignals,
+                        std::vector<ALPHAg::TPadSignal>& padsignals);
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >  FakePads(std::vector<ALPHAg::TWireSignal>& awsignals);
    
-   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > CombPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints);
+   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > CombPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >& spacepoints);
 
    void SetTrace(bool t) { fTrace=t; }
    void SetDebug(bool d) { fDebug=d; }

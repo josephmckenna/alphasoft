@@ -141,7 +141,7 @@ void Match::Setup(TFile* OutputFile)
     }
 }
 
-std::pair<std::set<short>,std::vector< std::vector<ALPHAg::TPadSignal> >> Match::PartitionBySector(std::vector<ALPHAg::TPadSignal> padsignals)
+std::pair<std::set<short>,std::vector< std::vector<ALPHAg::TPadSignal> >> Match::PartitionBySector(std::vector<ALPHAg::TPadSignal>& padsignals)
 {
   std::vector< std::vector<ALPHAg::TPadSignal> > pad_bysec;
   pad_bysec.resize(32);
@@ -182,7 +182,7 @@ std::vector< std::vector<ALPHAg::TPadSignal> > Match::PartitionByTime( std::vect
   return pad_bytime;
 }
 
-std::vector<std::vector<ALPHAg::TPadSignal>> Match::CombPads(std::vector<ALPHAg::TPadSignal> padsignals)
+std::vector<std::vector<ALPHAg::TPadSignal>> Match::CombPads(std::vector<ALPHAg::TPadSignal>& padsignals)
 {
   if( fTrace )
     std::cout<<"Match::CombPads!"<<std::endl;
@@ -230,7 +230,7 @@ std::vector<std::vector<ALPHAg::TPadSignal>> Match::CombPads(std::vector<ALPHAg:
   return comb;
 }
 
-std::vector<ALPHAg::TPadSignal> Match::CombineAPad(std::vector< std::vector<ALPHAg::TPadSignal> > comb,std::vector<ALPHAg::TPadSignal> CombinedPads, size_t PadNo)
+std::vector<ALPHAg::TPadSignal> Match::CombineAPad(std::vector< std::vector<ALPHAg::TPadSignal> >& comb,std::vector<ALPHAg::TPadSignal>& CombinedPads, size_t PadNo)
 {
 
   if (PadNo > comb.size())
@@ -258,7 +258,7 @@ std::vector<ALPHAg::TPadSignal> Match::CombineAPad(std::vector< std::vector<ALPH
 }
 
 
-std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector< std::vector<ALPHAg::TPadSignal> > comb)
+std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector< std::vector<ALPHAg::TPadSignal> >& comb)
 {
 
   
@@ -304,7 +304,7 @@ std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector< std::vector<ALPH
     for( unsigned i=0; i<comb.size(); ++i)
       {
 	cogthread.push_back( std::thread(&Match::CentreOfGravity_blobs,this,
-					 std::ref(comb.at(i)), CombinedPads ) );
+					 std::ref(comb.at(i)), std::ref(CombinedPads) ) );
       }   
     for( auto th=cogthread.begin();th!=cogthread.end();++th)
       {
@@ -322,13 +322,13 @@ std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector< std::vector<ALPH
   return CombinedPads;
 }
 
- std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector<ALPHAg::TPadSignal> padsignals)
+ std::vector<ALPHAg::TPadSignal> Match::CombinePads(std::vector<ALPHAg::TPadSignal>& padsignals)
 {
   std::vector< std::vector<ALPHAg::TPadSignal> > comb = CombPads( padsignals );
   return CombinePads(comb);
 }
 
-void Match::CentreOfGravity( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal> CombinedPads )
+void Match::CentreOfGravity( std::vector<ALPHAg::TPadSignal> &vsig, std::vector<ALPHAg::TPadSignal>& CombinedPads )
 {
   if(!vsig.size()) return;
 
@@ -557,7 +557,7 @@ std::vector<std::pair<double, double> > Match::FindBlobs(const std::vector<ALPHA
 }
 
 
-void Match::CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal>& vsig, std::vector<ALPHAg::TPadSignal> CombinedPads )
+void Match::CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal>& vsig, std::vector<ALPHAg::TPadSignal>& CombinedPads )
 {
   int nPositions=0;
   if(int(vsig.size()) < padsNmin) return;
@@ -715,7 +715,7 @@ void Match::CentreOfGravity_blobs( std::vector<ALPHAg::TPadSignal>& vsig, std::v
 }
 
 
-std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > Match::MatchElectrodes(std::vector<ALPHAg::TWireSignal> awsignals, std::vector<ALPHAg::TPadSignal> CombinedPads )
+std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > Match::MatchElectrodes(std::vector<ALPHAg::TWireSignal>& awsignals, std::vector<ALPHAg::TPadSignal>& CombinedPads )
 {
   std::multiset<ALPHAg::TWireSignal, ALPHAg::signal::timeorder> aw_bytime(awsignals.begin(),
 						     awsignals.end());
@@ -769,7 +769,7 @@ std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > Match::MatchEle
 }
 
 
-std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >  Match::FakePads(std::vector<ALPHAg::TWireSignal> awsignals)
+std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >  Match::FakePads(std::vector<ALPHAg::TWireSignal>& awsignals)
 {
   std::multiset<ALPHAg::TWireSignal, ALPHAg::signal::timeorder> aw_bytime(awsignals.begin(),
 						     awsignals.end());
@@ -949,7 +949,7 @@ uint Match::MergePoints(std::map<int,std::vector<std::pair<ALPHAg::TWireSignal,A
   return np;
 }
 
-std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > Match::CombPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints)
+std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > Match::CombPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >& spacepoints)
 {
   if( fTrace )
     std::cout<<"Match::CombPoints() spacepoints size: "<<spacepoints.size()<<std::endl;
