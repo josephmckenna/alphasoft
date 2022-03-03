@@ -180,6 +180,8 @@ public:
 
   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > matchSig;
 
+  std::vector< TSpacePoint> fSpacePoints;
+
   std::vector<ALPHAg::wf_ref> AWwf;
   std::vector<ALPHAg::wf_ref> PADwf;
 
