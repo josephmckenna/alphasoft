@@ -81,9 +81,11 @@ public:
 
    void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
                        const std::vector<ALPHAg::electrode> &fElectrodeIndex,
-                       std::vector<ALPHAg::TPadSignal>& signal ) const;
+                       std::vector<ALPHAg::TPadSignal>& signal,
+                       const int thread_no,
+                       const int total_threads ) const;
 
-   void Deconvolution( std::vector<ALPHAg::wfholder>& subtracted,
+   void DeconvolutionByRange( std::vector<ALPHAg::wfholder>& subtracted,
                        const std::vector<ALPHAg::electrode> &fElectrodeIndex,
                        std::vector<ALPHAg::TPadSignal>& signals,
                        const int start,

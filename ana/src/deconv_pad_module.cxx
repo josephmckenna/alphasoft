@@ -26,10 +26,16 @@ public:
 
    bool fPWBnorm = false;
    bool fTrace = false;
+
+   const int fThreadNo;
+   const int fThreadCount;
    
 public:
-   DeconvPadFlags() // ctor
-   { }
+   DeconvPadFlags(const int threadNo, const int threadCount):
+      fThreadNo(threadNo), fThreadCount(threadCount) // ctor
+   {
+
+   }
 
    ~DeconvPadFlags() // dtor
    { }
@@ -54,7 +60,11 @@ public:
                                                          d( f->ana_settings )
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="DeconvPADModule";
+      fModuleName = std::string("DeconvPADModule (") + 
+                    std::to_string(fFlags->fThreadNo) + 
+                    std::string("/") + 
+                    std::to_string(fFlags->fThreadCount) +
+                    std::string(")");
 #endif
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");
@@ -171,16 +181,23 @@ public:
          }
       else
          {
-             flow_sig->PadWaves.clear();
-             flow_sig->PadIndex.clear();
-             d.BuildWFContainer(pwb,flow_sig->PadWaves,flow_sig->PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
+             // The first thread builds containers
+             if ( fFlags->fThreadNo == 1)
+             {
+                flow_sig->PadWaves.clear();
+                flow_sig->PadIndex.clear();
+                d.BuildWFContainer(pwb,flow_sig->PadWaves,flow_sig->PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
+             }
+             // Deconvolution is split over fFlags->fThreadCount
              if (flow_sig->PadWaves.size())
              {
-                d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig );
+                d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo, fFlags->fThreadCount );
              }
              if (fFlags->fTrace)
                 std::cout <<"Deconv::FindPadTimes " << flow_sig->pdSig.size() << " found\n";
-             d.LogDeconvRemaineder(flow_sig->PadWaves);
+             //Final thread logs the remainder
+             if ( fFlags->fThreadNo == fFlags->fThreadCount)
+                d.LogDeconvRemaineder(flow_sig->PadWaves);
              ++fCounter;
          }
       return flow;
@@ -210,6 +227,11 @@ public:
    void Usage()
    {
       Help();
+   }
+   DeconvPADModuleFactory(int threadNo, int totalThreadCount):
+      fFlags(threadNo,totalThreadCount)
+   {
+      
    }
    void Init(const std::vector<std::string> &args)
    {    
@@ -271,8 +293,22 @@ public:
    }
 };
 
-static TARegister tar(new DeconvPADModuleFactory);
-
+#define NUMBER_OF_PAD_DECONVOLUTION_THREADS 1
+#if NUMBER_OF_PAD_DECONVOLUTION_THREADS==1
+static TARegister tar_1_1(new DeconvPADModuleFactory(1,1));
+#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==2
+static TARegister tar_1_2(new DeconvPADModuleFactory(1,2));
+static TARegister tar_2_2(new DeconvPADModuleFactory(2,2));
+#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==3
+static TARegister tar_1_3(new DeconvPADModuleFactory(1,3));
+static TARegister tar_2_3(new DeconvPADModuleFactory(2,3));
+static TARegister tar_3_3(new DeconvPADModuleFactory(3,3));
+#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==4
+static TARegister tar_1_4(new DeconvPADModuleFactory(1,4));
+static TARegister tar_2_4(new DeconvPADModuleFactory(2,4));
+static TARegister tar_3_4(new DeconvPADModuleFactory(3,4));
+static TARegister tar_4_4(new DeconvPADModuleFactory(4,4));
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

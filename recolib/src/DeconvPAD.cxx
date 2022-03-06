@@ -517,7 +517,7 @@ void DeconvPAD::BuildWFContainer(
 void DeconvPAD::Deconvolution(
     std::vector<ALPHAg::wfholder>& subtracted,
     const std::vector<ALPHAg::electrode> &fElectrodeIndex,
-    std::vector<ALPHAg::TPadSignal>& signals) const
+    std::vector<ALPHAg::TPadSignal>& signals, const int thread_no = 1, const int total_threads = 1) const
 {
    if(subtracted.empty())
       return;
@@ -525,22 +525,36 @@ void DeconvPAD::Deconvolution(
    size_t nsamples = subtracted.back().h.size();
    assert(nsamples >= thePadBin);
    
-   signals.clear();
-   signals.reserve(nsamples - thePadBin);
+   if (thread_no == 1)
+   {
+      signals.clear();
+      signals.reserve(nsamples - thePadBin);
+   }
    assert(nsamples < 1000);
    if( fTrace )
       std::cout<<"DeconvPAD::Deconvolution Subtracted Size: "<<subtracted.size()
                <<"\t# samples: "<<nsamples<<"\ttheBin: "<<thePadBin<<std::endl;
-
-   return Deconvolution( subtracted, fElectrodeIndex, signals, thePadBin,nsamples);
+   if (thread_no == 1 && total_threads == 1)
+      return DeconvolutionByRange( subtracted, fElectrodeIndex, signals, thePadBin,nsamples);
+   else
+   {
+      float slice_size = (nsamples - thePadBin) / (float)total_threads;
+      int start = floor(slice_size*(thread_no - 1) + thePadBin);
+      int stop = floor( slice_size * thread_no + thePadBin );
+      //I am the last thread
+      if (thread_no == total_threads)
+         stop = nsamples;
+      assert (start =< stop);
+      return DeconvolutionByRange( subtracted, fElectrodeIndex, signals, start ,stop);
+   }
 }
 
-void DeconvPAD::Deconvolution(
+void DeconvPAD::DeconvolutionByRange(
     std::vector<ALPHAg::wfholder>& subtracted,
     const std::vector<ALPHAg::electrode> &fElectrodeIndex,
     std::vector<ALPHAg::TPadSignal>& signals, const int start, const int stop) const
 {
-
+   //std::cout<<"DECONV:"<< start <<" -> "<< stop <<std::endl;
    for(int b = start; b < stop; ++b)// b is the current bin of interest
       {
          // For each bin, order waveforms by size,
@@ -550,7 +564,6 @@ void DeconvPAD::Deconvolution(
          //          <<" workable wf: "<<histset.size()<<std::endl;
          // this is useful to split deconv into the "Subtract" method
          // map ordered wf to corresponding electrode
-         double neTotal = 0.0;
          for (auto const it : histset)
             {
                unsigned int i = it->index;
@@ -560,7 +573,6 @@ void DeconvPAD::Deconvolution(
                const double ne = anElectrode.gain * fScale * wf[b] / fPadResponse[thePadBin];
                if( ne >= fPWBpeak )
                   {
-                     neTotal += ne;
                      // loop over all bins for subtraction
                      SubtractPAD(it,b,ne,fElectrodeIndex);
                      if( int( b - thePadBin) >= 0)
