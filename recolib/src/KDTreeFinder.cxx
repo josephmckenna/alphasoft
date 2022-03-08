@@ -54,7 +54,7 @@ KDTreeFinder::KDTreeFinder(std::vector<TSpacePoint*>* points, const double maxIn
 }
 
 //==============================================================================================
-int KDTreeFinder::RecTracks()
+int KDTreeFinder::RecTracks(std::vector<track_t>& TrackVector)
 {
    int Npoints = fPointsArray.size();
    if( Npoints<=0 )
@@ -82,7 +82,7 @@ int KDTreeFinder::RecTracks()
             }*/
 
          // do not start a track far from the anode
-         if( point->GetR() < fSeedRadCut && fTrackVector.size() > 0 ) break;
+         if( point->GetR() < fSeedRadCut && TrackVector.size() > 0 ) break;
 
          track_t vector_points;
          vector_points.clear();
@@ -102,21 +102,14 @@ int KDTreeFinder::RecTracks()
             {
                vector_points.push_front(i);
 
-               fTrackVector.push_back( vector_points );
-               for(auto& it: vector_points)
-                  {
-#if BUILD_EXCLUSION_LIST
-                     fExclusionList.push_back(fPointsArray[it]);
-#endif
-                     //fPointsArray[it]=NULL;
-                  }
+               TrackVector.push_back( vector_points );
                ++fNtracks;
             }
       }//i loop
 
-   if( fNtracks != int(fTrackVector.size()) )
+   if( fNtracks != int(TrackVector.size()) )
       std::cerr<<"KDTreeFinder::KDTreeFinder(): Number of found tracks "<<fNtracks
-               <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+               <<" does not match the number of entries "<<TrackVector.size()<<std::endl;
    else if( debug )
       {
          std::cout<<"KDTreeFinder::KDTreeFinder(): Number of found tracks "<<fNtracks<<std::endl;
@@ -130,7 +123,7 @@ int KDTreeFinder::RecTracks()
 
 void KDTreeFinder::PointCluster(const int index, double distcut, track_t& atrack) 
 {
-   if (fPointsArray.size() == index + 1 )
+   if (fPointsArray.size() == (size_t) index + 1 )
       return;
    TSpacePoint* thisPoint = fPointsArray[index];
    if (!thisPoint)

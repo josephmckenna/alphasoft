@@ -203,6 +203,13 @@ int TSpacePoint::Compare(const TObject* aPoint) const
   if ( fr > ((TSpacePoint*) aPoint)->fr ) return -1;// smaller = large radius = earlier
   else if ( fr < ((TSpacePoint*) aPoint)->fr ) return 1;// larger = small radius = later
   else return 0;
+  /*if (fr != ((TSpacePoint*) aPoint)->fr)
+     return ( fr > ((TSpacePoint*) aPoint)->fr )?-1:1;
+
+  if (fw != ((TSpacePoint*) aPoint)->fw)
+     return ( fw > ((TSpacePoint*) aPoint)->fw )?-1:1;
+*/
+  return 0;
 }
 
 // int TSpacePoint::Compare(const TObject* aPoint) const

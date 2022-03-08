@@ -16,7 +16,6 @@
 #include "TFitVertex.hh"
 #include "TFitLine.hh"
 
-enum finderChoice { base, adaptive, neural };
 
 class TracksFinder;
 class TFitVertex;
@@ -112,8 +111,9 @@ public:
    void AddSpacePoint( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints, double zcut );
    void AddSpacePoint( const TObjArray* points );
    void AddSpacePoint( const std::vector<ALPHAg::signal> spacepoints );
-   int FindTracks(finderChoice finder=adaptive);
+   int FindTracks(std::vector<track_t>& track_array,finderChoice finder=adaptive);
    void AddTracks( const std::vector<track_t>* track_vector );
+
    int FitLines();
    int FitHelix();
    int RecVertex(TFitVertex* Vertex);

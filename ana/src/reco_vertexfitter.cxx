@@ -1,5 +1,5 @@
 //
-// reco_module.cxx
+// reco_spacepoint_builder.cxx
 //
 // reconstruction of TPC data
 //
@@ -20,9 +20,10 @@
 #include "AnaSettings.hh"
 #include "json.hpp"
 
-#include "Reco.hh"
+#include "TRecoVertexFitter.hh"
+#include "TTrackBuilder.hh"
 
-class RecoRunFlags
+class VertexFitterFlags
 {
 public:
    bool fRecOff = false; //Turn reconstruction off
@@ -30,103 +31,73 @@ public:
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
+   double fMagneticField=-1.;
+   bool fFieldMap=true;
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   double fMagneticField=-1.;
-   bool fFieldMap=true;
 
-   double rfudge = 0.;
-   double pfudge = 0.;
-
-   bool ffiduc = false;
-   //   enum finderChoice { base, adaptive, neural };
    finderChoice finder = adaptive;
 
+   bool ffiduc = false;
+   
    AnaSettings* ana_settings=0;
-
-   std::string fLocation="CERN";
-
 public:
-   RecoRunFlags() // ctor
+   VertexFitterFlags() // ctor
    { }
 
-   ~RecoRunFlags() // dtor
+   ~VertexFitterFlags() // dtor
    { }
 };
 
-class RecoRun: public TARunObject
+class VertexFitter: public TARunObject
 {
 public:
    bool do_plot = false;
-   bool fTrace = false;
-   //bool fTrace = true;
+   const bool fTrace = false;
+   // bool fTrace = true;
    bool fVerb=false;
 
-   RecoRunFlags* fFlags;
+   VertexFitterFlags* fFlags;
 
 private:
-   Reco r;
-   unsigned fNhitsCut;
- 
-   double f_rfudge;
-   double f_pfudge;
+   TRecoVertexFitter vertexFitter;
 
+   unsigned fNhitsCut;
    bool diagnostics;
 
-   bool fiducialization; // exclude points in the inhomogeneous field regions
-   double z_fid; // region of inhomogeneous field
- 
 public:
    TStoreEvent *analyzed_event;
    TTree *EventTree;
 
-   RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
+   VertexFitter(TARunInfo* runinfo, VertexFitterFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField,  
-                                                    f->fLocation)
+                                                 vertexFitter( 
+                                                    fFlags->ana_settings->GetDouble("RecoModule","VtxChi2Cut"), 
+                                                    fTrace
+                                                 )
+
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="RecoModule";
+      fModuleName="VertexFitter";
 #endif
-      printf("RecoRun::ctor!\n");
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
-      fiducialization=fFlags->ffiduc;
-      z_fid=650.; // mm
       
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
         
-      if( fabs(fFlags->rfudge) < 1 )
-         f_rfudge = 1.+fFlags->rfudge;
-      else
-         std::cerr<<"RecoRun::RecoRun r fudge factor must be < 1"<<std::endl;
 
-      if( fabs(fFlags->pfudge) < 1 )
-         f_pfudge = 1.+fFlags->pfudge;  
-      else
-         std::cerr<<"RecoRun::RecoRun phi fudge factor must be < 1"<<std::endl;
-
-      r.SetTrace( fTrace );
    }
 
-   ~RecoRun()
+   ~VertexFitter()
    {
-      printf("RecoRun::dtor!\n");
+      printf("VertexFitter::dtor!\n");
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("RecoRun::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-
-      if( !fFlags->fFieldMap ) r.UseSTRfromData(runinfo->fRunNo);
-
-      std::cout<<"RecoRun::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
-      std::cout<<"RecoRun::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
-      r.SetFudgeFactors(f_rfudge,f_pfudge);
-
-
+      printf("VertexFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       analyzed_event = new TStoreEvent;
@@ -134,55 +105,35 @@ public:
       EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
       delete analyzed_event;
       analyzed_event=NULL;
-
-      if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
-  
-      std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
-      runinfo->fRoot->fOutputFile->cd();
-      int error_level_save = gErrorIgnoreLevel;
-      gErrorIgnoreLevel = kFatal;
-      TObjString sett = fFlags->ana_settings->GetSettingsString();
-      int bytes_written = gDirectory->WriteTObject(&sett,"ana_settings");
-      if( bytes_written > 0 )
-         std::cout<<" DONE ("<<bytes_written<<")"<<std::endl;
-      else
-         std::cout<<" FAILED"<<std::endl;
-      gErrorIgnoreLevel = error_level_save;
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("RecoRun::EndRun, run %d\n", runinfo->fRunNo);
-      r.PrintPattRec();
+      printf("VertexFitter::EndRun, run %d\n", runinfo->fRunNo);
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("RecoRun::PauseRun, run %d\n", runinfo->fRunNo);
+      printf("VertexFitter::PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("RecoRun::ResumeRun, run %d\n", runinfo->fRunNo);
+      printf("VertexFitter::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if( fTrace )
-         printf("RecoRun::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
+         printf("VertexFitter::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
       if (!ef || !ef->fEvent)
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
-#ifdef HAVE_MANALYZER_PROFILER
-      TAClock start_time = TAClockNow();
-#endif
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
@@ -239,7 +190,7 @@ public:
                   return flow;
                }
          }
-      //     std::cout<<"RecoRun::Analyze Event # "<<age->counter<<std::endl;
+      //     std::cout<<"VertexFitter::Analyze Event # "<<age->counter<<std::endl;
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
@@ -250,73 +201,21 @@ public:
 #endif
          return flow;
       }
-      
-      if( fTrace )
-         {
-            int AW,PAD,SP=-1;
-            AW=PAD=SP;
-            if (SigFlow->awSig.size()) AW=int(SigFlow->awSig.size());
-            printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-            if (SigFlow->pdSig.size()) PAD=int(SigFlow->pdSig.size());
-            printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-            if (SigFlow->matchSig.size()) SP=int(SigFlow->matchSig.size());
-            printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
-         }
-      if (SigFlow->matchSig.empty())
-      {
-         if( fVerb ) 
-            std::cout<<"RecoRun::No matched hits"<<std::endl;
-          SigFlow->fSkipReco = true;
-#ifdef HAVE_MANALYZER_PROFILER
-          flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
-#endif
-      }
-      else if( SigFlow->matchSig.size() > fNhitsCut )
-         {
-            if( fVerb ) 
-               std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
-            SigFlow->fSkipReco = true;
-#ifdef HAVE_MANALYZER_PROFILER
-            flow = new TAUserProfilerFlow(flow,"reco_module(too many hits)",start_time);
-#endif
-         }
-
       if (!SigFlow->fSkipReco)
-         {
-            //Root's fitting routines are often not thread safe
-#ifdef MODULE_MULTITHREAD
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-#endif
-      
-            if( !fiducialization )
-               r.AddSpacePoint( SigFlow->matchSig );
-            else
-               r.AddSpacePoint( SigFlow->matchSig, z_fid );
-
-            if( fTrace )
-               printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
-
-            r.FindTracks(SigFlow->fTrackVector ,fFlags->finder);
-            if( fTrace )
-               printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
-
-            if( fFlags->fMagneticField == 0. )
-               {
-                  int nlin = r.FitLines();
-                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-               }
-
-            int nhel = r.FitHelix();
-            if( fTrace )
-               std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
-
+      {
             TFitVertex theVertex(age->counter);
             //theVertex.SetChi2Cut( fVtxChi2Cut );
-            int status = r.RecVertex( &theVertex );
+            int status;
+            {
+            // TSeqCollection is not thread safe...
+            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+
+            status = vertexFitter.RecVertex(SigFlow->fHelixArray, &theVertex );
+            } 
             if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
-            analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
+            analyzed_event->SetEvent( &SigFlow->fSpacePoints, &SigFlow->fLinesArray, &SigFlow->fHelixArray);
             analyzed_event->SetVertexStatus( status );
             if( status > 0 )
                {
@@ -326,7 +225,7 @@ public:
                }
             else if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
-         }
+      }
  
       {
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
@@ -336,25 +235,24 @@ public:
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
-      //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-      if (!SigFlow->fSkipReco) r.Reset();
+
       return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      printf("RecoRun::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      printf("VertexFitter::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
-class RecoModuleFactory: public TAFactory
+class VertexFitterFactory: public TAFactory
 {
 public:
-   RecoRunFlags fFlags;
+   VertexFitterFlags fFlags;
 public:
    void Help()
    {
-      printf("RecoModuleFactory::Help\n");
+      printf("VertexFitterFactory::Help\n");
       printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t--useeventrange 123 456\t\tLimit reconstruction to an event range\n");
       //      printf("\t--Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
@@ -374,7 +272,7 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
-      printf("RecoModuleFactory::Init!\n");
+      printf("VertexFitterFactory::Init!\n");
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
             Help();
@@ -413,6 +311,10 @@ public:
             fFlags.fRecOff = true;
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
+
+         if( args[i] == "--anasettings" ) json=args[i+1];
+         
+         if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
          if( args[i] == "--finder" ){
             std::string findString = args[++i];
             // if(findString == "base") fFlags.finder = RecoRunFlags::base;
@@ -425,15 +327,6 @@ public:
                std::cerr << "Unknown track finder mode \"" << findString << "\", using adaptive" << std::endl;
             }
          }
-
-         if( args[i] == "--anasettings" ) json=args[i+1];
-
-         if( args[i] == "--rfudge" ) fFlags.rfudge = atof(args[i+1].c_str());
-         if( args[i] == "--pfudge" ) fFlags.pfudge = atof(args[i+1].c_str());
-         
-         if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
-         
-         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
@@ -442,17 +335,17 @@ public:
 
    void Finish()
    {
-      printf("RecoModuleFactory::Finish!\n");
+      printf("VertexFitterFactory::Finish!\n");
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new RecoRun(runinfo,&fFlags);
+      printf("VertexFitterFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new VertexFitter(runinfo,&fFlags);
    }
 };
 
 
-static TARegister tar(new RecoModuleFactory);
+static TARegister tar(new VertexFitterFactory);
 
 /* emacs
  * Local Variables:

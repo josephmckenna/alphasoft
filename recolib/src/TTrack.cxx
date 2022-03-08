@@ -11,7 +11,7 @@
 
 #include "TPCconstants.hh"
 
-TTrack::TTrack():fPoints(0),fNpoints(0),
+TTrack::TTrack():fNpoints(0),
 		 fB(0.),
 		 fStatus(-1),fParticle(0),
 		 fPointsCut(28),
@@ -20,7 +20,7 @@ TTrack::TTrack():fPoints(0),fNpoints(0),
 		 fPoint(0)
 {}
 
-TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
+TTrack::TTrack(TObjArray* array, double B):fNpoints(0),
 					   fB(B),
 					   fStatus(-1),fParticle(0),
 					   fPointsCut(28),
@@ -29,8 +29,9 @@ TTrack::TTrack(TObjArray* array, double B):fPoints(0),fNpoints(0),
 { 
   fNpoints=array->GetEntriesFast();
   fPoints.reserve(fNpoints);
+  
   for(int ip=0; ip<fNpoints; ++ip)
-    fPoints[ip]=(TSpacePoint*)array->At(ip);
+    fPoints.emplace_back(*(TSpacePoint*)array->At(ip));
 }
 
 TTrack::TTrack(const TObjArray* array):fB(0.),
@@ -43,10 +44,10 @@ TTrack::TTrack(const TObjArray* array):fB(0.),
   fNpoints=array->GetEntriesFast();
   fPoints.reserve(fNpoints);
   for(int ip=0; ip<fNpoints; ++ip)
-        fPoints.push_back((TSpacePoint*)array->At(ip));
+        fPoints.emplace_back(*(TSpacePoint*)array->At(ip));
 }
 
-TTrack::TTrack(double B):fPoints(0),fNpoints(0),
+TTrack::TTrack(double B):fNpoints(0),
 			 fB(B),
 			 fStatus(-1),fParticle(0),
 			 fPointsCut(28),
@@ -112,11 +113,11 @@ TTrack& TTrack::operator=( const TTrack& right )
   return *this;
 }
 
-int TTrack::AddPoint(TSpacePoint* aPoint)
+int TTrack::AddPoint(const TSpacePoint& aPoint)
 {
-  if( aPoint->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) )
+  if( aPoint.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) )
     {
-      fPoints.push_back(aPoint);
+      fPoints.emplace_back(aPoint);
       ++fNpoints;
     }
   return fNpoints;
@@ -149,7 +150,6 @@ double TTrack::GetApproxPathLength()
 
 double TTrack::CalculateResiduals()
 {
-  TSpacePoint* aPoint=0;
   fResiduals2=0.;
   fResidual.SetXYZ(0.,0.,0.);
   fResiduals.clear();
@@ -161,11 +161,11 @@ double TTrack::CalculateResiduals()
   int npoints=fPoints.size();
   for(int i=0; i<npoints; ++i)
     {
-      aPoint = (TSpacePoint*) fPoints.at(i);
-      TVector3 p(aPoint->GetX(),
-		 aPoint->GetY(),
-		 aPoint->GetZ());
-      double r = aPoint->GetR();
+      const TSpacePoint& aPoint = fPoints.at(i);
+      TVector3 p(aPoint.GetX(),
+		 aPoint.GetY(),
+		 aPoint.GetZ());
+      double r = aPoint.GetR();
 
       TVector3 res( p-Evaluate(r*r) );
       fResidual += res; 
@@ -183,7 +183,6 @@ double TTrack::CalculateResiduals()
       fResiduals2 += res.Mag2();
 
     }
-  aPoint=0;
   return fResiduals2;
 }
 

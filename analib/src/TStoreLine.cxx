@@ -19,7 +19,7 @@ TStoreLine::TStoreLine():fDirection(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kU
 {}
 
 TStoreLine::TStoreLine(TFitLine* line, 
-		       const std::vector<TSpacePoint*>* points):fDirection( line->GetU() ),
+		       const std::vector<TSpacePoint>* points):fDirection( line->GetU() ),
                                                                 fPoint( line->Get0() ),
                                                                 fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
                                                                 fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
@@ -31,11 +31,10 @@ TStoreLine::TStoreLine(TFitLine* line,
    fchi2=line->GetChi2()/double(line->GetDoF())/3.;
 
   //fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
-  for( uint i=0; i<points->size(); ++i )
-    {
-      TSpacePoint* p = (TSpacePoint*) points->at(i);
-      if( p->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
-	fSpacePoints.AddLast( new TSpacePoint( *p ) );
+  for (const TSpacePoint& p: *points)
+  {
+      if( p.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
+	fSpacePoints.AddLast( new TSpacePoint( p ) );
     }
   //  fSpacePoints.Compress();
   fNpoints = fSpacePoints.GetEntries();

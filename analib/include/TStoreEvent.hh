@@ -48,7 +48,9 @@ public:
   virtual ~TStoreEvent();  // destructor
 
   TStoreEvent& operator=(const TStoreEvent&);
-  void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
+  void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
+                const std::vector<TFitHelix*>* helices);
+void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
                 const std::vector<TFitHelix*>* helices);
 
   inline int GetEventNumber() const {return fID;}

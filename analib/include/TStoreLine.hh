@@ -34,7 +34,7 @@ private:
 
 public:
   TStoreLine();
-  TStoreLine(TFitLine*, const std::vector<TSpacePoint*>*);
+  TStoreLine(TFitLine*, const std::vector<TSpacePoint>*);
   TStoreLine(TFitLine*);
   virtual ~TStoreLine();  // destructor
 

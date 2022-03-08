@@ -27,7 +27,7 @@ TStoreHelix::TStoreHelix():fc(ALPHAg::kUnknown),
 {}
 
 TStoreHelix::TStoreHelix(TFitHelix* helix, 
-			 const std::vector<TSpacePoint*>* points):fc(helix->GetC()), fRc(helix->GetRc()), 
+			 const std::vector<TSpacePoint>* points):fc(helix->GetC()), fRc(helix->GetRc()), 
 						  fphi0(helix->GetPhi0()), fD(helix->GetD()),
 						  flambda(helix->GetLambda()), fz0(helix->GetZ0()),
 						  fx0( helix->GetX0() ), fy0( helix->GetY0() ),
@@ -43,12 +43,11 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
   fResidual(helix->GetResidual()),fResiduals(helix->GetResidualsVector()),
   fResiduals2(helix->GetResidualsSquared())
 {
-  for( uint i=0; i<points->size(); ++i )
-    {
-      TSpacePoint* p = (TSpacePoint*) points->at(i);
-      if( p->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
-	fSpacePoints.AddLast( new TSpacePoint( *p ) );
-    }
+  for(const TSpacePoint& p: *points)
+  {
+    if( p.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
+      fSpacePoints.AddLast( new TSpacePoint( p ) );
+  }
   //  fSpacePoints.Compress();
   fNpoints = fSpacePoints.GetEntries();
 }

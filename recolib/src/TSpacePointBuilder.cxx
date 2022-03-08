@@ -19,8 +19,10 @@ TSpacePointBuilder::TSpacePointBuilder(AnaSettings* ana_set, double B, std::stri
       fSTR = new LookUpTable(ALPHAg::_co2frac); // field map version (simulation)
       fMagneticField = 1.;
    }
-else
-   fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
+   else
+   {
+      fSTR = new LookUpTable(ALPHAg::_co2frac, fMagneticField, fLocation); // uniform field version (simulation)
+   }
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
 }
 
@@ -66,7 +68,6 @@ void TSpacePointBuilder::BuildSpacePointArray(
                       sp->first.height);
          ++n;
       }
-   //TSeqCollection::QSort((TObject*)PointsArray.data(),0,PointsArray.size());
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<PointsArray.size()<<std::endl;
 }

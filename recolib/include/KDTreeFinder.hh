@@ -38,7 +38,7 @@ public:
    inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}
    inline double GetLastPointRadCut() const { return fLastPointRadCut; }
 
-   virtual int RecTracks();
+   virtual int RecTracks(std::vector<track_t>& TrackVector);
 
    void PointCluster(const int index, double distcut, track_t& atrack);
 };

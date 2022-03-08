@@ -22,13 +22,13 @@ private:
    const double fMaxIncreseAdapt;
 
 public:
-   AdaptiveFinder(std::vector<TSpacePoint*>*, const double MaxIncrease, const double LastPointRadCut );
+   AdaptiveFinder(const std::vector<TSpacePoint*>*, const double MaxIncrease, const double LastPointRadCut );
    ~AdaptiveFinder(){};
 
    inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}
    inline double GetLastPointRadCut() const { return fLastPointRadCut; }
 
-   virtual int RecTracks();
+   virtual int RecTracks(std::vector<track_t>&);
 
    int NextPoint( const TSpacePoint*, const int, const int, double, track_t&) const;
    int NextPoint( const int, double, double, double, track_t&) const;

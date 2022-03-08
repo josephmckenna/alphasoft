@@ -20,9 +20,10 @@
 #include "AnaSettings.hh"
 #include "json.hpp"
 
-#include "TSpacePointBuilder.hh"
+#include "TRecoTrackFinder.hh"
+#include "TTrackBuilder.hh"
 
-class SpacePointBuilderFlags
+class TrackFinderFlags
 {
 public:
    bool fRecOff = false; //Turn reconstruction off
@@ -30,41 +31,39 @@ public:
    bool fTimeCut = false;
    double start_time = -1.;
    double stop_time = -1.;
+   double fMagneticField=-1.;
+   bool fFieldMap=true;
    bool fEventRangeCut = false;
    int start_event = -1;
    int stop_event = -1;
-   double fMagneticField=-1.;
-   bool fFieldMap=true;
 
-   double rfudge = 0.;
-   double pfudge = 0.;
+   finderChoice finder = adaptive;
 
    bool ffiduc = false;
    
    AnaSettings* ana_settings=0;
-
-   std::string fLocation="CERN";
-
 public:
-   SpacePointBuilderFlags() // ctor
+   TrackFinderFlags() // ctor
    { }
 
-   ~SpacePointBuilderFlags() // dtor
+   ~TrackFinderFlags() // dtor
    { }
 };
 
-class SpacePointBuilder: public TARunObject
+class TrackFinder: public TARunObject
 {
 public:
    bool do_plot = false;
    const bool fTrace = false;
-   // bool fTrace = true;
+   //bool fTrace = true;
    bool fVerb=false;
 
-   SpacePointBuilderFlags* fFlags;
+   TrackFinderFlags* fFlags;
 
+   std::string fLocation="CERN";
 private:
-   TSpacePointBuilder r;
+   TRecoTrackFinder r;
+   TTrackBuilder track_builder;
    unsigned fNhitsCut;
  
    double f_rfudge;
@@ -76,13 +75,14 @@ private:
    double z_fid; // region of inhomogeneous field
  
 public:
-   SpacePointBuilder(TARunInfo* runinfo, SpacePointBuilderFlags* f): TARunObject(runinfo),
+
+   TrackFinder(TARunInfo* runinfo, TrackFinderFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
-                                                 r( f->ana_settings, f->fMagneticField,  
-                                                    f->fLocation, fTrace)
+                                                 r( f->ana_settings, fTrace),
+                                                 track_builder(f->fMagneticField,fLocation, fTrace)
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="SpacePointBuilder";
+      fModuleName="TrackFinder";
 #endif
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
@@ -92,145 +92,137 @@ public:
       assert( fFlags->ana_settings );
       fNhitsCut = fFlags->ana_settings->GetInt("RecoModule","NhitsCut");
         
-      if( fabs(fFlags->rfudge) < 1 )
-         f_rfudge = 1.+fFlags->rfudge;
-      else
-         std::cerr<<"SpacePointBuilder::SpacePointBuilder r fudge factor must be < 1"<<std::endl;
-
-      if( fabs(fFlags->pfudge) < 1 )
-         f_pfudge = 1.+fFlags->pfudge;  
-      else
-         std::cerr<<"SpacePointBuilder::SpacePointBuilder phi fudge factor must be < 1"<<std::endl;
 
    }
 
-   ~SpacePointBuilder()
+   ~TrackFinder()
    {
-      printf("SpacePointBuilder::dtor!\n");
+      printf("TrackFinder::dtor!\n");
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("SpacePointBuilder::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      printf("TrackFinder::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
-      if( !fFlags->fFieldMap ) r.UseSTRfromData(runinfo->fRunNo);
+      if( !fFlags->fFieldMap ) track_builder.UseSTRfromData(runinfo->fRunNo);
 
-      std::cout<<"SpacePointBuilder::BeginRun() r fudge factor: "<<f_rfudge<<std::endl;
-      std::cout<<"SpacePointBuilder::BeginRun() phi fudge factor: "<<f_pfudge<<std::endl;
-      r.SetFudgeFactors(f_rfudge,f_pfudge);
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("SpacePointBuilder::EndRun, run %d\n", runinfo->fRunNo);
+      printf("TrackFinder::EndRun, run %d\n", runinfo->fRunNo);
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("SpacePointBuilder::PauseRun, run %d\n", runinfo->fRunNo);
+      printf("TrackFinder::PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("SpacePointBuilder::ResumeRun, run %d\n", runinfo->fRunNo);
+      printf("TrackFinder::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if( fTrace )
-         printf("SpacePointBuilder::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
+         printf("TrackFinder::AnalyzeFlowEvent, run %d\n", runinfo->fRunNo);
 
       AgEventFlow *ef = flow->Find<AgEventFlow>();
 
-      if (!ef || !ef->fEvent) {
-         *flags |= TAFlag_SKIP_PROFILE;
+      if (!ef || !ef->fEvent)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-#ifdef HAVE_MANALYZER_PROFILER
-      TAClock start_time = TAClockNow();
-#endif
-      AgEvent *age = ef->fEvent;
-      if (fFlags->fRecOff) {
-         *flags |= TAFlag_SKIP_PROFILE;
+      AgEvent* age = ef->fEvent;
+      if( fFlags->fRecOff )
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
          return flow;
       }
-      if (fFlags->fTimeCut) {
-         if (age->time < fFlags->start_time) {
-            *flags |= TAFlag_SKIP_PROFILE;
+      if (fFlags->fTimeCut)
+      {
+         if (age->time<fFlags->start_time)
+         {
+          *flags|=TAFlag_SKIP_PROFILE;
             return flow;
          }
-         if (age->time > fFlags->stop_time) {
-            *flags |= TAFlag_SKIP_PROFILE;
+         if (age->time>fFlags->stop_time)
+         {
+             *flags|=TAFlag_SKIP_PROFILE;
             return flow;
          }
       }
 
-      if (fFlags->fEventRangeCut) {
-         if (age->counter < fFlags->start_event) {
-            *flags |= TAFlag_SKIP_PROFILE;
+      if (fFlags->fEventRangeCut)
+      {
+         if (age->counter<fFlags->start_event)
+         {
+            *flags|=TAFlag_SKIP_PROFILE;
             return flow;
          }
-         if (age->counter > fFlags->stop_event) {
-            *flags |= TAFlag_SKIP_PROFILE;
-            return flow;
+         if (age->counter>fFlags->stop_event)
+         {
+                   *flags|=TAFlag_SKIP_PROFILE;
+                  return flow;
          }
       }
-      //     std::cout<<"SpacePointBuilder::Analyze Event # "<<age->counter<<std::endl;
+      //     std::cout<<"TrackFinder::Analyze Event # "<<age->counter<<std::endl;
 
-      AgSignalsFlow *SigFlow = flow->Find<AgSignalsFlow>();
-      if (!SigFlow) {
+      AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
+      if( !SigFlow ) 
+      {
 #ifdef HAVE_MANALYZER_PROFILER
-         *flags |= TAFlag_SKIP_PROFILE;
+         *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
       }
-      if (fTrace) {
-         int AW, PAD, SP = -1;
-         AW = PAD = SP;
-         if (SigFlow->awSig.size()) AW = int(SigFlow->awSig.size());
-         printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-         if (SigFlow->pdSig.size()) PAD = int(SigFlow->pdSig.size());
-         printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-         if (SigFlow->matchSig.size()) SP = int(SigFlow->matchSig.size());
-         printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
-      }
-      if (SigFlow->matchSig.empty()) {
-         SigFlow->fSkipReco = true;
-         if (fVerb) std::cout << "RecoRun::No matched hits" << std::endl;
+      if ( SigFlow->fSpacePoints.empty() || SigFlow->fSkipReco )
+      {
 #ifdef HAVE_MANALYZER_PROFILER
-         flow = new TAUserProfilerFlow(flow, "reco_spacepoint_builder(no matched hits)", start_time);
+         *flags|=TAFlag_SKIP_PROFILE;
 #endif
-      } else if (SigFlow->matchSig.size() > fNhitsCut) {
-         SigFlow->fSkipReco = true;
-         if (fVerb) std::cout << "RecoRun::AnalyzeFlowEvent Too Many Points... quitting" << std::endl;
-#ifdef HAVE_MANALYZER_PROFILER
-         flow = new TAUserProfilerFlow(flow, "reco_module(too many hits)", start_time);
-#endif
+         return flow;
       }
-      if (SigFlow->fSkipReco ) return flow;
-      SigFlow->fSpacePoints.clear();
-      if (!fiducialization)
-         r.BuildSpacePointArray(SigFlow->matchSig, SigFlow->fSpacePoints);
-      else
-         r.BuildSpacePointArray(SigFlow->matchSig, SigFlow->fSpacePoints, z_fid);
-      if (fTrace) printf("SpacePointBuilder::Analyze  Points: %ld\n", SigFlow->fSpacePoints.size());
+
+      std::vector<TSpacePoint*> SortedPoints;
+      {
+         // TSeqCollection is not threadsafe... 
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+         //Unfolding the array into a vector of points isn't free... so maybe we can look at changing the finder classes
+
+         SortedPoints.reserve(SigFlow->fSpacePoints.size());
+         for (const TSpacePoint& p: SigFlow->fSpacePoints)
+         {
+            SortedPoints.push_back( (TSpacePoint*) &p);
+         }
+         TSeqCollection::QSort((TObject**)SortedPoints.data(),0,SortedPoints.size());
+      }
+      SigFlow->fTrackVector.clear();
+      {
+         r.FindTracks(SortedPoints, SigFlow->fTrackVector ,fFlags->finder);
+      }
+      track_builder.BuildTracks(   SigFlow->fTrackVector,SortedPoints, SigFlow->fTracksArray );
+      if( fTrace )
+         printf("RecoTrackFinder::Analyze Tracks: %ld\n",SigFlow->fTrackVector.size());
       return flow;
    }
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      printf("SpacePointBuilder::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      printf("TrackFinder::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
-class SpacePointBuilderFactory: public TAFactory
+class TrackFinderFactory: public TAFactory
 {
 public:
-   SpacePointBuilderFlags fFlags;
+   TrackFinderFlags fFlags;
 public:
    void Help()
    {
-      printf("RecoModuleFactory::Help\n");
+      printf("TrackFinderFactory::Help\n");
       printf("\t--usetimerange 123.4 567.8\t\tLimit reconstruction to a time range\n");
       printf("\t--useeventrange 123 456\t\tLimit reconstruction to an event range\n");
       //      printf("\t--Bmap xx\t\tSet STR using Babcock Map OBSOLETE!!! This is now default\n");
@@ -250,7 +242,7 @@ public:
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
-      printf("RecoModuleFactory::Init!\n");
+      printf("TrackFinderFactory::Init!\n");
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
             Help();
@@ -290,15 +282,21 @@ public:
          if( args[i] == "--diag" )
             fFlags.fDiag = true;
 
-
          if( args[i] == "--anasettings" ) json=args[i+1];
-
-         if( args[i] == "--rfudge" ) fFlags.rfudge = atof(args[i+1].c_str());
-         if( args[i] == "--pfudge" ) fFlags.pfudge = atof(args[i+1].c_str());
          
          if( args[i] == "--fiduc" ) fFlags.ffiduc = true;
-         
-         if( args[i] == "--location" ) fFlags.fLocation=args[i+1];
+         if( args[i] == "--finder" ){
+            std::string findString = args[++i];
+            // if(findString == "base") fFlags.finder = RecoRunFlags::base;
+            // else if(findString == "neural") fFlags.finder = RecoRunFlags::neural;
+            // else if(findString == "adaptive") fFlags.finder = RecoRunFlags::adaptive;
+            if(findString == "base") fFlags.finder = base;
+            else if(findString == "neural") fFlags.finder = neural;
+            else if(findString == "adaptive") fFlags.finder = adaptive;
+            else {
+               std::cerr << "Unknown track finder mode \"" << findString << "\", using adaptive" << std::endl;
+            }
+         }
       }
 
       fFlags.ana_settings=new AnaSettings(json.Data());
@@ -307,17 +305,17 @@ public:
 
    void Finish()
    {
-      printf("RecoModuleFactory::Finish!\n");
+      printf("TrackFinderFactory::Finish!\n");
    }
    TARunObject* NewRunObject(TARunInfo* runinfo)
    {
-      printf("RecoModuleFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      return new SpacePointBuilder(runinfo,&fFlags);
+      printf("TrackFinderFactory::NewRunObject, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      return new TrackFinder(runinfo,&fFlags);
    }
 };
 
 
-static TARegister tar(new SpacePointBuilderFactory);
+static TARegister tar(new TrackFinderFactory);
 
 /* emacs
  * Local Variables:

@@ -166,6 +166,8 @@ class AgAnalysisFlow: public TAFlowEvent
 };
 
 #include "SignalsType.hh"
+#include "TracksFinder.hh"
+
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
@@ -180,7 +182,13 @@ public:
 
   std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > matchSig;
 
+  // Reco associated containers
+  bool fSkipReco = false;
   std::vector< TSpacePoint> fSpacePoints;
+  std::vector< track_t> fTrackVector;
+  std::vector<TTrack> fTracksArray;
+  std::vector<TFitLine*> fLinesArray;
+  std::vector<TFitHelix*> fHelixArray;
 
   std::vector<ALPHAg::wf_ref> AWwf;
   std::vector<ALPHAg::wf_ref> PADwf;
@@ -194,13 +202,14 @@ public:
   AgSignalsFlow(TAFlowEvent* flow):
     TAFlowEvent(flow)
   {
-
+     fSkipReco = false;
   }
   
   AgSignalsFlow(TAFlowEvent* flow,
 		std::vector<ALPHAg::TWireSignal> s):
     TAFlowEvent(flow)
   {
+    fSkipReco = false;
     awSig= std::move(s);
   }
 
@@ -209,6 +218,7 @@ public:
   		std::vector<ALPHAg::TPadSignal>& p):
     TAFlowEvent(flow)
   {
+    fSkipReco = false;
     awSig = std::move(s);
     pdSig = std::move(p);
   }
@@ -218,6 +228,7 @@ public:
 		std::vector<ALPHAg::wf_ref>& awf, std::vector<ALPHAg::wf_ref>& pwf):
     TAFlowEvent(flow)
   {
+    fSkipReco = false;
     AWwf = std::move(awf);
     PADwf = std::move(pwf);
     awSig = std::move(s);

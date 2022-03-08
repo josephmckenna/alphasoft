@@ -11,7 +11,7 @@
 #include <deque>
 
 typedef std::deque<int> track_t;
-
+enum finderChoice { base, adaptive, neural };
 
 #define BUILD_EXCLUSION_LIST 0
 
@@ -19,7 +19,6 @@ class TracksFinder
 {
 protected:
    std::vector<TSpacePoint*> fPointsArray;
-   std::vector<track_t> fTrackVector;
    int fNtracks;
 
    double fSeedRadCut;
@@ -42,7 +41,7 @@ private:
 #endif
 
 public:
-   TracksFinder(std::vector<TSpacePoint*>*);
+   TracksFinder(const std::vector<TSpacePoint*>*);
    virtual ~TracksFinder();
 
    inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }
@@ -55,11 +54,8 @@ public:
    inline int GetNpointsCut() const         { return fNpointsCut; }
 
    virtual void Clear();
-   inline int GetNumberOfTracks() const {return fNtracks;}
-   inline const std::vector<track_t>* GetTrackVector() const { return &fTrackVector; }
 
-   virtual int RecTracks();
-   void AddTrack(track_t&);
+   virtual int RecTracks(std::vector<track_t>& fTrackVector);
 
    inline void GetReasons(int& t, int& n, int& r) { t=track_not_advancing; n=points_cut; r=rad_cut;}
 

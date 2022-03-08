@@ -104,7 +104,7 @@ public:
    double MeasureZed(const TSpacePoint*) const;
    double DistanceRphi(const TSpacePoint*) const;
 
-   static inline bool Order(const TSpacePoint LHS,const  TSpacePoint RHS )
+   static inline bool Order(const TSpacePoint& LHS,const TSpacePoint& RHS )
    {
       bool greater = (LHS.fr > RHS.fr);
       if(greater || LHS.fr < RHS.fr){
@@ -112,6 +112,14 @@ public:
       } else {                  // sorting only by R makes maps and sets think two points are equal if r is equal
          return ((LHS.fz > RHS.fz) || ((LHS.fz == RHS.fz) && (LHS.fphi > RHS.fphi)));
       }
+      // Safer alternative?
+      /*if (LHS.fr != RHS.fr)
+         return LHS.fr > RHS.fr;
+      if (LHS.fw != RHS.fw)
+         return LHS.fw > RHS.fw;
+      if ( LHS.fz != RHS.fz)
+         return LHS.fz > RHS.fz
+      return LHS.fphi > RHS.fphi;*/
    }
 
    // static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )

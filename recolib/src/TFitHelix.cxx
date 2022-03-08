@@ -29,11 +29,10 @@ static TMinuit* rfitter=0;
 void RadFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitter->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
 
@@ -41,18 +40,16 @@ void RadFunc(int&, double*, double& chi2, double* p, int)
   double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
 
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r=apnt.GetR();
       Vector2 f = fitObj->Evaluate(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX();
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX();
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
@@ -60,28 +57,26 @@ static TMinuit* rfitter_=0;
 void RadFunc_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitter_->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
     double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
 
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r=apnt.GetR();
       Vector2 f = fitObj->Evaluate_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX();
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX();
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
+
   return;
 }
 
@@ -89,28 +84,25 @@ static TMinuit* rfitterPlus=0;
 void RadFuncPlus(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterPlus->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
   
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
       double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
   
-  for(int i=0; i<pcol; ++i)
+    for (const TSpacePoint& apnt : *PointsColl)
     {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+      r=apnt.GetR();
       Vector2 f = fitObj->EvaluatePlus(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX(); 
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
@@ -118,29 +110,26 @@ static TMinuit* rfitterPlus_=0;
 void RadFuncPlus_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterPlus_->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
 
   double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
   
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r=apnt.GetR();
       Vector2 f = fitObj->EvaluatePlus_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX(); 
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
@@ -148,27 +137,24 @@ static TMinuit* rfitterMinus=0;
 void RadFuncMinus(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterMinus->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
   
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
   double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r=apnt.GetR();
       Vector2 f = fitObj->EvaluateMinus(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX(); 
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
@@ -176,29 +162,26 @@ static TMinuit* rfitterMinus_=0;
 void RadFuncMinus_(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) rfitterMinus_->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tx,ty,d2;
   chi2=0.;
   
   
   double u0 = TMath::Cos(p[1]),
     v0 = TMath::Sin(p[1]); //phi
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r=apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r=apnt.GetR();
       Vector2 f = fitObj->EvaluateMinus_(r*r, p[0], u0, v0, p[2]);
-      tx = ( apnt->GetX() - f.X ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y ) / apnt->GetErrY();
+      tx = ( apnt.GetX() - f.X ) / apnt.GetErrX(); 
+      ty = ( apnt.GetY() - f.Y ) / apnt.GetErrY();
       d2 = tx*tx + ty*ty;
       //      d2 = tx*tx + ty*ty - tx*ty;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
@@ -206,47 +189,41 @@ static TMinuit* zfitter=0;
 void ZedFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) zfitter->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
 
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r = apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r = apnt.GetR();
       s = fitObj->GetArcLength(r*r);
       double f = fitObj->Evaluate(s, p[0], p[1]);
-      tz = (apnt->GetZ() - f )/ apnt->GetErrZ();
+      tz = (apnt.GetZ() - f )/ apnt.GetErrZ();
       chi2+=tz*tz;
     }
-  apnt=0;
   return;
 }
 
 void ZedFuncB(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) zfitter->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
 
-  TSpacePoint* apnt=0;
   double r,tz,s;
   chi2=0.;
-  for(int i=0; i<pcol; ++i)
-    {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      r = apnt->GetR();
+  for (const TSpacePoint& apnt : *PointsColl)
+  {
+      r = apnt.GetR();
       s = fitObj->GetArcLengthB(r*r);
       double f = fitObj->Evaluate(s, p[0], p[1]);
-      tz = (apnt->GetZ() - f )/ apnt->GetErrZ();
+      tz = (apnt.GetZ() - f )/ apnt.GetErrZ();
       chi2+=tz*tz;
     }
-  apnt=0;
   return;
 }
 
@@ -938,16 +915,16 @@ void TFitHelix::FitM2()
 // to initialize helix canonical form
 void TFitHelix::Initialization(double* Ipar)
 {
-  TSpacePoint* LastPoint = (TSpacePoint*) GetPointsArray()->back();
-  double x1 = LastPoint->GetX(),
-    y1 = LastPoint->GetY(),
-    z1 = LastPoint->GetZ(),
+  const TSpacePoint& LastPoint = GetPointsArray()->back();
+  double x1 = LastPoint.GetX(),
+    y1 = LastPoint.GetY(),
+    z1 = LastPoint.GetZ(),
     phi1 = TMath::ATan2(y1,x1);
 
-  TSpacePoint* FirstPoint = (TSpacePoint*) GetPointsArray()->front();
-  double x2 = FirstPoint->GetX(),
-    y2 = FirstPoint->GetY(),
-    z2 = FirstPoint->GetZ();
+  const TSpacePoint& FirstPoint = GetPointsArray()->front();
+  double x2 = FirstPoint.GetX(),
+    y2 = FirstPoint.GetY(),
+    z2 = FirstPoint.GetZ();
 
   // straight line
   double dx = x2-x1, dy = y2-y1, dz=z2-z1,
@@ -1491,7 +1468,6 @@ int TFitHelix::TubeIntersection( TVector3& pos1,  TVector3& pos2, const double r
 	  std::cerr<<"TFitHelix::TubeIntersection FAIL type: Unknown Branch Type "<<fBranch<<std::endl;
 	  return -1;
 	}
-
       pos1 = GetPosition(s1);
       if( !TMath::AreEqualRel( pos1.Perp(), radius, 1.e-4) )
 	{

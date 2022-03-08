@@ -331,7 +331,7 @@ void Reco::AddMChits( const TClonesArray* points )
 }
 #endif
 
-int Reco::FindTracks(finderChoice finder)
+int Reco::FindTracks(std::vector<track_t>& track_array, finderChoice finder)
 {
    switch(finder)
       {
@@ -369,7 +369,8 @@ int Reco::FindTracks(finderChoice finder)
    pattrec->SetNpointsCut(fNspacepointsCut);
    pattrec->SetSeedRadCut(fSeedRadCut);
 
-   int stat = pattrec->RecTracks();
+   
+   int stat = pattrec->RecTracks(track_array);
    if( fTrace ) 
       std::cout<<"Reco::FindTracks status: "<<stat<<std::endl;
    int tk,npc,rc;
@@ -377,13 +378,11 @@ int Reco::FindTracks(finderChoice finder)
    track_not_advancing += tk;
    points_cut += npc;
    rad_cut += rc;
-
-   AddTracks( pattrec->GetTrackVector() );
-
+   AddTracks( &track_array );
    return stat;
 }
 
-void Reco::AddTracks( const std::vector<track_t>* track_vector )
+void Reco::AddTracks( const std::vector<track_t>* track_vector)
 {
    int n=0;
    for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
@@ -395,7 +394,7 @@ void Reco::AddTracks( const std::vector<track_t>* track_vector )
          for( auto ip=it->begin(); ip!=it->end(); ++ip)
             {
                TSpacePoint* ap = (TSpacePoint*) fPointsArray.at(*ip);
-               thetrack->AddPoint( ap );
+               thetrack->AddPoint( *ap );
                //std::cout<<*ip<<", ";
                //ap->Print("rphi");
                // if( diagnostics )

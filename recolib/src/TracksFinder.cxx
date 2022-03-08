@@ -9,7 +9,7 @@
 // #include "TFitHelix.hh"
 #include <iostream>
 
-TracksFinder::TracksFinder(std::vector<TSpacePoint*>* points):
+TracksFinder::TracksFinder(const std::vector<TSpacePoint*>* points):
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
@@ -24,7 +24,6 @@ TracksFinder::TracksFinder(std::vector<TSpacePoint*>* points):
 #if BUILD_EXCLUSION_LIST
    fExclusionList.clear();
 #endif
-   fTrackVector.clear();
    // Reasons for failing:
    track_not_advancing = 0;
    points_cut = 0;
@@ -43,35 +42,11 @@ void TracksFinder::Clear()
 #if BUILD_EXCLUSION_LIST
    fExclusionList.clear();
 #endif
-   fTrackVector.clear();
 }
 
-void TracksFinder::AddTrack( track_t& atrack ) // currently not used
-{
-   //  std::cout<<"TracksFinder::AddTrack( track_t& atrack )"<<std::endl;
-   TFitLine l;
-   for(auto it: atrack) l.AddPoint( fPointsArray.at(it) );
-   l.SetPointsCut( fNpointsCut );
-   l.SetChi2Cut( 29. );
-   l.Fit();
-   if( l.IsGood() )
-      {
-         fTrackVector.push_back( atrack );
-         for(auto it: atrack) 
-            {
-#if BUILD_EXCLUSION_LIST
-               fExclusionList.push_back(fPointsArray[it]);
-#endif
-               fPointsArray[it]=NULL;//Remove pointer from local vector
-            }
-         ++fNtracks;
-      }
-  
-   //  std::cout<<"TracksFinder::AddTrack( track_t& atrack ) DONE"<<std::endl;
-}
 
 //==============================================================================================
-int TracksFinder::RecTracks()
+int TracksFinder::RecTracks(std::vector<track_t>& TrackVector)
 {
    int Npoints = fPointsArray.size(); 
    if( Npoints<=0 )
@@ -116,7 +91,7 @@ int TracksFinder::RecTracks()
          if( int(atrack.size()) > fNpointsCut && LastPoint->GetR() < fSmallRad )
             {
                atrack.push_front(i);
-               fTrackVector.push_back( atrack );
+               TrackVector.push_back( atrack );
                for(auto& it: atrack)
                   {
 #if BUILD_EXCLUSION_LIST
@@ -143,9 +118,9 @@ int TracksFinder::RecTracks()
             }
       }//i loop
 
-   if( fNtracks != int(fTrackVector.size()) )
+   if( fNtracks != int(TrackVector.size()) )
       std::cerr<<"TracksFinder::RecTracks(): Number of found tracks "<<fNtracks
-               <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+               <<" does not match the number of entries "<<TrackVector.size()<<std::endl;
 
    return fNtracks;
 }

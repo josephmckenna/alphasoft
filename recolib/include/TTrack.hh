@@ -14,11 +14,12 @@
 #include <iomanip>
 #include <map>
 
-class TSpacePoint;
+#include "TSpacePoint.hh"
+
 class TTrack: public TObject
 {
 protected:
-  std::vector<TSpacePoint*> fPoints; //I do not own my own copies of pointers
+  std::vector<TSpacePoint> fPoints;
   int fNpoints;
   double fB;
 
@@ -49,9 +50,29 @@ public:
 
   virtual void Fit();
 
-  int AddPoint(TSpacePoint*);
-  inline const std::vector<TSpacePoint*>* GetPointsArray() const {return &fPoints;}
-  inline void SetPointsArray(std::vector<TSpacePoint*>* array)   {fPoints=*array;}
+  int AddPoint(const TSpacePoint&);
+  inline const std::vector<TSpacePoint>* GetPointsArray() const {return &fPoints;}
+  const std::pair<const TSpacePoint*,const TSpacePoint*> GetLastSpacePoint() const { 
+    std::pair<const TSpacePoint*,const TSpacePoint*> FirstLast= {nullptr,nullptr};
+    double Rmin = 1.0/0.0;
+    double Rmax = -1.;
+    for (const TSpacePoint& p: fPoints)
+    {
+       const double R = p.GetR();
+       if ( R < Rmin)
+       {
+          Rmin = R;
+          FirstLast.second = &p;
+       }
+       if ( R > Rmax)
+       {
+          Rmax = R;
+          FirstLast.first = &p;
+       }
+    }
+    return FirstLast;
+  }
+  inline void SetPointsArray(std::vector<TSpacePoint>* array)   {fPoints=*array;}
   inline int GetNumberOfPoints()           const {return fNpoints;}
   inline void SetNumberOfPoints(int np)          {fNpoints = np;}
 

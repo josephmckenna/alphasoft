@@ -6,8 +6,9 @@
 #include "TPCconstants.hh"
 #include "AdaptiveFinder.hh"
 #include <iostream>
+#include "TSeqCollection.h"
 
-AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
+AdaptiveFinder::AdaptiveFinder(const std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
    TracksFinder(points),
    fLastPointRadCut(LastPointRadCut),
    fPointsRadCut(4.),
@@ -25,7 +26,7 @@ AdaptiveFinder::AdaptiveFinder(std::vector<TSpacePoint*>* points, const double m
 }
 
 //==============================================================================================
-int AdaptiveFinder::RecTracks()
+int AdaptiveFinder::RecTracks(std::vector<track_t>& TrackVector)
 {
    int Npoints = fPointsArray.size();
    if( Npoints<=0 )
@@ -51,7 +52,7 @@ int AdaptiveFinder::RecTracks()
             }
 
          // do not start a track far from the anode
-         if( point->GetR() < fSeedRadCut && fTrackVector.size() > 0 ) break;
+         if( point->GetR() < fSeedRadCut && TrackVector.size() > 0 ) break;
 
          track_t vector_points;
          vector_points.clear();
@@ -84,7 +85,7 @@ int AdaptiveFinder::RecTracks()
             {
                vector_points.push_front(i);
 
-               fTrackVector.push_back( vector_points );
+               TrackVector.push_back( vector_points );
                for(auto& it: vector_points)
                   {
 #if BUILD_EXCLUSION_LIST
@@ -96,9 +97,9 @@ int AdaptiveFinder::RecTracks()
             }
       }//i loop
 
-   if( fNtracks != int(fTrackVector.size()) )
+   if( fNtracks != int(TrackVector.size()) )
       std::cerr<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks
-               <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+               <<" does not match the number of entries "<<TrackVector.size()<<std::endl;
    else if( debug )
       {
          std::cout<<"AdaptiveFinder::AdaptiveFinder(): Number of found tracks "<<fNtracks<<std::endl;
