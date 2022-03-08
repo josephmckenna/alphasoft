@@ -14,6 +14,10 @@
 
 #include "TPCconstants.hh"
 
+#include "VertexFCN.hh"
+#include"Minuit2/FunctionMinimum.h"
+#include"Minuit2/VariableMetricMinimizer.h"
+
 #define BETA 0
 
 static TMinuit* mindist=0;
@@ -135,7 +139,8 @@ int TFitVertex::Calculate()
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
 
-  fchi2=Recalculate();
+  fchi2=RecalculateM2();
+  //fchi2=Recalculate(); //OCCHIO
 
   // // ------------- debug -----------------
   // std::cout<<"Recalc Vertex"<<std::endl;
@@ -249,6 +254,55 @@ double TFitVertex::FindMinDistance(double& s0, double& s1)
   return 0.25*chi2;
 }
 
+double TFitVertex::FindMinDistanceM2(double& s0, double& s1)
+{
+  static double step = 0.01;
+
+  mindist = new TMinuit(2);
+  mindist->SetObjectFit(this);
+  mindist->SetFCN(MinDistFunc);
+
+  double arglist[10];
+  int ierflg = 0;
+
+  mindist->SetPrintLevel(-1);
+
+  arglist[0] = 1.0;
+  mindist->mnexcm("SET ERR", arglist , 1, ierflg);
+  
+  mindist->mnparm(0, "s0", s0, step, 0,0,ierflg);
+  mindist->mnparm(1, "s1", s1, step, 0,0,ierflg);
+
+  arglist[0] = 6.0;
+  mindist->mnexcm("CALL FCN", arglist, 1, ierflg);
+
+  // Now ready for minimization step
+  arglist[0] = 500.0;
+  arglist[1] = 0.1;
+  mindist->mnexcm("MIGRAD", arglist, 2, ierflg);
+
+  double chi2,nused0,nused1;
+  int npar, stat;
+  // status integer indicating how good is the covariance
+  //   0= not calculated at all
+  //   1= approximation only, not accurate
+  //   2= full matrix, but forced positive-definite
+  //   3= full accurate covariance matrix
+  mindist->mnstat(chi2,nused0,nused1,npar,npar,stat);
+
+  double es0,es1;
+  mindist->GetParameter(0,s0,es0);
+  mindist->GetParameter(1,s1,es1);
+
+  delete mindist;	  
+  // degrees of freedom is ndf=3H-2
+  // for H=2, ndf=4
+  return 0.25*chi2;
+}
+
+
+
+
 TVector3 TFitVertex::EvaluateMeanPoint()
 {
   return EvaluateMeanPoint( ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par),
@@ -344,6 +398,43 @@ double TFitVertex::Recalculate()
   return fNewChi2; 
 }
 
+double TFitVertex::RecalculateM2()
+{
+  std::vector<double> init_vfit = {fVertex.X(),fVertex.Y(),fVertex.Z(),fSeed0Par,fSeed1Par};
+  std::vector<double> init_verr(5, 0.01);
+
+  VertFuncFCN fitvtx_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer fitvtx_minimizer;
+  ROOT::Minuit2::FunctionMinimum fitvtx_min = fitvtx_minimizer.Minimize(fitvtx_fcn, init_vfit, init_verr);
+  ROOT::Minuit2::MnUserParameterState fitvtx_state = fitvtx_min.UserState();
+
+  double chi2 = fitvtx_state.Fval();
+
+  double vx,vy,vz,ex,ey,ez;
+  vx = fitvtx_state.Value(0);
+  ex = fitvtx_state.Error(0);
+  vy = fitvtx_state.Value(1);
+  ey = fitvtx_state.Error(1);
+  vz = fitvtx_state.Value(2);
+  ez = fitvtx_state.Error(2);
+  fVertex.SetXYZ(vx,vy,vz);
+  fVertexError2.SetXYZ(ex*ex,ey*ey,ez*ez);
+  double es0,es1;
+  fNewSeed0Par = fitvtx_state.Value(3);
+  es0 = fitvtx_state.Error(3);
+  fNewSeed1Par = fitvtx_state.Value(4);
+  es1 = fitvtx_state.Error(4);
+  
+  // store the NewVertex and the NewChi2
+  fNewChi2=chi2;
+  fNewVertex.SetXYZ(vx,vy,vz);
+  fNewVertexError2.SetXYZ(ex*ex,ey*ey,ez*ez);
+
+  // degrees of freedom is ndf=3H-5
+  // for H=2, ndf=1
+  return fNewChi2; 
+}
+
 int TFitVertex::Improve()
 {
   double chi2;// normalized chi^2
@@ -373,7 +464,8 @@ int TFitVertex::Improve()
       ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLength(GetRadius()*GetRadius());
 #endif
 
-      chi2=FindNewVertex(ipar,iparerr);
+      //chi2=FindNewVertex(ipar,iparerr); OCCHIO
+      chi2=FindNewVertexM2(ipar,iparerr);
       // alternate cut based on delta chi2
       //if(((chi2 - fNewChi2) <= 0.4) &&
       //   ((chi2 - fNewChi2) >= 0.)){
@@ -454,6 +546,40 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
   double ndf = 3.*(double) fHelixStack.GetEntriesFast() - (double) npar;
   return chi2/ndf; 
 }
+
+double TFitVertex::FindNewVertexM2(double* ipar, double* iparerr)
+{
+  std::vector<double> init_vnewfit;
+  std::vector<double> init_vnewerr;
+
+  int mpar=3+fHelixStack.GetEntriesFast();
+
+  for(int i=0; i<mpar; ++i)
+    {
+      init_vnewfit.push_back(ipar[i]);
+      init_vnewerr.push_back(0.01);
+    }
+
+  VertFuncFCN fitnewvtx_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer fitnewvtx_minimizer;
+  ROOT::Minuit2::FunctionMinimum fitnewvtx_min = fitnewvtx_minimizer.Minimize(fitnewvtx_fcn, init_vnewfit, init_vnewerr);
+  ROOT::Minuit2::MnUserParameterState fitnewvtx_state = fitnewvtx_min.UserState();
+
+  double chi2 = fitnewvtx_state.Fval();
+  
+  for(int i=0; i<mpar; ++i)
+  {
+    ipar[i] = fitnewvtx_state.Value(i);
+    iparerr[i] = fitnewvtx_state.Error(i);
+  }
+  
+
+  double ndf = 3.*(double) fHelixStack.GetEntriesFast() - (double) mpar;
+  return chi2/ndf; 
+}
+
+
+
 
 void TFitVertex::AssignHelixStatus()
 {
