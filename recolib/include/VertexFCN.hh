@@ -1,10 +1,5 @@
 /*
  * Minuit2 minimization. Class derived from FCNBase. 
- * The current helix fitting minimizes multiple things instead of a single helix
- *
- * Hence there is a parent abstract Hel2VtxFCN, and a child (which overloads the
- * operator() with the appropriate function) for each thing that is currently
- * minimized.
  */
 
 #ifndef VERTEXFCN_HH

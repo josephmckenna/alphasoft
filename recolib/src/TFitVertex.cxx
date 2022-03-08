@@ -196,7 +196,8 @@ double TFitVertex::FindSeed(double trapradius2)
 #else
 	  s1=fInit1->GetArcLength(trapradius2);
 #endif
-	  chi2=FindMinDistance(s0,s1); 
+	  //chi2=FindMinDistance(s0,s1); //OCCHIO
+    chi2=FindMinDistanceM2(s0,s1); 
 	  if( chi2 < fSeedchi2 )
 	    {
 	      fSeedchi2=chi2;
@@ -258,43 +259,22 @@ double TFitVertex::FindMinDistanceM2(double& s0, double& s1)
 {
   static double step = 0.01;
 
-  mindist = new TMinuit(2);
-  mindist->SetObjectFit(this);
-  mindist->SetFCN(MinDistFunc);
-
-  double arglist[10];
-  int ierflg = 0;
-
-  mindist->SetPrintLevel(-1);
-
-  arglist[0] = 1.0;
-  mindist->mnexcm("SET ERR", arglist , 1, ierflg);
+  std::vector<double> init_dfit = {s0,s1};
+  std::vector<double> init_derr(2, 0.01);
   
-  mindist->mnparm(0, "s0", s0, step, 0,0,ierflg);
-  mindist->mnparm(1, "s1", s1, step, 0,0,ierflg);
+  MinDistFCN fitd_fcn(this);
+  ROOT::Minuit2::VariableMetricMinimizer fitd_minimizer;
+  ROOT::Minuit2::FunctionMinimum fitd_min = fitd_minimizer.Minimize(fitd_fcn,init_dfit,init_derr);
+  ROOT::Minuit2::MnUserParameterState fitd_state = fitd_min.UserState();
 
-  arglist[0] = 6.0;
-  mindist->mnexcm("CALL FCN", arglist, 1, ierflg);
-
-  // Now ready for minimization step
-  arglist[0] = 500.0;
-  arglist[1] = 0.1;
-  mindist->mnexcm("MIGRAD", arglist, 2, ierflg);
-
-  double chi2,nused0,nused1;
-  int npar, stat;
-  // status integer indicating how good is the covariance
-  //   0= not calculated at all
-  //   1= approximation only, not accurate
-  //   2= full matrix, but forced positive-definite
-  //   3= full accurate covariance matrix
-  mindist->mnstat(chi2,nused0,nused1,npar,npar,stat);
+  double chi2 = fitd_state.Fval();
 
   double es0,es1;
-  mindist->GetParameter(0,s0,es0);
-  mindist->GetParameter(1,s1,es1);
-
-  delete mindist;	  
+  s0 = fitd_state.Value(0);
+  es0 = fitd_state.Error(0);
+  s1 = fitd_state.Value(1);
+  es1 = fitd_state.Error(1);
+  
   // degrees of freedom is ndf=3H-2
   // for H=2, ndf=4
   return 0.25*chi2;
