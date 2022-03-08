@@ -19,15 +19,15 @@
 static TMinuit* mindist=0;
 void MinDistFunc(int&, double*, double& chi2, double* p, int)
 {
-  TFitVertex* fitObj = (TFitVertex*) mindist->GetObjectFit();
-  TFitHelix* hel0 = fitObj->GetInit0();
-  TFitHelix* hel1 = fitObj->GetInit1();
-  TVector3 H0     = hel0->GetPosition(p[0]);
+  const TFitVertex* fitObj = (TFitVertex*) mindist->GetObjectFit();
+  const TFitHelix* hel0 = fitObj->GetInit0();
+  const TFitHelix* hel1 = fitObj->GetInit1();
+  const TVector3 H0     = hel0->GetPosition(p[0]);
   //  TVector3 H0err2 = hel0->EvaluateErrors2(H0.Perp2());
-  TVector3 H0err2 = hel0->GetError2(p[0]);
-  TVector3 H1     = hel1->GetPosition(p[1]);
+  const TVector3 H0err2 = hel0->GetError2(p[0]);
+  const TVector3 H1     = hel1->GetPosition(p[1]);
   //  TVector3 H1err2 = hel1->EvaluateErrors2(H1.Perp2());
-  TVector3 H1err2 = hel1->GetError2(p[1]);
+  const TVector3 H1err2 = hel1->GetError2(p[1]);
   double tx=H0.X()-H1.X(), ty=H0.Y()-H1.Y(), tz=H0.Z()-H1.Z();
   chi2 = tx*tx/(H0err2.X()+H1err2.X())
        + ty*ty/(H0err2.Y()+H1err2.Y())
@@ -46,9 +46,9 @@ void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
   for(int i=0; i<helpoints; ++i)
     {
       s=p[i+3];
-      TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
+      const TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
       //      TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->EvaluateErrors2(h.Perp2());
-      TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->GetError2(s);
+      const TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->GetError2(s);
       tx=p[0]-h.X(); ty=p[1]-h.Y(); tz=p[2]-h.Z();
       chi2 += tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
     }
@@ -251,7 +251,8 @@ double TFitVertex::FindMinDistance(double& s0, double& s1)
 
 TVector3 TFitVertex::EvaluateMeanPoint()
 {
-  return EvaluateMeanPoint( ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par),
+  return EvaluateMeanPoint( 
+          ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par),
 			    ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetError2(fSeed0Par),
 			    ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetPosition(fSeed1Par),
 			    ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetError2(fSeed1Par)
@@ -277,8 +278,8 @@ TVector3 TFitVertex::EvaluateMeanPoint(TVector3 p0, TVector3 e0,
 
 TVector3 TFitVertex::EvaluateMeanPointError2()
 {
-  TVector3 e0 = ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetError2(fSeed0Par);
-  TVector3 e1 = ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetError2(fSeed1Par);
+  const TVector3 e0 = ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetError2(fSeed0Par);
+  const TVector3 e1 = ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetError2(fSeed1Par);
   fMeanVertexError2 = (e0+e1)*0.25;
   return fMeanVertexError2;
 }

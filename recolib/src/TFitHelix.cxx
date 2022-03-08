@@ -991,61 +991,61 @@ void TFitHelix::Initialization(double* Ipar)
 
 //==============================================================================================
 // internal helix parameter
-inline double TFitHelix::GetBeta(double r2, double Rc, double D) const
+inline double TFitHelix::GetBeta(const double r2,const double Rc,const double D) const
 {
-   double num = r2-D*D;
+   const double num = r2-D*D;
    if (num<0) return 0.;
-   double den = 1.+D/Rc,
+   const double den = 1.+D/Rc,
    arg=num/den;
    return TMath::Sqrt(arg)*0.5/Rc;
 }
 
-inline double TFitHelix::GetBetaPlus(double r2, double Rc, double D)
+inline double TFitHelix::GetBetaPlus(const double r2, const double Rc, const double D) const
 {
   return GetBeta(r2, Rc, D);
 }
 
-inline double TFitHelix::GetBetaMinus(double r2, double Rc, double D)
+inline double TFitHelix::GetBetaMinus(const double r2, const double Rc, const double D) const
 {
-   double num = r2-D*D;
+   const double num = r2-D*D;
    if (num<0) return 0.;
-   double den = 1.+D/Rc,
+   const double den = 1.+D/Rc,
    arg=num/den;
    return -TMath::Sqrt(arg)*0.5/Rc;
 }
 
-inline double TFitHelix::GetArcLength(double r2, double Rc, double D) const
+inline double TFitHelix::GetArcLength(const double r2, const double Rc, const double D) const
 {
   return TMath::ASin( GetBeta(r2,Rc,D) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLength_(double r2, double Rc, double D) const
+inline double TFitHelix::GetArcLength_(const double r2, const double Rc, const double D) const
 {
   return ( TMath::Pi() - TMath::ASin( GetBeta(r2,Rc,D) ) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLengthPlus(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLengthPlus(const double r2, const double Rc, const double D) const
 {
   return TMath::ASin( GetBetaPlus(r2,Rc,D) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLengthPlus_(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLengthPlus_(const double r2, const double Rc, const double D) const
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaPlus(r2,Rc,D) ) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLengthMinus(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLengthMinus(const double r2, const double Rc, const double D) const
 {
   return TMath::ASin( GetBetaMinus(r2,Rc,D) ) * 2. * Rc;
 }
 
-inline double TFitHelix::GetArcLengthMinus_(double r2, double Rc, double D)
+inline double TFitHelix::GetArcLengthMinus_(const double r2, const double Rc, const double D) const
 {
   return ( TMath::Pi() - TMath::ASin( GetBetaMinus(r2,Rc,D) ) ) * 2. * Rc;
 }
 
 // FitHelix Axial and FitVertex::FindSeed and FitVertex::Improve
-double TFitHelix::GetArcLength(double r2) const
+double TFitHelix::GetArcLength(const double r2) const
 {
   if(fBranch==1)
     return GetArcLength(r2,fRc,fD);
@@ -1055,7 +1055,7 @@ double TFitHelix::GetArcLength(double r2) const
     return 0;
 }
 
-double TFitHelix::GetArcLengthB(double r2)
+double TFitHelix::GetArcLengthB(const double r2) const
 {
   if(fBranch==1 && fBeta > 0.)
     return GetArcLengthPlus(r2,fRc,fD);
@@ -1071,90 +1071,90 @@ double TFitHelix::GetArcLengthB(double r2)
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-inline Vector2 TFitHelix::Evaluate(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::Evaluate(const double r2,const double Rc,const double phi,const double D) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   return Evaluate( r2, Rc, u0, v0, D);
 }
 
 //==============================================================================================
 // FitHelix Radial for +1 Branch
-Vector2 TFitHelix::Evaluate(double r2, double Rc, double u0, double v0, double D) const
+Vector2 TFitHelix::Evaluate(const double r2,const double Rc,const double u0,const double v0,const double D) const
 {
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBeta(r2, Rc, D);
-  double beta2 = beta*beta;
+  const double beta2 = beta*beta;
   return { x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
 	      y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 
 // FitHelix Radial for -1 Branch
-inline Vector2 TFitHelix::Evaluate_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::Evaluate_(const double r2,const double Rc,const double phi,const double D) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   return Evaluate_( r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch
-Vector2 TFitHelix::Evaluate_(double r2, double Rc, double u0, double v0, double D) const
+Vector2 TFitHelix::Evaluate_(const double r2,const double Rc,const double u0,const double v0, const double D) const
 {
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBeta(r2, Rc, D);
-  double beta2 = beta*beta;
+  const double beta2 = beta*beta;
   return { x0 - u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
 	      y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 
 // FitHelix Radial for +1 Branch, beta +ve root
-inline Vector2 TFitHelix::EvaluatePlus(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluatePlus(const double r2,const double Rc,const double u0,const double v0,const double D) const
 {
   return Evaluate(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for +1 Branch, beta +ve root
-inline Vector2 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluatePlus(const double r2,const double Rc,const double phi,const double D) const
 {
   return Evaluate(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for -1 Branch, beta +ve root
-inline Vector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluatePlus_(const double r2, const double Rc, const double u0, const double v0, const double D) const
 {
   return Evaluate_(r2, Rc, u0, v0, D);
 }
 // FitHelix Radial for -1 Branch, beta +ve root
-inline Vector2 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluatePlus_(const double r2, const double Rc, const double phi, const double D) const
 {
   return Evaluate_(r2, Rc, phi, D);
 }
 
 // FitHelix Radial for +1 Branch, beta -ve root
-inline Vector2 TFitHelix::EvaluateMinus(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluateMinus(const double r2,const double Rc, const double u0, const double v0, const double D) const
 {
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, Rc, D);
-  double beta2 = beta*beta;
+  const double beta2 = beta*beta;
   return { x0 + u0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc - v0 * beta2 * 2. * Rc,
                    y0 + v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 // FitHelix Radial for +1 Branch, beta -ve root
-inline Vector2 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluateMinus(const double r2,const double Rc, const double phi, const double D) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
   return EvaluateMinus(r2, Rc, u0, v0, D);
 }
 
 // FitHelix Radial for -1 Branch, beta -ve root
-inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double v0, double D)
+inline Vector2 TFitHelix::EvaluateMinus_(const double r2, const double Rc, const double u0, const double v0, const double D) const
 {
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, Rc, D);
-  double beta2 = beta*beta;
+  const double beta2 = beta*beta;
 /*  double beta_c = beta / c;
   double beta2_c = beta2 / c;
   double beta_ = beta_c * TMath::Sqrt(1.-beta2);
@@ -1164,83 +1164,83 @@ inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double u0, double
                    y0 - v0 * beta * TMath::Sqrt(1.-beta2) * 2. * Rc + u0 * beta2 * 2. * Rc};
 }
 // FitHelix Radial for -1 Branch, beta -ve root
-inline Vector2 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D)
+inline Vector2 TFitHelix::EvaluateMinus_(const double r2, const double Rc, const double phi, const double D) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
  return EvaluateMinus_(r2, Rc, u0, v0, D);
 }
 
 // FitHelix Axial
-double TFitHelix::Evaluate(double s, double l, double z0) const
+double TFitHelix::Evaluate(const double s, const double l, const double z0) const
 {
   return z0 + l * s;
 }
 
 
 // FitHelix for +1 Branch, beta +ve root
-TVector3 TFitHelix::EvaluatePlus(double r2, double Rc, double phi, double D, double l, double z0)
+TVector3 TFitHelix::EvaluatePlus(const double r2, const double Rc, const double phi, const double D, const double l, const double z0) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaPlus(r2, Rc, D);
-  double beta2 = beta*beta;
-  double beta_c = beta * 2. * Rc;
-  double beta2_c = beta2 * 2. * Rc;
-  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  const double beta2 = beta*beta;
+  const double beta_c = beta * 2. * Rc;
+  const double beta2_c = beta2 * 2. * Rc;
+  const double beta_ = beta_c * TMath::Sqrt(1.-beta2);
   return TVector3( x0 + u0 * beta_ - v0 * beta2_c,
                    y0 + v0 * beta_ + u0 * beta2_c,
                    z0 + l * GetArcLengthPlus(r2, Rc, D) );
 }
 
 // FitHelix for -1 Branch, beta +ve root
-TVector3 TFitHelix::EvaluatePlus_(double r2, double Rc, double phi, double D, double l, double z0)
+TVector3 TFitHelix::EvaluatePlus_(const double r2, const double Rc, const double phi, const double D, const double l, const double z0) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaPlus(r2, Rc, D);
-  double beta2 = beta*beta;
-  double beta_c = beta * 2. * Rc;
-  double beta2_c = beta2 * 2. * Rc;
-  double beta_ = beta_c * TMath::Sqrt(1.-beta2);  
+  const double beta2 = beta*beta;
+  const double beta_c = beta * 2. * Rc;
+  const double beta2_c = beta2 * 2. * Rc;
+  const double beta_ = beta_c * TMath::Sqrt(1.-beta2);  
   return TVector3( x0 - u0 * beta_ - v0 * beta2_c,
                    y0 - v0 * beta_ + u0 * beta2_c,
                    z0 + l * GetArcLengthPlus_(r2, Rc, D) );
 }
 
 // FitHelix for +1 Branch, beta -ve root
-TVector3 TFitHelix::EvaluateMinus(double r2, double Rc, double phi, double D, double l, double z0)
+TVector3 TFitHelix::EvaluateMinus(const double r2, const double Rc, const double phi, const double D, const double l, const double z0) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, Rc, D);
-  double beta2 = beta*beta;
-  double beta_c = beta * 2. * Rc;
-  double beta2_c = beta2 * 2. * Rc;
-  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  const double beta2 = beta*beta;
+  const double beta_c = beta * 2. * Rc;
+  const double beta2_c = beta2 * 2. * Rc;
+  const double beta_ = beta_c * TMath::Sqrt(1.-beta2);
   return TVector3( x0 + u0 * beta_ - v0 * beta2_c,
                    y0 + v0 * beta_ + u0 * beta2_c,
                    z0 + l * GetArcLengthMinus(r2, Rc, D) );
 }
 
 // FitHelix for -1 Branch, beta -ve root
-TVector3 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D, double l, double z0)
+TVector3 TFitHelix::EvaluateMinus_(const double r2, const double Rc, const double phi, const double D, const double l, const double z0) const
 {
-  double u0 = TMath::Cos(phi),
+  const double u0 = TMath::Cos(phi),
     v0 = TMath::Sin(phi);
-  double x0 = -D*v0,
+  const double x0 = -D*v0,
     y0 = D*u0,
     beta = GetBetaMinus(r2, Rc, D);
-  double beta2 = beta*beta;
-  double beta_c = beta * 2. * Rc;
-  double beta2_c = beta2 * 2. * Rc;
-  double beta_ = beta_c * TMath::Sqrt(1.-beta2);
+  const double beta2 = beta*beta;
+  const double beta_c = beta * 2. * Rc;
+  const double beta2_c = beta2 * 2. * Rc;
+  const double beta_ = beta_c * TMath::Sqrt(1.-beta2);
   return TVector3( x0 - u0 * beta_ - v0 * beta2_c,
                    y0 - v0 * beta_ + u0 * beta2_c,
                    z0 + l * GetArcLengthMinus_(r2, Rc, D) );
@@ -1248,9 +1248,9 @@ TVector3 TFitHelix::EvaluateMinus_(double r2, double Rc, double phi, double D, d
 //===============================================================================================
 
 // Draw routine
-TVector3 TFitHelix::Evaluate(double r2)
+TVector3 TFitHelix::Evaluate(const double r2) const
 {
-  double s= GetArcLength(r2);
+  const double s= GetArcLength(r2);
   Vector2 r;
   if(fBranch==1)
     r=Evaluate(r2, fRc, fphi0, fD);
@@ -1261,9 +1261,9 @@ TVector3 TFitHelix::Evaluate(double r2)
 }
 
 // FitVertex
-TVector3 TFitHelix::EvaluateErrors2(double r2)
+TVector3 TFitHelix::EvaluateErrors2(const double r2) const 
 {
-  double beta = GetBeta(r2,fRc,fD),
+  const double beta = GetBeta(r2,fRc,fD),
     beta2 = beta*beta,
     bb = beta*TMath::Sqrt(1.-beta2),
     cp=TMath::Cos(fphi0),
@@ -1271,7 +1271,7 @@ TVector3 TFitHelix::EvaluateErrors2(double r2)
     c2=fc*fc,
     eps=(double) fBranch;
 
-  double dxdc = -eps*bb*cp/c2 +beta2*sp/c2 ,
+  const double dxdc = -eps*bb*cp/c2 +beta2*sp/c2 ,
     dxdphi = -fD*cp -beta2*cp/fc -eps*bb*sp/fc,
     dxdD = -sp,
     dydc = -eps*bb*sp/c2 -beta2*cp/c2,
@@ -1285,7 +1285,7 @@ TVector3 TFitHelix::EvaluateErrors2(double r2)
 }
 
 // Draw routine
-TVector3 TFitHelix::EvaluateB(double r2)
+TVector3 TFitHelix::EvaluateB(double r2) const
 {
   if(fBranch==1 && fBeta > 0.)
     return EvaluatePlus(r2,fRc,fphi0,fD,flambda,fz0);
@@ -1302,7 +1302,7 @@ TVector3 TFitHelix::EvaluateB(double r2)
 }
 
 // FitVertex
-TVector3 TFitHelix::EvaluateErrors2B(double r2)
+TVector3 TFitHelix::EvaluateErrors2B(const double r2) const
 {
   double beta = -999999.;
   if(fBeta > 0.) 
@@ -1310,14 +1310,14 @@ TVector3 TFitHelix::EvaluateErrors2B(double r2)
   else if(fBeta < 0.) 
     beta = GetBetaMinus(r2,fRc,fD);
     
-  double beta2 = beta*beta,
+  const double beta2 = beta*beta,
     bb = beta*TMath::Sqrt(1.-beta2),
     cp=TMath::Cos(fphi0),
     sp=TMath::Sin(fphi0),
     c2=fc*fc,
     eps=(double) fBranch;
 
-  double dxdc = -eps*bb*cp/c2 +beta2*sp/c2 ,
+  const double dxdc = -eps*bb*cp/c2 +beta2*sp/c2 ,
     dxdphi = -fD*cp -beta2*cp/fc -eps*bb*sp/fc,
     dxdD = -sp,
     dydc = -eps*bb*sp/c2 -beta2*cp/c2,
@@ -1331,9 +1331,9 @@ TVector3 TFitHelix::EvaluateErrors2B(double r2)
 }
 
 // FitVertex
-TVector3 TFitHelix::GetPosition(double s)
+TVector3 TFitHelix::GetPosition(const double s) const
 {
-  double rho=2.*fc,
+  const double rho=2.*fc,
     cp=TMath::Cos(fphi0),sp=TMath::Sin(fphi0),
     crs=TMath::Cos(rho*s),srs=TMath::Sin(rho*s);
 
@@ -1343,13 +1343,13 @@ TVector3 TFitHelix::GetPosition(double s)
 }
 
 // FitVertex::EvaluateMeanPointError2
-TVector3 TFitHelix::GetError2(double s)
+TVector3 TFitHelix::GetError2(double s) const
 {
-  double rho=2.*fc,
+  const double rho=2.*fc,
     cp=TMath::Cos(fphi0),sp=TMath::Sin(fphi0),
     crs=TMath::Cos(rho*s),srs=TMath::Sin(rho*s);
 
-  double dxdc = s*crs*cp/fc - cp*srs/rho/fc + (1.-crs)*sp/rho/fc - s*srs*sp/fc,
+  const double dxdc = s*crs*cp/fc - cp*srs/rho/fc + (1.-crs)*sp/rho/fc - s*srs*sp/fc,
     dxdp = -fy0 - (1.-crs)*cp/rho -srs*sp/rho,
     dxdD = -sp,
     dydc = -(1.-crs)*cp/rho/fc + s*cp*srs/fc + s*crs*sp/fc - srs*sp/rho/fc,
@@ -1380,7 +1380,7 @@ double TFitHelix::Momentum()
   return pT;
 }
 
-double TFitHelix::GetApproxPathLength()
+double TFitHelix::GetApproxPathLength() const
 {
 #if BETA>0
   TVector3 r1(EvaluateB(ALPHAg::_cathradius*ALPHAg::_cathradius));
@@ -1392,7 +1392,7 @@ double TFitHelix::GetApproxPathLength()
   return TMath::Abs(r1.Mag()-r2.Mag());
 }
 
-double TFitHelix::VarMS()
+double TFitHelix::VarMS() const
 {
   // Multiple scattering causes the particle to scatter in the two planes
   // perpendicular to its path without losing energy. The distribution of
@@ -1470,7 +1470,7 @@ void TFitHelix::AddMSerror()
 }
 
 //==============================================================================================
-int TFitHelix::TubeIntersection(TVector3& pos1, TVector3& pos2, double radius)
+int TFitHelix::TubeIntersection( TVector3& pos1,  TVector3& pos2, const double radius) const
 {
   if( TMath::Abs(fD) < radius )
     {
@@ -1524,10 +1524,10 @@ void Hel2PntFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitHelix* fitObj = (TFitHelix*) hel2pnt->GetObjectFit();
   const TVector3* pnt  = fitObj->GetPoint();
-  TVector3 h  = fitObj->GetPosition( p[0] );
+  const TVector3 h  = fitObj->GetPosition( p[0] );
   //  TVector3 e2 = fitObj->EvaluateErrors2( h.Perp2() );
-  TVector3 e2 = fitObj->GetError2(p[0]);
-  double tx=pnt->X()-h.X(), ty=pnt->Y()-h.Y(), tz=pnt->Z()-h.Z();
+  const TVector3 e2 = fitObj->GetError2(p[0]);
+  const double tx=pnt->X()-h.X(), ty=pnt->Y()-h.Y(), tz=pnt->Z()-h.Z();
   chi2 = tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
   return;
 }
@@ -1581,8 +1581,7 @@ double TFitHelix::MinDistPoint(TVector3& minpoint)
   hel2pnt->GetParameter(0,s,es);
   delete hel2pnt;
 
-  TVector3 mpnt=GetPosition(s);
-  minpoint.SetXYZ(mpnt.X(),mpnt.Y(),mpnt.Z());
+  minpoint = GetPosition(s);
 
   //  chi2*=0.5;
   return chi2;
@@ -1697,7 +1696,7 @@ void TFitHelix::Reason()
 //   return false;
 // }
 
-bool TFitHelix::IsDuplicated(TFitHelix* right, double cut)
+bool TFitHelix::IsDuplicated(const TFitHelix* right, const double cut) const
 {
   if( TMath::AreEqualAbs(fMomentum.Phi(),right->GetMomentumV().Phi(),cut) &&
       TMath::AreEqualAbs(fMomentum.Theta(),right->GetMomentumV().Theta(),cut) )
