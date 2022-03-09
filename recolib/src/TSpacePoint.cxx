@@ -200,9 +200,16 @@ double TSpacePoint::MeasureZed(TSpacePoint* aPoint) const
 
 int TSpacePoint::Compare(const TObject* aPoint) const
 {
-  if ( fr > ((TSpacePoint*) aPoint)->fr ) return -1;// smaller = large radius = earlier
-  else if ( fr < ((TSpacePoint*) aPoint)->fr ) return 1;// larger = small radius = later
-  else return 0;
+  if (fr != ((TSpacePoint*) aPoint)->fr)
+     return ( fr > ((TSpacePoint*) aPoint)->fr )?-1:1;
+
+  if (fH != ((TSpacePoint*) aPoint)->fH)
+     return ( fH > ((TSpacePoint*) aPoint)->fH )?-1:1;
+
+  if (fphi != ((TSpacePoint*) aPoint)->fphi)
+     return ( fphi > ((TSpacePoint*) aPoint)->fphi )?-1:1;
+
+  return 0;
 }
 
 // int TSpacePoint::Compare(const TObject* aPoint) const
@@ -287,3 +294,12 @@ void TSpacePoint::Print(Option_t* opt) const
 }
 
 ClassImp(TSpacePoint)
+
+
+int SpacePointCompare(const void* a, const void* b)
+{
+   if (a == 0 && b == 0) return 0;
+   if (a == 0) return 1;
+   if (b == 0) return -1;
+   return ((TSpacePoint*)a)->Compare((TSpacePoint*)b);
+}

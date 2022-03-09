@@ -132,6 +132,9 @@ public:
    ClassDef(TSpacePoint,2)
 };
 
+int SpacePointCompare(const void* a, const void* b);
+
+
 #endif
 
 /* emacs
