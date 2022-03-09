@@ -198,14 +198,14 @@ void GasModelParametersMessenger::ConvertParameters(G4String newValues){
   G4Tokenizer next( newValues );
   fParticleName = next();
   G4String Semin = next();
-  if(Semin.isNull()){
+  if(Semin.empty()){
     fEmin = 1. *keV;
     fEmax = 1. *GeV;
   }
   else{
     fEmin = StoD(Semin);
     G4String Semax = next();
-    if(Semax.isNull())
+    if(Semax.empty())
       fEmax = 1.*GeV;
     else
       fEmax = StoD(Semax);

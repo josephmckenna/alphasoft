@@ -49,6 +49,7 @@ private:
   // stage 1
   double FindSeed(  double trapradius2 = ALPHAg::_trapradius*ALPHAg::_trapradius );
   double FindMinDistance(double& s0, double& s1);
+  double FindMinDistanceM2(double& s0, double& s1);
   TVector3 EvaluateMeanPoint();
   TVector3 EvaluateMeanPoint(TVector3 p0, TVector3 e0, 
 			     TVector3 p1, TVector3 e1);
@@ -56,10 +57,13 @@ private:
   
   // stage 2
   double Recalculate();
+  double RecalculateM2();
 
   // stage 3
   int Improve();
   double FindNewVertex(double* p, double* e);
+  double FindNewVertexM2(double* p, double* e);
+  
 
   void AssignHelixStatus();
 

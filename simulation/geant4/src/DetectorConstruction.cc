@@ -348,9 +348,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //--------------------------------------------------------------------
 
   // Visualization attribute
-  logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
-  logicBabcock->SetVisAttributes(G4VisAttributes::Invisible);
-  logicAG->SetVisAttributes(G4VisAttributes::Invisible);
+  // logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
+  // logicBabcock->SetVisAttributes(G4VisAttributes::Invisible);
+  // logicAG->SetVisAttributes(G4VisAttributes::Invisible);
+  logicWorld->SetVisAttributes(new G4VisAttributes(false));
+  logicBabcock->SetVisAttributes(new G4VisAttributes(false));
+  logicAG->SetVisAttributes(new G4VisAttributes(false));
 
   G4VisAttributes* DriftVisAtt= new G4VisAttributes(G4Colour::Cyan());
   DriftVisAtt->SetVisibility(true);
