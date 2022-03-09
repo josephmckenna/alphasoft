@@ -257,7 +257,6 @@ double TFitVertex::FindMinDistance(double& s0, double& s1)
 
 double TFitVertex::FindMinDistanceM2(double& s0, double& s1)
 {
-  static double step = 0.01;
 
   std::vector<double> init_dfit = {s0,s1};
   std::vector<double> init_derr(2, 0.01);
