@@ -139,8 +139,11 @@ int TFitVertex::Calculate()
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
   fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
 
+#if MINUIT2VERTEXFIT
   fchi2=RecalculateM2();
-  //fchi2=Recalculate(); //OCCHIO
+#else
+  fchi2=Recalculate();
+#endif
 
   // // ------------- debug -----------------
   // std::cout<<"Recalc Vertex"<<std::endl;
@@ -196,8 +199,13 @@ double TFitVertex::FindSeed(double trapradius2)
 #else
 	  s1=fInit1->GetArcLength(trapradius2);
 #endif
-	  //chi2=FindMinDistance(s0,s1); //OCCHIO
-    chi2=FindMinDistanceM2(s0,s1); 
+	
+#if MINUIT2VERTEXFIT
+   chi2=FindMinDistanceM2(s0,s1);
+#else
+   chi2=FindMinDistance(s0,s1); 
+#endif
+
 	  if( chi2 < fSeedchi2 )
 	    {
 	      fSeedchi2=chi2;
@@ -443,8 +451,11 @@ int TFitVertex::Improve()
       ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLength(GetRadius()*GetRadius());
 #endif
 
-      //chi2=FindNewVertex(ipar,iparerr); OCCHIO
+#if MINUIT2VERTEXFIT
       chi2=FindNewVertexM2(ipar,iparerr);
+#else
+      chi2=FindNewVertex(ipar,iparerr);
+#endif
       // alternate cut based on delta chi2
       //if(((chi2 - fNewChi2) <= 0.4) &&
       //   ((chi2 - fNewChi2) >= 0.)){
