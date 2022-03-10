@@ -27,6 +27,10 @@ class TTrackBuilder
          fSTR = new LookUpTable(runNumber);
          fMagneticField=0.; // data driven STR valid only for B=0T   
       }
+      ~TTrackBuilder()
+      {
+         delete fSTR;
+      }
 };
 
 #endif
