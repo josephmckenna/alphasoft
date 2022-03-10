@@ -107,7 +107,13 @@ public:
   //  inline const TObjArray* GetTracksArray() const {return &fStoredTracks;}
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
-  inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+  inline void SetUsedHelices(const TObjArray* a) {
+    for (int i = 0; i < a->GetEntriesFast(); i++)
+    {
+      TFitHelix* h = (TFitHelix* )a->At(i);
+      fUsedHelices.AddLast(  new  TStoreHelix( h, h->GetPointsArray() ) );
+    }
+  }
 
   int AddLine(TFitLine* l);
   int AddHelix(TFitHelix* h);
