@@ -110,6 +110,13 @@ void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLin
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
   inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+  inline void SetUsedHelices(const std::vector<TFitHelix*>* a) {
+    fUsedHelices.Clear();
+    for (TFitHelix* h: *a)
+    {
+      fUsedHelices.AddLast(h);
+    }
+  }
 
   int AddLine(TFitLine* l);
   int AddHelix(TFitHelix* h);

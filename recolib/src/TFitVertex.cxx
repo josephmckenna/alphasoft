@@ -43,16 +43,16 @@ static TMinuit* hel2vtx=0;
 void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitVertex* fitObj = (TFitVertex*) hel2vtx->GetObjectFit();
-  const TObjArray* hellColl = fitObj->GetHelixStack();
+  const std::vector<TFitHelix*>* hellColl = fitObj->GetHelixStack();
   chi2=0.;
   double tx,ty,tz,s;
-  int helpoints=hellColl->GetEntriesFast();
+  const int helpoints = hellColl->size();
   for(int i=0; i<helpoints; ++i)
     {
       s=p[i+3];
-      const TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
+      const TVector3& h = hellColl->at(i)->GetPosition(s);
       //      TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->EvaluateErrors2(h.Perp2());
-      const TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->GetError2(s);
+      const TVector3& e2 = hellColl->at(i)->GetError2(s);
       tx=p[0]-h.X(); ty=p[1]-h.Y(); tz=p[2]-h.Z();
       chi2 += tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
     }
@@ -81,8 +81,8 @@ TFitVertex::TFitVertex(int i):fID(i),fHelixArray(0),fNhelices(0),
 
 void TFitVertex::Clear(Option_t*)
 { 
-  fHelixArray.Clear();
-  fHelixStack.Clear();
+  fHelixArray.clear();
+  fHelixStack.clear();
 }
 
 
@@ -101,7 +101,7 @@ int TFitVertex::AddHelix(TFitHelix* anHelix)
   // MS error added in quadrature
   anHelix->AddMSerror();
 
-  fHelixArray.AddLast(anHelix);
+  fHelixArray.push_back(anHelix);
   ++fNhelices;
   return fNhelices;
 }
@@ -112,8 +112,7 @@ int TFitVertex::Calculate()
   if(fNhelices<2) return 0;
 
   // sort the helices by |c|, so that lowest |c| (highest momentum) is first
-  fHelixArray.Sort();
-
+  std::sort(fHelixArray.begin(),fHelixArray.end(),SortMomentum);
   // ============= FIRST PASS =============
   // find the minimum distance 
   // between a pair of helices
@@ -136,8 +135,8 @@ int TFitVertex::Calculate()
   // ============= SECOND PASS =============
   // minimize the distance of the minimum-distance-pair
   // to a point, called NewVertex
-  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
-  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
+  fHelixStack.push_back( fHelixArray.at( fSeed0Index ));
+  fHelixStack.push_back( fHelixArray.at( fSeed1Index ));
 
 #if MINUIT2VERTEXFIT
   fchi2=RecalculateM2();
@@ -160,15 +159,15 @@ int TFitVertex::Calculate()
   // // ------------- debug -----------------
   // std::cout<<" Number Of Used Helices = "<<fNumberOfUsedHelices
   // 	   <<"\t Helix Stack Entries  = "<<fHelixStack.GetEntriesFast()<<std::endl;
-  if(fNumberOfUsedHelices!=fHelixStack.GetEntriesFast()) 
-    std::cerr<<"Improve Error"<<std::endl;
+  if(fNumberOfUsedHelices!=fHelixStack.size())
+    std::cerr<<"Improve Error ("<<fNumberOfUsedHelices <<"!=" << fHelixStack.size() << ")"<<std::endl;
 
   // notify the helix in the stack whether it has been used for 
   // the seed (2)
   // the improvement (3)
   // ( all the helices outside the stack have status 1 )
   AssignHelixStatus();
-  fHelixStack.Compress();
+  //CompressHelixStack();
 
   // return code is
   //  0: only one good helix
@@ -185,7 +184,7 @@ double TFitVertex::FindSeed(double trapradius2)
     chi2; // normalized chi^2
   for(int n=0; n<fNhelices; ++n)
     {
-      fInit0=(TFitHelix*) fHelixArray.At(n);
+      fInit0 = fHelixArray.at(n);
 #if BETA>0
       s0=fInit0->GetArcLengthB(trapradius2);
 #else
@@ -193,7 +192,7 @@ double TFitVertex::FindSeed(double trapradius2)
 #endif
       for(int m=n+1; m<fNhelices; ++m)
 	{
-	  fInit1=(TFitHelix*) fHelixArray.At(m);
+	  fInit1 = fHelixArray.at(m);
 #if BETA>0
 	  s1=fInit1->GetArcLengthB(trapradius2);
 #else
@@ -293,10 +292,10 @@ double TFitVertex::FindMinDistanceM2(double& s0, double& s1)
 TVector3 TFitVertex::EvaluateMeanPoint()
 {
   return EvaluateMeanPoint( 
-          ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par),
-			    ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetError2(fSeed0Par),
-			    ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetPosition(fSeed1Par),
-			    ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetError2(fSeed1Par)
+          fHelixArray.at(fSeed0Index)->GetPosition(fSeed0Par),
+			    fHelixArray.at(fSeed0Index)->GetError2(fSeed0Par),
+			    fHelixArray.at(fSeed1Index)->GetPosition(fSeed1Par),
+			    fHelixArray.at(fSeed1Index)->GetError2(fSeed1Par)
 			  );
 }
 
@@ -319,8 +318,8 @@ TVector3 TFitVertex::EvaluateMeanPoint(TVector3 p0, TVector3 e0,
 
 TVector3 TFitVertex::EvaluateMeanPointError2()
 {
-  const TVector3 e0 = ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetError2(fSeed0Par);
-  const TVector3 e1 = ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetError2(fSeed1Par);
+  const TVector3& e0 = fHelixArray.at(fSeed0Index)->GetError2(fSeed0Par);
+  const TVector3& e1 = fHelixArray.at(fSeed1Index)->GetError2(fSeed1Par);
   fMeanVertexError2 = (e0+e1)*0.25;
   return fMeanVertexError2;
 }
@@ -439,17 +438,17 @@ int TFitVertex::Improve()
       iparerr[i]=sparerr[i]=0.0;
       spar[i]=ipar[i];
     }
-  int hels=fHelixArray.GetEntriesFast();
+  int hels=fHelixArray.size();
   for(int n=0; n<hels; ++n)
     {
       if(n==fSeed0Index || n==fSeed1Index) continue;
-      fHelixStack.AddLast((TFitHelix*) fHelixArray.At(n));
-      last=fHelixStack.GetEntriesFast()-1;
+      fHelixStack.push_back( fHelixArray.at(n) );
+      last = fHelixStack.size() - 1;
 
 #if BETA>0
-      ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLengthB(GetRadius()*GetRadius());
+      ipar[last+3] = fHelixStack.at(last)->GetArcLengthB(GetRadius()*GetRadius());
 #else
-      ipar[last+3]=((TFitHelix*) fHelixStack.At(last))->GetArcLength(GetRadius()*GetRadius());
+      ipar[last+3] = fHelixStack.at(last)->GetArcLength(GetRadius()*GetRadius());
 #endif
 
 #if MINUIT2VERTEXFIT
@@ -461,20 +460,19 @@ int TFitVertex::Improve()
       //if(((chi2 - fNewChi2) <= 0.4) &&
       //   ((chi2 - fNewChi2) >= 0.)){
       if(chi2 < fChi2Cut){
-
-	fchi2=chi2;
-	for(int i=0; i<npar; ++i){
-	  spar[i]=ipar[i];
-	  sparerr[i]=iparerr[i];
-	}
-	++fNumberOfUsedHelices;
+        fchi2=chi2;
+        for(int i=0; i<npar; ++i){
+          spar[i]=ipar[i];
+          sparerr[i]=iparerr[i];
+        }
+        ++fNumberOfUsedHelices;
       } else {
-	fHelixStack.RemoveAt(last);
-	for(int i=0; i<npar; ++i){
-	  ipar[i]=spar[i];
-	  iparerr[i]=sparerr[i];
-	}
-	fHelixStack.Compress();
+        fHelixStack.at(last) = nullptr;
+        for(int i=0; i<npar; ++i){
+          ipar[i]=spar[i];
+          iparerr[i]=sparerr[i];
+        }
+        CompressHelixStack();
       }
     }
   
@@ -492,7 +490,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 {
   static double step = 0.01;
 
-  int mpar=3+fHelixStack.GetEntriesFast();
+  int mpar = 3+fHelixStack.size();
   hel2vtx = new TMinuit(mpar);
   hel2vtx->SetObjectFit(this);
   hel2vtx->SetFCN(Hel2VtxFunc);
@@ -534,7 +532,7 @@ double TFitVertex::FindNewVertex(double* ipar, double* iparerr)
 
   delete hel2vtx;
 
-  double ndf = 3.*(double) fHelixStack.GetEntriesFast() - (double) npar;
+  double ndf = 3.*(double) fHelixStack.size() - (double) npar;
   return chi2/ndf; 
 }
 
@@ -574,13 +572,13 @@ double TFitVertex::FindNewVertexM2(double* ipar, double* iparerr)
 
 void TFitVertex::AssignHelixStatus()
 {
-  int nhelstack=fHelixStack.GetEntriesFast();
+  int nhelstack=fHelixStack.size();
   for(int h=0; h<nhelstack; ++h)
     {
       if(h==0 || h==1) 
-	( (TFitHelix*) fHelixStack.At(h) )->SetStatus(2);
+        fHelixStack.at(h)->SetStatus(2);
       else
-	( (TFitHelix*) fHelixStack.At(h) )->SetStatus(3);
+        fHelixStack.at(h)->SetStatus(3);
     }
 }
 
@@ -600,13 +598,13 @@ int TFitVertex::FindDCA()
   if(fSeed0Index<0||fSeed1Index<0) return -1;
   fNumberOfUsedHelices=2;
 
-  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed0Index ));
-  fHelixStack.AddLast((TFitHelix*) fHelixArray.At( fSeed1Index ));
+  fHelixStack.push_back( fHelixArray.at( fSeed0Index ));
+  fHelixStack.push_back( fHelixArray.at( fSeed1Index ));
 
   // the DCA is calculated using the existing variables since I'm re-using this 
   // vertex class
-  fMeanVertex = ( ((TFitHelix*) fHelixArray.At(fSeed0Index) )->GetPosition(fSeed0Par) ) -
-    ( ((TFitHelix*) fHelixArray.At(fSeed1Index) )->GetPosition(fSeed1Par) );
+  fMeanVertex = fHelixArray.at(fSeed0Index)->GetPosition(fSeed0Par) -
+    fHelixArray.at(fSeed1Index)->GetPosition(fSeed1Par);
   // the DCA is assigned to a chi^2 variable
   fNewChi2 = fMeanVertex.Mag();
 
@@ -639,7 +637,7 @@ void TFitVertex::Reset()
   fVertex.SetXYZ(-999.,-999.,-999.);
   fVertexError2.SetXYZ(-999.,-999.,-999.);
   //  fHelixArray.Delete();
-  fHelixArray.Clear();
+  fHelixArray.clear();
   fID=-1;
   fNhelices=-1;
   fchi2=-999.;
@@ -652,7 +650,7 @@ void TFitVertex::Reset()
   fMeanVertexError2.SetXYZ(-999.,-999.,-999.);
   fNumberOfUsedHelices=-1;
   //  fHelixStack.Delete();
-  fHelixStack.Clear();
+  fHelixStack.clear();
   fNewChi2=-999.;
   fNewVertex.SetXYZ(-999.,-999.,-999.);
   fNewVertexError2.SetXYZ(-999.,-999.,-999.);

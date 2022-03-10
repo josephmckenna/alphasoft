@@ -7,7 +7,7 @@ int TRecoVertexFitter::RecVertex(std::vector<TFitHelix*> HelixArray, TFitVertex*
    int nhel=HelixArray.size();
    for( int n = 0; n<nhel; ++n )
       {
-         TFitHelix* hel = (TFitHelix*)HelixArray.at(n);
+         TFitHelix* hel = HelixArray.at(n);
          if( hel->IsGood() )
             {
                Vertex->AddHelix(hel);
