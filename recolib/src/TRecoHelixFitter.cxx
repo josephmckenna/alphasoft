@@ -34,6 +34,7 @@ int TRecoHelixFitter::FitHelix(const std::vector<TTrack> TracksArray, std::vecto
       } else {
          if (fTrace) helix->Reason();
          helix->Clear();
+         delete helix;
       }
    }
    // fHelixArray.Compress();
