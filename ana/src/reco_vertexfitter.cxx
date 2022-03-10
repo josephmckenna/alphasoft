@@ -207,9 +207,11 @@ public:
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status;
             {
-            // TSeqCollection is not thread safe...
+            #if MINUIT2VERTEXFIT
+               // Minuit2 is thread safe... no need to slow things down
+            #else
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-
+            #endif
             status = vertexFitter.RecVertex(SigFlow->fHelixArray, &theVertex );
             } 
             if( fTrace )

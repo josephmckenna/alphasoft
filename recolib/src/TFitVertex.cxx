@@ -541,7 +541,7 @@ double TFitVertex::FindNewVertexM2(double* ipar, double* iparerr)
   std::vector<double> init_vnewfit;
   std::vector<double> init_vnewerr;
 
-  int mpar=3+fHelixStack.GetEntriesFast();
+  int mpar = 3+fHelixStack.size();
 
   for(int i=0; i<mpar; ++i)
     {
@@ -563,7 +563,7 @@ double TFitVertex::FindNewVertexM2(double* ipar, double* iparerr)
   }
   
 
-  double ndf = 3.*(double) fHelixStack.GetEntriesFast() - (double) mpar;
+  double ndf = 3.*(double) fHelixStack.size() - (double) mpar;
   return chi2/ndf; 
 }
 

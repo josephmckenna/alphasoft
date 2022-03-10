@@ -13,7 +13,7 @@
 class Hel2VtxFCN : public ROOT::Minuit2::FCNBase {
 	protected:
 		TFitVertex vtx;
-		const TObjArray* hellColl;
+		const std::vector<TFitHelix*>* hellColl;
 		double error_def;
 	public:
 		Hel2VtxFCN(TFitVertex* a_vtx);
