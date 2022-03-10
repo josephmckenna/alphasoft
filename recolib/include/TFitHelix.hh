@@ -273,6 +273,8 @@ public:
   ClassDef(TFitHelix,3)
 };
 
+bool SortMomentum(const TFitHelix* aHelix, const TFitHelix* bHelix);
+
 #endif
 
 /* emacs

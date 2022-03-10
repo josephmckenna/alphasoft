@@ -17,13 +17,13 @@ double VertFuncFCN::operator()(const std::vector<double>& p) const {
 
 	double chi2 = 0;
     double tx,ty,tz,s;
-    int helpoints=hellColl->GetEntriesFast();
+    const int helpoints = hellColl->size();
     for(int i=0; i<helpoints; ++i)
     {
       s=p[i+3];
-      TVector3 h = ( (TFitHelix*) hellColl->At(i) )->GetPosition(s);
+      const TVector3& h = hellColl->at(i)->GetPosition(s);
       //      TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->EvaluateErrors2(h.Perp2());
-      TVector3 e2 = ( (TFitHelix*) hellColl->At(i) )->GetError2(s);
+      const TVector3& e2 = hellColl->at(i)->GetError2(s);
       tx=p[0]-h.X(); ty=p[1]-h.Y(); tz=p[2]-h.Z();
       chi2 += tx*tx/e2.X() + ty*ty/e2.Y() + tz*tz/e2.Z() ;
     }

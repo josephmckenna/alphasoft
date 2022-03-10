@@ -15,7 +15,7 @@ int TRecoHelixFitter::FitHelix(const std::vector<TTrack> TracksArray, std::vecto
       helix->SetDCut(fHelDcut);
       //helix->Print();
 #ifdef __MINUIT2FIT__
-      helix.FitM2();
+      helix->FitM2();
 #else
       helix->Fit();
 #endif

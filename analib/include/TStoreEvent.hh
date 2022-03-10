@@ -50,7 +50,7 @@ public:
   TStoreEvent& operator=(const TStoreEvent&);
   void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
                 const std::vector<TFitHelix*>* helices);
-void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
+  void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
                 const std::vector<TFitHelix*>* helices);
 
   inline int GetEventNumber() const {return fID;}
@@ -109,7 +109,13 @@ void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLin
   //  inline const TObjArray* GetTracksArray() const {return &fStoredTracks;}
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
-  inline void SetUsedHelices(const TObjArray* a)       {fUsedHelices = *a;}
+  inline void SetUsedHelices(const std::vector<TFitHelix*>* a)
+  {
+    for (TFitHelix* h: * a)
+    {
+      fUsedHelices.AddLast( new TStoreHelix(h, h->GetPointsArray()));
+    }
+  }
 
   int AddLine(TFitLine* l);
   int AddHelix(TFitHelix* h);

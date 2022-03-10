@@ -67,9 +67,6 @@ private:
    bool diagnostics;
 
 public:
-   TStoreEvent *analyzed_event;
-   TTree *EventTree;
-
    VertexFitter(TARunInfo* runinfo, VertexFitterFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
                                                  vertexFitter( 
@@ -99,12 +96,6 @@ public:
    {
       printf("VertexFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-
-      analyzed_event = new TStoreEvent;
-      EventTree = new TTree("StoreEventTree", "StoreEventTree");
-      EventTree->Branch("StoredEvent", &analyzed_event, 32000, 0);
-      delete analyzed_event;
-      analyzed_event=NULL;
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -137,17 +128,13 @@ public:
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
-      analyzed_event=new TStoreEvent();
+      TStoreEvent* analyzed_event=new TStoreEvent();
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
-
+      flow = new AgAnalysisFlow(flow, analyzed_event);
       if( fFlags->fRecOff )
          {
-            {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-            EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-            EventTree->Fill();}
-            flow = new AgAnalysisFlow(flow, analyzed_event);
             return flow;
          }
 
@@ -155,18 +142,10 @@ public:
          {
             if (age->time<fFlags->start_time)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
-                  flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->time>fFlags->stop_time)
                {
-                  std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);{
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
-                  flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
          }
@@ -175,18 +154,10 @@ public:
          {
             if (age->counter<fFlags->start_event)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
-                  flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
             if (age->counter>fFlags->stop_event)
                {
-                  {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-                  EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-                  EventTree->Fill();}
-                  flow = new AgAnalysisFlow(flow, analyzed_event);
                   return flow;
                }
          }
@@ -207,9 +178,11 @@ public:
             //theVertex.SetChi2Cut( fVtxChi2Cut );
             int status;
             {
-            // TSeqCollection is not thread safe...
+            #if MINUIT2VERTEXFIT
+               // Minuit2 is thread safe... no need to slow things down
+            #else
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-
+            #endif
             status = vertexFitter.RecVertex(SigFlow->fHelixArray, &theVertex );
             } 
             if( fTrace )
@@ -226,16 +199,6 @@ public:
             else if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
       }
- 
-      {
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
-         EventTree->Fill();
-      }
-      //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
-      flow = new AgAnalysisFlow(flow, analyzed_event); 
- 
-
       return flow;
    }
 

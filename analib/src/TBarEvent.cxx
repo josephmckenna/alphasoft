@@ -82,7 +82,8 @@ ClassImp(BarHit)
 BarHit::BarHit()
 {
 // ctor
-
+   fTopHit = nullptr;
+   fBotHit = nullptr;
 }
 
 void BarHit::Print()
@@ -107,8 +108,10 @@ void BarHit::Print()
 
 BarHit::~BarHit()
 {
-
-
+   if (fTopHit)
+      delete fTopHit;
+   if (fBotHit)
+      delete fBotHit;
 }
 #endif
 /* emacs

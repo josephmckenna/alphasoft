@@ -8,7 +8,7 @@
 
 #include <TObject.h>
 #include <TVector3.h>
-#include <TObjArray.h>
+#include <vector>
 
 #include "TFitHelix.hh"
 
@@ -16,7 +16,7 @@ class TFitVertex : public TObject
 {
 private:
   int fID;
-  TObjArray fHelixArray;
+  std::vector<TFitHelix*> fHelixArray;
   int fNhelices;
 
   double fchi2;     // vertex chi^2
@@ -24,7 +24,7 @@ private:
   TVector3 fVertexError2;
 
   int fNumberOfUsedHelices;
-  TObjArray fHelixStack;
+  std::vector<TFitHelix*> fHelixStack;
 
   double fChi2Cut;
 
@@ -67,13 +67,25 @@ private:
 
   void AssignHelixStatus();
 
+  void CompressHelixStack()
+  {
+    std::vector<TFitHelix*> temp;
+    temp.reserve(fHelixStack.size());
+    for (TFitHelix* h: fHelixStack)
+    {
+      if (h)
+        temp.push_back(h);
+    }
+    fHelixStack = std::move(temp);
+  }
+
 public:
   TFitVertex() {};
   TFitVertex(int id);
   ~TFitVertex();
 
   int AddHelix(TFitHelix*);
-  inline const TObjArray* GetHelixArray()  {return &fHelixArray;}
+  inline const std::vector<TFitHelix*>* GetHelixArray()  {return &fHelixArray;}
   inline int GetNumberOfAddedHelix() const {return fNhelices;}
 
   inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
@@ -85,7 +97,7 @@ public:
   inline TFitHelix* GetInit0() const {return fInit0;}
   inline TFitHelix* GetInit1() const {return fInit1;}
 
-  inline const TObjArray* GetHelixStack() const {return &fHelixStack;}
+  inline const std::vector<TFitHelix*>* GetHelixStack() const {return &fHelixStack;}
   inline int GetNumberOfHelices() const         {return fNumberOfUsedHelices;}
 
   // inline double GetSeedHel0PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed0Index)))->GetParticleType();}
