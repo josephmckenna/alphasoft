@@ -23,6 +23,7 @@ reco_spacepoint_builder.o
 reco_trackfinder.o
 reco_trackfitter.o
 reco_vertexfitter.o
+reco_eventwriter.o
 
 #reco_module.o
 
