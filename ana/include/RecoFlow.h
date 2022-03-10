@@ -244,6 +244,12 @@ public:
      PADwf.clear();
      adc32max.clear();
      pwbMax.clear();
+     for (TFitHelix* h: fHelixArray)
+        delete h;
+     fHelixArray.clear();
+     for (TFitLine* h: fLinesArray)
+        delete h;
+     fLinesArray.clear();
   }
 
   void DeletePadSignals()
