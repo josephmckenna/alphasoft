@@ -57,6 +57,7 @@ TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
 
 TStoreLine::~TStoreLine()
 {
+  fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
   fResiduals.clear();
 }
