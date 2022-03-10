@@ -120,7 +120,7 @@ int KDTreeFinder::RecTracks(std::vector<track_t>& TrackVector)
 
    return fNtracks;
 }
-
+#include <array>
 void KDTreeFinder::PointCluster(const int index, double distcut, track_t& atrack) 
 {
    if (fPointsArray.size() == (size_t) index + 1 )
@@ -132,7 +132,7 @@ void KDTreeFinder::PointCluster(const int index, double distcut, track_t& atrack
    
    fCluster[index].set(fClusterID);
    atrack.push_back(index);
-   std::array<double,3> xyz = {thisPoint->GetX(),thisPoint->GetY(),thisPoint->GetZ()};
+   std::array<double,3> xyz = { thisPoint->GetX(),thisPoint->GetY(),thisPoint->GetZ()};
    std::cout <<thisPoint->GetX() << "\t"<< thisPoint->GetY() << "\t"<< thisPoint->GetZ() <<"\n";
    std::vector<int> index_in_range;
    fPoints->FindInRange (xyz.begin(), distcut, index_in_range);
