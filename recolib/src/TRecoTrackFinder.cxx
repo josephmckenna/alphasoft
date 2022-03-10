@@ -78,7 +78,7 @@ int TRecoTrackFinder::FindTracks(const std::vector<TSpacePoint*> SortedPoints , 
    points_cut += npc;
    rad_cut += rc;
 
-
+   delete pattrec;
    return stat;
 }
 
