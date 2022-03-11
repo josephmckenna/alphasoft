@@ -17,6 +17,7 @@
 
 #include <TDirectory.h>
 
+#define USE_STD_QSORT 0
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        fLocation("CERN"),
@@ -191,7 +192,12 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
          fPointsArray.push_back(point);
          ++n;
       }
+
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -233,7 +239,11 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -290,7 +300,11 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
