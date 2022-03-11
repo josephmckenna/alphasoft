@@ -77,7 +77,11 @@ public:
                                                  lineFitter(f->ana_settings, fTrace)
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="TrackFitter";
+#ifdef __MINUIT2FIT__
+      fModuleName="TrackFitter (M2)";
+#else
+      fModuleName="TrackFitter (M1)";
+#endif
 #endif
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming

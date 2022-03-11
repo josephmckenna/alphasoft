@@ -76,7 +76,11 @@ public:
 
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="VertexFitter";
+      #if MINUIT2VERTEXFIT
+      fModuleName="VertexFitter (M2)";
+      #else
+      fModuleName="VertexFitter (M1)";
+      #endif
 #endif
       //MagneticField = fFlags->fMagneticField;
       diagnostics=fFlags->fDiag; // dis/en-able histogramming
