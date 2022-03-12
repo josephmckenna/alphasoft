@@ -15,7 +15,8 @@ private:
    int fw;
    int fp;
    double ft;
-   double fH;
+   double fHw;
+   double fHp;
 
    double fx;
    double fy;
@@ -40,19 +41,19 @@ public:
                double t,
                double r, double lorentz, double z_from_pad,
                double er_str, double ep_str, double ez_from_pad,
-               double amplitude);
+               double WireAplitude, double PadAmplitude);
   void Setup(int anode, int pad_col, int pad_row, 
 	     double t,
 	     double r, double lorentz, double z_from_pad,
 	     double er_str, double ep_str, double ez_from_pad,
-	     double amplitude);
+	     double WireAplitude, double PadAmplitude);
 
   void Setup(int anode, int pad_col, int pad_row, 
 	     double t, double phi_from_aw,
 	     double r, double lorentz, double z_from_pad,
 	     double ep_from_aw,
 	     double er_str, double ep_str, double ez_from_pad,
-	     double amplitude);
+	     double WireAplitude, double PadAmplitude);
   
   TSpacePoint(double x, double y, double z,
 	      double ex, double ey, double ez);
@@ -74,7 +75,8 @@ public:
 
    inline double GetTime() const {return ft;}
 
-   inline double GetHeight() const { return fH;}
+   inline double GetWireHeight() const { return fHw;}
+   inline double GetPadHeight() const { return fHp;}
 
    inline double GetX() const {return fx;}
    inline double GetY() const {return fy;}

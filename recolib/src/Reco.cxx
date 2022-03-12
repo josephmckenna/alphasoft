@@ -188,7 +188,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
@@ -235,7 +235,7 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
@@ -296,7 +296,7 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
                       time,
                       r,correction,zed,
                       err,erp,zerr,
-                      sp->height);
+                      sp->height,sp->height);
          fPointsArray.push_back(point);
          ++n;
       }

@@ -209,7 +209,7 @@ float getHitVal(ImageData *data, HitInfo *hi)
             val = hi->time;
             break;
         case IDM_HEIGHT:
-            val = hi->height;
+            val = hi->wireheight;
             break;
         case IDM_ERROR:
             val = sqrt(hi->error[0]*hi->error[0] + hi->error[1]*hi->error[1] + hi->error[2]*hi->error[2]);

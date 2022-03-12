@@ -808,7 +808,7 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
          fHisto->FillHisto("hspzphi", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("hspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("hsprp", ap->GetPhi(), ap->GetR() );
-         fHisto->FillHisto("hspth",ap->GetTime(),ap->GetHeight());
+         fHisto->FillHisto("hspth",ap->GetTime(),ap->GetWireHeight());
       }
    double maxd= ((TSpacePoint*)sp->Last())->Distance( (TSpacePoint*)sp->First() );
    fHisto->FillHisto("hsplen", maxd );
@@ -867,7 +867,7 @@ void ReadEventTree::ProcessHelix(TStoreHelix* hel)
          fHisto->FillHisto("hhspzp", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("hhspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("hhsprp", ap->GetPhi(), ap->GetR() );
-         fHisto->FillHisto("hhspth", ap->GetTime(),ap->GetHeight());
+         fHisto->FillHisto("hhspth", ap->GetTime(),ap->GetWireHeight());
       }
 }
 
@@ -893,7 +893,7 @@ void ReadEventTree::ProcessUsed(TFitHelix* hel)
          fHisto->FillHisto("huhspzp", ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
          fHisto->FillHisto("huhspzr", ap->GetZ(), ap->GetR() );
          fHisto->FillHisto("huhsprp", ap->GetPhi(), ap->GetR() );
-         fHisto->FillHisto("huhspth", ap->GetTime(),ap->GetHeight());
+         fHisto->FillHisto("huhspth", ap->GetTime(),ap->GetWireHeight());
       }
 }
 
@@ -944,7 +944,7 @@ void ReadEventTree::FillCosmicsHisto()
          if( 0 )
             {
                double time = p->GetTime(),
-                  height = p->GetHeight();
+                  height = p->GetWireHeight();
                std::cout<<aw<<"\t\t"<<sec<<"\t"<<row<<"\t\t"<<time<<"\t\t"<<height<<std::endl;
             }
          fHisto->FillHisto("hcosaw", double(aw) );
