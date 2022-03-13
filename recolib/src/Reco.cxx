@@ -17,7 +17,7 @@
 
 #include <TDirectory.h>
 
-#define USE_STD_QSORT 0
+#define USE_STD_QSORT 1
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        fLocation("CERN"),

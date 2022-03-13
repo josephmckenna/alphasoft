@@ -207,10 +207,10 @@ int TSpacePoint::Compare(const TObject* aPoint) const
      return ( fr > ((TSpacePoint*) aPoint)->fr )?-1:1;
 
   if (fHw != ((TSpacePoint*) aPoint)->fHw)
-     return ( fHw < ((TSpacePoint*) aPoint)->fHw )?-1:1;
+     return ( fHw > ((TSpacePoint*) aPoint)->fHw )?-1:1;
 
   if (fHp != ((TSpacePoint*) aPoint)->fHp)
-     return ( fHp < ((TSpacePoint*) aPoint)->fHp )?-1:1;
+     return ( fHp > ((TSpacePoint*) aPoint)->fHp )?-1:1;
 
 
   std::cout <<"COMPARE FAILED!"<<std::endl;
