@@ -293,21 +293,31 @@ public:
    }
 };
 
-#define NUMBER_OF_PAD_DECONVOLUTION_THREADS 2
-#if NUMBER_OF_PAD_DECONVOLUTION_THREADS==1
+#if N_PAD_DECONV_THREADS==1
 static TARegister tar_1_1(new DeconvPADModuleFactory(1,1));
-#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==2
+#elif N_PAD_DECONV_THREADS==2
 static TARegister tar_1_2(new DeconvPADModuleFactory(1,2));
 static TARegister tar_2_2(new DeconvPADModuleFactory(2,2));
-#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==3
+#elif N_PAD_DECONV_THREADS==3
 static TARegister tar_1_3(new DeconvPADModuleFactory(1,3));
 static TARegister tar_2_3(new DeconvPADModuleFactory(2,3));
 static TARegister tar_3_3(new DeconvPADModuleFactory(3,3));
-#elif NUMBER_OF_PAD_DECONVOLUTION_THREADS==4
+#elif N_PAD_DECONV_THREADS==4
 static TARegister tar_1_4(new DeconvPADModuleFactory(1,4));
 static TARegister tar_2_4(new DeconvPADModuleFactory(2,4));
 static TARegister tar_3_4(new DeconvPADModuleFactory(3,4));
 static TARegister tar_4_4(new DeconvPADModuleFactory(4,4));
+#elif N_PAD_DECONV_THREADS==8
+static TARegister tar_1_8(new DeconvPADModuleFactory(1,8));
+static TARegister tar_2_8(new DeconvPADModuleFactory(2,8));
+static TARegister tar_3_8(new DeconvPADModuleFactory(3,8));
+static TARegister tar_4_8(new DeconvPADModuleFactory(4,8));
+static TARegister tar_5_8(new DeconvPADModuleFactory(5,8));
+static TARegister tar_6_8(new DeconvPADModuleFactory(6,8));
+static TARegister tar_7_8(new DeconvPADModuleFactory(7,8));
+static TARegister tar_8_8(new DeconvPADModuleFactory(8,8));
+#else
+#error ***Unsupported number of threads for pad deconvolution***
 #endif
 /* emacs
  * Local Variables:

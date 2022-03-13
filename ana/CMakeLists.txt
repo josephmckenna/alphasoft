@@ -13,9 +13,14 @@ macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
 endmacro()
 
 
+set(N_PAD_DECONV_THREADS "2" CACHE STRING "N Threads for Pad Deconvolution")
+
+set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS
+             "1" "2" "3" "4" "8")
+
+
 #Extra path for GitInfo.h file
 include_directories(${CMAKE_BINARY_DIR})
-
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
@@ -77,6 +82,8 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/analib/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/aged/include)
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
+
+    target_compile_definitions(${bin} PRIVATE N_PAD_DECONV_THREADS=${N_PAD_DECONV_THREADS})
 
     target_link_libraries( ${bin} ${AG_LINK_LIBS}
                            ${SQLite3_LIBRARIES}
