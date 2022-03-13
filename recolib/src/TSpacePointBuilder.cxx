@@ -65,9 +65,10 @@ void TSpacePointBuilder::BuildSpacePointArray(
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          ++n;
       }
+   std::qsort(PointsArray.data(),PointsArray.size(),sizeof(TSpacePoint),SpacePointCompare);
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<PointsArray.size()<<std::endl;
 }

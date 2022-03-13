@@ -12,7 +12,7 @@
 #include "TPCconstants.hh"
 
 TSpacePoint::TSpacePoint():TObject(),
-			   fw(-1),fp(-1),ft(ALPHAg::kUnknown),fH(ALPHAg::kUnknown),
+			   fw(-1),fp(-1),ft(ALPHAg::kUnknown),fHw(ALPHAg::kUnknown),fHp(ALPHAg::kUnknown),
 			   fx(ALPHAg::kUnknown),fy(ALPHAg::kUnknown),fz(ALPHAg::kUnknown),
 			   fr(ALPHAg::kUnknown),fphi(ALPHAg::kUnknown),
 			   ferrx(ALPHAg::kUnknown),ferry(ALPHAg::kUnknown),ferrz(ALPHAg::kUnknown),
@@ -24,7 +24,8 @@ TSpacePoint::TSpacePoint(const TSpacePoint &p):TObject(p)
   fw=p.fw;
   fp=p.fp;
   ft=p.ft;
-  fH=p.fH;
+  fHw=p.fHw;
+  fHp=p.fHp;
   fx=p.fx;
   fy=p.fy;
   fz=p.fz;
@@ -42,8 +43,8 @@ TSpacePoint::TSpacePoint(int w, int s, int i,
 			 double t,
 			 double r, double phi, double z,
 			 double er, double ep, double ez,
-			 double H):TObject(),
-				   fw(w),ft(t),fH(H),
+			 double Hw, double Hp):TObject(),
+				   fw(w),ft(t),fHw(Hw),fHp(Hp),
 				   fz(z),fr(r)
 {
   fp = s+i*32; // pad uniq index
@@ -82,11 +83,12 @@ void TSpacePoint::Setup(int w, int s, int i,
 			double t,
 			double r, double phi, double z,
 			double er, double ep, double ez,
-			double H)
+			double Hw, double Hp)
 {
   fw=w;
   ft=t;
-  fH=H;
+  fHw=Hw;
+  fHp=Hp;
   fz=z;
   fr=r;
   fp = s+i*32; // pad uniq index
@@ -126,11 +128,12 @@ void TSpacePoint::Setup(int w, int s, int i,
 			double r, double phi, double z,
 			double epos,
 			double er, double ep, double ez,
-			double H)
+			double Hw, double Hp)
 {
   fw=w;
   ft=t;
-  fH=H;
+  fHw=Hw;
+  fHp=Hp;
   fz=z;
   fr=r;
   fp = s+i*32; // pad uniq index
@@ -164,7 +167,7 @@ void TSpacePoint::Setup(int w, int s, int i,
 
 TSpacePoint::TSpacePoint(double x, double y, double z,
 			 double ex, double ey, double ez):fw(-1), fp(-1), 
-							  ft(ALPHAg::kUnknown),fH(999999.),
+							  ft(ALPHAg::kUnknown),fHw(999999.),fHp(999999.),
 							  fx(x), fy(y), fz(z),
 							  ferrx(ex), ferry(ey), ferrz(ez)
 {
@@ -175,17 +178,17 @@ TSpacePoint::TSpacePoint(double x, double y, double z,
 
 double TSpacePoint::MeasureRad(const TSpacePoint* aPoint) const
 {
-  return TMath::Abs(fr - aPoint->fr);
+  return TMath::Abs(fr-aPoint->fr);
 }
 
 double TSpacePoint::MeasurePhi(const TSpacePoint* aPoint) const
 {
   double dist=ALPHAg::kUnknown,
-    phi1 = fphi,phi2 = aPoint->fphi;
+    phi1=fphi,phi2=aPoint->fphi;
   if( phi1 < 0. )
-    phi1 += TMath::TwoPi();
+    phi1+=TMath::TwoPi();
   if( phi2 < 0. )
-    phi2 += TMath::TwoPi();
+    phi2+=TMath::TwoPi();
 
   if( phi1 >= 0. && phi2 >=0. ) dist = TMath::Abs(phi1-phi2);
 
@@ -194,21 +197,23 @@ double TSpacePoint::MeasurePhi(const TSpacePoint* aPoint) const
 
 double TSpacePoint::MeasureZed(const TSpacePoint* aPoint) const
 {
-  return TMath::Abs(fz - aPoint->fz);
+  return TMath::Abs(fz-aPoint->fz);
 }
 
 
 int TSpacePoint::Compare(const TObject* aPoint) const
 {
-  if ( fr > ((TSpacePoint*) aPoint)->fr ) return -1;// smaller = large radius = earlier
-  else if ( fr < ((TSpacePoint*) aPoint)->fr ) return 1;// larger = small radius = later
-  else return 0;
-  /*if (fr != ((TSpacePoint*) aPoint)->fr)
+  if (fr != ((TSpacePoint*) aPoint)->fr)
      return ( fr > ((TSpacePoint*) aPoint)->fr )?-1:1;
 
-  if (fw != ((TSpacePoint*) aPoint)->fw)
-     return ( fw > ((TSpacePoint*) aPoint)->fw )?-1:1;
-*/
+  if (fHw != ((TSpacePoint*) aPoint)->fHw)
+     return ( fHw > ((TSpacePoint*) aPoint)->fHw )?-1:1;
+
+  if (fHp != ((TSpacePoint*) aPoint)->fHp)
+     return ( fHp > ((TSpacePoint*) aPoint)->fHp )?-1:1;
+
+
+  std::cout <<"COMPARE FAILED!"<<std::endl;
   return 0;
 }
 
@@ -266,8 +271,9 @@ void TSpacePoint::Print(Option_t* opt) const
 {
   std::cout<<"TSpacePoint @ t = "<<std::setw(5)<<std::left<<ft<<" ns "
 	   <<"on anode: "<<std::setw(5)<<std::left<<fw
-	   <<" V = "<<std::setw(5)<<std::left<<fH
-	   <<" pad "<<std::setw(5)<<std::left<<fp<<std::endl;
+	   <<" V = "<<std::setw(5)<<std::left<<fHw
+	   <<" pad "<<std::setw(5)<<std::left<<fp
+	   <<" V = "<<std::setw(5)<<std::left<<fHp<<std::endl;
   if( !strcmp(opt,"xy") )
     {
       std::cout<<"\t(x,y,z) = ("
@@ -294,3 +300,12 @@ void TSpacePoint::Print(Option_t* opt) const
 }
 
 ClassImp(TSpacePoint)
+
+
+int SpacePointCompare(const void* a, const void* b)
+{
+   if (a == 0 && b == 0) return 0;
+   if (a == 0) return 1;
+   if (b == 0) return -1;
+   return ((TSpacePoint*)a)->Compare((TSpacePoint*)b);
+}

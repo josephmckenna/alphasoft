@@ -175,10 +175,10 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
             TSpacePoint* spi = (TSpacePoint*) points->At(i);
             double x=spi->GetX(),y=spi->GetY(),z=spi->GetZ();
             if (x*x+y*y>100) continue;
-            printf("BAD %d) %16lx %16lx %16lx %g %g %g time=%g h=%g r=%g phi=%g wire=%d pad=%d\n",
+            printf("BAD %d) %16lx %16lx %16lx %g %g %g time=%g ph=%g wh=%g r=%g phi=%g wire=%d pad=%d\n",
                 i, *(unsigned long *)&x, *(unsigned long *)&y, *(unsigned long *)&z,
                 x,y,z,
-                spi->GetTime(),spi->GetHeight(),spi->GetR(),spi->GetPhi(),spi->GetWire(),spi->GetPad());
+                spi->GetTime(),spi->GetWireHeight(),spi->GetPadHeight(),spi->GetR(),spi->GetPhi(),spi->GetWire(),spi->GetPad());
         }
     }
 #endif
@@ -237,13 +237,15 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
                 hi->wire = spi->GetWire();
                 hi->pad = spi->GetPad();
                 hi->time = spi->GetTime();
-                hi->height = spi->GetHeight();
+                hi->wireheight = spi->GetWireHeight();
+                hi->padheight = spi->GetWireHeight();
                 hi->error[0] = spi->GetErrX();
                 hi->error[1] = spi->GetErrY();
                 hi->error[2] = spi->GetErrZ();
                 hi->index = i;
                 if (std::isnan(hi->time)) hi->time = -1;
-                if (std::isnan(hi->height)) hi->height = -1;
+                if (std::isnan(hi->padheight)) hi->padheight = -1;
+                if (std::isnan(hi->wireheight)) hi->wireheight = -1;
             }
         }
         

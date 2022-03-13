@@ -188,8 +188,6 @@ public:
 
       std::vector<TSpacePoint*> SortedPoints;
       {
-         // TSeqCollection is not threadsafe... 
-         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          //Unfolding the array into a vector of points isn't free... so maybe we can look at changing the finder classes
 
          SortedPoints.reserve(SigFlow->fSpacePoints.size());
@@ -197,7 +195,6 @@ public:
          {
             SortedPoints.push_back( (TSpacePoint*) &p);
          }
-         TSeqCollection::QSort((TObject**)SortedPoints.data(),0,SortedPoints.size());
       }
       SigFlow->fTrackVector.clear();
       {
