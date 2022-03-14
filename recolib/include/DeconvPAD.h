@@ -119,7 +119,7 @@ public:
       return (x < y)? x : y;
    }
 
-   inline bool MaskPads(short& sec, int& row) const
+   inline bool MaskPads(const short& sec, const int& row) const
    {
       for(auto it=fPadSecMask.begin(); it!=fPadSecMask.end(); ++it)
          for(auto jt=fPadRowMask.begin(); jt!=fPadRowMask.end(); ++jt)

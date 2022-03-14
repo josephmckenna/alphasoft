@@ -332,11 +332,11 @@ public:
          row = fmap.at(i).second;
       return row;
    }
-   inline int index(int& sec, int& row) const
+   inline int index(const int& sec, const int& row) const
    {
       return sec + 32 * row;
    }
-   inline int index(short& sec, int& row) const
+   inline int index(const short& sec, const int& row) const
    {
       return sec + 32 * row;
    }

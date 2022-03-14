@@ -425,7 +425,7 @@ void DeconvPAD::BuildWFContainer(
    unsigned int index=0; //wfholder index
    for(unsigned int i = 0; i < channels.size(); ++i)
       {
-         FeamChannel* ch = channels[i];
+         const FeamChannel* ch = channels[i];
          if( !(ch->sca_chan>0) ) continue;
          short col = (short) (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col);
          col+=1;
@@ -437,7 +437,7 @@ void DeconvPAD::BuildWFContainer(
                         <<" pad col: "<<ch->pad_col
                         <<" PAD SEC ERROR"<<std::endl;
             }
-         int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
+         const int row = ch->pwb_ring * MAX_FEAM_PAD_ROWS + ch->pad_row;
          if( row<0 || row>576 )
             {
                std::cout<<"DeconvPAD::FindPadTimes() row: "<<row
@@ -445,7 +445,7 @@ void DeconvPAD::BuildWFContainer(
                         <<" pad row: "<<ch->pad_row
                         <<" PAD ROW EROOR"<<std::endl;
             }         
-         int pad_index = pmap.index(col,row);
+         const int pad_index = pmap.index(col,row);
          assert(!std::isnan(pad_index));
          if( pad_index < 0 || pad_index >= (int)ALPHAg::_padchan )
             {
@@ -471,18 +471,15 @@ void DeconvPAD::BuildWFContainer(
                continue;
             }
 
-         // CREATE electrode
-         ALPHAg::electrode el(col,row);
-
-         double ped = CalculatePedestal(ch->adc_samples);
-         double peak_h = GetPeakHeight(ch->adc_samples,pad_index,ped);
+         const double ped = CalculatePedestal(ch->adc_samples);
+         const double peak_h = GetPeakHeight(ch->adc_samples,pad_index,ped);
           
          if( fDiagnostic )
             {
                hPWBped->Fill(pad_index,ped);
                hPWBped_prox->Fill(pad_index,ped);
-               double peak_t = GetPeakTime(ch->adc_samples);
-               PwbPeaks.emplace_back(el,peak_t,peak_h,0.);
+               const double peak_t = GetPeakTime(ch->adc_samples);
+               PwbPeaks.emplace_back(ALPHAg::electrode(col,row),peak_t,peak_h,0.);
             }
             
 
@@ -504,10 +501,10 @@ void DeconvPAD::BuildWFContainer(
                waveform.massage(ped,fPwbRescale[pad_index]);
 
                // STORE electrode
-               PadIndex.push_back( el );
+               PadIndex.emplace_back( col,row );
 
                if( fAged )
-                  feamwaveforms.emplace_back(el,new std::vector<double>(waveform.h));
+                  feamwaveforms.emplace_back(ALPHAg::electrode(col,row),new std::vector<double>(waveform.h));
 
                ++index;
             }// max > thres
@@ -522,7 +519,7 @@ void DeconvPAD::Deconvolution(
    if(subtracted.empty())
       return;
 
-   size_t nsamples = subtracted.back().h.size();
+   const size_t nsamples = subtracted.back().h.size();
    assert(nsamples >= thePadBin);
    
    if (thread_no == 1)
@@ -538,8 +535,8 @@ void DeconvPAD::Deconvolution(
       return DeconvolutionByRange( subtracted, fElectrodeIndex, signals, thePadBin,nsamples);
    else
    {
-      float slice_size = (nsamples - thePadBin) / (float)total_threads;
-      int start = floor(slice_size*(thread_no - 1) + thePadBin);
+      const float slice_size = (nsamples - thePadBin) / (float)total_threads;
+      const int start = floor(slice_size*(thread_no - 1) + thePadBin);
       int stop = floor( slice_size * thread_no + thePadBin );
       //I am the last thread
       if (thread_no == total_threads)
@@ -566,7 +563,7 @@ void DeconvPAD::DeconvolutionByRange(
          // map ordered wf to corresponding electrode
          for (auto const it : histset)
             {
-               unsigned int i = it->index;
+               const unsigned int i = it->index;
                const std::vector<double>& wf=it->h;
                const ALPHAg::electrode &anElectrode = fElectrodeIndex[i];
                // number of "electrons"
