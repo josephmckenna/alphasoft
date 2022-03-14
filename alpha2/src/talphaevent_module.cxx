@@ -55,6 +55,10 @@
 
 #define VF48_COINCTIME 0.000010
 
+// Not ready yet! It works but the TSiliconEvent and TAlphaEvent might need preparing for recycling
+PointerRecycler<TSiliconEvent> SilEventFlow::gTSiliconEventRecycleBin(0,"TSiliconEvent");
+PointerRecycler<TAlphaEvent> SilEventFlow::gTAlphaEventRecycleBin(0,"TAlphaEvent");
+
 TVF48SiMap *gVF48SiMap = NULL;
 
 class AlphaEventFlags

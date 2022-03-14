@@ -19,6 +19,9 @@
 #include "TSISChannels.h"
 #include "TSISEvent.h"
 
+VectorRecycler<TSISBufferEvent> SISModuleFlow::gTSISBufferEventRecycleBin(1000,"TSIS Buffer");
+VectorRecycler<TSISEvent> SISEventFlow::gTSISEventRecycleBin(1000,"TSISEvent");
+
 //This works but obviously this stuff is global which is very bad.
 std::deque<TMEvent*> unpairedSISEvents;
 void pushbackevent(TMEvent* event) //This is a global function. We in python now bois.
@@ -51,7 +54,7 @@ class UnmatchedBuffer
       {
          if (fPosition >= fBuffer.front().size())
          {
-            gTSISBufferEventRecycleBin.RecycleVector(fBuffer.front());
+            SISModuleFlow::gTSISBufferEventRecycleBin.RecycleVector(fBuffer.front());
             fBuffer.pop_front();
             fPosition = 0;
             return GetFront();

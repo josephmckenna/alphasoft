@@ -21,8 +21,13 @@ template<typename T>
 class PointerRecycler
 {
    private:
+      const std::string fRecyclerName;
       const int fMaxBufferedEvents;
       std::deque<T*> fRecycleBin;
+      int fNEventsRecycled;
+      int fNEventsCreatedNew;
+      int fNEventsThrownAway;
+      int fNEventsQueued;
    private:
       T* GrabObject()
       {
@@ -32,12 +37,22 @@ class PointerRecycler
          return newObject;
       }
    public:
-      PointerRecycler(const int buffer_events): fMaxBufferedEvents(buffer_events)
+      PointerRecycler(const int buffer_events, const char* nick_name):
+         fRecyclerName(nick_name),
+         fMaxBufferedEvents(buffer_events)
       {
-
+         fNEventsRecycled = 0;
+         fNEventsCreatedNew = 0;
+         fNEventsThrownAway = 0;
+         fNEventsQueued = 0;
       }
       ~PointerRecycler()
       {
+          std::cout << fRecyclerName.c_str() << " PointerRecycler\n";
+          std::cout << "\t" << fNEventsRecycled << " events recycled\n";
+          std::cout << "\t" << fNEventsCreatedNew << " events created\n";
+          std::cout << "\t" << fNEventsThrownAway << " events thrown away (queue full)\n";
+          std::cout << "\t" << fNEventsQueued << " events queued\n";
           for (T* p: fRecycleBin)
              delete p;
           fRecycleBin.clear();
@@ -46,32 +61,46 @@ class PointerRecycler
       {
          if (fRecycleBin.size())
          {
+            fNEventsRecycled++;
             return GrabObject();
          }
          else
+         {
+            fNEventsCreatedNew++;
             return new T();
+         }
       }
       void RecycleObject(T* data)
       {
          if (fRecycleBin.size() < fMaxBufferedEvents)
          {
+            fNEventsQueued++;
             fRecycleBin.push_back(data);
          }
          else
          {
+            fNEventsThrownAway++;
             delete data;
          }
       }
 };
 
 
+
 template<typename T>
 class VectorRecycler
 {
    private:
+      const std::string fRecyclerName;
       const int fMaxBufferedEvents;
       std::deque<std::vector<T>> fRecycleBin;
       std::mutex fMutex;
+
+      int fNEventsRecycled;
+      int fNEventsCreatedNew;
+      int fNEventsThrownAway;
+      int fNEventsQueued;
+
    private:
       std::vector<T> GrabVector()
       {
@@ -83,21 +112,30 @@ class VectorRecycler
          }
          if (fRecycleBin.size())
          {
+            fNEventsRecycled++;
             std::vector<T> data = std::move(fRecycleBin.front());
             return data;
          }
          else
          {
+            fNEventsCreatedNew++;
             return std::vector<T>();
          }
       }
    public:
-      VectorRecycler(const int buffer_events): fMaxBufferedEvents(buffer_events)
+      VectorRecycler(const int buffer_events, const char* nick_name):
+         fRecyclerName(nick_name),
+         fMaxBufferedEvents(buffer_events)
       {
 
       }
       ~VectorRecycler()
       {
+          std::cout << fRecyclerName.c_str() << " PointerRecycler\n";
+          std::cout << "\t" << fNEventsRecycled << " events recycled\n";
+          std::cout << "\t" << fNEventsCreatedNew << " events created\n";
+          std::cout << "\t" << fNEventsThrownAway << " events thrown away (queue full)\n";
+          std::cout << "\t" << fNEventsQueued << " events queued\n";
           fRecycleBin.clear();
       }
       std::vector<T> NewVector()
@@ -115,22 +153,24 @@ class VectorRecycler
             return;
          if (fRecycleBin.size() < fMaxBufferedEvents)
          {
+            fNEventsQueued++;
             data.clear();
             fRecycleBin.emplace_back(std::move(data));
          }
          else
          {
             //std::cout << "VECTOR BUFFER FULL!" << typeid(T).name()<<std::endl;
+            fNEventsThrownAway++;
             data.clear();
          }
       }
 };
 
-static VectorRecycler<uint32_t> gVF48dataRecycler(5000);
 
 class VF48data
 {
   public:
+     static VectorRecycler<uint32_t> gVF48dataRecycler;
      std::array<std::vector<uint32_t>,nVF48> data32;
   VF48data()
   {
@@ -165,7 +205,6 @@ class VF48data
      }
   }
 };
-
 
 class VF48DataFlow: public TAFlowEvent
 {
@@ -205,11 +244,12 @@ class VF48EventFlow: public TAFlowEvent
 #include "TAlphaEvent.h"
 
 
-static PointerRecycler<TSiliconEvent> gTSiliconEventRecycleBin(1000);
-static PointerRecycler<TAlphaEvent> gTAlphaEventRecycleBin(1000);
 
 class SilEventFlow: public TAFlowEvent
 {
+  static PointerRecycler<TSiliconEvent> gTSiliconEventRecycleBin;
+  static PointerRecycler<TAlphaEvent> gTAlphaEventRecycleBin;
+
   public:
      TSiliconEvent* silevent;
      TAlphaEvent* alphaevent;
@@ -256,12 +296,12 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 #include "TSISEvent.h"
 
-static VectorRecycler<TSISBufferEvent> gTSISBufferEventRecycleBin(1000);
 
 //Flow for passing SIS data from Analyze function (main thread) to the AnalyzeFlowEvent (side thread)
 class SISModuleFlow: public TAFlowEvent
 {
   public:
+      static VectorRecycler<TSISBufferEvent> gTSISBufferEventRecycleBin;
       std::vector<TSISBufferEvent> fSISBufferEvents[NUM_SIS_MODULES];
       unsigned long MidasEventID=0;
       uint32_t MidasTime=0;
@@ -299,12 +339,10 @@ class SISModuleFlow: public TAFlowEvent
    }
 };
 
-
-static VectorRecycler<TSISEvent> gTSISEventRecycleBin(1000);
-
 class SISEventFlow: public TAFlowEvent
 {
   public:
+  static VectorRecycler<TSISEvent> gTSISEventRecycleBin;
   std::array<std::vector<TSISEvent>,NUM_SIS_MODULES> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
