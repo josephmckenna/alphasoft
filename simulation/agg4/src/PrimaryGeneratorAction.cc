@@ -78,7 +78,7 @@ extern double gMagneticField;
 
 PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
 						 fZcenter(50.*cm),fZlength(2.*cm),
-						 fRunAction(0)
+						 fRunAction(0), mu_minus(0), mu_plus(0)
 {
   // create annihilation products
   fHbarAnnihilation = new SecondaryProducer();
@@ -88,6 +88,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   sprintf(fname,"%s/simulation/agg4/annihilation.dat",getenv("AGRELEASE"));
   fin.open(fname,std::ios::in);
     //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
+
+  ///< Fix the parameters of the EcoMug generator
+  mu_minus = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
+  mu_plus = G4ParticleTable::GetParticleTable()->FindParticle("mu+");
+  fMuonGen.SetUseHSphere();
+  fMuonGen.SetHSphereRadius(3000*mm);
+  fMuonGen.SetHSphereCenterPosition({{0.,0.,0.}});
 
   // define a particle gun
   fParticleGun = new G4ParticleGun();
