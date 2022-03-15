@@ -1,21 +1,22 @@
 #include "TRecoVertexFitter.hh"
 
-int TRecoVertexFitter::RecVertex(std::vector<TFitHelix*> HelixArray, TFitVertex* Vertex)
+int TRecoVertexFitter::RecVertex(std::vector<TFitHelix>& HelixArray, TFitVertex* Vertex)
 {
    int Nhelices = 0;
+   // sort the helices by |c|, so that lowest |c| (highest momentum) is first
+   std::sort(HelixArray.begin(),HelixArray.end(),SortMomentum);
+
    Vertex->SetChi2Cut( fVtxChi2Cut );
-   int nhel=HelixArray.size();
-   for( int n = 0; n<nhel; ++n )
+   for (TFitHelix& hel: HelixArray)
+   {
+      if( hel.IsGood() )
       {
-         TFitHelix* hel = HelixArray.at(n);
-         if( hel->IsGood() )
-            {
-               Vertex->AddHelix(hel);
-               ++Nhelices;
-            }
+         Vertex->AddHelix(&hel);
+         ++Nhelices;
       }
+   }
    if( fTrace )
-      std::cout<<"Reco::RecVertex(  )   # helices: "<<nhel<<"   # good helices: "<<Nhelices<<std::endl;
+      std::cout<<"Reco::RecVertex(  )   # helices: "<<HelixArray.size()<<"   # good helices: "<<Nhelices<<std::endl;
    // reconstruct the vertex
    int sv = -2;
    if( Nhelices )// find the vertex!

@@ -16,7 +16,7 @@ class TRecoVertexFitter
       TRecoVertexFitter(double chi2cut, bool trace): fVtxChi2Cut(chi2cut), fTrace(trace)
       {
       }
-      int RecVertex(std::vector<TFitHelix*> HelixArray, TFitVertex* Vertex);
+      int RecVertex(std::vector<TFitHelix>& HelixArray, TFitVertex* Vertex);
 
 };
 

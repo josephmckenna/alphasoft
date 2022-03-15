@@ -188,7 +188,7 @@ public:
   std::vector< track_t> fTrackVector;
   std::vector<TTrack> fTracksArray;
   std::vector<TFitLine*> fLinesArray;
-  std::vector<TFitHelix*> fHelixArray;
+  std::vector<TFitHelix> fHelixArray;
 
   std::vector<ALPHAg::wf_ref> AWwf;
   std::vector<ALPHAg::wf_ref> PADwf;
@@ -244,8 +244,6 @@ public:
      PADwf.clear();
      adc32max.clear();
      pwbMax.clear();
-     for (TFitHelix* h: fHelixArray)
-        delete h;
      fHelixArray.clear();
      for (TFitLine* h: fLinesArray)
         delete h;

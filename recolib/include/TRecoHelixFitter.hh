@@ -26,7 +26,7 @@ class TRecoHelixFitter
       fHelChi2ZMin = ana_settings->GetDouble("RecoModule","HelChi2ZMin");
       fHelDcut = ana_settings->GetDouble("RecoModule","HelDcut");
    }
-   int FitHelix(const std::vector<TTrack> TracksArray, std::vector<TFitHelix*>& HelixArray) const;
+   int FitHelix(const std::vector<TTrack> TracksArray, std::vector<TFitHelix>& HelixArray, const int thread_no, const int total_threads ) const;
 
 
 };

@@ -49,7 +49,7 @@ public:
 
   TStoreEvent& operator=(const TStoreEvent&);
   void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
-                const std::vector<TFitHelix*>* helices);
+                const std::vector<TFitHelix>* helices);
   void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
                 const std::vector<TFitHelix*>* helices);
 

@@ -110,9 +110,6 @@ int TFitVertex::AddHelix(TFitHelix* anHelix)
 int TFitVertex::Calculate()
 {
   if(fNhelices<2) return 0;
-
-  // sort the helices by |c|, so that lowest |c| (highest momentum) is first
-  std::sort(fHelixArray.begin(),fHelixArray.end(),SortMomentum);
   // ============= FIRST PASS =============
   // find the minimum distance 
   // between a pair of helices

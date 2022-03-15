@@ -43,8 +43,13 @@ public:
    bool ffiduc = false;
    
    AnaSettings* ana_settings=0;
+
+   const int fThreadNo;
+   const int fThreadCount;
+
 public:
-   TrackFitterFlags() // ctor
+   TrackFitterFlags(const int threadNo, const int threadCount):
+      fThreadNo(threadNo), fThreadCount(threadCount)
    { }
 
    ~TrackFitterFlags() // dtor
@@ -78,9 +83,16 @@ public:
    {
 #ifdef HAVE_MANALYZER_PROFILER
 #ifdef __MINUIT2FIT__
-      fModuleName="TrackFitter (M2)";
+      fModuleName = std::string("TrackFitter (M2) (") +
+                    std::to_string(fFlags->fThreadNo) + 
+                    std::string("/") + 
+                    std::to_string(fFlags->fThreadCount) +
+                    std::string(")");
 #else
       fModuleName="TrackFitter (M1)";
+      //Minuit simply cannot be used during multithreading
+      if (fFlags->fThreadNo > 1)
+         fModuleName="TrackFitter (M1) [OFF]";
 #endif
 #endif
       //MagneticField = fFlags->fMagneticField;
@@ -158,33 +170,59 @@ public:
          }
          if (age->counter>fFlags->stop_event)
          {
-                   *flags|=TAFlag_SKIP_PROFILE;
-                  return flow;
-               }
+            *flags|=TAFlag_SKIP_PROFILE;
+            return flow;
          }
+      }
       //     std::cout<<"TrackFitter::Analyze Event # "<<age->counter<<std::endl;
+
+#ifdef __MINUIT2FIT__
+//Minuit2 fit can multi thread :)
+#else
+//Minuit1 cant... so only thread 1 does work
+      if ( fFlags->fThreadNo != 1)
+      {
+         *flags|=TAFlag_SKIP_PROFILE;
+         return flow;
+      }
+#endif
 
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
       if ( SigFlow->fSpacePoints.empty() || SigFlow->fSkipReco)
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
+      
+#ifdef __MINUIT2FIT__
+      //Minuit2 fit
+      if ( fFlags->fThreadNo == 1)
       {
-         #ifdef __MINUIT2FIT__
-            //Minuit2 fit
-         #else
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
-         #endif
+         if( fFlags->fMagneticField == 0. )
+            SigFlow->fLinesArray.clear();
+         SigFlow->fHelixArray.clear();
+         
+      }
+      if( fFlags->fMagneticField == 0. )
+      {
+         int nlin = lineFitter.FitLine(SigFlow->fTracksArray, SigFlow->fLinesArray,fFlags->fThreadNo,fFlags->fThreadCount);
+         std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+      }
+      int nhel = helixFitter.FitHelix(SigFlow->fTracksArray, SigFlow->fHelixArray,fFlags->fThreadNo,fFlags->fThreadCount);
+      if( fTrace )
+         std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+
+      
+
+#else
+      //Minuit 1 can't multithread... so we have to hold a global lock
+      {
+         std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          if( fFlags->fMagneticField == 0. )
          {
             SigFlow->fLinesArray.clear();
@@ -193,10 +231,9 @@ public:
          }
          SigFlow->fHelixArray.clear();
          int nhel = helixFitter.FitHelix(SigFlow->fTracksArray, SigFlow->fHelixArray);
-         if( fTrace )
-            std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
       }
-      
+#endif
+
       return flow;
    }
 
@@ -211,6 +248,7 @@ class TrackFitterFactory: public TAFactory
 public:
    TrackFitterFlags fFlags;
 public:
+
    void Help()
    {
       printf("TrackFitterFactory::Help\n");
@@ -230,6 +268,13 @@ public:
    {
       Help();
    }
+
+   TrackFitterFactory(int threadNo, int totalThreadCount):
+      fFlags(threadNo,totalThreadCount)
+   {
+
+   }
+
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
@@ -305,8 +350,32 @@ public:
    }
 };
 
-
-static TARegister tar(new TrackFitterFactory);
+#if N_TRACK_FIT_THREADS==1
+static TARegister tar(new TrackFitterFactory(1,1));
+#elif N_TRACK_FIT_THREADS==2
+static TARegister tar1(new TrackFitterFactory(1,2));
+static TARegister tar2(new TrackFitterFactory(2,2));
+#elif N_TRACK_FIT_THREADS==3
+static TARegister tar1(new TrackFitterFactory(1,3));
+static TARegister tar2(new TrackFitterFactory(2,3));
+static TARegister tar3(new TrackFitterFactory(3,3));
+#elif N_TRACK_FIT_THREADS==4
+static TARegister tar1(new TrackFitterFactory(1,4));
+static TARegister tar2(new TrackFitterFactory(2,4));
+static TARegister tar3(new TrackFitterFactory(3,4));
+static TARegister tar4(new TrackFitterFactory(4,4));
+#elif N_TRACK_FIT_THREADS==8
+static TARegister tar1(new TrackFitterFactory(1,8));
+static TARegister tar2(new TrackFitterFactory(2,8));
+static TARegister tar3(new TrackFitterFactory(3,8));
+static TARegister tar4(new TrackFitterFactory(4,8));
+static TARegister tar5(new TrackFitterFactory(5,8));
+static TARegister tar6(new TrackFitterFactory(6,8));
+static TARegister tar7(new TrackFitterFactory(7,8));
+static TARegister tar8(new TrackFitterFactory(8,8));
+#else
+#error *Invalid number of threads for TrackFitter*
+#endif
 
 /* emacs
  * Local Variables:

@@ -1688,9 +1688,9 @@ int TFitHelix::Compare(const TObject* aHelix) const
   else return 0;
 }
 
-bool SortMomentum(const TFitHelix* aHelix, const TFitHelix* bHelix)
+bool SortMomentum(const TFitHelix& aHelix, const TFitHelix& bHelix)
 {
-  return (TMath::Abs(aHelix->GetC()) > TMath::Abs(bHelix->GetC()));
+  return (TMath::Abs(aHelix.GetC()) > TMath::Abs(bHelix.GetC()));
 }
 
 //==============================================================================================

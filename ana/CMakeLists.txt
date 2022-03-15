@@ -14,10 +14,13 @@ endmacro()
 
 
 set(N_PAD_DECONV_THREADS "2" CACHE STRING "N Threads for Pad Deconvolution")
+set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
 
-set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS
-             "1" "2" "3" "4" "8")
+set(N_TRACK_FIT_THREADS "2" CACHE STRING "N Threads for Track Fitting (Minuit2 only)")
+set_property(CACHE N_TRACK_FIT_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
 
+set(N_VERTEX_FIT_THREADS "1" CACHE STRING "N Threads for Vertex fitting (each phase)")
+set_property(CACHE N_VERTEX_FIT_THREADS PROPERTY STRINGS "1" "2" "3")
 
 #Extra path for GitInfo.h file
 include_directories(${CMAKE_BINARY_DIR})
@@ -84,6 +87,8 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
 
     target_compile_definitions(${bin} PRIVATE N_PAD_DECONV_THREADS=${N_PAD_DECONV_THREADS})
+    target_compile_definitions(${bin} PRIVATE N_TRACK_FIT_THREADS=${N_TRACK_FIT_THREADS})
+    target_compile_definitions(${bin} PRIVATE N_VERTEX_FIT_THREADS=${N_VERTEX_FIT_THREADS})
 
     target_link_libraries( ${bin} ${AG_LINK_LIBS}
                            ${SQLite3_LIBRARIES}

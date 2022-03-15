@@ -26,7 +26,7 @@ TStoreHelix::TStoreHelix():fc(ALPHAg::kUnknown),
   fResiduals2(ALPHAg::kUnknown)
 {}
 
-TStoreHelix::TStoreHelix(TFitHelix* helix, 
+TStoreHelix::TStoreHelix(const TFitHelix* helix, 
 			 const std::vector<TSpacePoint>* points):fc(helix->GetC()), fRc(helix->GetRc()), 
 						  fphi0(helix->GetPhi0()), fD(helix->GetD()),
 						  flambda(helix->GetLambda()), fz0(helix->GetZ0()),
@@ -52,7 +52,7 @@ TStoreHelix::TStoreHelix(TFitHelix* helix,
   fNpoints = fSpacePoints.GetEntries();
 }
 
-TStoreHelix::TStoreHelix(TFitHelix* helix):fc(helix->GetC()), fRc(helix->GetRc()), 
+TStoreHelix::TStoreHelix(const TFitHelix* helix):fc(helix->GetC()), fRc(helix->GetRc()), 
 					   fphi0(helix->GetPhi0()), fD(helix->GetD()),
 					   flambda(helix->GetLambda()), fz0(helix->GetZ0()),
 					   fx0( helix->GetX0() ), fy0( helix->GetY0() ),

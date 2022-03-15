@@ -57,7 +57,7 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
 }
 
 void TStoreEvent::SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
-			   const std::vector<TFitHelix*>* helices)
+			   const std::vector<TFitHelix>* helices)
 {
   fNpoints=points->size();
   for(int i=0; i<fNpoints; ++i)
@@ -80,7 +80,7 @@ void TStoreEvent::SetEvent(const std::vector<TSpacePoint>* points, const std::ve
   fNtracks = helices->size();
   for(int i=0; i<fNtracks; ++i)
     {
-      TFitHelix* anHelix = helices->at(i);
+      const TFitHelix* anHelix = & helices->at(i);
       if( anHelix->GetStatus() > 0 )
 	{
 	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );

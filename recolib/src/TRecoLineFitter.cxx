@@ -1,12 +1,25 @@
 #include "TRecoLineFitter.hh"
 
 
-int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LinesArray) const
+int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LinesArray, const int thread_no = 1, const int total_threads = 1) const
 {
-   int n=0;
-   LinesArray.reserve(LinesArray.size() + TracksArray.size());
-   int ntracks=TracksArray.size();
-   for(int it=0; it<ntracks; ++it )
+
+   if (thread_no == 1)
+   {
+      LinesArray.clear();
+      LinesArray.reserve(TracksArray.size());
+   }
+
+   int n = LinesArray.size();
+
+   const float slice_size = TracksArray.size() / (float)total_threads;
+   const int start = floor(slice_size*(thread_no - 1));
+   int stop = floor( slice_size * thread_no );
+   //I am the last thread
+   if (thread_no == total_threads)
+      stop = TracksArray.size();
+
+   for(int it = start; it < stop; ++it )
       {
          const TTrack& at = TracksArray.at(it);
          TFitLine* line=new TFitLine(at); //Copy constructor

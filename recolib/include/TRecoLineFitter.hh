@@ -21,7 +21,7 @@ class TRecoLineFitter
       fLineChi2Min = ana_settings->GetDouble("RecoModule","LineChi2Min");
       fNspacepointsCut = ana_settings->GetInt("RecoModule","NpointsCut");
    }
-   int FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LineArray) const;
+   int FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LineArray, const int thread_no, const int total_threads) const;
 
 
 };
