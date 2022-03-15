@@ -46,10 +46,6 @@
 
 #define VF48_COINCTIME 0.000010
 
-//Copy of MIDAS bank (used to speed up multithreading, copy time is negligable compared to unpack time)
-
-VectorRecycler<uint32_t> VF48data::gVF48dataRecycler(5000,"VF48 data");
-
 class UnpackFlags
 {
 public:
