@@ -1,1 +1,1 @@
-../../alphag/src/eos_module.cxx
+../../ana/src/eos_module.cxx
