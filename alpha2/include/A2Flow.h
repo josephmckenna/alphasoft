@@ -97,7 +97,7 @@ class VectorRecyclerTableWriter
    };
 };
 
-#define ENABLE_VECTOR_RECYCLING 0
+#define ENABLE_VECTOR_RECYCLING 1
 
 template<typename T>
 class VectorRecycler
