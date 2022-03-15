@@ -85,7 +85,19 @@ class PointerRecycler
       }
 };
 
+class VectorRecyclerTableWriter
+{
+   public:
+   VectorRecyclerTableWriter() {
+      std::cout <<"PLOOP TABLE"<<std::endl;
+   };
+   ~VectorRecyclerTableWriter()
+   {
+      std::cout <<"MY TABLE"<<std::endl;
+   };
+};
 
+#define ENABLE_VECTOR_RECYCLING 0
 
 template<typename T>
 class VectorRecycler
@@ -101,6 +113,9 @@ class VectorRecycler
       int fNEventsThrownAway;
       int fNEventsQueued;
 
+      int fMemInUse;
+      int fMaxMemUse;
+
    private:
       std::vector<T> GrabVector()
       {
@@ -114,6 +129,7 @@ class VectorRecycler
          {
             fNEventsRecycled++;
             std::vector<T> data = std::move(fRecycleBin.front());
+            fMemInUse -= data.capacity();
             return data;
          }
          else
@@ -131,38 +147,59 @@ class VectorRecycler
       }
       ~VectorRecycler()
       {
-          std::cout << fRecyclerName.c_str() << " PointerRecycler\n";
+#if ENABLE_VECTOR_RECYCLING
+          std::cout << fRecyclerName.c_str() << " Container Recycler\n";
           std::cout << "\t" << fNEventsRecycled << " events recycled\n";
           std::cout << "\t" << fNEventsCreatedNew << " events created\n";
           std::cout << "\t" << fNEventsThrownAway << " events thrown away (queue full)\n";
           std::cout << "\t" << fNEventsQueued << " events queued\n";
+          if (fMemInUse > 1024 * 1024)
+          {
+             std::cout << "\t" << fMemInUse / 1024 / 1024 << "MB mem in use\n";
+          } else if (fMemInUse > 1024 ) {
+             std::cout << "\t" << fMemInUse / 1024 << "kB mem in use\n";
+          } else {
+             std::cout << "\t" << fMemInUse << "B mem in use\n";
+          }
+          //std::cout << "\t" << fMemInUse << " mem in use ("<<fMaxMemUse<<")\n";
           fRecycleBin.clear();
+#endif
       }
       std::vector<T> NewVector()
       {
+#if ENABLE_VECTOR_RECYCLING
          std::lock_guard<std::mutex> guard(fMutex);
          if (fRecycleBin.size())
             return GrabVector();
          else
+#endif
             return std::vector<T>();
       }
       void RecycleVector(std::vector<T> data)
       {
+#if ENABLE_VECTOR_RECYCLING
          std::lock_guard<std::mutex> guard(fMutex);
+         // Dont recycle empty containers
          if (!data.capacity())
             return;
          if (fRecycleBin.size() < fMaxBufferedEvents)
          {
             fNEventsQueued++;
             data.clear();
+            fMemInUse += data.capacity();
             fRecycleBin.emplace_back(std::move(data));
          }
          else
          {
             //std::cout << "VECTOR BUFFER FULL!" << typeid(T).name()<<std::endl;
+            if (fMemInUse > fMaxMemUse) 
+               fMaxMemUse = fMemInUse;
             fNEventsThrownAway++;
             data.clear();
          }
+#else 
+         data.clear();
+#endif
       }
 };
 
