@@ -1,6 +1,7 @@
 #ifndef __TKDTREEMATCH__
 #define __TKDTREEMATCH__
 #include <vector>
+#include <array>
 #include "TKDTree.h"
 #include "SignalsType.hh"
 

@@ -327,17 +327,21 @@ class AgKDTreeMatchFlow: public TAFlowEvent
          }
          return nullptr;
       }
-      std::vector<double>& GetXArray(const std::string name)
+      std::vector<double>* GetXArray(const std::string name)
       { 
          KDTreeIDContainer2D* t = GetTree(name);
          if (t)
-            return t->X();
+            return &t->X();
+         else
+            return nullptr;
       }
-      std::vector<double>& GetYArray(std::string name)
+      std::vector<double>* GetYArray(std::string name)
       { 
          KDTreeIDContainer2D* t = GetTree(name);
          if (t)
-            return t->Y();
+            return &t->Y();
+         else
+            return nullptr;
       }
 };
 
