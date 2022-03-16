@@ -17,7 +17,8 @@ class KDTreeIDContainer2D
          fKDTreeID(entires,2,1),
          fTreeName(treename)
       {
-
+         fX.reserve(entires);
+         fY.reserve(entires);
       }
       bool IsMatch(const std::string name) const
       {
