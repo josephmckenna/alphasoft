@@ -428,7 +428,7 @@ void DeconvPAD::BuildWFContainer(
       {
          const FeamChannel* ch = channels[i];
          if( !(ch->sca_chan>0) ) continue;
-         int col = (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col + 1) % 32;
+         short col = (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col + 1) % 32;
          
          if( col<0 || col >=32 ) 
             {
