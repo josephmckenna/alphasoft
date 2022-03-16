@@ -16,6 +16,9 @@ endmacro()
 set(N_PAD_DECONV_THREADS "2" CACHE STRING "N Threads for Pad Deconvolution")
 set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
 
+set(N_KDTREE_MATCH_THREADS "2" CACHE STRING "N Threads for KDTree spacepoint finding")
+set_property(CACHE N_KDTREE_MATCH_THREADS PROPERTY STRINGS "1" "2")
+
 set(N_TRACK_FIT_THREADS "2" CACHE STRING "N Threads for Track Fitting (Minuit2 only)")
 set_property(CACHE N_TRACK_FIT_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
 
@@ -87,6 +90,7 @@ foreach( LIST_FILE ${BINS} )
     target_include_directories(${bin} PUBLIC ${CMAKE_SOURCE_DIR}/agana)
 
     target_compile_definitions(${bin} PRIVATE N_PAD_DECONV_THREADS=${N_PAD_DECONV_THREADS})
+    target_compile_definitions(${bin} PRIVATE N_KDTREE_MATCH_THREADS=${N_KDTREE_MATCH_THREADS})
     target_compile_definitions(${bin} PRIVATE N_TRACK_FIT_THREADS=${N_TRACK_FIT_THREADS})
     target_compile_definitions(${bin} PRIVATE N_VERTEX_FIT_THREADS=${N_VERTEX_FIT_THREADS})
 

@@ -25,9 +25,12 @@ public:
    bool         fTrace       = false;
    bool         fForceReco   = false;
 
-   int TotalThreads = 0;
-   KDTreeMatchFlags() // ctor
+   const int fThreadNo;
+   const int fThreadCount;
+   KDTreeMatchFlags(const int threadNo, const int threadCount):
+      fThreadNo(threadNo), fThreadCount(threadCount) // ctor
    {
+
    }
 
    ~KDTreeMatchFlags() // dtor
@@ -54,10 +57,14 @@ public:
    TKDTreeMatch fKDTreeMatch;
 
 public:
-   KDTreeMatchModule(TARunInfo *runinfo, KDTreeMatchFlags *f) : TARunObject(runinfo)
+   KDTreeMatchModule(TARunInfo *runinfo, KDTreeMatchFlags *f) : TARunObject(runinfo), fFlags(f)
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName = "KDTreeMatch";
+      fModuleName = std::string("KDTreeMatch(") + 
+                    std::to_string(fFlags->fThreadNo) + 
+                    std::string("/") + 
+                    std::to_string(fFlags->fThreadCount) +
+                    std::string(")");
 #endif
       if (fTrace) printf("KDTreeMatchModule::ctor!\n");
 
@@ -130,38 +137,63 @@ public:
 #define wiresFindPads 1
 
       std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>> spacepoints;
-      AgKDTreeMatchFlow* kdtree_flow = new AgKDTreeMatchFlow(flow);
 
+      AgKDTreeMatchFlow* kdtree_flow = nullptr;
 #if wiresFindPads
       KDTreeIDContainer2D* pad_tree = NULL;
-      if (SigFlow->pdSig.size()) {
-         //printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
-         if (int(SigFlow->pdSig.size()) > fPadSignalsCut)
-            return flow;
-
-         // Roots generic kdtree wont understand cylindrical coordinates..
-         const int nPads = SigFlow->pdSig.size();
-         pad_tree = kdtree_flow->AddKDTree(nPads,"pad_tree");
-         fKDTreeMatch.BuildTree( SigFlow->pdSig,pad_tree, fPhiFactor);
-      }
 #else
       KDTreeIDContainer2D* wire_tree = NULL;
-      if (SigFlow->awSig.size())
-      {
-         if (int(SigFlow->awSig.size()) > fWireSignalsCut)
-            return flow;
-         const int nWires = SigFlow->awSig.size();
-         wire_tree = kdtree_flow->AddKDTree(nWires,"wire_tree");
-         fKDTreeMatch.BuildTree( SigFlow->awSig,wire_tree, fPhiFactor);
-      }
 #endif
+      if ( fFlags->fThreadNo == 1)
+      {
+         kdtree_flow = new AgKDTreeMatchFlow(flow);
 #if wiresFindPads
+         if (SigFlow->pdSig.size()) {
+            //printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+            if (int(SigFlow->pdSig.size()) > fPadSignalsCut)
+               return flow;
+
+            // Roots generic kdtree wont understand cylindrical coordinates..
+            const int nPads = SigFlow->pdSig.size();
+            pad_tree = kdtree_flow->AddKDTree(nPads,"pad_tree");
+            fKDTreeMatch.BuildTree( SigFlow->pdSig,pad_tree, fPhiFactor);
+         }
+#else
+
+         if (SigFlow->awSig.size())
+         {
+            if (int(SigFlow->awSig.size()) > fWireSignalsCut)
+               return flow;
+            const int nWires = SigFlow->awSig.size();
+            wire_tree = kdtree_flow->AddKDTree(nWires,"wire_tree");
+            fKDTreeMatch.BuildTree( SigFlow->awSig,wire_tree, fPhiFactor);
+         }
+#endif
+         // If work is split over more than 1 thread... return so other thread can do the work
+         if (fFlags->fThreadCount != 1)
+            return kdtree_flow;
+      }
+#if wiresFindPads
+      // If I am not the first thread... this is a nullptr
+      if (!kdtree_flow)
+      {
+         kdtree_flow = flow->Find<AgKDTreeMatchFlow>();
+         if (kdtree_flow)
+            pad_tree = kdtree_flow->GetTree("pad_tree");
+      }
       if (SigFlow->awSig.size() && pad_tree) 
       {
          fKDTreeMatch.WiresFindPads(SigFlow->awSig, SigFlow->pdSig,pad_tree, fPhiFactor,spacepoints);
       }
 #else
-      if (SigFlow->pdSig.size())
+      // If I am not the first thread... this is a nullptr
+      if (!kdtree_flow)
+      {
+         kdtree_flow = flow->Find<AgKDTreeMatchFlow>();
+         if (kdtree_flow)
+            wire_tree = kdtree_flow->GetTree("wire_tree");
+      }
+      if (SigFlow->pdSig.size() && wire_tree) 
       {
          fKDTreeMatch.PadsFindWires(SigFlow->pdSig, SigFlow->awSig,wire_tree, fPhiFactor, spacepoints);
       }
@@ -196,6 +228,11 @@ public:
    }
    void Usage() { Help(); }
 
+   KDTreeMatchFactory(int threadNo, int totalThreadCount):
+      fFlags(threadNo,totalThreadCount)
+   {
+      
+   }
    void Init(const std::vector<std::string> &args)
    {
       TString json = "default";
@@ -215,8 +252,6 @@ public:
       if (fFlags.fTrace) fFlags.ana_settings->Print();
    }
 
-   KDTreeMatchFactory() {}
-
    void Finish()
    {
       if (fFlags.fTrace == true) printf("KDTreeMatchFactory::Finish!\n");
@@ -229,8 +264,24 @@ public:
       return new KDTreeMatchModule(runinfo, &fFlags);
    }
 };
+#if N_KDTREE_MATCH_THREADS==1
+static TARegister tar(new KDTreeMatchFactory(1,1));
+#elif N_KDTREE_MATCH_THREADS==2
+static TARegister tar1(new KDTreeMatchFactory(1,2));
+static TARegister tar2(new KDTreeMatchFactory(2,2));
+#elif N_KDTREE_MATCH_THREADS==3
+static TARegister tar1(new KDTreeMatchFactory(1,3));
+static TARegister tar2(new KDTreeMatchFactory(2,3));
+static TARegister tar3(new KDTreeMatchFactory(3,3));
+#elif N_KDTREE_MATCH_THREADS==4
+static TARegister tar1(new KDTreeMatchFactory(1,4));
+static TARegister tar2(new KDTreeMatchFactory(2,4));
+static TARegister tar3(new KDTreeMatchFactory(3,4));
+static TARegister tar4(new KDTreeMatchFactory(4,4));
+#else
+#error **Unsupported number of threads for KDTree matching***
+#endif
 
-static TARegister tar(new KDTreeMatchFactory);
 
 /* emacs
  * Local Variables:
