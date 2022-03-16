@@ -16,8 +16,11 @@ class TRecoVertexFitter
       TRecoVertexFitter(double chi2cut, bool trace): fVtxChi2Cut(chi2cut), fTrace(trace)
       {
       }
-      int RecVertex(std::vector<TFitHelix>& HelixArray, TFitVertex* Vertex);
-
+      int RecVertex(
+         std::vector<TFitHelix>& HelixArray, 
+         TFitVertex* Vertex, 
+         const int thread_no = 1, 
+         const int thread_count = 1);
 };
 
 #endif

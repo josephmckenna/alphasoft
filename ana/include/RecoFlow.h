@@ -167,7 +167,7 @@ class AgAnalysisFlow: public TAFlowEvent
 
 #include "SignalsType.hh"
 #include "TracksFinder.hh"
-
+#include "TFitVertex.hh"
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
@@ -197,12 +197,14 @@ public:
    //  std::vector<signal> adc32range;
   std::vector<ALPHAg::TPadSignal> pwbMax;
    //  std::vector<ALPHAg::signal> pwbRange;
-
+  int fitStatus;
+  TFitVertex fitVertex;
 public:
   AgSignalsFlow(TAFlowEvent* flow):
     TAFlowEvent(flow)
   {
      fSkipReco = false;
+     fitStatus = 0;
   }
   
   AgSignalsFlow(TAFlowEvent* flow,
@@ -210,7 +212,8 @@ public:
     TAFlowEvent(flow)
   {
     fSkipReco = false;
-    awSig= std::move(s);
+    awSig = std::move(s);
+    fitStatus = 0;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -221,6 +224,7 @@ public:
     fSkipReco = false;
     awSig = std::move(s);
     pdSig = std::move(p);
+    fitStatus = 0;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
@@ -233,6 +237,7 @@ public:
     PADwf = std::move(pwf);
     awSig = std::move(s);
     pdSig = std::move(p);
+    fitStatus = 0;
   }
 
   ~AgSignalsFlow()

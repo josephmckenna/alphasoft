@@ -42,8 +42,13 @@ public:
    bool ffiduc = false;
    
    AnaSettings* ana_settings=0;
+
+   const int fThreadNo;
+   const int fThreadCount;
+
 public:
-   VertexFitterFlags() // ctor
+   VertexFitterFlags(const int threadNo, const int threadCount):
+      fThreadNo(threadNo), fThreadCount(threadCount)
    { }
 
    ~VertexFitterFlags() // dtor
@@ -77,9 +82,15 @@ public:
    {
 #ifdef HAVE_MANALYZER_PROFILER
       #if MINUIT2VERTEXFIT
-      fModuleName="VertexFitter (M2)";
+      fModuleName = std::string("VertexFitter (M2) (") +
+                    std::to_string(fFlags->fThreadNo) + 
+                    std::string("/") + 
+                    std::to_string(fFlags->fThreadCount) +
+                    std::string(")");
       #else
       fModuleName="VertexFitter (M1)";
+      if (fFlags->fThreadNo > 1)
+         fModuleName="VertexFitter (M1) [OFF]";
       #endif
 #endif
       //MagneticField = fFlags->fMagneticField;
@@ -132,11 +143,15 @@ public:
       AgEvent* age = ef->fEvent;
 
       // prepare event to store in TTree
-      TStoreEvent* analyzed_event=new TStoreEvent();
-      analyzed_event->Reset();
-      analyzed_event->SetEventNumber( age->counter );
-      analyzed_event->SetTimeOfEvent( age->time );
-      flow = new AgAnalysisFlow(flow, analyzed_event);
+      TStoreEvent* analyzed_event = nullptr;
+      if (fFlags->fThreadNo == fFlags->fThreadCount)
+      {
+         analyzed_event = new TStoreEvent();
+         analyzed_event->Reset();
+         analyzed_event->SetEventNumber( age->counter );
+         analyzed_event->SetTimeOfEvent( age->time );
+         flow = new AgAnalysisFlow(flow, analyzed_event);
+      }
       if( fFlags->fRecOff )
          {
             return flow;
@@ -170,7 +185,8 @@ public:
       AgSignalsFlow* SigFlow = flow->Find<AgSignalsFlow>();
       if( !SigFlow ) 
       {
-         delete analyzed_event;
+          if (fFlags->fThreadNo == fFlags->fThreadCount)
+            delete analyzed_event;
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
@@ -178,30 +194,38 @@ public:
       }
       if (!SigFlow->fSkipReco)
       {
-            TFitVertex theVertex(age->counter);
+            TFitVertex* theVertex = &SigFlow->fitVertex;
+            if (fFlags->fThreadNo == 1)
+               theVertex->SetID(age->counter);
+            int& status = SigFlow->fitStatus;
             //theVertex.SetChi2Cut( fVtxChi2Cut );
-            int status;
-            {
             #if MINUIT2VERTEXFIT
                // Minuit2 is thread safe... no need to slow things down
+               if (status >= 0)
+                  status = vertexFitter.RecVertex(SigFlow->fHelixArray, theVertex, fFlags->fThreadNo, fFlags->fThreadCount );
             #else
-            std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+            if (fFlags->fThreadNo == 1)
+            {
+               std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+               status = vertexFitter.RecVertex(SigFlow->fHelixArray, theVertex );
+            }
             #endif
-            status = vertexFitter.RecVertex(SigFlow->fHelixArray, &theVertex );
-            } 
             if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
-
-            analyzed_event->SetEvent( &SigFlow->fSpacePoints, &SigFlow->fLinesArray, &SigFlow->fHelixArray);
-            analyzed_event->SetVertexStatus( status );
-            if( status > 0 )
+            // Final thread
+            if (fFlags->fThreadNo == fFlags->fThreadCount)
+            {
+               analyzed_event->SetEvent( &SigFlow->fSpacePoints, &SigFlow->fLinesArray, &SigFlow->fHelixArray);
+               analyzed_event->SetVertexStatus( status );
+               if( SigFlow->fitStatus > 0 )
                {
-                  analyzed_event->SetVertex(*(theVertex.GetVertex()));
-                  analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-                  if( fTrace ) theVertex.Print("rphi");
+                  analyzed_event->SetVertex(*(theVertex->GetVertex()));
+                  analyzed_event->SetUsedHelices(theVertex->GetHelixStack());
+                  if( fTrace ) theVertex->Print("rphi");
                }
-            else if( fTrace )
-               std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
+               else if( fTrace )
+                  std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
+            }
       }
       return flow;
    }
@@ -236,6 +260,13 @@ public:
    {
       Help();
    }
+
+   VertexFitterFactory(int threadNo, int totalThreadCount):
+      fFlags(threadNo,totalThreadCount)
+   {
+
+   }
+
    void Init(const std::vector<std::string> &args)
    {
       TString json="default";
@@ -311,9 +342,18 @@ public:
    }
 };
 
-
-static TARegister tar(new VertexFitterFactory);
-
+#if N_VERTEX_FIT_THREADS==1
+static TARegister tar(new VertexFitterFactory(1,1));
+#elif N_VERTEX_FIT_THREADS==2
+static TARegister tar1(new VertexFitterFactory(1,2));
+static TARegister tar2(new VertexFitterFactory(2,2));
+#elif N_VERTEX_FIT_THREADS==3
+static TARegister tar1(new VertexFitterFactory(1,3));
+static TARegister tar2(new VertexFitterFactory(2,3));
+static TARegister tar3(new VertexFitterFactory(3,3));
+#else
+#error *Invalid number of threads for VertexFitter*
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

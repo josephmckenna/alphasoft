@@ -59,6 +59,26 @@ void Hel2VtxFunc(int&, double*, double& chi2, double* p, int)
   return;
 }
 
+TFitVertex::TFitVertex():fID(-1),fHelixArray(0),fNhelices(0),
+			      fchi2(-1.),
+			      fNumberOfUsedHelices(0),fHelixStack(0),
+			      fChi2Cut(17.),
+			      fInit0(0),fSeed0Index(-1),fSeed0Par(0.),
+			      fInit1(0),fSeed1Index(-1),fSeed1Par(0.),
+			      fSeedchi2(9999999.),
+			      fNewChi2(-1),
+			      fNewSeed0Par(0.),fNewSeed1Par(0.)
+{ 
+  fVertex.SetXYZ(-999.,-999.,-999.);
+  fVertexError2.SetXYZ(-999.,-999.,-999.);  
+  fNewVertex.SetXYZ(-999.,-999.,-999.);
+  fNewVertexError2.SetXYZ(-999.,-999.,-999.);  
+  fMeanVertex.SetXYZ(-999.,-999.,-999.);
+  fMeanVertexError2.SetXYZ(-999.,-999.,-999.);
+
+  //  fPoint = new TPolyMarker3D;
+}
+
 TFitVertex::TFitVertex(int i):fID(i),fHelixArray(0),fNhelices(0),
 			      fchi2(-1.),
 			      fNumberOfUsedHelices(0),fHelixStack(0),
@@ -107,12 +127,53 @@ int TFitVertex::AddHelix(TFitHelix* anHelix)
 }
 
 // main function for vertexing
-int TFitVertex::Calculate()
+int TFitVertex::Calculate(const int thread_no, const int thread_count)
 {
-  if(fNhelices<2) return 0;
+  if (fNhelices == 0) return -2;
+  if (fNhelices < 2) return 0;
+  int val = 0;
+    // ============= FIRST PASS =============
+   // find the minimum distance 
+   // between a pair of helices
+
+   // First thread does first pass
+   if (thread_no == 1)
+      val = FirstPass();
+   if (thread_no == 1 && thread_count > 1 || // I have more than 1 thread... safe work for another thread
+                                   val < 0)  // Or I failed a fit
+      return val;
+
+  // ============= SECOND PASS =============
+  // minimize the distance of the minimum-distance-pair
+  // to a point, called NewVertex
+  if (thread_no == 1 && thread_count == 1 ||  // First thread of ONE always works
+                            thread_no == 2 )  // Second thread does the work
+     SecondPass();
+  
+  if (thread_no == 2 && thread_count > 2) // I have 3 threads.... 
+      return val;
+
+  // ============= THIRD PASS =============
+  // if there are more than 2 helices, improve
+  // vertex by finding a new one with more helices
+  
+  val = ThirdPass(); // If we got this far, I am the last thread no matter what
+
+  // return code is
+  //  0: only one good helix
+  // -1: failed to find minimum-distance-pair
+  //  1: only two good helices
+  //  2: didn't improve vertex (more than 2 helices)
+  //  3: vertex improved
+  return val;
+}
+
+int TFitVertex::FirstPass()
+{
   // ============= FIRST PASS =============
   // find the minimum distance 
   // between a pair of helices
+  
   fchi2 = FindSeed(); 
   // ------------- debug -----------------
   // std::cout<<"1st pass chi^2: "<<fchi2<<std::endl;
@@ -128,7 +189,10 @@ int TFitVertex::Calculate()
   // std::cout<<"Seed Vertex"<<std::endl;
   // Print();
   // std::cout<<"----------------"<<std::endl;
-  
+  return 0;
+}
+void TFitVertex::SecondPass()
+{
   // ============= SECOND PASS =============
   // minimize the distance of the minimum-distance-pair
   // to a point, called NewVertex
@@ -136,9 +200,9 @@ int TFitVertex::Calculate()
   fHelixStack.push_back( fHelixArray.at( fSeed1Index ));
 
 #if MINUIT2VERTEXFIT
-  fchi2=RecalculateM2();
+  fchi2 = RecalculateM2();
 #else
-  fchi2=Recalculate();
+  fchi2 = Recalculate();
 #endif
 
   // // ------------- debug -----------------
@@ -146,7 +210,10 @@ int TFitVertex::Calculate()
   // Print();
   //  if(fVertex!=fNewVertex) std::cout<<"Recalc Error"<<std::endl;
   // std::cout<<"----------------"<<std::endl;
+}
 
+int TFitVertex::ThirdPass()
+{
   int val=1;
   // ============= THIRD PASS =============
   // if there are more than 2 helices, improve

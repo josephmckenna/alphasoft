@@ -47,6 +47,7 @@ private:
   double fNewSeed1Par;
 
   // stage 1
+  int FirstPass();
   double FindSeed(  double trapradius2 = ALPHAg::_trapradius*ALPHAg::_trapradius );
   double FindMinDistance(double& s0, double& s1);
   double FindMinDistanceM2(double& s0, double& s1);
@@ -56,10 +57,12 @@ private:
   TVector3 EvaluateMeanPointError2();
   
   // stage 2
+  void SecondPass();
   double Recalculate();
   double RecalculateM2();
 
   // stage 3
+  int ThirdPass();
   int Improve();
   double FindNewVertex(double* p, double* e);
   double FindNewVertexM2(double* p, double* e);
@@ -80,7 +83,7 @@ private:
   }
 
 public:
-  TFitVertex() {};
+  TFitVertex();
   TFitVertex(int id);
   ~TFitVertex();
 
@@ -88,11 +91,13 @@ public:
   inline const std::vector<TFitHelix*>* GetHelixArray()  {return &fHelixArray;}
   inline int GetNumberOfAddedHelix() const {return fNhelices;}
 
+  void SetID(int id) { fID = id; }
+
   inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
   inline double GetChi2Cut() {return fChi2Cut;}
 
   // main function to reconstruct the vertex
-  int Calculate();
+  int Calculate(const int thread_no = 1, const int thread_count = 1);
 
   inline TFitHelix* GetInit0() const {return fInit0;}
   inline TFitHelix* GetInit1() const {return fInit1;}
