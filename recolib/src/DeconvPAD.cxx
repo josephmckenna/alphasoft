@@ -405,31 +405,31 @@ void DeconvPAD::BuildWFContainer(
 ) const
 {
    const std::vector<FeamChannel*> channels = padSignals->hits;
+   const int n_chans = channels.size();
    // prepare vector with wf to manipulate
-   PadWaves.reserve( channels.size() );
+   PadWaves.reserve( n_chans );
    // clear/initialize "output" vectors
    PadIndex.clear();
-   PadIndex.reserve( channels.size() );
+   PadIndex.reserve( n_chans );
 
    if( fDiagnostic ) 
    {
-      PwbPeaks.reserve( channels.size() );
+      PwbPeaks.reserve( n_chans );
    }
 
    if( fAged ) 
    {
-      feamwaveforms.reserve( channels.size() );
+      feamwaveforms.reserve( n_chans );
    }
 
    // find intresting channels
    unsigned int index=0; //wfholder index
-   for(unsigned int i = 0; i < channels.size(); ++i)
+   for(unsigned int i = 0; i < n_chans; ++i)
       {
          const FeamChannel* ch = channels[i];
          if( !(ch->sca_chan>0) ) continue;
-         short col = (short) (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col);
-         col+=1;
-         if( col == 32 ) col = 0;
+         int col = (ch->pwb_column * MAX_FEAM_PAD_COL + ch->pad_col + 1) % 32;
+         
          if( col<0 || col >=32 ) 
             {
                std::cout<<"DeconvPAD::FindPadTimes() col: "<<col
