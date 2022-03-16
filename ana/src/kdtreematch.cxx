@@ -128,16 +128,11 @@ public:
 #define wiresFindPads 1
 
       std::vector<std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>> spacepoints;
+      AgKDTreeMatchFlow* kdtree_flow = new AgKDTreeMatchFlow(flow);
 #if wiresFindPads
-      TKDTreeID* pad_tree = NULL;
-      // Naive phi and t matching will have wrap around problems for phi
-      std::vector<double> pad_tree_x;
-      std::vector<double> pad_tree_y;
+      KDTreeIDContainer2D* pad_tree = NULL;
 #else
-      TKDTreeID* wire_tree = NULL;
-      // Naive phi and t matching will have wrap around problems for phi
-      std::vector<double> wire_tree_x;
-      std::vector<double> wire_tree_y;
+      KDTreeIDContainer2D* wire_tree = NULL;
 #endif
 
 
@@ -153,82 +148,40 @@ public:
 
          // Roots generic kdtree wont understand cylindrical coordinates..
          const int nPads = SigFlow->pdSig.size();
-         pad_tree = new TKDTreeID(nPads, 2, 1);
-         int i = 0;
+         pad_tree = kdtree_flow->AddKDTree(nPads,"pad_tree");
          for (const ALPHAg::TPadSignal &s : SigFlow->pdSig) {
-            if (1)
-            { 
-               pad_tree_x.emplace_back(s.t);
-               pad_tree_y.emplace_back(fPhiFactor * s.phi);
-            }
-            else
-            {
-               pad_tree_x.emplace_back( 0.0/0.0 );
-               pad_tree_y.emplace_back( 0.0/0.0 );
-            }
-            //y.emplace_back(s.phi);
-            i++;
+            pad_tree->emplace_back( s.t, fPhiFactor * s.phi);
          }
-         pad_tree->SetData(0, pad_tree_x.data());
-         pad_tree->SetData(1, pad_tree_y.data());
          pad_tree->Build();
-         /*for (int i = 0; i < 2; i++)
-         {
-             pad_quadrant_trees[i] = new TKDTreeID(pad_tree_x.size(), 2, 1);
-             pad_quadrant_trees[i]->SetData(0,t[i].data());
-             pad_quadrant_trees[i]->SetData(1,phi[i].data());
-             pad_quadrant_trees[i]->Build();
-         }*/
       }
 #else
       if (SigFlow->awSig.size())
       {
-         printf("KDTreeMatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
          if (int(SigFlow->awSig.size()) > fWireSignalsCut)
             return flow;
-         int i = 0;
-         // Roots generic kdtree wont understand cylindrical coordinates..
-
-         for (const ALPHAg::signal &s : SigFlow->awSig) {
-            wire_tree_x.emplace_back(s.t);
-            wire_tree_y.emplace_back(s.t);
-            i++;
+         const int nWires = SigFlow->awSig.size();
+         wire_tree = kdtree_flow->AddKDTree(nWires,"wire_tree");
+         for (const ALPHAg::TWireSignal &s : SigFlow->awSig) {
+            wire_tree->emplace_back( s.t, fPhiFactor * s.phi);
          }
-         wire_tree = new TKDTreeID(wire_tree_x.size(), 2, 1);
-         wire_tree->SetData(0, wire_tree_x.data());
-         wire_tree->SetData(1, wire_tree_y.data());
          wire_tree->Build();
       }
 #endif
-
 #if wiresFindPads
       if (SigFlow->awSig.size() && pad_tree) 
       {
          for (const ALPHAg::TWireSignal &s : SigFlow->awSig) {
             if (s.t > 0) {
-               std::array<double, 2> data = {s.t,fPhiFactor * s.phi};// {s.t * sin(s.phi), s.t * cos(s.phi)};
-               //std::array<double, 2> data = { (1/ s.t) * sin(s.phi), (1/ s.t) * cos(s.phi)};// {s.t * sin(s.phi), s.t * cos(s.phi)};
-               //std::array<double, 2> data = { (6000 -  s.t) * sin(s.phi), (6000 - s.t) * cos(s.phi)}
+               std::array<double, 2> data = {s.t,fPhiFactor * s.phi};
                int                   index = 0;
                double                distance = 9999999999999999999.;
 
                pad_tree->FindNearestNeighbors(data.begin(), 1, &index, &distance);
-               //std::cout << s.phi <<std::endl;
-
-               //std::cout <<"Dist: "<< distance << "\t"<< s.errphi<<std::endl;
                if (index < 0)
                   continue;
                const ALPHAg::TPadSignal& pad = SigFlow->pdSig.at(index);
-               //std::cout <<"\tIndex: "<< index << "\tDistance: " << distance  << " ( "<<sqrt( 20 * 20 + fPhiFactor * fPhiFactor * pad.errphi * pad.errphi )<<" )"<< std::endl;
-               //std::cout  <<"\tPhi: "<< pad.phi << "\tDPhi: " <<pad.errphi <<std::endl;
-               
-               //if (distance <  3* sqrt( 20 * 20 + fPhiFactor * fPhiFactor * pad.errphi * pad.errphi  ) )
-               
                if (fabs(pad.phi - s.phi) < 3* pad.errphi &&  fabs(pad.t - s.t) < 20)
                {
-                  //std::cout <<"Delta phi:\t" << fabs(pad.phi - s.phi) <<"<"<< 3* pad.errphi<< "\n";
-                  //std::cout <<"Delta t:\t" << fabs(pad.t - s.t) << "\t| "<< pad.t << " - " << s.t <<" |\n";
-               
                   spacepoints.emplace_back(
                           std::make_pair(
                               s,
