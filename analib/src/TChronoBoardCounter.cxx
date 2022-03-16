@@ -104,8 +104,13 @@ TChronoBoardCounter& TChronoBoardCounter::operator+=(const TCbFIFOEvent& cbFIFO)
    //   std::cout << "C:"<< cbFIFO.fChannel<< "\t"<< fCounts.at(cbFIFO.fChannel) << "+=" << cbFIFO.fCounts <<std::endl;
 
    if (cbFIFO.IsLeadingEdge())
-      fCounts.at(cbFIFO.fChannel) += cbFIFO.fCounts;
-
+   {
+      if ( cbFIFO.fChannel < fCounts.size() )
+         fCounts.at(cbFIFO.fChannel) += cbFIFO.fCounts;
+      else
+         std::cerr <<"BAD CHRONO CHANNEL! "<< cbFIFO.fChannel << ">" 
+                   << fCounts.size() << "SEGFAULT PREVENTED!"<<std::endl;
+   }
    return *this;
 }
 
