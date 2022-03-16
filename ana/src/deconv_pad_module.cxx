@@ -312,6 +312,12 @@ static TARegister tar_1_4(new DeconvPADModuleFactory(1,4));
 static TARegister tar_2_4(new DeconvPADModuleFactory(2,4));
 static TARegister tar_3_4(new DeconvPADModuleFactory(3,4));
 static TARegister tar_4_4(new DeconvPADModuleFactory(4,4));
+#elif N_PAD_DECONV_THREADS==5
+static TARegister tar_1_5(new DeconvPADModuleFactory(1,5));
+static TARegister tar_2_5(new DeconvPADModuleFactory(2,5));
+static TARegister tar_3_5(new DeconvPADModuleFactory(3,5));
+static TARegister tar_4_5(new DeconvPADModuleFactory(4,5));
+static TARegister tar_5_5(new DeconvPADModuleFactory(5,5));
 #elif N_PAD_DECONV_THREADS==8
 static TARegister tar_1_8(new DeconvPADModuleFactory(1,8));
 static TARegister tar_2_8(new DeconvPADModuleFactory(2,8));

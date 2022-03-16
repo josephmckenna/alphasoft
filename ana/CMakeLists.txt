@@ -14,7 +14,7 @@ endmacro()
 
 
 set(N_PAD_DECONV_THREADS "2" CACHE STRING "N Threads for Pad Deconvolution")
-set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
+set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "5" "8")
 
 set(N_KDTREE_MATCH_THREADS "2" CACHE STRING "N Threads for KDTree spacepoint finding")
 set_property(CACHE N_KDTREE_MATCH_THREADS PROPERTY STRINGS "1" "2")
