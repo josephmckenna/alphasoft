@@ -158,31 +158,6 @@ public:
          for (const ALPHAg::TPadSignal &s : SigFlow->pdSig) {
             if (1)
             { 
-               /*if ( s.phi < M_PI + (M_2_PI / 32) || s.phi > 2.0 * M_PI - (M_2_PI / 32) )
-               {
-                   t[0].emplace_back(s.t);
-                   phi[0].emplace_back(fPhiFactor * s.phi);
-               }
-               else
-               {
-                   t[0].emplace_back(1.0/0.0);
-                   phi[0].emplace_back(1.0/0.0);
-               }
-               if ( s.phi > M_PI - (M_2_PI / 32) && s.phi < M_PI + (M_2_PI / 32) )
-               {
-                   t[1].emplace_back(s.t);
-                   // Move wrap around point of phi
-                   double tempphi = s.phi - M_PI;
-                   if  (tempphi < 0 )
-                      tempphi += M_PI;
-                   phi[1].emplace_back(fPhiFactor * tempphi);
-               }
-               else
-               {
-                   t[1].emplace_back(1.0/0.0);
-                   phi[1].emplace_back(1.0/0.0);
-               }*/
-
                pad_tree_x.emplace_back(s.t);
                pad_tree_y.emplace_back(fPhiFactor * s.phi);
             }
@@ -206,15 +181,15 @@ public:
          }*/
       }
 #else
-      if (SigFlow->awSig)
+      if (SigFlow->awSig.size())
       {
-         printf("KDTreeMatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-         if (int(SigFlow->awSig->size()) > fWireSignalsCut)
+         printf("KDTreeMatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+         if (int(SigFlow->awSig.size()) > fWireSignalsCut)
             return flow;
          int i = 0;
          // Roots generic kdtree wont understand cylindrical coordinates..
 
-         for (const ALPHAg::signal &s : *(SigFlow->awSig)) {
+         for (const ALPHAg::signal &s : SigFlow->awSig) {
             wire_tree_x.emplace_back(s.t);
             wire_tree_y.emplace_back(s.t);
             i++;
@@ -239,26 +214,7 @@ public:
 
                pad_tree->FindNearestNeighbors(data.begin(), 1, &index, &distance);
                //std::cout << s.phi <<std::endl;
-/*
-               if (  s.phi < M_PI )
-               {
-                  pad_quadrant_trees[0]->FindNearestNeighbors(data.begin(), 1, &index, &distance);
-               }
-               else if ( s.phi >= M_PI && s.phi < 2.0*M_PI )
-               {
-                   double tempphi = s.phi - M_PI;
-                   if  (tempphi < 0 )
-                   {
-                      tempphi += M_PI;
-                   }
-                      data[1] = fPhiFactor * tempphi;
-                    
-                  pad_quadrant_trees[1]->FindNearestNeighbors(data.begin(), 1, &index, &distance);
-               }
-               else{
-                  std::cout<<"LINE" << __LINE__ << "FAIL!"<<std::endl;
-               }
-*/
+
                //std::cout <<"Dist: "<< distance << "\t"<< s.errphi<<std::endl;
                if (index < 0)
                   continue;
@@ -285,9 +241,9 @@ public:
          }
        }
 #else
-       if (SigFlow->pdSig)
+       if (SigFlow->pdSig.size())
        {
-         for (const ALPHAg::signal &s : *(SigFlow->pdSig)) {
+         for (const ALPHAg::TPadSignal &s : SigFlow->pdSig) {
             if (s.t > 0) {
                std::array<double, 2> data = {s.t, fPhiFactor * s.phi};// {s.t * sin(s.phi), s.t * cos(s.phi)};
                int                   index= 0;
@@ -295,11 +251,11 @@ public:
                wire_tree->FindNearestNeighbors(data.begin(), 1, &index, &distance);
                if (index < 0)
                   continue;
-               const ALPHAg::signal& wire = SigFlow->pdSig->at(index);
+               const ALPHAg::TWireSignal& wire = SigFlow->awSig[index];
                
                if (fabs(wire.phi - s.phi) < 3* wire.errphi &&  fabs(wire.t - s.t) < 20)
                {
-                  spacepoints->emplace_back(
+                  spacepoints.emplace_back(
                           std::make_pair(
                               wire,
                               s
