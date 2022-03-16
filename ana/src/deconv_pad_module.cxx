@@ -188,10 +188,15 @@ public:
                 flow_sig->PadIndex.clear();
                 d.BuildWFContainer(pwb,flow_sig->PadWaves,flow_sig->PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
              }
-             // Deconvolution is split over fFlags->fThreadCount
+             // Deconvolution is split over the remaining fFlags->fThreadCount threads
              if (flow_sig->PadWaves.size())
              {
-                d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo, fFlags->fThreadCount );
+                // If I am the first thread and only thread... do the whole range
+                if ( fFlags->fThreadNo == 1 && fFlags->fThreadCount == 1)
+                   d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo, fFlags->fThreadCount );
+                // Else split the work over the remaining threads
+                else if (fFlags->fThreadNo != 1)
+                   d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo - 1, fFlags->fThreadCount - 1 );              
              }
              if (fFlags->fTrace)
                 std::cout <<"Deconv::FindPadTimes " << flow_sig->pdSig.size() << " found\n";
