@@ -1,7 +1,7 @@
 #include "TRecoLineFitter.hh"
 
 
-int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LinesArray, const int thread_no = 1, const int total_threads = 1) const
+int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LinesArray, const int thread_no, const int total_threads) const
 {
 
    if (thread_no == 1)

@@ -1,6 +1,6 @@
 #include "TRecoHelixFitter.hh"
 
-int TRecoHelixFitter::FitHelix(const std::vector<TTrack> TracksArray, std::vector<TFitHelix> &HelixArray, const int thread_no = 1, const int total_threads = 1) const
+int TRecoHelixFitter::FitHelix(const std::vector<TTrack> TracksArray, std::vector<TFitHelix> &HelixArray, const int thread_no, const int total_threads) const
 {
 
    if (thread_no == 1)
