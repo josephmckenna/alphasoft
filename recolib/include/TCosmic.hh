@@ -43,8 +43,8 @@ private:
    double* fvstart;
 
    int AddAllPoints(const TObjArray*, const TObjArray*);
-   int AddAllPoints(const std::vector<TSpacePoint*>*,
-                    const std::vector<TSpacePoint*>*);
+   int AddAllPoints(const std::vector<TSpacePoint>*,
+                    const std::vector<TSpacePoint>*);
    int CalculateHelDCA(TStoreHelix*, TStoreHelix*);
    int CalculateHelDCA(TFitHelix*, TFitHelix*);
    double LineDistance(TStoreLine*, TStoreLine*);

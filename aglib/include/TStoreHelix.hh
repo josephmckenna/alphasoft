@@ -10,7 +10,7 @@
 #include "TObject.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-
+#include "TPCconstants.hh"
 #include "TFitHelix.hh"
 
 class TStoreHelix : public TObject
@@ -54,8 +54,8 @@ private:
 
 public:
   TStoreHelix();
-  TStoreHelix(TFitHelix*, const std::vector<TSpacePoint*>*);
-  TStoreHelix(TFitHelix*);
+  TStoreHelix(const TFitHelix*, const std::vector<TSpacePoint>*);
+  TStoreHelix(const TFitHelix*);
   virtual ~TStoreHelix();  // destructor
 
   TStoreHelix( const TStoreHelix& );

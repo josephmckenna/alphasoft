@@ -44,6 +44,13 @@ else()
     target_link_libraries(agtpc PUBLIC Minuit)
 endif( MINUIT2TRACK )
 
+if( MINUIT2VERTEX )
+  target_compile_definitions(agtpc PUBLIC MINUIT2VERTEXFIT=1)
+  message(STATUS "${PROJECT_NAME}: Using Minuit2 for Vertex Fitting")
+else()
+  target_compile_definitions(agtpc PUBLIC MINUIT2VERTEXFIT=0)
+endif( MINUIT2VERTEX )
+
 install(TARGETS agtpc DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libagtpc_rdict.pcm DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libagtpc.rootmap DESTINATION lib)

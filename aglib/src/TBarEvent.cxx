@@ -15,12 +15,7 @@ TBarEvent::TBarEvent()
 
 TBarEvent::~TBarEvent()
 {
-   // dtor
-   //   Reset();
-   fEventID=-1;
-   fEventTime=-1.;
-   fEndHit.clear();
-   fBarHit.clear();
+   Reset();
 }
 
 void TBarEvent::Print()

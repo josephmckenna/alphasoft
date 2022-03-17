@@ -8,8 +8,8 @@ class TBarHit: public TObject
 {
 private:
   int fBarID=-1;
-  TBarEndHit* fTopHit;
-  TBarEndHit* fBotHit;
+  TBarEndHit fTopHit;
+  TBarEndHit fBotHit;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;
@@ -20,8 +20,8 @@ public:
   virtual void Print();
   virtual ~TBarHit(); // dtor
 
-  void SetBotHit(TBarEndHit* _fBotHit) { fBotHit=_fBotHit; }
-  void SetTopHit(TBarEndHit* _fTopHit) { fTopHit=_fTopHit; }
+  void SetBotHit(TBarEndHit* _fBotHit) { fBotHit = *_fBotHit; }
+  void SetTopHit(TBarEndHit* _fTopHit) { fTopHit = *_fTopHit; }
   void SetBar(int _fBarID) { fBarID=_fBarID; }
   void SetZed(double _fZed) { fZed=_fZed; }
   void SetTPCHit(TVector3 _fTPC) {
@@ -29,14 +29,14 @@ public:
      fTPCMatched=true;
   }
   
-  TBarEndHit* GetTopHit() const {return fTopHit;}
-  TBarEndHit* GetBotHit() const {return fBotHit;}
-  double GetAmpTop() const {return fTopHit->GetAmp();}
-  double GetAmpBot() const {return fBotHit->GetAmp();}
-  double GetAmpRawTop() const {return fTopHit->GetAmpRaw();}
-  double GetAmpRawBot() const {return fBotHit->GetAmpRaw();}
-  double GetTDCTop() const {return fTopHit->GetTDCTime();}
-  double GetTDCBot() const {return fBotHit->GetTDCTime();}
+  const TBarEndHit& GetTopHit() const {return fTopHit;}
+  const TBarEndHit& GetBotHit() const {return fBotHit;}
+  double GetAmpTop() const {return fTopHit.GetAmp();}
+  double GetAmpBot() const {return fBotHit.GetAmp();}
+  double GetAmpRawTop() const {return fTopHit.GetAmpRaw();}
+  double GetAmpRawBot() const {return fBotHit.GetAmpRaw();}
+  double GetTDCTop() const {return fTopHit.GetTDCTime();}
+  double GetTDCBot() const {return fBotHit.GetTDCTime();}
   TVector3 GetTPC() const {return fTPC;}
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
@@ -50,8 +50,8 @@ public:
   }
   double GetAverageTDCTime() const
   {
-     double t_top = fTopHit->GetTDCTime();
-     double t_bot = fBotHit->GetTDCTime();
+     double t_top = fTopHit.GetTDCTime();
+     double t_bot = fBotHit.GetTDCTime();
      return (t_top + t_bot)/2.;
   }
   void GetXY(double &x, double &y) const

@@ -1,6 +1,6 @@
 # CMakeLists.txt for basic analysis package. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(alphagana)
+project(alphasoft)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -13,11 +13,22 @@ macro(replace_list_item LIST OLD_VALUE NEW_VALUE)
 endmacro()
 
 
-#Extra path for GitInfo.h file
-include_directories(${CMAKE_BINARY_DIR})
+set(N_PAD_DECONV_THREADS "2" CACHE STRING "N Threads for Pad Deconvolution")
+set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "5" "8")
 
+set(N_KDTREE_MATCH_THREADS "2" CACHE STRING "N Threads for KDTree spacepoint finding")
+set_property(CACHE N_KDTREE_MATCH_THREADS PROPERTY STRINGS "1" "2")
+
+set(N_TRACK_FIT_THREADS "2" CACHE STRING "N Threads for Track Fitting (Minuit2 only)")
+set_property(CACHE N_TRACK_FIT_THREADS PROPERTY STRINGS "1" "2" "3" "4" "8")
+
+set(N_VERTEX_FIT_THREADS "1" CACHE STRING "N Threads for Vertex fitting (each phase)")
+set_property(CACHE N_VERTEX_FIT_THREADS PROPERTY STRINGS "1" "2" "3")
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+#Extra path for GitInfo.h file
+include_directories(${CMAKE_BINARY_DIR})
 
 #Find all *.modules files
 file(GLOB BINS *.modules)
@@ -53,11 +64,21 @@ list(REMOVE_DUPLICATES MINI_LIBS)
 list(REMOVE_ITEM MINI_LIBS "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 foreach ( L ${MINI_LIBS})
-   #message("L:" ${L})
-   add_library(${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
-   target_include_directories(${L} PUBLIC include)
-   target_link_libraries(${L} PUBLIC ${AG_LINK_LIBS})
-endforeach()
+    # I am not totally happy that I am hard coding module names and matching compiler settings
+    # but it does keep 1:1 connection between these which would be good for build speeds when not much has changed
+    add_library(${L} OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/src/${L}.cxx)
+    target_include_directories(${L} PUBLIC include)
+    target_link_libraries(${L} PUBLIC ${AG_LINK_LIBS})
+    if (${L} STREQUAL "deconv_pad_module")
+        target_compile_definitions(${L} PRIVATE N_PAD_DECONV_THREADS=${N_PAD_DECONV_THREADS})
+    elseif(${L} STREQUAL "kdtreematch")
+        target_compile_definitions(${L} PRIVATE N_KDTREE_MATCH_THREADS=${N_KDTREE_MATCH_THREADS})
+    elseif(${L} STREQUAL "reco_trackfitter")
+        target_compile_definitions(${L} PRIVATE N_TRACK_FIT_THREADS=${N_TRACK_FIT_THREADS})
+    elseif(${L} STREQUAL "reco_vertexfitter")
+        target_compile_definitions(${L} PRIVATE N_VERTEX_FIT_THREADS=${N_VERTEX_FIT_THREADS})
+    endif()
+    endforeach()
 
 
 #message(Binaries: ${BINS})

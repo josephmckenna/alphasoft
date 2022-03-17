@@ -56,6 +56,46 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
   return *this;
 }
 
+void TStoreEvent::SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
+			   const std::vector<TFitHelix>* helices)
+{
+  fNpoints=points->size();
+  for(int i=0; i<fNpoints; ++i)
+    {
+      fSpacePoints.AddLast( new TSpacePoint(points->at(i)) );
+    }
+  fSpacePoints.Compress();
+
+  int nlines=lines->size();
+  for(int i=0; i<nlines; ++i)
+    {
+      TFitLine* aLine = lines->at(i);
+      if( aLine->GetStatus() > 0 )
+	{
+	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
+	}
+    }
+  fStoreLineArray.Compress();
+
+  fNtracks = helices->size();
+  for(int i=0; i<fNtracks; ++i)
+    {
+      const TFitHelix* anHelix = & helices->at(i);
+      if( anHelix->GetStatus() > 0 )
+	{
+	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );
+	  fNpoints += anHelix->GetNumberOfPoints();
+	}
+    }
+  fStoreHelixArray.Compress();
+
+  if( fNtracks > 0 )
+    fPattRecEff = (double)fNpoints/(double)fNtracks;
+  else
+    fPattRecEff = 0.;
+}
+
+
 void TStoreEvent::SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
 			   const std::vector<TFitHelix*>* helices)
 {
@@ -143,13 +183,19 @@ void TStoreEvent::Reset()
 
   fStoreLineArray.SetOwner(kTRUE);
   fStoreLineArray.Delete();
+  fStoreLineArray.Clear();
+
   fStoreHelixArray.SetOwner(kTRUE);
   fStoreHelixArray.Delete();
-  //fUsedHelices.SetOwner(kTRUE);
-  //fUsedHelices.Delete();
+  fStoreHelixArray.Clear();
+
+  fUsedHelices.SetOwner(kTRUE);
+  fUsedHelices.Delete();
   fUsedHelices.Clear();
+
   fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
+  fSpacePoints.Clear();
 
   fVertex.SetXYZ(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
 

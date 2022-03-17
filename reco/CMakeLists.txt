@@ -51,7 +51,7 @@ install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX}
 # Compile the analyzer for simulation
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
-  set(G4ANA_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/simulation/G4out/libG4out.so)
+  set(G4ANA_LINK_LIBS agtpc G4out)
   add_executable( g4ana.exe g4ana.cc 
                     ${sources} ${PROJECT_SOURCE_DIR}/src/ProcessEvents.cc
                     ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh 

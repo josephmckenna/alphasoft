@@ -106,158 +106,188 @@ class AgAnalysisFlow: public TAFlowEvent
 };
 
 #include "SignalsType.hh"
+#include "TracksFinder.hh"
+#include "TFitVertex.hh"
 class AgSignalsFlow: public TAFlowEvent
 {
 public:
-  std::vector<ALPHAg::signal>* awSig;
-  std::vector<ALPHAg::signal>* pdSig;
+  std::vector<ALPHAg::TWireSignal> awSig;
+  std::vector<ALPHAg::TPadSignal> pdSig;
 
-  std::vector< std::vector<ALPHAg::signal> > comb; //Intermediary within match_modules
-  std::vector<ALPHAg::signal>* combinedPads; //Intermediary within match_modules
+  std::vector<ALPHAg::wfholder> PadWaves; //Intermediary within deconv_pad_module
+  std::vector<ALPHAg::electrode> PadIndex; //Intermediary within deconv_pad_module
 
-  std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* matchSig;
+  std::vector< std::vector<ALPHAg::TPadSignal> > comb; //Intermediary within match_modules
+  std::vector<ALPHAg::TPadSignal> combinedPads; //Intermediary within match_modules
 
-  std::vector<ALPHAg::wf_ref>* AWwf;
-  std::vector<ALPHAg::wf_ref>* PADwf;
+  std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > matchSig;
 
-  std::vector<ALPHAg::signal>* adc32max;
+  // Reco associated containers
+  bool fSkipReco = false;
+  std::vector< TSpacePoint> fSpacePoints;
+  std::vector< track_t> fTrackVector;
+  std::vector<TTrack> fTracksArray;
+  std::vector<TFitLine*> fLinesArray;
+  std::vector<TFitHelix> fHelixArray;
+
+  std::vector<ALPHAg::wf_ref> AWwf;
+  std::vector<ALPHAg::wf_ref> PADwf;
+
+  std::vector<ALPHAg::TWireSignal> adc32max;
    //  std::vector<signal> adc32range;
-  std::vector<ALPHAg::signal>* pwbMax;
+  std::vector<ALPHAg::TPadSignal> pwbMax;
    //  std::vector<ALPHAg::signal> pwbRange;
-
+  int fitStatus;
+  TFitVertex fitVertex;
 public:
-  AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<ALPHAg::signal> *s):
+  AgSignalsFlow(TAFlowEvent* flow):
     TAFlowEvent(flow)
   {
-    AWwf=NULL;
-    PADwf=NULL;
-    awSig=s;
-    pdSig=NULL;
-    combinedPads=NULL;
-    matchSig=NULL;
-    adc32max=NULL;
-    pwbMax=NULL;
+     fSkipReco = false;
+     fitStatus = 0;
+  }
+  
+  AgSignalsFlow(TAFlowEvent* flow,
+		std::vector<ALPHAg::TWireSignal> s):
+    TAFlowEvent(flow)
+  {
+    fSkipReco = false;
+    awSig = std::move(s);
+    fitStatus = 0;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-  		std::vector<ALPHAg::signal>* s,
-  		std::vector<ALPHAg::signal>* p):
+  		std::vector<ALPHAg::TWireSignal>& s,
+  		std::vector<ALPHAg::TPadSignal>& p):
     TAFlowEvent(flow)
   {
-    AWwf=NULL;
-    PADwf=NULL;
-    awSig=s;
-    pdSig=p;
-    combinedPads=NULL;
-    matchSig=NULL;   
-    adc32max=NULL;
-    pwbMax=NULL;
+    fSkipReco = false;
+    awSig = std::move(s);
+    pdSig = std::move(p);
+    fitStatus = 0;
   }
 
   AgSignalsFlow(TAFlowEvent* flow,
-		std::vector<ALPHAg::signal>* s,std::vector<ALPHAg::signal>* p,
-		std::vector<ALPHAg::wf_ref>* awf, std::vector<ALPHAg::wf_ref>* pwf):
+		std::vector<ALPHAg::TWireSignal>& s,std::vector<ALPHAg::TPadSignal>& p,
+		std::vector<ALPHAg::wf_ref>& awf, std::vector<ALPHAg::wf_ref>& pwf):
     TAFlowEvent(flow)
   {
-    AWwf=awf;
-    PADwf=pwf;
-    awSig=s;
-    pdSig=p;
-    combinedPads=NULL;
-    matchSig=NULL;   
-    adc32max=NULL;
-    pwbMax=NULL;
+    fSkipReco = false;
+    AWwf = std::move(awf);
+    PADwf = std::move(pwf);
+    awSig = std::move(s);
+    pdSig = std::move(p);
+    fitStatus = 0;
   }
 
   ~AgSignalsFlow()
   {
-    if (awSig)
-    {
-       awSig->clear();
-       delete awSig;
-    }
-    if (pdSig)
-    {
-       pdSig->clear();
-       delete pdSig;
-    }
-    if (matchSig)
-    {
-       matchSig->clear();
-       delete matchSig;
-    }
-    if (AWwf)
-    {
-       // for (size_t i=0; i<AWwf->size(); i++)
-       //    delete AWwf->at(i).wf;
-       AWwf->clear();
-       delete AWwf;
-    }
-
-    if (PADwf)
-    {
-       // for (size_t i=0; i<PADwf->size(); i++)
-       //    delete PADwf->at(i).wf;
-       PADwf->clear();
-       delete PADwf;
-    }
-
-    if( adc32max )
-       {
-          adc32max->clear();
-          delete adc32max;
-       }
-    //    adc32range.clear();
-    if( pwbMax )
-       {
-          pwbMax->clear();
-          delete pwbMax;
-       }
-    //    pwbRange.clear();
+     awSig.clear();
+     pdSig.clear();
+     matchSig.clear();
+     AWwf.clear();
+     PADwf.clear();
+     adc32max.clear();
+     pwbMax.clear();
+     fHelixArray.clear();
+     for (TFitLine* h: fLinesArray)
+        delete h;
+     fLinesArray.clear();
   }
 
   void DeletePadSignals()
   {
-    delete pdSig;
-    pdSig=0;
-  }
-  void AddPadSignals( std::vector<ALPHAg::signal>* s )
-  {
-    pdSig=s;
+     pdSig.clear();
   }
 
-  void AddMatchSignals( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >*ss )
+  void AddPadSignals( std::vector<ALPHAg::TPadSignal> s )
+  {
+    pdSig = std::move(s);
+  }
+
+  void AddMatchSignals( std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal>> ss )
   {
      //matchSig=ss;
-     matchSig= new std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >(*ss);
+     matchSig = std::move(ss);
   }
 
-  void AddAWWaveforms(std::vector<ALPHAg::wf_ref>* af)
+  void AddAWWaveforms(std::vector<ALPHAg::wf_ref> af)
   {
-    AWwf=af;
+    AWwf = std::move(af);
   }
 
-  void AddPADWaveforms(std::vector<ALPHAg::wf_ref>* pf)
+  void AddPADWaveforms(std::vector<ALPHAg::wf_ref> pf)
   {
-    PADwf=pf;
+    PADwf = std::move(pf);
   }
 
-  void AddWaveforms(std::vector<ALPHAg::wf_ref>* af, std::vector<ALPHAg::wf_ref>* pf)
+  void AddWaveforms(std::vector<ALPHAg::wf_ref> af, std::vector<ALPHAg::wf_ref> pf)
   {
-    AWwf=af;
-    PADwf=pf;
+    AWwf = std::move(af);
+    PADwf = std::move(pf);
   }
 
-   void AddAdcPeaks(std::vector<ALPHAg::signal>* s)
+   void AddAdcPeaks(std::vector<ALPHAg::TWireSignal> s)
    {
-      adc32max=s;
+      adc32max = std::move(s);
    }
 
-   void AddPwbPeaks(std::vector<ALPHAg::signal>* s)
+   void AddPwbPeaks(std::vector<ALPHAg::TPadSignal> s)
    {
-      pwbMax=s;
+      pwbMax = std::move(s);
    }
+};
+
+#include "TKDTree.h"
+#include <string>
+#include "TKDTreeMatch.hh"
+
+
+class AgKDTreeMatchFlow: public TAFlowEvent
+{
+   public:
+      std::list<KDTreeIDContainer2D*> f2DTrees;
+      AgKDTreeMatchFlow(TAFlowEvent* flow):
+         TAFlowEvent(flow)
+      {
+
+      }
+      ~AgKDTreeMatchFlow()
+      {
+         for (KDTreeIDContainer2D* t: f2DTrees)
+            delete t;
+         f2DTrees.clear();
+      }
+      KDTreeIDContainer2D* AddKDTree(int entries, const char* name)
+      {
+         f2DTrees.emplace_back(new KDTreeIDContainer2D(entries,name));
+         return f2DTrees.back();
+      }
+      KDTreeIDContainer2D* GetTree(const std::string name)
+      {
+         for (KDTreeIDContainer2D* t: f2DTrees)
+         {
+            if (t->IsMatch(name))
+               return t;
+         }
+         return nullptr;
+      }
+      std::vector<double>* GetXArray(const std::string name)
+      { 
+         KDTreeIDContainer2D* t = GetTree(name);
+         if (t)
+            return &t->X();
+         else
+            return nullptr;
+      }
+      std::vector<double>* GetYArray(std::string name)
+      { 
+         KDTreeIDContainer2D* t = GetTree(name);
+         if (t)
+            return &t->Y();
+         else
+            return nullptr;
+      }
 };
 
 #endif

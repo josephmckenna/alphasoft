@@ -3,7 +3,12 @@ ClassImp(TBarEndHit)
 
 TBarEndHit::TBarEndHit()
 {
-// ctor
+   fBarID=-1;
+   fTDCTime=-1; 
+   fADCTime=-1;
+   fAmp=-1;
+   fAmpRaw=-1; 
+   fTDCMatched=false;
 }
 
 void TBarEndHit::Print()

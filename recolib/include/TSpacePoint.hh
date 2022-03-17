@@ -15,7 +15,8 @@ private:
    int fw;
    int fp;
    double ft;
-   double fH;
+   double fHw;
+   double fHp;
 
    double fx;
    double fy;
@@ -40,19 +41,19 @@ public:
                double t,
                double r, double lorentz, double z_from_pad,
                double er_str, double ep_str, double ez_from_pad,
-               double amplitude);
+               double WireAplitude, double PadAmplitude);
   void Setup(int anode, int pad_col, int pad_row, 
 	     double t,
 	     double r, double lorentz, double z_from_pad,
 	     double er_str, double ep_str, double ez_from_pad,
-	     double amplitude);
+	     double WireAplitude, double PadAmplitude);
 
   void Setup(int anode, int pad_col, int pad_row, 
 	     double t, double phi_from_aw,
 	     double r, double lorentz, double z_from_pad,
 	     double ep_from_aw,
 	     double er_str, double ep_str, double ez_from_pad,
-	     double amplitude);
+	     double WireAplitude, double PadAmplitude);
   
   TSpacePoint(double x, double y, double z,
 	      double ex, double ey, double ez);
@@ -74,7 +75,8 @@ public:
 
    inline double GetTime() const {return ft;}
 
-   inline double GetHeight() const { return fH;}
+   inline double GetWireHeight() const { return fHw;}
+   inline double GetPadHeight() const { return fHp;}
 
    inline double GetX() const {return fx;}
    inline double GetY() const {return fy;}
@@ -99,12 +101,12 @@ public:
          dz = fz-aPoint->fz;
       return TMath::Sqrt(dx*dx+dy*dy+dz*dz);
    }
-   double MeasureRad(TSpacePoint*) const;
-   double MeasurePhi(TSpacePoint*) const;
-   double MeasureZed(TSpacePoint*) const;
-   double DistanceRphi(TSpacePoint*) const;
+   double MeasureRad(const TSpacePoint*) const;
+   double MeasurePhi(const TSpacePoint*) const;
+   double MeasureZed(const TSpacePoint*) const;
+   double DistanceRphi(const TSpacePoint*) const;
 
-   static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
+   static inline bool Order(const TSpacePoint& LHS,const TSpacePoint& RHS )
    {
       bool greater = (LHS.fr > RHS.fr);
       if(greater || LHS.fr < RHS.fr){
@@ -112,6 +114,14 @@ public:
       } else {                  // sorting only by R makes maps and sets think two points are equal if r is equal
          return ((LHS.fz > RHS.fz) || ((LHS.fz == RHS.fz) && (LHS.fphi > RHS.fphi)));
       }
+      // Safer alternative?
+      /*if (LHS.fr != RHS.fr)
+         return LHS.fr > RHS.fr;
+      if (LHS.fw != RHS.fw)
+         return LHS.fw > RHS.fw;
+      if ( LHS.fz != RHS.fz)
+         return LHS.fz > RHS.fz
+      return LHS.fphi > RHS.fphi;*/
    }
 
    // static inline bool Order( TSpacePoint LHS, TSpacePoint RHS )
@@ -122,7 +132,7 @@ public:
    inline bool IsSortable() const { return true; }
    int Compare(const TObject*) const;
 
-   static bool RadiusOrder(TSpacePoint*, TSpacePoint*);
+   static bool RadiusOrder(const TSpacePoint*,const  TSpacePoint*);
 
    bool IsGood(const double&, const double&) const;
    int Check(const double&, const double&) const;
@@ -131,6 +141,9 @@ public:
 
    ClassDef(TSpacePoint,2)
 };
+
+int SpacePointCompare(const void* a, const void* b);
+
 
 #endif
 

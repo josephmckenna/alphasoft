@@ -6,15 +6,26 @@
 #include <map>
 #include <algorithm>
 #include "TPCconstants.hh"
-
+#include <cmath>
 
 namespace ALPHAg {
 
 class electrode
 {
 public:
+   short sec;  // for anodes sec=0 for top, sec=1 for bottom
+   // for pads [0,31] col (phi)
+   int idx; // for anodes [0,255]
+   // for pads [0,575] row (z)
+   double gain;
+
+
    electrode():sec(-1),idx(-1),gain(1.)
    {}
+   ~electrode()
+   {
+      
+   }
 
    electrode(short s, int ind, double g):sec(s),  // AW:top/bottom PAD:col(phi)
                                          idx(ind),// AW:wire PAD:row(z)
@@ -68,11 +79,6 @@ public:
 
    void setgain(double g) { if(g>0.) gain=g; };
 
-   short sec;  // for anodes sec=0 for top, sec=1 for bottom
-   // for pads [0,31] col (phi)
-   int idx; // for anodes [0,255]
-   // for pads [0,575] row (z)
-   double gain;
    virtual void print() const
    {
       printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain);
@@ -82,58 +88,24 @@ public:
 class signal: public electrode
 {
 public:
-   double t, height, errh, z, errz;
-   double phi, errphi;
+   double t, height, errh;
 
   signal():electrode(),
-	   t(ALPHAg::kUnknown),height(0.),errh(ALPHAg::kUnknown),
-     z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
-	   phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
+	   t(ALPHAg::kUnknown),height(0.),errh(ALPHAg::kUnknown)
   {}
+  ~signal()
+  {
+  }
 
-   signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
+   signal(const electrode& el, const double tt, const double hh, const double eh):electrode(el),
                                                                        t(tt)
    {
       height = hh/gain;  // should the gain be used here?
       errh = eh/gain;
-
-      if(isAnode){
-         SetAnodeCoords();
-      } else {
-         SetPadCoords();
-      }
    }
 
-  signal(short ss, int ii, double tt, double hh, double eh):electrode(ss, ii),
-						 t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
-						 phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
-  {
-    height = hh/gain;
-    errh = eh/gain;
-  }
-
-  signal(int ii, double tt, double hh, double eh):electrode(ii),
-     t(tt),z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown)
-  {
-    height = hh/gain;
-    errh = eh/gain;
-    SetAnodeCoords();
-  }
-
-  signal(short ss, int ii,
-	 double tt, double hh, double eh,
-	 double zz, double ez=ALPHAg::kUnknown):electrode(ss, ii),
-					t(tt),z(zz),errz(ez),
-					phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
-  {
-    height = hh/gain;
-    errh = eh/gain;
-  }
-
    signal(const signal &sig):electrode(sig),
-                             t(sig.t), height(sig.height), errh(sig.errh),
-                             z(sig.z), errz(sig.errz),
-                             phi(sig.phi), errphi(sig.errphi)
+                             t(sig.t), height(sig.height), errh(sig.errh)
    {}
 
    signal& operator=(const signal& sig)
@@ -146,22 +118,9 @@ public:
       t = sig.t;
       height = sig.height;
       errh = sig.errh;
-      z = sig.z;
-      errz = sig.errz;
-      phi = sig.phi;
-      errphi = sig.errphi;
       return *this;
    }
 
-   void SetAnodeCoords(){
-      phi = ALPHAg::_anodepitch * ( double(idx) + 0.5 );
-      errphi = ALPHAg::_anodepitch * ALPHAg::_sq12;
-   }
-
-   void SetPadCoords(){
-      z = ( double(idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
-      errz = ALPHAg::_padpitch * ALPHAg::_sq12;
-   }
 
    virtual void print() const
    {
@@ -195,40 +154,128 @@ public:
    };
 };
 
+
+
+
+class TWireSignal: public signal
+{
+   public:
+   double phi, errphi;
+   TWireSignal(): signal(), phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
+   {
+   }
+   
+   TWireSignal(const electrode& el, const double tt, const double hh, const double eh):signal(el, tt,hh,eh)
+   {
+      phi = ALPHAg::_anodepitch * ( double(idx) + 0.5 );
+      errphi = ALPHAg::_anodepitch * ALPHAg::_sq12;
+   }
+
+   TWireSignal(const TWireSignal &sig): signal(sig)
+   {
+      phi = sig.phi;
+      errphi = sig.errphi;
+   }
+
+   TWireSignal& operator=(const TWireSignal& sig)
+   {
+      //electrode members... can I be clever with calling the parent class's operator overload?
+      sec = sig.sec;
+      idx = sig.idx;
+      gain = sig.gain;
+
+      t = sig.t;
+      height = sig.height;
+      errh = sig.errh;
+      phi = sig.phi;
+      errphi = sig.errphi;
+      return *this;
+   }
+
+};
+
+class TPadSignal: public signal
+{
+   public:
+   double z, errz;
+   double phi, errphi;
+   TPadSignal(): signal(), z(ALPHAg::kUnknown), errz(ALPHAg::kUnknown), phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
+   {
+   }
+   TPadSignal(const electrode& el, const double tt, const double hh, const double eh):signal(el, tt,hh,eh)
+   {
+      z = ( double(idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
+      errz = ALPHAg::_padpitch * ALPHAg::_sq12;
+      phi = 2*M_PI / _padcol * ( double(sec) + 0.5 );
+      errphi = 2*M_PI / _padcol * ALPHAg::_sq12;
+   }
+
+   TPadSignal(const electrode& el, const double tt, const double hh, const double eh, double _z, double _errz):
+      signal(el, tt,hh,eh), z(_z), errz(_errz)
+   {
+      phi = 2*M_PI / _padcol * ( double(sec) + 0.5 );
+      errphi = 2*M_PI / _padcol * ALPHAg::_sq12;
+   }
+
+   TPadSignal(const TPadSignal &sig): signal(sig)
+   {
+      z = sig.z;
+      errz = sig.errz;
+      phi = sig.phi;
+      errphi = sig.errphi;
+   }
+
+   TPadSignal& operator=(const TPadSignal& sig)
+   {
+      //electrode members... can I be clever with calling the parent class's operator overload?
+      sec = sig.sec;
+      idx = sig.idx;
+      gain = sig.gain;
+
+      t = sig.t;
+      height = sig.height;
+      errh = sig.errh;
+      z = sig.z;
+      errz = sig.errz;
+      phi = sig.phi;
+      errphi = sig.errphi;
+      return *this;
+   }
+};
+
 struct wfholder
 {
-   std::vector<double> *h;
+   std::vector<double> h;
    double val;
    unsigned int index;
    wfholder( unsigned int& ii, 
              std::vector<int>::const_iterator begin,  
-             std::vector<int>::const_iterator end)
+             std::vector<int>::const_iterator end): h(begin,end)
    {
-      h = new std::vector<double>(begin,end);
       val = -1.0;
       index=ii;
    }
 
-   ~wfholder() { delete h; }
+   ~wfholder() { h.clear(); }
 
-   void massage(double& ped, double& norm)
+   void massage(const double& ped, const double& norm)
    {
       //SUBTRACT PEDESTAL
-      std::for_each(h->begin(), h->end(), [ped](double& d) { d-=ped;});
+      std::for_each(h.begin(), h.end(), [ped](double& d) { d-=ped;});
       // NORMALIZE WF
-      std::for_each(h->begin(), h->end(), [norm](double& v) { v*=norm;});
+      std::for_each(h.begin(), h.end(), [norm](double& v) { v*=norm;});
    }
    
    void print() const
    {
-      std::cout<<"wfholder:: size: "<<h->size()
+      std::cout<<"wfholder:: size: "<<h.size()
                <<", val: "<<val<<", index: "<<index<<std::endl;
    }
 };
 
 struct comp_hist_t
 {
-   bool operator() (wfholder* lhs, wfholder* rhs) const
+   bool operator() (const wfholder* lhs,const  wfholder* rhs) const
    {
       return lhs->val > rhs->val;
    }
@@ -285,11 +332,11 @@ public:
          row = fmap.at(i).second;
       return row;
    }
-   inline int index(int& sec, int& row) const
+   inline int index(const int& sec, const int& row) const
    {
       return sec + 32 * row;
    }
-   inline int index(short& sec, int& row) const
+   inline int index(const short& sec, const int& row) const
    {
       return sec + 32 * row;
    }

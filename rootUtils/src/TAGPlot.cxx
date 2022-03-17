@@ -267,16 +267,16 @@ void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
       helix.pTot = aHelix->GetMomentumV().Mag();
       helix.nPoints = aHelix->GetNumberOfPoints(); 
       UsedHelixEvents.push_back(helix);
-      const std::vector<TSpacePoint*>* points = aHelix->GetPointsArray();
+      const std::vector<TSpacePoint>* points = aHelix->GetPointsArray();
       for(uint ip = 0; ip<points->size(); ++ip  )
 	{
-	  TSpacePoint* ap = (TSpacePoint*) points->at(ip);
+	  const TSpacePoint& ap = points->at(ip);
 	  SpacePointEvent sp;
-	  sp.x = ap->GetX();
-	  sp.y = ap->GetY();
-	  sp.z = ap->GetZ();
-	  sp.r = ap->GetR();
-	  sp.p = ap->GetPhi()*TMath::RadToDeg();
+	  sp.x = ap.GetX();
+	  sp.y = ap.GetY();
+	  sp.z = ap.GetZ();
+	  sp.r = ap.GetR();
+	  sp.p = ap.GetPhi()*TMath::RadToDeg();
 	  SpacePointUsedHelixEvents.push_back(sp);
 	}
     }

@@ -164,7 +164,7 @@ void PHitInfoWindow::UpdateSelf()
         hi_num.SetString(buff);
         sprintf(buff,"%g",hi->time);
         hi_time.SetString(buff);
-        sprintf(buff,"%g",hi->height);
+        sprintf(buff,"%g",hi->padheight);
         hi_height.SetString(buff);
         sprintf(buff,"%d",(int)hi->wire);
         hi_wire.SetString(buff);

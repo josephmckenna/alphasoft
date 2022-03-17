@@ -17,26 +17,24 @@ static TMinuit* cfitter=0;
 void CosFit(int&, double*, double& chi2, double* p, int)
 {
    TFitLine* fitObj = (TFitLine*) cfitter->GetObjectFit();
-   const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+   const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
    int pcol=PointsColl->size();
    if(pcol==0) return;
   
-   TSpacePoint* apnt=0;
    double tx,ty,tz,d2;
    chi2=0.;
 
    for(int i=0; i<pcol; ++i)
       {
-         apnt=(TSpacePoint*) PointsColl->at(i);
-         double r2 = apnt->GetR() * apnt->GetR();
+         const TSpacePoint& apnt= PointsColl->at(i);
+         double r2 = apnt.GetR() * apnt.GetR();
          TVector3 f = fitObj->Evaluate( r2, p[0], p[1], p[2], p[3], p[4], p[5]  );
-         tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-         ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
-         tz = ( apnt->GetZ() - f.Z() ) / apnt->GetErrZ();
+         tx = ( apnt.GetX() - f.X() ) / apnt.GetErrX(); 
+         ty = ( apnt.GetY() - f.Y() ) / apnt.GetErrY();
+         tz = ( apnt.GetZ() - f.Z() ) / apnt.GetErrZ();
          d2 = tx*tx + ty*ty + tz*tz;
          chi2+=d2;
       }
-   apnt=0;
    return;
 }
 
@@ -93,18 +91,18 @@ int TCosmic::AddAllPoints(const TObjArray* pcol1, const TObjArray* pcol2)
    for(int i=0; i<np1; ++i)
       {
          TSpacePoint* ap = (TSpacePoint*) pcol1->At(i);
-         AddPoint( ap );
+         AddPoint( *ap );
       }
    for(int i=0; i<np2; ++i)
       {
          TSpacePoint* ap = (TSpacePoint*) pcol2->At(i);
-         AddPoint( ap );
+         AddPoint( *ap );
       }
    return fNpoints;
 }
 
-int TCosmic::AddAllPoints(const std::vector<TSpacePoint*>* pcol1, 
-			  const std::vector<TSpacePoint*>* pcol2)
+int TCosmic::AddAllPoints(const std::vector<TSpacePoint>* pcol1, 
+			  const std::vector<TSpacePoint>* pcol2)
 { 
    for(auto p: *pcol1) AddPoint( p );
    for(auto p: *pcol2) AddPoint( p );
@@ -199,17 +197,17 @@ void TCosmic::Initialization()
    for(int i=0;i<npoints-1;i+=2)
       {
          //     std::cout<<"TCosmic::Initialization   "<<i<<std::endl;
-         TSpacePoint* PointOne = (TSpacePoint*) fPoints.at(i);
-         double x1 = PointOne->GetX(),
-            y1 = PointOne->GetY(),
-            z1 = PointOne->GetZ();
+         const TSpacePoint& PointOne = fPoints.at(i);
+         double x1 = PointOne.GetX(),
+            y1 = PointOne.GetY(),
+            z1 = PointOne.GetZ();
          x0+=x1; y0+=y1; z0+=z1;
          //      PointOne->Print();
 
-         TSpacePoint* PointTwo = (TSpacePoint*) fPoints.at(i+1);
-         double x2 = PointTwo->GetX(),
-            y2 = PointTwo->GetY(),
-            z2 = PointTwo->GetZ();
+         const TSpacePoint& PointTwo = fPoints.at(i+1);
+         double x2 = PointTwo.GetX(),
+            y2 = PointTwo.GetY(),
+            z2 = PointTwo.GetZ();
          x0+=x2; y0+=y2; z0+=z2;
          //      PointTwo->Print();
 
@@ -235,9 +233,9 @@ void TCosmic::Initialization()
    fvstart[1]=my;
    fvstart[2]=mz;
 
-   fvstart[3]=((TSpacePoint*) fPoints.front())->GetX();
-   fvstart[4]=((TSpacePoint*) fPoints.front())->GetY();
-   fvstart[5]=((TSpacePoint*) fPoints.front())->GetZ();
+   fvstart[3] = fPoints.front().GetX();
+   fvstart[4] = fPoints.front().GetY();
+   fvstart[5] = fPoints.front().GetZ();
 }
 
 int TCosmic::CalculateHelDCA(TStoreHelix* hi, TStoreHelix* hj)

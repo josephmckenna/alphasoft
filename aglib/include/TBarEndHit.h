@@ -20,6 +20,26 @@ public:
   virtual void Print();
   virtual ~TBarEndHit(); // dtor
 
+  TBarEndHit(const TBarEndHit& h):
+     fBarID(h.fBarID),
+    fTDCTime(h.fTDCTime),
+    fADCTime(h.fADCTime),
+    fAmp(h.fAmp),
+    fAmpRaw(h.fAmpRaw),
+    fTDCMatched(h.fTDCMatched)
+  {
+  }
+  TBarEndHit& operator=(const TBarEndHit& h)
+  {
+    fBarID = h.fBarID;
+    fTDCTime = h.fTDCTime;
+    fADCTime = h.fADCTime;
+    fAmp = h.fAmp;
+    fAmpRaw = h.fAmpRaw;
+    fTDCMatched =  h.fTDCMatched;
+    return *this;
+  }
+
   void SetADCHit(int _fBarID, double _fAmp, double _fAmpRaw, double _fADCTime) 
   {
      fBarID=_fBarID;

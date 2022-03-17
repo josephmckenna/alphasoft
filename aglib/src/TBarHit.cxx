@@ -11,17 +11,17 @@ TBarHit::TBarHit()
 void TBarHit::Print()
 {
    std::cout<<"BarHit::Print() -- Bar ID:"<<fBarID<<std::endl;
-   if (fBotHit)
+   if (fBotHit.GetBar())
       {
          std::cout<<"Bot hit: vvv"<<std::endl;
-         fBotHit->Print();
+         fBotHit.Print();
       }
-   if (fTopHit)
+   if (fTopHit.GetBar())
       {
          std::cout<<"Top hit: vvv"<<std::endl;
-         fTopHit->Print();
+         fTopHit.Print();
       }
-   std::cout<<"Time Diff:"<<fTopHit->GetTDCTime()-fBotHit->GetTDCTime()<<std::endl;
+   std::cout<<"Time Diff:"<<fTopHit.GetTDCTime() - fBotHit.GetTDCTime()<<std::endl;
   std::cout<<"TPC Matched? "<<fTPCMatched;
   if (fTPCMatched) {std::cout<<" TPC hit: "<<std::endl; fTPC.Print();}
   else std::cout<<std::endl;
