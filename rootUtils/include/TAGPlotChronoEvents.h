@@ -98,7 +98,7 @@ class TAGPlotChronoPlotEvents: public TAPlotScalerEvents
          }
          return events;
       }
-      ClassDef(TAGPlotChronoPlotEvents,2);
+      ClassDefOverride(TAGPlotChronoPlotEvents,2);
 };
 
 #endif

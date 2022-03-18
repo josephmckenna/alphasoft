@@ -99,7 +99,7 @@ class TA2PlotSISPlotEvents: public TAPlotScalerEvents
          }
          return events;
       }
-      ClassDef(TA2PlotSISPlotEvents,2);
+      ClassDefOverride(TA2PlotSISPlotEvents,2);
 };
 
 #endif

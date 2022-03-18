@@ -45,7 +45,7 @@ class TAPlotScalerEvents: public TObject
          }
          return *this;
       }
-
+protected:
       void AddEvent(int runNumber, double time, double officialTime, int counts)
       {
          fRunNumber.push_back(runNumber);
@@ -53,7 +53,7 @@ class TAPlotScalerEvents: public TObject
          fOfficialTime.push_back(officialTime);
          fCounts.push_back(counts);
       }
-
+public:
       int GetEventRunNumber(int event) const { return fRunNumber.at(event); }
       
       virtual std::string CSVTitleLine() const = 0;
