@@ -13,6 +13,7 @@
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board);
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
 Double_t GetAGTotalRunTime(Int_t runNumber);
+Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* seqEvent,Int_t dumpIndex=0);
 #endif
 
 #ifdef BUILD_AG

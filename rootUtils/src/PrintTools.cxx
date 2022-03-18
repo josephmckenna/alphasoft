@@ -22,7 +22,7 @@ void PrintSequences(int runNumber, int SeqNum)
                << "\t ID:" << seqEvent->GetID()
                << "\t Name:" << seqEvent->GetEventName()
                << "\t Description: " << seqEvent->GetDescription()
-               //<< "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
+               << "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
                << std::endl;
    }
    delete seqEvent;
