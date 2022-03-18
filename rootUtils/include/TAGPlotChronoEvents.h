@@ -1,43 +1,42 @@
-#ifndef _TA2PLOTSISPLOTEVENTS_
-#define _TA2PLOTSISPLOTEVENTS_
+#ifndef _TAGPlotChronoPlotEvents_
+#define _TAGPlotChronoPlotEvents_
 
 #include "TAPlotScalerEvents.h"
 
-#include "TSISEvent.h"
-#include "TSISChannels.h"
+#include "TChronoChannel.h"
 
-class TA2PlotSISPlotEvents: public TAPlotScalerEvents
+class TAGPlotChronoPlotEvents: public TAPlotScalerEvents
 {
    public:
-      std::vector<TSISChannel> fSISChannel;
+      std::vector<TChronoChannel> fChronoChannel;
    public:
       //Std ctor and dtor
-      TA2PlotSISPlotEvents()
+      TAGPlotChronoPlotEvents()
       {
       }
-      ~TA2PlotSISPlotEvents()
+      ~TAGPlotChronoPlotEvents()
       {
       }
       //Copy ctor - !!!
-      TA2PlotSISPlotEvents(const TA2PlotSISPlotEvents& sisPlotEvents) : TAPlotScalerEvents(sisPlotEvents)
+      TAGPlotChronoPlotEvents(const TAGPlotChronoPlotEvents& sisPlotEvents) : TAPlotScalerEvents(sisPlotEvents)
       {
          //Deep copy vectors.
          for(size_t i=0; i<sisPlotEvents.fTime.size(); i++)
          {
-            fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
+            fChronoChannel.push_back( sisPlotEvents.fChronoChannel[i]);
          }
       }
-      TA2PlotSISPlotEvents operator+=(const TA2PlotSISPlotEvents &rhs) 
+      TAGPlotChronoPlotEvents operator+=(const TAGPlotChronoPlotEvents &rhs) 
       {
-         //std::cout << "TA2PlotSISPlotEvents += operator" << std::endl;
+         //std::cout << "TAGPlotChronoPlotEvents += operator" << std::endl;
          this->fRunNumber   .insert(this->fRunNumber.end(),      rhs.fRunNumber.begin(),      rhs.fRunNumber.end() );
          this->fTime           .insert(this->fTime.end(),              rhs.fTime.begin(),              rhs.fTime.end() );
          this->fOfficialTime.insert(this->fOfficialTime.end(),   rhs.fOfficialTime.begin(),   rhs.fOfficialTime.end() );
          this->fCounts      .insert(this->fCounts.end(),         rhs.fCounts.begin(),         rhs.fCounts.end() );
-         this->fSISChannel .insert(this->fSISChannel.end(),    rhs.fSISChannel.begin(),    rhs.fSISChannel.end() );
+         this->fChronoChannel .insert(this->fChronoChannel.end(),    rhs.fChronoChannel.begin(),    rhs.fChronoChannel.end() );
          return *this;
       }
-      TA2PlotSISPlotEvents& operator=(const TA2PlotSISPlotEvents& sisPlotEvents)
+      TAGPlotChronoPlotEvents& operator=(const TAGPlotChronoPlotEvents& sisPlotEvents)
       {
          for(size_t i = 0; i<sisPlotEvents.fTime.size(); i++)
          {
@@ -45,26 +44,26 @@ class TA2PlotSISPlotEvents: public TAPlotScalerEvents
             this->fTime.push_back( sisPlotEvents.fTime[i]);
             this->fOfficialTime.push_back( sisPlotEvents.fOfficialTime[i]);
             this->fCounts.push_back( sisPlotEvents.fCounts[i]);
-            this->fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
+            this->fChronoChannel.push_back( sisPlotEvents.fChronoChannel[i]);
          }
          return *this;
       }
-      friend TA2PlotSISPlotEvents operator+(const TA2PlotSISPlotEvents& lhs, const TA2PlotSISPlotEvents& rhs)
+      friend TAGPlotChronoPlotEvents operator+(const TAGPlotChronoPlotEvents& lhs, const TAGPlotChronoPlotEvents& rhs)
       {
-         //std::cout << "TA2PlotSISPlotEvents addition operator" << std::endl;
-         TA2PlotSISPlotEvents outputplot(lhs); //Create new from copy
+         //std::cout << "TAGPlotChronoPlotEvents addition operator" << std::endl;
+         TAGPlotChronoPlotEvents outputplot(lhs); //Create new from copy
          //Vectors- need concacting
          outputplot.fRunNumber.insert(outputplot.fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
          outputplot.fTime.insert(outputplot.fTime.end(), rhs.fTime.begin(), rhs.fTime.end() );
          outputplot.fOfficialTime.insert(outputplot.fOfficialTime.end(), rhs.fOfficialTime.begin(), rhs.fOfficialTime.end() );
          outputplot.fCounts.insert(outputplot.fCounts.end(), rhs.fCounts.begin(), rhs.fCounts.end() );
-         outputplot.fSISChannel.insert(outputplot.fSISChannel.end(), rhs.fSISChannel.begin(), rhs.fSISChannel.end() );
+         outputplot.fChronoChannel.insert(outputplot.fChronoChannel.end(), rhs.fChronoChannel.begin(), rhs.fChronoChannel.end() );
          return outputplot;
       }
-      void AddEvent(const int runNumber, const double time, const double officialTime, const int counts, const TSISChannel& channel)
+      void AddEvent(int runNumber, double time, double officialTime, int counts, const TChronoChannel& channel)
       {
          TAPlotScalerEvents::AddEvent(runNumber, time, officialTime, counts);
-         fSISChannel.push_back(channel);
+         fChronoChannel.push_back(channel);
       }
       int GetEventRunNumber(int event) const { return fRunNumber.at(event); }
       
@@ -84,22 +83,22 @@ class TA2PlotSISPlotEvents: public TAPlotScalerEvents
          line =std::string("") + fRunNumber.at(i) + "," +
                 fTime.at(i) + "," +
                 fOfficialTime.at(i) + "," +
-                fSISChannel.at(i).fChannel + "," + fSISChannel.at(i).fModule + "," +
+                fChronoChannel.at(i).GetChannel() + "," + fChronoChannel.at(i).GetBoard() + "," +
                 fCounts.at(i) + "\n";
          return line;
       }
       
-      int CountTotalCountsInChannel(const TSISChannel& ch) const 
+      int CountTotalCountsInChannel(const TChronoChannel& ch) const
       {
          int events = 0;
          for(size_t i = 0; i<fTime.size(); i++)
          {
-            if (fSISChannel[i] == ch)
+            if (fChronoChannel[i] == ch)
                events += fCounts[i];
          }
          return events;
       }
-      ClassDef(TA2PlotSISPlotEvents,2);
+      ClassDef(TAGPlotChronoPlotEvents,2);
 };
 
 #endif
