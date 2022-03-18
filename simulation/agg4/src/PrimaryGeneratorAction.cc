@@ -84,7 +84,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   fHbarAnnihilation = new SecondaryProducer();
 
   // get annihilation position
-  char fname[80];
+  char fname[200];
   sprintf(fname,"%s/simulation/agg4/annihilation.dat",getenv("AGRELEASE"));
   fin.open(fname,std::ios::in);
     //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;

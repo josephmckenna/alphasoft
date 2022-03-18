@@ -6,15 +6,26 @@
 #include <map>
 #include <algorithm>
 #include "TPCconstants.hh"
-
+#include <cmath>
 
 namespace ALPHAg {
 
 class electrode
 {
 public:
+   short sec;  // for anodes sec=0 for top, sec=1 for bottom
+   // for pads [0,31] col (phi)
+   int idx; // for anodes [0,255]
+   // for pads [0,575] row (z)
+   double gain;
+
+
    electrode():sec(-1),idx(-1),gain(1.)
    {}
+   ~electrode()
+   {
+      
+   }
 
    electrode(short s, int ind, double g):sec(s),  // AW:top/bottom PAD:col(phi)
                                          idx(ind),// AW:wire PAD:row(z)
@@ -68,11 +79,6 @@ public:
 
    void setgain(double g) { if(g>0.) gain=g; };
 
-   short sec;  // for anodes sec=0 for top, sec=1 for bottom
-   // for pads [0,31] col (phi)
-   int idx; // for anodes [0,255]
-   // for pads [0,575] row (z)
-   double gain;
    virtual void print() const
    {
       printf("electrode:: %d sector: %d (gain: %1.0f)\n",idx,sec,gain);
@@ -90,8 +96,11 @@ public:
      z(ALPHAg::kUnknown),errz(ALPHAg::kUnknown),
 	   phi(ALPHAg::kUnknown), errphi(ALPHAg::kUnknown)
   {}
+  ~signal()
+  {
+  }
 
-   signal(electrode el, double tt, double hh, double eh, bool isAnode):electrode(el),
+   signal(const electrode& el, const double tt, const double hh, const double eh, const bool isAnode):electrode(el),
                                                                        t(tt)
    {
       height = hh/gain;  // should the gain be used here?
@@ -161,6 +170,8 @@ public:
    void SetPadCoords(){
       z = ( double(idx) + 0.5 ) * ALPHAg::_padpitch - ALPHAg::_halflength;
       errz = ALPHAg::_padpitch * ALPHAg::_sq12;
+      phi = 2*M_PI / _padcol * ( double(sec) + 0.5 );
+      errphi = 2*M_PI / _padcol * ALPHAg::_sq12;
    }
 
    virtual void print() const

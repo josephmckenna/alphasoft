@@ -53,4 +53,13 @@ fi
 #agana.exe -O$DATADIR/CERN2021/cosmics5151.root --mt $AGMIDASDATA/run05151sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json |& tee $AGRELEASE/RunLogs/R5151.log
 agana.exe -O$DATADIR/CERN2021/cosmics5151.root --mt $AGMIDASDATA/run05151sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_3.json &> tee $AGRELEASE/RunLogs/R5151.log&
 
+#agana.exe -O$DATADIR/output/cosmics5131.root --mt $AGMIDASDATA/run05131sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json --Bfield 0 --calib |& tee $AGRELEASE/RunLogs/R5131.log
+#agana.exe -O$DATADIR/data/cosmics5131.root --mt $AGMIDASDATA/run05131sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json --Bfield 0 --calib |& tee $AGRELEASE/RunLogs/R5131M2.log
+#agana.exe -O$DATADIR/data/cosmics5131S0.root --mt $AGMIDASDATA/run05131sub000.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json --Bfield 0 --calib |& tee $AGRELEASE/RunLogs/R5131S0M2.log
+
+
+#agana.exe -O$DATADIR/data/cosmics5151.root --mt $AGMIDASDATA/run05151sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_2.json |& tee $AGRELEASE/RunLogs/R5151M2.log
+
+agana.exe -O$DATADIR/data/cosmics5157.root --mt $AGMIDASDATA/run05157sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_3.json |& tee $AGRELEASE/RunLogs/R5157M2.log
+
 agana.exe -O$DATADIR/CERN2021/cosmics5157.root --mt $AGMIDASDATA/run05157sub*.mid.lz4 -- --diag --anasettings $AGRELEASE/ana/cern2021_3.json &> tee $AGRELEASE/RunLogs/R5157.log&

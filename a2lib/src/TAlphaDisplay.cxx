@@ -17,6 +17,7 @@
 #include <TMarker3DBox.h>
 #include <TPaveText.h>
 #include <TList.h>
+#include <TLine.h>
 #include <TVector3.h>
 #include <TLatex.h>
 #include <TDiamond.h>

@@ -21,6 +21,7 @@
 #include "AlphaColourWheel.h"
 #include "TMultiGraph.h"
 #include "TTimeStamp.h"
+#include "AnalysisReportGetters.h"
 #include <numeric>
 
 #define SCALECUT 0.6
@@ -31,7 +32,7 @@
 class TVertexEvents: public TObject
 {
    public:
-      std::vector<int> fRunNumbers; 
+      std::vector<int> fRunNumbers; // I don't get set yet...
       std::vector<int> fEventNos;
       std::vector<int> fCutsResults;
       std::vector<int> fVertexStatuses;
@@ -158,6 +159,7 @@ class TVertexEvents: public TObject
                i++;
          return i;
       }
+      ClassDef(TVertexEvents, 1);
 };
 
 class TTimeWindows : public TObject
@@ -335,7 +337,7 @@ class TTimeWindows : public TObject
       {
          return fRunNumber.size();
       }
-
+      ClassDef(TTimeWindows, 1);
 };
 
 //Generic feLabVIEW / feGEM data inside a time window
@@ -379,6 +381,7 @@ class TEnvDataPlot: public TObject
          else
             return new TGraph(fData.size(),fRunTimes.data(),fData.data());
       }
+      ClassDef(TEnvDataPlot, 1);
 };
 
 //Collection of feLabVIEW / feGEM data with the same name (the same source)
@@ -453,6 +456,7 @@ class TEnvData: public TObject
             );
          return graph;
       }
+      ClassDef(TEnvData, 1);
 };
 
 //Specialise the above for feGEM
@@ -477,13 +481,14 @@ class TFEGEMData: public TEnvData
       {
          return std::string(category + "\\" + varName);
       }
+      ClassDef(TFEGEMData, 1);
 };
 
 //Specialise the above for feLabVIEW
 class TFELabVIEWData: public TEnvData
 {
    public:
-      void AddLVEvent(TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
+      void AddLVEvent(int runNumber, TStoreLabVIEWEvent* labviewEvent, TTimeWindows& timeWindows)
       {
          double time=labviewEvent->GetRunTime();
          //O^2 complexity atleast... There isn't usually allot of feGEM data so maybe we can live with this...?
@@ -496,6 +501,7 @@ class TFELabVIEWData: public TEnvData
          }
          return;
       }
+      ClassDef(TFELabVIEWData, 1);
 };
 
 class TAPlot: public TObject
@@ -572,6 +578,7 @@ class TAPlot: public TObject
       TObjArray            GetHisto()               {  return fHistos;}
       std::map<std::string,int> GetHistoPosition()  {  return fHistoPositions;}
       const std::vector<int> GetArrayOfRuns()       {  return fRuns; }
+      std::vector<TFELabVIEWData> GetLVData()       {  return fFELV; }
       //Getters defined in .cxx
       std::vector<std::pair<std::string,int>> GetGEMChannels();
       std::vector<std::pair<std::string,int>> GetLVChannels();
@@ -607,7 +614,7 @@ class TAPlot: public TObject
       //Load data functions.
       template<typename T> void LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime);
       void LoadFEGEMData(int runNumber, double firstTime, double lastTime);
-      void LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
+      void LoadFELVData(int runNumber, TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime);
       void LoadFELVData(int runNumber, double firstTime, double lastTime);
       // Hmm the add operators prevent this being a pure virtual function (ie
       // the add operator can't return TAPlot if TAPlot is an abstract class...
@@ -619,7 +626,7 @@ class TAPlot: public TObject
          std::cout << firstTime << "\t";
          std::cout << lastTime << std::endl;
       }
-      void LoadData();
+      void LoadData(bool verbose = false);
 
       
       //Default members, operators, and prints.
@@ -629,9 +636,9 @@ class TAPlot: public TObject
       TAPlot& operator=(const TAPlot& rhs);
       friend TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs);
       TAPlot& operator+=(const TAPlot &rhs);
-      void Print() const;
+      void Print(Option_t* option="") const;
       virtual void PrintFull();
-      
+   
       //Histogram functions
       void AutoTimeRange();
       template <class T> void AddHistogram(const char* keyname, T* h) //This refuses to go in the .cxx for some reason.

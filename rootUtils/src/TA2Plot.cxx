@@ -595,7 +595,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 
       if (subPadCD6) 
          subPadCD6->cd(2);
-      std::pair<TLegend*,TMultiGraph*> labviewDataMG=GetLVGraphs();
+      std::pair<TLegend*,TMultiGraph*> labviewDataMG = GetLVGraphs();
       if (labviewDataMG.first)
       {
          //Draw TMultigraph
@@ -684,13 +684,13 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 
 void TA2Plot::WriteEventList(std::string fileName, bool append)
 {
-   //TODO LMG - Check if file already exists and if so, append to it. If not, delete the old .list and rewrite.
-   //Change .ats to []s for speed. 
-
    //Initiate an ofstream to write to
    std::ofstream myFile;
    std::string file = fileName + ".list";
-   myFile.open(file);
+   if (append)
+      myFile.open(file, std::ios_base::app);
+   else
+      myFile.open(file);
    
    //Assert that the runNumbers and EventNos match up in terms of size.
    assert(fVertexEvents.fRunNumbers.size() == fVertexEvents.fEventNos.size());

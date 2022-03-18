@@ -46,7 +46,27 @@ include_directories(${ROOT_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Garfield++
 #
-find_package( Garfield REQUIRED)
+find_package(Garfield REQUIRED)
+
+find_path(Garfield_INCLUDE_DIRS Sensor.hh
+        HINTS $ENV{GARFIELD_INSTALL}/include
+        PATH_SUFFIXES Garfield)
+
+include_directories(${Garfield_INCLUDE_DIRS} ${Garfield_INCLUDE_DIRS}/.. ${GARFIELD_INCLUDE_DIRS})
+
+find_library(Garfield_LIBRARIES libGarfield.so
+  HINTS $ENV{GARFIELD_INSTALL}/lib $ENV{GARFIELD_INSTALL}/lib64)
+
+link_libraries(${Garfield_LIBRARIES} ${GARFIELD_LIBRARIES})
+
+message(STATUS "${PROJECT_NAME}: Garfieldpp includes: ${Garfield_INCLUDE_DIRS} ${GARFIELD_INCLUDE_DIRS} libs: ${Garfield_LIBRARIES} ${GARFIELD_LIBRARIES}")
+
+execute_process(COMMAND grep -c EnableMagneticField ${Garfield_INCLUDE_DIRS}/AvalancheMC.hh OUTPUT_VARIABLE FOUND_EN_MAG)
+
+if(${FOUND_EN_MAG} GREATER 0)
+  message(STATUS "${PROJECT_NAME}: Old version of Garfield++, consider updating")
+  add_compile_definitions(OLD_AV_MC)
+endif()
 
 #----------------------------------------------------------------------------
 # include CRY (required package)
