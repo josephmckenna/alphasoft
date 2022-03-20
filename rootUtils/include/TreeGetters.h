@@ -21,6 +21,7 @@ TTree* Get_Chrono_Name_Tree(const int  runNumber);
 
 TTree* Get_StoreEvent_Tree(const int runNumber);
 TTreeReader* Get_StoreEvent_TreeReader(const int runNumber);
+TTreeReader* Get_AGDetectorEvent_TreeReader(const int runNumber);
 //Legacy:
 
 

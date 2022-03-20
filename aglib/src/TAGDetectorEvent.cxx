@@ -1,6 +1,5 @@
 #include "TAGDetectorEvent.hh"
 
-
 TAGDetectorEvent::TAGDetectorEvent():
    fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown)
 {
@@ -9,6 +8,8 @@ TAGDetectorEvent::TAGDetectorEvent():
    fRunNumber = -1;
    fEventNo = -1;
    fRunTime = -1;
+   fCutsResult = 0;
+   fVertexStatus = 0;
    fTPCTime = -1;
    fNumHelices = -1;
    fNumTracks = -1;
@@ -21,13 +22,13 @@ TAGDetectorEvent::~TAGDetectorEvent()
    
 }
 // Construct with TStoreEvent
-TAGDetectorEvent::TAGDetectorEvent( const TStoreEvent* e )
+TAGDetectorEvent::TAGDetectorEvent( const TStoreEvent* e ): TAGDetectorEvent()
 {
    fHasBarFlow = false;
    fHasAnalysisFlow = false;
    AddAnalysisFlow(e);
 }
-TAGDetectorEvent::TAGDetectorEvent( const TBarEvent* b )
+TAGDetectorEvent::TAGDetectorEvent( const TBarEvent* b ): TAGDetectorEvent()
 {
    fHasBarFlow = false;
    fHasAnalysisFlow = false;
@@ -46,7 +47,9 @@ bool TAGDetectorEvent::AddAnalysisFlow(const TStoreEvent* event)
    fEventNo = event->GetEventNumber();
    fRunTime = event->GetTimeOfEvent();
    fTPCTime = event->GetTimeOfEvent();
+   fCutsResult = RadiusCut(event) & 1;
    fVertex = event->GetVertex();
+   fVertexStatus = event->GetVertexStatus();
    fNumHelices = event->GetUsedHelices()->GetEntriesFast();
    fNumTracks = event->GetNumberOfTracks();
    fNumADCBars = -1;
@@ -67,5 +70,19 @@ bool TAGDetectorEvent::AddBarFlow( const TBarEvent* b)
    fBarTime = b->GetRunTime();
    return true;
 }
+
+int TAGDetectorEvent::RadiusCut(const TStoreEvent* e)
+{
+   //Dummy example of ApplyCuts for a TStoreEvent... 
+   //Change this when we have pbars!
+   const Double_t R=e->GetVertex().Perp();
+   const Int_t NTracks=e->GetNumberOfTracks();
+   if (NTracks==2)
+      if (R < 85) return 1;
+   if (NTracks > 2)
+      if (R < 80) return 1;
+   return 0;
+}
+
 
 ClassImp(TAGDetectorEvent);

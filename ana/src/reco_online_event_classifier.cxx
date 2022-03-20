@@ -30,7 +30,7 @@ class TAGDetectorEventWriter: public TARunObject
 public:
    const bool fTrace = false;
    TAGDetectorEventWriterFlags* fFlags;
-   const int WriteInterval = 1000;
+   const int WriteInterval = 10000;
    std::deque<TAGDetectorEvent> fEvents;
 
    int fTPCEvents;
@@ -125,7 +125,8 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("TAGDetectorEventWriter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if (fTrace)
+         printf("TAGDetectorEventWriter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
 
       write_event = new TAGDetectorEvent();

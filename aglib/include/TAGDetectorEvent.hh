@@ -20,7 +20,9 @@ public:
    int fEventNo;
    double fRunTime; // Official time
    double fTPCTime; //TPC time stamp
+   int fCutsResult;
    TVector3 fVertex;
+   int fVertexStatus;
    int fNumHelices;  // helices used for vertexing
    int fNumTracks; // reconstructed (good) helices
    int fNumADCBars;
@@ -33,6 +35,11 @@ public:
    TAGDetectorEvent( const TBarEvent* b );
    bool AddAnalysisFlow(const TStoreEvent* event);
    bool AddBarFlow( const TBarEvent* b);
+   
+   // Online analysis cuts
+   int RadiusCut(const TStoreEvent* e);
+   
+   
    ClassDef(TAGDetectorEvent,1);
 };
 

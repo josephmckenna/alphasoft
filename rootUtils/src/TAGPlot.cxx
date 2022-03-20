@@ -152,6 +152,20 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
    return;
 }
 
+void TAGPlot::AddAGDetectorEvent(const TAGDetectorEvent& event)
+{
+  double time = event.fRunTime;
+  const double z = event.fVertex.Z();
+  if ( z < fZMinCut ) return;
+  if ( z > fZMaxCut ) return;
+
+  int index = GetTimeWindows()->GetValidWindowNumber(time);
+
+  if (index >= 0)
+  {
+    AddEvent(event, GetTimeWindows()->fZeroTime.at(index));
+  }
+}
 
 void TAGPlot::AddStoreEvent(const TStoreEvent& event)
 {
@@ -167,6 +181,8 @@ void TAGPlot::AddStoreEvent(const TStoreEvent& event)
     AddEvent(event, GetTimeWindows()->fZeroTime.at(index));
   }
 }
+
+
 
 void TAGPlot::AddChronoEvent(const TCbFIFOEvent& event, const std::string& board)
 {
@@ -187,7 +203,26 @@ void TAGPlot::AddChronoEvent(const TCbFIFOEvent& event, const std::string& board
   }
 }
 
+void TAGPlot::AddEvent(const TAGDetectorEvent& event, const double timeOffset)
+{
+  const double tMinusOffset = (event.fRunTime - timeOffset);
+   AddVertexEvent(
+     event.fRunNumber,
+     event.fEventNo,
+     event.fCutsResult,
+     event.fVertexStatus,
+     event.fVertex.X(),
+     event.fVertex.Y(),
+     event.fVertex.Z(),
+     tMinusOffset,
+     event.fRunTime,
+     event.fTPCTime,
+     event.fNumHelices,
+     event.fNumTracks
+   );
+  return;
 
+}
 void TAGPlot::AddEvent(const TStoreEvent& event, const double timeOffset)
 {
    const double tMinusOffset = (event.GetTimeOfEvent() - timeOffset);
@@ -266,17 +301,30 @@ void TAGPlot::AddDumpGates(const std::vector<TAGSpill> spills)
 void TAGPlot::LoadRun(const int runNumber, const double firstTime, const double lastTime)
 {
 
-   TTreeReader* TPCTreeReader = Get_StoreEvent_TreeReader(runNumber);
-   TTreeReaderValue<TStoreEvent> TPCEvent(*TPCTreeReader, "StoredEvent");
+   //TTreeReader* TPCTreeReader = Get_StoreEvent_TreeReader(runNumber);
+   //TTreeReaderValue<TStoreEvent> TPCEvent(*TPCTreeReader, "StoredEvent");
+   //while (TPCTreeReader->Next())
+   //{
+   //   const double t = TPCEvent->GetTimeOfEvent();
+   //   if (t < firstTime)
+   //      continue;
+   //   if (t > lastTime)
+   //      break;
+   //   AddStoreEvent(*TPCEvent);
+   //}
+
+   TTreeReader* TPCTreeReader = Get_AGDetectorEvent_TreeReader(runNumber);
+   TTreeReaderValue<TAGDetectorEvent> VertexEvent(*TPCTreeReader, "TADetectorEvent");
    while (TPCTreeReader->Next())
    {
-      const double t = TPCEvent->GetTimeOfEvent();
+      const double t =VertexEvent->fRunTime;
       if (t < firstTime)
          continue;
       if (t > lastTime)
          break;
-      AddStoreEvent(*TPCEvent);
+      AddAGDetectorEvent(*VertexEvent);
    }
+
 
    SetChronoChannels(runNumber);
    for (UInt_t j=0; j<fChronoChannels.size(); j++)

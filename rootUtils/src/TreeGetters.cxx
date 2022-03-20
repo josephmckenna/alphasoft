@@ -86,6 +86,11 @@ TTreeReader* Get_StoreEvent_TreeReader(const int runNumber)
 {
    return Get_TreeReader_By_Name(runNumber,"StoreEventTree");
 }
+
+TTreeReader* Get_AGDetectorEvent_TreeReader(const int runNumber)
+{
+   return Get_TreeReader_By_Name(runNumber,"TADetectorEventTree");
+}
 #endif
 
 #ifdef BUILD_A2

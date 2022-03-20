@@ -17,6 +17,8 @@
 #include "TSpacePoint.hh"
 #include "TFitHelix.hh"
 
+#include "TAGDetectorEvent.hh"
+
 #include "TLatex.h"
 #include "TLegend.h"
 #include "TPaveText.h"
@@ -84,9 +86,11 @@ public:
    //Setters and getters
    void SetChronoChannels(Int_t runNumber);
 
+   void AddAGDetectorEvent(const TAGDetectorEvent& event);
    void AddStoreEvent(const TStoreEvent& event);
    void AddChronoEvent(const TCbFIFOEvent& event, const std::string& board);
 private:
+   void AddEvent(const TAGDetectorEvent& event, const double timeOffset = 0);
    void AddEvent(const TStoreEvent& event, const double timeOffset = 0);
    void AddEvent(const TCbFIFOEvent& event, const TChronoChannel& channel, const double timeOffset = 0);
 public:
