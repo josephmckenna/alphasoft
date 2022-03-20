@@ -92,6 +92,7 @@ class TAGPlotHelixEvents: public TObject
          Curvature.clear();
          nPoints.clear();
       }
+      ClassDef(TAGPlotHelixEvents,1);
 };
 
 #endif

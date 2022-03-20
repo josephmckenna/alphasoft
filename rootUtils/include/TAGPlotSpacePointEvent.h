@@ -80,6 +80,7 @@ class TAGPlotSpacePointEvent: public TObject
       fR.push_back(r);
       fP.push_back(p);
     }
+   ClassDef(TAGPlotSpacePointEvent,1);
 };
 
 
