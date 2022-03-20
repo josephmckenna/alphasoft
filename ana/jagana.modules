@@ -24,6 +24,7 @@ reco_trackfinder.o
 reco_trackfitter.o
 reco_vertexfitter.o
 reco_eventwriter.o
+reco_online_event_classifier.o
 
 #reco_module.o
 

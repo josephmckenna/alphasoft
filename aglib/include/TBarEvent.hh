@@ -34,8 +34,8 @@ public:
   
   void SetID(int ID){ fEventID=ID;}
   void SetRunTime(double time){ fEventTime=time;}
-  int GetID(){ return fEventID;}
-  double GetRunTime(){ return fEventTime;}
+  int GetID() const { return fEventID;}
+  double GetRunTime() const { return fEventTime;}
   void Reset()
   {
     fEventID=-1;
@@ -89,8 +89,11 @@ public:
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }
   std::vector<TBarHit*> GetBars() { return fBarHit; }
+  const std::vector<TBarHit*> GetBars() const { return fBarHit; }
   std::vector<TBarEndHit*> GetEndHits() { return fEndHit; }
+  const std::vector<TBarEndHit*> GetEndHits() const { return fEndHit; }
   std::vector<TBarSimpleTdcHit*> GetTdcHits() { return fTdcHit; }
+  const std::vector<TBarSimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
 
   ClassDef(TBarEvent, 1);
 };

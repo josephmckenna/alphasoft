@@ -8,6 +8,9 @@
 #pragma link C++ class  TStoreEvent+;
 #pragma link C++ class  TStoreHelix+;
 #pragma link C++ class  TStoreLine+;
+
+
+#pragma link C++ class  TAGDetectorEvent;
 #endif
 
 #ifdef BUILD_AG

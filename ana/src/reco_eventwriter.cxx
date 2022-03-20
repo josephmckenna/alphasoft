@@ -23,9 +23,12 @@
 class TStoreEventWriterFlags
 {
 public:
+   bool lite_mode;
 public:
    TStoreEventWriterFlags() // ctor
-   { }
+   {
+      lite_mode = false;
+   }
 
    ~TStoreEventWriterFlags() // dtor
    { }
@@ -103,6 +106,7 @@ public:
 
       // prepare event to store in TTree
       analyzed_event = af->fEvent;
+      if (!fFlags->lite_mode)
       {
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
@@ -137,6 +141,8 @@ public:
       for (unsigned i=0; i<args.size(); i++) {
          if( args[i]=="-h" || args[i]=="--help" )
             Help();
+         else if ( args[i]=="--lite")
+            fFlags.lite_mode = true;
       }
    }
 
