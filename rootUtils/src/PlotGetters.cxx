@@ -199,7 +199,7 @@ TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t 
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax, bool ApplyCuts)
 {
-  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
+  TAGPlotTracks* p=new TAGPlotTracks();
 
   p->AddTimeGate(runNumber,tmin,tmax);
 
@@ -235,7 +235,7 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description,
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
 			      Int_t dumpIndex, bool ApplyCuts)
 { 
-  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
+  TAGPlotTracks* p=new TAGPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
   bool whole=false;

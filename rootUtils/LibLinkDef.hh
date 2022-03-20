@@ -21,6 +21,9 @@
 #pragma link C++ class TAGPlotChronoPlotEvents;
 #pragma link C++ class TAGPlotSpacePointEvent;
 #pragma link C++ class TAGPlotHelixEvents;
+
+#pragma link C++ class TAGPlotTracks+;
+
 #endif
 
 #ifdef BUILD_A2

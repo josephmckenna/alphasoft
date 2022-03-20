@@ -64,10 +64,6 @@ private:
    std::map<int, TChronoChannel> fBeamEjection;
 
 public:
-   TAGPlotHelixEvents fHelixEvents;
-   TAGPlotHelixEvents fUsedHelixEvents;
-   TAGPlotSpacePointEvent fSpacePointHelixEvents;
-   TAGPlotSpacePointEvent fSpacePointUsedHelixEvents;
    TAGPlotChronoPlotEvents fChronoEvents;
 
    // default class member functions
@@ -87,11 +83,9 @@ public:
    void SetChronoChannels(Int_t runNumber);
 
    void AddAGDetectorEvent(const TAGDetectorEvent& event);
-   void AddStoreEvent(const TStoreEvent& event);
    void AddChronoEvent(const TCbFIFOEvent& event, const std::string& board);
-private:
+protected:
    void AddEvent(const TAGDetectorEvent& event, const double timeOffset = 0);
-   void AddEvent(const TStoreEvent& event, const double timeOffset = 0);
    void AddEvent(const TCbFIFOEvent& event, const TChronoChannel& channel, const double timeOffset = 0);
 public:
    void AddDumpGates(const int runNumber, const std::vector<std::string> description, std::vector<int> dumpIndex );
@@ -100,31 +94,20 @@ public:
    void AddDumpGates(const std::vector<TAGSpill> spills );
 
    void LoadRun(const int runNumber, const double tmin, const double tmax);
+protected:
+   void LoadChronoEvents(const int runNumber, const double firstTime, const double lastTime);
+public:
    void SetUpHistograms();
 
    void FillHisto(bool applyCuts=true, int mode=0);
-private:
+protected:
    void FillChronoHistograms();
    void FillVertexHistograms(bool applyCuts,int mode);
 public:
    TCanvas *DrawVertexCanvas(const char* name = "cVTX",bool applyCuts=false, int mode=0);
 
-   TCanvas* DrawTrackCanvas(TString Name = "cTrack");
-
-
-
    void SetBarMultiplicityCut(Int_t cut) { BarMultiplicityCut=cut; }
    Int_t GetBarMultiplicityCut()         { return BarMultiplicityCut; }
-  
-
-      //Load, fill, draw, or save the object 
-      
-
-private:
-      void ProcessHelices(const double runNumber, const double time, const double officialtime, const TObjArray* tracks);
-      void ProcessUsedHelices(const double runNumber, const double time, const double officialtime, const TObjArray*);
-      void SetupTrackHistos();
-      void FillTrackHisto();
 public:
       void ExportCSV(const std::string filename, Bool_t PassedCutOnly=kFALSE);
    

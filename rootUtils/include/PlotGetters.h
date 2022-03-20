@@ -9,6 +9,7 @@
 #include "TAPlot.h"
 #include "TA2Plot.h"
 #include "TAGPlot.h"
+#include "TAGPlotTracks.h"
 
 #include "TChronoChannel.h"
 #include "TH1DGetters.h"
