@@ -16,12 +16,6 @@ Double_t GetTotalRunTimeFromTPC(Int_t runNumber);
 Double_t GetAGTotalRunTime(Int_t runNumber);
 #endif
 
-#ifdef BUILD_AG
-
-Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime);
-Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime);
-#endif
-
 #ifdef BUILD_A2
 #include "TSISEvent.h"
 #include "TSVD_QOD.h"

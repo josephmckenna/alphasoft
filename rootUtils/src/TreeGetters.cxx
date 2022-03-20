@@ -1,6 +1,6 @@
 #include "TreeGetters.h"
 
-TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
+TTree* Get_Tree_By_Name(const int runNumber,const char* name)
 {
    TFile* f=Get_File(runNumber);
    TTree *tree = NULL;
@@ -13,14 +13,18 @@ TTree* Get_Tree_By_Name(Int_t runNumber,const char* name)
    return tree;
 }
 
+TTreeReader* Get_TreeReader_By_Name(const int runNumber, const char* name)
+{
+   TFile* f=Get_File(runNumber);
+   return new TTreeReader(name,f);
+}
+
 
 #ifdef BUILD_AG
 
 TTreeReader* Get_AGSpillTree(Int_t runNumber)
 {
-   TFile* f=Get_File(runNumber);
-   TTreeReader* t=new TTreeReader("AGSpillTree", f);
-   return t;
+   return Get_TreeReader_By_Name(runNumber, "AGSpillTree");
 }
 
 #endif
@@ -41,20 +45,22 @@ TTree* Get_Chrono_Tree(const int runNumber, const std::string ChronoBoardChannel
 }
 #endif
 #ifdef BUILD_AG
-/*TTree* Get_Chrono_Tree(Int_t runNumber, const char* ChannelName, double &official_time)
+TTreeReader* Get_Chrono_TreeReader(const int runNumber, const std::string ChronoBoardChannel)
 {
-   Int_t chan=-1;
-   Int_t board=-1;
-   for (board=0; board<CHRONO_N_BOARDS; board++)
+   std::string Name="ChronoBox_" + ChronoBoardChannel;
+   std::cout<<"Loading "<<Name<<std::endl;
+
+   if (ChronoBoardChannel == "cb01")
    {
-       chan=Get_Chrono_Channel(runNumber, board, ChannelName);
-       if (chan>-1) break;
+      std::cout<<"AT TIME OF WRITING cb01 is not useful for FIFO analysis.... skipping"<<std::endl;
+      return NULL;
    }
-   return Get_Chrono_Tree(runNumber,board,chan,official_time);
-}*/
+
+   return Get_TreeReader_By_Name(runNumber,Name.c_str());
+}
 #endif
 #ifdef BUILD_AG
-TTree* Get_Chrono_Name_Tree(Int_t runNumber)
+TTree* Get_Chrono_Name_Tree(const int runNumber)
 {
    return Get_Tree_By_Name(runNumber,"ChronoBoxChannels");
 }
@@ -71,21 +77,17 @@ TTree* Get_Seq_State_Tree(Int_t runNumber)
 }
 
 #ifdef BUILD_AG
-TTree* Get_StoreEvent_Tree(Int_t runNumber)
+TTree* Get_StoreEvent_Tree(const int runNumber)
 {
    return Get_Tree_By_Name(runNumber,"StoreEventTree");
 }
-#endif
-#ifdef BUILD_AG
-TTree* Get_StoreEvent_Tree(Int_t runNumber, Double_t &time)
+
+TTreeReader* Get_StoreEvent_TreeReader(const int runNumber)
 {
-   TTree* t=Get_StoreEvent_Tree(runNumber);
-   //TTree* tf=Get_Tree_By_Name(runNumber,"StoreEventOfficialTime");
-   // tf->SetBranchAddress("OfficialTime",&time);
-  // t->AddFriend(tf);
-   return t;
+   return Get_TreeReader_By_Name(runNumber,"StoreEventTree");
 }
 #endif
+
 #ifdef BUILD_A2
 // ALPHA 2 Getters:
 TTreeReader* A2_SIS_Tree_Reader(Int_t runNumber, Int_t Module_Number)

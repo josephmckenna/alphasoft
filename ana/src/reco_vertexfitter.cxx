@@ -150,6 +150,7 @@ public:
          analyzed_event->Reset();
          analyzed_event->SetEventNumber( age->counter );
          analyzed_event->SetTimeOfEvent( age->time );
+         analyzed_event->SetRunNumber( runinfo->fRunNo );
          flow = new AgAnalysisFlow(flow, analyzed_event);
       }
       if( fFlags->fRecOff )

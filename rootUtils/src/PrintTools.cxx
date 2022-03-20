@@ -86,14 +86,12 @@ void PrintChronoBoards(int runNumber, Double_t tmin, Double_t tmax)
 Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
 {
    if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
-   double official_time;
    
    TStoreEvent *store_event = new TStoreEvent();
-   TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
+   TTree *t0 = Get_StoreEvent_Tree(runNumber);
    t0->SetBranchAddress("StoredEvent", &store_event);
    //SPEED THIS UP BY PREPARING FIRST ENTRY!
    store_event->Print("title");
-   std::cout<<"OfficialTime"<<std::endl;
    for (Int_t i = 0; i < t0->GetEntries(); ++i)
    {
       store_event->Reset();
@@ -104,19 +102,10 @@ Int_t PrintTPCEvents(Int_t runNumber, Double_t tmin, Double_t tmax)
          std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
          break;
       }
-      if (official_time <= tmin)
-      {
-         continue;
-      }
       
-      if (official_time > tmax)
-      {
-         break;
-      }
       
       //std::cout<<"Official Time of event "<<i<<", OfficialTime (RunTime):"<<official_time << "("<<store_event->GetTimeOfEvent()<<")"<<std::endl;
       store_event->Print("line");
-      std::cout<<official_time<<std::endl;
    
    }
    return 0;

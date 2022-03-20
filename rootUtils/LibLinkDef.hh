@@ -5,7 +5,7 @@
 //#pragma link off all functions;
 
 #pragma link C++ class TAPlot+;
-
+#pragma link C++ class TAPlotScalerEvents;
 #pragma link C++ class TAPlotTimeWindows;
 #pragma link C++ class TAPlotVertexEvents;
 
@@ -18,6 +18,9 @@
 
 #ifdef BUILD_AG
 #pragma link C++ class TAGPlot+;
+#pragma link C++ class TAGPlotChronoPlotEvents;
+#pragma link C++ class TAGPlotSpacePointEvent;
+#pragma link C++ class TAGPlotHelixEvents;
 #endif
 
 #ifdef BUILD_A2

@@ -54,12 +54,14 @@ class TAPlot: public TObject
       double fMaxDumpLength;
       double fTotalTime;
       bool fVerbose;
-      bool fApplyCuts;
       double fTimeFactor=1.; //Time scaling factor (used to switch between seconds and milliseconds)
 
-      //Hold historams in a vector so that saved TAGPlot objects can be backwards and forwards compatable
-      TObjArray fHistos;
+      double fZMinCut;
+      double fZMaxCut;
+
+      //Hold historams in a vector so that saved TAGPlot objects can be backwards and forwards compatable      TObjArray fHistos;
       std::map<std::string,int> fHistoPositions;
+      TObjArray fHistos;
    
       std::vector<double> fEjections;
       std::vector<double> fInjections;
@@ -83,8 +85,6 @@ class TAPlot: public TObject
       void SetTAPlotTitle(const std::string& title)      {  fCanvasTitle = title;  }
       void LoadingDataLoadingDone()                      {  fDataLoadedTime = TTimeStamp(); }
       void SetTimeFactor(double time)                    {  fTimeFactor = time; }
-      void SetCutsOn()                                   {  fApplyCuts = kTRUE; }
-      void SetCutsOff()                                  {  fApplyCuts = kFALSE; }
       void SetMVAMode(int mode)                          {  fMVAMode = mode; }
       void SetBinNumber(int bin)                         {  fNumBins = bin; }
       void SetVerbose(bool verbose)                      {  fVerbose = verbose; }
@@ -97,18 +97,17 @@ class TAPlot: public TObject
       TAPlotVertexEvents*       GetVertexEvents()        {  return &fVertexEvents; }
       TAPlotTimeWindows*        GetTimeWindows()         {  return &fTimeWindows; }
       std::string          GetTAPlotTitle()         {  return fCanvasTitle;  }
-      size_t               GetNVertexEvents()       {  return fVertexEvents.fXVertex.size(); }
+      size_t               GetNVertexEvents() const {  return fVertexEvents.fXVertex.size(); }
       double               GetTimeFactor() const    {  return fTimeFactor; }
       double               GetMaxDumpLength() const {  return fMaxDumpLength; }
       double               GetFirstTmin() const     {  return fFirstTMin;     }
       double               GetLastTmax() const      {  return fLastTMax;      }
       double               GetBiggestTzero() const  {  return fBiggestTZero;  }
       int                  GetNBins() const         {  return fNumBins; }
-      int                  GetNVerticies()          {  return GetNVertexType(1);  }
-      int                  GetNPassedCuts()         {  return GetNPassedType(1);  }
+      int                  GetNVerticies() const    {  return GetNVertexType(1);  }
+      int                  GetNPassedCuts() const   {  return GetNPassedType(1);  }
       bool                 IsGEMData()              {  return (fFEGEM.size() != 0);   }
       bool                 IsLVData()               {  return (fFEGEM.size() != 0);   }
-      bool                 GetCutsSettings() const  {  return fApplyCuts; }
       TObjArray            GetHisto()               {  return fHistos;}
       std::map<std::string,int> GetHistoPosition()  {  return fHistoPositions;}
       const std::vector<int> GetArrayOfRuns()       {  return fRuns; }
@@ -119,19 +118,13 @@ class TAPlot: public TObject
       std::pair<TLegend*,TMultiGraph*> GetGEMGraphs();
       std::pair<TLegend*,TMultiGraph*> GetLVGraphs();
       double GetApproximateProcessingTime();
-      int GetNPassedType(const int type);
-      int GetNVertexType(const int type);
+      int GetNPassedType(const int type) const;
+      int GetNVertexType(const int type) const;
       TString GetListOfRuns();
+      double GetTotalTime() const { return fTotalTime; }
 
       //Adders.
-      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex )
-      {
-         assert(!"Child class must have this");
-         //Suppress compiler warnings:
-         std::cout << runNumber << "\t";
-         std::cout << description.size() << "\t";
-         std::cout << dumpIndex.size() << std::endl;
-      }
+      virtual void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex ) =0;
       void AddStartDumpMarker(double time)               {  fDumpStarts.push_back(time);}
       void AddStopDumpMarker(double time)                {  fDumpStops.push_back(time); }
       void AddInjection(double time)                     {  fInjections.push_back(time);}
@@ -143,7 +136,7 @@ class TAPlot: public TObject
       void AddTimeGate(const int runNumber, const double minTime, const double maxTime, const double zeroTime);
       void AddTimeGate(const int runNumber, const double minTime, const double maxTime);
       void AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vertexStatus, double x, double y, double z, double t, double eventTime, double eunTime, int numHelices, int numTracks);
-
+      
 
       //Load data functions.
       template<typename T> void LoadFEGEMData(TAPlotFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime);
@@ -153,13 +146,7 @@ class TAPlot: public TObject
       // Hmm the add operators prevent this being a pure virtual function (ie
       // the add operator can't return TAPlot if TAPlot is an abstract class...
       // one to think about Joe)
-      virtual void LoadRun(int runNumber, double firstTime, double lastTime)
-      {
-         assert(!"Must be implemented by child class");
-         std::cout << runNumber << "\t";
-         std::cout << firstTime << "\t";
-         std::cout << lastTime << std::endl;
-      }
+      virtual void LoadRun(int runNumber, double firstTime, double lastTime) = 0;
       void LoadData(bool verbose = false);
 
       
@@ -168,8 +155,9 @@ class TAPlot: public TObject
       TAPlot(bool zeroTime = true);//, int MVAMode = 0);
       virtual ~TAPlot();
       TAPlot& operator=(const TAPlot& rhs);
-      friend TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs);
       TAPlot& operator+=(const TAPlot &rhs);
+      // Addition constructor...? Is this reasonable practice?
+      TAPlot(const TAPlot& lhs, const TAPlot& rhs);
       void Print(Option_t* option="") const;
       virtual void PrintFull();
    

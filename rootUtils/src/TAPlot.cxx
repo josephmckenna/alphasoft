@@ -13,7 +13,6 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
    fLegendDetail=1; 
    fMVAMode = 0;
    fClassifierCut = -99;
-   fApplyCuts = -1;
 
    fFirstTMin=1E99;
    fLastTMax=1.;
@@ -33,7 +32,6 @@ TAPlot::TAPlot(const TAPlot& object) : TObject(object), kZeroTimeAxis(object.kZe
    fNumBins                      = object.fNumBins ; 
    fDrawStyle                    = object.fDrawStyle ;
    fLegendDetail                 = object.fLegendDetail ; 
-   fApplyCuts                    = object.fApplyCuts ;
    fClassifierCut                = object.fClassifierCut ;
    fFirstTMin                    = object.fFirstTMin ;
    fLastTMax                     = object.fLastTMax ;
@@ -92,7 +90,6 @@ TAPlot& TAPlot::operator=(const TAPlot& rhs)
    this->fNumBins = rhs.fNumBins ; 
    this->fDrawStyle = rhs.fDrawStyle ;
    this->fLegendDetail = rhs.fLegendDetail ; 
-   this->fApplyCuts = rhs.fApplyCuts ;
    this->fClassifierCut = rhs.fClassifierCut ;
    this->fFirstTMin = rhs.fFirstTMin ;
    this->fLastTMax = rhs.fLastTMax ;
@@ -171,48 +168,6 @@ TAPlot& TAPlot::operator+=(const TAPlot &rhs)
    this->fVertexEvents+=rhs.fVertexEvents;
 
    return *this;
-}
-
-//Addition
-TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
-{
-   //std::cout << "TAPlot addition operator" << std::endl;
-   TAPlot outputPlot(lhs); //Create new from copy
-
-   //Vectors- need concacting
-   outputPlot.fEjections.insert(outputPlot.fEjections.end(), rhs.fEjections.begin(), rhs.fEjections.end() );
-   outputPlot.fInjections.insert(outputPlot.fInjections.end(), rhs.fInjections.begin(), rhs.fInjections.end() );
-   outputPlot.fDumpStarts.insert(outputPlot.fDumpStarts.end(), rhs.fDumpStarts.begin(), rhs.fDumpStarts.end() );
-   outputPlot.fDumpStops.insert(outputPlot.fDumpStops.end(), rhs.fDumpStops.begin(), rhs.fDumpStops.end() );
-   outputPlot.fRuns.insert(outputPlot.fRuns.end(), rhs.fRuns.begin(), rhs.fRuns.end() );//check dupes - ignore copies. AddRunNumber
-   outputPlot.fFEGEM.insert(outputPlot.fFEGEM.end(), rhs.fFEGEM.begin(), rhs.fFEGEM.end() );
-   outputPlot.fFELV.insert(outputPlot.fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
-
-   //Strings - This title gets overridden in the DrawCanvas function anyway, but until then they are concacted. 
-   outputPlot.fCanvasTitle+= ", ";
-   outputPlot.fCanvasTitle+=rhs.fCanvasTitle;
-
-   //All doubles
-   outputPlot.fFirstTMin              = (outputPlot.fFirstTMin < rhs.fFirstTMin)?outputPlot.fFirstTMin:rhs.fFirstTMin;
-   outputPlot.fLastTMax               = (outputPlot.fLastTMax > rhs.fLastTMax)?outputPlot.fLastTMax:rhs.fLastTMax;
-   outputPlot.fBiggestTZero           = (outputPlot.fBiggestTZero > rhs.fBiggestTZero)?outputPlot.fBiggestTZero:rhs.fBiggestTZero;
-   outputPlot.fMaxDumpLength          = (outputPlot.fMaxDumpLength > rhs.fMaxDumpLength)?outputPlot.fMaxDumpLength:rhs.fMaxDumpLength;
-   outputPlot.fTotalTime             += rhs.fTotalTime;
-   outputPlot.fObjectConstructionTime = (outputPlot.fObjectConstructionTime < rhs.fObjectConstructionTime)?outputPlot.fObjectConstructionTime:rhs.fObjectConstructionTime;
-   outputPlot.fDataLoadedTime         = (outputPlot.fDataLoadedTime > rhs.fDataLoadedTime)?outputPlot.fDataLoadedTime:rhs.fDataLoadedTime;
-   outputPlot.fTimeFactor                = (outputPlot.fTimeFactor < rhs.fTimeFactor)?outputPlot.fTimeFactor:rhs.fTimeFactor;
-
-   //Histograms and maps, very posssible that these get overridden in the DrawCanvas function anyway.
-   for(int i = 0; i < rhs.fHistos.GetSize(); i++)
-   {
-      outputPlot.fHistos.Add(rhs.fHistos.At(i));
-   }
-   outputPlot.fHistoPositions.insert( rhs.fHistoPositions.begin(), rhs.fHistoPositions.end() );
-
-   outputPlot.fTimeWindows+=rhs.fTimeWindows;
-   outputPlot.fVertexEvents+=rhs.fVertexEvents;
-
-   return outputPlot;
 }
 
 //Function to print time ranges
@@ -425,7 +380,7 @@ double TAPlot::GetApproximateProcessingTime()
    return fDataLoadedTime.AsDouble() - fObjectConstructionTime.AsDouble();
 }
 
-int TAPlot::GetNPassedType(const int kType)
+int TAPlot::GetNPassedType(const int kType) const
 {
    int n = 0;
    //for (auto& event: VertexEvents)
@@ -438,7 +393,7 @@ int TAPlot::GetNPassedType(const int kType)
    return n;
 }
 
-int TAPlot::GetNVertexType(const int kType)
+int TAPlot::GetNVertexType(const int kType) const
 {
    int n = 0;
    //for (auto& event: VertexEvents)
@@ -778,6 +733,8 @@ TLegend* TAPlot::DrawLines(TLegend* legend, const char* keyname)
 TLegend* TAPlot::AddLegendIntegral(TLegend* legend, const char* message, const char* keyname)
 {
    char line[201];
+   if (!fHistoPositions.count(keyname))
+      return legend;
    if (!legend)
       legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
    snprintf(line, 200, message, ((TH1D*)fHistos.At(fHistoPositions.at(keyname)))->Integral());

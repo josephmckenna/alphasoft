@@ -190,7 +190,7 @@ public:
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
-
+      analyzed_event->SetRunNumber( runinfo->fRunNo );
       if( fFlags->fRecOff )
          {
             {std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);

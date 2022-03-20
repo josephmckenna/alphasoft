@@ -1,5 +1,5 @@
 #include "FileGetters.h"
-TFile *Get_File(Int_t run_number, Bool_t die)
+TFile *Get_File(const int run_number, bool die)
 {
   TFile *f = NULL;
 #ifdef ALPHASOFT_DB_INSTALL_PATH

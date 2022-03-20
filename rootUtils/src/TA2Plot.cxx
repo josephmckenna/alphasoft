@@ -1,8 +1,8 @@
+#ifdef BUILD_A2
+
 #include "TA2Plot.h"
 #include <fstream>
 
-
-#ifdef BUILD_A2
 ClassImp(TA2Plot)
 
 //Default members, operators, and prints.
@@ -18,34 +18,27 @@ TA2Plot::TA2Plot(double zMin, double zMax, bool zeroTime): TAPlot(zeroTime)
    fZMaxCut = zMax;
 }
 
-//Construct TA2Plot from TAPlot.
-TA2Plot::TA2Plot(const TAPlot& object) : TAPlot(object)
+//Copy ctor.
+TA2Plot::TA2Plot(const TA2Plot& object):
+   TAPlot(object),
+   fSISChannels(object.fSISChannels),
+   fTrig(object.fTrig),
+   fTrigNobusy(object.fTrigNobusy),
+   fAtomOr(object.fAtomOr),
+   fCATStart( object.fCATStart),
+   fCATStop( object.fCATStop),
+   fRCTStart( object.fRCTStart),
+   fRCTStop( object.fRCTStop),
+   fATMStart( object.fATMStart),
+   fATMStop( object.fATMStop),
+   fBeamInjection(object.fBeamInjection),
+   fBeamEjection(object.fBeamEjection),
+   SISEvents(object.SISEvents)
 {
-   std::cout << "This is TA2Plot constructor from TAPlot" << std::endl;
-   fZMinCut=-99999.;
-   fZMaxCut= 99999.;
+   fZMinCut = object.fZMinCut;
+   fZMaxCut = object.fZMaxCut;
 }
 
-//Copy ctor.
-TA2Plot::TA2Plot(const TA2Plot& object) : TAPlot(object)
-{
-   //std::cout << "This is TA2Plot copy constructor" << std::endl;
-   fSISChannels    = object.fSISChannels;
-   fTrig           = object.fTrig;
-   fTrigNobusy    = object.fTrigNobusy;
-   fAtomOr        = object.fAtomOr;
-   fCATStart       = object.fCATStart;
-   fCATStop        = object.fCATStop;
-   fRCTStart       = object.fRCTStart;
-   fRCTStop        = object.fRCTStop;
-   fATMStart       = object.fATMStart;
-   fATMStop        = object.fATMStop;
-   fBeamInjection = object.fBeamInjection;
-   fBeamEjection  = object.fBeamEjection;
-   fZMinCut        = object.fZMinCut;
-   fZMaxCut        = object.fZMaxCut;
-   SISEvents      = object.SISEvents;
-}
 
 TA2Plot::~TA2Plot()
 {
@@ -54,6 +47,7 @@ TA2Plot::~TA2Plot()
 //Assignment operator
 TA2Plot& TA2Plot::operator=(const TA2Plot& rhs)
 {
+   TAPlot::operator=(rhs);
    //Inherited TAPlot members
    //std::cout << "TA2Plot equals operator" << std::endl;
    fSISChannels      = rhs.fSISChannels;
@@ -75,41 +69,6 @@ TA2Plot& TA2Plot::operator=(const TA2Plot& rhs)
    return *this;
 }
 
-//Addition
-TA2Plot operator+(const TA2Plot& lhs, const TA2Plot& rhs)
-{
-   //In order to call the parents addition first it is important to statically cast the Plots to their parent class,
-   //add the parents together, then initialise a TA2Plot from the TAPlot and fill in the rest of the values as a constructor would.
-   TAPlot lhsCast = static_cast<TAPlot>(lhs); //2 Static casts
-   TAPlot rhsCast = static_cast<TAPlot>(rhs);
-   TAPlot parentSum = lhsCast + rhsCast; //Add as TAPlots
-   TA2Plot basePlot = TA2Plot(parentSum); //Initialise a TA2Plot from the now summed TAPlots
-
-   //Now we fill in the (empty) values of this newly initiated TA2Plot with the values we need from the 2 input arguments:
-   //For all these copying A is fine.
-   basePlot.fTrig.insert(              rhs.fTrig.begin(), rhs.fTrig.end() );
-   basePlot.fTrigNobusy.insert(        rhs.fTrigNobusy.begin(), rhs.fTrigNobusy.end() );
-   basePlot.fAtomOr.insert(            rhs.fAtomOr.begin(), rhs.fAtomOr.end() );
-   basePlot.fCATStart.insert(          rhs.fCATStart.begin(), rhs.fCATStart.end() );
-   basePlot.fCATStop.insert(           rhs.fCATStop.begin(), rhs.fCATStop.end() );
-   basePlot.fRCTStart.insert(          rhs.fRCTStart.begin(), rhs.fRCTStart.end() );
-   basePlot.fRCTStop.insert(           rhs.fRCTStop.begin(), rhs.fRCTStop.end() );
-   basePlot.fATMStart.insert(          rhs.fATMStart.begin(), rhs.fATMStart.end() );
-   basePlot.fATMStop.insert(           rhs.fATMStop.begin(), rhs.fATMStop.end() );
-   basePlot.fBeamInjection.insert(     rhs.fBeamInjection.begin(), rhs.fBeamInjection.end() );
-   basePlot.fBeamEjection.insert(      rhs.fBeamEjection.begin(), rhs.fBeamEjection.end() );
-   
-   basePlot.fZMinCut        = lhs.fZMinCut;
-   basePlot.fZMaxCut        = lhs.fZMaxCut;
-
-   //Vectors need concacting.
-   basePlot.fSISChannels.insert(basePlot.fSISChannels.end(), rhs.fSISChannels.begin(), rhs.fSISChannels.end() );
-
-   basePlot.SISEvents += lhs.SISEvents;
-   basePlot.SISEvents += rhs.SISEvents;
-   
-   return basePlot;
-}
 
 TA2Plot& TA2Plot::operator+=(const TA2Plot& rhs)
 {
@@ -136,6 +95,15 @@ TA2Plot& TA2Plot::operator+=(const TA2Plot& rhs)
    SISEvents += rhs.SISEvents;
    
    return *this;
+}
+
+//Addition
+TA2Plot& operator+(const TA2Plot& lhs, const TA2Plot& rhs)
+{
+   TA2Plot* basePlot = new TA2Plot();
+   *basePlot += lhs;
+   *basePlot += rhs;
+   return *basePlot;
 }
 
 
@@ -172,15 +140,14 @@ void TA2Plot::SetSISChannels(int runNumber)
   return;
 }
 
-void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
+void TA2Plot::AddSVDEvent(const TSVD_QOD& SVDEvent)
 {
-   double time=SVDEvent->t;
-   if (SVDEvent->z < fZMinCut) return;
-   if (SVDEvent->z > fZMaxCut) return;
+   const double time=SVDEvent.t;
+   if (SVDEvent.z < fZMinCut) return;
+   if (SVDEvent.z > fZMaxCut) return;
 
-   int index = GetTimeWindows()->GetValidWindowNumber(time);
-   
-   
+   const int index = GetTimeWindows()->GetValidWindowNumber(time);
+
    //Checks to make sure GetValidWindowNumber hasn't returned -1 (in which case it will be ignored) and 
    //if not it will add the event. 
    if(index >= 0)
@@ -189,18 +156,18 @@ void TA2Plot::AddSVDEvent(TSVD_QOD* SVDEvent)
    }
 }
 
-void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
+void TA2Plot::AddSISEvent(const TSISEvent& SISEvent)
 {
-   size_t numSISChannels=fSISChannels.size();
-   double time=SISEvent->GetRunTime();
+   const size_t numSISChannels = fSISChannels.size();
+   const double time = SISEvent.GetRunTime();
 
    //Loop over all time windows
-   int index = GetTimeWindows()->GetValidWindowNumber(time);
-   if(index>=0)
+   const int index = GetTimeWindows()->GetValidWindowNumber(time);
+   if(index >= 0)
    {
       for (size_t i=0; i<numSISChannels; i++)
       {
-         int counts = SISEvent->GetCountsInChannel(fSISChannels[i]);
+         int counts = SISEvent.GetCountsInChannel(fSISChannels[i]);
          if (counts)
          {
             AddEvent(SISEvent, fSISChannels[i], GetTimeWindows()->fZeroTime[index]);
@@ -209,13 +176,44 @@ void TA2Plot::AddSISEvent(TSISEvent* SISEvent)
    }
 }
 
-void TA2Plot::AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex )
+//Private function member
+void TA2Plot::AddEvent(const TSVD_QOD& event, const double timeOffset)
+{
+   const double tMinusOffset = (event.t - timeOffset);
+   AddVertexEvent(
+      event.RunNumber,
+      event.VF48NEvent,
+      event.NPassedCuts + event.MVA*2,
+      event.NVertices, 
+      event.x,
+      event.y,
+      event.z,
+      tMinusOffset,
+      event.VF48Timestamp,
+      event.t,
+      -1,
+      event.NTracks);
+}
+
+//Private function member
+void TA2Plot::AddEvent(const TSISEvent& event, const TSISChannel& channel, const double timeOffset)
+{
+   SISEvents.AddEvent(
+      event.GetRunNumber(),
+      event.GetRunTime() - timeOffset, 
+      event.GetRunTime(),
+      event.GetCountsInChannel(channel), channel);
+}
+
+
+void TA2Plot::AddDumpGates(const int runNumber, const std::vector<std::string> description, std::vector<int> dumpIndex )
 {
    std::vector<TA2Spill> spills=Get_A2_Spills(runNumber, description, dumpIndex);
    return AddDumpGates(runNumber, spills);
 }
 
-void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills)
+
+void TA2Plot::AddDumpGates(const int runNumber, const std::vector<TA2Spill> spills)
 {
    std::vector<double> minTime;
    std::vector<double> maxTime;
@@ -236,9 +234,9 @@ void TA2Plot::AddDumpGates(int runNumber, std::vector<TA2Spill> spills)
 }
 
 //If spills are from one run, it is faster to call the function above
-void TA2Plot::AddDumpGates(std::vector<TA2Spill> spills)
+void TA2Plot::AddDumpGates(const std::vector<TA2Spill> spills)
 {
-   for (TA2Spill& spill: spills)
+   for (const TA2Spill& spill: spills)
    {
       if (spill.ScalerData)
       {
@@ -272,7 +270,7 @@ void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
          continue;
       if (t > lastTime)
          break;
-      AddSVDEvent(&(*SVDEvent));
+      AddSVDEvent(*SVDEvent);
    }
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
@@ -287,12 +285,12 @@ void TA2Plot::LoadRun(int runNumber, double firstTime, double lastTime)
       // so get multiple channels and multiple time windows in one pass
       while (SISReader->Next())
       {
-         double t = SISEvent->GetRunTime();
+         const double t = SISEvent->GetRunTime();
          if (t < firstTime)
             continue;
          if (t > lastTime)
             break;
-         AddSISEvent(&(*SISEvent));
+         AddSISEvent(*SISEvent);
       }
    }
 }
@@ -413,7 +411,7 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
          AddStopDumpMarker(time);
       else if (channel == fCATStop.find(SISEvents.fRunNumber[i])->second || channel == fRCTStop.find(SISEvents.fRunNumber[i])->second || channel == fATMStop.find(SISEvents.fRunNumber[i])->second)
          AddStartDumpMarker(time);
-      else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;
+      else std::cout <<"Unconfigured SIS channel in TA2Plot"<<std::endl;
    }
 
    //Fill Vertex Histograms
@@ -494,7 +492,6 @@ void TA2Plot::FillHisto(bool applyCuts, int mode)
 
 TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 {
-   
    SetTAPlotTitle(name);
    std::cout<<"TAPlot Processing time : ~" << GetApproximateProcessingTime() <<"s"<<std::endl;
    TCanvas *canvas = new TCanvas(name, name, 1800, 1000);
@@ -510,8 +507,8 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
 
    //Canvas 2
    canvas->cd(2); // Z-counts (with electrodes?)4
-      TVirtualPad *subPadCD2 = canvas->cd(2);
-      gPad->Divide(1, 2);
+   TVirtualPad *subPadCD2 = canvas->cd(2);
+   gPad->Divide(1, 2);
       //Canvas 2 - Pad 1
       subPadCD2->cd(1);
          DrawHistogram("rvtx","HIST E1");
@@ -549,7 +546,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
    }
    else
    {
-      if (GetCutsSettings())
+      if (applyCuts)
          legend=AddLegendIntegral(legend,"Pass Cuts: %5.0lf","tvtx");
       else
          legend=AddLegendIntegral(legend,"Vertices: %5.0lf","tvtx");
@@ -597,48 +594,6 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
    //Canvas 7
    canvas->cd(7);
    DrawHistogram("tvtx","HIST SAME");
-#if 0 //Why are these blocks here? They also haven't been regestered as active code when using the F2 rename variable so they are still with old names...
-  if (MVAMode) && HISTO_POSITION.count("tvtx"))
-  {
-    ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
-    TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
-    {
-      //Draw line at halfway point
-      Double_t Max = h->GetBinContent(h->GetMaximumBin());
-      Double_t Tmax = h->GetXaxis()->GetXmax();
-      for (Int_t i = 0; i < h->GetMaximumBin(); i++)
-      {
-        if (h->GetBinContent(i) > Max / 2.)
-        {
-          TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-          half->SetLineColor(kViolet);
-          half->Draw();
-          break;
-        }
-      }
-    }
-  }
-  else
-  {
-     //Draw line at halfway point
-     if (HISTO_POSITION.count("tvtx"))     //verticies
-     {
-        TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
-        Double_t Max = h->GetBinContent(h->GetMaximumBin());
-        Double_t Tmax = h->GetXaxis()->GetXmax();
-        for (Int_t i = 0; i < h->GetMaximumBin(); i++)
-        {
-           if (h->GetBinContent(i) > Max / 2.)
-           {
-              TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-              half->SetLineColor(kBlue);
-              half->Draw();
-              break;
-           }
-        }
-     }
-  }
-  #endif
 
    //Canvas 8
    canvas->cd(8);
@@ -654,7 +609,7 @@ TCanvas* TA2Plot::DrawCanvas(const char* name, bool applyCuts, int mode)
      applyCutsLabel->SetTextColor(kRed);
      applyCutsLabel->SetFillColor(kWhite);
      applyCutsLabel->Draw();
-   };
+   }
 
    //Canvas 0 - Global
    canvas->cd(0);
@@ -725,9 +680,8 @@ void TA2Plot::ExportCSV(std::string filename, bool PassedCutOnly)
 {
    //Save Time windows and vertex data
    TAPlot::ExportCSV(filename, PassedCutOnly);
-   
+
    std::string scalerFilename = filename + ".scaler.csv";
-   
    std::ofstream sis;
    sis.open(scalerFilename);
    sis << SISEvents.CSVTitleLine();
@@ -735,22 +689,8 @@ void TA2Plot::ExportCSV(std::string filename, bool PassedCutOnly)
       sis << SISEvents.CSVLine(i);
    sis.close();
    std::cout<< scalerFilename << " saved\n";
-   
-   
 }
 
-//Private members
-void TA2Plot::AddEvent(TSVD_QOD* event, double timeOffset)
-{
-   double tMinusOffset = (event->t - timeOffset);
-   AddVertexEvent(event->RunNumber, event->VF48NEvent, event->NPassedCuts+event->MVA*2, event->NVertices, 
-      event->x, event->y, event->z, tMinusOffset, event->VF48Timestamp, event->t, -1, event->NTracks);
-}
 
-void TA2Plot::AddEvent(TSISEvent* event, TSISChannel channel, double timeOffset)
-{
-   SISEvents.AddEvent(event->GetRunNumber(), event->GetRunTime() - timeOffset, 
-      event->GetRunTime(), event->GetCountsInChannel(channel), channel);
-}
 
 #endif

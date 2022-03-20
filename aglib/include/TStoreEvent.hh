@@ -23,6 +23,7 @@ class TFitHelix;
 class TStoreEvent: public TObject
 {
 private:
+  int fRunNumber;
   int fID;
   double fEventTime;
 
@@ -58,6 +59,9 @@ public:
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
+
+  inline int GetRunNumber() const { return fRunNumber; }
+  inline void SetRunNumber(const int n) { fRunNumber = n; }
 
   inline double GetTimeOfEvent() const {return fEventTime;}
   inline void SetTimeOfEvent(double t) {fEventTime = t;}
@@ -129,7 +133,7 @@ public:
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 
   inline void SetVertex(TVector3 vtx)     {fVertex = vtx; }
-  inline const TVector3 GetVertex()       {return fVertex;}
+  inline const TVector3 GetVertex() const      {return fVertex;}
 
   inline void SetVertexStatus(int status)  {fVertexStatus = status; }
   inline int GetVertexStatus() const       {return fVertexStatus;}
@@ -137,7 +141,7 @@ public:
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   
   void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
-  Int_t GetBarMultiplicity() { return fBarHit.size(); }
+  Int_t GetBarMultiplicity() const { return fBarHit.size(); }
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 

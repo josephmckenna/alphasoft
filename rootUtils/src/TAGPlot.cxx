@@ -6,635 +6,400 @@
 ClassImp(TAGPlot)
 
 //Default Constructor
-TAGPlot::TAGPlot(Bool_t ApplyCuts, Int_t MVAMode)
+TAGPlot::TAGPlot(bool zeroTime): TAPlot(zeroTime)
 {
-  Nbin=100; 
-  DrawStyle=0;
-  gLegendDetail=1; 
-
-  TMin=-1;
-  TMax=-1;
-
-  top={"",-1};
-  bottom={"",-1};
-  TPC_TRIG={"",-1};
-  Beam_Injection={"",-1};
-  /*trig=-1;// = -1;
-  trig_nobusy=-1; //Record of SIS channels
-  atom_or=-1;
-  Beam_Injection=-1;
-  Beam_Ejection=-1;
-  
-  CATStart=-1;
-  CATStop=-1;
-  RCTStart=-1;
-  RCTStop=-1;
-  ATMStart=-1;
-  ATMStop=-1;
-  */
-  
-  BarMultiplicityCut=3;
-
-  fTotalTime = 0.;
-  fTotalVert = 0.;
-
-  fVerbose=false;
-
-  SetMVAMode(MVAMode);
-  gApplyCuts=ApplyCuts;
+   fZMinCut=-99999.;
+   fZMaxCut= 99999.;
+   BarMultiplicityCut = 3;
 }
 
-TAGPlot* TAGPlot::LoadTAGPlot(TString file)
+TAGPlot::TAGPlot(double zMin, double zMax, bool zeroTime): TAPlot(zeroTime)
 {
-  TFile* f0=new TFile(file);
-  TAGPlot* a;//=new TAGPlot();
-  f0->GetObject("TAGPlot",a);
-  f0->Close();
-  delete f0;
-  return a;
+   fZMinCut = zMin;
+   fZMaxCut = zMax;
+   BarMultiplicityCut = 3;
 }
 
-void TAGPlot::Draw(Option_t *option)
+TAGPlot::TAGPlot(double zMin, double zMax, int barCut, bool zeroTime): TAPlot(zeroTime)
 {
-  TCanvas* a=Canvas("TAGPlot");
-  a->Draw(option);
-  return;
+   fZMinCut = zMin;
+   fZMaxCut = zMax;
+   BarMultiplicityCut = barCut;
 }
 
-void TAGPlot::Print()
+//Copy ctor.
+TAGPlot::TAGPlot(const TAGPlot& object):
+   TAPlot(object),
+   top(object.top),
+   bottom(object.bottom),
+   sipmad(object.sipmad),
+   sipmcf(object.sipmcf),
+   TPC_TRIG(object.TPC_TRIG),
+   fCATStart(object.fCATStart),
+   fCATStop(object.fCATStop),
+   fRCTStart(object.fRCTStart),
+   fRCTStop(object.fRCTStop),
+   fATMStart(object.fATMStart),
+   fATMStop(object.fATMStop),
+   fBeamInjection(object.fBeamInjection),
+   fBeamEjection(object.fBeamEjection),
+   fHelixEvents(object.fHelixEvents),
+   fUsedHelixEvents(object.fUsedHelixEvents),
+   fSpacePointHelixEvents(object.fSpacePointHelixEvents),
+   fSpacePointUsedHelixEvents(object.fSpacePointUsedHelixEvents)
 {
-  std::cout<<"TAGPlot Summary"<<std::endl;
-  FillHisto();
-  std::cout <<""<<std::endl<<"Run(s): ";
-  for (UInt_t i=0; i<Runs.size(); i++)
-  {
-     if (i>1) std::cout <<", ";
-     std::cout <<Runs[i];
-  }
-  std::cout <<std::endl;
-  
-  //Loop over TObj array and print it?
-  for (int i=0; i<HISTOS.GetEntries(); i++)
-  {
-      TH1D* a=dynamic_cast<TH1D*>(HISTOS.At(i));
-      if (a)
-      {
-         std::cout <<a->GetTitle()<<"\t"<<a->Integral()<<std::endl;
-      }
-  }
-  
-  /*if (ht_MVA)
-    std::cout <<"Pass MVA:      "<<ht_MVA->Integral() <<std::endl;
-  if (ht)
-    std::cout<<"Passed Cuts:    "<<ht->Integral() <<std::endl;
-  if (ht_IO32_sistime)
-    std::cout<<"VF48 Events:    "<<ht_IO32_sistime->Integral()<<std::endl;
-  if (ht_IO32)
-    std::cout<<"SIS readout:    "<<ht_IO32->Integral()<<std::endl;
-  if (ht_IO32_notbusy)
-    std::cout<<"IO32 NotBusy:   "<<ht_IO32_notbusy->Integral() <<std::endl;
-  */
-}
-
-void TAGPlot::ExportCSV(TString filename, Bool_t PassedCutOnly)
-{
-  
-  if (!filename.EndsWith(".csv"))
-  {
-    TString tmp("TAGPlot");
-    tmp+=filename;
-    tmp+="_vtx.csv";
-    filename=tmp;
-  }
-  std::ofstream SaveCSV (filename);
-
-  SaveCSV<<"RunNumber,Event Number,RunTime (Official time), TPC Time,VertexStatus,nHelices,NBars,x,y,z,t,Passed Cut,Passed MVA"<<std::endl;
-  for (UInt_t i=0; i<VertexEvents.size(); i++)
-  {
-    //Skip events that fail cuts if only saving passed cuts
-    if (PassedCutOnly && !VertexEvents[i].CutsResult ) continue; 
-    SaveCSV<<VertexEvents[i].runNumber<<",";
-    SaveCSV<<VertexEvents[i].EventNo<<",";
-    SaveCSV<<VertexEvents[i].RunTime<<",";
-    SaveCSV<<VertexEvents[i].EventTime<<",";
-    SaveCSV<<VertexEvents[i].VertexStatus<<",";
-    SaveCSV<<VertexEvents[i].nHelices<<",";
-    SaveCSV<<VertexEvents[i].NBars<<",";
-    SaveCSV<<VertexEvents[i].x<<",";
-    SaveCSV<<VertexEvents[i].y<<",";
-    SaveCSV<<VertexEvents[i].z<<",";
-    SaveCSV<<VertexEvents[i].t<<",";
-    SaveCSV<<(VertexEvents[i].CutsResult&1)<<",";
-    SaveCSV<<(VertexEvents[i].CutsResult&2)<<","<<std::endl;
-  }
-  SaveCSV.close();
-  
+   BarMultiplicityCut = object.BarMultiplicityCut;
 }
 
 //Default Destructor
 TAGPlot::~TAGPlot()
 {
-  ClearHisto();
-  Ejections.clear();
-  Injections.clear();
-  DumpStarts.clear();
-  DumpStops.clear();
-  ChronoChannels.clear();
-  Runs.clear();
-  VertexEvents.clear();
-  ChronoPlotEvents.clear();
+  Reset();
 }
 
-void TAGPlot::ClearHisto() //Destroy all histograms
+void TAGPlot::Reset() //Destroy all histograms
 {
-   //HISTOS.SetOwner(kTRUE);
-   //HISTOS.Delete();
+  fEjections.clear();
+  fInjections.clear();
+  fDumpStarts.clear();
+  fDumpStops.clear();
+  fChronoChannels.clear();
+  fRuns.clear();
+  fVertexEvents.Clear();
+  fChronoEvents.Clear();
 }
 
-
-void TAGPlot::AddToTAGPlot(TAGPlot *ialphaplot)
+TAGPlot& TAGPlot::operator=(const TAGPlot& rhs)
 {
-  ClearHisto();
-  ChronoPlotEvents.insert(ChronoPlotEvents.end(), ialphaplot->ChronoPlotEvents.begin(), ialphaplot->ChronoPlotEvents.end());
-  VertexEvents.insert(VertexEvents.end(), ialphaplot->VertexEvents.begin(), ialphaplot->VertexEvents.end());
-  Ejections.insert(Ejections.end(), ialphaplot->Ejections.begin(), ialphaplot->Ejections.end());
-  Injections.insert(Injections.end(), ialphaplot->Injections.begin(), ialphaplot->Injections.end());
-  Runs.insert(Runs.end(), ialphaplot->Runs.begin(), ialphaplot->Runs.end());
-  //Draw();
+   TAPlot::operator=(rhs);
+   top = rhs.top;
+   bottom = rhs.bottom;
+   sipmad = rhs.sipmad;
+   sipmcf = rhs.sipmcf;
+   TPC_TRIG = rhs.TPC_TRIG;
+   fCATStart = rhs.fCATStart;
+   fCATStop = rhs.fCATStop;
+   fRCTStart = rhs.fRCTStart;
+   fRCTStop = rhs.fRCTStop;
+   fATMStart = rhs.fATMStart;
+   fATMStop = rhs.fATMStop;
+   fBeamInjection = rhs.fBeamInjection;
+   fBeamEjection = rhs.fBeamEjection;
+   fHelixEvents = rhs.fHelixEvents;
+   fUsedHelixEvents = rhs.fUsedHelixEvents;
+   fSpacePointHelixEvents = rhs.fSpacePointHelixEvents;
+   fSpacePointUsedHelixEvents = rhs.fSpacePointUsedHelixEvents;
+   return *this;
 }
 
-void TAGPlot::AddToTAGPlot(TString file)
+
+
+TAGPlot& TAGPlot::operator+=(const TAGPlot& rhs)
 {
-  TAGPlot* tmp=LoadTAGPlot(file);
-  AddToTAGPlot(tmp);
-  delete tmp;
-  return;
+   //This calls the parent += operator first.
+   TAPlot::operator+=(rhs);
+   top.insert( rhs.top.begin(), rhs.top.end());
+   bottom.insert( rhs.bottom.begin(), rhs.bottom.end());
+   sipmad.insert( rhs.sipmad.begin(), rhs.sipmad.end());
+   sipmcf.insert( rhs.sipmcf.begin(), rhs.sipmcf.end());
+   TPC_TRIG.insert( rhs.TPC_TRIG.begin(), rhs.TPC_TRIG.end());
+   fCATStart.insert( rhs.fCATStart.begin(), rhs.fCATStart.end());
+   fCATStop.insert( rhs.fCATStop.begin(), rhs.fCATStop.end());
+   fRCTStart.insert( rhs.fRCTStart.begin(), rhs.fRCTStart.end());
+   fRCTStop.insert( rhs.fRCTStop.begin(), rhs.fRCTStop.end());
+   fATMStart.insert( rhs.fATMStart.begin(), rhs.fATMStart.end());
+   fATMStop.insert( rhs.fATMStop.begin(), rhs.fATMStop.end());
+   fBeamInjection.insert( rhs.fBeamInjection.begin(), rhs.fBeamInjection.end());
+   fBeamEjection.insert( rhs.fBeamEjection.begin(), rhs.fBeamEjection.end());
+   fHelixEvents += rhs.fHelixEvents;
+   fUsedHelixEvents += fUsedHelixEvents;
+   fSpacePointHelixEvents += fSpacePointHelixEvents;
+   fSpacePointUsedHelixEvents += fSpacePointUsedHelixEvents;
+   return *this;
 }
 
 
-void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
+
+TAGPlot& operator+(const TAGPlot& lhs, const TAGPlot& rhs)
 {
-  AGVertexEvent Event;
-  TVector3 vtx = event->GetVertex();
-  Event.EventNo= event->GetEventNumber();
-
-  Event.EventTime= event->GetTimeOfEvent();
-  Event.RunTime= event->GetTimeOfEvent();
-  Event.t= event->GetTimeOfEvent() - StartOffset;
-  Event.VertexStatus=event->GetVertexStatus();
-  Event.x=vtx.X();
-  Event.y=vtx.Y();
-  Event.z=vtx.Z();
-  Event.nHelices=event->GetUsedHelices()->GetEntries();
-  Event.NBars=event->GetBarMultiplicity();
-  Event.nTracks=event->GetNumberOfTracks();
-  //Event.vtx=vtx;
-  Int_t CutsResult = 3;
-
-  //ht_IO32_sistime->Fill(run_time);
-  if (MVAMode > 0)
-  {
-    //CutsResult=TRootUtils::ApplyMVA(sil_event);
-  }
-  else
-  {
-    if (gApplyCuts)
-      CutsResult=ApplyCuts(event);
-  }
-  Event.CutsResult=CutsResult;
-  VertexEvents.push_back(Event);
-  //AddVertexEvent(Event.RunNumber, Event.EventNo, Event.CutsResult, Event.VertexStatus, 
-      //Event.x, Event.y, Event.z, Event.t, Event.EventTime, Event.RunTime, Event.nHelices, Event.nTracks);
-
-  if( Event.VertexStatus >= 1 && Event.CutsResult > 0 )
-    {
-      ++fTotalVert;
-      if( fVerbose ) event->Print();
-    }
-
-  if( fPlotTracks )
-    {
-      ProcessHelices(event->GetHelixArray());
-      if( gApplyCuts && Event.CutsResult > 0 )
-      ProcessUsedHelices(event->GetUsedHelices());
-    }
-
-  return;
+   TAGPlot* basePlot = new TAGPlot;
+   *basePlot += lhs;
+   *basePlot += rhs;
+   return *basePlot;
 }
 
-void TAGPlot::ProcessHelices(const TObjArray* tracks)
-{
-  int Nhelices = tracks->GetEntries();
-  for(int i=0; i<Nhelices; ++i)
-    {
-      HelixEvent helix;
-      TStoreHelix* aHelix = (TStoreHelix*) tracks->At(i);
-      helix.parD = aHelix->GetD();
-      //helix.Curvature = aHelix->GetC();
-      helix.Curvature = aHelix->GetRc();
-      helix.pT = aHelix->GetMomentumV().Perp();
-      helix.pZ = aHelix->GetMomentumV().Z();
-      helix.pTot = aHelix->GetMomentumV().Mag();
-      helix.nPoints = aHelix->GetNumberOfPoints(); 
-      HelixEvents.push_back(helix);
-      const TObjArray* points = aHelix->GetSpacePoints();
-      for(int ip = 0; ip<points->GetEntries(); ++ip  )
-	{
-	  TSpacePoint* ap = (TSpacePoint*) points->At(ip);
-	  SpacePointEvent sp;
-	  sp.x = ap->GetX();
-	  sp.y = ap->GetY();
-	  sp.z = ap->GetZ();
-	  sp.r = ap->GetR();
-	  sp.p = ap->GetPhi()*TMath::RadToDeg();
-	  SpacePointHelixEvents.push_back(sp);
-	}
-    }
-}
-
-void TAGPlot::ProcessUsedHelices(const TObjArray* tracks)
-{
-  int Nhelices = tracks->GetEntries();
-  for(int i=0; i<Nhelices; ++i)
-    {
-      HelixEvent helix;
-      TFitHelix* aHelix = (TFitHelix*) tracks->At(i);
-      helix.parD = aHelix->GetD();
-      //helix.Curvature = aHelix->GetC();
-      helix.Curvature = aHelix->GetRc();
-      helix.pT = aHelix->GetMomentumV().Perp();
-      helix.pZ = aHelix->GetMomentumV().Z();
-      helix.pTot = aHelix->GetMomentumV().Mag();
-      helix.nPoints = aHelix->GetNumberOfPoints(); 
-      UsedHelixEvents.push_back(helix);
-      const std::vector<TSpacePoint>* points = aHelix->GetPointsArray();
-      for(uint ip = 0; ip<points->size(); ++ip  )
-	{
-	  const TSpacePoint& ap = points->at(ip);
-	  SpacePointEvent sp;
-	  sp.x = ap.GetX();
-	  sp.y = ap.GetY();
-	  sp.z = ap.GetZ();
-	  sp.r = ap.GetR();
-	  sp.p = ap.GetPhi()*TMath::RadToDeg();
-	  SpacePointUsedHelixEvents.push_back(sp);
-	}
-    }
-}
- 
-
-void TAGPlot::AddChronoEvent(TCbFIFOEvent *event, const std::string& board, Double_t StartOffset)
-{
-  ChronoPlotEvent Event;
-  Event.runNumber     =0;//event->GetRunNumber();
-  if (event->IsLeadingEdge())
-    Event.Counts++;
-  else
-    return;
-  Event.Chrono_Channel= TChronoChannel(board, event->GetChannel());
-  Event.RunTime       = event->GetRunTime();
-  Event.t             = event->GetRunTime() - StartOffset;
-  ChronoPlotEvents.push_back(Event);
-}
-
-//Maybe dont have this function... lets see...
-Int_t TAGPlot::AddEvents(Int_t runNumber, std::vector<std::string> description, std::vector<int> dumpIndex, Double_t Toffset, Bool_t zeroTime)
-{
-  std::vector<TAGSpill> spills = Get_AG_Spills(runNumber,{description},{dumpIndex});
-  Int_t sum = 0;
-  for (const TAGSpill& s: spills)
-  {
-     Double_t start_time = s.GetStartTime();
-     Double_t stop_time = s.GetStopTime();
-     sum += AddEvents(runNumber, start_time, stop_time, Toffset, zeroTime);
-  }
-  return sum;
-  
-}
-
-Int_t TAGPlot::AddEvents(Int_t runNumber, Double_t tmin, Double_t tmax, Double_t Toffset, Bool_t zeroTime)
-{
-  if (TMax < 0. && TMin < 0.)
-  {
-    std::cout << "Setting time range" << std::endl;
-    if (zeroTime)
-      SetTimeRange(0. - Toffset, tmax - tmin - Toffset);
-    else
-      SetTimeRange(tmin - Toffset, tmax - Toffset);
-    PrintTimeRange();
-
-  } // If plot range not set... use first instance of range
-
-  fTotalTime += (tmax-tmin);
-  //cout <<"Sis channels set."<<endl;
-  //Add Silicon Events:
-  //cout <<"Adding Silicon Events"<<endl;
-
-  if (std::find(Runs.begin(), Runs.end(), runNumber) == Runs.end() || Runs.size() == 0)
-  {
-    //std::cout <<"Adding runNo"<<std::endl;
-    Runs.push_back(runNumber);
-  }
-  TStoreEvent *store_event = new TStoreEvent();
-  TTree *t0 = Get_StoreEvent_Tree(runNumber);
-  t0->SetBranchAddress("StoredEvent", &store_event);
-  //SPEED THIS UP BY PREPARING FIRST ENTRY!
-  Int_t processed_events = 0;
-  for (Int_t i = 0; i < t0->GetEntries(); ++i)
-  {
-    store_event->Reset();
-    t0->GetEntry(i);
-    if (!store_event)
-    {
-      std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
-      break;
-    }
-    if (store_event->GetTimeOfEvent() <= tmin)
-    {
-      continue;
-    }
-    if (store_event->GetTimeOfEvent() > tmax)
-    {
-      break;
-    }
-    //store_event->Print();
-    
-    if (zeroTime)
-      AddStoreEvent(store_event,  Toffset + tmin);
-    else
-      AddStoreEvent(store_event, Toffset);
-    ++processed_events;
-    if( ((processed_events%1000) == 0) && fVerbose ) std::cout<<"TAGPlot::AddEvents StoreEvents: "<<processed_events<<std::endl;
-  }
-  if (store_event) delete store_event;
-  delete t0;
-  //Add SIS Events:
-  std::cout <<"Adding Chrono Events"<<std::endl;
-  SetChronoChannels(runNumber);
-  //SetSISChannels(runNumber);
- 
-  int processed_ts=0;
-  for (UInt_t j=0; j<ChronoChannels.size(); j++)
-  {
-    //std::cout <<"Adding Channel: "<<ChronoChannels[j]<<std::endl;
-    TTree *t = Get_Chrono_Tree(runNumber, ChronoChannels[j].GetBranchName());
-    TCbFIFOEvent* e=new TCbFIFOEvent();
-
-    t->SetBranchAddress("FIFOData", &e);
-    for (Int_t i = 0; i < t->GetEntriesFast(); ++i)
-    {
-      t->GetEntry(i);
-      if (e->GetRunTime() <= tmin)
-        continue;
-      if (e->GetRunTime() > tmax)
-        break;
-      if (zeroTime)
-        AddChronoEvent(e, ChronoChannels[j].GetBoard(), Toffset + tmin);
-      else
-        AddChronoEvent(e,ChronoChannels[j].GetBoard(), Toffset);
-
-      ++processed_ts;
-      if( ((processed_ts%1000) == 0) && fVerbose ) std::cout<<"TAGPlot::AddEvents Chrono Events: "<<processed_ts<<std::endl;
-    }
-    delete e;
-    delete t;
-  }
-  return processed_events;
-}
 
 void TAGPlot::SetChronoChannels(Int_t runNumber)
 {
-   top      = Get_Chrono_Channel( runNumber, "SiPM_B");
-   bottom   = Get_Chrono_Channel( runNumber, "SiPM_E");
-   sipmad   = Get_Chrono_Channel( runNumber, "SiPM_A_OR_D");
-   sipmcf   = Get_Chrono_Channel( runNumber, "SiPM_C_OR_F");
-   TPC_TRIG = Get_Chrono_Channel( runNumber, "ADC_TRG");
-   Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIG");
-/*
-  TSISChannels *sisch = new TSISChannels(runNumber);
-  trig =           sisch->GetChannel("IO32_TRIG");
-  trig_nobusy =    sisch->GetChannel("IO32_TRIG_NOBUSY");
-  atom_or =        sisch->GetChannel("SIS_PMT_ATOM_OR");
-  Beam_Injection = sisch->GetChannel("SIS_AD");
-  Beam_Ejection =  sisch->GetChannel("SIS_AD_2");
-  CATStart =       sisch->GetChannel("SIS_PBAR_DUMP_START");
-  CATStop =        sisch->GetChannel("SIS_PBAR_DUMP_STOP");
-  RCTStart =       sisch->GetChannel("SIS_RECATCH_DUMP_START");
-  RCTStop =        sisch->GetChannel("SIS_RECATCH_DUMP_STOP");
-  ATMStart =       sisch->GetChannel("SIS_ATOM_DUMP_START");
-  ATMStop =        sisch->GetChannel("SIS_ATOM_DUMP_STOP");
-*/
-  //Add all valid SIS channels to a list for later:
-  if (top.IsValidChannel())             ChronoChannels.push_back(top);
-  if (bottom.IsValidChannel())          ChronoChannels.push_back(bottom);
-  if (sipmad.IsValidChannel())             ChronoChannels.push_back(sipmad);
-  if (sipmcf.IsValidChannel())          ChronoChannels.push_back(sipmcf);
-  if (TPC_TRIG.IsValidChannel())        ChronoChannels.push_back(TPC_TRIG);
-  if (Beam_Injection.IsValidChannel())  ChronoChannels.push_back(Beam_Injection);
-  /*if (CATStart>0)       SISChannels.push_back(CATStart);
-  if (CATStop>0)        SISChannels.push_back(CATStop);
-  if (RCTStart>0)       SISChannels.push_back(RCTStart);
-  if (RCTStop>0)        SISChannels.push_back(RCTStop);
-  if (ATMStart>0)       SISChannels.push_back(ATMStart);
-  if (ATMStop>0)        SISChannels.push_back(ATMStop);*/
-   
+   top.insert(           std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "SiPM_B")));
+   bottom.insert(        std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "SiPM_E")));
+   sipmad.insert(        std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "SiPM_A_OR_D")));
+   sipmcf.insert(        std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "SiPM_C_OR_F")));
+   TPC_TRIG.insert(      std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "ADC_TRG")));
+   fBeamInjection.insert(std::pair<int,TChronoChannel>(runNumber, Get_Chrono_Channel( runNumber, "AD_TRIG")));
 
-   std::cout <<"Top:"<<top<<std::endl;
-   std::cout <<"Bottom:"<<bottom<<std::endl;
-   std::cout <<"TPC_TRIG:"<<TPC_TRIG<<std::endl;
+  //Add all valid SIS channels to a list for later:
+  if (top.find(runNumber)->second.IsValidChannel())             fChronoChannels.push_back(top.find(runNumber)->second);
+  if (bottom.find(runNumber)->second.IsValidChannel())          fChronoChannels.push_back(bottom.find(runNumber)->second);
+  if (sipmad.find(runNumber)->second.IsValidChannel())          fChronoChannels.push_back(sipmad.find(runNumber)->second);
+  if (sipmcf.find(runNumber)->second.IsValidChannel())          fChronoChannels.push_back(sipmcf.find(runNumber)->second);
+  if (TPC_TRIG.find(runNumber)->second.IsValidChannel())        fChronoChannels.push_back(TPC_TRIG.find(runNumber)->second);
+  if (fBeamInjection.find(runNumber)->second.IsValidChannel())  fChronoChannels.push_back(fBeamInjection.find(runNumber)->second);
+
+   //std::cout <<"Top:"<<top<<std::endl;
+   //std::cout <<"Bottom:"<<bottom<<std::endl;
+   //std::cout <<"TPC_TRIG:"<<TPC_TRIG<<std::endl;
    return;
 }
 
-void TAGPlot::AutoTimeRange()
+
+void TAGPlot::AddStoreEvent(const TStoreEvent& event)
 {
-  std::cout <<"Automatically setting time range for histrograms: ";
-  TMax=GetSilEventMaxT();
-  TMin=GetSilEventMinT();
-  std::cout <<TMin<<"s - "<<TMax<<"s"<<std::endl;
+  double time = event.GetTimeOfEvent();
+  const double z = event.GetVertex().Z();
+  if ( z < fZMinCut ) return;
+  if ( z > fZMaxCut ) return;
+
+  int index = GetTimeWindows()->GetValidWindowNumber(time);
+
+  if (index >= 0)
+  {
+    AddEvent(event, GetTimeWindows()->fZeroTime.at(index));
+  }
 }
 
-void TAGPlot::SetTimeRange(Double_t tmin_, Double_t tmax_)
+void TAGPlot::AddChronoEvent(const TCbFIFOEvent& event, const std::string& board)
 {
-  TMin = tmin_;
-  TMax = tmax_;
-  SetUpHistograms();
+  const size_t numChronoChannels = fChronoChannels.size();
+  const double time = event.GetRunTime();
+  
+  //Loop over all time windows
+  const int index = GetTimeWindows()->GetValidWindowNumber(time);
+  if(index >= 0)
+  {
+     for (const TChronoChannel& c: fChronoChannels)
+     {
+        if (event == c)
+        {
+          AddEvent(event, c, GetTimeWindows()->fZeroTime[index]);
+        }
+     }
+  }
+}
+
+
+void TAGPlot::AddEvent(const TStoreEvent& event, const double timeOffset)
+{
+   const double tMinusOffset = (event.GetTimeOfEvent() - timeOffset);
+   AddVertexEvent(
+      event.GetRunNumber(),
+      event.GetEventNumber(),
+      /*event.GetClassification()*/ 0,
+      event.GetVertexStatus(), 
+      event.GetVertex().X(),
+      event.GetVertex().Y(),
+      event.GetVertex().Z(),
+      tMinusOffset,
+      event.GetTimeOfEvent(),
+      event.GetTimeOfEvent(),
+      event.GetUsedHelices()->GetEntriesFast(),
+      event.GetNumberOfTracks());
   return;
 }
 
-Double_t TAGPlot::GetSilEventMaxT()
+void TAGPlot::AddEvent(const TCbFIFOEvent& event, const TChronoChannel& channel, const double StartOffset)
 {
-  Double_t max=-1;
-  for (UInt_t i=0; i<VertexEvents.size(); i++)
-  {
-    if (max<VertexEvents[i].t) max=VertexEvents[i].t;
-  }
-  return max;
+   if (!event.IsLeadingEdge())
+      return;
+   fChronoEvents.AddEvent(
+     event.GetRunNumber(),
+     event.GetRunTime(),
+     event.GetRunTime(),
+     event.fCounts,
+     channel);
 }
 
-Double_t TAGPlot::GetChronoPlotEventMaxT()
+//Maybe dont have this function... lets see...
+void TAGPlot::AddDumpGates(const int runNumber, const std::vector<std::string> description, const std::vector<int> dumpIndex)
 {
-  Double_t max=-1;
-  for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
-  {
-    if (max<ChronoPlotEvents[i].t) max=ChronoPlotEvents[i].t;
-  }
-  return max;
+   std::vector<TAGSpill> spills = Get_AG_Spills(runNumber,{description},{dumpIndex});
+   return AddDumpGates(runNumber, spills);
 }
 
-Double_t TAGPlot::GetSilEventMinT()
+void TAGPlot::AddDumpGates(const int runNumber, const std::vector<TAGSpill> spills)
 {
-  Double_t min=9999999.;
-  for (UInt_t i=0; i<VertexEvents.size(); i++)
-  {
-    if (min>VertexEvents[i].t) min=VertexEvents[i].t;
-  }
-  return min;
+   std::vector<double> minTime;
+   std::vector<double> maxTime;
+   
+   for (auto & spill: spills)
+   {
+      if (spill.ScalerData)
+      {
+         minTime.push_back(spill.ScalerData->fStartTime);
+         maxTime.push_back(spill.ScalerData->fStopTime);
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return AddTimeGates(runNumber, minTime, maxTime);
 }
 
-Double_t TAGPlot::GetChronoPlotEventMinT()
+//If spills are from one run, it is faster to call the function above
+void TAGPlot::AddDumpGates(const std::vector<TAGSpill> spills)
 {
-  Double_t min=9999999.;
-  for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
-  {
-    if (min>ChronoPlotEvents[i].t) min=ChronoPlotEvents[i].t;
-  }
-  return min;
+   for (const TAGSpill& spill: spills)
+   {
+      if (spill.ScalerData)
+      {
+         AddTimeGate(spill.RunNumber, spill.GetStartTime(), spill.GetStopTime());
+      }
+      else
+      {
+         std::cout<<"Spill didn't have Scaler data!? Was there an aborted sequence?"<<std::endl;
+      }
+   }
+   return;
+}
+
+void TAGPlot::LoadRun(const int runNumber, const double firstTime, const double lastTime)
+{
+
+   TTreeReader* TPCTreeReader = Get_StoreEvent_TreeReader(runNumber);
+   TTreeReaderValue<TStoreEvent> TPCEvent(*TPCTreeReader, "StoredEvent");
+   while (TPCTreeReader->Next())
+   {
+      const double t = TPCEvent->GetTimeOfEvent();
+      if (t < firstTime)
+         continue;
+      if (t > lastTime)
+         break;
+      AddStoreEvent(*TPCEvent);
+   }
+
+   SetChronoChannels(runNumber);
+   for (UInt_t j=0; j<fChronoChannels.size(); j++)
+   {
+      std::cout << "j:"<< j<<std::endl;
+      TTreeReader* ChronoReader = Get_Chrono_TreeReader(runNumber, fChronoChannels[j].GetBranchName());
+      TTreeReaderValue<TCbFIFOEvent> ChronoEvent(*ChronoReader, "FIFOData");
+      while (ChronoReader->Next())
+      {
+        const double t = ChronoEvent->GetRunTime();
+        if (t < firstTime)
+            continue;
+         if (t > lastTime)
+            break;
+         AddChronoEvent(*ChronoEvent,fChronoChannels[j].GetBoard());
+      }
+   }
 }
 
 void TAGPlot::SetUpHistograms()
 {
-   Bool_t ScaleAsMiliSeconds=kFALSE;
-   if (fabs(TMax-TMin)<SCALECUT)
-      ScaleAsMiliSeconds=kTRUE;
-   Double_t XMAX,YMAX,RMAX,ZMAX;
-   XMAX=YMAX=RMAX=100.;
-   ZMAX=1300.;
-   if (HISTOS.GetEntries()>0)
+   const double XMAX(100.),YMAX(100.),RMAX(100.), ZMAX(1300.);
+
+   double minTime;
+   double maxTime;
+   if (kZeroTimeAxis)
    {
-      HISTOS.Delete();
-      HISTO_POSITION.clear();
-   }
-   
-   TH1D* top=new TH1D("top_pm", "t;t [s];events", Nbin, TMin, TMax);
-   top->SetLineColor(kGreen);
-   top->SetMarkerColor(kGreen);
-   top->SetMinimum(0);
-   HISTOS.Add(top);
-   HISTO_POSITION["top_pm"]=HISTOS.GetEntries()-1;
-
-  
-   TH1D* bot=new TH1D("bot_pm", "t;t [s];events", Nbin, TMin, TMax);
-   bot->SetLineColor(kAzure - 8);
-   bot->SetMarkerColor(kAzure - 8);
-   bot->SetMinimum(0);
-   HISTOS.Add(bot);
-   HISTO_POSITION["bot_pm"]=HISTOS.GetEntries()-1;
-
-   TH1D* aandd=new TH1D("aandd_pm", "t;t [s];events", Nbin, TMin, TMax);
-   aandd->SetLineColor(kGreen);
-   aandd->SetMarkerColor(kGreen);
-   aandd->SetMinimum(0);
-   HISTOS.Add(aandd);
-   HISTO_POSITION["aandd_pm"]=HISTOS.GetEntries()-1;
-  
-   TH1D* candf=new TH1D("candf_pm", "t;t [s];events", Nbin, TMin, TMax);
-   candf->SetLineColor(kAzure - 8);
-   candf->SetMarkerColor(kAzure - 8);
-   candf->SetMinimum(0);
-   HISTOS.Add(candf);
-   HISTO_POSITION["candf_pm"]=HISTOS.GetEntries()-1;
-
-   
-   TH1D* TPC=new TH1D("TPC_TRIG", "t;t [s];events", Nbin, TMin, TMax);
-   TPC->SetMarkerColor(kRed);
-   TPC->SetLineColor(kRed);
-   TPC->SetMinimum(0);
-   HISTOS.Add(TPC);
-   HISTO_POSITION["TPC_TRIG"]=HISTOS.GetEntries()-1;
-
-   
-   
-   HISTOS.Add(new TH1D("zvtx", "Z Vertex;z [mm];events", Nbin, -ZMAX, ZMAX));
-   HISTO_POSITION["zvtx"]=HISTOS.GetEntries()-1;
-
-   TH1D* hr = new TH1D("rvtx", "R Vertex;r [mm];events", Nbin, 0., RMAX);
-   hr->SetMinimum(0);
-   HISTOS.Add(hr);
-   HISTO_POSITION["rvtx"]=HISTOS.GetEntries()-1;
-
-   TH1D* hphi = new TH1D("phivtx", "phi Vertex;phi [rad];events", Nbin, -TMath::Pi(), TMath::Pi());
-   hphi->SetMinimum(0);
-   HISTOS.Add(hphi);
-   HISTO_POSITION["phivtx"]=HISTOS.GetEntries()-1;
-
-   TH2D* hxy = new TH2D("xyvtx", "X-Y Vertex;x [mm];y [mm]", Nbin, -XMAX, XMAX, Nbin, -YMAX, YMAX);
-   HISTOS.Add(hxy);
-   HISTO_POSITION["xyvtx"]=HISTOS.GetEntries()-1;
-
-   TH2D* hzr = new TH2D("zrvtx", "Z-R Vertex;z [mm];r [mm]", Nbin, -ZMAX, ZMAX, Nbin, 0., RMAX);
-   HISTOS.Add(hzr);
-   HISTO_POSITION["zrvtx"]=HISTOS.GetEntries()-1;
-
-   TH2D* hzphi = new TH2D("zphivtx", "Z-Phi Vertex;z [mm];phi [rad]", Nbin, -ZMAX, ZMAX, Nbin, -TMath::Pi(), TMath::Pi());
-   HISTOS.Add(hzphi);
-   HISTO_POSITION["zphivtx"]=HISTOS.GetEntries()-1;
-
-   if (ScaleAsMiliSeconds)
-   {
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [ms];events", Nbin, TMin*1000., TMax*1000.);
-      ht->SetLineColor(kMagenta);
-      ht->SetMarkerColor(kMagenta);
-      ht->SetMinimum(0);
-      HISTOS.Add(ht);
-      HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
-
-      TString BarTitle="t bars>";
-      BarTitle+=BarMultiplicityCut;
-      BarTitle+=";t [ms];events";
-      TH1D* htbar = new TH1D("tbar", BarTitle.Data(), Nbin, TMin*1000., TMax*1000.);
-      htbar->SetMinimum(0);
-      HISTOS.Add(htbar);
-      HISTO_POSITION["tbar"]=HISTOS.GetEntries()-1;
-
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [cm];t [ms]", Nbin, -ZMAX, ZMAX, Nbin, TMin*1000., TMax*1000.);
-      HISTOS.Add(hzt);
-      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
-
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", Nbin,-TMath::Pi(), TMath::Pi() ,  Nbin,TMin*1000., TMax*1000);
-      HISTOS.Add(hphit);
-      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries()-1;
-
-      //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", Nbin, TMin*1000., TMax*1000.);
+      minTime = GetBiggestTzero();
+      maxTime = GetMaxDumpLength() + minTime;
    }
    else
    {
-      TH1D* ht = new TH1D("tvtx", "t Vertex;t [s];events", Nbin, TMin, TMax); 
+      minTime = GetFirstTmin();
+      maxTime = GetLastTmax();
+   }
+   std::string units;
+   if (GetMaxDumpLength() < SCALECUT) 
+   {
+      fTimeFactor = 1000;
+      units = "[ms]";
+   }
+   else
+   {
+      fTimeFactor = 1;
+      units = "[s]";
+   }
+   TH1D* top=new TH1D((GetTAPlotTitle() + "top_pm").c_str(), (std::string("t;t ")+ units + ";events").c_str(), GetNBins(), minTime, maxTime);
+   top->SetLineColor(kGreen);
+   top->SetMarkerColor(kGreen);
+   top->SetMinimum(0);
+   AddHistogram("top_pm", top); 
+
+  
+   TH1D* bot=new TH1D((GetTAPlotTitle() +"bot_pm").c_str(), (std::string("t;t ")+ units + ";events").c_str(), GetNBins(), minTime, maxTime);
+   bot->SetLineColor(kAzure - 8);
+   bot->SetMarkerColor(kAzure - 8);
+   bot->SetMinimum(0);
+   AddHistogram("bot_pm",bot);
+
+   TH1D* aandd=new TH1D((GetTAPlotTitle() +"aandd_pm").c_str(), (std::string("t;t ")+ units + ";events").c_str(), GetNBins(), minTime, maxTime);
+   aandd->SetLineColor(kGreen);
+   aandd->SetMarkerColor(kGreen);
+   aandd->SetMinimum(0);
+   AddHistogram("aandd_pm", aandd);
+  
+   TH1D* candf=new TH1D((GetTAPlotTitle() +"candf_pm").c_str(), (std::string("t;t ")+ units + ";events").c_str(), GetNBins(), minTime, maxTime);
+   candf->SetLineColor(kAzure - 8);
+   candf->SetMarkerColor(kAzure - 8);
+   candf->SetMinimum(0);
+   AddHistogram("candf_pm",candf);
+
+   TH1D* TPC=new TH1D((GetTAPlotTitle() +"TPC_TRIG").c_str(), (std::string("t;t ")+ units + ";events").c_str(), GetNBins(), minTime, maxTime);
+   TPC->SetMarkerColor(kRed);
+   TPC->SetLineColor(kRed);
+   TPC->SetMinimum(0);
+   AddHistogram("TPC_TRIG",TPC);
+
+   AddHistogram("zvtx",new TH1D((GetTAPlotTitle() +"zvtx").c_str(), "Z Vertex;z [mm];events", GetNBins(), -ZMAX, ZMAX));
+
+   TH1D* hr = new TH1D((GetTAPlotTitle() +"rvtx").c_str(), "R Vertex;r [mm];events", GetNBins(), 0., RMAX);
+   hr->SetMinimum(0);
+   AddHistogram("rvtx",hr);
+
+   TH1D* hphi = new TH1D((GetTAPlotTitle() +"phivtx").c_str(), "phi Vertex;phi [rad];events", GetNBins(), -TMath::Pi(), TMath::Pi());
+   hphi->SetMinimum(0);
+   AddHistogram("phivtx",hphi);
+
+   TH2D* hxy = new TH2D((GetTAPlotTitle() +"xyvtx").c_str(), "X-Y Vertex;x [mm];y [mm]", GetNBins(), -XMAX, XMAX, GetNBins(), -YMAX, YMAX);
+   AddHistogram("xyvtx",hxy);
+
+   TH2D* hzr = new TH2D((GetTAPlotTitle() +"zrvtx").c_str(), "Z-R Vertex;z [mm];r [mm]", GetNBins(), -ZMAX, ZMAX, GetNBins(), 0., RMAX);
+   AddHistogram("zrvtx",hzr);
+
+   TH2D* hzphi = new TH2D((GetTAPlotTitle() +"zphivtx").c_str(), "Z-Phi Vertex;z [mm];phi [rad]", GetNBins(), -ZMAX, ZMAX, GetNBins(), -TMath::Pi(), TMath::Pi());
+   AddHistogram("zphivtx",hzphi);
+
+
+
+  TH1D* ht = new TH1D((GetTAPlotTitle() +"tvtx").c_str(), (std::string("t Vertex;t ") + units + ";events").c_str(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
       ht->SetLineColor(kMagenta);
       ht->SetMarkerColor(kMagenta);
       ht->SetMinimum(0);
-      HISTOS.Add(ht);
-      HISTO_POSITION["tvtx"]=HISTOS.GetEntries()-1;
+      fHistos.Add(ht);
+      fHistoPositions["tvtx"]=fHistos.GetEntries()-1;
 
       TString BarTitle="t bars>";
       BarTitle+=BarMultiplicityCut;
-      BarTitle+=";t [ms];events";
-      TH1D* htbar= new TH1D("tbar", BarTitle.Data(), Nbin, TMin, TMax);
+      BarTitle+=";t ";
+      BarTitle+=units;
+      BarTitle+=";events";
+      TH1D* htbar = new TH1D((GetTAPlotTitle() +"tbar").c_str(), BarTitle.Data(), GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
       htbar->SetMinimum(0);
-      HISTOS.Add(htbar);
-      HISTO_POSITION["tbar"]=HISTOS.GetEntries()-1;
+      AddHistogram("tbar",htbar);
 
-      TH2D* hzt = new TH2D("ztvtx", "Z-T Vertex;z [mm];t [s]", Nbin, -ZMAX, ZMAX, Nbin, TMin, TMax);
-      HISTOS.Add(hzt);
-      HISTO_POSITION["ztvtx"]=HISTOS.GetEntries()-1;
+      TH2D* hzt = new TH2D((GetTAPlotTitle() +"ztvtx").c_str(), (std::string("Z-T Vertex;z [mm];t ") + units).c_str() , GetNBins(), -ZMAX, ZMAX, GetNBins(), minTime*fTimeFactor, maxTime*fTimeFactor);
+       AddHistogram("ztvtx",hzt);
 
-      TH2D* hphit = new TH2D("phitvtx", "Phi-T Vertex;phi [rad];t [s]", Nbin,-TMath::Pi(), TMath::Pi() ,  Nbin,TMin, TMax);
-      HISTOS.Add(hphit);
-      HISTO_POSITION["phitvtx"]=HISTOS.GetEntries()-1;
+      TH2D* hphit = new TH2D((GetTAPlotTitle() +"phitvtx").c_str(), (std::string("Phi-T Vertex;phi [rad];t ") + units).c_str() , GetNBins(),-TMath::Pi(), TMath::Pi() ,  GetNBins(),minTime*fTimeFactor, maxTime*fTimeFactor);
+      AddHistogram("phitvtx",hphit);
 
       //if (MVAMode)
-      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [s];Counts", Nbin, TMin, TMax);
-  }
+      //   ht_MVA = new TH1D("htMVA", "Vertex, Passcut and MVA;t [ms];Counts", GetNBins(), TMin*1000., TMax*1000.);
+      SetupTrackHistos();
   return;
 }
 
@@ -642,106 +407,96 @@ void TAGPlot::SetupTrackHistos()
 {
   // reco helices
   TH1D* hNhel = new TH1D("hNhel","Reconstructed Helices",10,0.,10.);
-  HISTOS.Add(hNhel);
-  HISTO_POSITION[hNhel->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hNhel->GetName(),hNhel);
 
   TH1D* hhD = new TH1D("hhD","Hel D;[mm]",200,-100.,100.);
-  HISTOS.Add(hhD);
-  HISTO_POSITION[hhD->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hhD->GetName(),hhD);
   // TH1D* hhc = new TH1D("hhc","Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
   // HISTOS.Add(hhc);
-  // HISTO_POSITION[hhc->GetName()]=HISTOS.GetEntries()-1;
+  // fHistoPositions[hhc->GetName()]=HISTOS.GetEntries()-1;
   TH1D* hhRc = new TH1D("hhRc","Hel Rc;[mm]",200,-2000.,2000.);
-  HISTOS.Add(hhRc);
-  HISTO_POSITION[hhRc->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hhRc->GetName(),hhRc);
 
   TH1D* hpt = new TH1D("hpt","Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,1000.);
-  HISTOS.Add(hpt);
-  HISTO_POSITION[hpt->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hpt->GetName(),hpt);
+
   TH1D* hpz = new TH1D("hpz","Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-1000.,1000.);
-  HISTOS.Add(hpz);
-  HISTO_POSITION[hpz->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hpz->GetName(),hpz);
+
   TH1D* hpp = new TH1D("hpp","Helix Total Momentum;p_{tot} [MeV/c]",200,0.,1000.);
-  HISTOS.Add(hpp);
-  HISTO_POSITION[hpp->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hpp->GetName(),hpp);
+
   TH2D* hptz = new TH2D("hptz","Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
 		  100,0.,1000.,200,-1000.,1000.);
-  HISTOS.Add(hptz);
-  HISTO_POSITION[hptz->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hptz->GetName(),hptz);
 
   // reco helices spacepoints
   TH2D* hhspxy = new TH2D("hhspxy","Spacepoints in Helices;x [mm];y [mm]",
 		    100,-190.,190.,100,-190.,190.);
   hhspxy->SetStats(kFALSE);
-  HISTOS.Add(hhspxy);
-  HISTO_POSITION[hhspxy->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hhspxy->GetName(),hhspxy);
+
   TH2D* hhspzr = new TH2D("hhspzr","Spacepoints in Helices;z [mm];r [mm]",
 		    600,-1200.,1200.,60,109.,174.);
   hhspzr->SetStats(kFALSE);
-  HISTOS.Add(hhspzr);
-  HISTO_POSITION[hhspzr->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hhspzr->GetName(),hhspzr);
+
   TH2D* hhspzp = new TH2D("hhspzp","Spacepoints in Helices;z [mm];#phi [deg]",
 		    600,-1200.,1200.,180,0.,360.);
   hhspzp->SetStats(kFALSE);
-  HISTOS.Add(hhspzp);
-  HISTO_POSITION[hhspzp->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hhspzp->GetName(),hhspzp);
 
   // TH2D* hhsprp = new TH2D("hhsprp","Spacepoints in Helices;#phi [deg];r [mm]",
   // 		    180,0.,TMath::TwoPi(),200,108.,175.);
   // hhsprp->SetStats(kFALSE);
-  // HISTOS.Add(hhsprp);
-  // HISTO_POSITION[hhsprp->GetName()]=HISTOS.GetEntries()-1;
+  // fHistos.Add(hhsprp);
+  // fHistoPositions[hhsprp->GetName()]=fHistos.GetEntries()-1;
 
   // used helices
   TH1D* hNusedhel = new TH1D("hNusedhel","Used Helices",10,0.,10.);
-  HISTOS.Add(hNusedhel);
-  HISTO_POSITION[hNusedhel->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(hNusedhel->GetName(),hNusedhel);
 
   TH1D* huhD = new TH1D("huhD","Used Hel D;[mm]",200,-100.,100.);
-  HISTOS.Add(huhD);
-  HISTO_POSITION[huhD->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhD->GetName(),huhD);
   // TH1D* huhc = new TH1D("huhc","Used Hel c;[mm^{-1}]",200,-1.e-2,1.e-2);
-  // HISTOS.Add(huhc);
-  // HISTO_POSITION[huhc->GetName()]=HISTOS.GetEntries()-1;
+  // fHistos.Add(huhc);
+  // fHistoPositions[huhc->GetName()]=fHistos.GetEntries()-1;
   TH1D* huhRc = new TH1D("huhRc","Used Hel Rc;[mm]",200,-2000.,2000.);
-  HISTOS.Add(huhRc);
-  HISTO_POSITION[huhRc->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhRc->GetName(),huhRc);
   
   TH1D* huhpt = new TH1D("huhpt","Used Helix Transverse Momentum;p_{T} [MeV/c]",200,0.,1000.);
-  HISTOS.Add(huhpt);
-  HISTO_POSITION[huhpt->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhpt->GetName(),huhpt);
+
   TH1D* huhpz = new TH1D("huhpz","Used Helix Longitudinal Momentum;p_{Z} [MeV/c]",500,-1000.,1000.);
-  HISTOS.Add(huhpz);
-  HISTO_POSITION[huhpz->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhpz->GetName(),huhpz);
+
   TH1D* huhpp = new TH1D("huhpp","Used Helix Total Momentum;p_{tot} [MeV/c]",200,0.,1000.);
-  HISTOS.Add(huhpp);
-  HISTO_POSITION[huhpp->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhpp->GetName(),huhpp);
+
   TH2D* huhptz = new TH2D("huhptz","Used Helix Momentum;p_{T} [MeV/c];p_{Z} [MeV/c]",
 		    100,0.,1000.,200,-1000.,1000.);
-  HISTOS.Add(huhptz);
-  HISTO_POSITION[huhptz->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhptz->GetName(),huhptz);
 
   // used helices spacepoints
   TH2D* huhspxy = new TH2D("huhspxy","Spacepoints in Used Helices;x [mm];y [mm]",
 		     100,-190.,190.,100,-190.,190.);
   huhspxy->SetStats(kFALSE);
-  HISTOS.Add(huhspxy);
-  HISTO_POSITION[huhspxy->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhspxy->GetName(),huhspxy);
+
   TH2D* huhspzr = new TH2D("huhspzr","Spacepoints in Used Helices;z [mm];r [mm]",
 		     600,-1200.,1200.,60,109.,174.);
   huhspzr->SetStats(kFALSE);
-  HISTOS.Add(huhspzr);
-  HISTO_POSITION[huhspzr->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhspzr->GetName(),huhspzr);
+
   TH2D* huhspzp = new TH2D("huhspzp","Spacepoints in Used Helices;z [mm];#phi [deg]",
 		     600,-1200.,1200.,180,0.,360.);
   huhspzp->SetStats(kFALSE);
-  HISTOS.Add(huhspzp);
-  HISTO_POSITION[huhspzp->GetName()]=HISTOS.GetEntries()-1;
+  AddHistogram(huhspzp->GetName(),huhspzp);
   // TH2D* huhsprp = new TH2D("huhsprp","Spacepoints in Used Helices;#phi [deg];r [mm]",
   // 		     180,0.,TMath::TwoPi(),200,108.,175.);
   // huhsprp->SetStats(kFALSE);
-  // HISTOS.Add(huhsprp);
-  // HISTO_POSITION[huhsprp->GetName()]=HISTOS.GetEntries()-1;
+  // fHistos.Add(huhsprp);
+  // fHistoPositions[huhsprp->GetName()]=fHistos.GetEntries()-1;
 }
 
 void SetUpBarHistos()
@@ -749,231 +504,196 @@ void SetUpBarHistos()
    //Get some cool looking bar plots going!
 }
 
-void TAGPlot::FillHisto()
+
+void TAGPlot::FillHisto(bool applyCuts, int mode)
 {
-   if (TMin<0 && TMax<0.) AutoTimeRange();
+  
    ClearHisto();
    SetUpHistograms();
-  
-   //Fill SIS histograms
-  
-  
-   for (UInt_t i=0; i<ChronoPlotEvents.size(); i++)
-   {
-      /*if (trig < 0.)
-      {
-         std::cout << "Warning: TAGPlot->SetSISChannels(runNumber) should have been called before AddChronoPlotEvent" << std::endl;
-         SetSISChannels(ChronoPlotEvents[i].runNumber);
-      }*/
-      Double_t time = ChronoPlotEvents[i].t;
-      if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
-      TChronoChannel Channel = ChronoPlotEvents[i].Chrono_Channel;
-      Int_t CountsInChannel = ChronoPlotEvents[i].Counts;
- 
-      if (Channel == top)
-         if (HISTO_POSITION.count("top_pm"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")))->Fill(time,CountsInChannel);
-
-      if (Channel == bottom)
-         if (HISTO_POSITION.count("bot_pm"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")))->Fill(time,CountsInChannel);
-
-      if (Channel == sipmad)
-         if (HISTO_POSITION.count("aandd_pm"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("aandd_pm")))->Fill(time,CountsInChannel);
-
-      if (Channel == sipmcf)
-         if (HISTO_POSITION.count("candf_pm"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("candf_pm")))->Fill(time,CountsInChannel);
-
-      if (Channel == TPC_TRIG)
-         if (HISTO_POSITION.count("TPC_TRIG"))
-            ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Fill(time,CountsInChannel);
-      
-      /*
-      if (Channel == trig)
-         ht_IO32->Fill(time, CountsInChannel);
-      else if (Channel == trig_nobusy)
-         ht_IO32_notbusy->Fill(time, CountsInChannel);
-      else if (Channel == atom_or)
-         ht_ATOM_OR->Fill(time, CountsInChannel);
-      else if (Channel == Beam_Injection)
-         Injections.push_back(time);
-      else if (Channel == Beam_Ejection)
-         Ejections.push_back(time);
-      else if (Channel == CATStart || Channel == RCTStart || Channel == ATMStart)
-         DumpStarts.push_back(time);
-      else if (Channel == CATStop || Channel == RCTStop || Channel == ATMStop)
-         DumpStops.push_back(time);
-      else std::cout <<"Unconfigured SIS channel in TAlhaPlot"<<std::endl;*/
-  }
-  
-  //Fill Vertex Histograms
-  
-  
-   TVector3 vtx;
-   for (UInt_t i=0; i<VertexEvents.size(); i++)
-   {
-      Double_t time = VertexEvents[i].t;
-      if (time<TMin) continue;
-      if (time>TMax) continue; //Cannot assume events are in order... cannot use break
-      if (fabs(TMax-TMin)<SCALECUT) time=time*1000.;
-      vtx=TVector3(VertexEvents[i].x,VertexEvents[i].y,VertexEvents[i].z);
-
-     if (HISTO_POSITION.count("tTPC"))
-     {
-        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tTPC")))->Fill(time);
-     }
-      
-     if (HISTO_POSITION.count("tbar")  && VertexEvents[i].NBars> BarMultiplicityCut)
-     {
-        ((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")))->Fill(time);
-     }
-      
-     Int_t CutsResult=VertexEvents[i].CutsResult;
-     if (MVAMode>0)
-     {
-        if (CutsResult & 1)//Passed cut result!
-        {
-           if (HISTO_POSITION.count("tvtx"))
-              ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-        }
-        if (CutsResult & 2)
-        {
-           if (HISTO_POSITION.count("tvtx"))
-              ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-        }
-        else
-           continue; //Don't draw vertex if it tails MVA cut
-     }
-     else
-     {
-        if (gApplyCuts)
-        {
-           if (CutsResult & 1)//Passed cut result!
-           {
-              if (HISTO_POSITION.count("tvtx"))
-                 ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-           }
-           else
-              continue;
-        }
-        else
-        {
-           if ( VertexEvents[i].VertexStatus > 0) 
-           {
-              if (HISTO_POSITION.count("tvtx"))
-                 ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Fill(time);
-           }
-           else 
-              continue;
-        }
-        if (VertexEvents[i].VertexStatus <= 0) continue; //Don't draw invaid vertices
-      }
-      if (HISTO_POSITION.count("phivtx"))
-         ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Fill(vtx.Phi());
-      if (HISTO_POSITION.count("zphivtx"))
-         ((TH2D*)HISTOS.At(HISTO_POSITION.at("zphivtx")))->Fill(vtx.Z(), vtx.Phi());
-      if (HISTO_POSITION.count("phitvtx"))
-         ((TH2D*)HISTOS.At(HISTO_POSITION.at("phitvtx")))->Fill(vtx.Phi(),time);
-      if (HISTO_POSITION.count("xyvtx"))
-         ((TH2D*)HISTOS.At(HISTO_POSITION.at("xyvtx")))->Fill(vtx.X(), vtx.Y());
-      if (HISTO_POSITION.count("zvtx"))
-         ((TH1D*)HISTOS.At(HISTO_POSITION.at("zvtx")))->Fill(vtx.Z());
-      if (HISTO_POSITION.count("rvtx"))
-         ((TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx")))->Fill(vtx.Perp());
-      if (HISTO_POSITION.count("zrvtx"))
-         ((TH2D*)HISTOS.At(HISTO_POSITION.at("zrvtx")))->Fill(vtx.Z(), vtx.Perp());
-      if (HISTO_POSITION.count("ztvtx"))
-         ((TH2D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Fill(vtx.Z(), time);
-   }
-   if (HISTO_POSITION.count("rvtx"))
-   {
-      TH1D* hr=(TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx"));
-      TH1D *hrdens = (TH1D *)hr->Clone("radial density");
-      hrdens->Sumw2();
-      TF1 *fr = new TF1("fr", "x", -100, 100);
-      hrdens->Divide(fr);
-      hrdens->Scale(hr->GetBinContent(hr->GetMaximumBin()) / hrdens->GetBinContent(hrdens->GetMaximumBin()));
-      hrdens->SetMarkerColor(kRed);
-      hrdens->SetLineColor(kRed);
-      delete fr;
-      HISTOS.Add(hrdens);
-      HISTO_POSITION["rdens"]=HISTOS.GetEntries()-1;
-   }
-
+   
+   FillChronoHistograms();
+   //Fill Vertex Histograms
+   FillVertexHistograms(applyCuts, mode);
+   
+   //FillTrackHisto();
 }
+
+void TAGPlot::FillChronoHistograms()
+{
+   const double kMaxDumpLength = GetMaxDumpLength();
+   int runNum = 0;
+   // Fill Chronobox events
+   for (size_t i = 0; i<fChronoEvents.fTime.size(); i++)
+   {
+      if (fChronoEvents.fRunNumber[i] != runNum)
+      {
+         runNum = fChronoEvents.fRunNumber[i];
+         SetChronoChannels(runNum);
+      }
+      double time;
+      if (kZeroTimeAxis)
+         time = fChronoEvents.fTime[i];
+      else
+         time = fChronoEvents.fOfficialTime[i];
+      if (kMaxDumpLength<SCALECUT) 
+         time=time*1000.;
+
+      const TChronoChannel& channel = fChronoEvents.fChronoChannel[i];
+      const int CountsInChannel = fChronoEvents.fCounts[i];
+ 
+      if (channel == top.find(fChronoEvents.fRunNumber[i])->second)
+         FillHistogram("top_pm",time,CountsInChannel);
+      else if (channel == bottom.find(fChronoEvents.fRunNumber[i])->second)
+         FillHistogram("bot_pm",time,CountsInChannel);
+      else if (channel == sipmad.find(fChronoEvents.fRunNumber[i])->second)
+         FillHistogram("aandd_pm",time,CountsInChannel);
+      else if (channel == sipmcf.find(fChronoEvents.fRunNumber[i])->second)
+         FillHistogram("candf_pm",time,CountsInChannel);
+      else if (channel == TPC_TRIG.find(fChronoEvents.fRunNumber[i])->second)
+         FillHistogram("TPC_TRIG",time,CountsInChannel);
+      else std::cout <<"Unconfigured Chrono channel in TAGPlot"<<std::endl;
+   }
+}
+
+void TAGPlot::FillVertexHistograms(bool applyCuts,int mode)
+{
+   TVector3 vertex;
+   const size_t NVertexEvents = fVertexEvents.size();
+   for (size_t i = 0; i < NVertexEvents; i++)
+   {
+      Double_t time;
+      if (kZeroTimeAxis)
+         time = fVertexEvents.fTimes[i];
+      else
+         time = fVertexEvents.fRunTimes[i];
+      if (fMaxDumpLength < SCALECUT)
+         time = time*1000.;
+
+      vertex = TVector3(fVertexEvents.fXVertex[i], fVertexEvents.fYVertex[i], fVertexEvents.fZVertex[i]);
+
+      FillHistogram("tTPC",time);
+      
+      //if (fVertexEvents.NBars[i] > BarMultiplicityCut)
+      //   FillHistogram("tbar",time);
+      const int cutsResult = fVertexEvents.fCutsResults[i];
+      if (mode>0)
+      {
+         if (cutsResult & 1)//Passed cut result!
+         {
+            FillHistogram("tvtx",time);
+         }
+         if (cutsResult & 2)
+         {
+            FillHistogram("tvtx",time);
+         }
+         else
+            continue; //Don't draw vertex if it tails MVA cut
+      }
+      else
+      {
+        if (applyCuts)
+         {
+            if (cutsResult & 1)//Passed cut result!
+            {
+               FillHistogram("tvtx", time);
+            }
+            else
+               continue;
+         }
+         else
+         {
+            if ( fVertexEvents.fVertexStatuses[i] > 0) 
+            {
+               FillHistogram("tvtx", time);
+            }
+            else 
+               continue;
+         }
+         if(fVertexEvents.fVertexStatuses[i] <= 0) continue; //Don't draw invaid vertices
+      }
+      FillHistogram("phivtx",vertex.Phi());
+      FillHistogram("zphivtx",vertex.Z(), vertex.Phi());
+      //FillHistogram("phitvtx",vtx.Phi(),time);
+      FillHistogram("xyvtx",vertex.X(), vertex.Y());
+      FillHistogram("zvtx",vertex.Z());
+      FillHistogram("rvtx",vertex.Perp());
+      FillHistogram("zrvtx",vertex.Z(), vertex.Perp());
+      FillHistogram("ztvtx",vertex.Z(), time);
+   }
+   TH1D* rHisto = GetTH1D("rvtx");
+   if (rHisto)
+   {
+      TH1D *rDensityHisto = (TH1D *)rHisto->Clone("radial density");
+      rDensityHisto->Sumw2();
+      TF1 *function = new TF1("fr", "x", -100, 100);
+      rDensityHisto->Divide(function);
+      rDensityHisto->Scale(rHisto->GetBinContent(rHisto->GetMaximumBin()) / rDensityHisto->GetBinContent(rDensityHisto->GetMaximumBin()));
+      rDensityHisto->SetMarkerColor(kRed);
+      rDensityHisto->SetLineColor(kRed);
+      delete function;
+      AddHistogram("rdens",rDensityHisto);
+   }
+}
+
 
 void TAGPlot::FillTrackHisto()
 { 
-  if( !fPlotTracks )
-    {
-      std::cerr<<"TAGPlot::FillTrackHisto() histograms for tracks not created!"<<std::endl;
-      return;
-    }
-  // else
-  //   std::cout<<"TAGPlot::FillTrackHisto()"<<std::endl;
-  std::cout<<"TAGPlot::FillTrackHisto() Number of histos: "<<HISTOS.GetEntries()<<std::endl;
+   std::cout<<"TAGPlot::FillTrackHisto() Number of histos: "<<fHistos.GetEntries()<<std::endl;
 
-  for(auto it = HelixEvents.begin(); it != HelixEvents.end(); ++it)
-    {
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Fill(it->parD);
-      //      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Fill(it->Curvature);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhRc")))->Fill(it->Curvature);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Fill(it->pT);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpz")))->Fill(it->pZ);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Fill(it->pTot);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hptz")))->Fill(it->pT,it->pZ);
-    }
-
-  for(auto it = SpacePointHelixEvents.begin(); it != SpacePointHelixEvents.end(); ++it)
-    {
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspxy")))->Fill(it->x,it->y);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzr")))->Fill(it->z,it->r);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzp")))->Fill(it->z,it->p);
-      //      ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhsprp")))->Fill(it->r,it->p);
-    }
-
-  for(auto it = UsedHelixEvents.begin(); it != UsedHelixEvents.end(); ++it)
-    {
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Fill(it->parD);
-      //((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Fill(it->Curvature);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhRc")))->Fill(it->Curvature);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Fill(it->pT);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpz")))->Fill(it->pZ);
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Fill(it->pTot);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhptz")))->Fill(it->pT,it->pZ);
-    }
-
-  for (auto it = VertexEvents.begin(); it != VertexEvents.end(); ++it)
-   {  
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Fill( double(it->nTracks) );
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNusedhel")))->Fill(double(it->nHelices));
+   for (int i = 0; i < fHelixEvents.size(); i++ )
+   {
+      FillHistogram("hhD",fHelixEvents.parD[i]);
+      FillHistogram("hhRc",fHelixEvents.Curvature[i]);
+      FillHistogram("hpt",fHelixEvents.pT[i]);
+      FillHistogram("hpz",fHelixEvents.pZ[i]);
+      FillHistogram("hpp",fHelixEvents.pTot[i]);
+      FillHistogram("hptz",fHelixEvents.pT[i],fHelixEvents.pZ[i]);
    }
 
-  for(auto it = SpacePointUsedHelixEvents.begin(); it != SpacePointUsedHelixEvents.end(); ++it)
-    {
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspxy")))->Fill(it->x,it->y);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzr")))->Fill(it->z,it->r);
-      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzp")))->Fill(it->z,it->p);
-      //      ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhsprp")))->Fill(it->r,it->p);
-    }
+   for (int i = 0; i < fSpacePointHelixEvents.size(); i++)
+   {
+      FillHistogram("hhspxy",fSpacePointHelixEvents.fX[i],fSpacePointHelixEvents.fY[i]);
+      FillHistogram("hhspzr",fSpacePointHelixEvents.fZ[i],fSpacePointHelixEvents.fR[i]);
+      FillHistogram("hhspzp",fSpacePointHelixEvents.fZ[i],fSpacePointHelixEvents.fP[i]);
+   }
+
+   for (int i = 0; i < fUsedHelixEvents.size(); i++)
+   {
+      FillHistogram("huhD",fUsedHelixEvents.parD[i]);
+      FillHistogram("huhRc",fUsedHelixEvents.Curvature[i]);
+      FillHistogram("huhpt",fUsedHelixEvents.pT[i]);
+      FillHistogram("huhpz",fUsedHelixEvents.pZ[i]);
+      FillHistogram("huhpp",fUsedHelixEvents.pTot[i]);
+      FillHistogram("huhptz",fUsedHelixEvents.pT[i],fUsedHelixEvents.pZ[i]);
+   }
+
+   for (int i = 0; i < fVertexEvents.size(); i++)
+   {
+      FillHistogram("hNhel", double(fVertexEvents.fNumTracks[i]) );
+      FillHistogram("hNusedhel",double(fVertexEvents.fNumHelices[i]));
+   }
+
+   for (int i = 0; i < fSpacePointHelixEvents.size(); i++)
+   {
+      FillHistogram("huhspxy",fSpacePointHelixEvents.fX[i],fSpacePointHelixEvents.fY[i]);
+      FillHistogram("huhspzr",fSpacePointHelixEvents.fZ[i],fSpacePointHelixEvents.fR[i]);
+      FillHistogram("huhspzp",fSpacePointHelixEvents.fZ[i],fSpacePointHelixEvents.fP[i]);
+   }
 }
 
-
-
-
-TCanvas *TAGPlot::Canvas(TString Name)
+TCanvas *TAGPlot::DrawVertexCanvas(const char* name, bool applyCuts, int mode)
 {
-   FillHisto();
-   std::cout<<"Number of Vtx Histos: "<<HISTOS.GetEntries()<<std::endl;
-   TCanvas *cVTX = new TCanvas(Name, Name, 1800, 1000);
+   SetTAPlotTitle(name);
+   std::cout<<"TAGPlot Processing time : ~" << GetApproximateProcessingTime() <<"s"<<std::endl;
+   TCanvas *canvas = new TCanvas(name, name, 1800, 1000);
+   std::cout <<"Filling histograms"<<std::endl;
+   FillHisto(applyCuts,mode);
+   std::cout <<"Filling histograms done"<<std::endl;
    //Scale factor to scale down to ms:
-   Double_t tFactor=1.;
-   if (fabs(TMax-TMin)<SCALECUT) tFactor=1000.;
-   cVTX->Divide(4, 2);
+   if (GetMaxDumpLength()<SCALECUT) SetTimeFactor(1000.);
+   canvas->Divide(4, 2);
 
-   if (gLegendDetail >= 1)
+   if (fLegendDetail >= 1)
    {
       gStyle->SetOptStat(11111);
    }
@@ -982,363 +702,286 @@ TCanvas *TAGPlot::Canvas(TString Name)
       gStyle->SetOptStat("ni");	//just like the knights of the same name
    }
 
-   cVTX->cd(1);
+   //Canvas 1
+   canvas->cd(1);
+   DrawHistogram("zvtx","HIST E1");
 
-   if (HISTO_POSITION.count("zvtx"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("zvtx")))->Draw("HIST E1");
-
-   cVTX->cd(2); // Z-counts (with electrodes?)4
-   TVirtualPad *cVTX_1 = cVTX->cd(2);
+   //Canvas 2
+   canvas->cd(2); // Z-counts (with electrodes?)4
+   TVirtualPad *cVTX_1 = canvas->cd(2);
    gPad->Divide(1, 2);
-   cVTX_1->cd(1);
-   //cVTX->cd(2)->SetFillStyle(4000 );
-      //cVTX->cd(1)->SetFillStyle(4000 );
-   // R-counts
-   if (HISTO_POSITION.count("rvtx"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("rvtx")))->Draw("HIST E1");
+   //Canvas 2 - Pad 1
+      cVTX_1->cd(1);
+         DrawHistogram("rvtx","HIST E1");
+         DrawHistogram("rdens","HIST E1 SAME");
+         TPaveText *radialDensityLabel = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
+         radialDensityLabel->AddText("radial density [arbs]");
+         radialDensityLabel->SetTextColor(kRed);
+         radialDensityLabel->SetFillStyle(0);
+         radialDensityLabel->SetLineStyle(0);
+         radialDensityLabel->Draw();
+      //Canvas 2 - Pad 2
+      cVTX_1->cd(2);
+         DrawHistogram("phivtx","HIST E1");
 
-   if (HISTO_POSITION.count("rdens"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("rdens")))->Draw("HIST E1 SAME");
+   //Canvas 3
+   canvas->cd(3); // T-counts
 
-   //((TH1D *)hh[VERTEX_HISTO_RDENS])->Draw("HIST E1 SAME");
-   TPaveText *rdens_label = new TPaveText(0.6, 0.8, 0.90, 0.85, "NDC NB");
-   rdens_label->AddText("radial density [arbs]");
-   rdens_label->SetTextColor(kRed);
-   rdens_label->SetFillStyle(0);
-   rdens_label->SetLineStyle(0);
-   rdens_label->Draw();
-   cVTX_1->cd(2);
-
-   if (HISTO_POSITION.count("phivtx"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("phivtx")))->Draw("HIST E1");
-
-   cVTX->cd(3); // T-counts
-   //cVTX->cd(3)->SetFillStyle(4000 );
-   //((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->Draw("HIST"); // io32-notbusy = readouts
-   //((TH1D *)hh[VERTEX_HISTO_IO32])->Draw("HIST SAME");    // io32
-   //((TH1D *)hh[VERTEX_HISTO_ATOM_OR])->Draw("HIST SAME");    // ATOM OR PMTs
-
-
-   if (HISTO_POSITION.count("TPC_TRIG"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")))->Draw("HIST");
-
-   if (HISTO_POSITION.count("tvtx"))     //verticies
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
-
-   if (HISTO_POSITION.count("tbar"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")))->Draw("HIST SAME");
-
-   if (HISTO_POSITION.count("tTPC"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("tTPC")))->Draw("HIST SAME");
-
-   if (HISTO_POSITION.count("top_pm"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")))->Draw("HIST SAME");
-
-   if (HISTO_POSITION.count("bot_pm"))
-      ((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")))->Draw("HIST SAME");
-
-   //((TH1D *)hh[VERTEX_HISTO_VF48])->Draw("HIST SAME");    //io32 sistime
-   if (MVAMode)
-      if (HISTO_POSITION.count("tmva"))
-         ((TH1D*)HISTOS.At(HISTO_POSITION.at("tmva")))->Draw("HIST SAME");
-
-
-   //auto legend = new TLegend(0.1,0.7,0.48,0.9);(0.75, 0.8, 1.0, 0.95
-   //auto legend = new TLegend(1., 0.7, 0.45, 1.);//, "NDC NB");
-   auto legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
-   char line[201];
-   TH1D* TPC=((TH1D*)HISTOS.At(HISTO_POSITION.at("TPC_TRIG")));
-   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral());
-   //   snprintf(line, 200, "TPC_TRIG: %5.0lf", TPC->Integral("width"));
-   legend->AddEntry(TPC, line, "f");
-   TH1D* top=((TH1D*)HISTOS.At(HISTO_POSITION.at("top_pm")));
-   snprintf(line, 200, "top_pm: %5.0lf", top->Integral());
-   //snprintf(line, 200, "top_pm: %5.0lf", top->Integral("width"));
-   legend->AddEntry(top, line, "f");
-   TH1D* bot=((TH1D*)HISTOS.At(HISTO_POSITION.at("bot_pm")));
-   snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral());
-   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
-   legend->AddEntry(bot, line, "f");
-   
-   TH1D* tbar=((TH1D*)HISTOS.At(HISTO_POSITION.at("tbar")));
-   snprintf(line, 200, "> %d bars: %5.0lf", BarMultiplicityCut, tbar->Integral());
-   std::cout<<line<<std::endl;
-   //snprintf(line, 200, "bottom pm: %5.0lf", bot->Integral("width"));
-   legend->AddEntry(tbar, line, "f");
-   
-   //snprintf(line, 200, "TPC Events: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-   //legend->AddEntry(hh[VERTEX_HISTO_VF48], line, "f");
-   if (MVAMode)
+   TLegend* legend = NULL;
+   DrawHistogram("TPC_TRIG","HIST");
+   legend=AddLegendIntegral(legend,"Triggers: %5.0lf","tTPC_TRIG");
+   DrawHistogram("tvtx","HIST SAME");
+   legend=AddLegendIntegral(legend,"Verts: %5.0lf","ttvtx");
+   DrawHistogram("tbar","HIST SAME");
+   legend=AddLegendIntegral(legend,"Reads: %5.0lf","ttbar");
+   DrawHistogram("tTPC","HIST SAME");
+   legend=AddLegendIntegral(legend,"Reads: %5.0lf","tTPC");
+   DrawHistogram("top_pm","HIST SAME");
+   legend=AddLegendIntegral(legend,"Trigs: %5.0lf","ttop_pm");
+   DrawHistogram("bot_pm","HIST SAME");
+   legend=AddLegendIntegral(legend,"Trigs: %5.0lf","tbot_pm");
+   if (mode)
    {
-      if (HISTO_POSITION.count("tvtx"))     //verticies
-         ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Draw("HIST SAME");
-
-      snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
-      snprintf(line, 200, "Pass MVA (rfcut %0.1f): %5.0lf", grfcut, ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
+      DrawHistogram("tmva","HIST SAME");
+      legend=AddLegendIntegral(legend,"Pass MVA: %5.0lf","tPassMVA");
    }
-   else
+   if (mode)
    {
-      if (gApplyCuts)
-         snprintf(line, 200, "Pass Cuts: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
+      DrawHistogram("tvtx","HIST SAME");
+      if (applyCuts)
+         legend=AddLegendIntegral(legend,"Pass Cuts: %5.0lf","tvtx");
       else
-         snprintf(line, 200, "Vertices: %5.0lf", ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->Integral());
-      //      snprintf(line, 200, "Vertices: %5.0lf", ((TH1D *)hh[VERTEX_HISTO_T])->Integral());
-      legend->AddEntry((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")), line, "f");
-      legend->SetFillColor(kWhite);
-      legend->SetFillStyle(1001);
-    //std::cout <<"Drawing lines"<<std::endl;
-   /*
-    for (UInt_t i = 0; i < Injections.size(); i++)
-    {
-      TLine *l = new TLine(Injections[i]*tFactor, 0., Injections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      l->SetLineColor(6);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "AD fill", "l");
-    }
-    for (UInt_t i = 0; i < Ejections.size(); i++)
-    {
-      TLine *l = new TLine(Ejections[i]*tFactor, 0., Ejections[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      l->SetLineColor(7);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Beam to ALPHA", "l");
-    }
-    for (UInt_t i = 0; i < DumpStarts.size(); i++)
-    {
-      if (DumpStarts.size() > 4) continue; //Don't draw dumps if there are lots
-      TLine *l = new TLine(DumpStarts[i]*tFactor, 0., DumpStarts[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      //l->SetLineColor(7);
-      l->SetLineColorAlpha(kGreen, 0.35);
-      //l->SetFillColorAlpha(kGreen,0.35);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Dump Start", "l");
-    }
-    for (UInt_t i = 0; i < DumpStops.size(); i++)
-    {
-      if (DumpStops.size() > 4) continue; //Don't draw dumps if there are lots
-      TLine *l = new TLine(DumpStops[i]*tFactor, 0., DumpStops[i]*tFactor, ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetMaximum());
-      //l->SetLineColor(7);
-      l->SetLineColorAlpha(kRed, 0.35);
-      l->Draw();
-      if (i == 0)
-        legend->AddEntry(l, "Dump Stop", "l");
-    }*/
-  }
+         legend=AddLegendIntegral(legend,"Vertices: %5.0lf","tvtx");
+      legend=DrawLines(legend,"tTPC");
+   }
 
-  // legend->AddEntry("f1","Function abs(#frac{sin(x)}{x})","l");
-  // legend->AddEntry("gr","Graph with error bars","lep");
-  legend->Draw();
-  cVTX->cd(4);
-  // X-Y-counts
-  //cVTX->cd(4)->SetFillStyle(4000 );
-  if (HISTO_POSITION.count("xyvtx"))     //verticies
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("xyvtx")))->Draw("colz");
+   //Canvas 4
+   canvas->cd(4);
+   DrawHistogram("xyvtx","colz");
 
-  cVTX->cd(5);
-  // Z-R-counts
-  //cVTX->cd(5)->SetFillStyle(4000 );
-  if (HISTO_POSITION.count("phitvtx"))     //verticies
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("phitvtx")))->Draw("colz");
+   //Canvas 5
+   canvas->cd(5);
+   DrawHistogram("ztvtx","colz");
 
-  cVTX->cd(6);
-  // Z-T-counts
-  //cVTX->cd(6)->SetFillStyle(4000 );
-  if (HISTO_POSITION.count("ztvtx"))
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("ztvtx")))->Draw("colz");
-
-  cVTX->cd(7);
-  // phi counts
-  //cVTX->cd(7)->SetFillStyle(4000 );
-  /*((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->SetStats(0);
-  ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative()->Draw("HIST");
-  ((TH1D *)hh[VERTEX_HISTO_IO32])->GetCumulative()->Draw("HIST SAME");*/
-  if (HISTO_POSITION.count("tvtx"))     //verticies
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
-  
-  //((TH1D *)hh[VERTEX_HISTO_VF48])->GetCumulative()->Draw("HIST SAME");
-
-  if (MVAMode && HISTO_POSITION.count("tvtx"))
-  {
-    ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative()->Draw("HIST SAME");
-    TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
-    {
-      //Draw line at halfway point
-      Double_t Max = h->GetBinContent(h->GetMaximumBin());
-      Double_t Tmax = h->GetXaxis()->GetXmax();
-      for (Int_t i = 0; i < h->GetMaximumBin(); i++)
+   //Canvas 6
+   canvas->cd(6);
+   TVirtualPad *subPadCD6 = NULL;
+   if (IsGEMData() && IsLVData())
+   {
+      subPadCD6 = canvas->cd(6);
+      gPad->Divide(1, 2);
+   }
+   if (subPadCD6) 
+      subPadCD6->cd(1);
+      std::pair<TLegend*,TMultiGraph*> gemDataMG = GetGEMGraphs();
+      if (gemDataMG.first)
       {
-        if (h->GetBinContent(i) > Max / 2.)
-        {
-          TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-          half->SetLineColor(kViolet);
-          half->Draw();
-          break;
-        }
+         //Draw TMultigraph
+         gemDataMG.second->Draw("AL*");
+         //Draw legend
+         gemDataMG.first->Draw();
       }
-    }
-  }
-  else
-  {
-     //Draw line at halfway point
-     if (HISTO_POSITION.count("tvtx"))     //verticies
-     {
-        TH1 *h = ((TH1D*)HISTOS.At(HISTO_POSITION.at("tvtx")))->GetCumulative();
-        Double_t Max = h->GetBinContent(h->GetMaximumBin());
-        Double_t Tmax = h->GetXaxis()->GetXmax();
-        for (Int_t i = 0; i < h->GetMaximumBin(); i++)
-        {
-           if (h->GetBinContent(i) > Max / 2.)
-           {
-              TLine *half = new TLine(TMax*tFactor * (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-              half->SetLineColor(kBlue);
-              half->Draw();
-              break;
-           }
-        }
-     }
-  }
-  //IO32_NOTBUSY Halfway point
-  /*
-  TH1 *h2 = ((TH1D *)hh[VERTEX_HISTO_IO32_NOTBUSY])->GetCumulative();
-  //Draw line at halfway point
-  Double_t Max = h2->GetBinContent(h2->GetMaximumBin());
-  Double_t Tmax = h2->GetXaxis()->GetXmax();
-  for (Int_t i = 0; i < h2->GetMaximumBin(); i++)
-  {
-    if (h2->GetBinContent(i) > Max / 2.)
-    {
-      TLine *half = new TLine(TMax *tFactor* (Double_t)i / (Double_t)Nbin, 0., Tmax * (Double_t)i / (Double_t)Nbin, Max / 2.);
-      half->SetLineColor(kRed);
-      half->Draw();
-      break;
-    }
-  }
-*/
-  cVTX->cd(8);
-  // Z-PHI-counts
-  //cVTX->cd(8)->SetFillStyle(4000 );
-  if (HISTO_POSITION.count("zphivtx"))     //verticies
-     ((TH1D*)HISTOS.At(HISTO_POSITION.at("zphivtx")))->Draw("colz");
-  if (gApplyCuts)
-  {
-    cVTX->cd(1);
-    TPaveText *applycuts_label = new TPaveText(0., 0.95, 0.20, 1.0, "NDC NB");
-    if (MVAMode>0)
-      applycuts_label->AddText("RF cut applied");
-    else
-      applycuts_label->AddText("Cuts applied");
-    applycuts_label->SetTextColor(kRed);
-    applycuts_label->SetFillColor(kWhite);
-    applycuts_label->Draw();
-  };
-  //TLatex* runs_label = new  TLatex(-32.5,-.0625, 32.5, 5.6, "NDC NB");
-  //
-  cVTX->cd(0);
-  TString run_txt = "Run(s): ";
-  std::sort(Runs.begin(), Runs.end());
-  for (UInt_t i = 0; i < Runs.size(); i++)
-  {
-    //std::cout <<"Run: "<<Runs[i] <<std::endl;
-    if (i > 0)
-      run_txt += ",";
-    run_txt += Runs[i];
-  }
-  run_txt += " ";
-  run_txt += Nbin;
-  run_txt += " bins";
-  /*if (gZcutMin > -998.)
-    {
-      run_txt += " gZcutMin=";
-      run_txt += gZcutMin;
-    }
-    if (gZcutMax < 998.)
-    {
-      run_txt += " gZcutMax=";
-      run_txt += gZcutMax;
-    }*/
-  //runs_label->AddText(run_txt);
-  TLatex *runs_label = new TLatex(0., 0., run_txt);
-  runs_label->SetTextSize(0.016);
-  //runs_label->SetTextColor(kRed);
-  //runs_label->SetFillColor(kWhite);
-  //runs_label->SetFillStyle(1001);
-  runs_label->Draw();
 
-  std::cout<<run_txt<<std::endl;
-  return cVTX;
+      if (subPadCD6) 
+         subPadCD6->cd(2);
+      std::pair<TLegend*,TMultiGraph*> labviewDataMG = GetLVGraphs();
+      if (labviewDataMG.first)
+      {
+         //Draw TMultigraph
+         labviewDataMG.second->Draw("AL*");
+         //Draw legend
+         labviewDataMG.first->Draw();
+      }
+
+   //Canvas 7
+   canvas->cd(7);
+   DrawHistogram("tvtx","HIST SAME");
+      //Canvas 8
+   canvas->cd(8);
+   DrawHistogram("zphivtx","colz");
+   if (applyCuts)
+   {
+     canvas->cd(1);
+     TPaveText *applyCutsLabel = new TPaveText(0., 0.95, 0.20, 1.0, "NDC NB");
+     if (mode>0)
+       applyCutsLabel->AddText("RF cut applied");
+     else
+       applyCutsLabel->AddText("Cuts applied");
+     applyCutsLabel->SetTextColor(kRed);
+     applyCutsLabel->SetFillColor(kWhite);
+     applyCutsLabel->Draw();
+   }
+
+   //Canvas 0 - Global
+   canvas->cd(0);
+   TString runText = "Run(s): ";
+   runText += GetListOfRuns();
+   runText += " ";
+   runText += GetNBins();
+   runText += " bins";
+   TLatex *runsLabel = new TLatex(0., 0., runText);
+   runsLabel->SetTextSize(0.016);
+   runsLabel->Draw();
+ 
+   std::cout<<runText<<std::endl;
+   return canvas;
 }
 
-TCanvas* TAGPlot::DrawTrackHisto(TString Name)
+TCanvas* TAGPlot::DrawTrackCanvas(TString Name)
 {
-  if( !fPlotTracks )
-    {
-      std::cerr<<"TAGPlot::DrawTrackHisto() histograms for tracks not created!"<<std::endl;
-      return 0;
-    }
-  // else
-  //   std::cout<<"TAGPlot::DrawTrackHisto()"<<std::endl;
-  SetupTrackHistos();
-  FillTrackHisto();
+   SetupTrackHistos();
+   FillTrackHisto();
 
   TCanvas* ct = new TCanvas(Name,Name,2000,1800);
   ct->Divide(5,4);
   
   ct->cd(1);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNhel")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hNhel")))->Draw("hist");
 
   ct->cd(2);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhD")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hhD")))->Draw("hist");
   ct->cd(3);
-  //  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhc")))->Draw("hist");
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hhRc")))->Draw("hist");
+  //  ((TH1D*)HISTOS.At(fHistoPositions.at("hhc")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hhRc")))->Draw("hist");
   ct->cd(4);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpt")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hpt")))->Draw("hist");
   ct->cd(5);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpz")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hpz")))->Draw("hist");
   ct->cd(6);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hpp")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hpp")))->Draw("hist");
   ct->cd(7);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hptz")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("hptz")))->Draw("colz");
 
   ct->cd(8);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspxy")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("hhspxy")))->Draw("colz");
   ct->cd(9);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzr")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("hhspzr")))->Draw("colz");
   ct->cd(10);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhspzp")))->Draw("colz");
-  //  ((TH2D*)HISTOS.At(HISTO_POSITION.at("hhsprp")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("hhspzp")))->Draw("colz");
+  //  ((TH2D*)fHistos.At(fHistoPositions.at("hhsprp")))->Draw("colz");
   
   ct->cd(11);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("hNusedhel")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("hNusedhel")))->Draw("hist");
 
   ct->cd(12);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhD")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("huhD")))->Draw("hist");
   ct->cd(13);
-  //((TH1D*)HISTOS.At(HISTO_POSITION.at("huhc")))->Draw("hist");
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhRc")))->Draw("hist");
+  //((TH1D*)fHistos.At(fHistoPositions.at("huhc")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("huhRc")))->Draw("hist");
   ct->cd(14);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpt")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("huhpt")))->Draw("hist");
   ct->cd(15);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpz")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("huhpz")))->Draw("hist");
   ct->cd(16);
-  ((TH1D*)HISTOS.At(HISTO_POSITION.at("huhpp")))->Draw("hist");
+  ((TH1D*)fHistos.At(fHistoPositions.at("huhpp")))->Draw("hist");
   ct->cd(17);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhptz")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("huhptz")))->Draw("colz");
 
   ct->cd(18);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspxy")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("huhspxy")))->Draw("colz");
   ct->cd(19);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzr")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("huhspzr")))->Draw("colz");
   ct->cd(20);
-  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhspzp")))->Draw("colz");
-  //  ((TH2D*)HISTOS.At(HISTO_POSITION.at("huhsprp")))->Draw("colz");
+  ((TH2D*)fHistos.At(fHistoPositions.at("huhspzp")))->Draw("colz");
+  //  ((TH2D*)fHistos.At(fHistoPositions.at("huhsprp")))->Draw("colz");
   
   return ct;
 }
+
+void TAGPlot::ExportCSV(const std::string filename, Bool_t PassedCutOnly)
+{
+   //Save Time windows and vertex data
+   TAPlot::ExportCSV(filename, PassedCutOnly);
+ 
+   std::string scalerFilename = filename + ".scaler.csv";
+   std::ofstream chrono;
+   chrono.open(scalerFilename);
+   chrono << fChronoEvents.CSVTitleLine();
+   for (size_t i=0; i< fChronoEvents.size(); i++)
+      chrono << fChronoEvents.CSVLine(i);
+   chrono.close();
+   std::cout<< scalerFilename << " saved\n";
+}
+
+
+
+
+
+void TAGPlot::ProcessHelices(const double runNumber, const double time, const double officialtime, const TObjArray* tracks)
+{
+  const int Nhelices = tracks->GetEntries();
+  for(int i=0; i<Nhelices; ++i)
+  {
+      const TStoreHelix* aHelix = (TStoreHelix*) tracks->At(i);
+      fHelixEvents.AddEvent(
+        runNumber,
+        time,
+        officialtime,
+        aHelix->GetMomentumV().Perp(),
+        aHelix->GetMomentumV().Z(),
+        aHelix->GetMomentumV().Mag(),
+        aHelix->GetD(),
+        aHelix->GetRc(),
+        aHelix->GetNumberOfPoints()
+      );
+
+      const TObjArray* points = aHelix->GetSpacePoints();
+      for(int ip = 0; ip<points->GetEntries(); ++ip  )
+	    {
+         const TSpacePoint* ap = (TSpacePoint*) points->At(ip);
+         fSpacePointHelixEvents.AddEvent(
+           runNumber,
+           time,
+           officialtime,
+           ap->GetX(),
+           ap->GetY(),
+           ap->GetZ(),
+           ap->GetR(),
+           ap->GetPhi()*TMath::RadToDeg()
+         );
+      }
+   }
+}
+
+void TAGPlot::ProcessUsedHelices(const double runNumber, const double time, const double officialtime, const TObjArray* tracks)
+{
+  const int Nhelices = tracks->GetEntries();
+  for(int i=0; i<Nhelices; ++i)
+  {
+      const TStoreHelix* aHelix = (TStoreHelix*) tracks->At(i);
+      fUsedHelixEvents.AddEvent(
+        runNumber,
+        time,
+        officialtime,
+        aHelix->GetMomentumV().Perp(),
+        aHelix->GetMomentumV().Z(),
+        aHelix->GetMomentumV().Mag(),
+        aHelix->GetD(),
+        aHelix->GetRc(),
+        aHelix->GetNumberOfPoints()
+      );
+
+      const TObjArray* points = aHelix->GetSpacePoints();
+      for(int ip = 0; ip<points->GetEntries(); ++ip  )
+	    {
+         const TSpacePoint* ap = (TSpacePoint*) points->At(ip);
+         fSpacePointUsedHelixEvents.AddEvent(
+           runNumber,
+           time,
+           officialtime,
+           ap->GetX(),
+           ap->GetY(),
+           ap->GetZ(),
+           ap->GetR(),
+           ap->GetPhi()*TMath::RadToDeg()
+         );
+      }
+   }
+}
+
+
+
+
 #endif
 /* emacs
  * Local Variables:
