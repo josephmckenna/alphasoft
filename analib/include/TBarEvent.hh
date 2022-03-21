@@ -85,7 +85,7 @@ public:
   void GetXY(double &x, double &y)
   {
 	  double r=(.223+.243)/2.;
-	  double offset_angle=TMath::Pi()+0.2;
+	  double offset_angle=TMath::Pi()+0.25698;
       double theta=fBarID*2.*TMath::Pi()/64; //Degrees
       x=r*TMath::Cos(theta + offset_angle);
       y=r*TMath::Sin(theta + offset_angle);
@@ -146,7 +146,7 @@ public:
 
   double GetPhi()
   {
-	  double offset_angle=TMath::Pi()+0.2;
+	  double offset_angle=TMath::Pi()+0.25698;
      double theta=fBarID*2.*TMath::Pi()/64;
      return theta+offset_angle;
   }
