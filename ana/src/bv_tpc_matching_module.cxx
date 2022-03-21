@@ -61,6 +61,10 @@ private:
    // TOF parameters
    double min_dphi;
 
+   // Counters
+   int c_hits=0;
+   int c_matched=0;
+
 
 public:
 
@@ -84,12 +88,14 @@ public:
    void BeginRun(TARunInfo* runinfo)
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
-      if (fFlags->fPrint) { printf("matchingmodule::begin!"); };
+      if (fFlags->fPrint) { printf("matchingmodule::begin!\n"); };
    }
 
 
    void EndRun(TARunInfo* runinfo)
    {
+      printf("BV/TPC Matching Module: Total TPC tracks: %d\n",c_hits);
+      printf("BV/TPC Matching Module: TPC tracks matched to BV: %d\n",c_matched);
       runinfo->fRoot->fOutputFile->Write();
    }
 
@@ -129,20 +135,20 @@ public:
       TBarEvent *barEvt=bf->BarEvent;
       if (!barEvt)
       {
-         if (fFlags->fPrint) {printf("matchingmodule: TBarEvent not found!");}
+         if (fFlags->fPrint) {printf("matchingmodule: TBarEvent not found!\n");}
          return flow;
       }
 
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
       if (!anaflow)
       {
-         if (fFlags->fPrint) {printf("matchingmodule: AgAnalysisFlow not found!");}
+         if (fFlags->fPrint) {printf("matchingmodule: AgAnalysisFlow not found!\n");}
          return flow;
       }
       TStoreEvent* e = anaflow->fEvent;
       if (!e)
       {
-         if (fFlags->fPrint) {printf("matchingmodule: TStoreEvent not found!");}
+         if (fFlags->fPrint) {printf("matchingmodule: TStoreEvent not found!\n");}
          return flow;
       }
 
@@ -156,26 +162,24 @@ public:
       // Main functions
       if( fFlags->fMagneticField > 0. || fFlags->fMagneticField < 0. )
          {
+            if (fFlags->fPrint and !(HelixArray)) printf("matchingmodule: HelixArray not found!\n");
             std::vector<TVector3> helix_points = GetHelices(HelixArray);
             MatchPoints(barEvt, helix_points);
          }
       else
          {
+            if (fFlags->fPrint and !(LineArray)) printf("matchingmodule: LineArray not found!\n");
             std::vector<TVector3> line_points = GetLines(LineArray);
             MatchPoints(barEvt, line_points);
          }
       
       //AgBarEventFlow 
+      e->SetBarEvent(barEvt);
       if (fFlags->fPrint) {
          printf("matchingmodule: Bar Event vvvvv\n");
          barEvt->Print();
-         printf("matchingmodule: Store Event vvvvv\n");
-         e->SetBarEvent(barEvt);
-         printf("matchingmodule: Store Flow Event vvvvv\n");
-         if (e->GetBarEvent())
-            e->GetBarEvent()->Print();
+         e->Print();
       }
-      e->Print();
       return flow;
    }
 
@@ -192,6 +196,7 @@ public:
             line_points.push_back(lin->Evaluate(radius*radius));
             delete lin;
          }
+      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %d TPC lines\n", line_points.size());
       return line_points;
    }
    std::vector<TVector3> GetHelices(const TObjArray* HelixArray)
@@ -204,14 +209,18 @@ public:
             helix_points.push_back(hel->Evaluate(radius*radius));
             delete hel;
          }
+      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %d TPC helixes\n", helix_points.size());
       return helix_points;
    }
    void MatchPoints(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
    {
       for (TVector3 tpc_point: tpc_points) {
-         double min_dist = 99999.;
-         BarHit* best_barhit;
-         for (BarHit* barhit: barEvt->GetBars()) {
+         c_hits++;
+         double min_dist = 999999999.;
+         int best_barhit;
+         std::vector<BarHit*> bars = barEvt->GetBars();
+         for (int i=0;i<barEvt->GetNBars();i++) {
+            BarHit* barhit = bars.at(i);
             TVector3 bv_point = Get3VectorBV(barhit);
             double dist = GetGeometricDistance(bv_point,tpc_point);
             if (dist>min_dist) continue;
@@ -220,11 +229,18 @@ public:
             double dzi = GetDZ(bv_point,tpc_point);
             if (TMath::Abs(dzi) > max_dz) continue;
             min_dist = dist;
-            best_barhit = barhit;
+            best_barhit = i;
          }
-         if (min_dist!=99999.) {
+         if (min_dist!=999999999.) {
             // Match!
-            best_barhit->SetTPCHit(tpc_point);
+            bars.at(best_barhit)->SetTPCHit(tpc_point);
+            c_matched++;
+         }
+      }
+      if (fFlags->fPrint) {
+         printf("%d total BarHits, %d total TPC points",barEvt->GetBars().size(),tpc_points.size());
+         for (BarHit* barhit: barEvt->GetBars()) {
+            printf("Matching module BarHit matched? %s\n", barhit->IsTPCMatched() ? "yes!" : "no");
          }
       }
    }
