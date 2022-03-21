@@ -195,16 +195,13 @@ public:
       runinfo->fRoot->fOutputFile->Write();
 
       // Print stats
-      if( fFlags->fPrint )
-         {
-            printf("tdc module stats:\n");
-            printf("Total number of adc hits = %d\n",c_adc);
-            printf("Total number of tdc hits = %d\n",c_tdc);
-            if (!fFlags->fPulser) {
-               printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
-               printf("Total number of top+bot combined hits = %d\n",c_topbot);
-            }
-         }
+      printf("tdc module stats:\n");
+      printf("Total number of adc hits = %d\n",c_adc);
+      printf("Total number of tdc hits = %d\n",c_tdc);
+      if (!fFlags->fPulser) {
+         printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
+         printf("Total number of top+bot combined hits = %d\n",c_topbot);
+      }
 
       // Delete histograms
       if (fFlags->fDiag)
@@ -320,9 +317,8 @@ public:
             if (!(fFlags->fProtoTOF)) barID = BVFindBarID(int(tdchit->fpga),int(tdchit->chan));
             if (fFlags->fProtoTOF) barID = protoTOFFindBarID(tdchit->chan);
 
-            // Skips channels 0-7, 48-55, 64-71, 112-119 FIXME remember to change this backa once they are time calibrated
-            //if ((0<=barID and barID<=7) or (64<=barID and barID<=71) or (48<=barID and barID<=55) or (112<=barID and barID<=119)) continue;
-            //if ((48<=barID and barID<=55) or (112<=barID and barID<=119) or (barID==0)) continue;
+            // Skips channels with bad calibration, remember to remove this once they are time calibrated
+            if ((48<=barID and barID<=55) or (112<=barID and barID<=119) or (barID==0) or (barID==100) or (barID==101)) continue;
 
             // Calculates hit time
             double tdc_time;
@@ -395,6 +391,10 @@ public:
             // Writes tdc data to endhit
             endhit->SetTDCHit(correct_time);
             c_adctdc+=1;
+         }
+         if (fFlags->fPrint) {
+            for (EndHit* endhit: endhits)
+               printf("tdcmodule: TDC matched? %s\n",endhit->IsTDCMatched() ? "yes" : "no");
          }
    }
 
