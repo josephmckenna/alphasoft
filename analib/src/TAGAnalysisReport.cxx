@@ -70,9 +70,9 @@ void TAGAnalysisReport::Print()
     PrintHeader();
     if(nStoreEvents>0)
     {
-       std::cout << "Mean #AW:   \t:"   << DoubleValue["TPC_Mean_AW"]    << std::endl;
-       std::cout << "Mean #PAD:   \t:"  << DoubleValue["TPC_Mean_Pad"]   << std::endl;
-       std::cout << "Mean #MATCH:   \t:"<< DoubleValue["TPC_Mean_Match"] << std::endl;
+       std::cout << "Mean #AW:   \t"   << DoubleValue["TPC_Mean_AW"]    << std::endl;
+       std::cout << "Mean #PAD:  \t"  << DoubleValue["TPC_Mean_Pad"]   << std::endl;
+       std::cout << "Mean #MATCH:\t"<< DoubleValue["TPC_Mean_Match"] << std::endl;
        std::cout << "Mean #Hits: \t"    << DoubleValue["TPC_Mean_Hits"] << std::endl;
        std::cout << "Mean #Tracks:\t"   << DoubleValue["TPC_Mean_Tracks"] << 
                         "\t(Mean ChiR:" << DoubleValue["TPC_Mean_Z_Sigma"] << 

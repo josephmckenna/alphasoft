@@ -61,10 +61,13 @@ public:
          sum_verts += 1;
       if (e->GetNumberOfPoints()>0)
          sum_hits  += e->GetNumberOfPoints();
-      if (e->GetBarMultiplicity()>0)
-         sum_bars  += e->GetBarMultiplicity();
       AnalysisReport->SetLastTPCTime( e->GetTimeOfEvent() );
       AnalysisReport->IncrementStoreEvents();
+   }
+   void FillBV(TBarEvent* e)
+   {
+      if (e->GetNBars()>0)
+         sum_bars  += e->GetNBars();
    }
 #endif
 #ifdef BUILD_AG
@@ -201,6 +204,16 @@ public:
             if (e)
             {
                fFlags->FillTPC(e);
+            }
+            continue;
+         }
+         AgBarEventFlow* bar_event = dynamic_cast<AgBarEventFlow*>(f);
+         if (bar_event)
+         {
+            TBarEvent* e = bar_event->BarEvent;
+            if (e)
+            {
+               fFlags->FillBV(e);
             }
             continue;
          }
