@@ -13,6 +13,9 @@ spill_log_module.o
 bsc_adc_module.o     
 # NM
 bsc_tdc_module.o
+# Simply write the TBarEvent to a tree
+bsc_eventwriter.o
+
 # rTPC tracking chain
 deconv_aw_module.o deconv_pad_module.o match_module.o reco_module.o
 
