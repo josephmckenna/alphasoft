@@ -13,7 +13,16 @@ BIN=${1}
 RUNS="${@:2}"
 
 # Theoretical top speed:
-/usr/bin/time -al lz4cat ${RUNS} > /dev/null 2> $AGRELEASE/scripts/MT_MODE_TEST_MAX_SPEED.log
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    /usr/bin/time --format='real %e\tuser %U\tsys %S\n' lz4cat ${RUNS} > /dev/null 2> $AGRELEASE/scripts/MT_MODE_TEST_MAX_SPEED.log
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    /usr/bin/time -al lz4cat ${RUNS} > /dev/null 2> $AGRELEASE/scripts/MT_MODE_TEST_MAX_SPEED.log
+else
+    echo "Unsupported OS (probably)"
+    return
+fi
+
+
 
 #grep set_property ana/CMakeLists.txt
 #set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "5" "8")
@@ -33,7 +42,15 @@ for N_PAD_DECONV_THREADS in 1 2 3 4 5 8; do
                 make install
                 OUTPUT=${N_PAD_DECONV_THREADS}_${N_KDTREE_MATCH_THREADS}_${N_TRACK_FIT_THREADS}_${N_VERTEX_FIT_THREADS}
                 cd $AGRELEASE
-                /usr/bin/time -al ${BIN} ${RUNS} --mt -- --anasettings ana/cern2021_2.json > $AGRELEASE/scripts/${BIN}_${OUTPUT}.log 2> $AGRELEASE/scripts/MT_MODE_TEST_${OUTPUT}.log
+                if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+                    /usr/bin/time --format='real %e\tuser %U\tsys %S\n'  ${BIN} ${RUNS} --mt -- --anasettings ana/cern2021_2.json > $AGRELEASE/scripts/${BIN}_${OUTPUT}.log 2> $AGRELEASE/scripts/MT_MODE_TEST_${OUTPUT}.log
+                elif [[ "$OSTYPE" == "darwin"* ]]; then
+                    /usr/bin/time -al ${BIN} ${RUNS} --mt -- --anasettings ana/cern2021_2.json > $AGRELEASE/scripts/${BIN}_${OUTPUT}.log 2> $AGRELEASE/scripts/MT_MODE_TEST_${OUTPUT}.log
+                else
+                    echo "Unsupported OS (probably)"
+                    return
+                fi
+
             done
         done
     done
