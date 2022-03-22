@@ -147,6 +147,7 @@ public:
       if ( fFlags->fThreadNo == 1)
       {
          kdtree_flow = new AgKDTreeMatchFlow(flow);
+         flow = kdtree_flow;
 #if wiresFindPads
          if (SigFlow->pdSig.size()) {
             //printf("KDTreeMatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
