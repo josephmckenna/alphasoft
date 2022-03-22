@@ -149,13 +149,8 @@ public:
          }
       }
 
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif      
-
       if( fFlags->fPrint )
          printf("BscModule::AnalyzeFlowEvent(...) Event number is : %d \n", data->counter);
-
 
       TBarEvent* BarEvent = AnalyzeBars(data, runinfo);
       BarEvent->SetID(e->counter);
