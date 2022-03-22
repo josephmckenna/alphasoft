@@ -334,7 +334,7 @@ double TFitVertex::FindMinDistanceM2(double& s0, double& s1)
   
   MinDistFCN fitd_fcn(this);
   ROOT::Minuit2::VariableMetricMinimizer fitd_minimizer;
-  ROOT::Minuit2::FunctionMinimum fitd_min = fitd_minimizer.Minimize(fitd_fcn,init_dfit,init_derr, 500, 0.1);
+  ROOT::Minuit2::FunctionMinimum fitd_min = fitd_minimizer.Minimize(fitd_fcn,init_dfit,init_derr,1, 500, 0.01);
   ROOT::Minuit2::MnUserParameterState fitd_state = fitd_min.UserState();
 
   double chi2 = fitd_state.Fval();
@@ -456,7 +456,7 @@ double TFitVertex::RecalculateM2()
 
   VertFuncFCN fitvtx_fcn(this);
   ROOT::Minuit2::VariableMetricMinimizer fitvtx_minimizer;
-  ROOT::Minuit2::FunctionMinimum fitvtx_min = fitvtx_minimizer.Minimize(fitvtx_fcn, init_vfit, init_verr, 500, 0.1);
+  ROOT::Minuit2::FunctionMinimum fitvtx_min = fitvtx_minimizer.Minimize(fitvtx_fcn, init_vfit, init_verr,1, 500, 0.01);
   ROOT::Minuit2::MnUserParameterState fitvtx_state = fitvtx_min.UserState();
 
   double chi2 = fitvtx_state.Fval();
@@ -516,7 +516,7 @@ int TFitVertex::Improve()
 #endif
 
 #if MINUIT2VERTEXFIT
-      chi2=FindNewVertexM2(ipar,iparerr);
+      chi2=FindNewVertexM2(ipar,iparerr); 
 #else
       chi2=FindNewVertex(ipar,iparerr);
 #endif
@@ -615,7 +615,7 @@ double TFitVertex::FindNewVertexM2(double* ipar, double* iparerr)
 
   VertFuncFCN fitnewvtx_fcn(this);
   ROOT::Minuit2::VariableMetricMinimizer fitnewvtx_minimizer;
-  ROOT::Minuit2::FunctionMinimum fitnewvtx_min = fitnewvtx_minimizer.Minimize(fitnewvtx_fcn, init_vnewfit, init_vnewerr, 500, 0.1);
+  ROOT::Minuit2::FunctionMinimum fitnewvtx_min = fitnewvtx_minimizer.Minimize(fitnewvtx_fcn, init_vnewfit, init_vnewerr, 1, 500, 0.01);
   ROOT::Minuit2::MnUserParameterState fitnewvtx_state = fitnewvtx_min.UserState();
 
   double chi2 = fitnewvtx_state.Fval();
