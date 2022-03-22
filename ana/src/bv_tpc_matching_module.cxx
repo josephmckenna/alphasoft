@@ -24,7 +24,7 @@
 class MatchingModuleFlags
 {
 public:
-   double fMagneticField = 0;
+   double fMagneticField = -1;
    bool fPrint = false;
    bool fDiag = false;
    AnaSettings* ana_settings=0;
@@ -138,6 +138,7 @@ public:
          if (fFlags->fPrint) {printf("matchingmodule: TBarEvent not found!\n");}
          return flow;
       }
+      
 
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
       if (!anaflow)
@@ -145,6 +146,7 @@ public:
          if (fFlags->fPrint) {printf("matchingmodule: AgAnalysisFlow not found!\n");}
          return flow;
       }
+      
       TStoreEvent* e = anaflow->fEvent;
       if (!e)
       {
