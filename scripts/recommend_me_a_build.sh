@@ -10,8 +10,10 @@
 # brute force... Id like to see it in  bash but maybe python is better
 
 BIN=${1}
-RUNS="$@"
+RUNS="${@:2}"
 
+# Theoretical top speed:
+/usr/bin/time -al lz4cat ${RUNS} > /dev/null 2> $AGRELEASE/scripts/MT_MODE_TEST_MAX_SPEED.log
 
 #grep set_property ana/CMakeLists.txt
 #set_property(CACHE N_PAD_DECONV_THREADS PROPERTY STRINGS "1" "2" "3" "4" "5" "8")
