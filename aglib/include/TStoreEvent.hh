@@ -41,7 +41,7 @@ private:
 
   double fPattRecEff;
 
-  std::vector<TBarHit*> fBarHit; //Barrel hits
+  //std::vector<TBarHit*> fBarHit; //Barrel hits
   
 public:
   TStoreEvent();
@@ -134,8 +134,8 @@ public:
 
   inline double GetNumberOfPointsPerTrack() const {return fPattRecEff;}
   
-  void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
-  Int_t GetBarMultiplicity() const { return fBarHit.size(); }
+  //void AddBarrelHits(TBarEvent* b) { fBarHit=b->GetBars();}
+  //Int_t GetBarMultiplicity() const { return fBarHit.size(); }
   virtual void Print(Option_t *option="") const;
   virtual void Reset();
 

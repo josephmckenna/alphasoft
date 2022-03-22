@@ -35,8 +35,8 @@ TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID
 						   fSpacePoints(right.fSpacePoints),
 						   fUsedHelices(right.fUsedHelices),
 						   fVertex(right.fVertex),fVertexStatus(right.fVertexStatus),
-						   fPattRecEff(right.fPattRecEff),
-						   fBarHit(right.fBarHit)
+						   fPattRecEff(right.fPattRecEff)
+						   //fBarHit(right.fBarHit)
 {}
 
 TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
@@ -52,7 +52,7 @@ TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
   fVertex = right.fVertex;
   fVertexStatus = right.fVertexStatus;
   fPattRecEff = right.fPattRecEff;
-  fBarHit = right.fBarHit;
+  //fBarHit = right.fBarHit;
   return *this;
 }
 
@@ -158,12 +158,12 @@ void TStoreEvent::Print(Option_t* o) const
       std::cout<<"***********************"<<std::endl;
       std::cout<<"fPattRecEff: "<< fPattRecEff <<std::endl;
 
-      std::cout<<"*** Bar Hits ***"<<std::endl;
-      std::cout<<"fBarHit: "<< fBarHit.size() <<std::endl;
-       for(int i=0; i<fBarHit.size(); ++i)
-         {
-           fBarHit.at(i)->Print();
-         }
+      //std::cout<<"*** Bar Hits ***"<<std::endl;
+      //std::cout<<"fBarHit: "<< fBarHit.size() <<std::endl;
+      //for(int i=0; i<fBarHit.size(); ++i)
+      //   {
+      //     fBarHit.at(i)->Print();
+      //   }
       std::cout<<"***********************"<<std::endl;
 
       std::cout<<"*** TObj Arrays ***"<<std::endl;
@@ -245,7 +245,7 @@ void TStoreEvent::Reset()
 
   fPattRecEff = -1.;
   
-  fBarHit.clear();
+  //fBarHit.clear();
 
 }
 
