@@ -16,6 +16,7 @@ private:
 
 public:
   TBarHit(); // ctor
+  TBarHit(const TBarHit &h);
   using TObject::Print;
   virtual void Print();
   virtual ~TBarHit(); // dtor
@@ -44,7 +45,7 @@ public:
 
   double GetPhi() const
   {
-	  double offset_angle=TMath::Pi()+0.2;
+	  double offset_angle=TMath::Pi()+0.25698;
      double theta=fBarID*2.*TMath::Pi()/64;
      return theta+offset_angle;
   }
@@ -62,11 +63,33 @@ public:
       x=r*TMath::Cos(theta + offset_angle);
       y=r*TMath::Sin(theta + offset_angle);
       return;
-  }
-//  double GetTDCZed() { // This should probably not be done here. The value of the speed of light should be put into the analysis settings, and this should be done in the tdc module.
-//      return (fBotHit->GetTDCTime() - fTopHit->GetTDCTime())*120.8686*1e9/2;
-//  }
-  ClassDef(TBarHit,3);
+   }
+   TVector3 Get3Vector() const
+   {
+      double x,y;
+      this->GetXY(x,y);
+      TVector3 bv_point = TVector3(x*1000,y*1000,fZed*1000); // to mm
+      return bv_point;
+   }
+   double GetDistToHit(const TBarHit* h) const
+   {
+      TVector3 diff = this->Get3Vector() - h->Get3Vector();
+      return diff.Mag();
+   }
+   double GetDPhiToHit(const TBarHit* h) const
+   {
+      return (h->Get3Vector()).DeltaPhi(this->Get3Vector());
+   }
+   double GetDZToHit(const TBarHit* h) const
+   {
+      return h->GetTDCZed() - fZed;
+   }
+   double GetTOFToHit(const TBarHit* h) const
+   {
+      return h->GetAverageTDCTime() - this->GetAverageTDCTime();
+   }
+
+  ClassDef(TBarHit,4);
 };
 
 

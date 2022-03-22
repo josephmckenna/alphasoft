@@ -33,6 +33,9 @@ public:
    bool fPulser = false; // Calibration pulser run
    bool fProtoTOF = false; // TRIUMF prototype
    bool fFitAll = false; // If false, fits only saturated waveforms
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
    AnaSettings* ana_settings=0;
 };
 
@@ -123,18 +126,32 @@ public:
 #endif
          return flow;
       }
-      #ifdef _TIME_ANALYSIS_
-      START_TIMER
-      #endif      
       const AgEvent* e = ef->fEvent;
       const Alpha16Event* data = e->a16;
-
       if( !data )
          {
             std::cout<<"BscModule::AnalyzeFlowEvent(...) No Alpha16Event in AgEvent # "
                      <<e->counter<<std::endl;
             return flow;
          }
+      if (fFlags->fTimeCut) {
+         if (e->time<fFlags->start_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+         if (e->time>fFlags->stop_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+      }
+
+      #ifdef _TIME_ANALYSIS_
+      START_TIMER
+      #endif      
 
       if( fFlags->fPrint )
          printf("BscModule::AnalyzeFlowEvent(...) Event number is : %d \n", data->counter);
@@ -321,6 +338,7 @@ public:
       printf("\t--bscProtoTOF\t\t\tanalyze run with with TRIUMF prototype instead of full BV\n");
       printf("\t--bscprint\t\t\tverbose mode\n");
       printf("\t--bscfitall\t\t\tfits all bsc adc waveforms instead of only saturated waveforms\n");
+      printf("\t--usetimerange 123.4 567.8\t\tLimit analysis to a time range\n");
    }
    void Usage()
    {
@@ -346,6 +364,16 @@ public:
             json=args[i+1];
          if( args[i] == "--bscfitall")
             fFlags.fFitAll = true;
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
       }
       fFlags.ana_settings=new AnaSettings(json.Data());
    }

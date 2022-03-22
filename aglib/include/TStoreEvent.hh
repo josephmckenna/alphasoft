@@ -39,9 +39,6 @@ private:
   TVector3 fVertex;
   int fVertexStatus;
 
-  int fOnlineCut = 0;
-  int fOnlineMVACut = 0;
-
   double fPattRecEff;
 
   std::vector<TBarHit*> fBarHit; //Barrel hits
@@ -70,9 +67,6 @@ public:
   inline void SetNumberOfPoints(int Npoints) {fNpoints = Npoints;}
   inline int GetNumberOfTracks() const {return fNtracks;}
   inline void SetNumberOfTracks(int Ntrk) {fNtracks = Ntrk;}
-
-  int GetOnlinePassCuts() const { return fOnlineCut; }
-  int GetOnlinePassMVA() const { return fOnlineMVACut; }
   
   double GetMeanZSigma()
   {

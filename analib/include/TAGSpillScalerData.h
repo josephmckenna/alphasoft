@@ -5,7 +5,7 @@
 #if BUILD_AG
 
 #include "TSpillScalerData.h"
-#include "TStoreEvent.hh"
+#include "TAGDetectorEvent.hh"
 #include "TChronoBoardCounter.h"
 #include "ChronoUtil.h"
 #include "TDumpMarkerPair.h"
@@ -18,7 +18,7 @@ class TAGSpillScalerData: public TSpillScalerData
    TAGSpillScalerData(int n_scaler_channels);
    TAGSpillScalerData(const TAGSpillScalerData& a);
    //TAGSpillScalerData* operator/(const TAGSpillScalerData* b);
-   TAGSpillScalerData(TDumpMarkerPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
+   TAGSpillScalerData(TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
    using TObject::Print;
    virtual void Print();
 

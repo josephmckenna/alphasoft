@@ -311,9 +311,9 @@ int TDumpMarkerPair<VertexType,ScalerType,NumScalers>::AddSVDEvent(const VertexT
 
 
 #if BUILD_AG
-#include "TStoreEvent.hh"
+#include "TAGDetectorEvent.hh"
 #include "TChronoBoardCounter.h"
-template class TDumpMarkerPair<TStoreEvent, TChronoBoardCounter, CHRONO_N_BOARDS>;
+template class TDumpMarkerPair<TAGDetectorEvent, TChronoBoardCounter, CHRONO_N_BOARDS>;
 #endif
 
 #if BUILD_A2

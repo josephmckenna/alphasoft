@@ -25,7 +25,7 @@ TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...):
    va_end(args);
 }
 
-TAGSpill::TAGSpill(int runno, TDumpMarkerPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
+TAGSpill::TAGSpill(int runno, TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
    TSpill(runno, d->fStartDumpMarker->fMidasTime, d->fStartDumpMarker->fDescription.c_str())
 {
    

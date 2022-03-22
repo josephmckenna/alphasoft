@@ -35,6 +35,7 @@ wf_persistency_module.o
 histo_module.o
 phspectrum_module.o
 # GS
+bv_tpc_matching_module.o
 bsc_histo_module.o
 # LM
 calib_module.o

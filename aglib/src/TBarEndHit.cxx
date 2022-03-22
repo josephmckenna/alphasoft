@@ -4,11 +4,21 @@ ClassImp(TBarEndHit)
 TBarEndHit::TBarEndHit()
 {
    fBarID=-1;
-   fTDCTime=-1; 
+   fTDCTime=-1;
    fADCTime=-1;
    fAmp=-1;
-   fAmpRaw=-1; 
+   fAmpRaw=-1;
    fTDCMatched=false;
+}
+
+TBarEndHit::TBarEndHit(const TBarEndHit &h): // copy ctor
+  fBarID(h.GetBar()),
+  fTDCTime(h.GetTDCTime()),
+  fADCTime(h.GetADCTime()),
+  fAmp(h.GetAmp()),
+  fAmpRaw(h.GetAmpRaw()),
+  fTDCMatched(h.IsTDCMatched())
+{
 }
 
 void TBarEndHit::Print()

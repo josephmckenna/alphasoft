@@ -11,6 +11,33 @@ TBarEvent::TBarEvent()
 // ctor
 }
 
+TBarEvent::TBarEvent(TBarEvent &barEvt)
+{
+// copy ctor
+  fEventID = barEvt.GetID();
+  fEventTime = barEvt.GetRunTime();
+  for(TBarHit* barhit: barEvt.GetBars())  {
+    if(barhit)
+    {
+      TBarHit* h = new TBarHit(*(barhit));
+      fBarHit.push_back(h);
+    }
+  }
+  for(TBarEndHit* endhit: barEvt.GetEndHits()) {
+    if(endhit)
+    {
+      TBarEndHit* h = new TBarEndHit(*(endhit));
+      fEndHit.push_back(h);
+    }
+  }
+  for(TBarSimpleTdcHit* tdchit: barEvt.GetTdcHits()) {
+    if(tdchit)
+    {
+      TBarSimpleTdcHit* h = new TBarSimpleTdcHit(*(tdchit));
+      fTdcHit.push_back(h);
+    }
+  }
+}
 
 
 TBarEvent::~TBarEvent()

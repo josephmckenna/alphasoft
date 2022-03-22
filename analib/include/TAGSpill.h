@@ -7,7 +7,7 @@
 #include "TAGSpillScalerData.h"
 #include "TAGSpillSequencerData.h"
 
-#include "TStoreEvent.hh"
+#include "TAGDetectorEvent.hh"
 #include "store_cb.h"
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
@@ -47,7 +47,7 @@ public:
    TAGSpill();
    TAGSpill(int runno, uint32_t unixtime);
    TAGSpill(int runno, uint32_t unixtime, const char* format, ...);
-   TAGSpill(int runno, TDumpMarkerPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
+   TAGSpill(int runno, TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d);
    TAGSpill* operator/( TAGSpill* b);
    TAGSpill* operator+( TAGSpill* b);
    TAGSpill(const TAGSpill& a);

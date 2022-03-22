@@ -18,6 +18,7 @@ public:
    bool fProtoTOF = false;
    bool fBscDiag = false;
    bool fWriteOffsetFile = false;
+   bool fRecOff = false;
 
 public:
    BscHistoFlags() // ctor
@@ -36,7 +37,9 @@ public:
 private:
 
    bool diagnostics;
-   double c = 0.2998; // m/ns
+   double c = 2.99792e-1; // m/ns
+   double refrac = 1.93; // From protoTOF tests with time walk correction applied
+   double factor = c/refrac * 0.5;
    int pulser_reference_chan = 40;
 
    // Container declaration
@@ -75,7 +78,10 @@ private:
    TH2D* hTdcSingleChannelHitTime2d;
    TH1D* hTdcTimeVsCh0;
    TH2D* hTdcTimeVsCh02d;
-   std::map<int,TH2D*> hTdcOffsetByRTM;
+   TH1D* hFineTimeCounter;
+   TH1D* hFineTime;
+   TH2D* hFineTimeCounter2d;
+   TH2D* hFineTime2d;
 
    // Bars
    TH1D* hBarMultiplicity;
@@ -93,8 +99,24 @@ private:
    TH1D* hNBarDPhi;
    TH1D* hTwoBarDZed;
    TH1D* hNBarDZed;
+   TH2D* hTwoBarDPhiDZed;
+   TH2D* hNBarDPhiDZed;
    TH1D* hTwoBarExpectedTOF;
    TH2D* hTwoBarExpectedTOFvsTOF;
+   TH1D* hNBarExpectedTOF;
+   TH2D* hNBarExpectedTOFvsTOF;
+   TH1D* hTwoBarExpectedTOFminusTOF;
+   TH1D* hNBarExpectedTOFminusTOF;
+
+   // Matching
+   TH1D* hTPCMatched;
+   TH1D* hMatchingDZ;
+   TH2D* hMatchingDZbyBar;
+   TH2D* hMatchingDZbyZed;
+   TH1D* hMatchingDPhi;
+   TH2D* hMatchingDPhibyBar;
+   TH1D* hMatchingD;
+   TH2D* hMatchingDbyBar;
 
 
 
@@ -164,11 +186,15 @@ public:
          hAdcTdcOccupancy = new TH1D("hAdcTdcOccupancy","Channel occupancy after TDC matching;Channel number",16,-0.5,15.5);
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",16,-0.5,15.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",16,-0.5,15.5,16,-0.5,15.5);
+         hFineTime = new TH1D("hFineTime","Fine time;Fine time (s)",200,-1e-9,6e-9);
+         hFineTime2d = new TH2D("hFineTime2d","Fine time;TDC channel number;Fine time (s)",16,-0.5,15.5,200,-1e-9,6e-9);
+         hFineTimeCounter = new TH1D("hFineTimeCounter","Fine time counter;Fine time counter",1024,0,1024);
+         hFineTimeCounter2d = new TH2D("hFineTimeCounter2d","Fine time counter;TDC channel number;Fine time counter",16,-0.5,15.5,1024,0,1024);
          hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",17,-0.5,16.5);
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,201,-0.5,200.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
-         hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",16,-0.5,15.5,1000,0,400);
+         hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",16,-0.5,15.5,100,0,400);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel forty;TDC time minus ch40 time (ns)",2000,-5,5);
             hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel forty;Channel number;TDC time minus ch40 time (ns)",16,-0.5,15.5,2000,-5,5);
@@ -180,11 +206,11 @@ public:
          hBarOccupancy = new TH1D("hBarOccupancy","Bar occupancy;Bar number;Counts",2,-0.5,1.5);
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",3,-0.5,2.5);
-            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-10,10);
-            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",2,-0.5,1.5,200,-10,10);
+            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-10,10);
+            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC bottom time minus TDC top time (ns)",2,-0.5,1.5,200,-10,10);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-2,2);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",2,-0.5,1.5,200,-2,2);
-            hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,-20,20);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","Time of flight between two bars;TOF (ns)",200,0,20);
             hTwoBarDZed = new TH1D("hTwoBarDZed","Zed difference between two bars;Delta Zed (m)",200,-2,2);
          }
          gDirectory->cd("..");
@@ -197,12 +223,12 @@ public:
          gDirectory->mkdir("adc_histos")->cd();
          hAdcOccupancy = new TH1D("hAdcOccupancy","ADC channel occupancy;Channel number;Counts",128,-0.5,127.5);
          hAdcCorrelation = new TH2D("hAdcCorrelation","ADC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
-         hAdcMultiplicity = new TH1D("hAdcMultiplicity","ADC hit multiplicity;Number of ADC channels hit",129,-0.5,128.5);
-         hAdcAmp = new TH1D("hAdcAmp","ADC pulse amplitude;Amplitude (volts)",200,0.,4.);
-         hAdcAmp2d = new TH2D("hAdcAmp2d","ADC pulse amplitude;Channel number;Amplitude (volts)",128,-0.5,127.5,200,0.,4.);
-         hAdcFitAmp = new TH1D("hAdcFitAmp","ADC pulse amplitude from fit;Amplitude from fit (volts)",200,0.,4.);
-         hAdcFitAmp2d = new TH2D("hAdcFitAmp2d","ADC pulse amplitude from fit;Channel number;Amplitude from fit (volts)",128,-0.5,127.5,200,0.,4.);
-         hAdcFitting = new TH2D("hAdcFitting","ADC pulse amplitude fit vs. measured;Amplitude (Volts);Amplitude from fit (volts)",200,0.,4.,200,0.,4.);
+         hAdcMultiplicity = new TH1D("hAdcMultiplicity","ADC hit multiplicity;Number of ADC channels hit",41,-0.5,40.5);
+         hAdcAmp = new TH1D("hAdcAmp","ADC pulse amplitude;Amplitude (volts)",200,0.,2.);
+         hAdcAmp2d = new TH2D("hAdcAmp2d","ADC pulse amplitude;Channel number;Amplitude (volts)",128,-0.5,127.5,200,0.,3.);
+         hAdcFitAmp = new TH1D("hAdcFitAmp","ADC pulse amplitude from fit;Amplitude from fit (volts)",200,0.,3.);
+         hAdcFitAmp2d = new TH2D("hAdcFitAmp2d","ADC pulse amplitude from fit;Channel number;Amplitude from fit (volts)",128,-0.5,127.5,200,0.,3.);
+         hAdcFitting = new TH2D("hAdcFitting","ADC pulse amplitude fit vs. measured;Amplitude (Volts);Amplitude from fit (volts)",200,0.,3.,200,0.,3.);
          hAdcTime = new TH1D("hAdcTime","ADC pulse start time;ADC pulse start time [ns]",3000,0,3000);
          hAdcTime2d = new TH2D("hAdcTime2d","ADC pulse start time;Channel number;ADC pulse start time [ns]",128,-0.5,127.5,3000,0,3000);
          gDirectory->cd("..");
@@ -213,21 +239,18 @@ public:
          hTdcOccupancy = new TH1D("hTdcOccupancy","TDC channel occupancy;Channel number",128,-0.5,127.5);
          hTdcCoincidence = new TH1D("hTdcCoincidence","TDC hits with corresponing hit on other end;Channel number",128,-0.5,127.5);
          hTdcCorrelation = new TH2D("hTdcCorrelation","TDC channel correlation;Channel number;Channel number",128,-0.5,127.5,128,-0.5,127.5);
-         hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",129,-0.5,128.5);
-         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
-         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,201,-0.5,200.5);
+         hFineTime = new TH1D("hFineTime","Fine time;Fine time (s)",200,-1e-9,6e-9);
+         hFineTime2d = new TH2D("hFineTime2d","Fine time;TDC channel number;Fine time (s)",128,-0.5,127.5,200,-1e-9,6e-9);
+         hFineTimeCounter = new TH1D("hFineTimeCounter","Fine time counter;Fine time counter",1024,0,1024);
+         hFineTimeCounter2d = new TH2D("hFineTimeCounter2d","Fine time counter;TDC channel number;Fine time counter",128,-0.5,127.5,1024,0,1024);
+         hTdcMultiplicity = new TH1D("hTdcMultiplicity","TDC channel multiplicity;Number of TDC channels hit",81,-0.5,80.5);
+         hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",11,-0.5,10.5);
+         hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,11,-0.5,10.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
          hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",128,-0.5,127.5,1000,0,400);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel forty;TDC time minus ch40 time (ns)",2000,-35,35);
             hTdcTimeVsCh02d = new TH2D("hTdcTimeVsCh02d","TDC time with reference to channel forty;Channel number;TDC time minus ch40 time (ns)",128,-0.5,127.5,2000,-35,35);
-            gDirectory->mkdir("offsets")->cd();
-            for (int rtm=0;rtm<8;rtm++) {
-               TString hname = TString::Format("hOffsetRTM%d",rtm);
-               TString htitle = TString::Format("Time offset from channel 0 - RTM %d;Channel number;TDC time minus ch0 time (ns)",rtm);
-               hTdcOffsetByRTM[rtm] = new TH2D(hname.Data(),htitle.Data(),16,-0.5,15.5,2000,-35.,35.);
-            }
-            gDirectory->cd("..");
          }
          gDirectory->cd("..");
 
@@ -237,22 +260,43 @@ public:
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",65,-0.5,64.5);
             hBarCorrelation = new TH2D("hBarCorrelation","Bar correlation;Bar number;Bar number",64,-0.5,63.5,64,-0.5,63.5);
-            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC top time minus TDC bottom time (ns)",200,-30,30);
-            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC top time minus TDC bottom time (ns)",64,-0.5,63.5,200,-30,30);
+            hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-30,30);
+            hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC bottom time minus TDC top time (ns)",64,-0.5,63.5,200,-30,30);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-3,3);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",64,-0.5,63.5,200,-2,2);
-            hTwoBarTOF = new TH1D("hTwoBarTOF","TOF for events with N=2 bars;TOF (ns)",200,-20,20);
-            hTwoBarTOF2d = new TH2D("hTwoBarTOF2d","TOF for events with N=2 bars;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
-            hNBarTOF = new TH1D("hNBarTOF","TOF for any permutation of two hits;TOF (ns)",200,-20,20);
-            hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,-20,20);
-            hTwoBarDPhi = new TH1D("hTwoBarDPhi","Angular separation for events with N=2 bars;Delta phi (degrees)",32,0,180);
-            hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (degrees)",32,0,180);
+            hTwoBarTOF = new TH1D("hTwoBarTOF","TOF for events with N=2 bars;TOF (ns)",200,0,10);
+            hTwoBarTOF2d = new TH2D("hTwoBarTOF2d","TOF for events with N=2 bars;Bar number;TOF (ns)",64,-0.5,63.5,200,0,10);
+            hNBarTOF = new TH1D("hNBarTOF","TOF for any permutation of two hits;TOF (ns)",200,0,10);
+            hNBarTOF2d = new TH2D("hNBarTOF2d","TOF for any permutation of two hits;Bar number;TOF (ns)",64,-0.5,63.5,200,0,10);
+            hTwoBarDPhi = new TH1D("hTwoBarDPhi","Angular separation for events with N=2 bars;Delta phi (bars)",65,-0.25,32.25);
+            hNBarDPhi = new TH1D("hNBarDPhi","Angular separation for any permutation of two hits;Delta phi (bars)",65,-0.25,32.25);
             hTwoBarDZed = new TH1D("hTwoBarDZed","Zed separation for events with N=2 bars;Delta zed (m)",200,-6,6);
             hNBarDZed = new TH1D("hNBarDZed","Zed separation for any permutation of two hits;Delta zed (m)",200,-6,6);
-           hTwoBarExpectedTOF = new TH1D("hTwoBarExpectedTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns)",200,0,30);
-           hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,30,200,0,30);
+            hTwoBarDPhiDZed = new TH2D("hTwoBarDPhiDZed","Angular separation vs zed separation for events with N=2 bars;Delta phi (bars);Delta zed (m)",33,-0.5,32.5,200,-6,6);
+            hNBarDPhiDZed = new TH2D("hNBarDPhiDZed","Angular separation vs zed separation for any permutation of two hits;Delta phi (bars);Delta zed (m)",33,-0.5,32.5,200,-6,6);
+           hTwoBarExpectedTOF = new TH1D("hTwoBarExpectedTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns)",200,0,10);
+           hTwoBarExpectedTOFvsTOF = new TH2D("hTwoBarExpectedTOFvsTOF","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
+           hNBarExpectedTOF = new TH1D("hNBarExpectedTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns)",200,0,10);
+           hNBarExpectedTOFvsTOF = new TH2D("hNBarExpectedTOFvsTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
+           hTwoBarExpectedTOFminusTOF = new TH1D("hTwoBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for events with N=2 bars;TOF - (Distance between hits)/c (ns)",200,-5,5);
+           hNBarExpectedTOFminusTOF = new TH1D("hNBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for all permutations;TOF - (Distance between hits)/c (ns)",200,-5,5);
          }
          gDirectory->cd("..");
+
+         // TPC matching
+         if ( !(fFlags->fPulser) ) {
+           gDirectory->mkdir("tpc_matching_histos")->cd();
+           hTPCMatched = new TH1D("hTPCMatched","Number of hits sucessfully matched to tracks;Bar number;Counts",64,-0.5,63.5);
+           hMatchingDZ = new TH1D("hMatchingDZ","Zed distance between BV and TPC hit;Delta Zed (m);Counts",200,-2,2);
+           hMatchingDZbyBar = new TH2D("hMatchingDZbyBar","Zed distance between BV and TPC hit;Bar number;Delta Zed (m)",64,-0.5,63.5,200,-2,2);
+           hMatchingDZbyZed = new TH2D("hMatchingDZbyZed","Zed distance between BV and TPC hit;Zed position;Delta Zed (m)",200,-3,3,200,-2,2);
+           hMatchingDPhi = new TH1D("hMatchingDPhi","Phi distance between BV and TPC hit;Delta Phi (rad);Counts",200,-2,2);
+           hMatchingDPhibyBar = new TH2D("hMatchingDPhibyBar","Phi distance between BV and TPC hit;Bar number;Delta Phi (rad)",64,-0.5,63.5,200,-2,2);
+           hMatchingD = new TH1D("hMatchingD","Geometric distance between BV and TPC hit;Geometric distance (m);Counts",200,0,2);
+           hMatchingDbyBar = new TH2D("hMatchingDbyBar","Geometric distance between BV and TPC hit;Bar number;Geometric distance (m)",64,-0.5,63.5,200,0,2);
+            gDirectory->cd("..");
+         }
+
       }
 
 
@@ -357,8 +401,11 @@ public:
 
       if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent start\n");
 
+      if( fFlags->fPrint ) printf("Filling ADC histos\n");
       AdcHistos(endhits);
+      if( fFlags->fPrint ) printf("Filling TDC histos\n");
       TdcHistos(endhits);
+      if( fFlags->fPrint ) printf("Filling more TDC histos\n");
       DirectTdcHistos(tdchits);
 
       std::vector<TBarHit*> barhits = barEvt->GetBars();
@@ -366,8 +413,12 @@ public:
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no barhits\n");
          return flow;
       }
+      if( fFlags->fPrint ) printf("Filling bar histos\n");
       BarHistos(barhits);
+      if( fFlags->fPrint ) printf("Filling TOF histos\n");
       TOFHistos(barhits);
+      if( fFlags->fPrint ) printf("Filling BV/TPC matching histos\n");
+      MatchingHistos(barhits);
 
       ++fCounter;
       if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent complete\n");
@@ -388,7 +439,9 @@ public:
          hAdcFitAmp2d->Fill(bar,endhit->GetAmp());
          hAdcFitting->Fill(endhit->GetAmpRaw(),endhit->GetAmp());
          for (TBarEndHit* endhit2: endhits) {
-            hAdcCorrelation->Fill(bar,endhit2->GetBar());
+            int bar2 = endhit2->GetBar();
+            if (bar==bar2) continue;
+            hAdcCorrelation->Fill(bar,bar2);
          }
       }
    }
@@ -409,16 +462,6 @@ public:
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
          }
       }
-      if (fFlags->fPulser and !(fFlags->fProtoTOF)) {
-         for (TBarEndHit* endhit: endhits) {
-            int end = endhit->GetBar();
-            if (end==pulser_reference_chan) continue;
-            //if (end%8==0 and end<63) continue;
-            int rtm = (end/8)%8;
-            int chan = end%8+(end/64)*8;
-            hTdcOffsetByRTM[rtm]->Fill(chan,1e9*(endhit->GetTDCTime()-ch0));
-         }
-      }
    }
 
    void DirectTdcHistos(const std::vector<TBarSimpleTdcHit*> tdchits)
@@ -430,7 +473,13 @@ public:
       for (const TBarSimpleTdcHit* tdchit: tdchits) {
          int bar = tdchit->GetBar();
          double time = tdchit->GetTime();
+         int fine_count = tdchit->GetFineTimeCount();
+         double fine_time = tdchit->GetFineTime();
          hTdcOccupancy->Fill(bar);
+         hFineTime->Fill(fine_time);
+         hFineTime2d->Fill(bar,fine_time);
+         hFineTimeCounter->Fill(fine_count);
+         hFineTimeCounter2d->Fill(bar,fine_count);
          counts[bar]++;
          if (t0[bar]!=0) {
             hTdcSingleChannelHitTime->Fill(1e9*(time-t0[bar]));
@@ -457,6 +506,7 @@ public:
             hTdcSingleChannelMultiplicity2d->Fill(bar,counts[bar]);
          }
          for (int bar2=0;bar2<max_chan;bar2++) {
+            if (bar==bar2) continue;
             hTdcCorrelation->Fill(bar,bar2,counts[bar]*counts[bar2]);
          }
       }
@@ -472,8 +522,8 @@ public:
       hBarMultiplicity->Fill(barhits.size());
       for (TBarHit* barhit: barhits) {
          int bar = barhit->GetBar();
-         hTopBotDiff->Fill(1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
-         hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCTop()-barhit->GetTDCBot()));
+         hTopBotDiff->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
+         hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
          hZed->Fill(barhit->GetTDCZed());
          hZed2d->Fill(bar,barhit->GetTDCZed());
          if (TMath::Abs(barhit->GetTDCZed())>3) {
@@ -481,7 +531,9 @@ public:
          }
          if (!(fFlags->fProtoTOF)) {
             for (TBarHit* barhit2: barhits) {
-               hBarCorrelation->Fill(bar,barhit2->GetBar());
+               int bar2 = barhit2->GetBar();
+               if (bar==bar2) continue;
+               hBarCorrelation->Fill(bar,bar2);
             }
          }
       }
@@ -492,38 +544,110 @@ public:
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
       if (barhits.size()==2) {
-         hTwoBarTOF->Fill(1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-         double x0,y0,x1,y1,z0,z1;
-         barhits[0]->GetXY(x0,y0);
-         barhits[1]->GetXY(x1,y1);
-         z0 = barhits[0]->GetTDCZed();
-         z1 = barhits[1]->GetTDCZed();
-         hTwoBarDZed->Fill(z0-z1);
          if (!(fFlags->fProtoTOF)) {
-            hTwoBarTOF2d->Fill(barhits[0]->GetBar(),1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
-            hTwoBarTOF2d->Fill(barhits[1]->GetBar(),1e9*(barhits[1]->GetAverageTDCTime()-barhits[0]->GetAverageTDCTime()));
-            double angle = (180/TMath::Pi())*TMath::Abs(barhits[0]->GetPhi()-barhits[1]->GetPhi());
-            if (angle>180) angle = 360 - angle;
-            hTwoBarDPhi->Fill(angle);
-            double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
-            hTwoBarExpectedTOF->Fill(expTOF);
-            hTwoBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime()));
+            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched() or (fFlags->fRecOff)) {
+               double TOF = 1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime());
+               TBarHit* hit0 = barhits[0];
+               TBarHit* hit1 = barhits[1];
+               if (TOF<=0) { hit1 = barhits[0]; hit0 = barhits[1]; }
+               TOF = TMath::Abs(TOF);
+               hTwoBarTOF->Fill(TOF);
+               double x0,y0,x1,y1,z0,z1;
+               hit0->GetXY(x0,y0);
+               hit1->GetXY(x1,y1);
+               z0 = hit0->GetTDCZed();
+               z1 = hit1->GetTDCZed();
+               hTwoBarDZed->Fill(z0-z1);
+               if (!(fFlags->fProtoTOF)) {
+                  hTwoBarTOF2d->Fill(hit0->GetBar(),TOF);
+                  hTwoBarTOF2d->Fill(hit1->GetBar(),TOF);
+                  double angle =TMath::Abs(hit0->GetBar()-hit1->GetBar());
+                  if (angle>32) angle = 64 - angle;
+                  hTwoBarDPhi->Fill(angle);
+                  hTwoBarDPhiDZed->Fill(angle,z0-z1);
+                  double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+                  hTwoBarExpectedTOF->Fill(expTOF);
+                  hTwoBarExpectedTOFvsTOF->Fill(expTOF,TOF);
+                  hTwoBarExpectedTOFminusTOF->Fill(TOF-expTOF);
+               }
+            }
          }
       }
       if (!(fFlags->fProtoTOF)) {
          for (TBarHit* barhit: barhits) {
             for (TBarHit* barhit2: barhits) {
+               if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
+               if ((!(barhit2->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
-               if (TOF==0) continue;
+               if (TOF<=0) continue;
                hNBarTOF->Fill(TOF);
                hNBarTOF2d->Fill(barhit->GetBar(),TOF);
-               double angle = (180/TMath::Pi())*TMath::Abs(barhit->GetPhi()-barhit2->GetPhi());
-               if (angle>180) angle = 360 - angle;
+               double angle = TMath::Abs(barhit->GetBar()-barhit2->GetBar());
+               if (angle>32) angle = 64 - angle;
                hNBarDPhi->Fill(angle);
-               hNBarDZed->Fill(barhit->GetTDCZed()-barhit2->GetTDCZed());
+               double x0,y0,x1,y1,z0,z1;
+               barhit->GetXY(x0,y0);
+               barhit2->GetXY(x1,y1);
+               z0 = barhit->GetTDCZed();
+               z1 = barhit2->GetTDCZed();
+               hNBarDZed->Fill(z0-z1);
+               hNBarDPhiDZed->Fill(angle,z0-z1);
+               double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+               hNBarExpectedTOF->Fill(expTOF);
+               hNBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()));
+               hNBarExpectedTOFminusTOF->Fill((1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()))-expTOF);
             }
          }
       }
+   }
+   void MatchingHistos(const std::vector<TBarHit*> barhits)
+   {
+      if (fFlags->fPulser) return;
+      if (fFlags->fProtoTOF) return;
+      if (fFlags->fRecOff) return;
+      for (TBarHit* barhit: barhits) {
+         if (!(barhit->IsTPCMatched())) continue;
+         TVector3 tpc_point = barhit->GetTPC();
+         TVector3 bv_point = Get3VectorBV(barhit);
+         double dz = GetDZ(tpc_point,bv_point);
+         double dphi = GetDPhi(tpc_point,bv_point);
+         double diff = GetGeometricDistance(tpc_point,bv_point);
+         int bar = barhit->GetBar();
+         double z = barhit->GetTDCZed();
+         hTPCMatched->Fill(bar);
+         hMatchingDZ->Fill(dz/1000);
+         hMatchingDZbyBar->Fill(bar,dz/1000);
+         hMatchingDZbyZed->Fill(z,dz/1000);
+         hMatchingDPhi->Fill(dphi);
+         hMatchingDPhibyBar->Fill(bar,dphi);
+         hMatchingD->Fill(diff/1000);
+         hMatchingDbyBar->Fill(bar,diff/1000);
+      }
+   }
+
+   // Helper functions
+
+   double GetDZ(TVector3 p1, TVector3 p2)
+   {
+      return p2.z() - p1.z();
+   }
+   double GetDPhi(TVector3 p1, TVector3 p2)
+   {
+      return p2.DeltaPhi(p1);
+   }
+   TVector3 Get3VectorBV(TBarHit* hit)
+   {
+      double xbv,ybv;
+      hit->GetXY(xbv,ybv);
+      double dt = (hit->GetTDCBot() - hit->GetTDCTop())*1e9;
+      double zbv = factor*dt;
+      TVector3 bv_point = TVector3(xbv*1000,ybv*1000,zbv*1000); // to mm
+      return bv_point;
+   }
+   double GetGeometricDistance(TVector3 p1, TVector3 p2)
+   {
+      TVector3 diff = p2-p1;
+      return diff.Mag();
    }
 
 
@@ -560,6 +684,8 @@ public:
             fFlags.fProtoTOF = true;
          if( args[i] == "--bscWriteOffsetFile" )
             fFlags.fWriteOffsetFile = true;
+         if( args[i] == "--recoff" )
+            fFlags.fRecOff = true;
 
       }
    }

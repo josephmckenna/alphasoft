@@ -11,7 +11,7 @@ TAGSpillSequencerData::TAGSpillSequencerData():
 TAGSpillSequencerData::~TAGSpillSequencerData()
 {
 }
-TAGSpillSequencerData::TAGSpillSequencerData(TDumpMarkerPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d)
+TAGSpillSequencerData::TAGSpillSequencerData(TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d)
 {
    fSequenceNum= d->fStartDumpMarker->fSequencerID;
    fDumpID     = d->fDumpID;

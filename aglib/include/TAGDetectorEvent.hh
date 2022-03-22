@@ -38,6 +38,15 @@ public:
    
    // Online analysis cuts
    int RadiusCut(const TStoreEvent* e);
+
+   // Spill log:
+   double GetTimeOfEvent() const { return fRunTime; }
+   int GetEventNumber() const { return fEventNo; }
+   int GetVertexStatus() const { return fVertexStatus; }
+   int GetOnlinePassCuts() const { return fCutsResult & 1;}
+   int GetOnlinePassMVA() const { return fCutsResult & 2;}
+
+
    
    
    ClassDef(TAGDetectorEvent,1);

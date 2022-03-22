@@ -656,10 +656,10 @@ void TDumpList<SpillType, VertexType, ScalerType, NumScalers>::finish()
 }
 
 #if BUILD_AG
-#include "TStoreEvent.hh"
+#include "TAGDetectorEvent.hh"
 #include "TChronoBoardCounter.h"
 #include "TAGSpill.h"
-template class TDumpList<TAGSpill,TStoreEvent, TChronoBoardCounter, CHRONO_N_BOARDS>;
+template class TDumpList<TAGSpill,TAGDetectorEvent, TChronoBoardCounter, CHRONO_N_BOARDS>;
 #endif
 
 #if BUILD_A2

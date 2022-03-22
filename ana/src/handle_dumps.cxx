@@ -16,6 +16,7 @@
 #include "cb_flow.h"
 #include "store_cb.h"
 
+#include "TAGDetectorEvent.hh"
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 #include "TChronoBoardCounter.h"
@@ -49,7 +50,7 @@ public:
    
    bool have_svd_events = false;
    
-   TDumpList<TAGSpill,TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
+   TDumpList<TAGSpill,TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)

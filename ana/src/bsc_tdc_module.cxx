@@ -20,6 +20,8 @@
 
 #include "TBarEvent.hh"
 
+using json = nlohmann::json;
+
 class TdcFlags
 {
 public:
@@ -29,7 +31,11 @@ public:
    bool fPulser = false;
    std::string fOffsetFile = ""; 
    bool fNoDelayCorrection = false;
-   double ftwA = 0;
+   bool fLinearTDC = false;
+   double ftwA = -999;
+   bool fTimeCut = false;
+   double start_time = -1.;
+   double stop_time = -1.;
    AnaSettings* ana_settings=0;
 };
 
@@ -59,6 +65,7 @@ private:
    double ProtoTOFTdcOffsets[16] = {0};
    int BVTdcMap[64][7];
    int protoTOFTdcMap[16][4];
+   json fine_counter_lookup_table;
    
 
    //Histogramm declaration
@@ -155,6 +162,31 @@ public:
          fprotoTOFoffsets.close();
       }
 
+      // Load fine counter look up table from json file
+      TString filename=TString::Format("%s/ana/bscint/fine_counters.json",getenv("AGRELEASE"));
+      std::ifstream json_file(filename.Data());
+      std::stringstream strStream;
+      strStream << json_file.rdbuf(); //read the file
+      std::string str = strStream.str(); //str holds the content of the file
+      fine_counter_lookup_table =json::parse(str);
+      std::cout<<"Fine counter look up table json parsing success!"<<std::endl;
+      json_file.close();
+      if (fFlags->fPrint) {
+         printf("Fine counter look up table (every 10th value printed)\n");
+         for (int i=0;i<256;i++) {
+            printf("TDC channel %i/256 lookup table:\t",i);
+            auto tablei = fine_counter_lookup_table[i];
+            for (int j=0;j<1024;j++) {
+               if ((j%10)!=0) continue;
+               double val = tablei[j];
+               printf("%.3e, ",val);
+            }
+            printf("\n");
+         }
+      }
+
+
+
    }
 
    void EndRun(TARunInfo* runinfo)
@@ -163,16 +195,13 @@ public:
       runinfo->fRoot->fOutputFile->Write();
 
       // Print stats
-      if( fFlags->fPrint )
-         {
-            printf("tdc module stats:\n");
-            printf("Total number of adc hits = %d\n",c_adc);
-            printf("Total number of tdc hits = %d\n",c_tdc);
-            if (!fFlags->fPulser) {
-               printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
-               printf("Total number of top+bot combined hits = %d\n",c_topbot);
-            }
-         }
+      printf("tdc module stats:\n");
+      printf("Total number of adc hits = %d\n",c_adc);
+      printf("Total number of tdc hits = %d\n",c_tdc);
+      if (!fFlags->fPulser) {
+         printf("Total number of adc+tdc combined hits = %d\n",c_adctdc);
+         printf("Total number of top+bot combined hits = %d\n",c_topbot);
+      }
 
       // Delete histograms
       if (fFlags->fDiag)
@@ -210,6 +239,20 @@ public:
          *flags|=TAFlag_SKIP_PROFILE;
 #endif
          return flow;
+      }
+      if (fFlags->fTimeCut) {
+         if (age->time<fFlags->start_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
+         if (age->time>fFlags->stop_time) {
+#ifdef HAVE_MANALYZER_PROFILER
+            *flags|=TAFlag_SKIP_PROFILE;
+#endif
+            return flow;
+         }
       }
       
       // Unpack tdc data from event
@@ -263,14 +306,32 @@ public:
             // Skip negative channels
             if (int(tdchit->chan)<=0) continue;
 
+            // Skip "bad signals" from the TDC
+            if (int(tdchit->fine_time)==1023) {
+               if (fFlags->fPrint) printf("bsc_tdc_module: skipping bad signal with fine counter = 1023\n");
+               continue;
+            }
+
             // Gets channel number
             int barID = -1;
             if (!(fFlags->fProtoTOF)) barID = BVFindBarID(int(tdchit->fpga),int(tdchit->chan));
             if (fFlags->fProtoTOF) barID = protoTOFFindBarID(tdchit->chan);
 
+            // Skips channels with bad calibration, remember to remove this once they are time calibrated
+            if ((48<=barID and barID<=55) or (112<=barID and barID<=119) or (barID==0) or (barID==100) or (barID==101)) continue;
+
             // Calculates hit time
-            double tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
-            
+            double tdc_time;
+            double fine_time;
+            if (fFlags->fLinearTDC or fFlags->fProtoTOF) {
+               tdc_time = GetFinalTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
+               fine_time = GetFineTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+            }
+            else {
+               tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
+               fine_time = GetFineTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
+            }
+
             // Corrects for tdc time offset
             double calib_time = tdc_time;
             if (!(fFlags->fNoDelayCorrection)) {
@@ -289,7 +350,7 @@ public:
                hTDCbar->Fill(barID);
 
             // Writes tdc data to SimpleTdcHit to add back into the flow
-            barEvt->AddTdcHit(barID,calib_time);
+            barEvt->AddTdcHit(barID,calib_time,int(tdchit->fine_time),fine_time);
          }
    }
 
@@ -324,12 +385,16 @@ public:
             // Corrects for time walk
             double amp = endhit->GetAmp();
             double tw_correction = twA/TMath::Sqrt(amp);
-            if (fFlags->ftwA!=0) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
+            if (fFlags->ftwA!=-999) tw_correction = fFlags->ftwA/TMath::Sqrt(amp);
             double correct_time = tdc_time - tw_correction;
 
             // Writes tdc data to endhit
             endhit->SetTDCHit(correct_time);
             c_adctdc+=1;
+         }
+         if (fFlags->fPrint) {
+            for (TBarEndHit* endhit: endhits)
+               printf("tdcmodule: TDC matched? %s\n",endhit->IsTDCMatched() ? "yes" : "no");
          }
    }
 
@@ -408,7 +473,7 @@ public:
       for (TBarHit* hit: barhits)
          {
             int bar = hit->GetBar();
-            double diff_tdc = hit->GetBotHit().GetTDCTime() - hit->GetTopHit().GetTDCTime();
+            double diff_tdc = hit->GetTDCBot() - hit->GetTDCTop();
             double c = 2.99792e8;
             double refrac = 1.93; // From protoTOF tests with time walk correction applied
             double factor = c/refrac * 0.5;
@@ -421,11 +486,31 @@ public:
    //________________________________
    // HELPER FUNCTIONS
 
-   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates time from tdc data (in seconds)
+   double GetFinalTimeLinear( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates time from tdc data (in seconds) using the linear approximation
    {
       double B = double(fine) - trb3LinearLowEnd;
       double C = trb3LinearHighEnd - trb3LinearLowEnd;
       return double(epoch)/epoch_freq +  double(coarse)/coarse_freq - (B/C)/coarse_freq;
+   }
+   double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine, int bar ) // Calculates time from tdc data (in seconds) using a fine time counter lookup table
+   {
+      int TDC_chan = BVFindTDCChan(bar);
+      auto lookup = fine_counter_lookup_table[TDC_chan];
+      double fine_time = lookup[fine];
+      return double(epoch)/epoch_freq +  double(coarse)/coarse_freq - fine_time;
+   }
+   double GetFineTimeLinear( uint32_t epoch, uint16_t coarse, uint16_t fine ) // Calculates fine time correction from tdc data (in seconds) using the linear approximation
+   {
+      double B = double(fine) - trb3LinearLowEnd;
+      double C = trb3LinearHighEnd - trb3LinearLowEnd;
+      return (B/C)/coarse_freq;
+   }
+   double GetFineTime( uint32_t epoch, uint16_t coarse, uint16_t fine, int bar ) // Calculates fine time correction from tdc data (in seconds) using a fine time counter lookup table
+   {
+      int TDC_chan = BVFindTDCChan(bar);
+      auto lookup = fine_counter_lookup_table[TDC_chan];
+      double fine_time = lookup[fine];
+      return fine_time;
    }
 
    int BVFindBarID(int fpga, int chan)
@@ -436,6 +521,21 @@ public:
       }
       if (fFlags->fPrint) printf("bsc_tdc_module failed to get bar number for fpga %d chan %d \n",fpga,chan);
       return -1;
+   }
+   int BVFindTDCChan(int bar) //TDC channel from 0 to 256
+   {
+      int fpga = -1; // 2, 3, or 4
+      int chan = -1; // 1-64
+      if (bar<0 or bar>128) return -1;
+      if (bar<64) {
+         fpga = BVTdcMap[bar][1];
+         chan = BVTdcMap[bar][6];
+      }
+      if (bar>=64) {
+         fpga = BVTdcMap[bar-64][1];
+         chan = BVTdcMap[bar-64][5];
+      }
+      return 64*(fpga-1) + chan -1;
    }
    int protoTOFFindBarID(int tdc_chan)
    {
@@ -462,6 +562,8 @@ public:
       printf("\t--bscprint\t\t\tverbose mode\n");
       printf("\t--twA float\t\t\tsets the parameter used in the time-walk correction. 0=no correction\n");
       printf("\t--nodelaycorr\t\t\tdisables the channel-by-channel tdc time delay correction\n");
+      printf("\t--usetimerange 123.4 567.8\t\tLimit analysis to a time range\n");
+      printf("\t--linearTDC\t\t\tuses a linear approximation to find the TDC fine time instead of a lookup table\n");
    }
    void Usage()
    {
@@ -482,12 +584,24 @@ public:
             fFlags.fPulser = true;
          if( args[i] == "--bscProtoTOF" )
             fFlags.fProtoTOF = true;
+         if( args[i] == "--linearTDC" )
+            fFlags.fLinearTDC = true;
          if( args[i] == "--twA" )
             fFlags.ftwA = atof(args[i+1].c_str());
          if( args[i] == "--nodelaycorr" )
             fFlags.fNoDelayCorrection = true;
          if( args[i] == "--anasettings" ) 
             json=args[i+1];
+         if( args[i] == "--usetimerange" )
+            {
+               fFlags.fTimeCut=true;
+               i++;
+               fFlags.start_time=atof(args[i].c_str());
+               i++;
+               fFlags.stop_time=atof(args[i].c_str());
+               printf("Using time range for reconstruction: ");
+               printf("%f - %fs\n",fFlags.start_time,fFlags.stop_time);
+            }
       }
       fFlags.ana_settings=new AnaSettings(json.Data());
    }

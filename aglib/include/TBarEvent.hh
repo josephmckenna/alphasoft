@@ -28,6 +28,7 @@ private:
 
 public:
   TBarEvent(); //ctor
+  TBarEvent(TBarEvent &barEvent); //copy ctor
   using TObject::Print;
   virtual void Print();
   virtual ~TBarEvent(); //dtor
@@ -67,10 +68,10 @@ public:
     b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
-  void AddTdcHit(int fBarID, double fTime)
+  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime)
   {
     TBarSimpleTdcHit* hit = new TBarSimpleTdcHit;
-    hit->SetHit(fBarID, fTime);
+    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime);
     AddTdcHit(hit);
   }
   void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)
@@ -88,6 +89,7 @@ public:
 
   int GetNBars() const { return fBarHit.size(); }
   int GetNEnds() const { return fEndHit.size(); }
+  int GetNTDC() const { return fTdcHit.size(); }
   std::vector<TBarHit*> GetBars() { return fBarHit; }
   const std::vector<TBarHit*> GetBars() const { return fBarHit; }
   std::vector<TBarEndHit*> GetEndHits() { return fEndHit; }
@@ -95,7 +97,30 @@ public:
   std::vector<TBarSimpleTdcHit*> GetTdcHits() { return fTdcHit; }
   const std::vector<TBarSimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
 
-  ClassDef(TBarEvent, 1);
+  std::vector<double> GetTOFs()
+  {
+     std::vector<double> TOFs;
+     if (fBarHit.size()<2) return TOFs;
+     for (int i=0; i<fBarHit.size()-1; i++) {
+        for (int j=i+1; j<fBarHit.size(); j++) {
+           TOFs.push_back( TMath::Abs( (fBarHit.at(i))->GetTOFToHit(fBarHit.at(j)) ));
+        }
+     }
+     return TOFs;
+  }
+  std::vector<double> GetDists()
+  {
+     std::vector<double> Dists;
+     if (fBarHit.size()<2) return Dists;
+     for (int i=0; i<fBarHit.size()-1; i++) {
+        for (int j=i+1; j<fBarHit.size(); j++) {
+           Dists.push_back( (fBarHit.at(i))->GetDistToHit(fBarHit.at(j)) );
+        }
+     }
+     return Dists;
+  }
+
+  ClassDef(TBarEvent, 2);
 };
 
 

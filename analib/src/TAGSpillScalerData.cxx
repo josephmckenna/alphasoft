@@ -25,7 +25,7 @@ TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScale
 
 }
 
-TAGSpillScalerData::TAGSpillScalerData(TDumpMarkerPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
+TAGSpillScalerData::TAGSpillScalerData(TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
    TAGSpillScalerData()
 {
    for (int i=0; i<CHRONO_N_BOARDS; i++)
