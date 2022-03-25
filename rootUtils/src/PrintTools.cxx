@@ -1,6 +1,7 @@
 #include "PrintTools.h"
 
 #include <fstream> 
+#include <iomanip>    // for std::setw and std::setfill
 #ifdef BUILD_AG
 void PrintSequences(int runNumber, int SeqNum)
 {
@@ -17,13 +18,22 @@ void PrintSequences(int runNumber, int SeqNum)
             continue;
          }
       }
-      std::cout<< "Sequencer Name:" << seqEvent->GetSeq().Data()
-               << "\t Seq Num:" << seqEvent->GetSeqNum()
-               << "\t ID:" << seqEvent->GetID()
-               << "\t Name:" << seqEvent->GetEventName()
-               << "\t Description: " << seqEvent->GetDescription()
-               << "\t RunTime: "<< GetRunTimeOfEvent(runNumber,seqEvent)
-               << std::endl;
+
+      if( seqEvent->GetEventName().BeginsWith("start",TString::kIgnoreCase) )
+         std::cout<< "Sequencer Name:" << seqEvent->GetSeq().Data()
+                  << "\t Seq Num:" << seqEvent->GetSeqNum()
+                  << "\t ID:" << seqEvent->GetID()
+            //               << "\t Name:" << seqEvent->GetEventName()
+                  << "\t Description: " << std::setfill(' ') << std::setw(24) << seqEvent->GetDescription()
+                  << "\t RunTime: ["<< GetRunTimeOfEvent(runNumber,seqEvent);
+            //               << std::endl;
+      else if( seqEvent->GetEventName().BeginsWith("stop",TString::kIgnoreCase) )
+         std::cout<<" - "<<GetRunTimeOfEvent(runNumber,seqEvent)<<"]s"<<std::endl;
+      else
+         {
+            std::string fname(__FILE__);
+            std::cerr<<"\n"<<fname<<"::PrintSequences Cannot identify dump name "<<seqEvent->GetEventName()<<" for "<<seqEvent->GetDescription()<<" at "<<GetRunTimeOfEvent(runNumber,seqEvent)<<"s since BOR"<<std::endl;
+         }
    }
    delete seqEvent;
    delete sequencerTree;
