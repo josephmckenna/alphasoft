@@ -16,6 +16,8 @@ TAGDetectorEvent::TAGDetectorEvent():
    fNumADCBars = -1;
    fNumTDCBars = -1;
    fBarTime = -1;
+   fBarMaxTOF = -1;
+   fBarTOFstdv = -1;
 }
 TAGDetectorEvent::~TAGDetectorEvent()
 {
@@ -54,6 +56,8 @@ bool TAGDetectorEvent::AddAnalysisFlow(const TStoreEvent* event)
    fNumTracks = event->GetNumberOfTracks();
    fNumADCBars = -1;
    fNumTDCBars = -1;
+   fBarMaxTOF = -1;
+   fBarTOFstdv = -1;
    return true;
 }
 bool TAGDetectorEvent::AddBarFlow( const TBarEvent* b)
@@ -68,6 +72,22 @@ bool TAGDetectorEvent::AddBarFlow( const TBarEvent* b)
    fNumADCBars = b->GetNBars();
    fNumTDCBars = b->GetTdcHits().size();
    fBarTime = b->GetRunTime();
+   std::vector<double> tofs = b->GetTOFs();
+   if (tofs.size())
+   {
+      fBarMaxTOF = *std::max_element(tofs.begin(),tofs.end());
+      //fBarMaxTOF *= 1e9; //Convert to ns
+      fBarTOFstdv = 0;
+      for (const double& d: tofs)
+         fBarTOFstdv += d*d;
+      fBarTOFstdv = sqrt(fBarTOFstdv);
+      //fBarTOFstdv *= 1e9; //convert to ns
+   }
+   else
+   {
+      fBarMaxTOF = -1;
+      fBarTOFstdv = -1;
+   }
    return true;
 }
 

@@ -97,7 +97,7 @@ public:
   std::vector<TBarSimpleTdcHit*> GetTdcHits() { return fTdcHit; }
   const std::vector<TBarSimpleTdcHit*> GetTdcHits() const { return fTdcHit; }
 
-  std::vector<double> GetTOFs()
+  std::vector<double> GetTOFs() const
   {
      std::vector<double> TOFs;
      if (fBarHit.size()<2) return TOFs;

@@ -178,10 +178,12 @@ void TAGPlot::AddChronoEvent(const TCbFIFOEvent& event, const std::string& board
 void TAGPlot::AddEvent(const TAGDetectorEvent& event, const double timeOffset)
 {
   const double tMinusOffset = (event.fRunTime - timeOffset);
+  //if ( event.fBarMaxTOF > 0)
+  //std::cout << event.fBarTOFstdv * 1E9 << "\t" << event.fBarMaxTOF * 1E9 <<std::endl;
    AddVertexEvent(
      event.fRunNumber,
      event.fEventNo,
-     event.fCutsResult,
+     /*event.fCutsResult,*/ event.fNumADCBars > 2, //  event.fBarMaxTOF * 1E9 < 500 && event.fBarMaxTOF >0,// && event.fBarMaxTOF  > 0,
      event.fVertexStatus,
      event.fVertex.X(),
      event.fVertex.Y(),

@@ -28,6 +28,8 @@ public:
    int fNumADCBars;
    int fNumTDCBars;
    double fBarTime;
+   double fBarMaxTOF;
+   double fBarTOFstdv;
    TAGDetectorEvent();
    ~TAGDetectorEvent();
    // Construct with TStoreEvent
