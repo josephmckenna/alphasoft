@@ -109,23 +109,27 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("VertexFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if (fTrace)
+         printf("VertexFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("VertexFitter::EndRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("VertexFitter::EndRun, run %d\n", runinfo->fRunNo);
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("VertexFitter::PauseRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("VertexFitter::PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("VertexFitter::ResumeRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("VertexFitter::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -233,7 +237,8 @@ public:
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      printf("VertexFitter::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      if (fTrace)
+         printf("VertexFitter::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 

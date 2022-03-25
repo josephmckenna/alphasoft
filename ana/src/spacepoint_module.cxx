@@ -71,8 +71,8 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if(fTrace)
+         printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
       match=new Match(fFlags->ana_settings);
       if(fTrace) 
@@ -83,8 +83,8 @@ public:
    }
    void EndRun(TARunInfo* runinfo)
    {
-      //if(fTrace)
-      printf("SpacepointModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
+      if(fTrace)
+         printf("SpacepointModule::EndRun, run %d    Total Counter %d\n", runinfo->fRunNo, fCounter);
       delete match;
    }
 

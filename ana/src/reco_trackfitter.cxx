@@ -106,27 +106,32 @@ public:
 
    ~TrackFitter()
    {
-      printf("TrackFitter::dtor!\n");
+      if (fTrace)
+         printf("TrackFitter::dtor!\n");
    }
 
    void BeginRun(TARunInfo* runinfo)
    {
-      printf("TrackFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+      if (fTrace)
+         printf("TrackFitter::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
    }
 
    void EndRun(TARunInfo* runinfo)
    {
-      printf("TrackFitter::EndRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("TrackFitter::EndRun, run %d\n", runinfo->fRunNo);
    }
 
    void PauseRun(TARunInfo* runinfo)
    {
-      printf("TrackFitter::PauseRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("TrackFitter::PauseRun, run %d\n", runinfo->fRunNo);
    }
 
    void ResumeRun(TARunInfo* runinfo)
    {
-      printf("TrackFitter::ResumeRun, run %d\n", runinfo->fRunNo);
+      if (fTrace)
+         printf("TrackFitter::ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
@@ -239,7 +244,8 @@ public:
 
    void AnalyzeSpecialEvent(TARunInfo* runinfo, TMEvent* event)
    {
-      printf("TrackFitter::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
+      if (fTrace)
+         printf("TrackFitter::AnalyzeSpecialEvent, run %d, event serno %d, id 0x%04x, data size %d\n", runinfo->fRunNo, event->serial_number, (int)event->event_id, event->data_size);
    }
 };
 
