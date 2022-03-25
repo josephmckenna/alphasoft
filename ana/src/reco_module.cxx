@@ -334,6 +334,18 @@ public:
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
          EventTree->Fill();
       }
+
+      // save a copy of the barell scrintillator hits
+      AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
+      if( !bef || !bef->BarEvent)
+         {
+            std::cout<<"RecoRun::AnalyzeFlowEvent no BSC event found"<<std::endl;
+         }
+      else
+         {
+            analyzed_event->AddBarrelHits(bef->BarEvent);
+         }
+
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
