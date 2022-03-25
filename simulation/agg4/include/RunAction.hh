@@ -84,6 +84,7 @@ public:
   inline TTree* GetSignalsTree()          { return fSignalsTree; }
 
   inline TClonesArray* GetScintBarsHitsArray()   { return fBarsHitsArray; }
+  inline TClonesArray* GetScintBarsDigiMCTruthArray()   { return fBarsDigiMCTruthArray; }
   inline TClonesArray* GetScintBarsMCHitsArray() { return fBarsMCHitsArray; }
   inline TTree* GetScintBarsHitTree()            { return fBarsTree; }
 
@@ -131,6 +132,8 @@ private:
   TTree* fSignalsTree;
 
   TClonesArray* fBarsHitsArray; // Scintillator Bars hits
+  TClonesArray* fBarsDigiMCTruthArray; // Scintillator Bars digi MC truth
+
   TClonesArray* fBarsMCHitsArray; 
   TTree* fBarsTree;
   

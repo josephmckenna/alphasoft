@@ -59,6 +59,7 @@
 #include "TDigi.hh"
 #include "ElectronDrift.hh"
 #include "TScintDigi.hh"
+#include "TScintDigiMCTruth.hh"
 
 #include "TWaveform.hh"
 
@@ -123,6 +124,8 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
   fRunAction->GetAnodesArray()->Delete();
 
   fRunAction->GetScintBarsHitsArray()->Clear();
+  fRunAction->GetScintBarsDigiMCTruthArray()->Clear();
+
   fRunAction->GetScintBarsMCHitsArray()->Clear();
 
   fRunAction->GetTPCreadout()->Reset();
@@ -536,11 +539,12 @@ void EventAction::FillHisto(TPCHitsCollection* THC)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
 {
-  TClonesArray& digiarray  = *(fRunAction->GetScintBarsHitsArray());
+  TClonesArray& hitarray  = *(fRunAction->GetScintBarsHitsArray());
+  TClonesArray& digimctrutharray  = *(fRunAction->GetScintBarsDigiMCTruthArray());
   TClonesArray& mchitarray = *(fRunAction->GetScintBarsMCHitsArray());
 
   // Add Scintillators Hits -- Digitization
-  int barHitted[64] = {0}; 
+  int barHit[64] = {0};  
   std::vector<int> barTrkID[64];
   // for (int i = 0; i < 64; i++)
   //   barTrkID[i] = -999;
@@ -550,7 +554,27 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
   for(G4int i=0;i<BHC->entries();++i)
     {
       ScintBarHit* aHit = (*BHC)[i];
+
       //      aHit->PrintPolar();
+      //************* Digi old array ******************
+      new(hitarray[i]) TScintDigi(aHit->GetTrackID(),
+				  aHit->GetPDGcode(),
+				  aHit->GetPosition().phi(),
+				  aHit->GetTime()/ns,
+				  aHit->GetPosition().perp()/mm,
+				  aHit->GetPosition().z()/mm,
+				  aHit->GetEdep()/MeV);
+
+      ((TScintDigi*) hitarray.Last())->Digi();
+          if( gmcbars )
+	    new(mchitarray[i]) TMChit(aHit->GetTrackID(),
+				  aHit->GetPDGcode(),
+				  aHit->GetPosition().perp()/mm,
+				  aHit->GetPosition().phi(),
+				  aHit->GetPosition().z()/mm,
+				  aHit->GetTime()/ns);
+
+      //****************** digi MC truth array ***********************
       bool newHit =  1;
       for(Int_t j=0; j< barTrkID[aHit->GetbarID()].size(); j++)
         {
@@ -563,41 +587,33 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
       
       if(newHit) 
       {
-        barHitted[aHit->GetbarID()] +=1;
+        barHit[aHit->GetbarID()] +=1;
         barTrkID[aHit->GetbarID()].push_back(aHit->GetTrackID());
-      new(digiarray[kk]) TScintDigi(aHit->GetTrackID(),
+      new(digimctrutharray[kk]) TScintDigiMCTruth(aHit->GetTrackID(),
                 aHit->GetPDGcode(),
                 aHit->GetPosition().phi(),
                 aHit->GetTime()/ns,
-                aHit->GetPosition().perp()/mm,
-                aHit->GetPosition().z()/mm,
                 aHit->GetEdep()/MeV);
             
             // G4cout<<"\t\t"<<i<<"\t"
-            // 	    <<((TScintDigi*) digiarray.Last())->GetR()<<"\t"
-            // 	    <<((TScintDigi*) digiarray.Last())->GetPhi()<<"\t";
-            ((TScintDigi*) digiarray.Last())->Digi();
-            ((TScintDigi*) digiarray.Last())->SetBarID((int)aHit->GetbarID());
-            ((TScintDigi*) digiarray.Last())->SetNhits(barHitted[aHit->GetbarID()]);
-            ((TScintDigi*) digiarray.Last())->SetMotherID(aHit->GetParentID());
+            // 	    <<((TScintDigiMCTruth*) digimctrutharray.Last())->GetR()<<"\t"
+            // 	    <<((TScintDigiMCTruth*) digimctrutharray.Last())->GetPhi()<<"\t";
+            //((TScintDigiMCTruth*) digimctrutharray.Last())->Digi();
+            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetBarID((int)aHit->GetbarID());
+            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetNhits(barHit[aHit->GetbarID()]);
+            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetMotherID(aHit->GetParentID());
             double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
             if(aHit->GetIsWhere()==-1)
               {
-                ((TScintDigi*) digiarray.Last())->SetPos_in(position);
-                ((TScintDigi*) digiarray.Last())->SetTimeIn(aHit->GetTime()/ns);
+                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetPos_in(position);
+                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetTimeIn(aHit->GetTime()/ns);
               }
             else if(aHit->GetIsWhere()==1) 
               {
-                ((TScintDigi*) digiarray.Last())->SetPos_out(position);
-                ((TScintDigi*) digiarray.Last())->SetTimeOut(aHit->GetTime()/ns);
+                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetPos_out(position);
+                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetTimeOut(aHit->GetTime()/ns);
               }
 
-            //((TScintDigi*) digiarray.Last())->Set
-            // G4cout<<((TScintDigi*) digiarray.Last())->GetBar()<<"\t"
-            // 	    <<((TScintDigi*) digiarray.Last())->GetPos()<<"\t"
-            // 	    <<((TScintDigi*) digiarray.Last())->GetTime()<<"\t"
-            // 	    <<((TScintDigi*) digiarray.Last())->GetZ()
-            // 	    <<G4endl;
             kk++; 
             
       } 
@@ -605,57 +621,51 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
       {
         for(G4int j=0; j<kk; j++)
         {
-          if(((TScintDigi*) digiarray[j])->GetBar()==(int)aHit->GetbarID() && ((TScintDigi*) digiarray[j])->GetTrackID()==(int)aHit->GetTrackID())
+          if(((TScintDigiMCTruth*) digimctrutharray[j])->GetBar()==(int)aHit->GetbarID() && ((TScintDigiMCTruth*) digimctrutharray[j])->GetTrackID()==(int)aHit->GetTrackID())
           {
-            barHitted[aHit->GetbarID()] +=1;
-            ((TScintDigi*) digiarray[j])->SetEnergy(((TScintDigi*) digiarray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
-            ((TScintDigi*) digiarray[j])->SetNhits(barHitted[aHit->GetbarID()]);
+            barHit[aHit->GetbarID()] +=1;
+            ((TScintDigiMCTruth*) digimctrutharray[j])->SetEnergy(((TScintDigiMCTruth*) digimctrutharray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
+            ((TScintDigiMCTruth*) digimctrutharray[j])->SetNhits(barHit[aHit->GetbarID()]);
             double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
             if(aHit->GetIsWhere()==-1) 
             {
-              ((TScintDigi*) digiarray[j])->SetPos_in(position);
-              ((TScintDigi*) digiarray[j])->SetTimeIn(aHit->GetTime()/ns);
+              ((TScintDigiMCTruth*) digimctrutharray[j])->SetPos_in(position);
+              ((TScintDigiMCTruth*) digimctrutharray[j])->SetTimeIn(aHit->GetTime()/ns);
             }
             else if(aHit->GetIsWhere()==1)
             {
-              ((TScintDigi*) digiarray[j])->SetPos_out(position);
-              ((TScintDigi*) digiarray[j])->SetTimeOut(aHit->GetTime()/ns);
+              ((TScintDigiMCTruth*) digimctrutharray[j])->SetPos_out(position);
+              ((TScintDigiMCTruth*) digimctrutharray[j])->SetTimeOut(aHit->GetTime()/ns);
             }
             break;
           }
         }
       }
-      if( gmcbars )
-	new(mchitarray[i]) TMChit(aHit->GetTrackID(),
-				  aHit->GetPDGcode(),
-				  aHit->GetPosition().perp()/mm,
-				  aHit->GetPosition().phi(),
-				  aHit->GetPosition().z()/mm,
-				  aHit->GetTime()/ns);
+    //*****************************************************************
     }
 
-  // Remove duplicated digitized Scintillators Hits
-  // int entries = digiarray.GetEntries(), j=0;
-  // while( j < entries )
-  //   {
-  //     TScintDigi* digi_temp = (TScintDigi*) digiarray.ConstructedAt(j);
-  //     for(int i=j+1; i<digiarray.GetEntries(); ++i)
-	// {
-	//   TScintDigi* digi_new = (TScintDigi*) digiarray.ConstructedAt(i);
-	//   if(digi_temp->IsSameDigi(digi_new)) 
-	//     {
-	//       // digi_temp->PrintChannel();
-	//       // G4cout<<"EventAction::AddScintBarsHits() Removing:"<<G4endl;
-	//       // digi_new->PrintChannel();
-	//       digiarray.RemoveAt(i);
-	//       --entries;
-	//     }
-	//   else break;
-	// }
-  //     digiarray.Compress();
-  //     ++j;
-  //   }
-  
+         // Remove duplicated digitized Scintillators Hits
+      int entries = hitarray.GetEntries(), j=0;
+      while( j < entries )
+        {
+          TScintDigi* digi_temp = (TScintDigi*) hitarray.ConstructedAt(j);
+          for(int i=j+1; i<hitarray.GetEntries(); ++i)
+          {
+            TScintDigi* digi_new = (TScintDigi*) hitarray.ConstructedAt(i);
+            if(digi_temp->IsSameDigi(digi_new)) 
+              {
+              // digi_temp->PrintChannel();
+              // G4cout<<"EventAction::AddScintBarsHits() Removing:"<<G4endl;
+              // digi_new->PrintChannel();
+              hitarray.RemoveAt(i);
+              --entries;
+              }
+            else break;
+          }
+          hitarray.Compress();
+          ++j;
+        }
+      
 }
 
 

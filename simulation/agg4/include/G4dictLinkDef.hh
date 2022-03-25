@@ -7,6 +7,7 @@
 
 #pragma link C++ class  TDigi+;
 #pragma link C++ class  TScintDigi+;
+#pragma link C++ class  TScintDigiMCTruth+;
 #pragma link C++ class  TTPCelement+;
 #pragma link C++ class  TAnode+;
 #pragma link C++ class  TPads+;

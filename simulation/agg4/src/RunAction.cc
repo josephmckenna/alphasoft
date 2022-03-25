@@ -94,6 +94,7 @@ RunAction::RunAction():fMCinfoTree(0),fTPCtree(0),fBarsTree(0),
   fReadout = new TPCreadout;
 
   fBarsHitsArray = new TClonesArray("TScintDigi");
+  fBarsDigiMCTruthArray = new TClonesArray("TScintDigiMCTruth");
 
   fBarsMCHitsArray = new TClonesArray("TMChit");
 
@@ -123,6 +124,7 @@ RunAction::~RunAction()
   delete fPADsignals;
 
   delete fBarsHitsArray;
+  delete fBarsDigiMCTruthArray;
   delete fBarsMCHitsArray;
 
   if(fRunMessenger) delete fRunMessenger;
@@ -185,6 +187,8 @@ void RunAction::BeginOfRunAction(const G4Run* aRun)
 
   fBarsTree = new TTree("ScintBarsMCdata","ScintBarsMCdata");
   fBarsTree->Branch("ScintBarHits",&fBarsHitsArray,32000,0);
+  fBarsTree->Branch("ScintBarDigiMCTruth",&fBarsDigiMCTruthArray,32000,0);
+
   if( gmcbars ) fBarsTree->Branch("ScintMCHits",&fBarsMCHitsArray,32000,0);
 
   fhSecond = new TH1D("fhSecond",
@@ -254,6 +258,7 @@ void RunAction::EndOfRunAction(const G4Run* aRun)
   fPadsArray->Clear("C");
 
   fBarsHitsArray->Clear("C");
+  fBarsDigiMCTruthArray->Clear("C");
   fBarsMCHitsArray->Clear("C");
 
   G4cout << "### Run " << aRun->GetRunID() << " end." << G4endl;
