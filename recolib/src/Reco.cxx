@@ -17,6 +17,7 @@
 
 #include <TDirectory.h>
 
+#define USE_STD_QSORT 1
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        fLocation("CERN"),
@@ -187,11 +188,16 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
+
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -229,11 +235,15 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -286,11 +296,15 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
                       time,
                       r,correction,zed,
                       err,erp,zerr,
-                      sp->height);
+                      sp->height,sp->height);
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
