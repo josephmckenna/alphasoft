@@ -179,48 +179,31 @@ void Utils::BookRecoHistos()
 }
 
 
-void Utils::FillRecoPointsHistos(const TObjArray* points)
-{  
-   int row,sec;
-   for(int p=0; p<points->GetEntriesFast(); ++p)
-      {
-         TSpacePoint* ap = (TSpacePoint*) points->At(p);
-         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
-         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
-         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
-         pmap.get(ap->GetPad(),sec,row);
-         fHisto.FillHisto("hOccPadpoints",row,sec);
-         
-         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
-      }
-}
-
-void Utils::FillRecoPointsHistos(std::vector<TSpacePoint*>* points)
+void Utils::FillRecoPointsHistos(const std::vector<TSpacePoint>* points)
 {  
    int row,sec;
    for(size_t p=0; p<points->size(); ++p)
       {
-         TSpacePoint* ap = (TSpacePoint*) points->at(p);
-         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
-         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
-         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
-         pmap.get(ap->GetPad(),sec,row);
+         const TSpacePoint& ap = points->at(p);
+         if( !ap.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
+         fHisto.FillHisto("hOccAwpoints",ap.GetWire());
+         fHisto.FillHisto("hAwpointsOccIsec",ap.GetWire()%8);
+         pmap.get(ap.GetPad(),sec,row);
          fHisto.FillHisto("hOccPadpoints",row,sec);
          
-         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
+         fHisto.FillHisto("hspzphipoints",ap.GetZ(),ap.GetPhi()*TMath::RadToDeg());
+         fHisto.FillHisto("hspxypoints",ap.GetX(),ap.GetY());
       }
 }
 
-void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
+void Utils::FillRecoTracksHisto(const std::vector<TTrack>* found_tracks)
 {  
    int row,sec;
    Npointstracks=0;
    for(size_t t=0; t<found_tracks->size(); ++t)
       {
-         TTrack* at = (TTrack*) found_tracks->at(t);
-         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         const TTrack& at = found_tracks->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
          for( const auto& it: *spacepoints )
             {
                fHisto.FillHisto("hOccAwtracks",it.GetWire());
@@ -238,7 +221,7 @@ void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
       }
 }
 
-void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
+void Utils::FillFitTracksHisto(const std::vector<TFitHelix>* tracks_array)
 {  
    int row,sec;
    Npoints=0;
@@ -246,8 +229,8 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
    std::set<int> trXaw;
    for(size_t t=0; t<tracks_array->size(); ++t)
       {
-         TTrack* at = (TTrack*) tracks_array->at(t);
-         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         const TFitHelix& at = tracks_array->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
          for(const auto& it: *spacepoints )
             {
                fHisto.FillHisto("hOccAw",it.GetWire());
@@ -277,28 +260,64 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
                fHisto.FillHisto("hTrackXpad",row,sec);                
             }
 
-         if( fMagneticField > 0. )
-            {
-               double chi2 = ((TFitHelix*)at)->GetRchi2();
-               double ndf = (double) ((TFitHelix*)at)->GetRDoF();
-               fHisto.FillHisto("hhchi2R",chi2/ndf);
+            double chi2 = at.GetRchi2();
+            double ndf = (double) at.GetRDoF();
+            fHisto.FillHisto("hhchi2R",chi2/ndf);
 
-               chi2 = ((TFitHelix*)at)->GetZchi2();
-               ndf = (double) ((TFitHelix*)at)->GetZDoF();
-               fHisto.FillHisto("hhchi2Z",chi2/ndf);
+            chi2 = at.GetZchi2();
+            ndf = (double) at.GetZDoF();
+            fHisto.FillHisto("hhchi2Z",chi2/ndf);
 
-               fHisto.FillHisto("hhD", ((TFitHelix*)at)->GetD() );
-            }
-         else
-            {
-               double ndf= (double) ((TFitLine*)at)->GetDoF();
-               double chi2 = ((TFitLine*)at)->GetChi2();
-               fHisto.FillHisto("hchi2",chi2/ndf);
-               // if( gVerb > 1 )
-               //    cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
-            }
+            fHisto.FillHisto("hhD", at.GetD() );
+
       }
 }
+
+void Utils::FillFitTracksHisto(const std::vector<TFitLine>* tracks_array)
+{  
+   int row,sec;
+   Npoints=0;
+   std::set<int> trkXpad;
+   std::set<int> trXaw;
+   for(size_t t=0; t<tracks_array->size(); ++t)
+      {
+         const TFitLine& at =tracks_array->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
+         for(const auto& it: *spacepoints )
+            {
+               fHisto.FillHisto("hOccAw",it.GetWire());
+               fHisto.FillHisto("hAwOccIsec",it.GetWire()%8);
+               trXaw.insert(it.GetWire());
+               pmap.get(it.GetPad(),sec,row);
+               trkXpad.insert(it.GetPad());
+               fHisto.FillHisto("hOccPad",row,sec);
+		  
+               fHisto.FillHisto("hsprad",it.GetR());
+               fHisto.FillHisto("hspphi",it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspzed",it.GetZ());
+		  
+               fHisto.FillHisto("hspzphi",it.GetZ(),it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspxy",it.GetX(),it.GetY());
+
+               ++Npoints;
+            }
+              
+         for(auto iaw = trXaw.begin(); iaw != trXaw.end(); ++iaw)
+            {
+               fHisto.FillHisto("hTrackXaw",*iaw);
+            }
+         for(auto ipd = trkXpad.begin(); ipd != trkXpad.end(); ++ipd)
+            {
+               pmap.get(*ipd,sec,row);
+               fHisto.FillHisto("hTrackXpad",row,sec);                
+            }
+
+            double ndf= (double) at.GetDoF();
+            double chi2 = at.GetChi2();
+            fHisto.FillHisto("hchi2",chi2/ndf);
+      }
+}
+
 
 void Utils::FillRecoVertex(const TFitVertex* Vertex)
 {
@@ -313,7 +332,7 @@ void Utils::FillRecoVertex(const TFitVertex* Vertex)
 
 // ===============================================================================================
 
-void Utils::FillFinalHistos(const Reco* r, int ntracks)
+void Utils::FillFinalHistos(const TStoreEvent* r, int ntracks)
 {
    fHisto.FillHisto("hNpoints",r->GetNumberOfPoints());
    if(Npointstracks) fHisto.FillHisto("hNpointstracks",Npointstracks);

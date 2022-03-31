@@ -15,7 +15,7 @@ TTrackBuilder::TTrackBuilder(double B, std::string location, bool trace): fMagne
 
 
 
-void TTrackBuilder::BuildTracks( const std::vector<track_t> track_vector, const std::vector<TSpacePoint*> PointsArray, std::vector<TTrack>& TTrackArray )
+void TTrackBuilder::BuildTracks( const std::vector<track_t> track_vector, const std::vector<TSpacePoint> PointsArray, std::vector<TTrack>& TTrackArray )
 {
    TTrackArray.reserve( TTrackArray.size() + track_vector.size());
    int n=0;
@@ -27,14 +27,22 @@ void TTrackBuilder::BuildTracks( const std::vector<track_t> track_vector, const 
          //std::cout<<"Reco::AddTracks Check Track # "<<n<<" "<<std::endl;
          for ( const int& pointNumber: t)
             {
-               thetrack.AddPoint( *PointsArray[pointNumber] );
+               thetrack.AddPoint( PointsArray[pointNumber] );
             }
          //            std::cout<<"\n";
          ++n;
       }
    //fTracksArray.Compress();
    //std::cout<<"Reco::AddTracks "<<n<<"\t"<<track_vector.size()<<"\t"<<TTrackArray.size()<<std::endl;   assert(n==int(track_vector->size()));
-   assert(fTracksArray.size()==track_vector->size());
+   assert(TTrackArray.size()==track_vector.size());
    if( fTrace )
       std::cout<<"Reco::AddTracks # entries: "<<TTrackArray.size()<<std::endl;
+}
+
+void TTrackBuilder::UseSTRfromData(int runNumber)
+{
+   delete fSTR;
+   std::cout<<"Reco::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
+   fSTR = new LookUpTable(runNumber);
+   fMagneticField=0.; // data driven STR valid only for B=0T   
 }

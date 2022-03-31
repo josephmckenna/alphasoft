@@ -45,36 +45,36 @@ TCosmic::TCosmic():TFitLine(),fMagneticField(0.),
    for(int n=0; n<9; ++n) fvstart[n]=ALPHAg::kUnknown;
 }
 
-TCosmic::TCosmic(TFitHelix* t1,TFitHelix* t2, double b):fMagneticField(b)
+TCosmic::TCosmic(const TFitHelix& t1,const TFitHelix& t2, double b):fMagneticField(b)
 {
    fvstart = new double[9];
-   AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
+   AddAllPoints(t1.GetPointsArray(),t2.GetPointsArray());
    CalculateHelDCA(t1,t2); // defined here
 }
 
-TCosmic::TCosmic(TFitLine* t1, TFitLine* t2):fMagneticField(0.)
+TCosmic::TCosmic(const TFitLine& t1, const TFitLine& t2):fMagneticField(0.)
 {
    fvstart = new double[9];
-   AddAllPoints(t1->GetPointsArray(),t2->GetPointsArray());
-   fDCA = t1->Distance(t2);// defined in TFitLine
-   fCosAngle = t1->CosAngle(t2);
-   fAngle = t1->Angle(t2);
+   AddAllPoints(t1.GetPointsArray(),t2.GetPointsArray());
+   fDCA = t1.Distance(t2);// defined in TFitLine
+   fCosAngle = t1.CosAngle(t2);
+   fAngle = t1.Angle(t2);
 }
 
-TCosmic::TCosmic(TStoreHelix* t1, TStoreHelix* t2, double b):fMagneticField(b)
+TCosmic::TCosmic(const TStoreHelix& t1, const TStoreHelix& t2, double b):fMagneticField(b)
 {
    fvstart = new double[9];
-   AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
+   AddAllPoints( t1.GetSpacePoints(), t2.GetSpacePoints() );
    CalculateHelDCA(t1,t2); // defined here
 }
 
-TCosmic::TCosmic(TStoreLine* t1 ,TStoreLine* t2):fMagneticField(0.)
+TCosmic::TCosmic(const TStoreLine& t1 ,const TStoreLine& t2):fMagneticField(0.)
 {
    fvstart = new double[9];
-   AddAllPoints( t1->GetSpacePoints(), t2->GetSpacePoints() );
+   AddAllPoints( t1.GetSpacePoints(), t2.GetSpacePoints() );
    fDCA = LineDistance(t1,t2); // defined here
-   fCosAngle = t1->GetDirection()->Dot( *(t2->GetDirection()) );
-   fAngle = t1->GetDirection()->Angle( *(t2->GetDirection()) );
+   fCosAngle = t1.GetDirection()->Dot( *(t2.GetDirection()) );
+   fAngle = t1.GetDirection()->Angle( *(t2.GetDirection()) );
 }
 
 TCosmic::~TCosmic()
@@ -238,30 +238,30 @@ void TCosmic::Initialization()
    fvstart[5] = fPoints.front().GetZ();
 }
 
-int TCosmic::CalculateHelDCA(TStoreHelix* hi, TStoreHelix* hj)
+int TCosmic::CalculateHelDCA(const TStoreHelix& hi, const TStoreHelix& hj)
 {
    TFitHelix* hel1 = new TFitHelix(hi);
    hel1->SetMagneticField(fMagneticField);
    TFitHelix* hel2 = new TFitHelix(hj);
    hel2->SetMagneticField(fMagneticField);
-   int stat = CalculateHelDCA(hel1,hel2);
+   int stat = CalculateHelDCA(*hel1,*hel2);
    delete hel1;
    delete hel2;
    return stat;
 }
 
-int TCosmic::CalculateHelDCA(TFitHelix* hel1, TFitHelix* hel2)
+int TCosmic::CalculateHelDCA(const TFitHelix& hel1, const TFitHelix& hel2)
 {
    TFitVertex* c = new TFitVertex(-1);
-   c->AddHelix( hel1 );
-   c->AddHelix( hel2 );
+   c->AddHelix( (TFitHelix*) &hel1 );
+   c->AddHelix( (TFitHelix*) &hel2 );
    int stat = c->FindDCA();
    if( stat > 0 )
       {
          //fDCA = c->GetNewChi2(); //mis-name since I'm re-using the vertexing algorithm
          fDCA = c->GetMeanVertex()->Mag();
-         TVector3 p1 = hel1->GetMomentumV();
-         TVector3 p2 = hel2->GetMomentumV();
+         TVector3 p1 = hel1.GetMomentumV();
+         TVector3 p2 = hel2.GetMomentumV();
          fCosAngle = p1.Unit().Dot(p1.Unit());
          fAngle = p1.Unit().Angle(p1.Unit());
       }
@@ -274,12 +274,12 @@ int TCosmic::CalculateHelDCA(TFitHelix* hel1, TFitHelix* hel2)
    return stat;
 }
 
-double TCosmic::LineDistance(TStoreLine* l0, TStoreLine* l1)
+double TCosmic::LineDistance(const TStoreLine& l0, const TStoreLine& l1)
 {
-   TVector3 u0 = *(l0->GetDirection());
-   TVector3 u1 = *(l1->GetDirection());
-   TVector3 p0 = *(l0->GetPoint());
-   TVector3 p1 = *(l1->GetPoint());
+   TVector3 u0 = *(l0.GetDirection());
+   TVector3 u1 = *(l1.GetDirection());
+   TVector3 p0 = *(l0.GetPoint());
+   TVector3 p1 = *(l1.GetPoint());
   
    TVector3 n0 = u0.Cross( u1 ); // normal to lines
    TVector3 c =  p1 - p0;

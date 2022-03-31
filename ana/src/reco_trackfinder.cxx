@@ -186,21 +186,17 @@ public:
          return flow;
       }
 
-      std::vector<TSpacePoint*> SortedPoints;
-      {
-         //Unfolding the array into a vector of points isn't free... so maybe we can look at changing the finder classes
-
-         SortedPoints.reserve(SigFlow->fSpacePoints.size());
-         for (const TSpacePoint& p: SigFlow->fSpacePoints)
-         {
-            SortedPoints.push_back( (TSpacePoint*) &p);
-         }
-      }
       SigFlow->fTrackVector.clear();
       {
-         r.FindTracks(SortedPoints, SigFlow->fTrackVector ,fFlags->finder);
+         r.FindTracks(
+            SigFlow->fSpacePoints,
+            SigFlow->fTrackVector,
+            fFlags->finder);
       }
-      track_builder.BuildTracks(   SigFlow->fTrackVector,SortedPoints, SigFlow->fTracksArray );
+      track_builder.BuildTracks( 
+         SigFlow->fTrackVector,
+         SigFlow->fSpacePoints,
+         SigFlow->fTracksArray );
       if( fTrace )
          printf("RecoTrackFinder::Analyze Tracks: %ld\n",SigFlow->fTrackVector.size());
       return flow;

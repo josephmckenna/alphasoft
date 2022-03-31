@@ -541,7 +541,7 @@ void DeconvPAD::Deconvolution(
       //I am the last thread
       if (thread_no == total_threads)
          stop = nsamples;
-      assert (start =< stop);
+      assert (start <= stop);
       return DeconvolutionByRange( subtracted, fElectrodeIndex, signals, start ,stop);
    }
 }

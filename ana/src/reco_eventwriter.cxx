@@ -103,6 +103,7 @@ public:
 
       // prepare event to store in TTree
       analyzed_event = af->fEvent;
+      if (analyzed_event)
       {
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);

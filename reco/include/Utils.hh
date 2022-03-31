@@ -13,6 +13,7 @@
 #include "TTrack.hh"
 #include "TFitHelix.hh"
 #include "TFitVertex.hh"
+#include "TStoreEvent.hh"
 
 class Utils
 {
@@ -38,13 +39,14 @@ public:
    void BookRecoHistos();
    void BookAGG4Histos();
 
-   void FillRecoPointsHistos(const TObjArray* points);
-   void FillRecoPointsHistos(std::vector<TSpacePoint*>* points);
-   void FillRecoTracksHisto(std::vector<TTrack*>* found_tracks);
-   void FillFitTracksHisto(std::vector<TTrack*>* tracks_array);
+   void FillRecoPointsHistos(const std::vector<TSpacePoint>* points);
+   void FillRecoTracksHisto(const std::vector<TTrack>* found_tracks);
+   void FillFitTracksHisto(const std::vector<TFitHelix>* tracks_array);
+   void FillFitTracksHisto(const std::vector<TFitLine>* tracks_array);
+
    void FillRecoVertex(const TFitVertex* Vertex);
 
-   void FillFinalHistos(const Reco* r, int ntracks);
+   void FillFinalHistos(const TStoreEvent* r, int ntracks);
 
    void DebugNeuralNet(NeuralFinder*);
    void DebugNeuralNetMC(NeuralFinder*);

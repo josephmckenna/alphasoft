@@ -585,26 +585,26 @@ void TFitLine::Reason()
    }
 }
 
-double TFitLine::Angle( TFitLine* line )
+double TFitLine::Angle( const TFitLine& line ) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->GetUx(),line->GetUy(),line->GetUz());
+  TVector3 u1(line.GetUx(),line.GetUy(),line.GetUz());
   return u0.Angle(u1);
 }
 
-double TFitLine::CosAngle( TFitLine* line )
+double TFitLine::CosAngle( const TFitLine& line ) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->GetUx(),line->GetUy(),line->GetUz());
+  TVector3 u1(line.GetUx(),line.GetUy(),line.GetUz());
   return u0.Dot(u1);
 }
 
-TVector3 TFitLine::Sagitta(TFitLine* line)
+TVector3 TFitLine::Sagitta(const TFitLine& line) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->fux, line->fuy, line->fuz);
+  TVector3 u1(line.fux, line.fuy, line.fuz);
   TVector3 p0(fx0, fy0, fz0);
-  TVector3 p1(line->fx0, line->fy0, line->fz0);
+  TVector3 p1(line.fx0, line.fy0, line.fz0);
 
   TVector3 n0 = u0.Cross( u1 ); // normal to lines
   TVector3 c =  p1 - p0;
@@ -628,7 +628,7 @@ TVector3 TFitLine::Sagitta(TFitLine* line)
   return Q;
 }
 
-double TFitLine::Distance(TFitLine* line)
+double TFitLine::Distance(const TFitLine& line) const
 {
   return Sagitta(line).Mag();
 }

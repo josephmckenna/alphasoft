@@ -41,7 +41,7 @@ private:
 #endif
 
 public:
-   TracksFinder(const std::vector<TSpacePoint*>*);
+   TracksFinder(const std::vector<TSpacePoint>*);
    virtual ~TracksFinder();
 
    inline void SetSeedRadCut(double cut)    { fSeedRadCut=cut; }

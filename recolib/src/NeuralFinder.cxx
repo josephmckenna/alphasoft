@@ -29,7 +29,7 @@ NeuralFinder::Neuron::Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(null
 }
 
 //==============================================================================================
-NeuralFinder::NeuralFinder(const std::vector<TSpacePoint*>* points):
+NeuralFinder::NeuralFinder(const std::vector<TSpacePoint>* points):
    TracksFinder(points)
 {
    // // No inherent reason why these parameters should be the same as in base class

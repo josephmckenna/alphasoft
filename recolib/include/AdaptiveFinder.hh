@@ -22,7 +22,7 @@ private:
    const double fMaxIncreseAdapt;
 
 public:
-   AdaptiveFinder(const std::vector<TSpacePoint*>*, const double MaxIncrease, const double LastPointRadCut );
+   AdaptiveFinder(const std::vector<TSpacePoint>*, const double MaxIncrease, const double LastPointRadCut );
    ~AdaptiveFinder(){};
 
    inline double GetMaxIncreseAdapt() const {return fMaxIncreseAdapt;}

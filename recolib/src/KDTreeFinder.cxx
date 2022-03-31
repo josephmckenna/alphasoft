@@ -8,7 +8,7 @@
 #include "KDTreeFinder.hh"
 #include <iostream>
 
-KDTreeFinder::KDTreeFinder(std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
+KDTreeFinder::KDTreeFinder(const std::vector<TSpacePoint>* points, const double maxIncrease, const double LastPointRadCut):
    TracksFinder(points),
    fLastPointRadCut(LastPointRadCut),
    fPointsRadCut(4.),
@@ -24,7 +24,7 @@ KDTreeFinder::KDTreeFinder(std::vector<TSpacePoint*>* points, const double maxIn
    fZ.reserve(npoints);
    fCluster.reserve(npoints);
    fClusterID = 0;
-   for (const TSpacePoint* p: *points)
+   for (const TSpacePoint* p: fPointsArray)
    {
        fCluster.emplace_back(0);
        if (p)

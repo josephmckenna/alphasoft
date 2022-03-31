@@ -52,7 +52,7 @@ class TRecoTrackFinder
    
       //TRecoTrackFinder(std::string json, bool trace = false);
       TRecoTrackFinder(AnaSettings* ana_set,  bool trace = false);
-      int FindTracks(const std::vector<TSpacePoint*> PointsArray , std::vector<track_t>& TrackVector,  finderChoice finder);
+      int FindTracks(const std::vector<TSpacePoint> PointsArray , std::vector<track_t>& TrackVector,  finderChoice finder);
       void PrintPattRec();
 
 

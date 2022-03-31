@@ -26,6 +26,14 @@ TSpacePointBuilder::TSpacePointBuilder(AnaSettings* ana_set, double B, std::stri
    std::cout<<"Reco::Reco()  max time: "<<fSTR->GetMaxTime()<<" ns"<<std::endl;
 }
 
+void TSpacePointBuilder::UseSTRfromData(int runNumber)
+{
+   delete fSTR;
+   std::cout<<"Reco::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
+   fSTR = new LookUpTable(runNumber);
+   fMagneticField=0.; // data driven STR valid only for B=0T   
+}
+
 void TSpacePointBuilder::BuildSpacePointArray( 
     const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints,
     std::vector<TSpacePoint> &PointsArray,

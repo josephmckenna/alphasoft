@@ -28,7 +28,7 @@ using std::endl;
 class NeuralFinder: public TracksFinder
 {
 public:
-   NeuralFinder(const std::vector<TSpacePoint*>*);
+   NeuralFinder(const std::vector<TSpacePoint>*);
    ~NeuralFinder(){};
 
    virtual int RecTracks(std::vector<track_t>& TrackVector);

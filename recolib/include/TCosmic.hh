@@ -19,10 +19,10 @@ class TCosmic: public TFitLine
 {
 public:
    TCosmic();
-   TCosmic(TFitHelix*,TFitHelix*,double);
-   TCosmic(TFitLine*,TFitLine*);
-   TCosmic(TStoreHelix*,TStoreHelix*,double);
-   TCosmic(TStoreLine*,TStoreLine*);
+   TCosmic(const TFitHelix&,const TFitHelix&,double);
+   TCosmic(const TFitLine&,const TFitLine&);
+   TCosmic(const TStoreHelix&,const TStoreHelix&,double);
+   TCosmic(const TStoreLine&,const TStoreLine&);
 
    ~TCosmic();
 
@@ -45,9 +45,9 @@ private:
    int AddAllPoints(const TObjArray*, const TObjArray*);
    int AddAllPoints(const std::vector<TSpacePoint>*,
                     const std::vector<TSpacePoint>*);
-   int CalculateHelDCA(TStoreHelix*, TStoreHelix*);
-   int CalculateHelDCA(TFitHelix*, TFitHelix*);
-   double LineDistance(TStoreLine*, TStoreLine*);
+   int CalculateHelDCA(const TStoreHelix&, const TStoreHelix&);
+   int CalculateHelDCA(const TFitHelix&, const TFitHelix&);
+   double LineDistance(const TStoreLine&, const TStoreLine&);
 
    void Initialization();
 
