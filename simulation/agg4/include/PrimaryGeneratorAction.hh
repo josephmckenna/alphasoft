@@ -35,11 +35,12 @@
 #define PrimaryGeneratorAction_h 1
 #include "TRandom3.h"
 
+#include "G4ParticleDefinition.hh"
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
 
 #include "Randomize.hh"
-
+#include "EcoMug.h"
 
 #include <fstream>
 #include <vector>
@@ -83,6 +84,9 @@ private:
 
   G4ParticleGun*             fParticleGun; // pointer a to G4 particle generator
   CRYGenerator*              fCosmicGen;   // cosmic generator
+  EcoMug                     fMuonGen;     // cosmic-ray muons generator (through EcoMug)
+  G4ParticleDefinition       *mu_minus, *mu_plus;
+
   std::vector<CRYParticle*>* fvect;        // vector of generated cosmic particles
 
   G4RandGauss* fRandGaus;
