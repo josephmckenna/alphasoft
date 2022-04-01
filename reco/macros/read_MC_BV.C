@@ -9,8 +9,8 @@
 ///< ############################################################
 void read_MC_BV::AnalyzeMCinfo()
 {
-   std::string  stat_opt = "im";      // i = integral, m = mean, r = rms, etc. 
-   gStyle->SetOptStat(stat_opt.c_str());
+   //std::string  stat_opt = "im";      // i = integral, m = mean, r = rms, etc. 
+   gStyle->SetOptStat(1);
    //##########################################################
    // histograms
    int nbin = 1000, nbinr = 100;
@@ -78,19 +78,21 @@ void read_MC_BV::AnalyzeMCinfo()
 ///< ############################################################
 ///< HISTOS AND NUMBERS FOR THE BV BARS
 ///< ############################################################
-void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = 999, Float_t smearingTime = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = 999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 {
 //_________________________________________________________________________________________
 
+   bool  BExcludeBars = 0; //OCCHIO escludi  barre escluse nei dati
    const Float_t Radius=223; //[mm]
    const Float_t speedC=299.792458; //[mm/ns]
+   const Float_t Veff=speedC/1.93;
    const Int_t   NBARS=64;
    Float_t nEle = 0., nMu = 0., nPi = 0., nOther = 0.;
 //_________________________________________________________________________________________   
 
    TH1F *hNbarsHitperEvent = new TH1F("hNbarsHitperEvent", "hNbarsHitperEvent",15,-0.5,14.5);
    hNbarsHitperEvent->SetTitle("Number of hit bars per event");
-   hNbarsHitperEvent->SetXTitle("N. hit bars"); hNbarsHitperEvent->SetYTitle("%");
+   hNbarsHitperEvent->SetXTitle("N. hit bars"); //hNbarsHitperEvent->SetYTitle("%");
    TH1F *hBarNumber = new TH1F("hBarNumber", "hBarNumber", NBARS,0,NBARS);
    TH1F *hNdigiperEvent = new TH1F("hNdigiperEvent","hNdigiperEvent", 15,-0.5,14.5);
    TH1F *hEnergyperEvent = new TH1F("hEnergyperEvent","hEnergyperEvent", 200,0,100);
@@ -154,8 +156,14 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
       Float_t z[NBARS]={0};
       Float_t phi[NBARS]={0};
       for (Int_t i=0;i<ndigi;i++) { //loop on digi //NO CUTS HERE!!!
-         TScintDigiMCTruth *Scdigi = (TScintDigiMCTruth*) ScintBarDigiMCTruth->At(i);
+         TBSCHit *Scdigi = (TBSCHit*) ScintBarDigiMCTruth->At(i);
          Int_t barN = Scdigi->GetBar();
+
+         if(BExcludeBars)
+         {
+            if( barN==0 || barN==36 || barN==37 || (barN>=48 && barN<=55) ) continue; //OCCHIO  barre escluse nei dati
+         }
+
          if(fabs(Scdigi->GetTrackPDG())==11) {nEle++;} 
          else if(fabs(Scdigi->GetTrackPDG())==13) {nMu++;} 
          else if(fabs(Scdigi->GetTrackPDG())==211) {nPi++;} 
@@ -226,21 +234,32 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
 
          if(barFlag_in[i]==0) continue; //if bar not hit
          time[i]/=barFlag_in[i]; //media dei tempi se ho multiple hit in one bar
-         if(smearingTime>0) time[i] += gRandom->Gaus(0,smearingTime);
+         if(smearingTime>0) time[i] += gRandom->Gaus(0,smearingTime/TMath::Sqrt(2)); //TOF = T1-T2 = (t1top+t1bot)/2 - (t2top+t2bot)/2, so sigmaT1 = sigmat/sqrt(2)
          z[i]/=barFlag_in[i];
+         if(smearingTime>0 || v_reluncertainty>0)
+         {
+            Float_t sigmat = 0.0;
+            Float_t sigmav = 0.0;
+            if(smearingTime>0) sigmat = smearingTime;
+            if(v_reluncertainty>0) sigmav = v_reluncertainty;
+            Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2 + sigmav*sigmav*z[i]*z[i]);
+            z[i] += gRandom->Gaus(0,sigmaz);
+         }
+
          for (Int_t j = 0; j < i; j++)
          {
             if(barFlag_in[j]==0) continue; //if bar not hit
             TOF =  TMath::Abs(time[j]-time[i]);
             deltaz = TMath::Abs(z[j]-z[i]);
             deltaphi = TMath::Abs(phi[j]-phi[i]);
+            if(deltaphi>TMath::Pi()) deltaphi = 2*TMath::Pi() - deltaphi;
 
-            if(deltaphi<DeltaPhiCut) continue; //cut on deltaphi
+            if(deltaphi<DeltaPhiCut)  continue; //cut on deltaphi
 
             distance = TMath::Sqrt(deltaz*deltaz+(2*Radius*TMath::Sin(deltaphi/2))*(2*Radius*TMath::Sin(deltaphi/2)));
 
             hTOF->Fill(TOF);//****************
-            hDistance->Fill(distance/speedC);
+            hDistance->Fill(distance/speedC);//****************
             hdeltaz->Fill(deltaz);//****************
             hTOFvsDistance->Fill(distance/speedC,TOF);//****************
          }
@@ -285,21 +304,6 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
    c1->cd(5);
    hTOFvsDistance->Draw("colz");
 
-   // TFile *fOut = new TFile("fHistoOut"+filename+Form("EnergyCut%1.1f_DeltaPhiCut%1.1f_MultCut%d_timesmeaaring%1.1f.root",EnergyCut,DeltaPhiCut,MultCut,smearingTime),"RECREATE");
-   // fOut->cd();
-   // hNdigiperEvent->Write();
-   // hNbarsHitperEvent->Write();
-   // hBarNumber->Write();
-   // hEnergyperBar->Write();
-   // hEnergyperBarMult->Write();
-   // hEnergyperDigivsPDGcode->Write();
-   // hEnergyperEvent->Write();
-   // hzin->Write();
-   // hzout->Write();
-   // hzinMinuszout->Write();
-   // hTOFvsDistance->Write();
-   // fOut->Close();
-
    TCanvas *cTOF = new TCanvas("cTOF", "cTOF", 1200, 1200);
    hTOFvsDistance->Draw("COLZ");
    // hDigi_Bars->Draw();
@@ -307,7 +311,7 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
    TCanvas *cSummary = new TCanvas("cSummary", "cSummary", 1200, 1200);
    cSummary->Divide(2,2);
 
-   hNbarsHitperEvent->Scale(1./hNbarsHitperEvent->Integral()*100.);
+   //hNbarsHitperEvent->Scale(1./hNbarsHitperEvent->Integral()*100.);
    cSummary->cd(1); hNbarsHitperEvent->Draw("H");
 
    hEnergyperBar->SetFillColor(46);
@@ -325,4 +329,26 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
    hDistance->SetFillColor(46);
    cProj->cd(1); hTOF->Draw();
    cProj->cd(2); hDistance->Draw();
+
+   TString snamefileout="simulation/fHistoOut"+filename+Form("EnergyCut%1.1f_DeltaPhiCut%1.1f_MultCut%d_timesmeaaring%1.1f_v_reluncertainty%1.1f",EnergyCut,DeltaPhiCut,MultCut,smearingTime,v_reluncertainty);
+   if(BExcludeBars) snamefileout+="_excludedbars";
+
+   snamefileout+=".root";
+         
+   TFile *fOut = new TFile(snamefileout,"RECREATE");
+   fOut->cd();
+   hNdigiperEvent->Write();
+   hNbarsHitperEvent->Write();
+   hBarNumber->Write();
+   hEnergyperBar->Write();
+   hEnergyperBarMult->Write();
+   hEnergyperDigivsPDGcode->Write();
+   hEnergyperEvent->Write();
+   hzin->Write();
+   hzout->Write();
+   hzinMinuszout->Write();
+   hTOFvsDistance->Write();
+   hTOF->Write();
+   hDistance->Write();
+   fOut->Close();
 }

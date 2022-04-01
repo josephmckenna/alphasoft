@@ -59,7 +59,7 @@
 #include "TDigi.hh"
 #include "ElectronDrift.hh"
 #include "TScintDigi.hh"
-#include "TScintDigiMCTruth.hh"
+#include "TBSCHit.hh"
 
 #include "TWaveform.hh"
 
@@ -589,29 +589,29 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
       {
         barHit[aHit->GetbarID()] +=1;
         barTrkID[aHit->GetbarID()].push_back(aHit->GetTrackID());
-      new(digimctrutharray[kk]) TScintDigiMCTruth(aHit->GetTrackID(),
+      new(digimctrutharray[kk]) TBSCHit(aHit->GetTrackID(),
                 aHit->GetPDGcode(),
                 aHit->GetPosition().phi(),
                 aHit->GetTime()/ns,
                 aHit->GetEdep()/MeV);
             
             // G4cout<<"\t\t"<<i<<"\t"
-            // 	    <<((TScintDigiMCTruth*) digimctrutharray.Last())->GetR()<<"\t"
-            // 	    <<((TScintDigiMCTruth*) digimctrutharray.Last())->GetPhi()<<"\t";
-            //((TScintDigiMCTruth*) digimctrutharray.Last())->Digi();
-            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetBarID((int)aHit->GetbarID());
-            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetNhits(barHit[aHit->GetbarID()]);
-            ((TScintDigiMCTruth*) digimctrutharray.Last())->SetMotherID(aHit->GetParentID());
+            // 	    <<((TBSCHit*) digimctrutharray.Last())->GetR()<<"\t"
+            // 	    <<((TBSCHit*) digimctrutharray.Last())->GetPhi()<<"\t";
+            //((TBSCHit*) digimctrutharray.Last())->Digi();
+            ((TBSCHit*) digimctrutharray.Last())->SetBarID((int)aHit->GetbarID());
+            ((TBSCHit*) digimctrutharray.Last())->SetNhits(barHit[aHit->GetbarID()]);
+            ((TBSCHit*) digimctrutharray.Last())->SetMotherID(aHit->GetParentID());
             double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
             if(aHit->GetIsWhere()==-1)
               {
-                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetPos_in(position);
-                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetTimeIn(aHit->GetTime()/ns);
+                ((TBSCHit*) digimctrutharray.Last())->SetPos_in(position);
+                ((TBSCHit*) digimctrutharray.Last())->SetTimeIn(aHit->GetTime()/ns);
               }
             else if(aHit->GetIsWhere()==1) 
               {
-                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetPos_out(position);
-                ((TScintDigiMCTruth*) digimctrutharray.Last())->SetTimeOut(aHit->GetTime()/ns);
+                ((TBSCHit*) digimctrutharray.Last())->SetPos_out(position);
+                ((TBSCHit*) digimctrutharray.Last())->SetTimeOut(aHit->GetTime()/ns);
               }
 
             kk++; 
@@ -621,21 +621,21 @@ void EventAction::AddScintBarsHits(ScintBarHitsCollection* BHC)
       {
         for(G4int j=0; j<kk; j++)
         {
-          if(((TScintDigiMCTruth*) digimctrutharray[j])->GetBar()==(int)aHit->GetbarID() && ((TScintDigiMCTruth*) digimctrutharray[j])->GetTrackID()==(int)aHit->GetTrackID())
+          if(((TBSCHit*) digimctrutharray[j])->GetBar()==(int)aHit->GetbarID() && ((TBSCHit*) digimctrutharray[j])->GetTrackID()==(int)aHit->GetTrackID())
           {
             barHit[aHit->GetbarID()] +=1;
-            ((TScintDigiMCTruth*) digimctrutharray[j])->SetEnergy(((TScintDigiMCTruth*) digimctrutharray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
-            ((TScintDigiMCTruth*) digimctrutharray[j])->SetNhits(barHit[aHit->GetbarID()]);
+            ((TBSCHit*) digimctrutharray[j])->SetEnergy(((TBSCHit*) digimctrutharray[j])->GetEnergy()+aHit->GetEdep()/MeV); //però le info le devo prendere dal hit non dal digi
+            ((TBSCHit*) digimctrutharray[j])->SetNhits(barHit[aHit->GetbarID()]);
             double position[3] = {aHit->GetPosition().x()/mm, aHit->GetPosition().y()/mm, aHit->GetPosition().z()/mm};
             if(aHit->GetIsWhere()==-1) 
             {
-              ((TScintDigiMCTruth*) digimctrutharray[j])->SetPos_in(position);
-              ((TScintDigiMCTruth*) digimctrutharray[j])->SetTimeIn(aHit->GetTime()/ns);
+              ((TBSCHit*) digimctrutharray[j])->SetPos_in(position);
+              ((TBSCHit*) digimctrutharray[j])->SetTimeIn(aHit->GetTime()/ns);
             }
             else if(aHit->GetIsWhere()==1)
             {
-              ((TScintDigiMCTruth*) digimctrutharray[j])->SetPos_out(position);
-              ((TScintDigiMCTruth*) digimctrutharray[j])->SetTimeOut(aHit->GetTime()/ns);
+              ((TBSCHit*) digimctrutharray[j])->SetPos_out(position);
+              ((TBSCHit*) digimctrutharray[j])->SetTimeOut(aHit->GetTime()/ns);
             }
             break;
           }

@@ -14,7 +14,7 @@
 
 // Header file for the classes stored in the TTree if any.
 #include "TClonesArray.h"
-#include "TScintDigiMCTruth.hh"
+#include "TBSCHit.hh"
 #include "Riostream.h"
 
 
@@ -23,6 +23,7 @@ public :
    TTree          *tMCinfo;   //!pointer to the analyzed TTree or TChain
    TTree          *tBVBars;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
+   TString         filename;
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
@@ -46,7 +47,7 @@ public :
    virtual void     InitMCinfoTree(TTree *tree);
    virtual void     InitBVBarsTree(TTree *tree);
    virtual void     AnalyzeMCinfo();
-   virtual void     AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = 999, Float_t smearingTime = -999.0);
+   virtual void     AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = 999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0);
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
@@ -58,11 +59,18 @@ public :
 read_MC_BV::read_MC_BV(string file_name) : tMCinfo(0), tBVBars(0) 
 {
 // used to generate this class and read the Tree.
+   filename=file_name;
+   Int_t dot = filename.Last('.');
+   Int_t len = filename.Length();
+   filename.Remove(dot,len-dot);
+
+   TString fname =  "simulation/"+filename+".root";
+   
    TTree *treeMCinfo = 0;
    TTree *treeBVBars = 0;
-   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(file_name.c_str());
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(fname);
    if (!f || !f->IsOpen()) {
-      f = new TFile(file_name.c_str());
+      f = new TFile(fname);
    }
    f->GetObject("MCinfo",treeMCinfo);
    f->GetObject("ScintBarsMCdata",treeBVBars);

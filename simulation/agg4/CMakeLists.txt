@@ -60,8 +60,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include
 		    ${CMAKE_SOURCE_DIR}/simulation/G4out/include)
 
-ROOT_GENERATE_DICTIONARY( G__G4dict TDigi.hh TScintDigi.hh TScintDigiMCTruth.hh TTPCelement.hh TAnode.hh TPads.hh LINKDEF include/G4dictLinkDef.hh )
-set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigiMCTruth.cc ${PROJECT_SOURCE_DIR}/src/TTPCelement.cc ${PROJECT_SOURCE_DIR}/src/TAnode.cc ${PROJECT_SOURCE_DIR}/src/TPads.cc)
+ROOT_GENERATE_DICTIONARY( G__G4dict TDigi.hh TScintDigi.hh TBSCHit.hh TTPCelement.hh TAnode.hh TPads.hh LINKDEF include/G4dictLinkDef.hh )
+set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc ${PROJECT_SOURCE_DIR}/src/TScintDigi.cc ${PROJECT_SOURCE_DIR}/src/TBSCHit.cc ${PROJECT_SOURCE_DIR}/src/TTPCelement.cc ${PROJECT_SOURCE_DIR}/src/TAnode.cc ${PROJECT_SOURCE_DIR}/src/TPads.cc)
 add_library(G4dict SHARED ${LIBRARY_SOURCES} G__G4dict)
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)

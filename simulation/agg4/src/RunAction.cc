@@ -94,7 +94,7 @@ RunAction::RunAction():fMCinfoTree(0),fTPCtree(0),fBarsTree(0),
   fReadout = new TPCreadout;
 
   fBarsHitsArray = new TClonesArray("TScintDigi");
-  fBarsDigiMCTruthArray = new TClonesArray("TScintDigiMCTruth");
+  fBarsDigiMCTruthArray = new TClonesArray("TBSCHit");
 
   fBarsMCHitsArray = new TClonesArray("TMChit");
 
