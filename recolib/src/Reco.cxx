@@ -337,7 +337,9 @@ void Reco::AddMChits( const TClonesArray* points )
          point->Setup( aw, sec, row, time,
                        rad, lor, zed,
                        err, erp, erz,
-                       h->GetDepositEnergy() );
+                       // This sets the energy for both wire and pad... 
+                       // perhaps TMChit should have two energy entries
+                       h->GetDepositEnergy(),h->GetDepositEnergy() );
          point->SetTrackID(h->GetTrackID());
          point->SetTrackPDG(h->GetTrackPDG());
          fPointsArray.push_back(point);
