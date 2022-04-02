@@ -363,12 +363,27 @@ public:
             else if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
          }
- 
+
+      // save a copy of the barell scrintillator hits
+      AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
+      if( !bef || !bef->BarEvent )
+         {
+            std::cerr<<"RecoRun::AnalyzeFlowEvent no BSC event found"<<std::endl;
+         }
+      else
+         {
+            if( bef->BarEvent->GetNBars() <= 0 )
+               if( fTrace )
+                  std::cout<<"RecoRun::AnalyzeFlowEvent no BSC hits found"<<std::endl;
+            analyzed_event->AddBarrelHits(bef->BarEvent);
+         }
+      
       {
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
          EventTree->Fill();
       }
+
       //Put a copy in the flow for thread safety, now I can safely edit/ delete the local one
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  

@@ -215,7 +215,7 @@ void TAGPlot::AddStoreEvent(TStoreEvent *event, Double_t StartOffset)
   if( fPlotTracks )
     {
       ProcessHelices(event->GetHelixArray());
-      if( gApplyCuts && Event.CutsResult > 0 )
+      if( gApplyCuts && Event.CutsResult > 0 ) // <-- WHY? AC 18/3/2022
       ProcessUsedHelices(event->GetUsedHelices());
     }
 
@@ -408,7 +408,7 @@ void TAGPlot::SetChronoChannels(Int_t runNumber)
    bottom   = Get_Chrono_Channel( runNumber, "SiPM_E");
    sipmad   = Get_Chrono_Channel( runNumber, "SiPM_A_OR_D");
    sipmcf   = Get_Chrono_Channel( runNumber, "SiPM_C_OR_F");
-   TPC_TRIG = Get_Chrono_Channel( runNumber, "ADC_TRG");
+   TPC_TRIG = Get_Chrono_Channel( runNumber, "trig_out"); // select readout triggers
    Beam_Injection = Get_Chrono_Channel( runNumber, "AD_TRIG");
 /*
   TSISChannels *sisch = new TSISChannels(runNumber);

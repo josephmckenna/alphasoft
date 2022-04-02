@@ -109,10 +109,6 @@ void BarHit::Print()
 
 BarHit::~BarHit()
 {
-   /*if (fTopHit)
-      delete fTopHit;
-   if (fBotHit)
-      delete fBotHit;*/
 }
 #endif
 /* emacs
