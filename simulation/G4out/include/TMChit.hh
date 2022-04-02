@@ -15,6 +15,7 @@ private:
   double fr;
   double fp; // in rad
   double ft; // in ns
+  //Perhaps have an Edep for wire and pad?
   double fEdep; // in eV
   
 public:
