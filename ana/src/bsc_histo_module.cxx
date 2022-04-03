@@ -478,7 +478,9 @@ public:
       for (EndHit* endhit: endhits) {
          if (!(endhit->IsTDCMatched())) continue;
          int end = endhit->GetBar();
-         if (end==pulser_reference_chan) ch0 = endhit->GetTDCTime();
+         if (end==pulser_reference_chan) {
+            ch0 = endhit->GetTDCTime();
+         }
          hAdcTdcOccupancy->Fill(end);
       }
       if (fFlags->fPulser and ch0!=0) {

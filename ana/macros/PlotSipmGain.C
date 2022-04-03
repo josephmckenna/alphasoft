@@ -60,13 +60,13 @@ void PlotSipmGain(int run_num)
          }
       }
       TGraph* g = new TGraph(count,&x[0],&y[0]);
-      g->SetTitle(Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Natural logarithm of amplitude from fit",i));
+      g->SetTitle(Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Ln amplitude from fit",i));
       g->Fit("pol1");
       TF1 *f2 = (TF1*) (g->GetListOfFunctions()->FindObject("pol1"));
       h->Draw();
       if (f2) f2->Draw("same");
-      //f1->Draw("same");
-      //f1->SetLineColor(4);
+      f1->SetLineColor(4);
+      f1->Draw("same");
       c->Print(outputname.Data(),"pdf");
       delete c;
       delete g;

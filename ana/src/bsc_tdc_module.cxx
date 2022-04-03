@@ -323,13 +323,16 @@ public:
             // Calculates hit time
             double tdc_time;
             double fine_time;
+            double coarse_time;
             if (fFlags->fLinearTDC or fFlags->fProtoTOF) {
                tdc_time = GetFinalTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
                fine_time = GetFineTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
+               coarse_time = GetCoarseTime(tdchit->epoch,tdchit->coarse_time);
             }
             else {
                tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
                fine_time = GetFineTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
+               coarse_time = GetCoarseTime(tdchit->epoch,tdchit->coarse_time);
             }
 
             // Corrects for tdc time offset
@@ -350,7 +353,7 @@ public:
                hTDCbar->Fill(barID);
 
             // Writes tdc data to SimpleTdcHit to add back into the flow
-            barEvt->AddTdcHit(barID,calib_time,int(tdchit->fine_time),fine_time);
+            barEvt->AddTdcHit(barID,calib_time,int(tdchit->fine_time),fine_time,coarse_time);
          }
    }
 
@@ -491,6 +494,10 @@ public:
       double B = double(fine) - trb3LinearLowEnd;
       double C = trb3LinearHighEnd - trb3LinearLowEnd;
       return double(epoch)/epoch_freq +  double(coarse)/coarse_freq - (B/C)/coarse_freq;
+   }
+   double GetCoarseTime( uint32_t epoch, uint16_t coarse) // Calculates coarse time only
+   {
+      return double(epoch)/epoch_freq +  double(coarse)/coarse_freq;
    }
    double GetFinalTime( uint32_t epoch, uint16_t coarse, uint16_t fine, int bar ) // Calculates time from tdc data (in seconds) using a fine time counter lookup table
    {

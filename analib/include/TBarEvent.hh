@@ -20,6 +20,7 @@ private:
    double fTime=-1;
    int fFineTimeCount=-1;
    double fFineTime=-1;
+   double fCoarseTime=-1;
 
 public:
    SimpleTdcHit(); //ctor
@@ -28,18 +29,20 @@ public:
   virtual void Print();
   virtual ~SimpleTdcHit(); // dtor
 
-  void SetHit(int _fBarID, double _fTime, int _fFineTimeCount, double _fFineTime) 
+  void SetHit(int _fBarID, double _fTime, int _fFineTimeCount, double _fFineTime, double _fCoarseTime) 
   {
      fBarID=_fBarID;
      fTime=_fTime;
      fFineTimeCount=_fFineTimeCount;
      fFineTime=_fFineTime;
+     fCoarseTime=_fCoarseTime;
   }
 
   int GetBar() const {return fBarID;}
   double GetTime() const {return fTime;}
   int GetFineTimeCount() const {return fFineTimeCount;}
   double GetFineTime() const {return fFineTime;}
+  double GetCoarseTime() const {return fCoarseTime;}
 
   ClassDef(SimpleTdcHit, 3);
 };
@@ -242,10 +245,10 @@ public:
     b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
-  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime)
+  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime, double fCoarseTime)
   {
     SimpleTdcHit* hit = new SimpleTdcHit;
-    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime);
+    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime, fCoarseTime);
     AddTdcHit(hit);
   }
   void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)
