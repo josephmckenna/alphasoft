@@ -13,7 +13,6 @@ TAPlot::TAPlot(bool zerotime) : kZeroTimeAxis(zerotime)
    fLegendDetail=1; 
    fMVAMode = 0;
    fClassifierCut = -99;
-   fApplyCuts = -1;
 
    fFirstTMin=1E99;
    fLastTMax=1.;
@@ -33,7 +32,6 @@ TAPlot::TAPlot(const TAPlot& object) : TObject(object), kZeroTimeAxis(object.kZe
    fNumBins                      = object.fNumBins ; 
    fDrawStyle                    = object.fDrawStyle ;
    fLegendDetail                 = object.fLegendDetail ; 
-   fApplyCuts                    = object.fApplyCuts ;
    fClassifierCut                = object.fClassifierCut ;
    fFirstTMin                    = object.fFirstTMin ;
    fLastTMax                     = object.fLastTMax ;
@@ -92,7 +90,6 @@ TAPlot& TAPlot::operator=(const TAPlot& rhs)
    this->fNumBins = rhs.fNumBins ; 
    this->fDrawStyle = rhs.fDrawStyle ;
    this->fLegendDetail = rhs.fLegendDetail ; 
-   this->fApplyCuts = rhs.fApplyCuts ;
    this->fClassifierCut = rhs.fClassifierCut ;
    this->fFirstTMin = rhs.fFirstTMin ;
    this->fLastTMax = rhs.fLastTMax ;
@@ -173,48 +170,6 @@ TAPlot& TAPlot::operator+=(const TAPlot &rhs)
    return *this;
 }
 
-//Addition
-TAPlot operator+(const TAPlot& lhs, const TAPlot& rhs)
-{
-   //std::cout << "TAPlot addition operator" << std::endl;
-   TAPlot outputPlot(lhs); //Create new from copy
-
-   //Vectors- need concacting
-   outputPlot.fEjections.insert(outputPlot.fEjections.end(), rhs.fEjections.begin(), rhs.fEjections.end() );
-   outputPlot.fInjections.insert(outputPlot.fInjections.end(), rhs.fInjections.begin(), rhs.fInjections.end() );
-   outputPlot.fDumpStarts.insert(outputPlot.fDumpStarts.end(), rhs.fDumpStarts.begin(), rhs.fDumpStarts.end() );
-   outputPlot.fDumpStops.insert(outputPlot.fDumpStops.end(), rhs.fDumpStops.begin(), rhs.fDumpStops.end() );
-   outputPlot.fRuns.insert(outputPlot.fRuns.end(), rhs.fRuns.begin(), rhs.fRuns.end() );//check dupes - ignore copies. AddRunNumber
-   outputPlot.fFEGEM.insert(outputPlot.fFEGEM.end(), rhs.fFEGEM.begin(), rhs.fFEGEM.end() );
-   outputPlot.fFELV.insert(outputPlot.fFELV.end(), rhs.fFELV.begin(), rhs.fFELV.end() );
-
-   //Strings - This title gets overridden in the DrawCanvas function anyway, but until then they are concacted. 
-   outputPlot.fCanvasTitle+= ", ";
-   outputPlot.fCanvasTitle+=rhs.fCanvasTitle;
-
-   //All doubles
-   outputPlot.fFirstTMin              = (outputPlot.fFirstTMin < rhs.fFirstTMin)?outputPlot.fFirstTMin:rhs.fFirstTMin;
-   outputPlot.fLastTMax               = (outputPlot.fLastTMax > rhs.fLastTMax)?outputPlot.fLastTMax:rhs.fLastTMax;
-   outputPlot.fBiggestTZero           = (outputPlot.fBiggestTZero > rhs.fBiggestTZero)?outputPlot.fBiggestTZero:rhs.fBiggestTZero;
-   outputPlot.fMaxDumpLength          = (outputPlot.fMaxDumpLength > rhs.fMaxDumpLength)?outputPlot.fMaxDumpLength:rhs.fMaxDumpLength;
-   outputPlot.fTotalTime             += rhs.fTotalTime;
-   outputPlot.fObjectConstructionTime = (outputPlot.fObjectConstructionTime < rhs.fObjectConstructionTime)?outputPlot.fObjectConstructionTime:rhs.fObjectConstructionTime;
-   outputPlot.fDataLoadedTime         = (outputPlot.fDataLoadedTime > rhs.fDataLoadedTime)?outputPlot.fDataLoadedTime:rhs.fDataLoadedTime;
-   outputPlot.fTimeFactor                = (outputPlot.fTimeFactor < rhs.fTimeFactor)?outputPlot.fTimeFactor:rhs.fTimeFactor;
-
-   //Histograms and maps, very posssible that these get overridden in the DrawCanvas function anyway.
-   for(int i = 0; i < rhs.fHistos.GetSize(); i++)
-   {
-      outputPlot.fHistos.Add(rhs.fHistos.At(i));
-   }
-   outputPlot.fHistoPositions.insert( rhs.fHistoPositions.begin(), rhs.fHistoPositions.end() );
-
-   outputPlot.fTimeWindows+=rhs.fTimeWindows;
-   outputPlot.fVertexEvents+=rhs.fVertexEvents;
-
-   return outputPlot;
-}
-
 //Function to print time ranges
 void TAPlot::PrintTimeRanges()
 {
@@ -243,7 +198,7 @@ void TAPlot::PrintFull()
    std::cout << std::endl << std::endl << std::endl;
 }
 
-void TAPlot::Print() const
+void TAPlot::Print(Option_t *option) const
 {
   std::cout<<"TAPlot Summary"<<std::endl;
   //FillHisto();
@@ -279,7 +234,7 @@ void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string 
          continue;
       std::cout<<"GEM Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
-   TFEGEMData newEntry;
+   TAPlotFEGEMData newEntry;
    newEntry.fVariableName = name;
    if (label.size() == 0)
       newEntry.fLabel = name;
@@ -293,7 +248,7 @@ void TAPlot::SetGEMChannel(const std::string& name, int arrayEntry, std::string 
 void TAPlot::SetGEMChannel(const std::string& category, const std::string& varName, int arrayEntry, std::string title)
 {
    //Perhaps this line should be a function used everywhere
-   std::string name = TFEGEMData::CombinedName(category, varName);
+   std::string name = TAPlotFEGEMData::CombinedName(category, varName);
    return SetGEMChannel(name,arrayEntry,title);
 }
 
@@ -307,7 +262,7 @@ void TAPlot::SetLVChannel(const std::string& name, int arrayEntry, std::string t
          continue;
       std::cout<<"LV Channel "<< name.c_str()<< "["<<arrayEntry<<"] already registered"<<std::endl;
    }
-   TFELabVIEWData newEntry;
+   TAPlotFELabVIEWData newEntry;
    newEntry.fVariableName = name;
    if (title.size() == 0)
       newEntry.fLabel = name;
@@ -398,7 +353,7 @@ std::pair<TLegend*,TMultiGraph*> TAPlot::GetLVGraphs()
             if (fTimeWindows.fRunNumber[i] == uniqueRuns.at(colourID))
                break;
          }
-         TGraph* graph = obj.BuildGraph(i,kZeroTimeAxis);
+         TGraph* graph = obj.BuildGraph(i, kZeroTimeAxis);
          graph->SetLineColor(GetColour(colourID + colourOffset));
          graph->SetMarkerColor(GetColour(colourID + colourOffset));
          uniqueLabels[obj.GetVariable()] = graph;
@@ -425,11 +380,11 @@ double TAPlot::GetApproximateProcessingTime()
    return fDataLoadedTime.AsDouble() - fObjectConstructionTime.AsDouble();
 }
 
-int TAPlot::GetNPassedType(const int kType)
+int TAPlot::GetNPassedType(const int kType) const
 {
    int n = 0;
    //for (auto& event: VertexEvents)
-   //const TVertexEvents* event = GetVertexEvents();
+   //const TAPlotVertexEvents* event = GetVertexEvents();
    for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fCutsResults[i]&kType)
@@ -438,11 +393,11 @@ int TAPlot::GetNPassedType(const int kType)
    return n;
 }
 
-int TAPlot::GetNVertexType(const int kType)
+int TAPlot::GetNVertexType(const int kType) const
 {
    int n = 0;
    //for (auto& event: VertexEvents)
-   //const TVertexEvents* event = GetVertexEvents();
+   //const TAPlotVertexEvents* event = GetVertexEvents();
    for (size_t i = 0; i<fVertexEvents.fXVertex.size(); i++)
    {
       if (fVertexEvents.fVertexStatuses[i]&kType)
@@ -575,7 +530,7 @@ void TAPlot::AddVertexEvent(int runNumber, int eventNo, int cutsResult, int vert
 
 //Load data functions
 template <typename T>
-void TAPlot::LoadFEGEMData(TFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFEGEMData(TAPlotFEGEMData& gemData, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreGEMData<T>> gemEvent(*gemReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -623,7 +578,7 @@ void TAPlot::LoadFEGEMData(int runNumber, double firstTime, double lastTime)
    }
 }
 
-void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
+void TAPlot::LoadFELVData(int runNumber, TAPlotFELabVIEWData& labviewData, TTreeReader* labviewReader, const char* name, double firstTime, double lastTime)
 {
    TTreeReaderValue<TStoreLabVIEWEvent> labviewEvent(*labviewReader, name);
    // I assume that file IO is the slowest part of this function... 
@@ -636,7 +591,7 @@ void TAPlot::LoadFELVData(TFELabVIEWData& labviewData, TTreeReader* labviewReade
          continue;
       if (runTime > lastTime)
          break;
-      labviewData.AddLVEvent(&(*labviewEvent), *GetTimeWindows());
+      labviewData.AddLVEvent(runNumber, &(*labviewEvent), *GetTimeWindows());
    }
    return;
 }
@@ -654,13 +609,13 @@ void TAPlot::LoadFELVData(int runNumber, double firstTime, double lastTime)
          continue;
       }
       if (tree->GetBranchStatus("TStoreLabVIEWEvent"))
-         LoadFELVData(obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
+         LoadFELVData(runNumber, obj, labviewReader, "TStoreLabVIEWEvent", firstTime, lastTime);
       else
          std::cout << "Warning unable to find TStoreLVData type" << std::endl;   
    }
 }
 
-void TAPlot::LoadData()
+void TAPlot::LoadData(bool verbose)
 {
    for (size_t i=0; i<fRuns.size(); i++)
    {
@@ -669,7 +624,7 @@ void TAPlot::LoadData()
       int runNumber = fRuns[i];
       //Calculate our list time... so we can stop early
       //for (auto& t: GetTimeWindows())
-      //TTimeWindows t = GetTimeWindows();
+      //TAPlotTimeWindows t = GetTimeWindows();
       for (size_t i=0; i<GetTimeWindows()->fMaxTime.size(); i++)
       {
          if (GetTimeWindows()->fRunNumber[i]==runNumber)
@@ -681,6 +636,10 @@ void TAPlot::LoadData()
             if (firstTime > GetTimeWindows()->fMinTime[i] )
                firstTime = GetTimeWindows()->fMinTime[i];
          }
+      }
+      if (verbose)
+      {
+         std::cout<<"Loading data from run " << runNumber << " from t="<< firstTime <<" to t="<<lastTime<<"\n";
       }
       LoadFEGEMData(runNumber, firstTime, lastTime);
       LoadFELVData(runNumber, firstTime, lastTime);
@@ -774,6 +733,8 @@ TLegend* TAPlot::DrawLines(TLegend* legend, const char* keyname)
 TLegend* TAPlot::AddLegendIntegral(TLegend* legend, const char* message, const char* keyname)
 {
    char line[201];
+   if (!fHistoPositions.count(keyname))
+      return legend;
    if (!legend)
       legend = new TLegend(1, 0.7, 0.55, .95); //, "NDC NB");
    snprintf(line, 200, message, ((TH1D*)fHistos.At(fHistoPositions.at(keyname)))->Integral());

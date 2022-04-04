@@ -15,7 +15,7 @@
 #include "TSystem.h"
 #include <TEnv.h>
 
-#include "RecoFlow.h"
+#include "AnalysisFlow.h"
 #include "A2Flow.h"
 #include "TTree.h"
 
@@ -467,7 +467,7 @@ public:
          //TString DataLoaderPath=outfileName(0,outfileName.Length()-5);
          TString spillLogName="R";
          spillLogName+=gRunNumber;
-         spillLogName+=".log";
+         spillLogName+="spilllog.log";
          std::cout <<"Log file: "<<spillLogName<<std::endl;
          std::ofstream spillLog (spillLogName);
          spillLog<<"[code]";

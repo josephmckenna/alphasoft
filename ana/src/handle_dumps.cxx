@@ -10,15 +10,17 @@
 #include "midasio.h"
 #include "TSpill.h"
 #include "AgFlow.h"
+#include "AnalysisFlow.h"
 #include "RecoFlow.h"
 
 #include "cb_flow.h"
 #include "store_cb.h"
 
+#include "TAGDetectorEvent.hh"
 #include "TChronoChannel.h"
 #include "TChronoChannelName.h"
 #include "TChronoBoardCounter.h"
-#include "DumpHandling.h"
+#include "TDumpList.h"
 #include <iostream>
 
 #include <array>
@@ -48,7 +50,7 @@ public:
    
    bool have_svd_events = false;
    
-   DumpList<TAGSpill,TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
+   TDumpList<TAGSpill,TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS> dumplist[USED_SEQ];
    std::mutex SequencerLock[USED_SEQ];
    
    DumpMakerModule(TARunInfo* runinfo, DumpMakerModuleFlags* flags)
@@ -73,7 +75,7 @@ public:
          printf("DumpMakerModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       for (int j=0; j<USED_SEQ; j++) 
       {
-         dumplist[j].SequencerID=j;
+         dumplist[j].fSequencerID=j;
          dumplist[j].fRunNo=runinfo->fRunNo;
       }
 
@@ -147,10 +149,10 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          dumplist[a].finish();
-         while (dumplist[a].error_queue.size())
+         while (dumplist[a].fErrorQueue.size())
          {
-            IncompleteDumps.push_back(dumplist[a].error_queue.front());
-            dumplist[a].error_queue.pop_front();
+            IncompleteDumps.push_back(dumplist[a].fErrorQueue.front());
+            dumplist[a].fErrorQueue.pop_front();
          }
          dumplist[a].fRunNo=-2;
       }
@@ -211,12 +213,12 @@ public:
       
       dumplist[iSeq].setup(me->time_stamp);
       
-      for(auto dump: DumpsFlow->DumpMarkers)
+      for(const auto& dump: DumpsFlow->DumpMarkers)
       {
-         dumplist[iSeq].AddDump( &dump);
+         dumplist[iSeq].AddDump( dump);
       }
-      //Copy states into dumps
-      dumplist[iSeq].AddStates(DumpsFlow->states);
+      //Copy fStates into dumps
+      dumplist[iSeq].AddStates(DumpsFlow->fStates);
       //Inspect dumps and make sure the SIS will get triggered when expected... (study digital out)
       dumplist[iSeq].check(DumpsFlow->driver);
       
@@ -295,10 +297,10 @@ public:
       for (int a=0; a<USED_SEQ; a++)
       {
          std::lock_guard<std::mutex> lock(SequencerLock[a]);
-         while (dumplist[a].error_queue.size())
+         while (dumplist[a].fErrorQueue.size())
          {
-            IncompleteDumps.push_back(dumplist[a].error_queue.front());
-            dumplist[a].error_queue.pop_front();
+            IncompleteDumps.push_back(dumplist[a].fErrorQueue.front());
+            dumplist[a].fErrorQueue.pop_front();
          }
       }
 

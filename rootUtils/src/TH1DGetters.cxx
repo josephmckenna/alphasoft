@@ -1,6 +1,5 @@
 #include "TH1DGetters.h"
 
-extern Int_t gNbin;
 #ifdef BUILD_AG
 std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chrono_chan, std::vector<double> tmin, std::vector<double> tmax, double range )
 {
@@ -54,7 +53,7 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
 
       TH1D* h= new TH1D( name.Data(),
                         Title.Data(),
-                        gNbin,0.,range );
+                        rootUtils::GetDefaultBinNumber(),0.,range );
       hh.push_back(h);
    }
 
@@ -105,8 +104,8 @@ std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {
@@ -154,7 +153,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    for (auto& t: tmax)
    {
       //Replace negative tmax times with the end of run...
-      if (t < 0) t = GetA2TotalRunTime(runNumber);
+      if (t < 0) t = GetAGTotalRunTime(runNumber);
       //Find the latest tmax time
       if (last_time < t )
          last_time = t;
@@ -184,7 +183,7 @@ std::vector<std::vector<TH1D*>> Get_Chrono(Int_t runNumber, std::vector<TChronoC
    
          TH1D* h= new TH1D( name.Data(),
                            Title.Data(),
-                           gNbin,0.,tmax[j] - tmin[j] );
+                           rootUtils::GetDefaultBinNumber(),0.,tmax[j] - tmin[j] );
          times.push_back(h);
       }
       hh.push_back(times);
@@ -276,7 +275,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, TChronoChannel chan, Double_t tmin, Doub
    Title+=name.Data();
    TH1D* hh = new TH1D(name.Data(),
                       Title.Data(),
-                      gNbin,PlotMin,PlotMax);
+                      rootUtils::GetDefaultBinNumber(),PlotMin,PlotMax);
 
    t->SetBranchAddress("ChronoEvent", &e);
    t->GetEntry(0);
@@ -367,7 +366,7 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_
 
       TH1D* h= new TH1D( name.Data(),
                         Title.Data(),
-                        gNbin,0.,range );
+                        rootUtils::GetDefaultBinNumber(),0.,range );
       hh.push_back(h);
    }
 
@@ -418,8 +417,8 @@ std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {
@@ -478,7 +477,7 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel
 
          TH1D* h= new TH1D( name.Data(),
                            Title.Data(),
-                           gNbin,0. ,tmax.at(j) - tmin.at(j) );
+                           rootUtils::GetDefaultBinNumber(),0. ,tmax.at(j) - tmin.at(j) );
          times.push_back(h);
       }
       hh.push_back(times);
@@ -529,8 +528,8 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {

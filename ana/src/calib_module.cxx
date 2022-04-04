@@ -232,7 +232,7 @@ public:
          return flow;
       }
 
-      if( !SigFlow->awSig )
+      if( SigFlow->awSig.empty() )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -240,10 +240,10 @@ public:
          return flow;
       }
       
-      if( SigFlow->awSig->size() > 0 )
+      if( SigFlow->awSig.size() )
          {
             if(fTrace)
-               printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig->size()));
+               printf("CalibRun::Analyze, N signals %d\n", int(SigFlow->awSig.size()));
             AnalyzeSignals(SigFlow->awSig);
             if (fTrace)
                printf("CalibRun::Analysis DONE\n");
@@ -261,14 +261,14 @@ public:
    }
 
 
-   void AnalyzeSignals(std::vector<ALPHAg::signal>* awsignals)
+   void AnalyzeSignals(std::vector<ALPHAg::TWireSignal> awsignals)
    {
       double aw_rad = ALPHAg::_anoderadius;
       std::vector<double> intersect;
 
-      std::multiset<ALPHAg::signal, ALPHAg::signal::heightorder> byheight1, byheight2;
-      std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> bytime(awsignals->begin(),
-                                                      awsignals->end());
+      std::multiset<ALPHAg::TWireSignal, ALPHAg::signal::heightorder> byheight1, byheight2;
+      std::multiset<ALPHAg::TWireSignal, ALPHAg::signal::timeorder> bytime(awsignals.begin(),
+                                                      awsignals.end());
       auto it = bytime.begin();
 
       double t1 = -1;
@@ -341,7 +341,7 @@ public:
             double phiT, d, phiRot=0.;
             StraightTrack(intersect[0], intersect[1], phiRot, phiT, d);
             ++fCosmicsFull;
-            for(auto& s: *awsignals)
+            for(const auto& s: awsignals)
                {
                   //double r  = strack.GetR(s.idx);
                   //double phi=double(s.idx)/256.*TMath::TwoPi();

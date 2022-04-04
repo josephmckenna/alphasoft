@@ -1,7 +1,6 @@
 
 #ifndef _PlotGetters_
 #define _PlotGetters_
-#include "RootUtils.h"
 #include "TH1D.h"
 #include "TSpline.h"
 #include "THStack.h"
@@ -10,12 +9,24 @@
 #include "TAPlot.h"
 #include "TA2Plot.h"
 #include "TAGPlot.h"
+#include "TAGPlotTracks.h"
 
 #include "TChronoChannel.h"
+#include "TH1DGetters.h"
+#include "TStringGetters.h"
 
+#include "TSplineGetters.h"
+#include "RootUtilGlobals.h"
 #include <sstream>
+#if BUILD_A2
+#include "TSISChannelGetters.h"
+#include "TA2SpillGetters.h"
+#endif
+#if BUILD_AG
+#include "TAGSpillGetters.h"
+#endif
 
-#ifdef BUILD_AG
+#if BUILD_AG
 TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<double> tmin, std::vector<double> tmax);
 TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::vector<std::string> description, std::vector<int> index);
 TCanvas* Plot_Chrono(Int_t runNumber, const char* ChannelName, std::vector<std::string> description, std::vector<int> dumpIndex);
@@ -46,12 +57,14 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin=0., Double_t max=-1.);
 //*************************************************************
 // Energy Analysis
 //*************************************************************
-#ifdef BUILD_AG
+#if BUILD_A2
 TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
                           Double_t EnergyRangeFactor=10.);
 
+#endif
 
+#if BUILD_AG
 
 TCanvas* Plot_AG_ColdDump(Int_t runNumber, Int_t dumpIndex, 
                           Int_t binNumber, 
@@ -95,14 +108,14 @@ void SaveCanvas(Int_t runNumber, const char* Description);
 void SaveCanvas(TString Description);
 void SaveCanvas( TCanvas* iSaveCanvas, TString iDescription);
 
-#ifdef BUILD_A2
+#if BUILD_A2
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax);
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<double> tmin, std::vector<double> tmax);
 TCanvas* Plot_SIS_on_pulse(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::pair<double,int>> SIS_Counts,double tstart, double tstop);
 
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TAGSpill> spills);
-TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TAGSpill> spills);
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills);
+TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<TA2Spill> spills);
 
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<std::string> description, std::vector<int> dumpIndex);
 TCanvas* Plot_Summed_SIS(Int_t runNumber, std::vector<std::string> SIS_Channel_Names, std::vector<std::string> description, std::vector<int> dumpIndex);

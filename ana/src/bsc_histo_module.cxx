@@ -54,8 +54,6 @@ private:
    const double trb3LinearLowEnd = 17.0;
    const double trb3LinearHighEnd = 450.0;
 
-   double min_angle_nbars = 5;
-
    // ADC
    TH1D* hAdcOccupancy;
    TH2D* hAdcCorrelation;
@@ -109,10 +107,6 @@ private:
    TH2D* hNBarExpectedTOFvsTOF;
    TH1D* hTwoBarExpectedTOFminusTOF;
    TH1D* hNBarExpectedTOFminusTOF;
-   TH2D* hTwoBarExpectedTOFvsTOFzTPC;
-   TH2D* hNBarExpectedTOFvsTOFzTPC;
-   TH1D* hTwoBarExpectedTOFminusTOFzTPC;
-   TH1D* hNBarExpectedTOFminusTOFzTPC;
 
    // Matching
    TH1D* hTPCMatched;
@@ -123,10 +117,6 @@ private:
    TH2D* hMatchingDPhibyBar;
    TH1D* hMatchingD;
    TH2D* hMatchingDbyBar;
-   TH1D* hMatchedZ;
-   TH1D* hMatchedZTPC;
-   std::vector<TH2D*> hAmpVsZed;
-   std::vector<TH2D*> hLnAmpVsZed;
 
 
 
@@ -290,10 +280,6 @@ public:
            hNBarExpectedTOFvsTOF = new TH2D("hNBarExpectedTOFvsTOF","Geometric distance/speed of light for all permutations;(Distance between hits)/c (ns);Measured TOF (ns)",200,0,10,200,0,10);
            hTwoBarExpectedTOFminusTOF = new TH1D("hTwoBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for events with N=2 bars;TOF - (Distance between hits)/c (ns)",200,-5,5);
            hNBarExpectedTOFminusTOF = new TH1D("hNBarExpectedTOFminusTOF","Geometric distance/speed of light minus TOF for all permutations;TOF - (Distance between hits)/c (ns)",200,-5,5);
-           hTwoBarExpectedTOFvsTOFzTPC = new TH2D("hTwoBarExpectedTOFvsTOFzTPC","Geometric distance/speed of light for events with N=2 bars;(Distance between hits)/c with Z from TPC (ns);Measured TOF (ns)",200,0,10,200,0,10);
-           hNBarExpectedTOFvsTOFzTPC = new TH2D("hNBarExpectedTOFvsTOFzTPC","Geometric distance/speed of light for all permutations;(Distance between hits)/c with Z from TPC (ns);Measured TOF (ns)",200,0,10,200,0,10);
-           hTwoBarExpectedTOFminusTOFzTPC = new TH1D("hTwoBarExpectedTOFminusTOFzTPC","Geometric distance/speed of light minus TOF for events with N=2 bars;TOF - (Distance between hits)/c with Z from TPC (ns)",200,-5,5);
-           hNBarExpectedTOFminusTOFzTPC = new TH1D("hNBarExpectedTOFminusTOFzTPC","Geometric distance/speed of light minus TOF for all permutations;TOF - (Distance between hits)/c with Z from TPC (ns)",200,-5,5);
          }
          gDirectory->cd("..");
 
@@ -308,18 +294,6 @@ public:
            hMatchingDPhibyBar = new TH2D("hMatchingDPhibyBar","Phi distance between BV and TPC hit;Bar number;Delta Phi (rad)",64,-0.5,63.5,200,-2,2);
            hMatchingD = new TH1D("hMatchingD","Geometric distance between BV and TPC hit;Geometric distance (m);Counts",200,0,2);
            hMatchingDbyBar = new TH2D("hMatchingDbyBar","Geometric distance between BV and TPC hit;Bar number;Geometric distance (m)",64,-0.5,63.5,200,0,2);
-           hMatchedZ = new TH1D("hMatchedZ","Zed of matched hits from BV;Zed (m)",200,-3,3);
-           hMatchedZTPC = new TH1D("hMatchedZTPC","Zed of matched hits from TPC;Zed (m)",200,-3,3);
-           gDirectory->mkdir("amp_vs_zed")->cd();
-           for (int i=0;i<64;i++) {
-              hAmpVsZed.push_back(new TH2D(Form("hAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Amplitude from fit (volts)",i),200,-3,3,200,0,4));
-              hLnAmpVsZed.push_back(new TH2D(Form("hLnAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Natural logarithm of amplitude from fit",i),200,-3,3,200,-3,1.5));
-           }
-           for (int i=64;i<128;i++) {
-              hAmpVsZed.push_back(new TH2D(Form("hAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;-1 times Zed from TPC (m);Amplitude from fit (volts)",i),200,-3,3,200,0,4));
-              hLnAmpVsZed.push_back(new TH2D(Form("hLnAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;-1 times Zed from TPC (m);Natural logarithm of amplitude from fit",i),200,-3,3,200,-3,1.5));
-           }
-           gDirectory->cd("..");
             gDirectory->cd("..");
          }
 
@@ -414,12 +388,12 @@ public:
       }
      
       
-      std::vector<EndHit*> endhits = barEvt->GetEndHits();
+      std::vector<TBarEndHit*> endhits = barEvt->GetEndHits();
       if (endhits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no endhits\n");
          return flow;
       }
-      std::vector<SimpleTdcHit*> tdchits = barEvt->GetTdcHits();
+      std::vector<TBarSimpleTdcHit*> tdchits = barEvt->GetTdcHits();
       if (tdchits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no tdc hits\n");
          return flow;
@@ -434,7 +408,7 @@ public:
       if( fFlags->fPrint ) printf("Filling more TDC histos\n");
       DirectTdcHistos(tdchits);
 
-      std::vector<BarHit*> barhits = barEvt->GetBars();
+      std::vector<TBarHit*> barhits = barEvt->GetBars();
       if (barhits.size()==0) {
          if( fFlags->fPrint ) printf("BscHistoModule::AnalyzeFlowEvent no barhits\n");
          return flow;
@@ -451,10 +425,10 @@ public:
       return flow;
    }
 
-   void AdcHistos(const std::vector<EndHit*> endhits)
+   void AdcHistos(const std::vector<TBarEndHit*> endhits)
    {
       hAdcMultiplicity->Fill(endhits.size());
-      for (EndHit* endhit: endhits) {
+      for (TBarEndHit* endhit: endhits) {
          int bar = endhit->GetBar();
          hAdcOccupancy->Fill(bar);
          hAdcTime->Fill(endhit->GetADCTime());
@@ -464,7 +438,7 @@ public:
          hAdcFitAmp->Fill(endhit->GetAmp());
          hAdcFitAmp2d->Fill(bar,endhit->GetAmp());
          hAdcFitting->Fill(endhit->GetAmpRaw(),endhit->GetAmp());
-         for (EndHit* endhit2: endhits) {
+         for (TBarEndHit* endhit2: endhits) {
             int bar2 = endhit2->GetBar();
             if (bar==bar2) continue;
             hAdcCorrelation->Fill(bar,bar2);
@@ -472,10 +446,10 @@ public:
       }
    }
 
-   void TdcHistos(const std::vector<EndHit*> endhits)
+   void TdcHistos(const std::vector<TBarEndHit*> endhits)
    {
       double ch0 = 0;
-      for (EndHit* endhit: endhits) {
+      for (TBarEndHit* endhit: endhits) {
          if (!(endhit->IsTDCMatched())) continue;
          int end = endhit->GetBar();
          if (end==pulser_reference_chan) {
@@ -484,7 +458,7 @@ public:
          hAdcTdcOccupancy->Fill(end);
       }
       if (fFlags->fPulser and ch0!=0) {
-         for (EndHit* endhit: endhits) {
+         for (TBarEndHit* endhit: endhits) {
             if (endhit->GetBar()==0) continue;
             hTdcTimeVsCh0->Fill(1e9*(endhit->GetTDCTime()-ch0));
             hTdcTimeVsCh02d->Fill(endhit->GetBar(),1e9*(endhit->GetTDCTime()-ch0));
@@ -492,13 +466,13 @@ public:
       }
    }
 
-   void DirectTdcHistos(const std::vector<SimpleTdcHit*> tdchits)
+   void DirectTdcHistos(const std::vector<TBarSimpleTdcHit*> tdchits)
    {
       int max_chan=128;
       if (fFlags->fProtoTOF) max_chan=16;
       std::vector<int> counts(max_chan,0);
       std::vector<double> t0(max_chan,0);
-      for (const SimpleTdcHit* tdchit: tdchits) {
+      for (const TBarSimpleTdcHit* tdchit: tdchits) {
          int bar = tdchit->GetBar();
          double time = tdchit->GetTime();
          int fine_count = tdchit->GetFineTimeCount();
@@ -516,7 +490,7 @@ public:
          if (t0[bar]==0) t0[bar] = time;
          if (!(fFlags->fProtoTOF)) {
             bool matched = false;
-            for (SimpleTdcHit* tdchit2: tdchits) {
+            for (TBarSimpleTdcHit* tdchit2: tdchits) {
                if (tdchit2->GetBar()!=(bar+64) and tdchit2->GetBar()!=(bar-64)) continue;
                double time2 = tdchit2->GetTime();
                if (TMath::Abs(time-time2)>50*1e-9) continue;
@@ -541,14 +515,14 @@ public:
       hTdcMultiplicity->Fill(bars);
    }
 
-   void BarHistos(const std::vector<BarHit*> barhits)
+   void BarHistos(const std::vector<TBarHit*> barhits)
    {
-      for (BarHit* barhit: barhits) {
+      for (TBarHit* barhit: barhits) {
          hBarOccupancy->Fill(barhit->GetBar());
       }
       if (fFlags->fPulser) return;
       hBarMultiplicity->Fill(barhits.size());
-      for (BarHit* barhit: barhits) {
+      for (TBarHit* barhit: barhits) {
          int bar = barhit->GetBar();
          hTopBotDiff->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
          hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
@@ -558,7 +532,7 @@ public:
             if (fFlags->fPrint) printf("BscHistoModule: weird bar hit: bar %d zed %f top %f bot %f diff %f \n",bar,barhit->GetTDCZed(),barhit->GetTDCTop(),barhit->GetTDCBot(),barhit->GetTDCTop()-barhit->GetTDCBot());
          }
          if (!(fFlags->fProtoTOF)) {
-            for (BarHit* barhit2: barhits) {
+            for (TBarHit* barhit2: barhits) {
                int bar2 = barhit2->GetBar();
                if (bar==bar2) continue;
                hBarCorrelation->Fill(bar,bar2);
@@ -567,63 +541,51 @@ public:
       }
    }
 
-   void TOFHistos(const std::vector<BarHit*> barhits)
+   void TOFHistos(const std::vector<TBarHit*> barhits)
    {
       if (barhits.size()<2) return;
       if (fFlags->fPulser) return;
       if (barhits.size()==2) {
          if (!(fFlags->fProtoTOF)) {
-            if (barhits[0]->IsTPCMatched() and barhits[1]->IsTPCMatched() or (fFlags->fRecOff)) {
-               double angle1 = TMath::Abs(barhits[0]->GetBar()-barhits[1]->GetBar());
-               if (angle1>32) angle1 = 64 - angle1;
-               if (angle1>min_angle_nbars) {
-                  double TOF = 1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime());
-                  BarHit* hit0 = barhits[0];
-                  BarHit* hit1 = barhits[1];
-                  if (TOF<=0) { hit1 = barhits[0]; hit0 = barhits[1]; }
-                  TOF = TMath::Abs(TOF);
-                  hTwoBarTOF->Fill(TOF);
-                  double x0,y0,x1,y1,z0,z1;
-                  hit0->GetXY(x0,y0);
-                  hit1->GetXY(x1,y1);
-                  z0 = hit0->GetTDCZed();
-                  z1 = hit1->GetTDCZed();
-                  hTwoBarDZed->Fill(z0-z1);
-                  if (!(fFlags->fProtoTOF)) {
-                     hTwoBarTOF2d->Fill(hit0->GetBar(),TOF);
-                     hTwoBarTOF2d->Fill(hit1->GetBar(),TOF);
-                     double angle =TMath::Abs(hit0->GetBar()-hit1->GetBar());
-                     if (angle>32) angle = 64 - angle;
-                     hTwoBarDPhi->Fill(angle);
-                     hTwoBarDPhiDZed->Fill(angle,z0-z1);
-                     double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
-                     hTwoBarExpectedTOF->Fill(expTOF);
-                     hTwoBarExpectedTOFvsTOF->Fill(expTOF,TOF);
-                     hTwoBarExpectedTOFminusTOF->Fill(TOF-expTOF);
-                     if (!(fFlags->fRecOff)) {
-                        double z0tpc = hit0->GetTPC().z()/1000;
-                        double z1tpc = hit1->GetTPC().z()/1000;
-                        double expTOFzTPC = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0tpc-z1tpc)*(z0tpc-z1tpc))/c;
-                        hTwoBarExpectedTOFvsTOFzTPC->Fill(expTOFzTPC,TOF);
-                        hTwoBarExpectedTOFminusTOFzTPC->Fill(TOF-expTOFzTPC);
-                     }
-                  }
+            if (barhits[0]->IsTPCMatched() and barhits[0]->IsTPCMatched() or (fFlags->fRecOff)) {
+               double TOF = 1e9*(barhits[0]->GetAverageTDCTime()-barhits[1]->GetAverageTDCTime());
+               TBarHit* hit0 = barhits[0];
+               TBarHit* hit1 = barhits[1];
+               if (TOF<=0) { hit1 = barhits[0]; hit0 = barhits[1]; }
+               TOF = TMath::Abs(TOF);
+               hTwoBarTOF->Fill(TOF);
+               double x0,y0,x1,y1,z0,z1;
+               hit0->GetXY(x0,y0);
+               hit1->GetXY(x1,y1);
+               z0 = hit0->GetTDCZed();
+               z1 = hit1->GetTDCZed();
+               hTwoBarDZed->Fill(z0-z1);
+               if (!(fFlags->fProtoTOF)) {
+                  hTwoBarTOF2d->Fill(hit0->GetBar(),TOF);
+                  hTwoBarTOF2d->Fill(hit1->GetBar(),TOF);
+                  double angle =TMath::Abs(hit0->GetBar()-hit1->GetBar());
+                  if (angle>32) angle = 64 - angle;
+                  hTwoBarDPhi->Fill(angle);
+                  hTwoBarDPhiDZed->Fill(angle,z0-z1);
+                  double expTOF = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0-z1)*(z0-z1))/c;
+                  hTwoBarExpectedTOF->Fill(expTOF);
+                  hTwoBarExpectedTOFvsTOF->Fill(expTOF,TOF);
+                  hTwoBarExpectedTOFminusTOF->Fill(TOF-expTOF);
                }
             }
          }
       }
       if (!(fFlags->fProtoTOF)) {
-         for (BarHit* barhit: barhits) {
-            for (BarHit* barhit2: barhits) {
+         for (TBarHit* barhit: barhits) {
+            for (TBarHit* barhit2: barhits) {
                if ((!(barhit->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
                if ((!(barhit2->IsTPCMatched())) and (!(fFlags->fRecOff))) continue;
-               double angle = TMath::Abs(barhit->GetBar()-barhit2->GetBar());
-               if (angle>32) angle = 64 - angle;
-               if (angle<=min_angle_nbars) continue;
                double TOF = 1e9*(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime());
                if (TOF<=0) continue;
                hNBarTOF->Fill(TOF);
                hNBarTOF2d->Fill(barhit->GetBar(),TOF);
+               double angle = TMath::Abs(barhit->GetBar()-barhit2->GetBar());
+               if (angle>32) angle = 64 - angle;
                hNBarDPhi->Fill(angle);
                double x0,y0,x1,y1,z0,z1;
                barhit->GetXY(x0,y0);
@@ -636,23 +598,16 @@ public:
                hNBarExpectedTOF->Fill(expTOF);
                hNBarExpectedTOFvsTOF->Fill(expTOF,1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()));
                hNBarExpectedTOFminusTOF->Fill((1e9*TMath::Abs(barhit->GetAverageTDCTime()-barhit2->GetAverageTDCTime()))-expTOF);
-               if (!(fFlags->fRecOff)) {
-                  double z0tpc = barhit->GetTPC().z()/1000;
-                  double z1tpc = barhit2->GetTPC().z()/1000;
-                  double expTOFzTPC = TMath::Sqrt((x0-x1)*(x0-x1)+(y0-y1)*(y0-y1)+(z0tpc-z1tpc)*(z0tpc-z1tpc))/c;
-                  hNBarExpectedTOFvsTOFzTPC->Fill(expTOFzTPC,TOF);
-                  hNBarExpectedTOFminusTOFzTPC->Fill(TOF-expTOFzTPC);
-               }
             }
          }
       }
    }
-   void MatchingHistos(const std::vector<BarHit*> barhits)
+   void MatchingHistos(const std::vector<TBarHit*> barhits)
    {
       if (fFlags->fPulser) return;
       if (fFlags->fProtoTOF) return;
       if (fFlags->fRecOff) return;
-      for (BarHit* barhit: barhits) {
+      for (TBarHit* barhit: barhits) {
          if (!(barhit->IsTPCMatched())) continue;
          TVector3 tpc_point = barhit->GetTPC();
          TVector3 bv_point = Get3VectorBV(barhit);
@@ -669,12 +624,6 @@ public:
          hMatchingDPhibyBar->Fill(bar,dphi);
          hMatchingD->Fill(diff/1000);
          hMatchingDbyBar->Fill(bar,diff/1000);
-         hMatchedZ->Fill(tpc_point.z()/1000);
-         hMatchedZTPC->Fill(z);
-         hAmpVsZed[bar]->Fill(tpc_point.z()/1000,barhit->GetAmpBot());
-         hAmpVsZed[bar+64]->Fill(-1*tpc_point.z()/1000,barhit->GetAmpTop());
-         hLnAmpVsZed[bar]->Fill(tpc_point.z()/1000,TMath::Log(barhit->GetAmpBot()));
-         hLnAmpVsZed[bar+64]->Fill(-1*tpc_point.z()/1000,TMath::Log(barhit->GetAmpTop()));
       }
    }
 
@@ -688,7 +637,7 @@ public:
    {
       return p2.DeltaPhi(p1);
    }
-   TVector3 Get3VectorBV(BarHit* hit)
+   TVector3 Get3VectorBV(TBarHit* hit)
    {
       double xbv,ybv;
       hit->GetXY(xbv,ybv);

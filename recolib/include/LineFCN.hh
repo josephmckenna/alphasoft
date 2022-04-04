@@ -13,8 +13,8 @@
 
 class LineFCN : public ROOT::Minuit2::FCNBase {
 	private:
-		TFitLine track;
-		std::vector<TSpacePoint*> points; 
+		TFitLine* track;
+		const std::vector<TSpacePoint>* points; 
 		double error_def;
 	public:
 		LineFCN(TFitLine* a_track);

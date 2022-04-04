@@ -126,26 +126,16 @@ public:
 #endif            
             return flow;
          }
-      std::vector<ALPHAg::wf_ref>* awwf=SigFlow->AWwf;
-      if( !awwf )
+      const std::vector<ALPHAg::wf_ref>& awwf = SigFlow->AWwf;
+      if( awwf.empty() )
          {
 #ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
 #endif
             return flow;
          }
-#ifdef _TIME_ANALYSIS_
-      START_TIMER
-#endif   
-         if( awwf->size() <= 0 ) 
-            {
-#ifdef HAVE_MANALYZER_PROFILER
-               *flags|=TAFlag_SKIP_PROFILE;
-#endif
-               return flow;
-            }
       
-      for(auto it=awwf->begin();it!=awwf->end();++it)
+      for(auto it=awwf.begin();it!=awwf.end();++it)
          {
             if( fTrace )
                printf("WFpersistencyModule AW %d\n",it->i);

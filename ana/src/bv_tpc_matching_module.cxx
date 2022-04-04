@@ -24,7 +24,7 @@
 class MatchingModuleFlags
 {
 public:
-   double fMagneticField = 0;
+   double fMagneticField = -1;
    bool fPrint = false;
    bool fDiag = false;
    AnaSettings* ana_settings=0;
@@ -138,6 +138,7 @@ public:
          if (fFlags->fPrint) {printf("matchingmodule: TBarEvent not found!\n");}
          return flow;
       }
+      
 
       AgAnalysisFlow *anaflow = flow->Find<AgAnalysisFlow>();
       if (!anaflow)
@@ -145,6 +146,7 @@ public:
          if (fFlags->fPrint) {printf("matchingmodule: AgAnalysisFlow not found!\n");}
          return flow;
       }
+      
       TStoreEvent* e = anaflow->fEvent;
       if (!e)
       {
@@ -174,7 +176,7 @@ public:
          }
       
       //AgBarEventFlow 
-      e->SetBarEvent(barEvt);
+      //e->SetBarEvent(barEvt);
       if (fFlags->fPrint) {
          printf("matchingmodule: Bar Event vvvvv\n");
          barEvt->Print();
@@ -196,7 +198,7 @@ public:
             line_points.push_back(lin->Evaluate(radius*radius));
             delete lin;
          }
-      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %d TPC lines\n", line_points.size());
+      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %ld TPC lines\n", line_points.size());
       return line_points;
    }
    std::vector<TVector3> GetHelices(const TObjArray* HelixArray)
@@ -209,7 +211,7 @@ public:
             helix_points.push_back(hel->Evaluate(radius*radius));
             delete hel;
          }
-      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %d TPC helixes\n", helix_points.size());
+      if (fFlags->fPrint) printf("BV/TPC Matching module sees total %ld TPC helixes\n", helix_points.size());
       return helix_points;
    }
    void MatchPoints(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
@@ -218,9 +220,9 @@ public:
          c_hits++;
          double min_dist = 999999999.;
          int best_barhit;
-         std::vector<BarHit*> bars = barEvt->GetBars();
+         std::vector<TBarHit*> bars = barEvt->GetBars();
          for (int i=0;i<barEvt->GetNBars();i++) {
-            BarHit* barhit = bars.at(i);
+            TBarHit* barhit = bars.at(i);
             TVector3 bv_point = Get3VectorBV(barhit);
             double dist = GetGeometricDistance(bv_point,tpc_point);
             if (dist>min_dist) continue;
@@ -238,8 +240,8 @@ public:
          }
       }
       if (fFlags->fPrint) {
-         printf("%d total BarHits, %d total TPC points",barEvt->GetBars().size(),tpc_points.size());
-         for (BarHit* barhit: barEvt->GetBars()) {
+         printf("%ld total BarHits, %ld total TPC points",barEvt->GetBars().size(),tpc_points.size());
+         for (TBarHit* barhit: barEvt->GetBars()) {
             printf("Matching module BarHit matched? %s\n", barhit->IsTPCMatched() ? "yes!" : "no");
          }
       }
@@ -257,7 +259,7 @@ public:
       //return std::min(TMath::Abs(p1.DeltaPhi(p2)),TMath::Abs(p2.DeltaPhi(p1)));
       return p2.DeltaPhi(p1);
    }
-   TVector3 Get3VectorBV(BarHit* hit)
+   TVector3 Get3VectorBV(TBarHit* hit)
    {
       double xbv,ybv;
       hit->GetXY(xbv,ybv);

@@ -1,8 +1,8 @@
-#include "RootUtils.h"
-#include "TSeq_Event.h"
-
 #ifndef _TSeqEventGetters_
 #define _TSeqEventGetters_
+
+#include "TSeq_Event.h"
+#include "TreeGetters.h"
 
 TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, Bool_t IsStart, Int_t dumpIndex=0);
 TSeq_Event* Get_Seq_Event(Int_t runNumber, const char* description, const char* DumpType, Int_t dumpIndex=0);

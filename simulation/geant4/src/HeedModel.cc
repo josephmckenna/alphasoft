@@ -186,7 +186,9 @@ void HeedModel::SetTracking()
     {  
       fDrift = new Garfield::AvalancheMC();
       fDrift->SetSensor(fSensor);
+#ifdef OLD_AV_MC
       fDrift->EnableMagneticField();
+#endif
       //fDrift->EnableSignalCalculation();
       fDrift->SetDistanceSteps(2.e-3);
       if(createAval) fDrift->EnableAttachment();

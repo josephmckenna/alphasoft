@@ -19,13 +19,13 @@ std::vector<std::pair<double, double>> CheckDetectorEfficiency(int runno, const 
    {
       if (h.ScalerData)
       {
-         if (h.ScalerData->DetectorCounts[PMTCH] > MIN_COUNTS )
+         if (h.ScalerData->fDetectorCounts[PMTCH] > MIN_COUNTS )
          {
-            if (h.ScalerData->DetectorCounts[SiCH] > MIN_COUNTS )
+            if (h.ScalerData->fDetectorCounts[SiCH] > MIN_COUNTS )
             {
                double dump_length = h.GetStopTime() - h.GetStartTime();
                if (dump_length > MIN_DUMP_LENGTH && dump_length < MAX_DUMP_LENGTH)
-                  counts.emplace_back(std::make_pair(h.ScalerData->DetectorCounts[PMTCH], h.ScalerData->DetectorCounts[SiCH]));
+                  counts.emplace_back(std::make_pair(h.ScalerData->fDetectorCounts[PMTCH], h.ScalerData->fDetectorCounts[SiCH]));
             }
          }
       }

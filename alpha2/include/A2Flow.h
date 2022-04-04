@@ -12,62 +12,58 @@
 #include "UnpackVF48.h"
 #include "SiMod.h"
 
-#include "AnalysisFlow.h"
+#include <iostream>
+
+
+#include <array>
+
+
 
 class VF48data
 {
   public:
-     int       size32[nVF48];
-     uint32_t *data32[nVF48];
-    //char* data[NUM_VF48_MODULES];
-    //int size[NUM_VF48_MODULES];
+     std::array<std::vector<uint32_t>,nVF48> data32;
   VF48data()
+  {
+
+  }
+  void Reset()
   {
     for (int i=0; i<nVF48; i++)
     {
-      size32[i]=0;
-      data32[i]=NULL;
+      data32[i].clear();
     }
   }
-  void AddVF48data(int unit, const void* _data, int _size)
+  void AddVF48data(const int unit, const uint32_t* data, const int size)
   {
 
     //std::cout<<"VFModule:"<< unit<<" size:"<<_size<<std::endl;
     //int       size32 = size;
-  //32const uint32_t *data32 = (const uint32_t*)data;
-    if (!_size) return;
-    size32[unit]=_size;
-    data32[unit]=(uint32_t*) malloc(_size*sizeof(uint32_t));
-    memcpy(data32[unit], _data, _size*sizeof(uint32_t));
+    if (!size) return;
+    const size_t old_size = data32[unit].size();
+    data32[unit].resize(size + data32[unit].size() );
+    std::copy( data , data + size, data32[unit].begin() + old_size );
     return;
   }
   ~VF48data()
   {
-     for (int i=0; i<nVF48; i++)
-     {
-       // if (data32[i])
-           free( data32[i] );
-     }
   }
 };
 
 class VF48DataFlow: public TAFlowEvent
 {
    public:
-   std::deque<VF48data*> VF48dataQueue;
+   VF48data VF48dataQueue;
      public:
   VF48DataFlow(TAFlowEvent* flow)
        : TAFlowEvent(flow)
   {
+
   }
-  void AddData(VF48data* e)
-  {
-     VF48dataQueue.push_back(e);
-  }
-  //Do not delete the pointers... we don't own them
+
   ~VF48DataFlow()
   {
-     VF48dataQueue.clear();
+ 
   }
 };
 
@@ -90,6 +86,8 @@ class VF48EventFlow: public TAFlowEvent
 };
 #include "TSiliconEvent.h"
 #include "TAlphaEvent.h"
+
+
 
 class SilEventFlow: public TAFlowEvent
 {
@@ -138,11 +136,13 @@ class A2OnlineMVAFlow: public TAFlowEvent
 
 
 #include "TSISEvent.h"
+
+
 //Flow for passing SIS data from Analyze function (main thread) to the AnalyzeFlowEvent (side thread)
 class SISModuleFlow: public TAFlowEvent
 {
   public:
-      std::vector<TSISBufferEvent*> fSISBufferEvents[NUM_SIS_MODULES];
+      std::vector<TSISBufferEvent> fSISBufferEvents[NUM_SIS_MODULES];
       unsigned long MidasEventID=0;
       uint32_t MidasTime=0;
 
@@ -154,16 +154,21 @@ class SISModuleFlow: public TAFlowEvent
       fSISBufferEvents[module].reserve(nevents);
       for ( int i = 0; i < nevents; i++ )
       {
-         fSISBufferEvents[module].emplace_back(new TSISBufferEvent(ptr,module));
+         fSISBufferEvents[module].emplace_back(module,ptr);
          ptr += NUM_SIS_CHANNELS;
       }
       return;
    }
    void Clear()
    {
+      for (int i = 0; i < NUM_SIS_MODULES; i++)
+      {
+         fSISBufferEvents[i].clear();
+      }
    }
    SISModuleFlow(TAFlowEvent* flow): TAFlowEvent(flow)
    {
+
    }
    ~SISModuleFlow()
    {
@@ -171,23 +176,17 @@ class SISModuleFlow: public TAFlowEvent
    }
 };
 
-
 class SISEventFlow: public TAFlowEvent
 {
   public:
-  std::vector<std::vector<TSISEvent>> sis_events;
+  std::array<std::vector<TSISEvent>,NUM_SIS_MODULES> sis_events;
   SISEventFlow(TAFlowEvent* flow): TAFlowEvent(flow)
   {
-     for ( int i = 0; i < NUM_SIS_MODULES; i++)
-     {
-        sis_events.push_back(std::vector<TSISEvent>());
-     }
   }
   ~SISEventFlow()
   {
      for (int j=0; j<NUM_SIS_MODULES; j++)
      {
-        sis_events[j].clear();
      }
   }
 };

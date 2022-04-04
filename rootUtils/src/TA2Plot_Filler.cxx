@@ -82,7 +82,7 @@ void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time
          break;
       //Fill the plot, a fine time cut is done inside
       for (auto& p: plots)
-         p->AddSVDEvent(&(*SVDEvent));
+         p->AddSVDEvent(*SVDEvent);
    }
 
    //TTreeReaders are buffered... so this is faster than iterating over a TTree by hand
@@ -105,7 +105,7 @@ void TA2Plot_Filler::LoadData(int runNumber, double first_time, double last_time
             break;
          //Fill the plot, a fine time cut is done inside
          for (auto& p: plots)
-            p->AddSISEvent(&(*SISEvent));
+            p->AddSISEvent(*SISEvent);
       }
    }
 }
@@ -132,7 +132,7 @@ void TA2Plot_Filler::LoadData()
    std::vector<double> first_times(UniqueRuns.size(),1E99);
    for (auto& plot: plots)
    {
-      //TTimeWindows* temp = plot->GetTimeWindows();
+      //TAPlotTimeWindows* temp = plot->GetTimeWindows();
       //Calculate our list time... so we can stop early
       for (size_t t = 0; t < plot->GetTimeWindows()->fMaxTime.size(); t++)
       {

@@ -12,57 +12,41 @@
      exit(1);
   }
 
+  #include "BuildConfig.h"
+  
 
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
-  #include "BuildConfig.h"
   
-  
-  gSystem->Load("libMinuit2");
-  gSystem->Load("libGeom");
 
+   std::vector<TString> LibsToLoad = {"libMinuit2","libGeom"};
 
-
-  TString libname;
-  int s=-1;
-#ifdef BUILD_AG
-  libname="libagtpc";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+#if BUILD_AG
+   LibsToLoad.emplace_back("libagtpc");
+   LibsToLoad.emplace_back("libaglib");
 #endif
-
-  libname="libanalib";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
-
-#ifdef BUILD_A2
-  libname="libalpha2";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+#if BUILD_A2
+  LibsToLoad.emplace_back("libalpha2");
 #endif 
- 
-  libname="librootUtils";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+  LibsToLoad.emplace_back("libanalib");
+  LibsToLoad.emplace_back("librootUtils");
 
-#ifdef BUILD_AG_SIM
-  libname="libG4out";
-  libname=gSystem->FindDynamicLibrary(libname);
-  cout<<"Loading: "<<libname;
-  s=gSystem->Load( libname );
-  if(s==0) cout<<"... ok"<<endl;
+#if BUILD_AG_SIM
+   LibsToLoad.emplace_back("libG4out");
 #endif
 
-  gInterpreter->ProcessLine("#include \"RootUtils.h\"");
+   for ( TString& libname: LibsToLoad)
+   {
+      gSystem->FindDynamicLibrary(libname);
+      std::cout<<"Loading: "<<libname;
+      int s = gSystem->Load( libname );
+      if(s==0)
+         std::cout<<"... ok"<<std::endl;
+      else
+         std::cout<<"...ERROR!"<<std::endl;
+   }
+
   gStyle->SetOptStat(1011111);
   //gStyle->SetPalette(kRainBow);
   //gStyle->SetPalette(kAurora);

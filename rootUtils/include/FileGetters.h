@@ -7,7 +7,7 @@
 
 #ifndef _FileGetters_
 #define _FileGetters_
-TFile* Get_File(Int_t run_number, Bool_t die=kFALSE);
+TFile* Get_File(const int run_number, bool die = false);
 
 
 #endif

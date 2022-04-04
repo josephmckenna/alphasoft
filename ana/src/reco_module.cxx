@@ -190,7 +190,7 @@ public:
       analyzed_event->Reset();
       analyzed_event->SetEventNumber( age->counter );
       analyzed_event->SetTimeOfEvent( age->time );
-
+      analyzed_event->SetRunNumber( runinfo->fRunNo );
       if( fFlags->fRecOff )
          {
             std::cout << "The TStoreEvent I am adding to the flow is the following:" << std::endl;
@@ -246,38 +246,37 @@ public:
          return flow;
       }
       
-      bool skip_reco=false;
       if( fTrace )
          {
             int AW,PAD,SP=-1;
             AW=PAD=SP;
-            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            if (SigFlow->awSig.size()) AW=int(SigFlow->awSig.size());
             printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            if (SigFlow->pdSig.size()) PAD=int(SigFlow->pdSig.size());
             printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            if (SigFlow->matchSig.size()) SP=int(SigFlow->matchSig.size());
             printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
-      if (!SigFlow->matchSig)
+      if (SigFlow->matchSig.empty())
       {
          if( fVerb ) 
             std::cout<<"RecoRun::No matched hits"<<std::endl;
-          skip_reco=true;
+          SigFlow->fSkipReco = true;
 #ifdef HAVE_MANALYZER_PROFILER
           flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
 #endif
       }
-      else if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig.size() > fNhitsCut )
          {
             if( fVerb ) 
                std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
-            skip_reco=true;
+            SigFlow->fSkipReco = true;
 #ifdef HAVE_MANALYZER_PROFILER
             flow = new TAUserProfilerFlow(flow,"reco_module(too many hits)",start_time);
 #endif
          }
 
-      if (!skip_reco)
+      if (!SigFlow->fSkipReco)
          {
             //Root's fitting routines are often not thread safe
 #ifdef MODULE_MULTITHREAD
@@ -292,7 +291,7 @@ public:
             if( fTrace )
                printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
 
-            r.FindTracks(fFlags->finder);
+            r.FindTracks(SigFlow->fTrackVector ,fFlags->finder);
             if( fTrace )
                printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
 
@@ -330,7 +329,7 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
       //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-      if (!skip_reco) r.Reset();
+      if (!SigFlow->fSkipReco) r.Reset();
       return flow;
    }
 

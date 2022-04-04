@@ -99,7 +99,7 @@ char * TAlphaEventMap::ReturnSilName(Int_t SilNum)
   char * name = new char[5];
   
   // AD end
-  if ( SilNum < 10 ) sprintf(name,"0si%1d",SilNum);
+  if ( SilNum < 10 ) sprintf(name,"0si%c",'0' + SilNum);
   if ( SilNum >= 10 && SilNum < 22 )
   {
       if(SilNum == 20) sprintf(name, "1siA" );

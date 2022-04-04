@@ -8,7 +8,6 @@
 
 #include "manalyzer.h"
 #include "midasio.h"
-#include "RecoFlow.h"
 #include "A2Flow.h"
 #include "TSpill.h"
 #include "TSISChannels.h"
@@ -245,10 +244,10 @@ public:
       for(const auto i: channelsToCheck)
       {
          // toInt() isn't a great solution... do we want a operator overload for [] and TSISChannel / TChronoChannel
-         if(fColdDump->ScalerData->DetectorCounts[i.toInt()] > bestCount)
+         if(fColdDump->ScalerData->fDetectorCounts[i.toInt()] > bestCount)
          {
             bestChannel = i;
-            bestCount = fColdDump->ScalerData->DetectorCounts[i.toInt()];
+            bestCount = fColdDump->ScalerData->fDetectorCounts[i.toInt()];
          }
       }
        return bestChannel;
@@ -259,10 +258,10 @@ public:
       std::cout<<"lifetime_module::CalculateLifetime"<<std::endl;
       TSISChannel bestChannel = FindBestChannel(runinfo);
 
-      size_t smallestChannelsSize = std::min({fFirstFifthDump->ScalerData->DetectorCounts.size(), fSecondFifthDump->ScalerData->DetectorCounts.size(),  
-         fColdDump->ScalerData->DetectorCounts.size(), finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size()});
+      size_t smallestChannelsSize = std::min({fFirstFifthDump->ScalerData->fDetectorCounts.size(), fSecondFifthDump->ScalerData->fDetectorCounts.size(),  
+         fColdDump->ScalerData->fDetectorCounts.size(), finalColdDump->ScalerData->fDetectorCounts.size(), fLifetime->ScalerData->fDetectorCounts.size()});
       
-      //smallestChannelsSize = std::min(smallestChannelsSize, finalColdDump->ScalerData->DetectorCounts.size(), fLifetime->ScalerData->DetectorCounts.size());
+      //smallestChannelsSize = std::min(smallestChannelsSize, finalColdDump->ScalerData->fDetectorCounts.size(), fLifetime->ScalerData->fDetectorCounts.size());
 
       if(!bestChannel.IsValid())
       {
@@ -273,11 +272,11 @@ public:
       //Step by step - good for debugging, potentially worse for performance. - No need to use .at() due to the checks above?
       double lifetimeHold = fLifetime->GetStopTime() - fLifetime->GetStartTime();
       // I am not totally happy with toInt() as a solution. the Scaler data should maybe have an overload for the [] operator with a TSISChannel / TChronoChannel?
-      double countsFD0 = fFirstFifthDump->ScalerData->DetectorCounts[bestChannel.toInt()];
-      double countsFD1 = fSecondFifthDump->ScalerData->DetectorCounts[bestChannel.toInt()];
-      double countsCD0 = fColdDump->ScalerData->DetectorCounts[bestChannel.toInt()];
-      double countsCD1 = finalColdDump->ScalerData->DetectorCounts[bestChannel.toInt()];
-      double countslifetime = fLifetime->ScalerData->DetectorCounts[bestChannel.toInt()];
+      double countsFD0 = fFirstFifthDump->ScalerData->fDetectorCounts[bestChannel.toInt()];
+      double countsFD1 = fSecondFifthDump->ScalerData->fDetectorCounts[bestChannel.toInt()];
+      double countsCD0 = fColdDump->ScalerData->fDetectorCounts[bestChannel.toInt()];
+      double countsCD1 = finalColdDump->ScalerData->fDetectorCounts[bestChannel.toInt()];
+      double countslifetime = fLifetime->ScalerData->fDetectorCounts[bestChannel.toInt()];
       double normalised0 = countsCD0/countsFD0;
       double normalised1 = countsCD1/countsFD1;
       double logfactor = ( normalised0 / normalised1 );
@@ -286,13 +285,13 @@ public:
 
       //This refuses to work as a one liner. For now we keep the above method but these are here if someone decides to make this work. 
       /*double lifetimeInMins = ((fLifetime->GetStopTime() - fLifetime->GetStartTime()) / 
-                              TMath::Log( (((fColdDump->ScalerData->DetectorCounts[bestChannel])/
-                              (fFirstFifthDump->ScalerData->DetectorCounts[bestChannel])) / 
-                              ((finalColdDump->ScalerData->DetectorCounts[bestChannel])/(fSecondFifthDump->ScalerData->DetectorCounts[bestChannel]))) ))/60; */
+                              TMath::Log( (((fColdDump->ScalerData->fDetectorCounts[bestChannel])/
+                              (fFirstFifthDump->ScalerData->fDetectorCounts[bestChannel])) / 
+                              ((finalColdDump->ScalerData->fDetectorCounts[bestChannel])/(fSecondFifthDump->ScalerData->fDetectorCounts[bestChannel]))) ))/60; */
 
       /*double lifetimeInMins = ( fLifetime->GetStopTime() - fLifetime->GetStartTime() ) / 
-                                 (60 * TMath::Log( (fColdDump->ScalerData->DetectorCounts[bestChannel] / fFirstFifthDump->ScalerData->DetectorCounts[bestChannel]) / 
-                                 (finalColdDump->ScalerData->DetectorCounts[bestChannel] / fSecondFifthDump->ScalerData->DetectorCounts[bestChannel]) ));*/
+                                 (60 * TMath::Log( (fColdDump->ScalerData->fDetectorCounts[bestChannel] / fFirstFifthDump->ScalerData->fDetectorCounts[bestChannel]) / 
+                                 (finalColdDump->ScalerData->fDetectorCounts[bestChannel] / fSecondFifthDump->ScalerData->fDetectorCounts[bestChannel]) ));*/
 
       return lifetimeInMins;
    }

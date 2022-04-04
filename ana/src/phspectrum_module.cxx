@@ -117,23 +117,23 @@ public:
          return flow;
       }
       
-      std::vector<ALPHAg::signal>* adc32 = SigFlow->adc32max;
-      std::vector<ALPHAg::signal>* pwb = SigFlow->pwbMax;
+      const std::vector<ALPHAg::TWireSignal>& adc32 = SigFlow->adc32max;
+      const std::vector<ALPHAg::TPadSignal>& pwb = SigFlow->pwbMax;
       
-      std::vector<ALPHAg::signal>* aws = SigFlow->awSig;
-      std::vector<ALPHAg::signal>* pads = SigFlow->pdSig;
+      const std::vector<ALPHAg::TWireSignal>& aws = SigFlow->awSig;
+      const std::vector<ALPHAg::TPadSignal>& pads = SigFlow->pdSig;
 
       if( fFlags->fMagneticField > 0. )
-         HelPHspect(e,*adc32,*pwb,*aws,*pads);
+         HelPHspect(e,adc32,pwb,aws,pads);
       else
-         LinePHspect(e,*adc32,*pwb,*aws,*pads);
+         LinePHspect(e,adc32,pwb,aws,pads);
       
       return flow;
    }
 
    void FillHistos(const TObjArray* points,
-                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
-                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
+                   const std::vector<ALPHAg::TWireSignal> &adc32, const std::vector<ALPHAg::TPadSignal> &pwb,
+                   const std::vector<ALPHAg::TWireSignal> &aws, const std::vector<ALPHAg::TPadSignal> &pads)
    {
       int nPoints = points->GetEntriesFast();
       std::cout<<"PHspectrum::FillHistos() # of points: "<<nPoints<<std::endl;
@@ -177,8 +177,8 @@ public:
    }
 
    void HelPHspect(TStoreEvent* anEvent,
-                   std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
-                   std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
+                   const std::vector<ALPHAg::TWireSignal> &adc32, const std::vector<ALPHAg::TPadSignal> &pwb,
+                   const std::vector<ALPHAg::TWireSignal> &aws, const std::vector<ALPHAg::TPadSignal> &pads)
    {
       const TObjArray* helices = anEvent->GetHelixArray();
       int nTracks = helices->GetEntriesFast();
@@ -193,8 +193,8 @@ public:
    }// function: HelPHspect
 
    void LinePHspect(TStoreEvent* anEvent,
-                    std::vector<ALPHAg::signal> &adc32, std::vector<ALPHAg::signal> &pwb,
-                    std::vector<ALPHAg::signal> &aws, std::vector<ALPHAg::signal> &pads)
+                    const std::vector<ALPHAg::TWireSignal> &adc32, const std::vector<ALPHAg::TPadSignal> &pwb,
+                    const std::vector<ALPHAg::TWireSignal> &aws, const std::vector<ALPHAg::TPadSignal> &pads)
    {
       const TObjArray* lines = anEvent->GetLineArray();
       int nTracks = lines->GetEntriesFast();

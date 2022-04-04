@@ -63,8 +63,7 @@ Int_t ApplyCuts(TStoreEvent* e)
 #ifdef BUILD_AG
 Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
 {
-   double ot; //official time;
-   TTree* t=Get_StoreEvent_Tree(runNumber, ot);
+   TTree* t=Get_StoreEvent_Tree(runNumber);
    TStoreEvent* e=new TStoreEvent();
    t->SetBranchAddress("StoredEvent", &e);
    int FirstEvent=-1;
@@ -72,11 +71,7 @@ Int_t GetTPCEventNoBeforeOfficialTime(Double_t runNumber, Double_t tmin)
    {
       e->Reset();
       t->GetEntry(i);
-      if (ot>tmin)
-      {
-         FirstEvent=i-1;
-         break;
-      }
+
    }
    delete e;
    return FirstEvent;

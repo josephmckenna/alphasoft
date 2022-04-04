@@ -6,6 +6,7 @@
 // Joseph McKenna
 //
 
+
 #include <stdio.h>
 #include <iomanip>
 
@@ -19,9 +20,12 @@
 
 #ifdef BUILD_A2
 #include "A2Flow.h"
-#endif
 
-#include "TAnalysisReport.h"
+
+#endif
+#include "AnalysisFlow.h"
+
+#include "TA2AnalysisReport.h"
 
 //I am intentionally global, external modules test this
 bool TimeModules=true;
@@ -31,8 +35,8 @@ class A2DumpSummary
 public:
    std::string DumpName;
    int PassedCuts;   double PassedCuts_sqsum;
-   int Verticies;    double Verticies_sqsum;
-   int VF48Events;   double VF48Events_sqsum;
+   int fVerticies;    double Verticies_sqsum;
+   int fVF48Events;   double VF48Events_sqsum;
    double time;
    int TotalCount;
    A2DumpSummary(const char* name)
@@ -40,9 +44,9 @@ public:
       DumpName=name;
       PassedCuts      =0;
       PassedCuts_sqsum=0;
-      Verticies       =0;
+      fVerticies       =0;
       Verticies_sqsum =0;
-      VF48Events      =0;
+      fVF48Events      =0;
       VF48Events_sqsum=0;
       time=0.;
       TotalCount=0;
@@ -55,16 +59,16 @@ public:
          return;
       }
       //std::cout<<"Adding spill to list"<<std::endl;
-      PassedCuts       += s->ScalerData->PassCuts;
-      PassedCuts_sqsum += s->ScalerData->PassCuts * s->ScalerData->PassCuts;
+      PassedCuts       += s->ScalerData->fPassCuts;
+      PassedCuts_sqsum += s->ScalerData->fPassCuts * s->ScalerData->fPassCuts;
 
-      Verticies        += s->ScalerData->Verticies;
-      Verticies_sqsum  += s->ScalerData->Verticies * s->ScalerData->Verticies;
+      fVerticies        += s->ScalerData->fVerticies;
+      Verticies_sqsum  += s->ScalerData->fVerticies * s->ScalerData->fVerticies;
 
-      VF48Events       += s->ScalerData->VertexEvents;
+      fVF48Events       += s->ScalerData->VertexEvents;
       VF48Events_sqsum += s->ScalerData->VertexEvents * s->ScalerData->VertexEvents;
 
-      time             += s->ScalerData->StopTime-s->ScalerData->StartTime;
+      time             += s->ScalerData->fStopTime-s->ScalerData->fStartTime;
       TotalCount++;
    }
    double calc_stdev(double sq_sum, int scaler)
@@ -75,11 +79,11 @@ public:
    }
    /*void Print()
    {
-      printf("DUMP SUMMARY:%s\t DumpCount: %d  \t VF48Events: %d ( %f )\tVerticies: %d ( %f )\t PassedCuts: %d ( %f )\t TotalTime: %f\t\n",
+      printf("DUMP SUMMARY:%s\t DumpCount: %d  \t fVF48Events: %d ( %f )\tVerticies: %d ( %f )\t PassedCuts: %d ( %f )\t TotalTime: %f\t\n",
                    DumpName.c_str(),
                    TotalCount,
-                   VF48Events, calc_stdev(VF48Events_sqsum, VF48Events),
-                   Verticies, calc_stdev(Verticies_sqsum, Verticies), 
+                   fVF48Events, calc_stdev(VF48Events_sqsum, fVF48Events),
+                   fVerticies, calc_stdev(Verticies_sqsum, fVerticies), 
                    PassedCuts, calc_stdev(PassedCuts_sqsum, PassedCuts),
                    time);
    }*/
@@ -88,9 +92,9 @@ public:
       std::streamsize ss = std::cout.precision();
        std::cout<<"DUMP SUMMARY: "<< DumpName.c_str() << "\t";
        std::cout<<"DumpCount: "   << TotalCount << "\t";
-       std::cout<<"VF48Events: "  << VF48Events << "\t";
-       std::cout<<"Verticies: "   << Verticies << " (" << std::setprecision(3) << 100.*Verticies/VF48Events << "% / "  << Verticies/time <<"Hz)\t";
-       std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/VF48Events << "% / " << PassedCuts/time <<"Hz)\t";
+       std::cout<<"fVF48Events: "  << fVF48Events << "\t";
+       std::cout<<"fVerticies: "   << fVerticies << " (" << std::setprecision(3) << 100.*fVerticies/fVF48Events << "% / "  << fVerticies/time <<"Hz)\t";
+       std::cout<<"PassedCuts: "  << PassedCuts << " (" << std::setprecision(3) << 100.*PassedCuts/fVF48Events << "% / " << PassedCuts/time <<"Hz)\t";
        std::cout<<"TotalTime: "   << std::setprecision(ss) << time << std::endl;
     }
 };

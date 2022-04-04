@@ -42,11 +42,17 @@ class TSVD_QOD: public TObject
    TSVD_QOD();
    TSVD_QOD(TAlphaEvent*a, TSiliconEvent*s );
    virtual ~TSVD_QOD();
-   double X() { return x; }
-   double Y() { return y; }
-   double Z() { return z; }
-   double GetTime() { return t; }
-   double R() { return TMath::Sqrt(x*x+y*y); }
+   double X() const { return x; }
+   double Y() const { return y; }
+   double Z() const { return z; }
+   double GetTimeOfEvent() const { return t; }
+   int GetEventNumber() const { return VF48NEvent; }
+   double R() const { return TMath::Sqrt(x*x+y*y); }
+
+   int GetVertexStatus() const { return NVertices; }
+   int GetOnlinePassCuts() const { return NPassedCuts; }
+   int GetOnlinePassMVA() const { return MVA; }
+
 
    ClassDef(TSVD_QOD,1); 
 };

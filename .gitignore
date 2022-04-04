@@ -13,6 +13,8 @@
 *.csv
 *.ods
 *.out
+*.out.nopid
+*.out.annotate
 run*.json
 *.root
 *.log

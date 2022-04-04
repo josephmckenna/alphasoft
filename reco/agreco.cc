@@ -169,13 +169,12 @@ int main(int argc, char** argv)
       r.AddSpacePoint( points );
 
       // Tracks Finder
-      int nt = r.FindTracks( choosen_finder );
+      std::vector<track_t> tracks;
+      int nt = r.FindTracks( tracks, choosen_finder );
       if( n%1000 == 0 || Verb > 0 )
 	std::cout<<"\t# of Points: "<<std::setw(3)<<points->GetEntriesFast()
             <<"\t# of Tracks: "<<nt<<std::endl;
 
-      u.FillRecoTracksHisto(r.GetTracks());
-      
       // Tracks Fitter
       int nlin=0, nhel=0;
       if( MagneticField > 0. )
@@ -194,6 +193,7 @@ int main(int argc, char** argv)
          tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
       else if( nlin > 0 ) 
          tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());
+      u.FillRecoTracksHisto(tracks_array);
       
       if( tracks_array ) 
 	{

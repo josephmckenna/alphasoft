@@ -220,19 +220,19 @@ void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
    for(size_t t=0; t<found_tracks->size(); ++t)
       {
          TTrack* at = (TTrack*) found_tracks->at(t);
-         const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
-         for( auto& it: *spacepoints )
+         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         for( const auto& it: *spacepoints )
             {
-               fHisto.FillHisto("hOccAwtracks",it->GetWire());
-               pmap.get(it->GetPad(),sec,row);
+               fHisto.FillHisto("hOccAwtracks",it.GetWire());
+               pmap.get(it.GetPad(),sec,row);
                fHisto.FillHisto("hOccPadtracks",row,sec);
 		  
-               fHisto.FillHisto("hspradtracks",it->GetR());
-               fHisto.FillHisto("hspphitracks",it->GetPhi()*TMath::RadToDeg());
-               fHisto.FillHisto("hspzedtracks",it->GetZ());
+               fHisto.FillHisto("hspradtracks",it.GetR());
+               fHisto.FillHisto("hspphitracks",it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspzedtracks",it.GetZ());
 		  
-               fHisto.FillHisto("hspzphitracks",it->GetZ(),it->GetPhi()*TMath::RadToDeg());
-               fHisto.FillHisto("hspxytracks",it->GetX(),it->GetY());
+               fHisto.FillHisto("hspzphitracks",it.GetZ(),it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspxytracks",it.GetX(),it.GetY());
                ++Npointstracks;
             }
       }
@@ -247,22 +247,22 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
    for(size_t t=0; t<tracks_array->size(); ++t)
       {
          TTrack* at = (TTrack*) tracks_array->at(t);
-         const std::vector<TSpacePoint*>* spacepoints = at->GetPointsArray();
-         for( auto& it: *spacepoints )
+         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         for(const auto& it: *spacepoints )
             {
-               fHisto.FillHisto("hOccAw",it->GetWire());
-               fHisto.FillHisto("hAwOccIsec",it->GetWire()%8);
-               trXaw.insert(it->GetWire());
-               pmap.get(it->GetPad(),sec,row);
-               trkXpad.insert(it->GetPad());
+               fHisto.FillHisto("hOccAw",it.GetWire());
+               fHisto.FillHisto("hAwOccIsec",it.GetWire()%8);
+               trXaw.insert(it.GetWire());
+               pmap.get(it.GetPad(),sec,row);
+               trkXpad.insert(it.GetPad());
                fHisto.FillHisto("hOccPad",row,sec);
 		  
-               fHisto.FillHisto("hsprad",it->GetR());
-               fHisto.FillHisto("hspphi",it->GetPhi()*TMath::RadToDeg());
-               fHisto.FillHisto("hspzed",it->GetZ());
+               fHisto.FillHisto("hsprad",it.GetR());
+               fHisto.FillHisto("hspphi",it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspzed",it.GetZ());
 		  
-               fHisto.FillHisto("hspzphi",it->GetZ(),it->GetPhi()*TMath::RadToDeg());
-               fHisto.FillHisto("hspxy",it->GetX(),it->GetY());
+               fHisto.FillHisto("hspzphi",it.GetZ(),it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspxy",it.GetX(),it.GetY());
 
                ++Npoints;
             }
@@ -373,8 +373,9 @@ void Utils::DebugNeuralNetMC(NeuralFinder* pattrec)
 
 void Utils::DisplayNeuralNet(NeuralFinder* pattrec)
 {
-   for(int i = 0; i < pattrec->GetNumberOfTracks(); i++)
-      PlotNeurons(creco, pattrec->GetTrackNeurons(i), kGray+1);
+   assert(!"FIXME"); // pattrec no longer owns a list of tracks
+   //for(int i = 0; i < pattrec->GetNumberOfTracks(); i++)
+     // PlotNeurons(creco, pattrec->GetTrackNeurons(i), kGray+1);
 
    PlotNeurons(creco, pattrec->GetMetaNeurons(), kRed);
    // PlotNeurons(creco, pattrec->GetTrackNeurons(1), kMagenta);
@@ -681,22 +682,22 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
          gzphi->SetMarkerColor(cols[t%ncols]);
          gzphi->SetLineColor(cols[t%ncols]);
          gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
-         const std::vector<TSpacePoint*>* points = aTrack->GetPointsArray();
+         const std::vector<TSpacePoint>* points = aTrack->GetPointsArray();
          for( uint i=0; i<points->size(); ++i )
             {
-               TSpacePoint* p = (TSpacePoint*) points->at(i);
+               const TSpacePoint& p = points->at(i);
 
-               gxy->SetPoint(i,p->GetX(),p->GetY());
-               gxy->SetPointError(i,p->GetErrX(),p->GetErrY());
+               gxy->SetPoint(i,p.GetX(),p.GetY());
+               gxy->SetPointError(i,p.GetErrX(),p.GetErrY());
 
-               grz->SetPoint(i,p->GetR(),p->GetZ());
-               grz->SetPointError(i,p->GetErrR(),p->GetErrZ());
+               grz->SetPoint(i,p.GetR(),p.GetZ());
+               grz->SetPointError(i,p.GetErrR(),p.GetErrZ());
 
-               grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
-               grphi->SetPointError(i,p->GetErrR(),p->GetErrPhi()*TMath::RadToDeg());
+               grphi->SetPoint(i,p.GetR(),p.GetPhi()*TMath::RadToDeg());
+               grphi->SetPointError(i,p.GetErrR(),p.GetErrPhi()*TMath::RadToDeg());
 
-               gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
-               gzphi->SetPointError(i,p->GetErrZ(),p->GetErrPhi()*TMath::RadToDeg());
+               gzphi->SetPoint(i,p.GetZ(),p.GetPhi()*TMath::RadToDeg());
+               gzphi->SetPointError(i,p.GetErrZ(),p.GetErrPhi()*TMath::RadToDeg());
             }
          c->cd(1);
          gxy->Draw("Psame");
@@ -1144,14 +1145,14 @@ void Utils::HelixPlots(std::vector<TFitHelix*>* helices)
          fHisto.FillHisto("hpToTgood", p.Mag());
          fHisto.FillHisto("hpTZgood", p.Perp(), p.Z() );
          ++nhel;
-         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         const vector<TSpacePoint> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
             {
-               TSpacePoint* ap = sp->at(ip);
-               fHisto.FillHisto( "hhspxy" , ap->GetX(), ap->GetY() );
-               fHisto.FillHisto( "hhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-               fHisto.FillHisto( "hhspzr" , ap->GetZ(), ap->GetR() );
-               fHisto.FillHisto( "hhsprp" , ap->GetPhi(), ap->GetR() );
+               const TSpacePoint& ap = sp->at(ip);
+               fHisto.FillHisto( "hhspxy" , ap.GetX(), ap.GetY() );
+               fHisto.FillHisto( "hhspzp" , ap.GetZ(), ap.GetPhi()*TMath::RadToDeg() );
+               fHisto.FillHisto( "hhspzr" , ap.GetZ(), ap.GetR() );
+               fHisto.FillHisto( "hhsprp" , ap.GetPhi(), ap.GetR() );
             }
       }
    fHisto.FillHisto("hNhel",double(nhel));
@@ -1173,14 +1174,14 @@ void Utils::UsedHelixPlots(const TObjArray* helices)
          fHisto.FillHisto("hpToTused", p.Mag());
          fHisto.FillHisto("hpTZused", p.Perp(), p.Z() );
          ++nhel;
-         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         const vector<TSpacePoint> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
             {
-               TSpacePoint* ap = sp->at(ip);
-               fHisto.FillHisto( "huhspxy" , ap->GetX(), ap->GetY() );
-               fHisto.FillHisto( "huhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-               fHisto.FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
-               fHisto.FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
+               const TSpacePoint& ap = sp->at(ip);
+               fHisto.FillHisto( "huhspxy" , ap.GetX(), ap.GetY() );
+               fHisto.FillHisto( "huhspzp" , ap.GetZ(), ap.GetPhi()*TMath::RadToDeg() );
+               fHisto.FillHisto( "huhspzr" , ap.GetZ(), ap.GetR() );
+               fHisto.FillHisto( "huhsprp" , ap.GetPhi(), ap.GetR() );
             }
       }   
    fHisto.FillHisto("hNusedhel",double(nhel));
@@ -1204,14 +1205,14 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
          fHisto.FillHisto("hpToTused", p.Mag());
          fHisto.FillHisto("hpTZused", p.Perp(), p.Z() );
          ++nhel;
-         const vector<TSpacePoint*> *sp = hel->GetPointsArray();
+         const vector<TSpacePoint> *sp = hel->GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
             {
-               TSpacePoint* ap = sp->at(ip);
-               fHisto.FillHisto( "huhspxy" , ap->GetX(), ap->GetY() );
-               fHisto.FillHisto( "huhspzp" , ap->GetZ(), ap->GetPhi()*TMath::RadToDeg() );
-               fHisto.FillHisto( "huhspzr" , ap->GetZ(), ap->GetR() );
-               fHisto.FillHisto( "huhsprp" , ap->GetPhi(), ap->GetR() );
+               const TSpacePoint& ap = sp->at(ip);
+               fHisto.FillHisto( "huhspxy" , ap.GetX(), ap.GetY() );
+               fHisto.FillHisto( "huhspzp" , ap.GetZ(), ap.GetPhi()*TMath::RadToDeg() );
+               fHisto.FillHisto( "huhspzr" , ap.GetZ(), ap.GetR() );
+               fHisto.FillHisto( "huhsprp" , ap.GetPhi(), ap.GetR() );
             }
       }
    fHisto.FillHisto("hNusedhel",double(nhel));

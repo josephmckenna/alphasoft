@@ -3,7 +3,6 @@
 
 #include "TStyle.h"
 
-extern Int_t gNbin;
 //Plots
 
 #ifdef BUILD_AG
@@ -161,11 +160,11 @@ TCanvas* Plot_TPC(Int_t runNumber,  Double_t tmin, Double_t tmax, bool ApplyCuts
 {
   if (tmax<0.) tmax=GetAGTotalRunTime(runNumber);
   TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off
-  p->SetTimeRange(0.,tmax-tmin);
-  p->AddEvents(runNumber,tmin,tmax);
+  p->AddTimeGate(runNumber,tmin,tmax);
+  p->LoadData();
   TString cname = TString::Format("cVTX_R%d",runNumber);
-  std::cout<<"NVerts:"<<p->GetTotalVertices()<<std::endl;
-  return p->Canvas(cname);
+  std::cout<<"NVerts:"<<p->GetNVerticies()<<std::endl;
+  return p->DrawVertexCanvas(cname);
 }
 #endif
 #ifdef BUILD_AG
@@ -174,11 +173,8 @@ TCanvas* Plot_TPC(Int_t runNumber,  const char* description, Int_t dumpIndex, bo
    std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description}, {dumpIndex});
    double tmin = spills.front().GetStartTime();
    double tmax = spills.front().GetStopTime();
-  std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
-  double ttmin = GetTrigTimeBefore(runNumber,tmin),
-    ttmax = GetTrigTimeAfter(runNumber,tmax);
-  std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-  return Plot_TPC(runNumber,tmin,tmax, ApplyCuts);
+   std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
+   return Plot_TPC(runNumber,tmin,tmax, ApplyCuts);
 }
 #endif
 #ifdef BUILD_AG
@@ -193,35 +189,32 @@ TCanvas* Plot_TPC(Int_t* runNumber, Int_t Nruns, const char* description, Int_t 
       double tmax = spills.front().GetStopTime();
   
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
-      double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
-      ttmax = GetTrigTimeAfter(runNumber[i],tmax);
-      std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-      p->SetTimeRange(0.,tmax-tmin);
-      p->AddEvents(runNumber[i],tmin,tmax);
+      p->AddTimeGate(runNumber[i],tmin,tmax);
     }
-  TString cname = TString::Format("cVTX_%s_Rlist",description);
-  return p->Canvas(cname);
+   p->LoadData();
+   TString cname = TString::Format("cVTX_%s_Rlist",description);
+   return p->DrawVertexCanvas(cname.Data());
 }
 #endif
 #ifdef BUILD_AG
 void Plot_Vertices_And_Tracks(Int_t runNumber, double tmin, double tmax, bool ApplyCuts)
 {
-  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
-  p->SetPlotTracks();
-  int total_number_events = p->AddEvents(runNumber,tmin,tmax);
+  TAGPlotTracks* p=new TAGPlotTracks();
 
-  int total_number_vertices = p->GetTotalVertices();
+  p->AddTimeGate(runNumber,tmin,tmax);
+
+  int total_number_vertices = p->GetNVertexEvents();
   double total_runtime = p->GetTotalTime();
-
+  p->LoadData();
   TString cname = TString::Format("cVTX_%1.1f-%1.1f_R%d",tmin,tmax,runNumber);
   //  std::cout<<cname<<std::endl;
-  p->Canvas(cname);
+  p->DrawVertexCanvas(cname);
 
   cname = TString::Format("cHEL_%1.1f-%1.1f_R%d",tmin,tmax,runNumber);
   //  std::cout<<cname<<std::endl;
-  p->DrawTrackHisto(cname.Data());
+  p->DrawTrackCanvas(cname.Data());
 
-  std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
+  //std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
   std::cout<<"Total Number of Vertices: "<<total_number_vertices<<std::endl;
   std::cout<<"Total Runtime: "<<total_runtime<<std::endl;
 
@@ -242,8 +235,7 @@ void Plot_Vertices_And_Tracks(Int_t runNumber, const char* description,
 void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* description, 
 			      Int_t dumpIndex, bool ApplyCuts)
 { 
-  TAGPlot* p=new TAGPlot(ApplyCuts); //Cuts off  
-  p->SetPlotTracks();
+  TAGPlotTracks* p=new TAGPlotTracks();
   //  p->SetVerbose(true);
   int total_number_events=0;
   bool whole=false;
@@ -268,15 +260,11 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
   
 	}
       std::cout<<"Dump at ["<<tmin<<","<<tmax<<"] s   duration: "<<tmax-tmin<<" s"<<std::endl;
-      double ttmin = GetTrigTimeBefore(runNumber[i],tmin),
-      ttmax = GetTrigTimeAfter(runNumber[i],tmax);
-      std::cout<<"Trigger window ["<<ttmin<<","<<ttmax<<"] s   duration:"<<ttmax-ttmin<<" s"<<std::endl;
-      total_number_events+=p->AddEvents(runNumber[i],tmin,tmax);
+      p->AddTimeGate(runNumber[i],tmin,tmax);
     }
-  if( whole )
-    p->SetTimeRange(0.,duration);
-
-  int total_number_vertices = p->GetTotalVertices();
+  
+  p->LoadData();
+  int total_number_vertices = p->GetNVerticies();
   double total_runtime = p->GetTotalTime();
 
   TString cnamev,cnamet;
@@ -292,11 +280,11 @@ void Plot_Vertices_And_Tracks(Int_t* runNumber, Int_t Nruns, const char* descrip
     }
 
   //  std::cout<<cnamev<<std::endl;
-  p->Canvas(cnamev);
+  p->DrawVertexCanvas(cnamev);
   //  std::cout<<cnamet<<std::endl;
-  p->DrawTrackHisto(cnamet.Data());
+  p->DrawTrackCanvas(cnamet.Data());
 
-  std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
+  //std::cout<<"Total Number of Events: "<<total_number_events<<std::endl;
   std::cout<<"Total Number of Vertices: "<<total_number_vertices<<std::endl;
   std::cout<<"Total Runtime: "<<total_runtime<<std::endl;
 
@@ -325,10 +313,10 @@ TCanvas* Plot_AG_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, cons
    std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
    std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-   Int_t oldBinNumber = gNbin;
-   gNbin=1.e4;
+   Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+   rootUtils::SetDefaultBinNumber(1.e4);
    TH1D* dumpHisto = Get_Chrono( runNumber, {Get_Chrono_Channel(runNumber,Chrono_Channel_Name)}, {start_time}, {stop_time} ).front().front();
-  gNbin=oldBinNumber;
+   rootUtils::SetDefaultBinNumber(oldBinNumber);
  
   if(!dumpHisto){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
@@ -351,7 +339,7 @@ TCanvas* Plot_AG_ColdDump(Int_t runNumber,Int_t dumpIndex, Int_t binNumber, cons
   hEnergy->SetLineColor(kBlack);
 
   // calculate the energy resolution
-  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+  Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
   char resolution[80];
   sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
   printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
@@ -464,15 +452,15 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
   std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-  Int_t oldBinNumber = gNbin;
-  gNbin=1.e4;
+  Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+  rootUtils::SetDefaultBinNumber(1.e4);
 
   TSISChannels chans(runNumber);
   TSISChannel channel = chans.GetChannel("SIS_PMT_CATCH_OR");
   std::vector<TSISChannel> SISChannels = {channel};
   
   std::vector<TH1D*> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time}).front();
-  gNbin=oldBinNumber;
+  rootUtils::SetDefaultBinNumber(oldBinNumber);
  
   if(!dumpHisto.at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
   // and the voltage ramp function of time
@@ -495,7 +483,7 @@ TCanvas* Plot_A2_CT_HotDump(Int_t runNumber, Int_t repitition, Int_t binNumber, 
   hEnergy->SetLineColor(kBlack);
 
   // calculate the energy resolution
-  Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+  Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
   char resolution[80];
   sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
   printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
@@ -789,8 +777,8 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
    std::cout <<"Dump start: "<< start_time-startOffset << " Dump stop: " << stop_time-stopOffset << std::endl;
    std::cout<<"Dump Duration "<<"\t"<<dumpDuration<<" s"<<std::endl;
 
-   Int_t oldBinNumber = gNbin;
-   gNbin=1.e4;
+   Int_t oldBinNumber = rootUtils::GetDefaultBinNumber();
+   rootUtils::SetDefaultBinNumber(1.e4);
 
    TSISChannels chans(runNumber);
 
@@ -800,7 +788,7 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
  
    std::vector<std::vector<TH1D*>> dumpHisto = Get_SIS( runNumber, SISChannels, {start_time}, {stop_time});
 
-   gNbin=oldBinNumber;
+   rootUtils::SetDefaultBinNumber(oldBinNumber);
 
    if(!dumpHisto.at(0).at(0)){Error("PlotEnergyDump","NO CB counts plot"); return 0;}
     // and the voltage ramp function of time
@@ -824,7 +812,7 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
    hEnergy->SetMarkerStyle(7);
    hEnergy->SetLineColor(kBlack);
    // calculate the energy resolution
-   Double_t res = (Emax-Emin)/ (Double_t) gNbin;
+   Double_t res = (Emax-Emin)/ (Double_t) rootUtils::GetDefaultBinNumber();
    char resolution[80];
    sprintf(resolution,"Energy Resolution %.1lf meV ",res*1.e3);
    printf(resolution,"Energy Resolution %.1lf meV\n",res*1.e3);
@@ -1105,8 +1093,8 @@ void Plot_SVD(Int_t runNumber, std::vector<TA2Spill> spills)
    {
       if (spill.ScalerData)
       {
-         tmin.push_back(spill.ScalerData->StartTime);
-         tmax.push_back(spill.ScalerData->StopTime);
+         tmin.push_back(spill.ScalerData->fStartTime);
+         tmax.push_back(spill.ScalerData->fStopTime);
       }
       else
       {

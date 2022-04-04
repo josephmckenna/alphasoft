@@ -20,18 +20,15 @@ Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board)
 #ifdef BUILD_AG
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber)
 {
-   Double_t OfficialTime;
-   TTree* t=Get_StoreEvent_Tree(runNumber, OfficialTime);
+   TTree* t=Get_StoreEvent_Tree(runNumber);
    TStoreEvent* e = new TStoreEvent();
    t->SetBranchAddress("StoredEvent", &e);
    t->GetEntry(t->GetEntries()-1);
    Double_t RunTime=e->GetTimeOfEvent();
    delete e;
    //We may want to choose to only use official time once its well calibrated
-   std::cout<<"End time from TPC (official time):"<<RunTime<<" ("<<OfficialTime<<")"<<std::endl;
-   if (RunTime>OfficialTime)
-      return RunTime;
-   return OfficialTime;
+   std::cout<<"End time from TPC (official time):"<<RunTime<<std::endl;
+   return RunTime;
 }
 #endif
 #ifdef BUILD_AG
@@ -47,69 +44,6 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
    tmp=GetTotalRunTimeFromTPC(runNumber);
    if (tmp>tmax) tmax=tmp;
    return tmax;
-}
-#endif
-
-#ifdef BUILD_AG
-Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
-{   
-  double official_time;
-  TStoreEvent *store_event = new TStoreEvent();
-  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
-  t0->SetBranchAddress("StoredEvent", &store_event);
-  int event_id = -1;
-  for( Int_t i = 0; i < t0->GetEntries(); ++i )
-    {
-      store_event->Reset();
-      t0->GetEntry(i);
-      if( !store_event )
-	{
-	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
-	  break;
-	}
-      if( official_time > mytime )
-	{
-	  event_id = i-1;
-	  store_event->Reset();
-	  break;
-	}
-      store_event->Reset();
-   }
-  t0->GetEntry(event_id);
-  double runtime=store_event->GetTimeOfEvent();
-  delete store_event;
-  return runtime;
-}
-#endif
-#ifdef BUILD_AG
-Double_t GetTrigTimeAfter(Int_t runNumber, Double_t mytime)
-{   
-  double official_time;
-  TStoreEvent *store_event = new TStoreEvent();
-  TTree *t0 = Get_StoreEvent_Tree(runNumber, official_time);
-  t0->SetBranchAddress("StoredEvent", &store_event);
-  int event_id = -1;
-  for( Int_t i = 0; i < t0->GetEntries(); ++i )
-    {
-      store_event->Reset();
-      t0->GetEntry(i);
-      if( !store_event )
-	{
-	  std::cout<<"NULL TStore event: Probably more OfficialTimeStamps than events"<<std::endl;
-	  break;
-	}
-      if( official_time > mytime )
-	{
-	  event_id = i;
-	  store_event->Reset();
-	  break;
-	}
-      store_event->Reset();
-   }
-  t0->GetEntry(event_id);
-  double runtime=store_event->GetTimeOfEvent();  
-  delete store_event;
-  return runtime;
 }
 #endif
 

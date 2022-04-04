@@ -1,10 +1,15 @@
-#include "RootUtils.h"
-#include "TH1D.h"
-
-
 #ifndef _TH1DGetter_
 #define _TH1DGetter_
+
+#include "TH1D.h"
+
+#include "DoubleGetters.h"
+#include "TStringGetters.h"
+
+#include "RootUtilGlobals.h"
+
 #ifdef BUILD_AG
+#include "TAGSpillGetters.h"
 
 std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chan, std::vector<double> tmin, std::vector<double> tmax, double range = -1);
 std::vector<TH1D*> Get_Summed_Chrono(Int_t runNumber, std::vector<TChronoChannel> chan, std::vector<TAGSpill> spills);
@@ -22,6 +27,7 @@ TH1D* Get_Delta_Chrono(Int_t runNumber, const char* ChannelName, const char* des
 #ifdef BUILD_A2
 #include "TA2SpillGetters.h"
 #include "TSISEvent.h"
+#include "TSISChannels.h"
 //ALPHA2
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<double> tmin, std::vector<double> tmax, double range = -1);
 std::vector<TH1D*> Get_Summed_SIS(Int_t runNumber, std::vector<TSISChannel> SIS_Channel, std::vector<TA2Spill> spills);

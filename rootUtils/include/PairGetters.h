@@ -9,6 +9,7 @@
 #ifdef BUILD_A2
 #include "TSISEvent.h"
 #include "TSISChannelGetters.h"
+#include "TA2Spill.h"
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel,         std::vector<double> tmin, std::vector<double> tmax);
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, const char* ChannelName, std::vector<double> tmin, std::vector<double> tmax);
 std::vector<std::pair<double,int>> GetSISTimeAndCounts(Int_t runNumber, TSISChannel SIS_Channel,         const std::vector<TA2Spill>& spills);
@@ -23,6 +24,8 @@ std::vector<std::pair<double,double>> GetLVData(Int_t runNumber, const char* Ban
 #endif
 
 #ifdef BUILD_AG
+#include "TAGSpill.h"
+#include "TStoreLabVIEWEvent.h"
 std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, std::vector<double> tmin, std::vector<double> tmax);
 std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, const char* ChannelName, std::vector<double> tmin, std::vector<double> tmax);
 std::vector<std::pair<double,int>> GetRunTimeOfChronoCount(Int_t runNumber, TChronoChannel chan, const std::vector<TAGSpill>& spills);

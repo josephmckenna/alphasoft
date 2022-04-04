@@ -58,7 +58,7 @@ else
 fi
 
 if [ ! -f ${AGRELEASE}/run${RUNNO}sub00000.mid.gz  ]; then
-  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.gz ${AGRELEASE}/
+  eos cp /eos/experiment/alpha/midasdata/run${RUNNO}sub00000.mid.{gz,lz4} ${AGRELEASE}/
 else
   echo "run${RUNNO}sub00000.mid.gz found locally"
 fi
@@ -143,15 +143,15 @@ fi
 if [ ${TEST_TYPE} == "LEAK" ]; then
    #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
    set -x
-   valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+   valgrind --leak-check=full --error-limit=no ${SUPP} --log-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.{gz,lz4} ${MODULESFLAGS} &> ${ALPHATEST}
 elif [ ${TEST_TYPE} == "SPEED" ]; then
    #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
    set -x
-   valgrind --tool=callgrind --callgrind-out-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz &> ${ALPHATEST}
+   valgrind --tool=callgrind --callgrind-out-file="${VALGRINDTEST}" ${PROG} ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.{gz,lz4} &> ${ALPHATEST}
 elif [ ${TEST_TYPE} == "THREAD" ]; then
    #Suppress false positives: https://root.cern.ch/how/how-suppress-understood-valgrind-false-positives
    set -x
-   valgrind -v --tool=helgrind --error-limit=no  --log-file="${VALGRINDTEST}" ${PROG} --mt ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.gz ${MODULESFLAGS} &> ${ALPHATEST}
+   valgrind -v --tool=helgrind --error-limit=no  --log-file="${VALGRINDTEST}" ${PROG} --mt ${Event_Limit} ${AGRELEASE}/run${RUNNO}sub00000.mid.{gz,lz4} ${MODULESFLAGS} &> ${ALPHATEST}
 else
    echo "FATAL Test type not understood"
 fi

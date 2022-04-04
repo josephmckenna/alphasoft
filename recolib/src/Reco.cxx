@@ -17,6 +17,7 @@
 
 #include <TDirectory.h>
 
+#define USE_STD_QSORT 1
 
 Reco::Reco(std::string json, double B):fTrace(false),fMagneticField(B),
                                        fLocation("CERN"),
@@ -153,10 +154,10 @@ Reco::~Reco()
    delete fSTR;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->first.t, zed = sp->second.z;
@@ -187,19 +188,24 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
+
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> > *spacepoints, double z_fid )
+void Reco::AddSpacePoint( const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints, double z_fid )
 {
    int n = 0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->first.t, zed = sp->second.z;
@@ -229,11 +235,15 @@ void Reco::AddSpacePoint( std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> 
                       time,
                       r,correction,zed,
                       err,erp,sp->second.errz,
-                      sp->first.height);
+                      sp->first.height, sp->second.height);
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -250,12 +260,12 @@ void Reco::AddSpacePoint( const TObjArray* p )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
 
-void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
+void Reco::AddSpacePoint(const std::vector<ALPHAg::signal> spacepoints )
 {
    int n = 0;
    double zed = 0.,zerr=ALPHAg::_padpitch*ALPHAg::_sq12;
    int padidx=288,padsec=0;
-   for( auto sp=spacepoints->begin(); sp!=spacepoints->end(); ++sp )
+   for( auto sp=spacepoints.begin(); sp!=spacepoints.end(); ++sp )
       {
          // STR: (t,z)->(r,phi)
          const double time = sp->t;
@@ -286,11 +296,15 @@ void Reco::AddSpacePoint( std::vector<ALPHAg::signal> *spacepoints )
                       time,
                       r,correction,zed,
                       err,erp,zerr,
-                      sp->height);
+                      sp->height,sp->height);
          fPointsArray.push_back(point);
          ++n;
       }
+#if USE_STD_QSORT
+   std::qsort(fPointsArray.data(),fPointsArray.size(),sizeof(TSpacePoint*),SpacePointCompare);
+#else
    TSeqCollection::QSort((TObject**)fPointsArray.data(),0,fPointsArray.size());
+#endif
    if( fTrace )
       std::cout<<"Reco::AddSpacePoint # entries: "<<fPointsArray.size()<<std::endl;
 }
@@ -331,14 +345,12 @@ void Reco::AddMChits( const TClonesArray* points )
 }
 #endif
 
-int Reco::FindTracks(finderChoice finder)
+int Reco::FindTracks(std::vector<track_t>& track_array, finderChoice finder)
 {
    switch(finder)
       {
       case adaptive:
-         pattrec = new AdaptiveFinder( &fPointsArray );
-         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
-         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
+         pattrec = new AdaptiveFinder( &fPointsArray, fMaxIncreseAdapt, fLastPointRadCut);
          break;
       case neural:
          pattrec = new NeuralFinder( &fPointsArray );
@@ -360,9 +372,7 @@ int Reco::FindTracks(finderChoice finder)
          pattrec = new TracksFinder( &fPointsArray ); 
          break;
       default:
-         pattrec = new AdaptiveFinder( &fPointsArray );
-         ((AdaptiveFinder*)pattrec)->SetMaxIncreseAdapt(fMaxIncreseAdapt);
-         ((AdaptiveFinder*)pattrec)->SetLastPointRadCut(fLastPointRadCut);
+         pattrec = new AdaptiveFinder( &fPointsArray , fMaxIncreseAdapt,fLastPointRadCut);
          break;
       }
    
@@ -373,7 +383,8 @@ int Reco::FindTracks(finderChoice finder)
    pattrec->SetNpointsCut(fNspacepointsCut);
    pattrec->SetSeedRadCut(fSeedRadCut);
 
-   int stat = pattrec->RecTracks();
+   
+   int stat = pattrec->RecTracks(track_array);
    if( fTrace ) 
       std::cout<<"Reco::FindTracks status: "<<stat<<std::endl;
    int tk,npc,rc;
@@ -381,13 +392,11 @@ int Reco::FindTracks(finderChoice finder)
    track_not_advancing += tk;
    points_cut += npc;
    rad_cut += rc;
-
-   AddTracks( pattrec->GetTrackVector() );
-
+   AddTracks( &track_array );
    return stat;
 }
 
-void Reco::AddTracks( const std::vector<track_t>* track_vector )
+void Reco::AddTracks( const std::vector<track_t>* track_vector)
 {
    int n=0;
    for( auto it=track_vector->begin(); it!=track_vector->end(); ++it)
@@ -399,7 +408,7 @@ void Reco::AddTracks( const std::vector<track_t>* track_vector )
          for( auto ip=it->begin(); ip!=it->end(); ++ip)
             {
                TSpacePoint* ap = (TSpacePoint*) fPointsArray.at(*ip);
-               thetrack->AddPoint( ap );
+               thetrack->AddPoint( *ap );
                //std::cout<<*ip<<", ";
                //ap->Print("rphi");
                // if( diagnostics )

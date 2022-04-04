@@ -361,19 +361,19 @@ public:
    void MatchTDCtoADC(TBarEvent* barEvt)
    {
       // Get endhits from adc module
-      std::vector<EndHit*> endhits = barEvt->GetEndHits();
+      std::vector<TBarEndHit*> endhits = barEvt->GetEndHits();
       c_adc+=endhits.size();
 
       // Gets tdc hits added to BarEvent by last function
-      std::vector<SimpleTdcHit*> tdchits = barEvt->GetTdcHits();
+      std::vector<TBarSimpleTdcHit*> tdchits = barEvt->GetTdcHits();
 
-      for (EndHit* endhit: endhits)
+      for (TBarEndHit* endhit: endhits)
          {
             double tdc_time = 0;
             int bar = int(endhit->GetBar());
     
             // Finds tdc hit
-            for (const SimpleTdcHit* tdchit: tdchits)
+            for (const TBarSimpleTdcHit* tdchit: tdchits)
                {
                   // Checks channel number
                   if (bar!=tdchit->GetBar()) continue;
@@ -396,7 +396,7 @@ public:
             c_adctdc+=1;
          }
          if (fFlags->fPrint) {
-            for (EndHit* endhit: endhits)
+            for (TBarEndHit* endhit: endhits)
                printf("tdcmodule: TDC matched? %s\n",endhit->IsTDCMatched() ? "yes" : "no");
          }
    }
@@ -404,8 +404,8 @@ public:
 
    void CombineEnds(TBarEvent* barEvt)
    {
-      std::vector<EndHit*> endhits = barEvt->GetEndHits();
-      for (EndHit* tophit: endhits)
+      std::vector<TBarEndHit*> endhits = barEvt->GetEndHits();
+      for (TBarEndHit* tophit: endhits)
          {
             if (!(tophit->IsTDCMatched())) continue; // REQUIRE TDC MATCHING
 
@@ -446,8 +446,8 @@ public:
             }
 
             // Find bottom hit
-            EndHit* bothit = NULL;
-            for (EndHit* hit: endhits)
+            TBarEndHit* bothit = NULL;
+            for (TBarEndHit* hit: endhits)
                {
                   if (!(hit->GetBar()==bot_chan)) continue;
                   if (!(hit->IsTDCMatched())) continue;
@@ -472,8 +472,8 @@ public:
    }
 
    void CalculateZ(TBarEvent* barEvt) {
-      std::vector<BarHit*> barhits = barEvt->GetBars();
-      for (BarHit* hit: barhits)
+      std::vector<TBarHit*> barhits = barEvt->GetBars();
+      for (TBarHit* hit: barhits)
          {
             int bar = hit->GetBar();
             double diff_tdc = hit->GetTDCBot() - hit->GetTDCTop();

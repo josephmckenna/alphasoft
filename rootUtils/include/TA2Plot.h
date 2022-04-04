@@ -1,4 +1,4 @@
-#ifdef BUILD_A2
+#if BUILD_A2
 
 #ifndef _TALPHA2PLOT_
 #define _TALPHA2PLOT_
@@ -11,129 +11,21 @@
 #include "TA2Spill.h"
 #include "TA2SpillGetters.h"
 
-class TSISPlotEvents: public TObject
-{
-   public:
-      std::vector<int> fRunNumber;
-      std::vector<double> fTime;  //Plot time (based off official time)
-      std::vector<double> fOfficialTime;
-      std::vector<int> fCounts;
-      std::vector<TSISChannel> fSISChannel;
-   public:
-      //Std ctor and dtor
-      TSISPlotEvents()
-      {
-      }
-      ~TSISPlotEvents()
-      {
-      }
-      //Copy ctor - !!!
-      TSISPlotEvents(const TSISPlotEvents& sisPlotEvents) : TObject(sisPlotEvents)
-      {
-         //Deep copy vectors.
-         for(size_t i=0; i<sisPlotEvents.fTime.size(); i++)
-         {
-            fRunNumber.push_back( sisPlotEvents.fRunNumber[i]);
-            fTime.push_back( sisPlotEvents.fTime[i]);
-            fOfficialTime.push_back( sisPlotEvents.fOfficialTime[i]);
-            fCounts.push_back( sisPlotEvents.fCounts[i]);
-            fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
-         }
-      }
-      TSISPlotEvents operator+=(const TSISPlotEvents &rhs) 
-      {
-         //std::cout << "TSISPlotEvents += operator" << std::endl;
-         this->fRunNumber   .insert(this->fRunNumber.end(),      rhs.fRunNumber.begin(),      rhs.fRunNumber.end() );
-         this->fTime           .insert(this->fTime.end(),              rhs.fTime.begin(),              rhs.fTime.end() );
-         this->fOfficialTime.insert(this->fOfficialTime.end(),   rhs.fOfficialTime.begin(),   rhs.fOfficialTime.end() );
-         this->fCounts      .insert(this->fCounts.end(),         rhs.fCounts.begin(),         rhs.fCounts.end() );
-         this->fSISChannel .insert(this->fSISChannel.end(),    rhs.fSISChannel.begin(),    rhs.fSISChannel.end() );
-         return *this;
-      }
-      TSISPlotEvents& operator=(const TSISPlotEvents& sisPlotEvents)
-      {
-         for(size_t i = 0; i<sisPlotEvents.fTime.size(); i++)
-         {
-            this->fRunNumber.push_back( sisPlotEvents.fRunNumber[i]);
-            this->fTime.push_back( sisPlotEvents.fTime[i]);
-            this->fOfficialTime.push_back( sisPlotEvents.fOfficialTime[i]);
-            this->fCounts.push_back( sisPlotEvents.fCounts[i]);
-            this->fSISChannel.push_back( sisPlotEvents.fSISChannel[i]);
-         }
-         return *this;
-      }
-      friend TSISPlotEvents operator+(const TSISPlotEvents& lhs, const TSISPlotEvents& rhs)
-      {
-         //std::cout << "TSISPlotEvents addition operator" << std::endl;
-         TSISPlotEvents outputplot(lhs); //Create new from copy
-         //Vectors- need concacting
-         outputplot.fRunNumber.insert(outputplot.fRunNumber.end(), rhs.fRunNumber.begin(), rhs.fRunNumber.end() );
-         outputplot.fTime.insert(outputplot.fTime.end(), rhs.fTime.begin(), rhs.fTime.end() );
-         outputplot.fOfficialTime.insert(outputplot.fOfficialTime.end(), rhs.fOfficialTime.begin(), rhs.fOfficialTime.end() );
-         outputplot.fCounts.insert(outputplot.fCounts.end(), rhs.fCounts.begin(), rhs.fCounts.end() );
-         outputplot.fSISChannel.insert(outputplot.fSISChannel.end(), rhs.fSISChannel.begin(), rhs.fSISChannel.end() );
-         return outputplot;
-      }
-      void AddEvent(int runNumber, double time, double officialTime, int counts, TSISChannel channel)
-      {
-         fRunNumber.push_back(runNumber);
-         fTime.push_back(time);  
-         fOfficialTime.push_back(officialTime);
-         fCounts.push_back(counts);
-         fSISChannel.push_back(channel);
-      }
-      int GetEventRunNumber(int event) const { return fRunNumber.at(event); }
-      
-      std::string CSVTitleLine() const
-      {
-         return std::string("Run Number,") + 
-                "Plot Time (Time axis of TAPlot)," +
-                "OfficialTime (run time)," +
-                "SIS Channel, SIS Module," +
-                "Counts\n";
-      }
+#include "TPaveText.h"
 
-      std::string CSVLine(size_t i) const
-      {
-         //This is a little fugly
-         std::string line;
-         line =std::string("") + fRunNumber.at(i) + "," +
-                fTime.at(i) + "," +
-                fOfficialTime.at(i) + "," +
-                fSISChannel.at(i).fChannel + "," + fSISChannel.at(i).fModule + "," +
-                fCounts.at(i) + "\n";
-         return line;
-      }
-
-      size_t size() const
-      {
-         return fRunNumber.size();
-      }
-      
-      int CountTotalCountsInChannel(int ch) const
-      {
-         int events = 0;
-         for(size_t i = 0; i<fTime.size(); i++)
-         {
-            if (fSISChannel[i] == ch)
-               events += fCounts[i];
-         }
-         return events;
-      }
-      ClassDef(TSISPlotEvents,1);
-};
+#include "TA2PlotSISPlotEvents.h"
 
 class TA2Plot: public TAPlot
 {
    protected:
       std::vector<TSISChannel> fSISChannels;
 
-      //Detector SIS channels
+      //Detector SIS channels mapped to run number
       std::map<int, TSISChannel> fTrig;
       std::map<int, TSISChannel> fTrigNobusy;
       std::map<int, TSISChannel> fAtomOr;
 
-      //Dump marker SIS channels:
+      //Dump marker SIS channels mapped to run number:
       std::map<int, TSISChannel> fCATStart;
       std::map<int, TSISChannel> fCATStop;
       std::map<int, TSISChannel> fRCTStart;
@@ -141,25 +33,25 @@ class TA2Plot: public TAPlot
       std::map<int, TSISChannel> fATMStart;
       std::map<int, TSISChannel> fATMStop;
    
-      //Beam injection/ ejection markers:
+      //Beam injection/ ejection markers mapped to run number:
       std::map<int, TSISChannel> fBeamInjection;
       std::map<int, TSISChannel> fBeamEjection;
-      
-      double fZMinCut;
-      double fZMaxCut;
+
 
    public:
-      TSISPlotEvents SISEvents;  
+      TA2PlotSISPlotEvents SISEvents;  
       
       //Default members, operators, and prints.
       TA2Plot(bool zeroTime = true);
       TA2Plot(double zMin, double zMax,bool zeroTime = true);
-      TA2Plot(const TAPlot& object);
       TA2Plot(const TA2Plot& object);
+
       virtual ~TA2Plot();
-      friend TA2Plot operator+(const TA2Plot& lhs, const TA2Plot& rhs);
-      TA2Plot& operator+=(const TA2Plot& rhs);
       TA2Plot& operator=(const TA2Plot& rhs);
+      TA2Plot& operator+=(const TA2Plot& rhs);
+      friend TA2Plot& operator+(const TA2Plot& lhs, const TA2Plot& rhs);
+      
+      
    
       //Setters and getters
       void SetSISChannels(int runNumber);
@@ -174,23 +66,29 @@ class TA2Plot: public TAPlot
       }
       
       //Adding events and dumps
-      void AddSVDEvent(TSVD_QOD* SVDEvent);
-      void AddSISEvent(TSISEvent* SISEvent);
-      void AddDumpGates(int runNumber, std::vector<std::string> description, std::vector<int> dumpIndex );
-      void AddDumpGates(int runNumber, std::vector<TA2Spill> spills );
+      void AddSVDEvent(const TSVD_QOD& SVDEvent);
+      void AddSISEvent(const TSISEvent& SISEvent);
+   private:
+      void AddEvent(const TSISEvent& event, const TSISChannel& channel, const double timeOffset=0);
+      void AddEvent(const TSVD_QOD& event, const double timeOffset=0);
+   public:
+      void AddDumpGates(const int runNumber, const std::vector<std::string> description, const std::vector<int> dumpIndex );
+      void AddDumpGates(const int runNumber, const std::vector<TA2Spill> spills );
       //If spills are from one run, it is faster to call the function above
-      void AddDumpGates(std::vector<TA2Spill> spills );
+      void AddDumpGates(const std::vector<TA2Spill> spills );
 
-      //Load, fill, draw, or save the object      
+      //Load, fill, draw, or save the object
       void LoadRun(int runNumber, double firstTime, double lastTime);
       void SetUpHistograms();
       void FillHisto(bool applyCuts=true, int mode=0);
       TCanvas* DrawCanvas(const char* name="cVTX",bool applyCuts=true, int mode=0);
+      TCanvas* DrawVertexCanvas(const char* name="cVTX",bool applyCuts=true, int mode=0)
+      {
+         return DrawCanvas(name, applyCuts, mode);
+      }
       void WriteEventList(std::string fileName, bool append = true);
       void ExportCSV(std::string filename, bool PassedCutOnly = true);
-   private:
-      void AddEvent(TSISEvent* event, TSISChannel channel,double timeOffset=0);
-      void AddEvent(TSVD_QOD* event,double timeOffset=0);
+
    
    ClassDef(TA2Plot, 1)
 };

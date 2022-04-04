@@ -1,105 +1,6 @@
 #include "TAGSpill.h"
 
-#ifdef BUILD_AG
-ClassImp(TAGSpillScalerData)
-TAGSpillScalerData::TAGSpillScalerData():
-   TSpillScalerData(CHRONO_N_BOARDS*CHRONO_N_CHANNELS)
-{
-
-}
-
-TAGSpillScalerData::~TAGSpillScalerData()
-{
-
-}
-
-TAGSpillScalerData::TAGSpillScalerData(int n_scaler_channels):
-   TSpillScalerData(n_scaler_channels)
-{
-
-}
-
-TAGSpillScalerData::TAGSpillScalerData(const TAGSpillScalerData& a): TSpillScalerData(a)
-{
-
-}
-
-TAGSpillScalerData::TAGSpillScalerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
-   TAGSpillScalerData()
-{
-   for (int i=0; i<CHRONO_N_BOARDS; i++)
-   {
-      const TChronoBoardCounter& e = d->IntegratedSISCounts[i];
-      for (size_t j = 0; j < e.fCounts.size(); j++)
-         DetectorCounts.at(i*CHRONO_N_CHANNELS + j) = e.fCounts[j];
-      ScalerFilled[i] = true;
-   }
-
-   if (d->StartDumpMarker)
-      StartTime = d->StartDumpMarker->fRunTime;
-   if (d->StopDumpMarker)
-      StopTime = d->StopDumpMarker->fRunTime;
-
-   /*FirstVertexEvent  =d->IntegratedSVDCounts.FirstVF48Event;
-   LastVertexEvent   =d->IntegratedSVDCounts.LastVF48Event;
-   VertexEvents      =d->IntegratedSVDCounts.VF48Events;
-   Verticies         =d->IntegratedSVDCounts.Verticies;
-   PassCuts          =d->IntegratedSVDCounts.PassCuts;
-   PassMVA           =d->IntegratedSVDCounts.PassMVA;*/
-   VertexFilled      =true;
-}
-
-ClassImp(TAGSpillSequencerData)
-
-TAGSpillSequencerData::TAGSpillSequencerData():
-   TSpillSequencerData()
-{
-}
-TAGSpillSequencerData::~TAGSpillSequencerData()
-{
-}
-TAGSpillSequencerData::TAGSpillSequencerData(DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d)
-{
-   fSequenceNum= d->StartDumpMarker->fSequencerID;
-   fDumpID     = d->dumpID;
-   if ( fSequenceNum < 0 )
-      fSeqName = "Sequencer Unknown";
-   else
-   fSeqName    = SeqNames.at(fSequenceNum);
-   fStartState = d->StartDumpMarker->fonState;
-   fStopState  = d->StopDumpMarker->fonState;
-}
-
-void TAGSpillScalerData::Print()
-{
-   std::cout<<"StartTime: "<<StartTime << " StopTime: "<<StopTime <<std::endl;
-   std::cout<<"ChronoFilled: ";
-   for (size_t i=0; i<ScalerFilled.size(); i++)
-   {
-      std::cout<<ScalerFilled.at(i);
-   }
-   std::cout  << " BVFilled: "<<VertexFilled <<std::endl;
-   int sum = 0;
-   for (size_t i = 0; i <  DetectorCounts.size(); i++)
-      sum+=DetectorCounts[i];
-   std::cout<<"ChronoEntries:"<< sum <<std::endl;
-   for (size_t i = 0; i < DetectorCounts.size(); i++)
-   {
-      std::cout<<DetectorCounts[i]<<"\t";
-   }
-}
-
-
-TAGSpillSequencerData::TAGSpillSequencerData(const TAGSpillSequencerData& a):
-   TSpillSequencerData(a)
-{
-   fSequenceNum  =a.fSequenceNum;
-   fDumpID       =a.fDumpID;
-   fSeqName      =a.fSeqName;
-   fStartState   =a.fStartState;
-   fStopState    =a.fStopState;
-}
-
+#if BUILD_AG
 ClassImp(TAGSpill)
 
 TAGSpill::TAGSpill()
@@ -124,11 +25,11 @@ TAGSpill::TAGSpill(int runno, uint32_t unixtime, const char* format, ...):
    va_end(args);
 }
 
-TAGSpill::TAGSpill(int runno, DumpPair<TStoreEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
-   TSpill(runno, d->StartDumpMarker->fMidasTime, d->StartDumpMarker->fDescription.c_str())
+TAGSpill::TAGSpill(int runno, TDumpMarkerPair<TAGDetectorEvent,TChronoBoardCounter,CHRONO_N_BOARDS>* d):
+   TSpill(runno, d->fStartDumpMarker->fMidasTime, d->fStartDumpMarker->fDescription.c_str())
 {
    
-   if (d->StartDumpMarker && d->StopDumpMarker) IsDumpType=true;
+   if (d->fStartDumpMarker && d->fStopDumpMarker) IsDumpType=true;
    ScalerData = new TAGSpillScalerData(d);
    SeqData = new TAGSpillSequencerData(d);
    //Print();
@@ -261,9 +162,9 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
    {
       char buf[200];
       sprintf(buf,"[%8.3lf-%8.3lf]=%8.3lfs |",
-                 ScalerData->StartTime,
-                 ScalerData->StopTime,
-                 ScalerData->StopTime-ScalerData->StartTime
+                 ScalerData->fStartTime,
+                 ScalerData->fStopTime,
+                 ScalerData->fStopTime-ScalerData->fStartTime
                  ); // timestamps 
       log += buf;
    }
@@ -301,7 +202,7 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
          int counts=-1;
          //If valid channel number:
          if (c.GetChannel() >= 0)
-            counts = ScalerData->DetectorCounts.at(c.GetBoardNumber() * CHRONO_N_CHANNELS + c.GetChannel());
+            counts = ScalerData->fDetectorCounts.at(c.GetBoardNumber() * CHRONO_N_CHANNELS + c.GetChannel());
          sprintf(buf,"%9d",counts);
          log += buf;
          if (units.size())
@@ -310,9 +211,9 @@ TString TAGSpill::Content(std::vector<TChronoChannel> chrono_channels)
             log += " ";
       }
       //ALPHA G is not fast enought for vertex data yet
-      //sprintf(buf,"%9d ",ScalerData->PassCuts);
+      //sprintf(buf,"%9d ",ScalerData->fPassCuts);
       //log += buf;
-      //sprintf(buf,"%9d ",ScalerData->PassMVA);
+      //sprintf(buf,"%9d ",ScalerData->fPassMVA);
       //log += buf;
       log += "";
    }
