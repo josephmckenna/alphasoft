@@ -117,6 +117,10 @@ private:
    TH2D* hMatchingDPhibyBar;
    TH1D* hMatchingD;
    TH2D* hMatchingDbyBar;
+   TH1D* hMatchedZ;
+   TH1D* hMatchedZTPC;
+   std::vector<TH2D*> hAmpVsZed;
+   std::vector<TH2D*> hLnAmpVsZed;
 
 
 
@@ -294,7 +298,19 @@ public:
            hMatchingDPhibyBar = new TH2D("hMatchingDPhibyBar","Phi distance between BV and TPC hit;Bar number;Delta Phi (rad)",64,-0.5,63.5,200,-2,2);
            hMatchingD = new TH1D("hMatchingD","Geometric distance between BV and TPC hit;Geometric distance (m);Counts",200,0,2);
            hMatchingDbyBar = new TH2D("hMatchingDbyBar","Geometric distance between BV and TPC hit;Bar number;Geometric distance (m)",64,-0.5,63.5,200,0,2);
-            gDirectory->cd("..");
+           hMatchedZ = new TH1D("hMatchedZ","Zed of matched hits from BV;Zed (m)",200,-3,3);
+           hMatchedZTPC = new TH1D("hMatchedZTPC","Zed of matched hits from TPC;Zed (m)",200,-3,3);
+           gDirectory->mkdir("amp_vs_zed")->cd();
+           for (int i=0;i<64;i++) {
+              hAmpVsZed.push_back(new TH2D(Form("hAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Amplitude from fit (volts)",i),200,-3,3,200,0,4));
+              hLnAmpVsZed.push_back(new TH2D(Form("hLnAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Natural logarithm of amplitude from fit",i),200,-3,3,200,-3,1.5));
+           }
+           for (int i=64;i<128;i++) {
+              hAmpVsZed.push_back(new TH2D(Form("hAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;-1 times Zed from TPC (m);Amplitude from fit (volts)",i),200,-3,3,200,0,4));
+              hLnAmpVsZed.push_back(new TH2D(Form("hLnAmpVsZed%d",i),Form("Amplitude vs TPC zed, channel %d;-1 times Zed from TPC (m);Natural logarithm of amplitude from fit",i),200,-3,3,200,-3,1.5));
+           }
+           gDirectory->cd("..");
+           gDirectory->cd("..");
          }
 
       }
@@ -624,6 +640,13 @@ public:
          hMatchingDPhibyBar->Fill(bar,dphi);
          hMatchingD->Fill(diff/1000);
          hMatchingDbyBar->Fill(bar,diff/1000);
+         hMatchedZ->Fill(tpc_point.z()/1000);
+         hMatchedZTPC->Fill(z);
+         hAmpVsZed[bar]->Fill(tpc_point.z()/1000,barhit->GetAmpBot());
+         hAmpVsZed[bar+64]->Fill(-1*tpc_point.z()/1000,barhit->GetAmpTop());
+         hLnAmpVsZed[bar]->Fill(tpc_point.z()/1000,TMath::Log(barhit->GetAmpBot()));
+         hLnAmpVsZed[bar+64]->Fill(-1*tpc_point.z()/1000,TMath::Log(barhit->GetAmpTop()));
+
       }
    }
 

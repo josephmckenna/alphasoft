@@ -1,7 +1,7 @@
 void PlotSipmGain(int run_num)
 {
-   TString filename=getenv("AGRELEASE");
-   filename+="/root_output_files/output0";
+   TString filename="/afs/cern.ch/work/g/gwsmith/private/root_output_files/";
+   filename+="output0";
    filename+=std::to_string(run_num);
    filename+=".root";
    TString outputname = "SipmGain_run" + std::to_string(run_num) + ".pdf";
@@ -43,6 +43,12 @@ void PlotSipmGain(int run_num)
    g0->Fit("pol1");
    TF1 *f1 = (TF1*) (g0->GetListOfFunctions()->FindObject("pol1"));
    
+   std::vector<double> gx = {};
+   std::vector<double> ugx = {};
+   std::vector<double> p0 = {};
+   std::vector<double> up0 = {};
+   std::vector<double> p1 = {};
+   std::vector<double> up1 = {};
    for (int i=0;i<128;i++) {
       TCanvas* c = new TCanvas(cname.Data(),cname.Data(), 1200, 800);
       TH2D* h = (TH2D*) gDirectory->Get(Form("hLnAmpVsZed%d",i));
@@ -63,6 +69,12 @@ void PlotSipmGain(int run_num)
       g->SetTitle(Form("Amplitude vs TPC zed, channel %d;Zed from TPC (m);Ln amplitude from fit",i));
       g->Fit("pol1");
       TF1 *f2 = (TF1*) (g->GetListOfFunctions()->FindObject("pol1"));
+      gx.push_back(i);
+      ugx.push_back(0);
+      p0.push_back(f2->GetParameter(0));
+      up0.push_back(f2->GetParError(0));
+      p1.push_back(f2->GetParameter(1));
+      up1.push_back(f2->GetParError(1));
       h->Draw();
       if (f2) f2->Draw("same");
       f1->SetLineColor(4);
@@ -71,6 +83,14 @@ void PlotSipmGain(int run_num)
       delete c;
       delete g;
    }
+   TGraphErrors* gp0 = new TGraphErrors(128,gx.data(),p0.data(),ugx.data(),up0.data());
+   gp0->SetTitle("Fit y intercept;Channel Number;Fit y intercept");
+   gp0->Draw();
+   c1->Print(outputname.Data(),"pdf");
+   TGraphErrors* gp1 = new TGraphErrors(128,gx.data(),p1.data(),ugx.data(),up1.data());
+   gp1->SetTitle("Fit y intercept;Channel Number;Fit y intercept");
+   gp1->Draw();
+   c1->Print(outputname.Data(),"pdf");
    c1->Print((outputname+"]").Data());
    delete c1;
    delete f;

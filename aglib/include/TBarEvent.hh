@@ -68,10 +68,10 @@ public:
     b->SetBar(fBarID);
     fBarHit.push_back(b);
   }
-  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime)
+  void AddTdcHit(int fBarID, double fTime, int fFineTimeCount, double fFineTime, double fCoarseTime)
   {
     TBarSimpleTdcHit* hit = new TBarSimpleTdcHit;
-    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime);
+    hit->SetHit(fBarID, fTime, fFineTimeCount, fFineTime, fCoarseTime);
     AddTdcHit(hit);
   }
   void AddADCHit(int fBarID, double fAmp, double fAmpRaw, double fADCTime)

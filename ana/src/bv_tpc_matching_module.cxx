@@ -217,6 +217,10 @@ public:
    void MatchPoints(TBarEvent* barEvt, std::vector<TVector3> tpc_points)
    {
       for (TVector3 tpc_point: tpc_points) {
+         if (std::isnan(tpc_point.x())) {
+            if (fFlags->fPrint) printf("BV/TPC Matching module: skipping NaN TPC point\n");
+            continue;
+         }
          c_hits++;
          double min_dist = 999999999.;
          int best_barhit;
@@ -237,6 +241,7 @@ public:
             // Match!
             bars.at(best_barhit)->SetTPCHit(tpc_point);
             c_matched++;
+
          }
       }
       if (fFlags->fPrint) {
@@ -263,8 +268,7 @@ public:
    {
       double xbv,ybv;
       hit->GetXY(xbv,ybv);
-      double dt = (hit->GetTDCBot() - hit->GetTDCTop())*1e9;
-      double zbv = factor*dt;
+      double zbv = hit->GetTDCZed();
       TVector3 bv_point = TVector3(xbv*1000,ybv*1000,zbv*1000); // to mm
       return bv_point;
    }
