@@ -78,7 +78,7 @@ void read_MC_BV::AnalyzeMCinfo()
 ///< ############################################################
 ///< HISTOS AND NUMBERS FOR THE BV BARS
 ///< ############################################################
-void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = 999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = -999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 {
 //_________________________________________________________________________________________
 
@@ -149,13 +149,15 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
       Int_t barFlag[NBARS]={0}; //quante volte ho un hit sulla barra
       Int_t barFlag_in[NBARS]={0}; //quante volte ho un incoming hit sulla barra
       Int_t NbarsHit =0;
-
-      Float_t Energy[NBARS]={0};
       Float_t TotEnergy=0;
-      Float_t time[NBARS]={0};
-      Float_t z[NBARS]={0};
-      Float_t phi[NBARS]={0};
-      for (Int_t i=0;i<ndigi;i++) { //loop on digi //NO CUTS HERE!!!
+
+      std::vector<Int_t>   BarNumber;
+      std::vector<Float_t> Energy;
+      std::vector<Float_t> time;
+      std::vector<Float_t> z;
+      std::vector<Float_t> phi;
+      for (Int_t i=0;i<ndigi;i++)  //loop on digi //NO CUTS HERE!!!
+      { 
          TBSCHit *Scdigi = (TBSCHit*) ScintBarDigiMCTruth->At(i);
          Int_t barN = Scdigi->GetBar();
 
@@ -168,16 +170,12 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
          else if(fabs(Scdigi->GetTrackPDG())==13) {nMu++;} 
          else if(fabs(Scdigi->GetTrackPDG())==211) {nPi++;} 
          else {nOther++;}
-         
+
          // if(fabs(Scdigi->GetTrackPDG())==11) continue; ///< Show only electrons
          // if(fabs(Scdigi->GetTrackPDG())==13) continue; ///< Show only muons
          // if(fabs(Scdigi->GetTrackPDG())==211) continue; ///< Show only pions
          //std::cout<<barN<<std::endl;
          hEnergyperDigivsPDGcode->Fill(Scdigi->GetEnergy(),Scdigi->GetTrackPDG());//****************
-         if(Scdigi->GetEnergy()<EnergyCut) continue; //Cut on energy released in the bar
-
-         Energy[barN]+=Scdigi->GetEnergy();
-
          TotEnergy +=Scdigi->GetEnergy();
 
          double p_in[3];
@@ -189,14 +187,42 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
          if(!isnan(p_out[2])) hzout->Fill(p_out[2]);//****************
          if(!isnan(p_in[2]) && !isnan(p_out[2])) hzinMinuszout->Fill(p_in[2]-p_out[2]);//****************
          
-         if( !isnan(Scdigi->GetTimeIn()) && !isnan(p_in[2]))
+         if(barFlag[barN]) //if barN was already hit
          {
-            time[barN]+=Scdigi->GetTimeIn(); //poi divido per nro di digi in quella barra
-            z[barN]+=p_in[2];
-            phi[barN]=barN*TMath::Pi()/32;
-
-            barFlag_in[barN]+=1; //aggiungo un 1 all'elemento barN-esimo
-         }  
+            for (Int_t j = BarNumber.size()-1; j >=0; j--)
+            {
+               if (BarNumber.at(j)==barN)
+               {
+                  Energy.at(j)+=Scdigi->GetEnergy();
+                  if( !isnan(Scdigi->GetTimeIn()) && !isnan(p_in[2]))
+                  {
+                     time.at(j)+=Scdigi->GetTimeIn(); //poi divido per nro di digi in quella barra
+                     z.at(j)+=p_in[2];
+                     barFlag_in[barN]+=1;
+                  }
+                  break;
+               }
+               
+            }
+            
+         }
+         else
+         {
+            BarNumber.push_back(barN);
+            phi.push_back(barN*TMath::Pi()/32);
+            Energy.push_back(Scdigi->GetEnergy());
+            if( !isnan(Scdigi->GetTimeIn()) && !isnan(p_in[2]))
+               {
+                  time.push_back(Scdigi->GetTimeIn());
+                  z.push_back(p_in[2]);
+                  barFlag_in[barN]+=1;
+               }
+            else
+               {
+                  time.push_back(0.0);
+                  z.push_back(0.0);
+               }
+         }
          
          barFlag[barN]+=1;
          if(barFlag[barN]==1) //se la barraN è appena stata colpita
@@ -205,6 +231,7 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
             hBarNumber->Fill(barN);//****************
          }
       }//end loop on digi
+      
       if(ndigi!=0) hDigi_Bars->Fill(ndigi-NbarsHit);
       hEnergyperEvent->Fill(TotEnergy);//****************
       
@@ -213,45 +240,52 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
       Float_t deltaphi=nan("");
       Float_t distance=nan("");
       
-      for(Int_t i=0;i<NBARS;i++) //loop on bars
+      // cout<<jentry<<")"<<endl;
+      // cout<<BarNumber.size()<<endl;
+      // cout<<Energy.size()<<endl;
+      // cout<<time.size()<<endl;
+      // cout<<z.size()<<endl;
+      // cout<<phi.size()<<endl;
+      // cout<<endl;
+
+      for(Int_t i=0;i<BarNumber.size();i++) //loop on hits
       {
-         if(barFlag[i]==0) continue; //if bar not hit
-         if(Energy[i]<EnergyCut) //riduce il numero di barre colpine nell'evento
+         if(Energy.at(i)<EnergyCut) //riduce il numero di barre colpine nell'evento
          {
-            barFlag[i]=0;
-            barFlag_in[i]=0;
+            barFlag[BarNumber.at(i)]=0;
+            barFlag_in[BarNumber.at(i)]=0;
             NbarsHit-=1;
          }
       }
-      if(NbarsHit == 0 || NbarsHit>MultCut) continue; //Cut on Multiplicity
 
-      for(Int_t i=0;i<NBARS;i++) //loop on bars
+      if(NbarsHit == 0 || (MultCut>0 && NbarsHit!=MultCut)) continue; //Cut on Multiplicity
+
+      for(Int_t i=0;i<BarNumber.size();i++) //loop on hits
       {
          //cout<<barFlag[i];
-         if(barFlag[i]==0) continue; //if bar not hit
-         if(Energy[i]<EnergyCut) continue; //Cut on energy released in the bar
-         hEnergyperBar->Fill(Energy[i]);//****************
+         if(barFlag[BarNumber.at(i)]==0) continue; //if bar not hit
+         hEnergyperBar->Fill(Energy.at(i));//****************
 
-         if(barFlag_in[i]==0) continue; //if bar not hit
-         time[i]/=barFlag_in[i]; //media dei tempi se ho multiple hit in one bar
-         if(smearingTime>0) time[i] += gRandom->Gaus(0,smearingTime/TMath::Sqrt(2)); //TOF = T1-T2 = (t1top+t1bot)/2 - (t2top+t2bot)/2, so sigmaT1 = sigmat/sqrt(2)
-         z[i]/=barFlag_in[i];
+         if(barFlag_in[BarNumber.at(i)]==0) continue; //if bar not hit
+         time.at(i)/=barFlag_in[BarNumber.at(i)]; //media dei tempi se ho multiple hit in one bar
+         if(smearingTime>0) time.at(i) += gRandom->Gaus(0,smearingTime/TMath::Sqrt(2)); //TOF = T1-T2 = (t1top+t1bot)/2 - (t2top+t2bot)/2, so sigmaT1 = sigmat/sqrt(2)
+         z.at(i)/=barFlag_in[BarNumber.at(i)];
          if(smearingTime>0 || v_reluncertainty>0)
          {
             Float_t sigmat = 0.0;
             Float_t sigmav = 0.0;
             if(smearingTime>0) sigmat = smearingTime;
             if(v_reluncertainty>0) sigmav = v_reluncertainty;
-            Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2 + sigmav*sigmav*z[i]*z[i]);
-            z[i] += gRandom->Gaus(0,sigmaz);
+            Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2 + sigmav*sigmav*z.at(i)*z.at(i));
+            z.at(i) += gRandom->Gaus(0,sigmaz);
          }
 
          for (Int_t j = 0; j < i; j++)
          {
-            if(barFlag_in[j]==0) continue; //if bar not hit
-            TOF =  TMath::Abs(time[j]-time[i]);
-            deltaz = TMath::Abs(z[j]-z[i]);
-            deltaphi = TMath::Abs(phi[j]-phi[i]);
+            if(barFlag_in[BarNumber.at(j)]==0) continue; //if bar not hit
+            TOF =  TMath::Abs(time.at(j)-time.at(i));
+            deltaz = TMath::Abs(z.at(j)-z.at(i));
+            deltaphi = TMath::Abs(phi.at(j)-phi.at(i));
             if(deltaphi>TMath::Pi()) deltaphi = 2*TMath::Pi() - deltaphi;
 
             if(deltaphi<DeltaPhiCut)  continue; //cut on deltaphi
@@ -268,6 +302,11 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
       //cout<<endl;
       hNbarsHitperEvent->Fill(NbarsHit);//****************
 
+      BarNumber.clear();
+      Energy.clear();
+      time.clear();
+      z.clear();
+      phi.clear();
    }//end loop on events
 //________________________________________________________________________
 
