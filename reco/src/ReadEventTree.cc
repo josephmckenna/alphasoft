@@ -908,7 +908,7 @@ void ReadEventTree::ProcessVertex(TVector3* v)
 void ReadEventTree::FillCosmicsHisto()
 {
    int cf_status = fCosmicFinder->Process();
-   std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
+   //   std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
    // fCosmicFinder->Status();
    if( fCosmicFinder->GetStatus() ) 
       {
