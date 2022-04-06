@@ -49,7 +49,12 @@
 #include "ElectronDrift.hh"
 #include "TPCBase.hh"
 
-#include "agg4globals.hh"
+extern double gPadTime;
+extern double gAnodeTime;
+extern double gMagneticField;
+extern double gQuencherFraction;
+extern bool kMat;
+extern bool kProto;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

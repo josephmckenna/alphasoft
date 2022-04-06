@@ -23,13 +23,6 @@ find_path(Garfield_INCLUDE_DIRS Sensor.hh
         HINTS $ENV{GARFIELD_INSTALL}/include
         PATH_SUFFIXES Garfield)
 
-include_directories(${Garfield_INCLUDE_DIRS} ${Garfield_INCLUDE_DIRS}/.. ${GARFIELD_INCLUDE_DIRS})
-
-find_library(Garfield_LIBRARIES libGarfield.so
-        HINTS $ENV{GARFIELD_INSTALL}/lib $ENV{GARFIELD_INSTALL}/lib64)
-
-link_libraries(${Garfield_LIBRARIES} ${GARFIELD_LIBRARIES})
-
 # get_cmake_property(_variableNames VARIABLES)
 # list (SORT _variableNames)
 # foreach (_variableName ${_variableNames})
@@ -59,13 +52,13 @@ set(NEWBINS DriftGas.cc PlotMedium.cc polar.cc PolarDrift.cc PolarSignal.cc Pola
 foreach(target ${OLDBINS})
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target} ${sources})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES})
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield::Garfield)
   install(TARGETS ${bin} DESTINATION simulation)
 endforeach(target ${OLDBINS})
 
 foreach(target ${NEWBINS})
   string( REPLACE ".cc" ".exe" bin ${target} )
   add_executable(${bin} ${PROJECT_SOURCE_DIR}/src/${target})
-  target_link_libraries(${bin} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES})
+  target_link_libraries(${bin} ${ROOT_LIBRARIES} Garfield::Garfield)
   install(TARGETS ${bin} DESTINATION simulation)
 endforeach(target ${NEWBINS})
