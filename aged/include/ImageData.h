@@ -111,7 +111,8 @@ struct BarInfo {
 };
 
 struct HitInfo {
-    float       height;             // pulse height
+    float       wireheight;             // pulse height
+    float       padheight;             // pulse height
     float       time;               // pulse time
     float       error[3];           // error in XYZ position
     short       hit_val;            // colour index for drawing this hit

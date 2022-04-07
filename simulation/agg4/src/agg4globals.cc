@@ -14,15 +14,15 @@ double gPadZed=4.0;//mm
 double gPadRphi=4.0;//mm
 double gPadTime;
 
-double gAnodeTime;
+double gAnodeTime=16.;
 
 int gNbars = 64;
 double gBarRadius;
 double gBarLength = 2600.0; // mm
 
-bool kMat;
-bool kProto;
+bool kMat=true;
+bool kProto=false;
 
-int gVerb;
+int gVerb=0;
 
 #endif

@@ -2,13 +2,13 @@
   cout<<"ROOT "<<gROOT->GetVersion()<<" on "<<gSystem->HostName()<<endl;
   if (!getenv("AGRELEASE"))
   {
-     std::cout <<"$AGRELEASE not set... Please source agconfig.sh"<<std::endl;
+     std::cout <<"AGRELEASE not set... Please source agconfig.sh"<<std::endl;
      exit(1);
   }
   TString basedir(getenv("AGRELEASE"));
   if (basedir.Sizeof()<3)
   {
-     std::cout <<"$AGRELEASE not set... Please source agconfig.sh"<<std::endl;
+     std::cout <<"AGRELEASE not set... Please source agconfig.sh"<<std::endl;
      exit(1);
   }
 
@@ -16,7 +16,8 @@
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
-  #include "BuildConfig.h"
+  //gInterpreter->ProcessLine("#include \"BuildConfig.h\"");
+  #include "bin/include/BuildConfig.h"
   
   
   gSystem->Load("libMinuit2");
@@ -56,6 +57,12 @@
 
 #ifdef BUILD_AG_SIM
   libname="libG4out";
+  libname=gSystem->FindDynamicLibrary(libname);
+  cout<<"Loading: "<<libname;
+  s=gSystem->Load( libname );
+  if(s==0) cout<<"... ok"<<endl;
+
+  libname="libG4dict";
   libname=gSystem->FindDynamicLibrary(libname);
   cout<<"Loading: "<<libname;
   s=gSystem->Load( libname );

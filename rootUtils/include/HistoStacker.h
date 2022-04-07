@@ -27,6 +27,8 @@ class HistoStacker
 
       void AddHisto(TH1D* h)
       {
+         h->SetStats(0);
+	 std::cout<<"Adding Histo: "<<h->GetName()<<std::endl;
          fHistos.push_back(h);
          std::cout<< fHistos.size() << " histograms held"<<std::endl;
       }
@@ -82,8 +84,9 @@ class HistoStacker
             if (h != tallest_plot)
                h->Draw("SAME");
          }
-         fLegend->Draw();
-         c->Draw();
+	 c->Modified();
+	 c->Update();
+	 c->BuildLegend(0.78,0.72,0.99,0.9);
          return c;
       }
 };

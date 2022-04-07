@@ -49,7 +49,26 @@ Double_t GetAGTotalRunTime(Int_t runNumber)
    return tmax;
 }
 #endif
-
+#ifdef BUILD_AG
+Double_t GetRunTimeOfEvent(Int_t runNumber, TSeq_Event* seqEvent, Int_t dumpIndex)
+{
+   if( seqEvent )
+      {
+         TString description(seqEvent->GetDescription());
+         std::vector<TAGSpill> spills = Get_AG_Spills(runNumber, {description.Data()}, {dumpIndex});
+         if( spills.size() > 0 )
+            {
+               TString name(seqEvent->GetEventName());
+               if( name.BeginsWith("start", TString::kIgnoreCase) )
+                  return spills.front().GetStartTime();
+               else
+                  return spills.front().GetStopTime();
+            }
+         return 0.;
+      }
+   return -1.;
+}
+#endif
 #ifdef BUILD_AG
 Double_t GetTrigTimeBefore(Int_t runNumber, Double_t mytime)
 {   

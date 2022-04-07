@@ -52,7 +52,7 @@ install(TARGETS agreco.exe MainEventTree.exe DESTINATION ${CMAKE_INSTALL_PREFIX}
 # Compile the analyzer for simulation
 if (BUILD_AG_SIM)
   message(STATUS "Building Geant4 analyzer")
-  set(G4ANA_LINK_LIBS ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/simulation/G4out/libG4out.so)
+  set(G4ANA_LINK_LIBS agtpc G4out)
   add_executable( g4ana.exe g4ana.cc 
                     ${sources} ${PROJECT_SOURCE_DIR}/src/ProcessEvents.cc
                     ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh 
@@ -68,6 +68,6 @@ if (BUILD_AG_SIM)
     ${CMAKE_SOURCE_DIR}/simulation/agg4/src/ElectronDrift.cc )
   add_dependencies(baranalysis.exe agtpc G4dict)
   target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include)
-  target_link_libraries(baranalysis.exe ${ROOT_LIBRARIES} ${CMAKE_BINARY_DIR}/recolib/libagtpc.so ${CMAKE_BINARY_DIR}/simulation/agg4/libG4dict.so)
+  target_link_libraries(baranalysis.exe ${ROOT_LIBRARIES} agtpc G4dict)
   install(TARGETS baranalysis.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)

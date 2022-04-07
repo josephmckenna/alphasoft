@@ -25,7 +25,6 @@ TRandom3 rndm;
 
 //double gBarRadius = 230.;
 //int gNbars = 64;
-#include "agg4globals.hh"
 
 void rec(TString filename, 
 	 int pdgc,
