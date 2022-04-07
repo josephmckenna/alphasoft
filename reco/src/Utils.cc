@@ -18,6 +18,7 @@
 #include "TSpacePoint.hh"
 #include "TFitLine.hh"
 
+#include "TStoreEvent.hh"
 
 Utils::Utils(double B):fHisto(),pmap(),
                        fMagneticField(B),tmax(4500.)
@@ -1270,9 +1271,11 @@ void Utils::WriteHisto()
 
 // ===============================================================================================
 
-void Utils::CreateStoreEvent(std::vector<TSpacePoint*>*, std::vector<TTrack*>*, std::vector<TFitHelix*>*)
+TStoreEvent Utils::CreateStoreEvent(std::vector<TSpacePoint*>* points, std::vector<TFitHelix*>* hels, std::vector<TFitLine*>* lines)
 {
-   // FIXME: Write simulation event data into TStoreEvent
+   TStoreEvent evt;
+   evt.SetEvent(points, lines, hels);
+   return evt;
 }
 
 

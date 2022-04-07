@@ -54,6 +54,8 @@ public:
    void ProcessMonteCarlo(TClonesArray*,TVector3*);
    void ProcessVertex(TVector3*);
 
+   TStoreEvent GetStoreEvent();
+
    void Finish();
    void Finish(TClonesArray*,TClonesArray*);
    void End();

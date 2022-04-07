@@ -25,7 +25,7 @@ public:
     ~Aged();
     
     TAFlags* ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, AgBarEventFlow* barFlow, TAFlags* flags, TARunInfo* runinfo);
-    TAFlags* ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals);
+    int ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals);
 
 private:
     ImageData   *fData;

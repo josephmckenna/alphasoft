@@ -14,6 +14,8 @@
 #include "TFitHelix.hh"
 #include "TFitVertex.hh"
 
+#include "TStoreEvent.hh"
+
 class Utils
 {
 private:
@@ -92,7 +94,7 @@ public:
    void WriteSettings(TObjString*);
    void WriteHisto();
 
-   TStoreEvent CreateStoreEvent(std::vector<TSpacePoint*>*, std::vector<TTrack*>*, std::vector<TFitHelix*>*);
+   TStoreEvent CreateStoreEvent(std::vector<TSpacePoint*>*, std::vector<TFitHelix*>* = nullptr, std::vector<TFitLine*>* = nullptr);
 
    inline void SetTmax(double t) {tmax=t;}
 };

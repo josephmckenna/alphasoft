@@ -16,6 +16,8 @@
 #include "AnaSettings.hh"
 #include "Reco.hh"
 
+#include "Aged.h"
+
 
 int main(int argc, char** argv)
 {
@@ -33,6 +35,7 @@ int main(int argc, char** argv)
    parser.addArgument("--enableMC",1);
    parser.addArgument("-2","--twod",1);
    parser.addArgument("-l","--led",1);
+   parser.addArgument("-D","--aged",1);
 
     
    // parse the command-line arguments - throws if invalid format
@@ -172,6 +175,13 @@ int main(int argc, char** argv)
          led=true;
          std::cout<<"[main]# Leading edge reconstruction!"<<std::endl;
       }
+
+   Aged *aged = nullptr;
+   if( parser.count("aged") )
+      {
+         aged = new Aged;
+         std::cout<<"[main]# Aged visualization"<<std::endl;
+      }
  
    TApplication* app=0;
    if( draw )
@@ -228,6 +238,7 @@ int main(int argc, char** argv)
       app->Run();
    }
    std::cout<<"[main]# End Run"<<std::endl;
+   if(aged) delete aged;
    return 0;
 }
 

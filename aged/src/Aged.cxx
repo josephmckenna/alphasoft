@@ -353,5 +353,6 @@ int Aged::ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *pad
 {
     int status = 0;
     // FIXME: Maybe create sigFlow and barFlow here? then use code above?
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     return status;
 }
