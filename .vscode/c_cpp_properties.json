@@ -19,7 +19,7 @@
                 "${workspaceFolder}/recolib/include/**",
                 "${workspaceFolder}/rootUtils/include/**"
             ],
-            "defines": [],
+            "defines": ["BUILD_AG_SIM"],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++11",

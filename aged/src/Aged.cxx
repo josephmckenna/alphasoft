@@ -356,7 +356,9 @@ int Aged::ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *pad
 {
     int status = 0;
     std::vector<ALPHAg::signal> s, p;
-    AgSignalsFlow sigFlow(nullptr, &s, &p);
+    TAFlowEvent fe;
+    AgAnalysisFlow anaFlow(&fe, &evt);
+    AgSignalsFlow sigFlow(&anaFlow, &s, &p);
     // AgBarEventFlow barFlow(nullptr, barSignals);
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     return status;
