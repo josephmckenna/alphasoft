@@ -351,10 +351,14 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
     return flags;
 }
 
+#ifdef BUILD_AG_SIM
 int Aged::ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals)
 {
     int status = 0;
-    // FIXME: Maybe create sigFlow and barFlow here? then use code above?
+    std::vector<ALPHAg::signal> s, p;
+    AgSignalsFlow sigFlow(nullptr, &s, &p);
+    // AgBarEventFlow barFlow(nullptr, barSignals);
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     return status;
 }
+#endif

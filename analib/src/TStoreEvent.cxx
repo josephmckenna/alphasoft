@@ -16,22 +16,30 @@
 
 #include <iostream>
 
-TStoreEvent::TStoreEvent()
-   : TObject(), fID(-1), fNpoints(-1), fNtracks(-1), fStoreHelixArray(20), fStoreLineArray(20), fSpacePoints(5000),
-     fUsedHelices(20), fVertex(ALPHAg::kUnknown, ALPHAg::kUnknown, ALPHAg::kUnknown), fVertexStatus(-3),
-     fPattRecEff(-1.)
-{
-}
+TStoreEvent::TStoreEvent():TObject(),fID(-1),
+			   fNpoints(-1),fNtracks(-1),
+			   fStoreHelixArray(20), fStoreLineArray(20),
+			   fSpacePoints(5000),
+			   fUsedHelices(20),
+			   fVertex(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown),
+			   fVertexStatus(-3),
+			   fPattRecEff(-1.)
+{}
 
-TStoreEvent::TStoreEvent(const TStoreEvent &right)
-   : TObject(right), fID(right.fID), fEventTime(right.fEventTime), fNpoints(right.fNpoints), fNtracks(right.fNtracks),
-     fStoreHelixArray(right.fStoreHelixArray), fStoreLineArray(right.fStoreLineArray), fSpacePoints(right.fSpacePoints),
-     fUsedHelices(right.fUsedHelices), fVertex(right.fVertex), fVertexStatus(right.fVertexStatus),
-     fPattRecEff(right.fPattRecEff), fBarHit(right.fBarHit)
-{
-}
+TStoreEvent::TStoreEvent(const TStoreEvent& right):TObject(right), fID(right.fID),
+						   fEventTime(right.fEventTime),
+						   fNpoints(right.fNpoints),
+						   fNtracks(right.fNtracks),
+						   fStoreHelixArray(right.fStoreHelixArray),
+						   fStoreLineArray(right.fStoreLineArray),
+						   fSpacePoints(right.fSpacePoints),
+						   fUsedHelices(right.fUsedHelices),
+						   fVertex(right.fVertex),fVertexStatus(right.fVertexStatus),
+						   fPattRecEff(right.fPattRecEff),
+						   fBarHit(right.fBarHit)
+{}
 
-TStoreEvent &TStoreEvent::operator=(const TStoreEvent &right)
+TStoreEvent& TStoreEvent::operator=(const TStoreEvent& right)
 {
    fID              = right.fID;
    fEventTime       = right.fEventTime;
@@ -48,8 +56,8 @@ TStoreEvent &TStoreEvent::operator=(const TStoreEvent &right)
    return *this;
 }
 
-void TStoreEvent::SetEvent(const std::vector<TSpacePoint *> *points, const std::vector<TFitLine *> *lines,
-                           const std::vector<TFitHelix *> *helices)
+void TStoreEvent::SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
+			   const std::vector<TFitHelix*>* helices)
 {
    if (points) {
       fNpoints = points->size();
@@ -94,72 +102,74 @@ void TStoreEvent::SetEvent(const std::vector<TSpacePoint *> *points, const std::
 
 TStoreEvent::~TStoreEvent()
 {
-   Reset();
+  Reset();
 }
-void TStoreEvent::Print(Option_t *o) const
+void TStoreEvent::Print(Option_t* o) const
 {
-   if (strcmp(o, "title") == 0)
-      std::cout << "EventNo\tTPCtime\tNpoints\tNtracks\tX\tY\tZ\t";
-   else if (strcmp(o, "line") == 0)
-      printf("%d\t%f\t%d\t%d\t%d\t%.2f\t%.2f\t%.2f\t", fID, fEventTime, fNpoints, fNtracks, fVertexStatus, fVertex.X(),
-             fVertex.Y(), fVertex.Z());
-   else {
-      std::cout << "=============== TStoreEvent " << std::setw(5) << fID << " ===============" << std::endl;
-      std::cout << "EventTime: " << fEventTime << std::endl;
-      std::cout << "Number of Points: " << fNpoints << "\tNumber Of Tracks: " << fNtracks << std::endl;
-      std::cout << "*** Vertex Position ***" << std::endl;
+   if (strcmp(o,"title")==0)
+      std::cout<<"EventNo\tTPCtime\tNpoints\tNtracks\tX\tY\tZ\t";
+   else if (strcmp(o,"line")==0) 
+      printf("%d\t%f\t%d\t%d\t%d\t%.2f\t%.2f\t%.2f\t",fID,fEventTime,fNpoints,fNtracks,fVertexStatus,fVertex.X(),fVertex.Y(),fVertex.Z());
+   else
+   {
+      std::cout<<"=============== TStoreEvent "<<std::setw(5)
+         <<fID<<" ==============="<<std::endl;
+      std::cout<<"EventTime: "<< fEventTime <<std::endl;
+      std::cout<<"Number of Points: "<<fNpoints
+         <<"\tNumber Of Tracks: "<<fNtracks<<std::endl;
+      std::cout<<"*** Vertex Position ***"<<std::endl;
       fVertex.Print();
-      std::cout << "***********************" << std::endl;
+      std::cout<<"***********************"<<std::endl;
       // for(int i=0; i<fStoreLineArray.GetEntries(); ++i)
       //   {
       //     ((TFitLine*)fStoreLineArray.At(i))->Print();
       //   }
-      std::cout << "=======================================" << std::endl;
+      std::cout<<"======================================="<<std::endl;
    }
 }
 
-int TStoreEvent::AddLine(TFitLine *l)
-{
-   fStoreLineArray.AddLast(new TStoreLine(l, l->GetPointsArray()));
-   return fStoreLineArray.GetEntriesFast();
+int TStoreEvent::AddLine(TFitLine* l) 
+{ 
+  fStoreLineArray.AddLast( new TStoreLine( l, l->GetPointsArray() ) ); 
+  return fStoreLineArray.GetEntriesFast(); 
 }
-
-int TStoreEvent::AddHelix(TFitHelix *h)
-{
-   fStoreHelixArray.AddLast(new TStoreHelix(h, h->GetPointsArray()));
-   return fStoreHelixArray.GetEntriesFast();
+		 
+int TStoreEvent::AddHelix(TFitHelix* h) 
+{ 
+  fStoreHelixArray.AddLast( new TStoreHelix( h, h->GetPointsArray() ) ); 
+  return fStoreHelixArray.GetEntriesFast(); 
 }
 
 void TStoreEvent::Reset()
 {
-   fID      = -1;
-   fNpoints = -1;
-   fNtracks = -1;
+  fID = -1;
+  fNpoints = -1;
+  fNtracks = -1;
 
-   fStoreLineArray.SetOwner(kTRUE);
-   fStoreLineArray.Delete();
-   fStoreHelixArray.SetOwner(kTRUE);
-   fStoreHelixArray.Delete();
-   // fUsedHelices.SetOwner(kTRUE);
-   // fUsedHelices.Delete();
-   fUsedHelices.Clear();
-   fSpacePoints.SetOwner(kTRUE);
-   fSpacePoints.Delete();
+  fStoreLineArray.SetOwner(kTRUE);
+  fStoreLineArray.Delete();
+  fStoreHelixArray.SetOwner(kTRUE);
+  fStoreHelixArray.Delete();
+  //fUsedHelices.SetOwner(kTRUE);
+  //fUsedHelices.Delete();
+  fUsedHelices.Clear();
+  fSpacePoints.SetOwner(kTRUE);
+  fSpacePoints.Delete();
 
-   fVertex.SetXYZ(ALPHAg::kUnknown, ALPHAg::kUnknown, ALPHAg::kUnknown);
+  fVertex.SetXYZ(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
 
-   fPattRecEff = -1.;
-
-   fBarHit.clear();
-   // fCosmicCosineAngle = -99.;
+  fPattRecEff = -1.;
+  
+  fBarHit.clear();
+  // fCosmicCosineAngle = -99.;
 }
 
 ClassImp(TStoreEvent)
 #endif
-   /* emacs
-    * Local Variables:
-    * tab-width: 8
-    * c-basic-offset: 3
-    * indent-tabs-mode: nil
-    * End:
-    */
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

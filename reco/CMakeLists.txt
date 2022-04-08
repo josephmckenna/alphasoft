@@ -14,7 +14,6 @@ include_directories(${CMAKE_SOURCE_DIR}/recolib/include)
 include_directories(${CMAKE_SOURCE_DIR}/analib/include)
 include_directories(${CMAKE_SOURCE_DIR}/ana/include)
 include_directories(${CMAKE_SOURCE_DIR}/simulation/G4out/include)
-include_directories()
 include_directories(include)
 
 # Find source for this project

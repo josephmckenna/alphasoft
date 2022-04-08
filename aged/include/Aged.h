@@ -25,8 +25,9 @@ public:
     ~Aged();
     
     TAFlags* ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, AgBarEventFlow* barFlow, TAFlags* flags, TARunInfo* runinfo);
+#ifdef BUILD_AG_SIM
     int ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals);
-
+#endif
 private:
     ImageData   *fData;
     PWindow     *fWindow;
