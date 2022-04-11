@@ -276,7 +276,7 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
             Float_t sigmav = 0.0;
             if(smearingTime>0) sigmat = smearingTime;
             if(v_reluncertainty>0) sigmav = v_reluncertainty;
-            Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2 + sigmav*sigmav*z.at(i)*z.at(i));
+            Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2);
             z.at(i) += gRandom->Gaus(0,sigmaz);
          }
 
