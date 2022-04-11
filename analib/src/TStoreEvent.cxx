@@ -143,13 +143,19 @@ void TStoreEvent::Reset()
 
   fStoreLineArray.SetOwner(kTRUE);
   fStoreLineArray.Delete();
+  fStoreLineArray.Clear();
+
   fStoreHelixArray.SetOwner(kTRUE);
   fStoreHelixArray.Delete();
-  //fUsedHelices.SetOwner(kTRUE);
-  //fUsedHelices.Delete();
+  fStoreHelixArray.Clear();
+
+  fUsedHelices.SetOwner(kTRUE);
+  fUsedHelices.Delete();
   fUsedHelices.Clear();
+
   fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
+  fSpacePoints.Clear();
 
   fVertex.SetXYZ(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kUnknown);
 
