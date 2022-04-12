@@ -137,8 +137,8 @@ class TVertexEvents: public TObject
                 fTimes.at(i) + "," +
                 fEventTimes.at(i) + "," +
                 fRunTimes.at(i) + "," +
-                bool(fCutsResults.at(i)&1) + "," +
-                bool(fCutsResults.at(i)&2) + "," +
+                int(fCutsResults.at(i)&1) + "," +
+                int(fCutsResults.at(i)&2) + "," +
                 fVertexStatuses.at(i) + "," +
                 fXVertex.at(i) + "," +
                 fYVertex.at(i) + "," +
@@ -326,9 +326,9 @@ class TTimeWindows : public TObject
       {
          //This is a little fugly
          std::string line;
-         line =std::string("") + fRunNumber.at(i) + 
-         fMinTime.at(i) +
-         fMaxTime.at(i) +
+         line =std::string("") + fRunNumber.at(i) + "," +
+         fMinTime.at(i) + "," +
+         fMaxTime.at(i) + "," +
          fZeroTime.at(i);
          return line;
       }
