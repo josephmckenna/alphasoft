@@ -90,8 +90,8 @@ class BarHit: public TObject
 {
 private:
   int fBarID=-1;
-  EndHit* fTopHit;
-  EndHit* fBotHit;
+  EndHit* fTopHit=0;
+  EndHit* fBotHit=0;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;

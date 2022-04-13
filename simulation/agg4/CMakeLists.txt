@@ -71,6 +71,7 @@ set(LIBRARY_SOURCES ${PROJECT_SOURCE_DIR}/src/TDigi.cc
                     ${PROJECT_SOURCE_DIR}/../garfieldpp/src/TPCBase.cc
                     ${PROJECT_SOURCE_DIR}/src/agg4globals.cc)
 add_library(G4dict SHARED ${LIBRARY_SOURCES} G__G4dict)
+target_link_libraries(G4dict PUBLIC ${ROOT_LIBRARIES})
 
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(APPEND sources ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc)

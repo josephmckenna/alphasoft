@@ -52,13 +52,6 @@ find_path(Garfield_INCLUDE_DIRS Sensor.hh
         HINTS $ENV{GARFIELD_INSTALL}/include
         PATH_SUFFIXES Garfield)
 
-include_directories(${Garfield_INCLUDE_DIRS} ${Garfield_INCLUDE_DIRS}/.. ${GARFIELD_INCLUDE_DIRS})
-
-find_library(Garfield_LIBRARIES libGarfield.so
-  HINTS $ENV{GARFIELD_INSTALL}/lib $ENV{GARFIELD_INSTALL}/lib64)
-
-link_libraries(${Garfield_LIBRARIES} ${GARFIELD_LIBRARIES})
-
 message(STATUS "${PROJECT_NAME}: Garfieldpp includes: ${Garfield_INCLUDE_DIRS} ${GARFIELD_INCLUDE_DIRS} libs: ${Garfield_LIBRARIES} ${GARFIELD_LIBRARIES}")
 
 execute_process(COMMAND grep -c EnableMagneticField ${Garfield_INCLUDE_DIRS}/AvalancheMC.hh OUTPUT_VARIABLE FOUND_EN_MAG)
@@ -92,7 +85,7 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 add_executable(rTPCsim rTPCsim.cc ${sources} ${headers})
 add_compile_definitions(CAD_FILE_PATH="${AG_CAD_FILE_PATH}")
 add_compile_definitions(CRYDATAPATH="${CRY_DATA_PATH}")
-target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${GARFIELD_LIBRARIES} ${CRY_LIBRARIES} cry cadmesh G4out)
+target_link_libraries(rTPCsim ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} Garfield::Garfield ${CRY_LIBRARIES} cry cadmesh G4out)
 
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
