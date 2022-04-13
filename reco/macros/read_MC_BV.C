@@ -3,6 +3,11 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include "TVector.h"
+#include "TLorentzVector.h"
+#include "TRandom.h"
+#include "TMath.h"
+#include "TH1.h"
 
 ///< ############################################################
 ///< HISTOS AND NUMBERS FOR THE VERTEX AND MOMENTUM AT GENERATION
