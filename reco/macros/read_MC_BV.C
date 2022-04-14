@@ -83,7 +83,7 @@ void read_MC_BV::AnalyzeMCinfo()
 ///< ############################################################
 ///< HISTOS AND NUMBERS FOR THE BV BARS
 ///< ############################################################
-void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = -999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = -999, Float_t smearingTime = -999.0) //TAGLIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 {
 //_________________________________________________________________________________________
 
@@ -263,7 +263,7 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
          }
       }
 
-      if(NbarsHit == 0 || (MultCut>0 && NbarsHit!=MultCut)) continue; //Cut on Multiplicity
+      if(NbarsHit == 0 || (MultCut>0 && NbarsHit<=MultCut)) continue; //Cut on Multiplicity
 
       for(Int_t i=0;i<BarNumber.size();i++) //loop on hits
       {
@@ -275,12 +275,11 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
          time.at(i)/=barFlag_in[BarNumber.at(i)]; //media dei tempi se ho multiple hit in one bar
          if(smearingTime>0) time.at(i) += gRandom->Gaus(0,smearingTime/TMath::Sqrt(2)); //TOF = T1-T2 = (t1top+t1bot)/2 - (t2top+t2bot)/2, so sigmaT1 = sigmat/sqrt(2)
          z.at(i)/=barFlag_in[BarNumber.at(i)];
-         if(smearingTime>0 || v_reluncertainty>0)
+         if(smearingTime>0)
          {
             Float_t sigmat = 0.0;
             Float_t sigmav = 0.0;
             if(smearingTime>0) sigmat = smearingTime;
-            if(v_reluncertainty>0) sigmav = v_reluncertainty;
             Float_t sigmaz = TMath::Sqrt(sigmat*sigmat*Veff*Veff/2);
             z.at(i) += gRandom->Gaus(0,sigmaz);
          }
@@ -374,7 +373,7 @@ void read_MC_BV::AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -
    cProj->cd(1); hTOF->Draw();
    cProj->cd(2); hDistance->Draw();
 
-   TString snamefileout="simulation/fHistoOut"+filename+Form("EnergyCut%1.1f_DeltaPhiCut%1.1f_MultCut%d_timesmeaaring%1.1f_v_reluncertainty%1.1f",EnergyCut,DeltaPhiCut,MultCut,smearingTime,v_reluncertainty);
+   TString snamefileout="simulation/fHistoOut"+filename+Form("EnergyCut%1.1f_DeltaPhiCut%1.1f_MultCut%d_timesmeaaring%1.1f",EnergyCut,DeltaPhiCut,MultCut,smearingTime);
    if(BExcludeBars) snamefileout+="_excludedbars";
 
    snamefileout+=".root";

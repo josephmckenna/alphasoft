@@ -47,7 +47,7 @@ public :
    virtual void     InitMCinfoTree(TTree *tree);
    virtual void     InitBVBarsTree(TTree *tree);
    virtual void     AnalyzeMCinfo();
-   virtual void     AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = -999, Float_t smearingTime = -999.0, Float_t v_reluncertainty = -999.0);
+   virtual void     AnalyzeBVBars(Float_t EnergyCut=-999.0, Float_t DeltaPhiCut = -999.0, Int_t MultCut = -999, Float_t smearingTime = -999.0);
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
