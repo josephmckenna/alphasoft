@@ -81,10 +81,9 @@ lxplus()
   fi
 }
 
-alphadaq()
+alphasuperdaq()
 {
-   export ROOTANASYS=${AGRELEASE}/rootana
-   export MIDASSYS=/home/alpha/packages/midas-develop
+   source /home/alpha/packages/root_v6.26.00.Linux-ubuntu20-x86_64-gcc9.3/bin/thisroot.sh
    export AGOUTPUT=${AGRELEASE}/root_output_files/
 }
 
@@ -163,16 +162,16 @@ alphavme*  )
   echo "DO NOT RUN ANALYSIS ON A VME CRATE"
   exit
   ;;
-alphagdaq* | alphadaq* )
+alphagdaq* | alphadaq* | alphasuperdaq* )
   echo "DAQ computer detected..."
-  alphadaq
+  alphasuperdaq
   echo "DO NOT RUN ANALYSIS ON DAQ!!! Just online tools"
   return
   ;;
 alphacpc04* | alphacpc09*  )
   echo -e " \e[33malphacpc04 or 09 detected...\033[0m"
   . ~/packages/root_6_22_02/bin/thisroot.sh
-  alphadaq
+  alphasuperdaq
   export AGMIDASDATA="/alpha/agdaq/data"
   if [ `whoami` = "agana" ] ; then
       echo -e " \e[33mUser agana\033[0m"
