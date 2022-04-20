@@ -15,7 +15,8 @@
 
 #include "AnaSettings.hh"
 
-#include "Deconv.hh"
+#include "DeconvAW.hh"
+#include "DeconvPAD.hh"
 #include "Ledge.hh"
 #include "Match.hh"
 #include "Reco.hh"
@@ -24,7 +25,8 @@
 class ProcessEvents
 {
 private:
-   Deconv d;
+   DeconvAW dAW;
+   DeconvPAD dPad;
    Ledge leaw;
    Ledge lepad;
    Match m;

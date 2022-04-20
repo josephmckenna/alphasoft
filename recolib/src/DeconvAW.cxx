@@ -166,15 +166,14 @@ void DeconvAW::Reset()
 }
 
 #ifdef BUILD_AG_SIM
-int DeconvAW::FindAnodeTimes(TClonesArray* AWsignals)
+int DeconvAW::FindAnodeTimes(TClonesArray* AWsignals, std::vector<ALPHAg::TWireSignal>& signals)
 {
    int Nentries = AWsignals->GetEntries();
    // prepare vector with wf to manipulate
-   std::vector<ALPHAg::wfholder*> AnodeWaves;
+   std::vector<ALPHAg::wfholder> AnodeWaves;
    AnodeWaves.reserve( Nentries );
-   // clear/initialize "output" vectors
-   fAnodeIndex.clear();
-   fAnodeIndex.reserve( Nentries );
+   std::vector<ALPHAg::electrode> AnodeIndex;
+   AnodeIndex.reserve( Nentries );
  
    // find intresting channels
    unsigned int index=0; //wfholder index
@@ -200,11 +199,11 @@ int DeconvAW::FindAnodeTimes(TClonesArray* AWsignals)
          if( MaskWires(aw_number) ) continue;
 
          double ped = CalculatePedestal(data);
-         double peak_h = GetPeakHeight(data,el.idx,ped,true);
+         double peak_h = GetPeakHeight(data,el.idx,ped);
          //std::cout<<"aw: "<<aw_number<<" PH: "<<peak_h<<" (ped:"<<ped<<")"<<std::endl;
 
          // CREATE WAVEFORM
-         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
+         ALPHAg::wfholder waveform( index, 
                                           std::next(data.begin(),pedestal_length),
                                           data.end());
          if(peak_h > fADCThres)     // Signal amplitude < thres is considered uninteresting
@@ -213,141 +212,28 @@ int DeconvAW::FindAnodeTimes(TClonesArray* AWsignals)
                   std::cout<<"\tsignal above threshold ch: "<<j<<" aw: "<<aw_number<<std::endl;
 
                // SUBTRACT PEDESTAL
-               waveform->massage(ped,fAdcRescale.at(el.idx));
+               waveform.massage(ped,fAdcRescale.at(el.idx));
 
                // fill vector with wf to manipulate
                AnodeWaves.emplace_back( waveform );
 
                // STORE electrode
-               fAnodeIndex.push_back( el );
+               AnodeIndex.push_back( el );
 
                ++index;
             }// max > thres 
-         else
-            delete waveform;
       } // channels
 
    // ============== DECONVOLUTION ==============
-   sanode = Deconvolution(&AnodeWaves,fAnodeIndex,fAnodeResponse,theAnodeBin, true);
-   int nsig=-1;
-   if(!sanode) nsig=0;
-   else nsig = sanode->size();
+   Deconvolution(AnodeWaves,AnodeIndex,signals);
+
+   int nsig=signals.size();
    std::cout<<"DeconvAW::FindAnodeTimes "<<nsig<<" found"<<std::endl;
    // ===========================================
-
-   
-   for (uint i=0; i<AnodeWaves.size(); i++)
-      {
-         //delete AnodeWaves.at(i)->h;
-         delete AnodeWaves.at(i);
-      }
-   AnodeWaves.clear();
    
    return nsig;
 }
 
-int DeconvAW::FindPadTimes(TClonesArray* PADsignals)
-{
-   int Nentries = PADsignals->GetEntries();
-
-   // prepare vector with wf to manipulate
-   std::vector<ALPHAg::wfholder*> PadWaves;
-   PadWaves.reserve( Nentries );
-   // clear/initialize "output" vectors
-   fPadIndex.clear();
-   fPadIndex.reserve( Nentries );
-
-   std::string delimiter = "_";
-
-   // find intresting channels
-   unsigned int index=0; //ALPHAg::wfholder index
-   for( int j=0; j<Nentries; ++j )
-      {
-         TWaveform* w = (TWaveform*) PADsignals->ConstructedAt(j);
-         std::vector<int> data(w->GetWaveform());
-         std::string wname = w->GetElectrode();
-
-         size_t pos = wname.find(delimiter);
-         std::string p = wname.substr(0, pos);
-         if( p != "p" )
-            std::cerr<<"DeconvAW Error: Wrong Electrode? "<<p<<std::endl;
-         wname = wname.erase(0, pos + delimiter.length());
-
-         pos = wname.find(delimiter);
-         short col = std::stoi( wname.substr(0, pos) );
-         assert(col<32&&col>=0);
-         //std::cout<<"DeconvAW::FindPadTimes() col: "<<col<<std::endl;
-         wname = wname.erase(0, pos + delimiter.length());
-
-         pos = wname.find(delimiter);
-         int row = std::stoi( wname.substr(0, pos) );
-         //std::cout<<"DeconvAW::FindPadTimes() row: "<<row<<std::endl;
-         assert(row<576&&row>=0);
-
-         int coli = int(col);
-         int pad_index = pmap->index(coli,row);
-         assert(!std::isnan(pad_index));
-         // CREATE electrode
-         ALPHAg::electrode el(col,row);
-  
-         if( data.size() == 0 ) continue;
-
-         // nothing dumb happens
-         if( (int)data.size() < 410 + pedestal_length )
-            {
-               std::cerr<<"DeconvAW::FindPadTimes ERROR wf samples: "
-                        <<data.size()<<std::endl;
-               continue;
-            }
-         // mask hot pads
-         if( MaskPads(col,row) ) continue;
-
-         double ped = CalculatePedestal(data);
-         double peak_h = GetPeakHeight(data,pad_index,ped,false);
-
-         // CREATE WAVEFORM
-         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
-                                          std::next(data.begin(),pedestal_length),
-                                          data.end());
-         
-         // Signal amplitude < thres is considered uninteresting
-         if(peak_h > fPWBThres)
-            {
-               if(fTrace)
-                  std::cout<<"\tsignal above threshold ch: "<<j<<" index: "<<index<<std::endl;
-
-               // SUBTRACT PEDESTAL
-               waveform->massage(ped,fPwbRescale.at(pad_index));
-
-               // fill vector with wf to manipulate
-               PadWaves.emplace_back( waveform );
-                  
-               // STORE electrode
-               fPadIndex.push_back( el );     
-                  
-               ++index;
-            }// max > thres
-         else
-            delete waveform;
-      }// channels
-
-   // ============== DECONVOLUTION ==============
-   spad = Deconvolution(&PadWaves,fPadIndex,fPadResponse,thePadBin,false);
-   int nsig=-1;
-   if(!spad) nsig=0;
-   else nsig = spad->size();
-   std::cout<<"DeconvAW::FindPadTimes "<<nsig<<" found"<<std::endl;
-   // ===========================================   
-
-   for (uint i=0; i<PadWaves.size(); i++)
-      {
-         // delete PadWaves.at(i)->h;
-         delete PadWaves.at(i);
-      }
-   PadWaves.clear();
-  
-   return nsig;
-}
 #endif
 
 void DeconvAW::BuildWFContainer(

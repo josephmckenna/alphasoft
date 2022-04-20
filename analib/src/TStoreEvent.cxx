@@ -73,10 +73,10 @@ if(lines){
 int nlines=lines->size();
   for(int i=0; i<nlines; ++i)
     {
-      TFitLine* aLine = lines->at(i);
-      if( aLine->GetStatus() > 0 )
+      const TFitLine &aLine = lines->at(i);
+      if( aLine.GetStatus() > 0 )
 	{
-	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine->GetPointsArray() ) );
+	  fStoreLineArray.AddLast( new TStoreLine( aLine, aLine.GetPointsArray() ) );
 	}
     }
 }
@@ -86,11 +86,11 @@ if(helices){
   fNtracks = helices->size();
   for(int i=0; i<fNtracks; ++i)
     {
-      TFitHelix* anHelix = helices->at(i);
-      if( anHelix->GetStatus() > 0 )
+      const TFitHelix &anHelix = helices->at(i);
+      if( anHelix.GetStatus() > 0 )
 	{
-	  fStoreHelixArray.AddLast( new TStoreHelix( anHelix, anHelix->GetPointsArray() ) );
-	  fNpoints += anHelix->GetNumberOfPoints();
+	  fStoreHelixArray.AddLast( new TStoreHelix( &anHelix, anHelix.GetPointsArray() ) );   // FIXME: why does TStoreHelix want a pointer, when TStoreLine wants a reference?
+	  fNpoints += anHelix.GetNumberOfPoints();
 	}
     }
 } else {
