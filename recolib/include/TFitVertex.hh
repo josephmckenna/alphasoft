@@ -8,7 +8,7 @@
 
 #include <TObject.h>
 #include <TVector3.h>
-#include <TObjArray.h>
+#include <vector>
 
 #include "TFitHelix.hh"
 
@@ -16,7 +16,7 @@ class TFitVertex : public TObject
 {
 private:
   int fID;
-  TObjArray fHelixArray;
+  std::vector<TFitHelix*> fHelixArray;
   int fNhelices;
 
   double fchi2;     // vertex chi^2
@@ -24,7 +24,7 @@ private:
   TVector3 fVertexError2;
 
   int fNumberOfUsedHelices;
-  TObjArray fHelixStack;
+  std::vector<TFitHelix*> fHelixStack;
 
   double fChi2Cut;
 
@@ -47,41 +47,62 @@ private:
   double fNewSeed1Par;
 
   // stage 1
+  int FirstPass();
   double FindSeed(  double trapradius2 = ALPHAg::_trapradius*ALPHAg::_trapradius );
   double FindMinDistance(double& s0, double& s1);
+  double FindMinDistanceM2(double& s0, double& s1);
   TVector3 EvaluateMeanPoint();
   TVector3 EvaluateMeanPoint(TVector3 p0, TVector3 e0, 
 			     TVector3 p1, TVector3 e1);
   TVector3 EvaluateMeanPointError2();
   
   // stage 2
+  void SecondPass();
   double Recalculate();
+  double RecalculateM2();
 
   // stage 3
+  int ThirdPass();
   int Improve();
   double FindNewVertex(double* p, double* e);
+  double FindNewVertexM2(double* p, double* e);
+  
 
   void AssignHelixStatus();
 
+  void CompressHelixStack()
+  {
+    std::vector<TFitHelix*> temp;
+    temp.reserve(fHelixStack.size());
+    for (TFitHelix* h: fHelixStack)
+    {
+      if (h)
+        temp.push_back(h);
+    }
+    fHelixStack = std::move(temp);
+  }
+
 public:
-  TFitVertex() {};
+  TFitVertex();
   TFitVertex(int id);
   ~TFitVertex();
 
   int AddHelix(TFitHelix*);
-  inline const TObjArray* GetHelixArray()  {return &fHelixArray;}
+  inline const std::vector<TFitHelix*>* GetHelixArray()  {return &fHelixArray;}
   inline int GetNumberOfAddedHelix() const {return fNhelices;}
+
+  void SetID(int id) { fID = id; }
 
   inline void SetChi2Cut(double cut) {fChi2Cut=cut;}
   inline double GetChi2Cut() {return fChi2Cut;}
 
   // main function to reconstruct the vertex
-  int Calculate();
+  int Calculate(const int thread_no = 1, const int thread_count = 1);
 
   inline TFitHelix* GetInit0() const {return fInit0;}
   inline TFitHelix* GetInit1() const {return fInit1;}
 
-  inline const TObjArray* GetHelixStack() const {return &fHelixStack;}
+  inline const std::vector<TFitHelix*>* GetHelixStack() const {return &fHelixStack;}
   inline int GetNumberOfHelices() const         {return fNumberOfUsedHelices;}
 
   // inline double GetSeedHel0PDG() const {return ((TFitHelix*)(fHelixArray.At(fSeed0Index)))->GetParticleType();}

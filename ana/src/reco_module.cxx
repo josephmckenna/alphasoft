@@ -84,7 +84,7 @@ public:
    RecoRun(TARunInfo* runinfo, RecoRunFlags* f): TARunObject(runinfo),
                                                  fFlags(f),
                                                  r( f->ana_settings, f->fMagneticField,  
-                                                    f->fLocation)
+                                                    f->fLocation, fTrace)
    {
 #ifdef HAVE_MANALYZER_PROFILER
       fModuleName="RecoModule";
@@ -107,8 +107,6 @@ public:
          f_pfudge = 1.+fFlags->pfudge;  
       else
          std::cerr<<"RecoRun::RecoRun phi fudge factor must be < 1"<<std::endl;
-
-      r.SetTrace( fTrace );
    }
 
    ~RecoRun()
@@ -135,7 +133,8 @@ public:
       delete analyzed_event;
       analyzed_event=NULL;
 
-      if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
+      // Setup initialised histograms that were never used... so I guess we dont bother?
+      //if( diagnostics ) r.Setup( runinfo->fRoot->fOutputFile );
   
       std::cout<<"RecoRun::BeginRun Saving AnaSettings to rootfile... ";
       runinfo->fRoot->fOutputFile->cd();
@@ -251,79 +250,115 @@ public:
          return flow;
       }
       
-      bool skip_reco=false;
       if( fTrace )
          {
             int AW,PAD,SP=-1;
             AW=PAD=SP;
-            if (SigFlow->awSig) AW=int(SigFlow->awSig->size());
+            if (SigFlow->awSig.size()) AW=int(SigFlow->awSig.size());
             printf("RecoModule::AnalyzeFlowEvent, AW # signals %d\n", AW);
-            if (SigFlow->pdSig) PAD=int(SigFlow->pdSig->size());
+            if (SigFlow->pdSig.size()) PAD=int(SigFlow->pdSig.size());
             printf("RecoModule::AnalyzeFlowEvent, PAD # signals %d\n", PAD);
-            if (SigFlow->matchSig) SP=int(SigFlow->matchSig->size());
+            if (SigFlow->matchSig.size()) SP=int(SigFlow->matchSig.size());
             printf("RecoModule::AnalyzeFlowEvent, SP # %d\n", SP);
          }
-      if (!SigFlow->matchSig)
+      if (SigFlow->matchSig.empty())
       {
          if( fVerb ) 
             std::cout<<"RecoRun::No matched hits"<<std::endl;
-          skip_reco=true;
+          SigFlow->fSkipReco = true;
 #ifdef HAVE_MANALYZER_PROFILER
           flow = new TAUserProfilerFlow(flow,"reco_module(no matched hits)",start_time);
 #endif
       }
-      else if( SigFlow->matchSig->size() > fNhitsCut )
+      else if( SigFlow->matchSig.size() > fNhitsCut )
          {
             if( fVerb ) 
                std::cout<<"RecoRun::AnalyzeFlowEvent Too Many Points... quitting"<<std::endl;
-            skip_reco=true;
+            SigFlow->fSkipReco = true;
 #ifdef HAVE_MANALYZER_PROFILER
             flow = new TAUserProfilerFlow(flow,"reco_module(too many hits)",start_time);
 #endif
          }
 
-      if (!skip_reco)
+      if (!SigFlow->fSkipReco)
          {
             //Root's fitting routines are often not thread safe
 #ifdef MODULE_MULTITHREAD
             std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
 #endif
       
-            if( !fiducialization )
-               r.AddSpacePoint( SigFlow->matchSig );
+            SigFlow->fSpacePoints.clear();
+            if (!fiducialization)
+               r.BuildSpacePointArray(SigFlow->matchSig, SigFlow->fSpacePoints);
             else
-               r.AddSpacePoint( SigFlow->matchSig, z_fid );
+               r.BuildSpacePointArray(SigFlow->matchSig, SigFlow->fSpacePoints, z_fid);
 
             if( fTrace )
-               printf("RecoRun::Analyze  Points: %d\n",r.GetNumberOfPoints());
+               printf("RecoRun::Analyze  Points: %lu\n",SigFlow->fSpacePoints.size());
 
-            r.FindTracks(fFlags->finder);
+            SigFlow->fTrackVector.clear();
+            {
+               r.FindTracks(
+                  SigFlow->fSpacePoints,
+                  SigFlow->fTrackVector,
+                  fFlags->finder);
+            }
+            r.BuildTracks(
+               SigFlow->fTrackVector,
+               SigFlow->fSpacePoints,
+               SigFlow->fTracksArray );
             if( fTrace )
-               printf("RecoRun::Analyze  Tracks: %d\n",r.GetNumberOfTracks());
+               printf("RecoRun::Analyze  Tracks: %lu\n",SigFlow->fTracksArray.size());
 
+#ifdef __MINUIT2FIT__
+            //Minuit2 fit
             if( fFlags->fMagneticField == 0. )
-               {
-                  int nlin = r.FitLines();
-                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
-               }
-
-            int nhel = r.FitHelix();
+            {
+               SigFlow->fLinesArray.clear();
+               int nlin = r.FitLine(SigFlow->fTracksArray, SigFlow->fLinesArray,fFlags->fThreadNo,fFlags->fThreadCount);
+               std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+            }
+            SigFlow->fHelixArray.clear();
+            int nhel = r.FitHelix(SigFlow->fTracksArray, SigFlow->fHelixArray,fFlags->fThreadNo,fFlags->fThreadCount);
             if( fTrace )
                std::cout<<"RecoRun Analyze helices count: "<<nhel<<std::endl;
+#else
+            //Minuit 1 can't multithread... so we have to hold a global lock
+            {
+               std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+               if( fFlags->fMagneticField == 0. )
+               {
+                  SigFlow->fLinesArray.clear();
+                  int nlin = r.FitLine(SigFlow->fTracksArray, SigFlow->fLinesArray);
+                  std::cout<<"RecoRun Analyze lines count: "<<nlin<<std::endl;
+               }
+               SigFlow->fHelixArray.clear();
+               int nhel = r.FitHelix(SigFlow->fTracksArray, SigFlow->fHelixArray);
+            }
+#endif
 
-            TFitVertex theVertex(age->counter);
-            //theVertex.SetChi2Cut( fVtxChi2Cut );
-            int status = r.RecVertex( &theVertex );
+            TFitVertex* theVertex = &SigFlow->fitVertex;
+            theVertex->SetID(age->counter);
+            int& status = SigFlow->fitStatus;
+#if MINUIT2VERTEXFIT
+               // Minuit2 is thread safe... no need to slow things down
+               if (status >= 0)
+                  status = r.RecVertex(SigFlow->fHelixArray, theVertex);
+#else
+               std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
+               status = r.RecVertex(SigFlow->fHelixArray, theVertex );
+#endif
+
             if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent Vertexing Status: "<<status<<std::endl;
 
-            analyzed_event->SetEvent(r.GetPoints(),r.GetLines(),r.GetHelices());
+            analyzed_event->SetEvent( &SigFlow->fSpacePoints, &SigFlow->fLinesArray, &SigFlow->fHelixArray);
             analyzed_event->SetVertexStatus( status );
-            if( status > 0 )
+               if( SigFlow->fitStatus > 0 )
                {
-                  analyzed_event->SetVertex(*(theVertex.GetVertex()));
-                  analyzed_event->SetUsedHelices(theVertex.GetHelixStack());
-                  if( fTrace ) theVertex.Print("rphi");
+                  analyzed_event->SetVertex(*(theVertex->GetVertex()));
+                  analyzed_event->SetUsedHelices(theVertex->GetHelixStack());
+                  if( fTrace ) theVertex->Print("rphi");
                }
             else if( fTrace )
                std::cout<<"RecoRun::AnalyzeFlowEvent no vertex found"<<std::endl;
@@ -353,7 +388,8 @@ public:
       flow = new AgAnalysisFlow(flow, analyzed_event); 
  
       //std::cout<<"\tRecoRun Analyze EVENT "<<age->counter<<" ANALYZED"<<std::endl;
-      if (!skip_reco) r.Reset();
+      //No need to reset, I dont own the data :)
+      //if (!SigFlow->fSkipReco) r.Reset();
       return flow;
    }
 

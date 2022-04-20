@@ -17,8 +17,8 @@
 
 class HelixFCN : public ROOT::Minuit2::FCNBase {
 	protected:
-		TFitHelix track;
-		std::vector<TSpacePoint*> points;
+		TFitHelix* track;
+		const std::vector<TSpacePoint>* points;
 		double error_def;
 	public:
 		HelixFCN(TFitHelix* a_track);

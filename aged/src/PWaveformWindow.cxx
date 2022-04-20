@@ -380,19 +380,19 @@ void PWaveformWindow::UpdateSelf()
            
             AgSignalsFlow *sigFlow = data->sigFlow;
             
-            if (!sigFlow->AWwf)
+            if (sigFlow->AWwf.empty())
                printf("No AWwf in flow\n");
             else
-               for (auto it=sigFlow->AWwf->begin(); it!=sigFlow->AWwf->end(); ++it) {
+               for (auto it=sigFlow->AWwf.begin(); it!=sigFlow->AWwf.end(); ++it) {
                    if (it->i == hi->wire) {
                        wave[kWireHist] = (void *)it->wf;
                        break;
                    }
                }
-            if (!sigFlow->PADwf)
+            if (sigFlow->PADwf.empty())
                printf("No AWwf in flow\n");
             else
-               for (auto it=sigFlow->PADwf->begin(); it!=sigFlow->PADwf->end(); ++it) {
+               for (auto it=sigFlow->PADwf.begin(); it!=sigFlow->PADwf.end(); ++it) {
                    int pad = it->sec+it->i*32;
                    if (pad  == hi->pad) {
                        wave[kPadHist] = (void *)it->wf;

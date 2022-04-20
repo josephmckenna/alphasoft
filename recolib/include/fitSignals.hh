@@ -87,7 +87,7 @@ private:
 class GaussFcn: public ROOT::Minuit2::FCNBase 
 {
 public:
-  GaussFcn(std::vector<ALPHAg::signal> &s):fSignals(s),theErrorDef(1.)
+  GaussFcn(std::vector<ALPHAg::TPadSignal> &s):fPadSignals(s),theErrorDef(1.)
    {
       //      std::cout<<"GaussFcn signals size: "<<fSignals.size()<<std::endl;
    }
@@ -98,12 +98,12 @@ public:
   virtual double Up() const {return theErrorDef;}
   inline void SetErrorDef(double def) {theErrorDef = def;}
 
-  inline const std::vector<ALPHAg::signal>* GetData() const { return &fSignals; }
+  inline const std::vector<ALPHAg::TPadSignal>* GetData() const { return &fPadSignals; }
 
   void TestSignals() const;
 
 private:
-  std::vector<ALPHAg::signal> fSignals;
+  std::vector<ALPHAg::TPadSignal> fPadSignals;
   double theErrorDef;
 };
 
@@ -111,7 +111,7 @@ class fitSignals
 {
 public:
   //  fitSignals(std::vector<signal>);
-  fitSignals(std::vector<ALPHAg::signal>, int n=1);
+  fitSignals(std::vector<ALPHAg::TPadSignal>, int n=1);
   ~fitSignals() {}
 
   inline void SetStart(double* s) { for(uint i=0; i<fNpar; ++i) fStart[i]=s[i]; }
@@ -169,8 +169,8 @@ private:
   std::vector<double> fSigmaError;
 };
 
-void SignalsStatistics(std::vector<ALPHAg::signal>::const_iterator first,
-		       std::vector<ALPHAg::signal>::const_iterator last, 
+void SignalsStatistics(std::vector<ALPHAg::TPadSignal>::const_iterator first,
+		       std::vector<ALPHAg::TPadSignal>::const_iterator last, 
 		       double& mean, double& rms);
 
 #endif

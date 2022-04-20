@@ -1,8 +1,9 @@
 #include"HelixFCN.hh"
 #include<cassert>
 
-HelixFCN::HelixFCN(TFitHelix* a_track) : track(*a_track), error_def(1) {
-	points = *(track.GetPointsArray());
+HelixFCN::HelixFCN(TFitHelix* a_track) : error_def(1) {
+        track = a_track;
+	points = track->GetPointsArray();
 }
 
 double HelixFCN::Up() const {
@@ -20,12 +21,12 @@ double RadFuncFCN::operator()(const std::vector<double>& p) const {
 	double u0 = TMath::Cos(p[1]);
 	double v0 = TMath::Sin(p[1]);
 
-	for(const auto& apnt : points) {
-		double r2 = apnt->GetR() * apnt->GetR();
-		Vector2 f = track.Evaluate(r2, p[0], u0, v0, p[2]);
+	for(const auto& apnt : *points) {
+		double r2 = apnt.GetR() * apnt.GetR();
+		Vector2 f = track->Evaluate(r2, p[0], u0, v0, p[2]);
 
-		double tx = (apnt->GetX() - f.X) / apnt->GetErrX();
-		double ty = (apnt->GetY() - f.Y) / apnt->GetErrY();
+		double tx = (apnt.GetX() - f.X) / apnt.GetErrX();
+		double ty = (apnt.GetY() - f.Y) / apnt.GetErrY();
 		double d2 = tx * tx + ty * ty;
 
 		chi2 += d2;
@@ -44,12 +45,12 @@ double RadFunc_FCN::operator()(const std::vector<double>& p) const {
 	double u0 = TMath::Cos(p[1]);
 	double v0 = TMath::Sin(p[1]);
 
-	for(const auto& apnt : points) {
-		double r2 = apnt->GetR() * apnt->GetR();
-		Vector2 f = track.Evaluate_(r2, p[0], u0, v0, p[2]);
+	for(const auto& apnt : *points) {
+		double r2 = apnt.GetR() * apnt.GetR();
+		Vector2 f = track->Evaluate_(r2, p[0], u0, v0, p[2]);
 
-		double tx = (apnt->GetX() - f.X) / apnt->GetErrX();
-		double ty = (apnt->GetY() - f.Y) / apnt->GetErrY();
+		double tx = (apnt.GetX() - f.X) / apnt.GetErrX();
+		double ty = (apnt.GetY() - f.Y) / apnt.GetErrY();
 		double d2 = tx * tx + ty * ty;
 
 		chi2 += d2;
@@ -65,12 +66,12 @@ double ZedFuncFCN::operator()(const std::vector<double>& p) const {
 
 	double chi2 = 0;
 
-	for(const auto& apnt : points) {
-		double r2 = apnt->GetR() * apnt->GetR();
-		double s = track.GetArcLength(r2);
-		double f = track.Evaluate(s, p[0], p[1]);
+	for(const auto& apnt : *points) {
+		double r2 = apnt.GetR() * apnt.GetR();
+		double s = track->GetArcLength(r2);
+		double f = track->Evaluate(s, p[0], p[1]);
 
-		double tz = (apnt->GetZ() - f) / apnt->GetErrZ();
+		double tz = (apnt.GetZ() - f) / apnt.GetErrZ();
 		double d2 = tz * tz;
 
 		chi2 += d2;

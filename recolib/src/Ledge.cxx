@@ -15,14 +15,14 @@
 
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
-  fSignals = Analyze( anodeSignals->hits );
-  return int(fSignals->size());
+  fAnodeSignals = Analyze( anodeSignals->hits );
+  return int(fAnodeSignals.size());
 }
 
 int Ledge::FindPadTimes(const FeamEvent* padSignals)
 {  
-  fSignals = Analyze( padSignals->hits );
-  return int(fSignals->size());
+  fPadSignals = Analyze( padSignals->hits );
+  return int(fPadSignals.size());
 }
 
 int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double& err)
@@ -48,10 +48,10 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   return 1;
 }
 
-std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
+std::vector<ALPHAg::TWireSignal> Ledge::Analyze(std::vector<Alpha16Channel*> channels)
 {
-  std::vector<ALPHAg::signal>* sanodes = new std::vector<ALPHAg::signal>;
-  sanodes->reserve(channels.size());
+  std::vector<ALPHAg::TWireSignal> sanodes;
+  sanodes.reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
       const Alpha16Channel* ch = channels.at(i);
@@ -69,16 +69,16 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channel
 	      elec.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  sanodes->emplace_back( elec, time, amp, err, true );
+	  sanodes.emplace_back( elec, time, amp, err );
 	}
     }
   return sanodes;
 }
 
-std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
+std::vector<ALPHAg::TPadSignal> Ledge::Analyze(std::vector<FeamChannel*> channels)
 {
-  std::vector<ALPHAg::signal>* spads = new std::vector<ALPHAg::signal>;
-  spads->reserve(channels.size());
+  std::vector<ALPHAg::TPadSignal> spads;
+  spads.reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
       const FeamChannel* ch = channels.at(i);
@@ -106,7 +106,7 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
 	      elec.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  spads->emplace_back( elec, time, amp, err, false );
+	  spads.emplace_back( elec, time, amp, err);
 	}
     }
   return spads;
