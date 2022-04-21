@@ -2,6 +2,7 @@
 #define __SPACEPOINTBUILDER__
 
 #include <vector>
+#include <TClonesArray.h>
 #include "SignalsType.hh"
 #include "TSpacePoint.hh"
 #include "AnaSettings.hh"
@@ -37,6 +38,11 @@ class TSpacePointBuilder
       std::vector<TSpacePoint> &PointsArray,
       double z_fid  = std::numeric_limits<double>::infinity() 
       );
+   void BuildMCSpacePointArray( 
+      const TClonesArray *points,
+      std::vector<TSpacePoint> &PointsArray
+      );
+
 
 };
 
