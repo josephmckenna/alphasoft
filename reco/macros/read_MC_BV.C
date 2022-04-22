@@ -19,7 +19,7 @@ void read_MC_BV::AnalyzeMCinfo()
    //##########################################################
    // histograms
    int nbin = 1000, nbinr = 100;
-   float rlim = 250., zleft = -130., zright = +130.;
+   float rlim = 250., zleft = -160., zright = +160.;
    TH2F *hr = new TH2F("hr", "Antiproton annihilation radius (X vs Y)", nbinr, -rlim, rlim, nbinr, -rlim, rlim);
    hr->SetXTitle("cm"); hr->SetYTitle("cm");
    TH1F *hz = new TH1F("hz", "Antiproton annihilation z", nbin, zleft, zright);

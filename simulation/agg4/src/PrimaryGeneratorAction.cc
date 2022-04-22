@@ -94,13 +94,13 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   mu_plus = G4ParticleTable::GetParticleTable()->FindParticle("mu+");
 
   fMuonGen.SetSkySize({{10000.*mm, 10000.*mm}});
-  fMuonGen.SetSkyCenterPosition({0., 0., 1200.*mm});
+  fMuonGen.SetSkyCenterPosition({0., 0., 1600.*mm});
 
-  fMuonGen.SetHSphereRadius(2450*mm); ///< To cover all the BV bars (H = 2400*mm)
-  fMuonGen.SetHSphereCenterPosition({{0.,0.,-1200.*mm}}); ///< centered at the base of the BV
+  fMuonGen.SetHSphereRadius(3150*mm); ///< To cover all the BV bars (H = 2600*mm)
+  fMuonGen.SetHSphereCenterPosition({{0.,0.,-1300.*mm}}); ///< centered at the base of the BV
 
-  fMuonGen.SetCylinderRadius(250*mm); ///< To cover all the BV bars (R = 250*mm)
-  fMuonGen.SetCylinderHeight(2450*mm); ///< To cover all the BV bars (H = 2400*mm)
+  fMuonGen.SetCylinderRadius(700*mm); ///< To cover all the BV bars (R = 250*mm)
+  fMuonGen.SetCylinderHeight(3150*mm); ///< To cover all the BV bars (H = 2600*mm)
   fMuonGen.SetCylinderCenterPosition({{0.,0.,0.}}); 
 
 //   fMuonGen.SetUseSky();
