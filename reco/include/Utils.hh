@@ -71,13 +71,20 @@ public:
    void Draw(std::vector<ALPHAg::TWireSignal> *awsig, std::vector<ALPHAg::TPadSignal> *padsig, bool norm = true);
 
    template <class T>
-   void PrintSignals(std::vector<T> *sig);
+   void PrintSignals(std::vector<T> *sig)
+{
+   for(auto s: *sig)
+      static_cast<ALPHAg::signal>(s).print();
+}
 
+private: // If these are to be made public, their implementation needs to move into the header
    template <class T>
    TH1D *PlotSignals(std::vector<T> *sig, std::string name);
 
    template <class T>
    TH1D *PlotOccupancy(std::vector<T> *sig, std::string name);
+
+public:
    TH2D *PlotSignals(std::vector<ALPHAg::TWireSignal> *awsignals, std::vector<ALPHAg::TPadSignal> *padsignals,
                      std::string type = "none");
 

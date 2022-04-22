@@ -859,13 +859,7 @@ void Utils::DrawTPCxy(TCanvas* c)
    FWrz->Draw("same");
 }
 
-template<class T>
-void Utils::PrintSignals(std::vector<T>* sig)
-{
-   for(auto s: *sig)
-      static_cast<ALPHAg::signal>(s).print();
-}
-
+// If these template functions are to be used from outside this source file, they must be moved into the header instead
 template<class T>
 TH1D* Utils::PlotSignals(std::vector<T>* sig, std::string name)
 {
@@ -994,7 +988,7 @@ void Utils::Draw(std::vector<ALPHAg::TWireSignal>* awsig, std::vector<ALPHAg::TP
    hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
-
+// If these template functions are to be used from outside this source file, they must be moved into the header instead
 template <class T>
 TH1D* Utils::PlotOccupancy(std::vector<T>* sig, std::string name)
 {
