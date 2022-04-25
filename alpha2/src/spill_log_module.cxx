@@ -477,7 +477,7 @@ public:
          spillLog.close();
 #ifdef HAVE_MIDAS
          char cmd[200]={0};
-         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8080 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
+         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8083 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
          printf("--- Command: \n%s\n", cmd);
          if ( fFlags->fWriteElog )
             system(cmd);
