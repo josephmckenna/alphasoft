@@ -1,8 +1,8 @@
 #!/bin/bash
 
 case `hostname` in
-alphadaq*)
-    echo "Good, we are on alphadaq"
+alphasuperdaq*)
+    echo "Good, we are on alphasuperdaq"
     ;;
 *)
     echo "The start_daq script should be executed on alphadaq"

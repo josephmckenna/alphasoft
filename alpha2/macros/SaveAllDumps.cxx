@@ -2,6 +2,8 @@
 #include "PlotGetters.h"
 #include "TSISChannels.h"
 
+#include <vector>
+
 void SaveAllDumps(int runNumber)
 {
    std::vector<TA2Spill> all = Get_A2_Spills(runNumber,{"*"},{-1});
@@ -13,7 +15,7 @@ void SaveAllDumps(int runNumber)
          "CT_SiPM2",
          "CT_SiPM_OR",
          "CT_SiPM_AND"};
-   std::vector<int> chans;
+   std::vector<TSISChannel> chans;
    for (std::string channel_name: detector_channels)
    {
       TSISChannels* sisch = new TSISChannels(runNumber);
@@ -32,11 +34,11 @@ void SaveAllDumps(int runNumber)
       std::map<std::string,int> dumpIndex_counter;
     
       TSISChannels* sisch = new TSISChannels(runNumber);
-      int ch = sisch->GetChannel(channel_name.c_str());
+      TSISChannel ch = sisch->GetChannel(channel_name.c_str());
       delete sisch;
 
       std::cout<<channel_name <<"\tis sis channel\t"<<ch<<std::endl;
-      if (ch<0)
+      if (!ch.IsValid())
          continue;
       
       for (int j = 0; j < all.size(); j++)
@@ -52,12 +54,12 @@ void SaveAllDumps(int runNumber)
             std::cout<<s.Name << " has no scaler data (its an information dump...) skipping plot" <<std::endl;
             continue;
          }
-         if (!s.ScalerData->DetectorCounts.at(ch))
+         if (!s.ScalerData->DetectorCounts.at(ch.toInt()))
          {
             std::cout<<s.Name << " has no counts in channel " << ch<<" ... skipping plot" <<std::endl;
             continue;
          }
-         std::string dump_name = s.GetSequenceName() + "_" + s.Name + "_" + std::to_string(dumpIndex_counter[s.GetSequenceName() + "_" + s.Name]++);         std::string dump_name = s.GetSequenceName() + "_" + s.Name + "_" + std::to_string(repetition_counter[s.GetSequenceName() + "_" + s.Name]++);         
+         std::string dump_name = s.GetSequenceName() + "_" + s.Name + "_" + std::to_string(dumpIndex_counter[s.GetSequenceName() + "_" + s.Name]++);
          // Remove quote marks... they upset uploading to elog
          dump_name.erase(std::remove(dump_name.begin(), dump_name.end(), '"'), dump_name.end());
          std::cout << "dump_name:"<< channel_name << "/"<< dump_name <<std::endl;
