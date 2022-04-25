@@ -1300,6 +1300,8 @@ void PHistImage::DrawSelf()
             } else {
                 SetForeground(TEXT_COL);
             }
+            printf("DrawString(x2,y1+HIST_LABEL_Y,%s,kTextAlignTopRight)\n", mLabel);
+
             DrawString(x2,y1+HIST_LABEL_Y,mLabel,kTextAlignTopRight);
         }
     }

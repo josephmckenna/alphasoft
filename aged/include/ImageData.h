@@ -154,12 +154,13 @@ struct ImageData : AgedResource {
     int             mNext;              // true to step to next event (exit event loop)
 
     TStoreEvent   * agEvent;            // the event we are displaying
-    AgAnalysisFlow* anaFlow;            // the analysis flow
+    // AgAnalysisFlow* anaFlow;            // the analysis flow
     AgSignalsFlow * sigFlow;            // the signals flow
     AgEvent*        age;                // ALPHAg event (ADC data)
     Widget          toplevel;           // top level Aged widget
     SpacePoints     hits;               // tube hit information
-    AgBarEventFlow* barFlow;
+    // AgBarEventFlow* barFlow;
+    TBarEvent*      barEvent;
     BarPoints       barhits;            // BV hit information
     
     Node            sun_dir;            // direction to sun

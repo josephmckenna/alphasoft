@@ -301,10 +301,11 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
         calcBarVals(data);
 
         data->agEvent = anEvent;
-        data->anaFlow = anaFlow;
+        // data->anaFlow = anaFlow;
         data->sigFlow = sigFlow;
         data->age     = age;
-        data->barFlow = barFlow;
+        // data->barFlow = barFlow;
+        data->barEvent = barFlow->BarEvent;
         data->run_number = runinfo->fRunNo;
         data->event_id = anEvent->GetEventNumber();
     
@@ -350,6 +351,162 @@ TAFlags* Aged::ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* s
     data->mNext = 0;
     return flags;
 }
+
+#if 0
+// Show ALPHA-g event in the display
+TAFlags* Aged::ShowEvent(TStoreEvent &evt, TBarEvent &barevt, TAFlags* flags, TARunInfo* runinfo)
+{
+    ImageData *data = fData;
+
+    if (data) clearEvent(data);
+
+    if (data) {
+        PEventControlWindow *pe_win = (PEventControlWindow *)data->mWindow[EVT_NUM_WINDOW];
+        if (pe_win) {
+            pe_win->Show();
+        } else {
+            data->mMainWindow->CreateWindow(EVT_NUM_WINDOW);
+        }
+        if (data->trigger_flag == TRIGGER_SINGLE) {
+            setTriggerFlag(data,TRIGGER_OFF);
+        }
+
+        // copy the space point XYZ positions into our Node array
+        const TObjArray *points = evt.GetSpacePoints();
+        if (points) {
+            int num = points->GetEntries();
+            Node *node = (Node *)XtMalloc(num*sizeof(Node));
+            if (!node) {
+                printf("Out of memory!\n");
+                return flags;
+            }
+            data->hits.hit_info  = (HitInfo *)XtMalloc(num*sizeof(HitInfo));
+            if (!data->hits.hit_info) {
+                printf("Out of memory!\n");
+                free(node);
+                return flags;
+            }
+            data->hits.nodes = node;
+            data->hits.num_nodes = num;
+            memset(data->hits.hit_info, 0, num*sizeof(HitInfo)); 
+            memset(node, 0, num*sizeof(Node));
+            HitInfo *hi = data->hits.hit_info;
+            for (int i=0; i<num; ++i, ++node, ++hi) {
+                TSpacePoint* spi = (TSpacePoint*)points->At(i);
+                node->x3 = spi->GetX() / AG_SCALE;
+                node->y3 = spi->GetY() / AG_SCALE;
+                node->z3 = spi->GetZ() / AG_SCALE;
+                hi->wire = spi->GetWire();
+                hi->pad = spi->GetPad();
+                hi->time = spi->GetTime();
+                hi->wireheight = spi->GetWireHeight();
+                hi->padheight = spi->GetWireHeight();
+                hi->error[0] = spi->GetErrX();
+                hi->error[1] = spi->GetErrY();
+                hi->error[2] = spi->GetErrZ();
+                hi->index = i;
+                if (std::isnan(hi->time)) hi->time = -1;
+                if (std::isnan(hi->padheight)) hi->padheight = -1;
+                if (std::isnan(hi->wireheight)) hi->wireheight = -1;
+            }
+        }
+        
+
+          std::vector<BarHit*> bars=barevt.GetBars();
+          if (bars.size())
+          {
+            int num = bars.size();
+            Node *barnode = (Node *)XtMalloc(num*sizeof(Node));
+            if (!barnode) {
+                printf("Out of memory!\n");
+                return flags;
+            }
+            data->barhits.bar_info  = (BarInfo *)XtMalloc(num*sizeof(BarInfo));
+            if (!data->barhits.bar_info) {
+                printf("Out of memory!\n");
+                free(barnode);
+                return flags;
+            }
+            data->barhits.nodes = barnode;
+            data->barhits.num_nodes = num;
+            double MeanTDC=0.; int GoodTDC=0;
+            memset(data->barhits.bar_info, 0, num*sizeof(BarInfo)); 
+            memset(barnode, 0, num*sizeof(Node));
+            BarInfo *bi = data->barhits.bar_info;
+            for (int i=0; i<num; ++i, ++barnode, ++bi) {
+                BarHit* bar=bars.at(i);
+                double x,y;
+                bar->GetXY(x,y);
+                barnode->x3 = x;// /AG_SCALE;
+                barnode->y3 = y; // /AG_SCALE;
+                barnode->z3 = bar->GetTDCZed();// /AG_SCALE;
+                bi->ADCtop = bar->GetAmpTop();
+                bi->ADCbot = bar->GetAmpBot();
+                bi->TDCtop = bar->GetTDCTop();
+                bi->TDCbot = bar->GetTDCBot();
+                bi->index = bar->GetBar();
+                if (fabs(bar->GetTDCZed())<2.) //If TDC Z data in range of TPC
+                {
+                   double tdc=(bar->GetTDCTop()+bar->GetTDCBot())/2.;
+                   //std::cout<<"TDC:"<<tdc<<"  z:"<<bar.GetTDCZed()<<std::endl;
+                   MeanTDC+=tdc;
+                   GoodTDC++;
+                }
+            }
+            data->barhits.meantdc = MeanTDC/double(GoodTDC);
+          }
+        }
+        /* calculate the hit colour indices */
+        calcHitVals(data);
+        calcBarVals(data);
+
+        data->agEvent = &evt;
+        data->run_number = runinfo->fRunNo;
+        data->event_id = evt.GetEventNumber();
+    
+        sendMessage(data, kMessageNewEvent);
+
+        if (data->trigger_flag == TRIGGER_CONTINUOUS) {
+            long delay = (long)(data->time_interval );
+            XtAppAddTimeOut(data->the_app, delay, (XtTimerCallbackProc)do_next, data);
+        }
+        if (data->trigger_flag == TRIGGER_QUIT) {
+             if (!flags) flags=new TAFlags();
+            *flags=TAFlag_QUIT;
+            return flags;
+        }
+    }
+    // main event loop
+    while (data && data->mMainWindow!=NULL && !data->mNext) {
+        if (!data->the_app) return flags;
+        XEvent theEvent;
+        XtAppNextEvent(data->the_app, &theEvent);
+        // fast-forward to most recent pointer motion event (avoids
+        // falling behind current mouse position if drawing is slow)
+        if (theEvent.type == MotionNotify) {
+            while (XCheckTypedEvent(data->display, MotionNotify, &theEvent)) { }
+        }
+        if ( theEvent.type == ClientMessage) //X11 command...
+        {
+           XClientMessageEvent* e=(XClientMessageEvent*)&theEvent;
+           //std::cout<<e->message_type<<std::endl;
+           if (e->message_type==303)  //Click on X (close)
+           {
+              if (!flags) flags=new TAFlags();
+             *flags=TAFlag_QUIT; //Call end run
+             return flags;
+           }
+        }
+
+        // dispatch the X event
+        dispatchEvent(&theEvent);
+        // update windows now if necessary (but only after all X events have been dispatched)
+        if (!XPending(data->display)) PWindow::HandleUpdates();
+    }
+    data->mNext = 0;
+    return flags;
+}
+#endif
 
 #ifdef BUILD_AG_SIM
 int Aged::ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals)

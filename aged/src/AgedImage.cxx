@@ -716,8 +716,8 @@ void AgedImage::DrawSelf()
 ** Draw bar space points
 */
 
-    AgBarEventFlow* bf = data->barFlow;
-    TBarEvent* b = bf->BarEvent;
+    // AgBarEventFlow* bf = data->barFlow;
+    TBarEvent* b = data->barEvent;
     std::vector<BarHit*> bars=b->GetBars();
     if (bars.size() > 0 && data->wSpStyle != IDM_SP_NONE) {
         num = bars.size();

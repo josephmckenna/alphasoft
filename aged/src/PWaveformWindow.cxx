@@ -447,11 +447,13 @@ void PWaveformWindow::UpdateSelf()
                 }
             }
             if (buff[0]) {
+                printf("A %s\n", buff);
                 if (!mHist[i]->GetLabel() || strcmp(buff, mHist[i]->GetLabel())) {
                     mHist[i]->SetLabel(buff);
                     mHist[i]->SetDirty();
                 }
             } else if (mHist[i]->GetLabel()) {
+                printf("B %s\n", mHist[i]->GetLabel());
                 mHist[i]->SetLabel(NULL);
                 mHist[i]->SetDirty();
             }
