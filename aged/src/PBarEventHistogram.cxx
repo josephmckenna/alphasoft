@@ -88,7 +88,7 @@ void PBarEventHistogram::MakeHistogram()
     ImageData   *data = mOwner->GetData();
     int         i,n,num,slab;
     long        max;
-    BarInfo     *bi  = data->barhits.bar_info;
+    BarInfo     *bi  = data->barpoints.bar_info;
     long        bit_mask;
     long        nbin = data->hist_bins;
     float       val, first, last, range;
@@ -127,7 +127,7 @@ void PBarEventHistogram::MakeHistogram()
     memset(mHistogram, 0, nbin * sizeof(long));
     memset(mOverlay[0], 0, nbin * sizeof(long));
     
-    num = data->barhits.num_nodes;
+    num = data->barpoints.num_nodes;
     max = 0;
     incr = 1;
     

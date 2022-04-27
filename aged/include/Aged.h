@@ -18,17 +18,19 @@ class TARunInfo;
 class PWindow;
 struct ImageData;
 
-class Aged
-{
+class Aged {
 public:
-    Aged();
-    ~Aged();
-    
-    TAFlags* ShowEvent(AgEvent* age, AgAnalysisFlow* anaFlow, AgSignalsFlow* sigFlow, AgBarEventFlow* barFlow, TAFlags* flags, TARunInfo* runinfo);
+   Aged();
+   ~Aged();
+
+//    TAFlags *ShowEvent(AgEvent *age, AgAnalysisFlow *anaFlow, AgSignalsFlow *sigFlow, AgBarEventFlow *barFlow,
+//                       TAFlags *flags, TARunInfo *runinfo);
+   TAFlags *ShowEvent(TStoreEvent &evt, const std::vector<BarHit *> &bars, const std::vector<ALPHAg::wf_ref> &AWwf,
+                      const std::vector<ALPHAg::wf_ref> &PADwf, long runNo = 0, TAFlags *flags = nullptr);
 #ifdef BUILD_AG_SIM
-    int ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals);
+//    int ShowEvent(TStoreEvent &evt, TClonesArray *awSignals, TClonesArray *padSignals, TClonesArray *barSignals);
 #endif
 private:
-    ImageData   *fData;
-    PWindow     *fWindow;
+   ImageData *fData;
+   PWindow *  fWindow;
 };
