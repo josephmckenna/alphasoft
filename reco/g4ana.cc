@@ -13,6 +13,8 @@
 #include "fileutility.hh"
 #include "ProcessEvents.hh"
 
+#include "AGRoot2STL.h"
+
 #include "AnaSettings.hh"
 #include "Reco.hh"
 
@@ -197,8 +199,8 @@ int main(int argc, char **argv)
       if (aged) {
          TStoreEvent                 ev = proc.GetStoreEvent();
          std::vector<BarHit *>       bars;
-         std::vector<ALPHAg::wf_ref> AWwf;
-         std::vector<ALPHAg::wf_ref> PADwf;
+         std::vector<ALPHAg::wf_ref> AWwf = ConvertWaveformArray(AWsignals);
+         std::vector<ALPHAg::wf_ref> PADwf = ConvertWaveformArray(PADsignals);
          aged->ShowEvent(ev, bars, AWwf, PADwf);
       }
    } // events loop
