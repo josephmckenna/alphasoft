@@ -354,7 +354,8 @@ void ProcessEvents::Finish(TClonesArray* garfpp_hits, TClonesArray* aw_hits)
 
 TStoreEvent ProcessEvents::GetStoreEvent()
 {
-   return u.CreateStoreEvent(&PointsArray, &HelixArray, &LineArray);
+   TStoreEvent sevt = u.CreateStoreEvent(&PointsArray, &HelixArray, &LineArray);
+   return sevt;
 }
 void ProcessEvents::End()
 {

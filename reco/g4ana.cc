@@ -20,6 +20,15 @@
 
 #include "Aged.h"
 
+typedef int TAFlags;
+
+#define TAFlag_OK          0
+#define TAFlag_SKIP    (1<<0)
+#define TAFlag_QUIT    (1<<1)
+#define TAFlag_WRITE   (1<<2)
+#define TAFlag_DISPLAY (1<<3)
+#define TAFlag_SKIP_PROFILE (1<<4)
+
 int main(int argc, char **argv)
 {
    // make a new ArgumentParser
@@ -190,19 +199,26 @@ int main(int argc, char **argv)
 
       proc.ProcessVertex(mcvtx);
 
+      bool theEnd = false;
+      if (aged) {
+         TStoreEvent                 ev = proc.GetStoreEvent();
+         TAFlags flags;
+         if(ev.GetNumberOfPoints()){
+         std::vector<BarHit *>       bars;
+         std::vector<ALPHAg::wf_ref> AWwf = ConvertWaveformArray(AWsignals);
+         std::vector<ALPHAg::wf_ref> PADwf = ConvertWaveformArray(PADsignals);
+         aged->ShowEvent(ev, bars, AWwf, PADwf, 0, &flags);
+         theEnd = (flags == TAFlag_QUIT);
+         }
+      }
+
       if (tGarf) {
          tGarf->GetEntry(i);
          proc.Finish(garfpp_hits, aw_hits);
          if (enableMC) proc.ProcessMonteCarlo(aw_hits, mcvtx);
       } else
          proc.Finish();
-      if (aged) {
-         TStoreEvent                 ev = proc.GetStoreEvent();
-         std::vector<BarHit *>       bars;
-         std::vector<ALPHAg::wf_ref> AWwf = ConvertWaveformArray(AWsignals);
-         std::vector<ALPHAg::wf_ref> PADwf = ConvertWaveformArray(PADsignals);
-         aged->ShowEvent(ev, bars, AWwf, PADwf);
-      }
+      if(theEnd) break;
    } // events loop
 
    proc.End();

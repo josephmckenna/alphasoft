@@ -481,6 +481,7 @@ void Utils::PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
    int Npoints = points->GetEntries();
    std::cout<<"[utils]#  GarfHits --> "<<Npoints<<std::endl;
+   if(!Npoints) return;
    TGraph* gxy = new TGraph(Npoints);
    gxy->SetMarkerStyle(6);
    gxy->SetMarkerColor(kGreen+2);

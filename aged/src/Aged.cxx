@@ -368,9 +368,11 @@ TAFlags *Aged::ShowEvent(TStoreEvent &evt, const std::vector<BarHit *> &bars, co
 
       // copy the space point XYZ positions into our Node array
       const TObjArray *points = evt.GetSpacePoints();
+      std::cout << "points: " << points << std::endl;
       if (points) {
          int   num  = points->GetEntries();
-         Node *node = (Node *)XtMalloc(num * sizeof(Node));
+       std::cout << num << " points" << std::endl;
+        Node *node = (Node *)XtMalloc(num * sizeof(Node));
          if (!node) {
             printf("Out of memory!\n");
             return flags;
