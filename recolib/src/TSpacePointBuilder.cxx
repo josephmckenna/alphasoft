@@ -1,5 +1,4 @@
 #include "TSpacePointBuilder.hh"
-#include "TMChit.hh"
 
 TSpacePointBuilder::TSpacePointBuilder(std::string json, double B, bool trace)
    : fMagneticField(B), fTrace(trace), fLocation("CERN"), f_rfudge(1.), f_pfudge(1.)
@@ -69,6 +68,7 @@ void TSpacePointBuilder::BuildSpacePointArray(
    if (fTrace) std::cout << "Reco::AddSpacePoint # entries: " << PointsArray.size() << std::endl;
 }
 
+#ifdef BUILD_AG_SIM
 void TSpacePointBuilder::BuildMCSpacePointArray(const TClonesArray *points, std::vector<TSpacePoint> &PointsArray)
 {
    int Npoints = points->GetEntries();
@@ -104,3 +104,4 @@ void TSpacePointBuilder::BuildMCSpacePointArray(const TClonesArray *points, std:
          PointsArray.push_back(point);
       }
 }
+#endif

@@ -1,5 +1,7 @@
 #include "AGRoot2STL.h"
-#include "TWaveform.hh"
+
+
+#ifdef BUILD_AG_SIM
 
 std::vector<ALPHAg::wf_ref> ConvertWaveformArray(TClonesArray *wfarray)
 {
@@ -34,3 +36,5 @@ std::vector<ALPHAg::wf_ref> ConvertWaveformArray(TClonesArray *wfarray)
 
    return wfvec;
 }
+
+#endif
