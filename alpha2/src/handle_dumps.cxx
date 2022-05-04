@@ -271,7 +271,7 @@ public:
 
 
       double LNE0 = -1.;
-      double LNE5 = -1.;
+      //double LNE5 = -1.;
       uint32_t unixtime = -1;
       if (GEMFlow)
       {
@@ -283,8 +283,8 @@ public:
             if (bank->GetVariableName() == "LNEAPULB0030")
                LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
             //LNE5
-            if (bank->GetVariableName() == "LNEAPULB5030")
-               LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
+            //if (bank->GetVariableName() == "LNEAPULB5030")
+               //LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
          }
       }
 
@@ -305,25 +305,30 @@ public:
                   LNE0 = *(bank->GetFirstDataEntry()->DATA(0));
                }
                //LNE5
-               if (bank->GetVariableName() == "LNEAPULB5030")
-               {
-                  LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
-               }
+               //if (bank->GetVariableName() == "LNEAPULB5030")
+               //{
+               //   LNE5 = *(bank->GetFirstDataEntry()->DATA(0));
+               //}
             }
             bank = (GEMBANK<float>*) array->GetGEMBANK(++bank_no);
          }
       }
-      if (LNE0 > 0 || LNE5 > 0)
+      if (LNE0 > 0 )//|| LNE5 > 0)
       {
          
-         std::string ELENA_STRING = std::string("LNE0: ") + std::to_string(LNE0) + std::string("\tLNE5: ") + std::to_string(LNE5);
+
          TA2Spill* elena = NULL;
+#if 1
+         elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E ",LNE0 * 1E6);
+#else
+         std::string ELENA_STRING = std::string("LNE0: ") + std::to_string(LNE0) + std::string("\tLNE5: ") + std::to_string(LNE5);
          if (LNE0 > 0 && LNE5 > 0)
             elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E \t LNE5: %.2E	",LNE0 * 1E6,LNE5 * 1E6);
          else if (LNE0 > 0)
             elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> LNE0: %.2E ",LNE0 * 1E6);
          else if (LNE5 > 0)
             elena = new TA2Spill(runinfo->fRunNo,unixtime,"---------------------> \t\t\tLNE5: %.2E ",LNE5 * 1E6);
+#endif
          if (elena)
             f->spill_events.push_back(elena);
          //std::cout << "DATA" << LNE0 << "\t" << LNE5 << std::endl;
