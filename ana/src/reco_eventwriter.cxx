@@ -103,7 +103,21 @@ public:
 
       // prepare event to store in TTree
       analyzed_event = af->fEvent;
-      if (analyzed_event)
+      if (!analyzed_event)
+         return flow;
+      // save a copy of the barell scrintillator hits
+      AgBarEventFlow *bef = flow->Find<AgBarEventFlow>();
+      if( !bef || !bef->BarEvent )
+      {
+         std::cerr<<"RecoRun::AnalyzeFlowEvent no BSC event found"<<std::endl;
+      }
+      else
+      {
+         if( bef->BarEvent->GetNBars() <= 0 )
+            if( fTrace )
+               std::cout<<"RecoRun::AnalyzeFlowEvent no BSC hits found"<<std::endl;
+         analyzed_event->AddBarrelHits(bef->BarEvent);
+      }
       {
          std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
          EventTree->SetBranchAddress("StoredEvent", &analyzed_event);
