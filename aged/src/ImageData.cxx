@@ -149,12 +149,12 @@ void clearEvent(ImageData *data)
         free(data->hits.hit_info);
         data->hits.hit_info = NULL;
     }
-    if (data->barhits.num_nodes) {
-        data->barhits.num_nodes = 0;
-        free(data->barhits.nodes);
-        data->barhits.nodes = NULL;
-        free(data->barhits.bar_info);
-        data->barhits.bar_info = NULL;
+    if (data->barpoints.num_nodes) {
+        data->barpoints.num_nodes = 0;
+        free(data->barpoints.nodes);
+        data->barpoints.nodes = NULL;
+        free(data->barpoints.bar_info);
+        data->barpoints.bar_info = NULL;
     }
     data->cursor_hit = -1;
     data->run_number = 0;
@@ -231,7 +231,7 @@ float getHitVal(ImageData *data, BarInfo *bi)
     
     switch (data->wDataType) {
         case IDM_TIME:
-            val = (bi->TDCtop +  bi->TDCbot)/2. - data->barhits.meantdc;
+            val = (bi->TDCtop +  bi->TDCbot)/2. - data->barpoints.meantdc;
             break;
         case IDM_HEIGHT:
             val = (bi->ADCtop + bi->ADCbot)/2.;
@@ -313,8 +313,8 @@ void calcBarVals(ImageData *data)
     long    ncols;
     
     //Bar hits
-    BarInfo* bi = data->barhits.bar_info;
-    int bn = data->barhits.num_nodes;
+    BarInfo* bi = data->barpoints.bar_info;
+    int bn = data->barpoints.num_nodes;
     PBarEventHistogram::GetBins(data, &first, &last);
     range = last - first;
     ncols = data->num_cols - 2;

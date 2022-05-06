@@ -176,12 +176,12 @@ TSpacePoint::TSpacePoint(double x, double y, double z,
     fr = TMath::Sqrt(fx*fx+fy*fy);
 }
 
-double TSpacePoint::MeasureRad(TSpacePoint* aPoint) const
+double TSpacePoint::MeasureRad(const TSpacePoint* aPoint) const
 {
   return TMath::Abs(fr-aPoint->fr);
 }
 
-double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
+double TSpacePoint::MeasurePhi(const TSpacePoint* aPoint) const
 {
   double dist=ALPHAg::kUnknown,
     phi1=fphi,phi2=aPoint->fphi;
@@ -195,7 +195,7 @@ double TSpacePoint::MeasurePhi(TSpacePoint* aPoint) const
   return dist;
 }
 
-double TSpacePoint::MeasureZed(TSpacePoint* aPoint) const
+double TSpacePoint::MeasureZed(const TSpacePoint* aPoint) const
 {
   return TMath::Abs(fz-aPoint->fz);
 }
@@ -224,7 +224,7 @@ int TSpacePoint::Compare(const TObject* aPoint) const
 //   else return 0;
 // }
 
-bool TSpacePoint::RadiusOrder(TSpacePoint* ip, TSpacePoint* jp)
+bool TSpacePoint::RadiusOrder(const TSpacePoint* ip,const  TSpacePoint* jp)
 {
   return ip->fr < jp->fr;
 }
@@ -273,7 +273,7 @@ void TSpacePoint::Print(Option_t* opt) const
 	   <<"on anode: "<<std::setw(5)<<std::left<<fw
 	   <<" V = "<<std::setw(5)<<std::left<<fHw
 	   <<" pad "<<std::setw(5)<<std::left<<fp
-     <<" V = "<<std::setw(5)<<std::left<<fHp<<std::endl;
+	   <<" V = "<<std::setw(5)<<std::left<<fHp<<std::endl;
   if( !strcmp(opt,"xy") )
     {
       std::cout<<"\t(x,y,z) = ("
@@ -302,10 +302,8 @@ void TSpacePoint::Print(Option_t* opt) const
 ClassImp(TSpacePoint)
 
 
-int SpacePointCompare(const void* a_, const void* b_)
+int SpacePointCompare(const void* a, const void* b)
 {
-   TSpacePoint* a = *(TSpacePoint**)a_;
-   TSpacePoint* b = *(TSpacePoint**)b_;
    if (a == 0 && b == 0) return 0;
    if (a == 0) return 1;
    if (b == 0) return -1;

@@ -6,7 +6,7 @@
 
 #include "AnaSettings.hh"
 
-#include "Deconv.hh"
+#include "DeconvPAD.h"
 
 class DeconvPadFlags
 {
@@ -26,35 +26,45 @@ public:
 
    bool fPWBnorm = false;
    bool fTrace = false;
+
+   const int fThreadNo;
+   const int fThreadCount;
    
 public:
-   DeconvPadFlags() // ctor
-   { }
+   DeconvPadFlags(const int threadNo, const int threadCount):
+      fThreadNo(threadNo), fThreadCount(threadCount) // ctor
+   {
+
+   }
 
    ~DeconvPadFlags() // dtor
    { }
 };
 
 
+
 class DeconvPADModule: public TARunObject
 {
 public:
    DeconvPadFlags* fFlags = 0;
-   bool fTrace=false;
+   bool fTrace = false;
    int fCounter = 0;
 
 private:
-   Deconv d;
+   DeconvPAD d;
   
 public:
 
    DeconvPADModule(TARunInfo* runinfo, DeconvPadFlags* f): TARunObject(runinfo),
-                                                           fFlags(f),
-                                                           d( f->ana_settings )
-      
+                                                         fFlags(f),
+                                                         d( f->ana_settings )
    {
 #ifdef HAVE_MANALYZER_PROFILER
-      fModuleName="DeconvPADModule";
+      fModuleName = std::string("DeconvPADModule (") + 
+                    std::to_string(fFlags->fThreadNo) + 
+                    std::string("/") + 
+                    std::to_string(fFlags->fThreadCount) +
+                    std::string(")");
 #endif
       if (fTrace)
          printf("DeconvPADModule::ctor!\n");
@@ -71,7 +81,7 @@ public:
       if (fTrace)
          printf("BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       fCounter = 0;
-
+      d.SetTrace(fFlags->fTrace);
       d.SetupPWBs( runinfo->fRoot->fOutputFile,
                    runinfo->fRunNo, 
                    fFlags->fPWBnorm,   // dis/en-able normalization of WF
@@ -101,67 +111,60 @@ public:
          printf("ResumeRun, run %d\n", runinfo->fRunNo);
    }
 
+   bool SkipAnalysis(const AgEvent* e) const
+   {
+      if (!e)
+         return true;
+      if (fFlags->fTimeCut)
+      {
+         if (e->time < fFlags->start_time)
+         {
+            return true;
+         }
+         if (e->time > fFlags->stop_time)
+         {
+            return true;
+         }
+      }
+
+      if (fFlags->fEventRangeCut)
+      {
+         if (e->counter < fFlags->start_event)
+         {
+            return true;
+         }
+      
+         if (e->counter > fFlags->stop_event)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       // turn off recostruction
       if (fFlags->fRecOff)
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
       if(fTrace)
          printf("DeconvPADModule::Analyze, run %d, counter %d\n",
                 runinfo->fRunNo, fCounter);
       const AgEventFlow* ef = flow->Find<AgEventFlow>();
-
-      if (!ef || !ef->fEvent)
+      if (!ef )
       {
-#ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
-#endif
          return flow;
       }
-
       const AgEvent* e = ef->fEvent;
-      if (fFlags->fTimeCut)
+      if (SkipAnalysis(e))
       {
-         if (e->time<fFlags->start_time)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
             *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-         if (e->time>fFlags->stop_time)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
+            return flow;         
       }
-
-      if (fFlags->fEventRangeCut)
-      {
-         if (e->counter<fFlags->start_event)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-      
-         if (e->counter>fFlags->stop_event)
-         {
-#ifdef HAVE_MANALYZER_PROFILER
-            *flags|=TAFlag_SKIP_PROFILE;
-#endif
-            return flow;
-         }
-      }
-
       AgSignalsFlow* flow_sig = flow->Find<AgSignalsFlow>();
       if( !flow_sig ) 
          {
@@ -178,21 +181,30 @@ public:
          }
       else
          {
-             int stat = d.FindPadTimes(pwb);
-             if(fTrace) printf("DeconvPADModule::AnalyzeFlowEvent() status: %d\n",stat);
-             if( stat > 0 ) flow_sig->AddPadSignals(d.GetPadSignal());
-
-             if( fFlags->fDiag )
-               {
-                  //d.PADdiagnostic();
-                  flow_sig->AddPwbPeaks( d.GetPWBPeaks() );
-                  //                  flow_sig->pwbRange = d.GetPwbRange();
-               }
-
-             if( !fFlags->fBatch ) flow_sig->AddPADWaveforms( d.GetPADwaveforms() );
+             // The first thread builds containers
+             if ( fFlags->fThreadNo == 1)
+             {
+                flow_sig->PadWaves.clear();
+                flow_sig->PadIndex.clear();
+                d.BuildWFContainer(pwb,flow_sig->PadWaves,flow_sig->PadIndex, flow_sig->PADwf,flow_sig->pwbMax);
+             }
+             // Deconvolution is split over the remaining fFlags->fThreadCount threads
+             if (flow_sig->PadWaves.size())
+             {
+                // If I am the first thread and only thread... do the whole range
+                if ( fFlags->fThreadNo == 1 && fFlags->fThreadCount == 1)
+                   d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo, fFlags->fThreadCount );
+                // Else split the work over the remaining threads
+                else if (fFlags->fThreadNo != 1)
+                   d.Deconvolution(flow_sig->PadWaves, flow_sig->PadIndex, flow_sig->pdSig, fFlags->fThreadNo - 1, fFlags->fThreadCount - 1 );              
+             }
+             if (fFlags->fTrace)
+                std::cout <<"Deconv::FindPadTimes " << flow_sig->pdSig.size() << " found\n";
+             //Final thread logs the remainder
+             if ( fFlags->fThreadNo == fFlags->fThreadCount)
+                d.LogDeconvRemaineder(flow_sig->PadWaves);
+             ++fCounter;
          }
-      ++fCounter;
-      //d.Reset();
       return flow;
    }
 
@@ -214,11 +226,17 @@ public:
    {
       printf("DeconvPADModuleFactory::Help!\n");
       printf("\t--recoff     Turn off reconstruction\n");
+      printf("\t--wfnorm     Normalize all waveforms from rescale file\n");
       printf("\t--pwbnorm    Normalize PWB waveforms from rescale file\n");
    }
    void Usage()
    {
       Help();
+   }
+   DeconvPADModuleFactory(int threadNo, int totalThreadCount):
+      fFlags(threadNo,totalThreadCount)
+   {
+      
    }
    void Init(const std::vector<std::string> &args)
    {    
@@ -280,8 +298,38 @@ public:
    }
 };
 
-static TARegister tar(new DeconvPADModuleFactory);
-
+#if N_PAD_DECONV_THREADS==1
+static TARegister tar_1_1(new DeconvPADModuleFactory(1,1));
+#elif N_PAD_DECONV_THREADS==2
+static TARegister tar_1_2(new DeconvPADModuleFactory(1,2));
+static TARegister tar_2_2(new DeconvPADModuleFactory(2,2));
+#elif N_PAD_DECONV_THREADS==3
+static TARegister tar_1_3(new DeconvPADModuleFactory(1,3));
+static TARegister tar_2_3(new DeconvPADModuleFactory(2,3));
+static TARegister tar_3_3(new DeconvPADModuleFactory(3,3));
+#elif N_PAD_DECONV_THREADS==4
+static TARegister tar_1_4(new DeconvPADModuleFactory(1,4));
+static TARegister tar_2_4(new DeconvPADModuleFactory(2,4));
+static TARegister tar_3_4(new DeconvPADModuleFactory(3,4));
+static TARegister tar_4_4(new DeconvPADModuleFactory(4,4));
+#elif N_PAD_DECONV_THREADS==5
+static TARegister tar_1_5(new DeconvPADModuleFactory(1,5));
+static TARegister tar_2_5(new DeconvPADModuleFactory(2,5));
+static TARegister tar_3_5(new DeconvPADModuleFactory(3,5));
+static TARegister tar_4_5(new DeconvPADModuleFactory(4,5));
+static TARegister tar_5_5(new DeconvPADModuleFactory(5,5));
+#elif N_PAD_DECONV_THREADS==8
+static TARegister tar_1_8(new DeconvPADModuleFactory(1,8));
+static TARegister tar_2_8(new DeconvPADModuleFactory(2,8));
+static TARegister tar_3_8(new DeconvPADModuleFactory(3,8));
+static TARegister tar_4_8(new DeconvPADModuleFactory(4,8));
+static TARegister tar_5_8(new DeconvPADModuleFactory(5,8));
+static TARegister tar_6_8(new DeconvPADModuleFactory(6,8));
+static TARegister tar_7_8(new DeconvPADModuleFactory(7,8));
+static TARegister tar_8_8(new DeconvPADModuleFactory(8,8));
+#else
+#error ***Unsupported number of threads for pad deconvolution***
+#endif
 /* emacs
  * Local Variables:
  * tab-width: 8

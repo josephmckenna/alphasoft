@@ -10,7 +10,7 @@
 #include "TObject.h"
 #include "TObjArray.h"
 #include "TVector3.h"
-
+#include "TPCconstants.hh"
 #include "TFitHelix.hh"
 
 class TStoreHelix : public TObject
@@ -54,8 +54,8 @@ private:
 
 public:
   TStoreHelix();
-  TStoreHelix(TFitHelix*, const std::vector<TSpacePoint*>*);
-  TStoreHelix(TFitHelix*);
+  TStoreHelix(const TFitHelix*, const std::vector<TSpacePoint>*);
+  TStoreHelix(const TFitHelix*);
   virtual ~TStoreHelix();  // destructor
 
   TStoreHelix( const TStoreHelix& );
@@ -110,7 +110,7 @@ public:
 
   TVector3 GetResidual() const                   { return fResidual; }
   std::vector<double> GetResidualsVector() const { return fResiduals; }
-  double GetResidualsSquared()                   { return fResiduals2; }
+  double GetResidualsSquared() const              { return fResiduals2; }
   void SetResidual(TVector3 r)                    { fResidual=r; }
   void SetResidualsVector(std::vector<double>& r) { fResiduals=r; }
   void SetResidualsSquared(double rq)             { fResiduals2=rq; }

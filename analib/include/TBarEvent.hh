@@ -53,6 +53,25 @@ public:
   virtual void Print();
   virtual ~EndHit(); // dtor
 
+  EndHit(const EndHit& h):
+     fBarID(h.fBarID),
+    fTDCTime(h.fTDCTime),
+    fADCTime(h.fADCTime),
+    fAmp(h.fAmp),
+    fAmpRaw(h.fAmpRaw),
+    fTDCMatched(h.fTDCMatched)
+  {
+  }
+  EndHit& operator=(const EndHit& h)
+  {
+    fBarID = h.fBarID;
+    fTDCTime = h.fTDCTime;
+    fADCTime = h.fADCTime;
+    fAmp = h.fAmp;
+    fAmpRaw = h.fAmpRaw;
+    fTDCMatched =  h.fTDCMatched;
+    return *this;
+  }
   void SetADCHit(int _fBarID, double _fAmp, double _fAmpRaw, double _fADCTime) 
   {
      fBarID=_fBarID;
@@ -90,8 +109,8 @@ class BarHit: public TObject
 {
 private:
   int fBarID=-1;
-  EndHit* fTopHit=0;
-  EndHit* fBotHit=0;
+  EndHit fTopHit;
+  EndHit fBotHit;
   bool fTPCMatched=false;
   TVector3 fTPC;
   double fZed=-9999;
@@ -102,8 +121,8 @@ public:
   virtual void Print();
   virtual ~BarHit(); // dtor
 
-  void SetBotHit(EndHit* _fBotHit) { fBotHit=_fBotHit; }
-  void SetTopHit(EndHit* _fTopHit) { fTopHit=_fTopHit; }
+  void SetBotHit(EndHit* _fBotHit) { fBotHit = *_fBotHit; }
+  void SetTopHit(EndHit* _fTopHit) { fTopHit = *_fTopHit; }
   void SetBar(int _fBarID) { fBarID=_fBarID; }
   void SetZed(double _fZed) { fZed=_fZed; }
   void SetTPCHit(TVector3 _fTPC) {
@@ -111,14 +130,14 @@ public:
      fTPCMatched=true;
   }
   
-  EndHit* GetTopHit() const {return fTopHit;}
-  EndHit* GetBotHit() const {return fBotHit;}
-  double GetAmpTop() const {return fTopHit->GetAmp();}
-  double GetAmpBot() const {return fBotHit->GetAmp();}
-  double GetAmpRawTop() const {return fTopHit->GetAmpRaw();}
-  double GetAmpRawBot() const {return fBotHit->GetAmpRaw();}
-  double GetTDCTop() const {return fTopHit->GetTDCTime();}
-  double GetTDCBot() const {return fBotHit->GetTDCTime();}
+  const EndHit& GetTopHit() const {return fTopHit;}
+  const EndHit& GetBotHit() const {return fBotHit;}
+  double GetAmpTop() const {return fTopHit.GetAmp();}
+  double GetAmpBot() const {return fBotHit.GetAmp();}
+  double GetAmpRawTop() const {return fTopHit.GetAmpRaw();}
+  double GetAmpRawBot() const {return fBotHit.GetAmpRaw();}
+  double GetTDCTop() const {return fTopHit.GetTDCTime();}
+  double GetTDCBot() const {return fBotHit.GetTDCTime();}
   TVector3 GetTPC() const {return fTPC;}
   bool IsTPCMatched() const {return fTPCMatched;}
   int GetBar() const {return fBarID;}
@@ -132,8 +151,8 @@ public:
   }
   double GetAverageTDCTime()
   {
-     double t_top = fTopHit->GetTDCTime();
-     double t_bot = fBotHit->GetTDCTime();
+     double t_top = fTopHit.GetTDCTime();
+     double t_bot = fBotHit.GetTDCTime();
      return (t_top + t_bot)/2.;
   }
   void GetXY(double &x, double &y)
@@ -181,6 +200,8 @@ public:
     fBarHit.clear();
     for (auto hit: fTdcHit) delete hit;
     fTdcHit.clear();
+    fEventID=-1;
+    fEventTime=-1.;
   }
   void AddEndHit(EndHit* e)
   {

@@ -28,10 +28,10 @@ using std::endl;
 class NeuralFinder: public TracksFinder
 {
 public:
-   NeuralFinder(std::vector<TSpacePoint*>*);
+   NeuralFinder(const std::vector<TSpacePoint>*);
    ~NeuralFinder(){};
 
-   virtual int RecTracks();
+   virtual int RecTracks(std::vector<track_t>& TrackVector);
    inline int GetNNeurons() const { return nneurons; };
    int CountActive();
    inline vector<double> GetPointWeights() const { return pointWeights; };
@@ -40,7 +40,7 @@ public:
    inline vector<double> GetNeuronV() const { return neuronV; };
 
    int MakeNeurons();
-   int ApplyThreshold(double thres);
+   int ApplyThreshold(std::vector<track_t>& TrackVector,double thres);
 
    inline void SetLambda(double v) { lambda = v; }
    inline void SetAlpha(double v) { alpha = v; }
@@ -111,7 +111,7 @@ public:
       int subTrackID = -1.;
    };
 
-   const set<Neuron*> GetTrackNeurons(int trackID);
+   const set<Neuron*> GetTrackNeurons(int trackID,const  std::vector<track_t> TrackVector);
    const set<Neuron*> GetMetaNeurons();
 
 private:
@@ -126,11 +126,11 @@ private:
    void  CalcMatrixT_meta(Neuron &n);
    double CalcV_meta(Neuron &n, double B, double T);
 
-   int AssignTracks();
+   int AssignTracks(std::vector<track_t>& TrackVector);
    set<int> FollowTrack(Neuron &n, int subID);
 
    int MakeMetaNeurons();
-   int MatchMetaTracks();
+   int MatchMetaTracks(std::vector<track_t>& TrackVector);
 
    map<int,vector<int> > GetEndNeurons();
    map<int,vector<int> > GetStartNeurons();

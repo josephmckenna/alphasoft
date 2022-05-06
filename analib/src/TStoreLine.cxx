@@ -18,46 +18,46 @@ TStoreLine::TStoreLine():fDirection(ALPHAg::kUnknown,ALPHAg::kUnknown,ALPHAg::kU
 			 fResiduals2(ALPHAg::kUnknown)
 {}
 
-TStoreLine::TStoreLine(TFitLine* line, 
-		       const std::vector<TSpacePoint*>* points):fDirection( line->GetU() ),
-                                                                fPoint( line->Get0() ),
-                                                                fDirectionError( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() ),
-                                                                fPointError( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() ),
-                                                                fStatus(line->GetStatus()),
-   fResidual( line->GetResidual() ), fResiduals( line->GetResidualsVector() ),
-   fResiduals2( line->GetResidualsSquared() )
+TStoreLine::TStoreLine(const TFitLine& line, 
+		       const std::vector<TSpacePoint>* points):fDirection( line.GetU() ),
+                                                                fPoint( line.Get0() ),
+                                                                fDirectionError( line.GetUxErr2(), line.GetUyErr2(), line.GetUzErr2() ),
+                                                                fPointError( line.GetX0Err2(), line.GetY0Err2(), line.GetZ0Err2() ),
+                                                                fStatus(line.GetStatus()),
+   fResidual( line.GetResidual() ), fResiduals( line.GetResidualsVector() ),
+   fResiduals2( line.GetResidualsSquared() )
 						
 {
-   fchi2=line->GetChi2()/double(line->GetDoF())/3.;
+   fchi2=line.GetChi2()/double(line.GetDoF())/3.;
 
   //fSpacePoints( points ), fNpoints(fSpacePoints->GetEntries()), 
-  for( uint i=0; i<points->size(); ++i )
-    {
-      TSpacePoint* p = (TSpacePoint*) points->at(i);
-      if( p->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
-	fSpacePoints.AddLast( new TSpacePoint( *p ) );
+  for (const TSpacePoint& p: *points)
+  {
+      if( p.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) 
+	fSpacePoints.AddLast( new TSpacePoint( p ) );
     }
   //  fSpacePoints.Compress();
   fNpoints = fSpacePoints.GetEntries();
 }
 
-TStoreLine::TStoreLine(TFitLine* line):fDirection( line->GetU() ),
-				       fPoint( line->Get0() ),
+TStoreLine::TStoreLine(const TFitLine& line):fDirection( line.GetU() ),
+				       fPoint( line.Get0() ),
 				       fSpacePoints( 0 ),
-				       fNpoints( line->GetNumberOfPoints() ),
-				       fResidual( line->GetResidual() ), fResiduals( line->GetResidualsVector() ),
-				       fResiduals2( line->GetResidualsSquared() )
+				       fNpoints( line.GetNumberOfPoints() ),
+				       fResidual( line.GetResidual() ), fResiduals( line.GetResidualsVector() ),
+				       fResiduals2( line.GetResidualsSquared() )
 {
-  fDirectionError.SetXYZ( line->GetUxErr2(), line->GetUyErr2(), line->GetUzErr2() );
-  fPointError.SetXYZ( line->GetX0Err2(), line->GetY0Err2(), line->GetZ0Err2() );
+  fDirectionError.SetXYZ( line.GetUxErr2(), line.GetUyErr2(), line.GetUzErr2() );
+  fPointError.SetXYZ( line.GetX0Err2(), line.GetY0Err2(), line.GetZ0Err2() );
 
-  fchi2 = line->GetChi2()/double(line->GetDoF())/3.;
+  fchi2 = line.GetChi2()/double(line.GetDoF())/3.;
  
-  fStatus = line->GetStatus();
+  fStatus = line.GetStatus();
 }
 
 TStoreLine::~TStoreLine()
 {
+  fSpacePoints.SetOwner(kTRUE);
   fSpacePoints.Delete();
   fResiduals.clear();
 }

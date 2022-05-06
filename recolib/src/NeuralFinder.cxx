@@ -29,7 +29,7 @@ NeuralFinder::Neuron::Neuron(): TVector3(), TPolyLine3D(), in(nullptr), out(null
 }
 
 //==============================================================================================
-NeuralFinder::NeuralFinder(std::vector<TSpacePoint*>* points):
+NeuralFinder::NeuralFinder(const std::vector<TSpacePoint>* points):
    TracksFinder(points)
 {
    // // No inherent reason why these parameters should be the same as in base class
@@ -262,11 +262,11 @@ int NeuralFinder::MakeMetaNeurons()
    return metaNeurons.size();
 }
 //==============================================================================================
-const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID)
+const set<NeuralFinder::Neuron*> NeuralFinder::GetTrackNeurons(int trackID,const  std::vector<track_t> TrackVector)
 {
    set<NeuralFinder::Neuron*> nset;
-   if(trackID >= 0 && trackID < (int)fTrackVector.size()){
-      const track_t &t = fTrackVector[trackID];
+   if(trackID >= 0 && trackID < (int)TrackVector.size()){
+      const track_t &t = TrackVector[trackID];
       for(int i: t){
          TSpacePoint *p = fPointsArray[i];
          for(int j: inNeurons[p]){
@@ -540,10 +540,10 @@ bool NeuralFinder::RunMeta()
 }
 
 //==============================================================================================
-int NeuralFinder::AssignTracks(){
+int NeuralFinder::AssignTracks(std::vector<track_t>& TrackVector){
    // reset tracking
    fNtracks = 0;
-   fTrackVector.clear();
+   TrackVector.clear();
    for(auto &n: neurons){
       n.SetSubID(-1);
    }
@@ -555,7 +555,7 @@ int NeuralFinder::AssignTracks(){
 
          if(n.GetActive() && n.GetSubID() < 0){
             set<int> trackPts = FollowTrack(n, fNtracks);
-            fTrackVector.emplace_back(trackPts.begin(), trackPts.end());
+            TrackVector.emplace_back(trackPts.begin(), trackPts.end());
             fNtracks++;
          }
       }
@@ -592,15 +592,15 @@ int NeuralFinder::AssignTracks(){
    //    }
    // }
 
-   if( fNtracks != int(fTrackVector.size()) )
+   if( fNtracks != int(TrackVector.size()) )
       std::cerr<<"NeuralFinder::RecTracks(): Number of found tracks "<<fNtracks
-               <<" does not match the number of entries "<<fTrackVector.size()<<std::endl;
+               <<" does not match the number of entries "<<TrackVector.size()<<std::endl;
 
    return fNtracks;
 }
 
 //==============================================================================================
-int NeuralFinder::MatchMetaTracks(){
+int NeuralFinder::MatchMetaTracks(std::vector<track_t> & TrackVector){
    map<int, unsigned int> metaMap;
    for(auto i: inMeta){
       set<int> idset;
@@ -640,18 +640,18 @@ int NeuralFinder::MatchMetaTracks(){
    }
 
    vector<int> doneSubTracks;
-   for(unsigned int i = 0; i < fTrackVector.size(); i++){
+   for(unsigned int i = 0; i < TrackVector.size(); i++){
       if(metaMap.count(i)){
          if(metaMap[i] != i){
-            track_t &dest = fTrackVector[metaMap[i]];
-            track_t &source = fTrackVector[i];
+            track_t &dest = TrackVector[metaMap[i]];
+            track_t &source = TrackVector[i];
             dest.insert(dest.end(), source.begin(), source.end());
             doneSubTracks.push_back(i);
          }
       }
    }
    for(auto it = doneSubTracks.rbegin(); it != doneSubTracks.rend(); it++){
-      fTrackVector.erase(fTrackVector.begin()+ *it);
+      TrackVector.erase(TrackVector.begin()+ *it);
       fNtracks--;
    }
    return doneSubTracks.size();
@@ -699,7 +699,7 @@ set<int> NeuralFinder::FollowTrack(Neuron &n, int subID)
 }
 
 //==============================================================================================
-int NeuralFinder::ApplyThreshold(double thres)
+int NeuralFinder::ApplyThreshold(std::vector<track_t>& TrackVector, double thres)
 {
    if(thres > 1){
       cout << "NeuralFinder::ApplyThreshold: set threshold above 1, this will switch off all Neurons!" << endl;
@@ -710,19 +710,19 @@ int NeuralFinder::ApplyThreshold(double thres)
       n.SetActive(n.GetV() >= VThres);
    }
    cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << endl;
-   return AssignTracks();
+   return AssignTracks(TrackVector);
 }
 
 
 //==============================================================================================
-int NeuralFinder::RecTracks()
+int NeuralFinder::RecTracks(std::vector<track_t>& TrackVector)
 {
    MakeNeurons();
    Run();
-   AssignTracks();
+   AssignTracks(TrackVector);
    cout << "NeuralFinder: Neurons : \t" << nneurons << "\tactive:\t" << CountActive() << "\ttracks:\t" << fNtracks << endl;
    RunMeta();
-   int n = MatchMetaTracks();
+   int n = MatchMetaTracks(TrackVector);
    cout << "NeuralFinder: sub-track matching: absorbed sub-tracks = " << n << "\ttracks:\t" << fNtracks << endl;
    return fNtracks;
 }

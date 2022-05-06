@@ -57,8 +57,8 @@ if (BUILD_AG_SIM)
                     ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh 
 		    ${PROJECT_SOURCE_DIR}/include/fileutility.hh )
   add_dependencies(g4ana.exe agtpc G4out)
-  target_include_directories(g4ana.exe PUBLIC ${CMAKE_SOURCE_DIR}/agana)
-  target_link_libraries(g4ana.exe ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS})
+  target_include_directories(g4ana.exe PUBLIC ${CMAKE_SOURCE_DIR}/agana ${CMAKE_SOURCE_DIR}/aged/include)
+  target_link_libraries(g4ana.exe ${ROOT_LIBRARIES} ${G4ANA_LINK_LIBS} rootUtils aged analib)
   install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
   message(STATUS "Building (Geant4) BSC analyzer")
