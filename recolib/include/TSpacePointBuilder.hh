@@ -38,11 +38,13 @@ class TSpacePointBuilder
       std::vector<TSpacePoint> &PointsArray,
       double z_fid  = std::numeric_limits<double>::infinity() 
       );
+   
+   #ifdef BUILD_AG_SIM
    void BuildMCSpacePointArray( 
       const TClonesArray *points,
       std::vector<TSpacePoint> &PointsArray
       );
-
+   #endif
 
 };
 
