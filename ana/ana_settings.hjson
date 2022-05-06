@@ -4,44 +4,41 @@
 ///// use with "--anasettings <mysettings.json>"
 {
     DeconvModule: {         // Deconvolution parameters
-        ADCthr: 1000
-        PWBthr:  200
-        AWthr:   10
-        PADthr:  10
+        ADCthr: 1000        // signals with (inverted) peakheight over pedestal below this get ignored
+        PWBthr:  200        // same for pads
+        AWthr:   10         // deconvolution only considers clusters of at least this charge
+        PADthr:  10         // same for pads
     }
 
     LEModule: {              // Leading Edge reconstruction parameters
         ADCrms  : 1000
         PWBrms  :  100
-	ADCthr  :  750
-	PWBthr  :  100
+    	ADCthr  :  750
+	    PWBthr  :  100
         ADCgain :    1.33333
         PWBgain :    1
         ADCtime : -535
         PWBtime : -390
         CFDfrac :    0.6
-   }
+    }
 
     MatchModule: {              // Match anode and pad signals to generate spacepoints
-        CentreOfGravityMethod: "CentreOfGravity_blobs"
-        maxPadGroups: 10
-        padSigma: 7.0
-        padSigmaD: 0.75
+        CentreOfGravityMethod: "CentreOfGravity_blobs"  // options: CentreOfGravity_blobs or CentreOfGravity
+        maxPadGroups: 10        // max. number of separate groups of pads coincident with single wire signal
+        padSigma: 7.0           // width of single avalanche charge distribution = 2*(pad-aw)/2.34
+        padSigmaD: 0.75         // max. rel. deviation of fitted sigma from padSigma
         //padFitErrThres: 0.05 (Lars settings from better_matching branch)
-        padFitErrThres: 0.1
-        use_mean_on_spectrum: false
+        padFitErrThres: 0.1     // max. accepted error on pad gaussian fit mean
         pad_charge_dist_scale: 0    // use AW dependent pad threshold in matching. Scale by this factor. (~30)
-        spectrum_mean_multiplyer: 0.3333333333
-        spectrum_cut: 10.0
-        spectrum_width_min: 0.0
-        padsNmin: 6
-        coincTime: 20.0
-        grassCut: 0.1
-        goodDist: 40.0
-        NpadsCut: 9999
+        spectrum_width_min: 0.0 // if TSpectrum finds multiple peaks, but their distribution is narrow, only highest peak gets used
+        padsNmin: 6             // minimum number of coincident pad hits to attempt reconstructing a point
+        coincTime: 20.0         // nanoseconds, in practice this is quantized by the sampling rate, unless fancier deconv gets used
+        grassCut: 0.1           // don't consider peaks smaller than grassCut factor of a
+        goodDist: 40.0          // neighbouring peak, if that peak is closer than goodDist
+        NpadsCut: 9999          // quit if the number of reconstructed pads is too large
     }
     RecoModule: {               // reconstruct tracks from spacepoints
-        NhitsCut: 5000
+        NhitsCut: 5000          // do not attempt reco of events with too many spacepoints
         // only consider points possible neighbours below this distance, only uncomment one line
         PointsDistCut: 8.1      // AdaptiveFinder
         // PointsDistCut: 20.0     // NeuralFinder is more relaxed here
@@ -75,14 +72,14 @@
         ItThres_NN: 0.0005      // stop iterating if change from previous step < this
     }
    BscModule: {
-       //pulse_threshold: 800 // Minimum ADC value to define start and end of pulse
-       pulse_threshold: 1400 // Minimum ADC value to define start and end of pulse
-       //ADCamplitude: 5000 // Minimum ADC value for peak height
-       ADCamplitude: 1000 // Minimum ADC value for peak height
+       //pulse_threshold: 800   // Minimum ADC value to define start and end of pulse
+       pulse_threshold: 1400    // Minimum ADC value to define start and end of pulse
+       //ADCamplitude: 5000     // Minimum ADC value for peak height
+       ADCamplitude: 1000       // Minimum ADC value for peak height
        max_adc_tdc_diff: 4.0e-8 // s, maximum allowed time between ADC time and matched TDC time
        max_top_bot_diff: 1.0e-6 // s, maximum allowed time between top TDC time and matched bot TDC time
-       max_dz: 300.0  // mm, tpc-bsc matching
-       max_dphi: 0.3 // rad, tpc-bsc matching, within 3 bars
-       min_dphi: 1.8325957 // rad, 105 degrees seperation between two hits ("back to back")
+       max_dz: 300.0            // mm, tpc-bsc matching
+       max_dphi: 0.3            // rad, tpc-bsc matching, within 3 bars
+       min_dphi: 1.8325957      // rad, 105 degrees seperation between two hits ("back to back")
    }
 }

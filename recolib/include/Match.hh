@@ -30,9 +30,6 @@ private:
    const double padSigma; // width of single avalanche charge distribution = 2*(pad-aw)/2.34
    const double padSigmaD; // max. rel. deviation of fitted sigma from padSigma
    const double padFitErrThres; // max. accepted error on pad gaussian fit mean
-   const bool use_mean_on_spectrum;
-   const double spectrum_mean_multiplyer; //if use_mean_on_spectrum is true, this is used.
-   const double spectrum_cut;              //if use_mean_on_spectrum is false, this is used.
    const double spectrum_width_min;
 
    const double grassCut;       // don't consider peaks smaller than grassCut factor of a
