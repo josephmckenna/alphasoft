@@ -17,7 +17,18 @@ bsc_tdc_module.o
 deconv_aw_module.o deconv_pad_module.o 
 kdtreematch.o
 # match_module.o
-reco_module.o
+
+# Previously reco_module
+reco_spacepoint_builder.o
+reco_trackfinder.o
+reco_trackfitter.o
+reco_vertexfitter.o
+reco_eventwriter.o
+
+#reco_module.o
+
+
+
 # AC
 wf_persistency_module.o
 histo_module.o

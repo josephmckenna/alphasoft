@@ -111,11 +111,11 @@ public:
   virtual void Reason();
   bool IsWeird();
 
-  double Angle( TFitLine* );
-  double CosAngle( TFitLine* );
+  double Angle( const TFitLine& ) const;
+  double CosAngle( const TFitLine& ) const;
 
-  TVector3 Sagitta( TFitLine* );
-  double Distance( TFitLine* ); 
+  TVector3 Sagitta( const TFitLine& ) const;
+  double Distance( const TFitLine& ) const; 
 
   virtual void Print(Option_t *option="") const;
 

@@ -201,7 +201,7 @@ public:
          return flow;
       }
 
-      if( ! SigFlow->awSig )
+      if( SigFlow->awSig.empty() )
       {
 #ifdef HAVE_MANALYZER_PROFILER
          *flags|=TAFlag_SKIP_PROFILE;
@@ -210,11 +210,11 @@ public:
       }
       if( fTrace )
       {
-         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig->size()));
-         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig->size()));
+         printf("MatchModule::Analyze, AW # signals %d\n", int(SigFlow->awSig.size()));
+         printf("MatchModule::Analyze, PAD # signals %d\n", int(SigFlow->pdSig.size()));
       }  
      
-      if( SigFlow->pdSig )
+      if( SigFlow->pdSig.size() )
         {
             // -----------------
             //I am the first thread... 
@@ -222,10 +222,6 @@ public:
             if (fFlags->ThreadID < 0)
             {
                SigFlow->comb = match->CombPads( SigFlow->pdSig );
-               //Prepare pointer for next threads...
-               //... should we only make this pointer if SigFlow->comb.size()>0 ?...
-               // if we dont set this pointer, then the analysis will try to fake pads for us
-               SigFlow->combinedPads=new std::vector<ALPHAg::signal>;
                return flow;
             }
             // -----------------
@@ -238,7 +234,7 @@ public:
 
                //std::cout<<"SIZE:"<<SigFlow->comb.size()<<"\t"<<start<<" - "<<stop<<std::endl;
                for (size_t i=start; i<stop; i++)
-                  SigFlow->combinedPads = match->CombineAPad( &SigFlow->comb,SigFlow->combinedPads,i );
+                  SigFlow->combinedPads = match->CombineAPad( SigFlow->comb,SigFlow->combinedPads,i );
                return flow;
             }
         }
@@ -248,11 +244,11 @@ public:
       if (fFlags->TotalThreads==0 && fFlags->ThreadID==1)
       {
          // allow events without pwbs
-         std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints = NULL;
-         if( SigFlow->combinedPads )
+         std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints;
+         if( SigFlow->combinedPads.size() )
             {
                if( fTrace )
-                  printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads->size()));
+                  printf("MatchModule::Analyze, combined pads # %d\n", int(SigFlow->combinedPads.size()));
                SigFlow->DeletePadSignals(); //Replace pad signals with combined ones
                SigFlow->AddPadSignals( SigFlow->combinedPads );
                spacepoints =
@@ -267,17 +263,16 @@ public:
                spacepoints = match->FakePads( SigFlow->awSig );
             }
 
-         if( spacepoints )
+         if( spacepoints.size() )
             {
                if(fFlags->fTrace)
-                  printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints->size()));
-               if( spacepoints->size() > 0 )
+                  printf("MatchModule::Analyze, Spacepoints # %d\n", int(spacepoints.size()));
+               if( spacepoints.size() > 0 )
                   SigFlow->AddMatchSignals( spacepoints );
             }
          else
             printf("MatchModule::Analyze Spacepoints should exists at this point\n");
 
-         delete spacepoints;
          return flow;
       }
       return flow;

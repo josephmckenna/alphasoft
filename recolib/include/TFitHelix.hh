@@ -20,6 +20,7 @@ struct Vector2 {
   double Y;
 };
 
+
 class TStoreHelix;
 
 #define BETA 0
@@ -75,20 +76,20 @@ private:
   void Initialization(double* Ipar);
 
   // utilities to calculate internal helix parameters
-  double GetBeta      ( double r2, double Rc, double D ) const;
-  double GetBetaPlus  ( double r2, double Rc, double D );
-  double GetBetaMinus ( double r2, double Rc, double D );
+  double GetBeta      ( const double r2, const double Rc, const double D ) const;
+  double GetBetaPlus  ( const double r2, const double Rc, const double D ) const;
+  double GetBetaMinus ( const double r2, const double Rc, const double D ) const;
 
-  double GetArcLength ( double r2, double Rc, double D ) const;
-  double GetArcLength_( double r2, double Rc, double D ) const;
+  double GetArcLength ( const double r2, const double Rc, const double D ) const;
+  double GetArcLength_( const double r2, const double Rc, const double D ) const;
 
-  double GetArcLengthPlus ( double r2, double Rc, double D );
-  double GetArcLengthPlus_( double r2, double Rc, double D );
-  double GetArcLengthMinus ( double r2, double Rc, double D );
-  double GetArcLengthMinus_( double r2, double Rc, double D );
+  double GetArcLengthPlus ( const double r2, const double Rc, const double D ) const;
+  double GetArcLengthPlus_( const double r2, const double Rc, const double D ) const;
+  double GetArcLengthMinus ( const double r2, const double Rc, const double D ) const;
+  double GetArcLengthMinus_( const double r2, const double Rc, const double D ) const;
 
   // Multiple Scattering angle variance
-  double VarMS();
+  double VarMS() const;
 
   // select the successful radial fit with the smallest chi^2
   // among the 4 combiation of branch and  beta sign
@@ -100,7 +101,7 @@ public:
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
   TFitHelix( const TFitHelix& right );
-  TFitHelix(TStoreHelix*);
+  TFitHelix(const TStoreHelix&);
 
   TFitHelix& operator=( const TFitHelix& right );
   
@@ -196,71 +197,71 @@ public:
   void AxialFit(double* Ipar);
 
   // Evaluate the function for fitting
-  Vector2 Evaluate ( double r2, double Rc, double phi, double D ); // +1 branch
-  Vector2 Evaluate ( double r2, double Rc, double u0, double v0, double D ) const; // +1 branch
-  Vector2 Evaluate_( double r2, double Rc, double phi, double D ); // -1 branch
-  Vector2 Evaluate_( double r2, double Rc, double u0, double v0, double D ) const; // -1 branch
+  Vector2 Evaluate ( const double r2, const double Rc, const double phi, const double D ) const; // +1 branch
+  Vector2 Evaluate ( const double r2, const double Rc, const double u0, const double v0, const double D ) const; // +1 branch
+  Vector2 Evaluate_( const double r2, const double Rc, const double phi, const double D )  const; // -1 branch
+  Vector2 Evaluate_( const double r2, const double Rc, const double u0, const double v0, const double D ) const; // -1 branch
 
   // +1 branch, beta +ve root
-  Vector2 EvaluatePlus ( double r2, double Rc, double phi, double D ); 
-  Vector2 EvaluatePlus ( double r2, double Rc, double u0, double v0, double D ); 
+  Vector2 EvaluatePlus ( const double r2, const double Rc, const double phi, const double D ) const; 
+  Vector2 EvaluatePlus ( const double r2, const double Rc, const double u0, const double v0, const double D ) const; 
   // -1 branch, beta +ve root
-  Vector2 EvaluatePlus_( double r2, double Rc, double phi, double D );
-  Vector2 EvaluatePlus_( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluatePlus_( const double r2, const double Rc, const double phi, const double D ) const;
+  Vector2 EvaluatePlus_( const double r2, const double Rc, const double u0, const double v0, const double D ) const;
   // +1 branch, beta -ve root
-  Vector2 EvaluateMinus ( double r2, double Rc, double phi, double D );
-  Vector2 EvaluateMinus ( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluateMinus ( const double r2, const double Rc, const double phi, const double D ) const;
+  Vector2 EvaluateMinus ( const double r2, const double Rc, const double u0, const double v0, const double D ) const;
   // -1 branch, beta -ve root
-  Vector2 EvaluateMinus_( double r2, double Rc, double phi, double D );
-  Vector2 EvaluateMinus_( double r2, double Rc, double u0, double v0, double D );
+  Vector2 EvaluateMinus_( const double r2, const double Rc, const double phi, const double D ) const;
+  Vector2 EvaluateMinus_( const double r2, const double Rc, const double u0, const double v0, const double D ) const;
 
-  double Evaluate   ( double s,  double l, double z0 ) const;            // axial fit
+  double Evaluate   ( const double s,  const double l, const double z0 ) const;            // axial fit
 
   // unused but useful
   // +1 branch
-  TVector3 Evaluate ( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 Evaluate ( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
   // -1 branch 
-  TVector3 Evaluate_( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 Evaluate_( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
   // +1 branch, beta +ve root
-  TVector3 EvaluatePlus ( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 EvaluatePlus ( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
   // -1 branch, beta +ve root
-  TVector3 EvaluatePlus_( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 EvaluatePlus_( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
   // +1 branch, beta -ve root
-  TVector3 EvaluateMinus ( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 EvaluateMinus ( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
   // -1 branch, beta -ve root
-  TVector3 EvaluateMinus_( double r2, double Rc, double phi, double D, double l, double z0  );
+  TVector3 EvaluateMinus_( const double r2, const double Rc, const double phi, const double D, const double l, const double z0  ) const;
 
   // Radial arclength parameter for fitting/vertexing
-  double GetArcLength ( double r2 ) const;
-  double GetArcLengthB( double r2 );
+  double GetArcLength ( const double r2 ) const;
+  double GetArcLengthB( const double r2 ) const;
 
   // Evaluate the function for plotting
-  TVector3 Evaluate( double r2 );
+  TVector3 Evaluate( const double r2 ) const;
   // Evaluate errors for vertexing
-  TVector3 EvaluateErrors2( double r2 );
+  TVector3 EvaluateErrors2( const double r2 ) const;
   // Evaluate the function for plotting
-  TVector3 EvaluateB( double r2 );
+  TVector3 EvaluateB( const double r2 ) const;
   // Evaluate errors for vertexing
-  TVector3 EvaluateErrors2B( double r2 );
+  TVector3 EvaluateErrors2B( const double r2 ) const;
 
   // Evaluate function and errors for vertexing
-  TVector3 GetPosition(double s);
-  TVector3 GetError2(double s);
+  TVector3 GetPosition(const double s) const;
+  TVector3 GetError2(const double s) const;
 
   double Momentum(); // returns pT in MeV/c
 
-  virtual double GetApproxPathLength();
+  virtual double GetApproxPathLength() const;
   void AddMSerror();
 
   int TubeIntersection(TVector3&, TVector3&, 
-		       double radius = ALPHAg::_trapradius);
+		       const double radius = ALPHAg::_trapradius) const;
 
   virtual double MinDistPoint(TVector3&);
 
   virtual bool IsGood();
   bool IsGoodChiSquare();
   void Reason();
-  bool IsDuplicated(TFitHelix*,double);
+  bool IsDuplicated(const TFitHelix*,const double) const;
 
   virtual void Print(Option_t *option="") const;
   virtual void Clear(Option_t *option="");
@@ -271,6 +272,8 @@ public:
 
   ClassDef(TFitHelix,3)
 };
+
+bool SortMomentum(const TFitHelix& aHelix, const TFitHelix& bHelix);
 
 #endif
 

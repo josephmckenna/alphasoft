@@ -34,9 +34,14 @@ public:
     virtual void    DrawLine(int x1,int y1,int x2,int y2);
     virtual void    FillRectangle(int x,int y,int w,int h);
     virtual void    FillPolygon(XPoint *point, int num);
-    virtual void    DrawString(int x, int y, char *str, ETextAlign_q align);
+    virtual void    DrawString(int x, int y, const char *str, ETextAlign_q align);
     virtual void    DrawArc(int cx,int cy,int rx,int ry,float ang1,float ang2);
     virtual void    FillArc(int cx,int cy,int rx,int ry,float ang1,float ang2);
+    virtual void    Comment(const char */*str*/){ printf("PDrawPostscriptFile::Comment() not implemented\n"); };
+    virtual void    SetForegroundPixel(Pixel /*pixel*/, int /*alpha=0xffff*/){ printf("PDrawPostscriptFile::SetForegroundPixel() not implemented\n"); };
+    virtual void    DrawPoint(int /*x*/, int /*y*/){ printf("PDrawPostscriptFile::DrawPoint() not implemented\n"); };
+    virtual void    DrawRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/){ printf("PDrawPostscriptFile::DrawRectangle() not implemented\n"); };
+    virtual void    PutImage(XImage */*image*/, int /*dest_x*/, int /*dest_y*/){ printf("PDrawPostscriptFile::PutImage() not implemented\n"); };
 
     virtual EDevice GetDeviceType()     { return kDevicePrinter; }
 

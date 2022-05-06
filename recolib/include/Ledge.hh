@@ -47,12 +47,13 @@ public:
   int FindPadTimes(TClonesArray*);
 #endif  
 
-  std::vector<ALPHAg::signal>* Analyze(std::vector<Alpha16Channel*> );
-  std::vector<ALPHAg::signal>* Analyze(std::vector<FeamChannel*> );
+  std::vector<ALPHAg::TWireSignal> Analyze(std::vector<Alpha16Channel*> );
+  std::vector<ALPHAg::TPadSignal> Analyze(std::vector<FeamChannel*> );
   int Analyze(const std::vector<int>*, double& time, double& amp, double& err);
-
-  inline std::vector<ALPHAg::signal>* GetSignal() { return fSignals; }
   
+  inline std::vector<ALPHAg::TWireSignal> GetWireSignal() { return fAnodeSignals; }
+  inline std::vector<ALPHAg::TPadSignal> GetPadSignal() { return fPadSignals; }
+
   inline void SetPedestalLength(int l)          { fBaseline = l; }
   inline void SetGain(double g)                 { fGain = g; }
   inline void SetRMSBaselineCut(double c)       { fCutBaselineRMS = c; }
@@ -75,7 +76,8 @@ private:
 
   double fMaxTime;
 
-  std::vector<ALPHAg::signal>* fSignals;
+  std::vector<ALPHAg::TWireSignal> fAnodeSignals;
+  std::vector<ALPHAg::TPadSignal> fPadSignals;
 
   bool fDebug;
 

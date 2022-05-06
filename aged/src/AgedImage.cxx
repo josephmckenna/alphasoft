@@ -408,7 +408,7 @@ void AgedImage::TransformHits()
     int         i;
     ImageData   *data = mOwner->GetData();
     int         num = data->hits.num_nodes;
-    int         numbars = data->barhits.num_nodes;
+    int         numbars = data->barpoints.num_nodes;
 #ifdef PRINT_DRAWS
     Printf(":transform 3-D\n");
 #endif
@@ -438,7 +438,7 @@ void AgedImage::TransformHits()
         }
     }
     if (numbars) {
-        Node *node = data->barhits.nodes;
+        Node *node = data->barpoints.nodes;
         Transform(node,numbars);
     }
 
@@ -716,16 +716,16 @@ void AgedImage::DrawSelf()
 ** Draw bar space points
 */
 
-    AgBarEventFlow* bf = data->barFlow;
-    TBarEvent* b = bf->BarEvent;
-    std::vector<BarHit*> bars=b->GetBars();
+    // AgBarEventFlow* bf = data->barFlow;
+    // TBarEvent* b = data->barEvent;
+    const std::vector<BarHit*> &bars=*data->barhits;
     if (bars.size() > 0 && data->wSpStyle != IDM_SP_NONE) {
         num = bars.size();
-        BarInfo *bi = data->barhits.bar_info;
+        BarInfo *bi = data->barpoints.bar_info;
         //int bit_mask = data->bit_mask;
         int sz = (int)(data->hit_size * 8 + 0.5);
 	//         double scl = data->hit_size / AG_SCALE; // --> unused variable -- AC 29/5/2019
-        for (i=0, n1=data->barhits.nodes; i<num; ++i, ++bi, ++n1) {
+        for (i=0, n1=data->barpoints.nodes; i<num; ++i, ++bi, ++n1) {
             SetForeground(FIRST_SCALE_COL + bi->hit_val  );
             switch (data->wSpStyle) {
                 //For now draw bar hits as squares

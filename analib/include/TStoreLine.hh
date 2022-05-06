@@ -16,8 +16,8 @@
 class TStoreLine : public TObject
 {
 private:
-  const TVector3 fDirection;
-  const TVector3 fPoint;
+  TVector3 fDirection;
+  TVector3 fPoint;
 
   TVector3 fDirectionError;
   TVector3 fPointError;
@@ -34,9 +34,12 @@ private:
 
 public:
   TStoreLine();
-  TStoreLine(TFitLine*, const std::vector<TSpacePoint*>*);
-  TStoreLine(TFitLine*);
+  TStoreLine(const TFitLine&, const std::vector<TSpacePoint>*);
+  TStoreLine(const TFitLine&);
   virtual ~TStoreLine();  // destructor
+
+  TStoreLine( const TStoreLine& );
+  TStoreLine& operator=(const TStoreLine&);
 
   inline const TVector3* GetDirection() const { return &fDirection; }
   inline const TVector3* GetPoint() const { return &fPoint; }

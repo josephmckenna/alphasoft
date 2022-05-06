@@ -15,14 +15,14 @@
 
 int Ledge::FindAnodeTimes(const Alpha16Event* anodeSignals)
 {
-  fSignals = Analyze( anodeSignals->hits );
-  return int(fSignals->size());
+  fAnodeSignals = Analyze( anodeSignals->hits );
+  return int(fAnodeSignals.size());
 }
 
 int Ledge::FindPadTimes(const FeamEvent* padSignals)
 {  
-  fSignals = Analyze( padSignals->hits );
-  return int(fSignals->size());
+  fPadSignals = Analyze( padSignals->hits );
+  return int(fPadSignals.size());
 }
 
 int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double& err)
@@ -48,10 +48,10 @@ int Ledge::Analyze(const std::vector<int>* wf, double& time, double& amp, double
   return 1;
 }
 
-std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channels)
+std::vector<ALPHAg::TWireSignal> Ledge::Analyze(std::vector<Alpha16Channel*> channels)
 {
-  std::vector<ALPHAg::signal>* sanodes = new std::vector<ALPHAg::signal>;
-  sanodes->reserve(channels.size());
+  std::vector<ALPHAg::TWireSignal> sanodes;
+  sanodes.reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
       const Alpha16Channel* ch = channels.at(i);
@@ -69,16 +69,16 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<Alpha16Channel*> channel
 	      elec.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  sanodes->emplace_back( elec, time, amp, err, true );
+	  sanodes.emplace_back( elec, time, amp, err );
 	}
     }
   return sanodes;
 }
 
-std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
+std::vector<ALPHAg::TPadSignal> Ledge::Analyze(std::vector<FeamChannel*> channels)
 {
-  std::vector<ALPHAg::signal>* spads = new std::vector<ALPHAg::signal>;
-  spads->reserve(channels.size());
+  std::vector<ALPHAg::TPadSignal> spads;
+  spads.reserve(channels.size());
   for(unsigned int i = 0; i < channels.size(); ++i)
     {
       const FeamChannel* ch = channels.at(i);
@@ -106,7 +106,7 @@ std::vector<ALPHAg::signal>* Ledge::Analyze(std::vector<FeamChannel*> channels)
 	      elec.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  spads->emplace_back( elec, time, amp, err, false );
+	  spads.emplace_back( elec, time, amp, err);
 	}
     }
   return spads;
@@ -117,8 +117,8 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 {
   int Nentries = AWsignals->GetEntries();
 
-  std::vector<ALPHAg::signal>* sanodes = new std::vector<ALPHAg::signal>;
-  sanodes->reserve(Nentries);
+  fAnodeSignals.clear();
+  fAnodeSignals.reserve(Nentries);
    
   // find intresting channels
   //  unsigned int index=0; //wfholder index -- unused 14 Oct 2020  -- AC
@@ -141,19 +141,18 @@ int Ledge::FindAnodeTimes(TClonesArray* AWsignals)
 	      el.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  sanodes->emplace_back( el, time, amp, err, true );
+	  fAnodeSignals.emplace_back( el, time, amp, err);
 	}
     }
 
-  fSignals=sanodes;
-  return int(sanodes->size());
+  return int(fAnodeSignals.size());
 }
 
 int Ledge::FindPadTimes(TClonesArray* PADsignals)
 {
   int Nentries = PADsignals->GetEntries();
-  std::vector<ALPHAg::signal>* spads = new std::vector<ALPHAg::signal>;
-  spads->reserve(Nentries);
+  fPadSignals.clear();
+  fPadSignals.reserve(Nentries);
 
   std::string delimiter = "_";
 
@@ -201,12 +200,11 @@ int Ledge::FindPadTimes(TClonesArray* PADsignals)
 	      el.print();
 	      std::cout<<"t: "<<time<<" A: "<<amp<<" E: "<<err<<std::endl;
 	    }
-	  spads->emplace_back( el, time, amp, err, false );
+	  fPadSignals.emplace_back( el, time, amp, err);
 	}
     }
 
-  fSignals=spads;
-  return int(spads->size());
+  return int(fPadSignals.size());
 }
 #endif
 

@@ -11,6 +11,7 @@
 #include "PSpeaker.h"
 #include "PProjImage.h"
 #include "PHistImage.h"
+#include <vector>
 
 #define MAX_FNODES      4               // maximum number of nodes per face
 #define NODE_HID        0x01            // node is hidden
@@ -137,11 +138,15 @@ struct SpacePoints {
 };
 
 class TStoreEvent;
-class AgAnalysisFlow;
-class AgSignalsFlow;
-class AgBarEventFlow;
+// class AgAnalysisFlow;
+// class AgSignalsFlow;
+// class AgBarEventFlow;
 class TBarEvent;
+class BarHit;
 struct AgEvent;
+namespace ALPHAg {
+class wf_ref;
+}
 
 struct ImageData : AgedResource {
     AgedWindow    * mMainWindow;        // main Aged window
@@ -154,13 +159,18 @@ struct ImageData : AgedResource {
     int             mNext;              // true to step to next event (exit event loop)
 
     TStoreEvent   * agEvent;            // the event we are displaying
-    AgAnalysisFlow* anaFlow;            // the analysis flow
-    AgSignalsFlow * sigFlow;            // the signals flow
-    AgEvent*        age;                // ALPHAg event (ADC data)
+    // AgAnalysisFlow* anaFlow;            // the analysis flow
+    // AgSignalsFlow * sigFlow;            // the signals flow
+    const std::vector<ALPHAg::wf_ref> *AWwf;
+    const std::vector<ALPHAg::wf_ref> *PADwf;
+
+    // const AgEvent*        age;                // ALPHAg event (ADC data)
     Widget          toplevel;           // top level Aged widget
     SpacePoints     hits;               // tube hit information
-    AgBarEventFlow* barFlow;
-    BarPoints       barhits;            // BV hit information
+    // AgBarEventFlow* barFlow;
+    const TBarEvent*      barEvent;
+    const std::vector<BarHit*> *barhits;
+    BarPoints       barpoints;            // BV hit information
     
     Node            sun_dir;            // direction to sun
     int             num_disp;           // number of displayed hits
