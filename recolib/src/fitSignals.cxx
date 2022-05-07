@@ -14,7 +14,7 @@ double GaussFcn::operator()(const std::vector<double>& par) const
    MultiGaussFunction gauss(par);
 
    double chi2 = 0.;
-   for(const ALPHAg::signal &s: fSignals)
+   for(const ALPHAg::TPadSignal &s: fPadSignals)
       {
          double d = ( gauss(s.z) - s.height ) / s.errh;
          chi2+=(d*d);
@@ -25,16 +25,16 @@ double GaussFcn::operator()(const std::vector<double>& par) const
 void GaussFcn::TestSignals() const
 {
   double mean,rms;
-  SignalsStatistics(fSignals.begin(), fSignals.end(), mean, rms);
+  SignalsStatistics(fPadSignals.begin(), fPadSignals.end(), mean, rms);
   ALPHAg::signal::heightorder sigcmp_h;
-  auto maxit = std::max_element(fSignals.begin(), fSignals.end(), sigcmp_h);
+  auto maxit = std::max_element(fPadSignals.begin(), fPadSignals.end(), sigcmp_h);
   double maxpos = maxit->z;
   double max = maxit->height;
-  std::cout<<"GaussFcn::TestSignals() size: "<<fSignals.size()<<" max: "<<max<<" mean: "<<mean<<" rms: "<<rms<<" pos: "<<maxpos<<std::endl;
+  std::cout<<"GaussFcn::TestSignals() size: "<<fPadSignals.size()<<" max: "<<max<<" mean: "<<mean<<" rms: "<<rms<<" pos: "<<maxpos<<std::endl;
   
 }
 
-fitSignals::fitSignals(std::vector<ALPHAg::signal> s, int n):theFCN(s),fNpar(3*n),
+fitSignals::fitSignals(std::vector<ALPHAg::TPadSignal> s, int n):theFCN(s),fNpar(3*n),
                                                      fStep(3*n,1.e-3),fStart(3*n,0.0),
                                                      print_level(-1),
                                                      fStat(-1),fchi2(-1.),
@@ -92,15 +92,15 @@ void fitSignals::Fit()
       std::cout<<"fitSignals::Fit() chi2 = "<<fchi2<<std::endl;
 }
 
-void SignalsStatistics(std::vector<ALPHAg::signal>::const_iterator first,
-		       std::vector<ALPHAg::signal>::const_iterator last, 
+void SignalsStatistics(std::vector<ALPHAg::TPadSignal>::const_iterator first,
+		       std::vector<ALPHAg::TPadSignal>::const_iterator last, 
 		       double& mean, double& rms)
 {
   int dimension = last-first;
   // den = sum_i yi --> sum of weights    //signal(ss,ii,tt,hh,eh,zz,(ez))
-  ALPHAg::signal res = std::accumulate(first, last, ALPHAg::signal(0,0,0.,0.,0.,0.), 
-			       [](const ALPHAg::signal &a, const ALPHAg::signal &b)
-			       { return ALPHAg::signal(0,0,0.,a.height+b.height,0.,a.z+b.z*b.height); });
+  ALPHAg::TPadSignal res = std::accumulate(first, last, ALPHAg::TPadSignal(), 
+			       [](const ALPHAg::TPadSignal &a, const ALPHAg::TPadSignal &b)
+			       { return ALPHAg::TPadSignal(ALPHAg::electrode(0,0,0.),a.height+b.height,0.,a.z+b.z*b.height); });
   double den = res.height;
   double num = res.z;
   double norm = (double(dimension)-1.)*den/double(dimension);
@@ -109,7 +109,7 @@ void SignalsStatistics(std::vector<ALPHAg::signal>::const_iterator first,
     
   std::vector<double> temp(dimension);
   // calculate the difference from the mean: xi-m
-  std::transform(first, last, temp.begin(),[mean](const ALPHAg::signal &s){ return s.z - mean; });
+  std::transform(first, last, temp.begin(),[mean](const ALPHAg::TPadSignal &s){ return s.z - mean; });
   // square it: (xi-m)*(xi-m)
   std::transform(temp.begin(),temp.end(),temp.begin(),temp.begin(),std::multiplies<double>());
   // multiply by the weights: yi*(xi-m)*(xi-m)

@@ -285,13 +285,14 @@ void PDrawPostscriptFile::FillPolygon(XPoint *point, int num)
     fprintf(mFile,"closepath fill\n");
 }
 
-void PDrawPostscriptFile::DrawString(int x, int y, char *str, ETextAlign_q align)
+void PDrawPostscriptFile::DrawString(int x, int y, const char *str, ETextAlign_q align)
 {
     if (GetFont()) {
         static const char *draw_cmds[] = { "textouttl", "textouttc", "textouttr",
                                      "textoutml", "textoutmc", "textoutmr",
                                      "textoutbl", "textoutbc", "textoutbr" };
-        char ch, *pt, *start;
+        char ch;
+        const char *pt, *start;
         int is_symbol;
         
         fprintf(mFile,"gsave %d %d translate 0 0 moveto 1 -1 scale\n", x, y);

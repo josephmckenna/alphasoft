@@ -25,45 +25,40 @@ static TMinuit* lfitter=0;
 void FitFunc(int&, double*, double& chi2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
   
-  TSpacePoint* apnt=0;
+
   double tx,ty,tz,d2;
   chi2=0.;
 
-  for(int i=0; i<pcol; ++i)
+  for (const TSpacePoint& apnt: *PointsColl)
     {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      double r2 = apnt->GetR() * apnt->GetR();
+      double r2 = apnt.GetR() * apnt.GetR();
       TVector3 f = fitObj->Evaluate( r2, p[0], p[1], p[2], p[3], p[4], p[5]  );
-      tx = ( apnt->GetX() - f.X() ) / apnt->GetErrX(); 
-      ty = ( apnt->GetY() - f.Y() ) / apnt->GetErrY();
-      tz = ( apnt->GetZ() - f.Z() ) / apnt->GetErrZ();
+      tx = ( apnt.GetX() - f.X() ) / apnt.GetErrX(); 
+      ty = ( apnt.GetY() - f.Y() ) / apnt.GetErrY();
+      tz = ( apnt.GetZ() - f.Z() ) / apnt.GetErrZ();
       d2 = tx*tx + ty*ty + tz*tz;
       chi2+=d2;
     }
-  apnt=0;
   return;
 }
 
 void PointDistFunc(int&, double*, double& d2, double* p, int)
 {
   TFitLine* fitObj = (TFitLine*) lfitter->GetObjectFit();
-  const std::vector<TSpacePoint*>* PointsColl = fitObj->GetPointsArray();
+  const std::vector<TSpacePoint>* PointsColl = fitObj->GetPointsArray();
   int pcol=PointsColl->size();
   if(pcol==0) return;
-  
-  TSpacePoint* apnt=0;
+
   d2=0.;
-  for(int i=0; i<pcol; ++i)
+  for (const TSpacePoint& apnt: *PointsColl)
     {
-      apnt=(TSpacePoint*) PointsColl->at(i);
-      double hit[]={apnt->GetX(),apnt->GetY(),apnt->GetZ()};
+      double hit[]={apnt.GetX(),apnt.GetY(),apnt.GetZ()};
       d2+=fitObj->PointDistance2(p,hit);
     }
-  apnt=0;
   return;
 }
 
@@ -271,6 +266,10 @@ void TFitLine::FitM2()
   if( mod == 0.) {
         std::cerr<<"TFitLine::Fit() NULL SLOPE: error!"<<std::endl;
         return;
+  }
+  else if( mod == 1. )
+     {
+        //  std::cout<<"TFitLine::Fit() UNIT SLOPE: warning!"<<std::endl;
      }else {
 	  //Maybe the error in these parameters should be propagated after
 	  //normalization
@@ -327,10 +326,10 @@ double TFitLine::GetParameter( double r2,
   TVector3 p2 = GetPosition(t2,ux,uy,uz,x0,y0,z0);
   //  std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
 
-  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.back();
-  TVector3 point(LastPoint->GetX(),
-		 LastPoint->GetY(),
-		 LastPoint->GetZ());
+  const TSpacePoint& LastPoint = fPoints.back();
+  TVector3 point(LastPoint.GetX(),
+		 LastPoint.GetY(),
+		 LastPoint.GetZ());
   if( (p1-point).Mag() < (p2-point).Mag())
     {  
       //      std::cout<<"t1: "<<t1<<" @\t"<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
@@ -370,10 +369,10 @@ TVector3 TFitLine::Evaluate(double r2,
   TVector3 p2 = GetPosition(t2,ux,uy,uz,x0,y0,z0);
 //    std::cout<<p2.X()<<"\t"<<p2.Y()<<"\t"<<p2.Z()<<std::endl;
 
-  TSpacePoint* LastPoint = (TSpacePoint*) fPoints.back();
-  TVector3 point(LastPoint->GetX(),
-		 LastPoint->GetY(),
-		 LastPoint->GetZ());
+  const TSpacePoint& LastPoint = fPoints.back();
+  TVector3 point(LastPoint.GetX(),
+		 LastPoint.GetY(),
+		 LastPoint.GetZ());
   if( (p1-point).Mag() < (p2-point).Mag())
     {  
 //            std::cout<<"p1\t"<<p1.X()<<"\t"<<p1.Y()<<"\t"<<p1.Z()<<std::endl;
@@ -434,17 +433,17 @@ void TFitLine::Initialization(double* Ipar)
   for(int i=0;i<npoints-1;i+=2)
     {
       //     std::cout<<"TFitLine::Initialization   "<<i<<std::endl;
-      TSpacePoint* PointOne = (TSpacePoint*) fPoints.at(i);
-      double x1 = PointOne->GetX(),
-	y1 = PointOne->GetY(),
-	z1 = PointOne->GetZ();
+      const TSpacePoint& PointOne = fPoints.at(i);
+      double x1 = PointOne.GetX(),
+	y1 = PointOne.GetY(),
+	z1 = PointOne.GetZ();
       x0+=x1; y0+=y1; z0+=z1;
       //      PointOne->Print();
 
-      TSpacePoint* PointTwo = (TSpacePoint*) fPoints.at(i+1);
-      double x2 = PointTwo->GetX(),
-	y2 = PointTwo->GetY(),
-	z2 = PointTwo->GetZ();
+      const TSpacePoint& PointTwo = fPoints.at(i+1);
+      double x2 = PointTwo.GetX(),
+	y2 = PointTwo.GetY(),
+	z2 = PointTwo.GetZ();
       x0+=x2; y0+=y2; z0+=z2;
       //      PointTwo->Print();
 
@@ -470,9 +469,9 @@ void TFitLine::Initialization(double* Ipar)
   Ipar[1]=my;
   Ipar[2]=mz;
 
-  Ipar[3]=((TSpacePoint*) fPoints.front())->GetX();
-  Ipar[4]=((TSpacePoint*) fPoints.front())->GetY();
-  Ipar[5]=((TSpacePoint*) fPoints.front())->GetZ();
+  Ipar[3]= fPoints.front().GetX();
+  Ipar[4]= fPoints.front().GetY();
+  Ipar[5]= fPoints.front().GetZ();
 }
 
 double TFitLine::MinDistPoint(TVector3& minpoint)
@@ -586,26 +585,26 @@ void TFitLine::Reason()
    }
 }
 
-double TFitLine::Angle( TFitLine* line )
+double TFitLine::Angle( const TFitLine& line ) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->GetUx(),line->GetUy(),line->GetUz());
+  TVector3 u1(line.GetUx(),line.GetUy(),line.GetUz());
   return u0.Angle(u1);
 }
 
-double TFitLine::CosAngle( TFitLine* line )
+double TFitLine::CosAngle( const TFitLine& line ) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->GetUx(),line->GetUy(),line->GetUz());
+  TVector3 u1(line.GetUx(),line.GetUy(),line.GetUz());
   return u0.Dot(u1);
 }
 
-TVector3 TFitLine::Sagitta(TFitLine* line)
+TVector3 TFitLine::Sagitta(const TFitLine& line) const
 {
   TVector3 u0(fux, fuy, fuz);
-  TVector3 u1(line->fux, line->fuy, line->fuz);
+  TVector3 u1(line.fux, line.fuy, line.fuz);
   TVector3 p0(fx0, fy0, fz0);
-  TVector3 p1(line->fx0, line->fy0, line->fz0);
+  TVector3 p1(line.fx0, line.fy0, line.fz0);
 
   TVector3 n0 = u0.Cross( u1 ); // normal to lines
   TVector3 c =  p1 - p0;
@@ -629,7 +628,7 @@ TVector3 TFitLine::Sagitta(TFitLine* line)
   return Q;
 }
 
-double TFitLine::Distance(TFitLine* line)
+double TFitLine::Distance(const TFitLine& line) const
 {
   return Sagitta(line).Mag();
 }

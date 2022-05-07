@@ -357,7 +357,7 @@ void PDrawXPixmap::FillPolygon(XPoint *point, int num)
 #endif
 }
 
-void PDrawXPixmap::DrawString(int x, int y, char *str, ETextAlign_q align)
+void PDrawXPixmap::DrawString(int x, int y, const char *str, ETextAlign_q align)
 {
     int len = strlen(str);
 

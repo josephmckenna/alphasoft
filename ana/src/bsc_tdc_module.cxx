@@ -408,7 +408,7 @@ public:
       for (BarHit* hit: barhits)
          {
             int bar = hit->GetBar();
-            double diff_tdc = hit->GetBotHit()->GetTDCTime() - hit->GetTopHit()->GetTDCTime();
+            double diff_tdc = hit->GetBotHit().GetTDCTime() - hit->GetTopHit().GetTDCTime();
             double c = 2.99792e8;
             double refrac = 1.93; // From protoTOF tests with time walk correction applied
             double factor = c/refrac * 0.5;

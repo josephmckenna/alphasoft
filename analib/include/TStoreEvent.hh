@@ -18,8 +18,9 @@
 #include <TVector3.h>
 #include "TBarEvent.hh"
 #include <iomanip>
-class TFitLine;
-class TFitHelix;
+
+#include "TSpacePoint.hh"
+
 class TStoreEvent: public TObject
 {
 private:
@@ -48,8 +49,8 @@ public:
   virtual ~TStoreEvent();  // destructor
 
   TStoreEvent& operator=(const TStoreEvent&);
-  void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
-                const std::vector<TFitHelix*>* helices);
+  void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine>* lines, 
+                const std::vector<TFitHelix>* helices);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
@@ -107,16 +108,16 @@ public:
   //  inline const TObjArray* GetTracksArray() const {return &fStoredTracks;}
 
   inline const TObjArray* GetUsedHelices()       const {return &fUsedHelices;}
-  inline void SetUsedHelices(const TObjArray* a) {
-    for (int i = 0; i < a->GetEntriesFast(); i++)
+  inline void SetUsedHelices(const std::vector<TFitHelix*>* a)
+  {
+    for (TFitHelix* h: * a)
     {
-      TFitHelix* h = (TFitHelix* )a->At(i);
-      fUsedHelices.AddLast(  new  TStoreHelix( h, h->GetPointsArray() ) );
+      fUsedHelices.AddLast( new TStoreHelix(h, h->GetPointsArray()));
     }
   }
 
-  int AddLine(TFitLine* l);
-  int AddHelix(TFitHelix* h);
+  int AddLine(const TFitLine* l);
+  int AddHelix(const TFitHelix* h);
 
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 
