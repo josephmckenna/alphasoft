@@ -17,7 +17,7 @@ if [ -z ${RUNNO} ]; then
    echo "No run number set"
    Run_number=`odbedit -e ${MIDAS_EXPT_NAME} -c 'ls "/Runinfo/Run number"'`
    echo ${Run_number}
-   RUNNO=`echo $Run_number | awk '{print $3}'`
+   RUNNO=`echo $Run_number | grep -v command | awk '{print $3}' | head -n1`
 fi
 
 cd ~/alphasoft
