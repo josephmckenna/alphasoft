@@ -11,6 +11,14 @@
 #include "RecoFlow.h"
 #include "A2Flow.h"
 
+#include "TSISChannels.h"
+
+#ifdef HAVE_MIDAS
+#include "midas.h"
+#include "msystem.h"
+#include "mrpc.h"
+#endif
+
 #include <iostream>
 class CatchEfficiencyModuleFlags
 {
@@ -25,6 +33,7 @@ private:
    uint32_t FirstEvent=0;
    TA2Spill* HotDump=NULL;
    TA2Spill* ColdDump=NULL;
+   int fCTDetector = -1;
 
 public:
    CatchEfficiencyModuleFlags* fFlags;
@@ -52,6 +61,10 @@ public:
       if (fTrace)
          printf("CatchEfficiencyModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
       start_time=clock();
+      
+      TSISChannels* sisch = new TSISChannels(runinfo->fRunNo);
+      fCTDetector = sisch->GetChannel("CT_SiPM_OR").toInt();
+      delete sisch;
     }
 
    void EndRun(TARunInfo* runinfo)
@@ -100,6 +113,11 @@ public:
                   ColdDump = NULL;
                }
                HotDump = new TA2Spill(*s);
+               // To do: Replace '54' with a look up to channel number
+               if (HotDump->ScalerData)
+                  if (fCTDetector > 0)
+                     if (HotDump->ScalerData->DetectorCounts.at(fCTDetector) < 5000)
+                         cm_msg(MTALK, "alpha2online","Warning: Hot Dump is Low");
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
