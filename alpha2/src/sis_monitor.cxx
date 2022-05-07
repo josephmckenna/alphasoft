@@ -18,7 +18,7 @@
 #include "TExec.h"
 #include "TCanvas.h"
 
-#define SECONDS_TO_BUFFER 60
+#define SECONDS_TO_BUFFER 15
 
 
 //Time to group SIS Events (seconds)
