@@ -233,6 +233,8 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::TWireSignal,ALP
       u.FillFitTracksHisto(&HelixArray);
    else if( nlin > 0 )
       u.FillFitTracksHisto(&LineArray);
+
+   u.FillFinalHistos(PointsArray.size(), TrackVector.size(), nhel+nlin);
 }
 
 void ProcessEvents::ProcessVertex(TVector3* mcvtx)

@@ -48,6 +48,7 @@ public:
    void FillRecoVertex(const TFitVertex *Vertex);
 
    void FillFinalHistos(const TStoreEvent *r, int ntracks);
+   void FillFinalHistos(int total_points, int total_tracks, int good_tracks);
 
    void DebugNeuralNet(NeuralFinder *);
    void DebugNeuralNetMC(NeuralFinder *);

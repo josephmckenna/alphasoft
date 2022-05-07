@@ -213,7 +213,7 @@ int main(int argc, char** argv)
       if( sv > 0 && Verb ) Vertex.Print();
       if( sv > 0 ) u.FillRecoVertex(&Vertex);
 
-      //u.FillFinalHistos(&r,nhel+nlin);
+      u.FillFinalHistos(points.size(), tracks.size(), nhel+nlin);
 
       // Perform Cosmic Analysis
       int cf_status = cosfind.Process(cosmics);
