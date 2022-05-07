@@ -92,7 +92,7 @@ class SpillLogPrinter
       std::string logo_indent(indent,' ');
       //For readability make a large break from the last run
       cm_msg1(MINFO, "SpillLog", "alpha2online","%s%s", logo_indent.c_str(), "           /_/ |_/____/_/  /_//_/_/ |_|    ");
-      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ /___/___/___/");
+      cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "/___/___/___/ __ |/ /__/ ___/ _  / __ |___/___/___/");
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), " ____________/ _ | / /  / _ \\/ // / _ |____________");
       cm_msg1(MINFO, "SpillLog", "alpha2online", "%s%s", logo_indent.c_str(), "              ___   __   ___  __ _____             ");
 
