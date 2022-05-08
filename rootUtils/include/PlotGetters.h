@@ -47,11 +47,6 @@ void Plot_Chrono_Sync(Int_t runNumber, Double_t tmin=0., Double_t max=-1.);
 // Energy Analysis
 //*************************************************************
 #ifdef BUILD_AG
-//TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, Int_t binNumber=1000, 
-//                          const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
-//                          Double_t EnergyRangeFactor=10.);
-
-
 
 TCanvas* Plot_AG_ColdDump(Int_t runNumber, Int_t dumpIndex, 
                           Int_t binNumber, 
@@ -72,12 +67,16 @@ TCanvas* Plot_AG_RCT_ColdDump(Int_t runNumber,Int_t dumpIndex = 0,
 #endif
 
 #ifdef BUILD_A2
-TCanvas* Plot_A2_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
+TCanvas* Plot_A2_ColdDump(Int_t runNumber, int dump_index = 0, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
                           Double_t EnergyRangeFactor=10., const char* SIS_Channel_Name = "SIS_PMT_CATCH_OR");
 
-TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition = 0, Int_t binNumber=1000, 
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int dump_index = 0, Int_t binNumber=1000, 
                           const char* dumpFile="ana/macros/ColdDumpE4E5.dump",
+                          Double_t EnergyRangeFactor=10.);
+
+TCanvas* Plot_A2_RCT_ColdDump(Int_t runNumber, int dump_index = 0, Int_t binNumber=1000, 
+                          const char* dumpFile="alpha2/macros/ColdDump_E5E6_500ms_withOffsets_20141105.dat",
                           Double_t EnergyRangeFactor=10.);
 
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 

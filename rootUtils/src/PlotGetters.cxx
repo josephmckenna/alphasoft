@@ -896,12 +896,20 @@ TCanvas* Plot_A2_ColdDump(Int_t runNumber,int repetition, Int_t binNumber, const
 #endif
 
 #ifdef BUILD_A2
-TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int repetition, Int_t binNumber, 
+TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int dump_index, Int_t binNumber, 
                           const char* dumpFile,
                           Double_t EnergyRangeFactor)
-                          {
-                            return Plot_A2_ColdDump(runNumber, repetition, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
-                          }
+{
+   return Plot_A2_ColdDump(runNumber, dump_index, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
+}
+                          
+TCanvas* Plot_A2_RCT_ColdDump(Int_t runNumber,int dump_index, Int_t binNumber, 
+                          const char* dumpFile,
+                          Double_t EnergyRangeFactor)
+{
+   return Plot_A2_ColdDump( runNumber, dump_index, binNumber, dumpFile, EnergyRangeFactor,"PMT_11");
+}
+
 #endif
 
 #ifdef BUILD_A2
