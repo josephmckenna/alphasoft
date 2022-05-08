@@ -159,6 +159,15 @@ class TVertexEvents: public TObject
                i++;
          return i;
       }
+      void PrintPassCutEvents() const
+      {
+         for (int i = 0; i < fCutsResults.size(); i++)
+         {
+            if (fCutsResults.at(i))
+               std::cout << fEventNos.at(i) << "\t";
+         }
+         std::cout << std::endl;
+      }
       ClassDef(TVertexEvents, 1);
 };
 
