@@ -10,15 +10,18 @@ alphasuperdaq*)
     ;;
 esac
 
-sleep 3
-
 RUNNO=${1}
 if [ -z ${RUNNO} ]; then
    echo "No run number set"
-   Run_number=`odbedit -e ${MIDAS_EXPT_NAME} -c 'ls "/Runinfo/Run number"'`
+   Run_number=`odbedit -c 'ls "/Runinfo/Run number"' | grep -v command | awk '{print $3}' | head -n1`
+   echo "\n"
    echo ${Run_number}
-   RUNNO=`echo $Run_number | grep -v command | awk '{print $3}' | head -n1`
+   echo "\n"
+   RUNNO=`echo $Run_number `
 fi
+
+
+sleep 3
 
 cd ~/alphasoft
 . agconfig.sh
@@ -44,6 +47,15 @@ SaveAllDumpsSVD(${RUNNO})
 
 echo "done"
 
+
+echo "auto FRDs = Get_A2_Spills({RUNNO},{\"FastRampDown\"},{-1});
+if (FRD.size()) {
+TA2Plot a;
+a.AddDumpGates(FRDs);
+a.LoadData();
+a.GetVertexEvent()->PrintPassCutEvents();
+.q
+" | root -l -b &> AutoSISPlots/R${RUNNO}_FRD_PassCutsEvents.log
 
 echo "Cleaning up old runs"
 
