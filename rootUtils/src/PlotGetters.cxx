@@ -902,13 +902,21 @@ TCanvas* Plot_A2_CT_ColdDump(Int_t runNumber, int dump_index, Int_t binNumber,
 {
    return Plot_A2_ColdDump(runNumber, dump_index, binNumber, dumpFile, EnergyRangeFactor, "SIS_PMT_CATCH_OR");
 }
-                          
+
 TCanvas* Plot_A2_RCT_ColdDump(Int_t runNumber,int dump_index, Int_t binNumber, 
                           const char* dumpFile,
                           Double_t EnergyRangeFactor)
 {
    return Plot_A2_ColdDump( runNumber, dump_index, binNumber, dumpFile, EnergyRangeFactor,"PMT_11");
 }
+
+TCanvas* Plot_A2_PreMix_ColdDump(Int_t runNumber,int dump_index, Int_t binNumber, 
+                          const char* dumpFile,
+                          Double_t EnergyRangeFactor)
+{
+   return Plot_A2_ColdDump( runNumber, dump_index, binNumber, dumpFile, EnergyRangeFactor,"PMT_11");
+}
+
 
 #endif
 

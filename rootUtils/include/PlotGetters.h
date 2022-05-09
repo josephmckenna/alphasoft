@@ -79,6 +79,11 @@ TCanvas* Plot_A2_RCT_ColdDump(Int_t runNumber, int dump_index = 0, Int_t binNumb
                           const char* dumpFile="alpha2/macros/ColdDump_E5E6_500ms_withOffsets_20141105.dat",
                           Double_t EnergyRangeFactor=10.);
 
+TCanvas* Plot_A2_PreMix_ColdDump(Int_t runNumber,int dump_index, Int_t binNumber, 
+                          const char* dumpFile = "alpha2/macros/ColdDump_E11_500ms_20141105.dat",
+                          Double_t EnergyRangeFactor=10.);
+
+
 TCanvas* MultiPlotRunsAndDumps(std::vector<Int_t> runNumbers, std::string SISChannel, 
                                 std::vector<std::string> description, std::vector<std::vector<int>> dumpNumbers, 
                                 std::string drawOption = "3dheat");
