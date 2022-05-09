@@ -48,12 +48,13 @@ SaveAllDumpsSVD(${RUNNO})
 echo "done"
 
 
-echo "auto FRDs = Get_A2_Spills({RUNNO},{\"FastRampDown\"},{-1});
-if (FRD.size()) {
+echo "auto FRDs = Get_A2_Spills(${RUNNO},{\"FastRampDown\"},{-1});
+if (FRDs.size()) {
 TA2Plot a;
 a.AddDumpGates(FRDs);
 a.LoadData();
-a.GetVertexEvent()->PrintPassCutEvents();
+a.GetVertexEvents()->PrintPassCutEvents();
+}
 .q
 " | root -l -b &> AutoSISPlots/R${RUNNO}_FRD_PassCutsEvents.log
 
