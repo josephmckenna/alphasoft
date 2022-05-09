@@ -325,7 +325,7 @@ void TAlphaDisplay::UpdateText()
                fCurrentTSilEvent->GetVF48NTrigger(), //FIXME
                fCurrentTSilEvent->GetVF48Timestamp() //FIXME
             );
-  TPad * ftext = new TPad("text", "text",0.19,0.99,0.74, 0.96);
+  TPad * ftext = new TPad("text", "text",0.19,0.96,0.74, 0.99);
   ftext->Draw();
   //ftext->SetFillColor(1);
   ftext->SetBorderSize(2);
