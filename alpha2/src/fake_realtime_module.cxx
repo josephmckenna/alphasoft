@@ -11,8 +11,7 @@
 
 //usleep
 #include "unistd.h"
-
-#include "AnalysisTimer.h"
+#include <time.h>
 #include <iostream>
 class RealTimeModuleFlags
 {
@@ -23,7 +22,8 @@ public:
 class RealTimeModule: public TARunObject
 {
 private:
-   clock_t start_time;
+   time_t fStartAnalysisTime;
+   time_t fODBStartTime;
    uint32_t FirstEvent=0;
 public:
    RealTimeModuleFlags* fFlags;
@@ -48,7 +48,13 @@ public:
    {
       if (fTrace)
          printf("RealTimeModule::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-      start_time=clock();
+      fStartAnalysisTime = time(NULL);
+#ifdef INCLUDE_VirtualOdb_H
+      fODBStartTime = runinfo->fOdb->odbReadUint32("/Runinfo/Start time binary", 0, 0);
+#endif
+#ifdef INCLUDE_MVODB_H
+      runinfo->fOdb->RU32("Runinfo/Start time binary",(uint32_t*) &fODBStartTime);
+#endif
     }
 
    void EndRun(TARunInfo* runinfo)
@@ -80,13 +86,27 @@ public:
       {
          if(!FirstEvent)
             FirstEvent=me->time_stamp;
-         clock_t time_now=(clock()-start_time)/CLOCKS_PER_SEC;
-         //std::cout << me->time_stamp-FirstEvent <<"<"<<time_now<<std::endl;
-         while (me->time_stamp-FirstEvent>time_now)
+         while (true)
          {
-            //std::cout<<"Sleep"<<std::endl;
-            //std::cout << me->time_stamp <<" > "<<time_now<<std::endl;
-            time_now=(clock()-start_time)/CLOCKS_PER_SEC;
+#ifdef HAVE_THTTP_SERVER
+      if ( runinfo->fRoot->fgHttpServer ) {
+            runinfo->fRoot->fgHttpServer->ProcessRequests();
+      }
+#endif
+            // Time difference between experiment start and analysis start
+            int dt = fStartAnalysisTime - fODBStartTime;
+
+            // Time difference between experiment start and now
+            int dt_now = time(NULL) - fODBStartTime;
+            
+            // Run time in seconds
+            int midas_time = me->time_stamp - fODBStartTime;
+
+            // We've waited long enough
+            if (midas_time < dt_now - dt)
+               break;
+            //if (midas_time >= 0)
+            //  std::cout <<midas_time << " > " << dt_now << " - " << dt << std::endl;
             usleep(1000);
          }
       }
