@@ -198,10 +198,11 @@ int main(int argc, char** argv)
          }
 
       u.FillRecoTracksHisto(&TTracks);
-      if (helices.size())
+      if (MagneticField > 0.){
 	     u.FillFitTracksHisto(&helices);
-      if (lines.size())
+	  } else {
          u.FillFitTracksHisto(&lines);
+	  }
       // Setup Cosmic Analysis 
       std::vector<TCosmic> cosmics;         
       cosfind.Create(&helices,cosmics);
