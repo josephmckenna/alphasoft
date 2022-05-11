@@ -17,7 +17,7 @@ ProcessEvents::ProcessEvents( AnaSettings* a, double B,
                                                           r(a,B,"CERN", false),rMC(a,B,"CERN", false),
                                                           u(f,B),kFinder(adaptive),
                                                           EventNo(-1),kDraw(false),
-                                                          kVerb(0)
+                                                          kVerb(0), fMagneticField(B)
 {
    if( issim )
       {
@@ -219,20 +219,23 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::TWireSignal,ALP
    std::cout<<"[proc]# "<<EventNo<<"\ttracks: "<<TracksArray.size()<<std::endl;
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   //r.SetTrace( true );
-   int nlin = r.FitLine(TracksArray, LineArray);   // no MT for now
-   std::cout<<"[proc]# "<<EventNo<<"\tline: "<<nlin<<std::endl;
-   //r.SetTrace(true);
-   int nhel = r.FitHelix(TracksArray, HelixArray); // no MT for now
-   // r.SetTrace(false);
-   std::cout<<"[proc]# "<<EventNo<<"\thelix: "<<nhel<<std::endl;
-   u.HelixPlots( &HelixArray );
+   int nlin = 0, nhel = 0;
+   if(fMagneticField > 0.) {
+	   nhel = r.FitHelix(TracksArray, HelixArray); // no MT for now
+	   std::cout<<"[proc]# "<<EventNo<<"\thelix: "<<nhel<<std::endl;
+	   u.HelixPlots( &HelixArray );
+   } else {
+	   nlin = r.FitLine(TracksArray, LineArray);   // no MT for now
+	   std::cout<<"[proc]# "<<EventNo<<"\tline: "<<nlin<<std::endl;
+   }
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    if( nhel > 0 ) 
       u.FillFitTracksHisto(&HelixArray);
    else if( nlin > 0 )
       u.FillFitTracksHisto(&LineArray);
+
+   u.FillFinalHistos(PointsArray.size(), TrackVector.size(), nhel+nlin);
 }
 
 void ProcessEvents::ProcessVertex(TVector3* mcvtx)
