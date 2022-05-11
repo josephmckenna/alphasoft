@@ -47,6 +47,8 @@ option(WARNINGS_ALL "Enable gcc warnings" OFF)
 option(LINTER "Enable clang-tidy to inspect C++ code" OFF)
 option(MINUIT2TRACK "Enable Minuit2 for track fitting" OFF)
 option(MINUIT2VERTEX "Enable Minuit2 for vertex fitting" ON)
+# Keep workspace tidy by no installing the manalyzer examples
+set(MANALYZER_NO_INSTALL_EXAMPLES ON )
 
 
 # Find Git
