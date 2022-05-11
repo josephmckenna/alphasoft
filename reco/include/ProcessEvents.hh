@@ -38,6 +38,7 @@ private:
    int EventNo;
    bool kDraw;
    int kVerb;
+   double fMagneticField;
    
    std::vector<TSpacePoint> PointsArray;
    std::vector<TTrack> TracksArray;

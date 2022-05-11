@@ -353,6 +353,26 @@ void Utils::FillFinalHistos(const TStoreEvent* r, int ntracks)
       fHisto.FillHisto("hgoodpattreceff",0.);
 }
 
+void Utils::FillFinalHistos(int total_points, int total_tracks, int good_tracks)
+{
+   fHisto.FillHisto("hNpoints",total_points);
+   if(Npointstracks) fHisto.FillHisto("hNpointstracks",Npointstracks); //This comes from FillRecoTracksHisto. Hence that function HAS to be called before this one
+   if(Npoints) fHisto.FillHisto("hNgoodpoints",Npoints); //This comes from FillFitTracksHisto. Hence that function HAS to be called before this one
+
+   fHisto.FillHisto("hNtracks",total_tracks);
+   fHisto.FillHisto("hNgoodtracks",double(good_tracks));
+
+   if( total_tracks > 0 )
+      fHisto.FillHisto("hpattreceff", double(Npointstracks)/double(total_tracks));
+   else
+      fHisto.FillHisto("hpattreceff",0.);
+      
+   if( good_tracks > 0 )
+      fHisto.FillHisto("hgoodpattreceff", double(Npoints)/double(good_tracks));
+   else
+      fHisto.FillHisto("hgoodpattreceff",0.);
+}
+
 // ===============================================================================================
 void Utils::DebugNeuralNet(NeuralFinder* pattrec)
 {

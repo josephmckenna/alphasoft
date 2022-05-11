@@ -1,5 +1,9 @@
 #include "TSpacePointBuilder.hh"
 
+#ifdef BUILD_AG_SIM
+#include "TMChit.hh"
+#endif
+
 TSpacePointBuilder::TSpacePointBuilder(std::string json, double B, bool trace)
    : fMagneticField(B), fTrace(trace), fLocation("CERN"), f_rfudge(1.), f_pfudge(1.)
 {
