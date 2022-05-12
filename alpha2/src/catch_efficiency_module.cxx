@@ -113,11 +113,13 @@ public:
                   ColdDump = NULL;
                }
                HotDump = new TA2Spill(*s);
+#if HAVE_MIDAS
                // To do: Replace '54' with a look up to channel number
                if (HotDump->ScalerData)
                   if (fCTDetector > 0)
                      if (HotDump->ScalerData->DetectorCounts.at(fCTDetector) < 5000)
                          cm_msg(MTALK, "alpha2online","Warning: Hot Dump is Low");
+#endif
             }
             if (strcmp(s->Name.c_str(),"\"Cold Dump\"")==0)
             {
