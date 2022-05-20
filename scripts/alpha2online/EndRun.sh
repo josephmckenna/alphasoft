@@ -38,6 +38,8 @@ fi
 
 cd $AGRELEASE
 
+sleep 4
+
 echo "Generating SIS plots..."
 echo ".L alpha2/macros/SaveAllDumps.cxx 
 SaveAllDumps(${RUNNO})
@@ -54,6 +56,8 @@ TA2Plot a;
 a.AddDumpGates(FRDs);
 a.LoadData();
 a.GetVertexEvents()->PrintPassCutEvents();
+} else {
+std::cout << \"No FRD in this run\" <<std::endl;
 }
 .q
 " | root -l -b &> AutoSISPlots/R${RUNNO}_FRD_PassCutsEvents.log
