@@ -512,7 +512,7 @@ std::vector<std::vector<TH1D*>> Get_SIS(Int_t runNumber, std::vector<TSISChannel
                }
                //This event has been written to the array... so I dont need
                //to check the other winodws... break! Move to next SISEvent
-               break;
+               //break;
             }
          }
       }
