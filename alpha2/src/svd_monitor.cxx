@@ -5,6 +5,7 @@
 //
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "manalyzer.h"
 #include "midasio.h"
@@ -105,13 +106,82 @@ class TSVD
    {
       return fRunTime;
    }
+
 };
+
+#define LIVE_DUMP_MARKERS 0
+#if LIVE_DUMP_MARKERS
+class TSVDDumpMarker
+{
+   private:
+      int fSeq;
+      int fType;
+      uint32_t fMidasTime;
+      double fTime;
+//      TF1* fLine;
+   public:
+      TSVDDumpMarker(const int seq, const int type, const uint32_t midas_time, const double time)//, TF1* line)
+      {
+         fSeq = seq;
+         fType = type;
+         fMidasTime = midas_time;
+         fTime = time;
+  //       fLine = line;
+         //std::string name = "Line" + std::to_string(time);
+         //std::string formula = std::to_string(time);
+         //new TF1(name.c_str(),formula.c_str(), -30,30 );
+      }
+      ~TSVDDumpMarker()
+      {
+         //delete fLine;
+         //fLine = NULL;
+      }
+      EColor GetColour() const
+      {
+         if (fType == 0 )
+            return kGreen;
+         else if (fType == 1 )
+            return kRed;
+         return kBlack;
+      }
+      double GetRunTime() const
+      {
+         return fTime;
+      }
+/*      void Draw()
+      {
+         std::cout <<"DrawLine: " << fTime <<std::endl;
+         fLine->Draw("SAME");
+      }*/
+      void Draw(TF1* line)
+      {
+         line->SetParameter(0,fTime );
+         line->SetLineColor(GetColour());
+         line->SetLineWidth(1);
+         std::cout <<"DrawLine: " << fTime <<std::endl;
+         line->Draw("SAME");
+      }
+   
+};
+#endif
+
 
 class SVDMonitor: public TARunObject
 {
 private:
    // Ring buffer would probably be quicker... but lets just get this working
    std::deque<TSVD> fFIFO;
+
+#if LIVE_DUMP_MARKERS
+   std::deque<TSVDDumpMarker> fDumpMarkerFIFO;
+   std::array<TSISChannel,USED_SEQ> DumpStartChannels;
+   std::array<TSISChannel,USED_SEQ> DumpStopChannels;
+
+   TString StartNames[NUMSEQ]={"SIS_PBAR_DUMP_START","SIS_RECATCH_DUMP_START","SIS_ATOM_DUMP_START","SIS_POS_DUMP_START","NA","NA","NA","NA","NA"};
+   TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
+#endif
+
+   std::chrono::steady_clock::time_point fLastHistoUpdate;
 
    TCanvas fLiveVertex;
    TCanvas fLiveOccupancy;
@@ -120,6 +190,11 @@ private:
    //TH2D fZY;
    TH2I fZTvert;
    TH2I fZTpass;
+
+#if LIVE_DUMP_MARKERS
+   TH2I fDumpStart;
+   TH2I fDumpStop;
+#endif
    //TH1I fR;
    TH2I fOccupancyT[4];
    TStyle* fSVDStyle;
@@ -133,8 +208,7 @@ public:
          fLiveVertex("LiveVertex","LiveVertex"),
          fLiveOccupancy("LiveOccupancy","LiveOccupancy")
    {
-      
-      
+      fLastHistoUpdate = std::chrono::high_resolution_clock::now(); //measure time starting here
       fModuleName = "SVDMonitor";
       for (int i = 0; i < BUFFER_DEPTH; i++)
       {
@@ -155,6 +229,14 @@ public:
 
    void BeginRun(TARunInfo* runinfo)
    {
+#if LIVE_DUMP_MARKERS
+      TSISChannels* SISChannels=new TSISChannels( runinfo->fRunNo );
+      for (int j=0; j<USED_SEQ; j++) 
+      {
+         DumpStartChannels[j] =SISChannels->GetChannel(StartNames[j],runinfo->fRunNo);
+         DumpStopChannels[j]  =SISChannels->GetChannel(StopNames[j], runinfo->fRunNo);
+      }
+#endif
       fSVDStyle->SetPalette(kCool);
       fXYvert = TH2I(
                "XY Vertex",
@@ -168,6 +250,18 @@ public:
                100,-30,30,
                BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime()
             );
+#if LIVE_DUMP_MARKERS
+      fDumpStart = TH2I("StartDumpMarkers",
+               "Dump Marker;",
+               1,-30,30,
+               BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime()
+            );
+      fDumpStop = TH2I("StopDumpMarkers",
+               "Dump Marker;",
+               1,-30,30,
+               BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime()
+            );
+#endif
       fXYpass = TH2I(
                "XY Pass Cut",
                "XY Pass Cut; X(cm); Y(cm)",
@@ -220,30 +314,101 @@ public:
 #endif
       return flow;
    }
-   
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {
 
-      SilEventFlow* SilFlow = flow->Find<SilEventFlow>();
-      if (!SilFlow)
-         return flow;
-      TSiliconEvent* se = SilFlow->silevent;
+   void AddEvent(const TSiliconEvent* se)
+   {
       int i = fFIFO.back().fBin;
+      // Grow FIFO if needed (then remove old events automatically)
       while (fFIFO.back().GetRunTime() < se->GetVF48Timestamp())
       {
          fFIFO.emplace_back(TSVD(++i));
          fFIFO.pop_front();
       }
-
-      //Find bin of the first event
+      //Find bin of the first event and add it to the cointers
       int bin = 0;
       while ( se->GetVF48Timestamp() > fFIFO.at(bin).GetRunTime())
          bin++;
       fFIFO.at(bin) += *se;
+   }
+#if LIVE_DUMP_MARKERS
+   void AddEvent(const SISEventFlow* SISFlow)
+   {
+      //Add timestamps to dumps
+      for (int j=0; j<NUM_SIS_MODULES; j++)
+      {
+         const std::vector<TSISEvent>& ce = SISFlow->sis_events[j];
+         for (size_t i = 0; i < ce.size(); i++)
+         {
+            const TSISEvent& e = ce.at(i);
+            for (int a = 0; a < USED_SEQ; a++)
+            {
+               if (DumpStartChannels.at(a).IsValid())
+               {
+                  const int counts = e.GetCountsInChannel(DumpStartChannels[a]);
+                  //if (e->GetCountsInChannel(DumpStartChannels[a]))
+                  for (int nstarts = 0; nstarts < counts; nstarts++)
+                  {
+                     fDumpMarkerFIFO.emplace_back(a,0,e.GetMidasUnixTime(), e.GetRunTime());//,GetTF1());
+                  }
+               }
+               if (DumpStopChannels.at(a).IsValid())
+               {
+                  const int counts = e.GetCountsInChannel(DumpStopChannels[a]);
+                  for (int nstops = 0; nstops < counts; nstops++)
+                  {
+                     fDumpMarkerFIFO.emplace_back(a,1,e.GetMidasUnixTime(), e.GetRunTime());//,GetTF1());
+                  }
+               }
+            }
+         }
+      }
+      // Clean up dump marker FIFO
+      double vf48_oldest_event = fFIFO.front().GetRunTime();
+      while (true)
+      {
+          if (!fDumpMarkerFIFO.size())
+             break;
+          if (fDumpMarkerFIFO.front().GetRunTime() < vf48_oldest_event)
+          {
+             std::cout<<"Popping fDumpMarker at " << fDumpMarkerFIFO.front().GetRunTime() <<"\n";
+             fDumpMarkerFIFO.pop_front();
+          }
+          else
+          {
+             break;
+          }
+      }
+
+   }
+#endif
+
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+
+      SilEventFlow* SilFlow = flow->Find<SilEventFlow>();
+
+      if (SilFlow)
+         AddEvent(SilFlow->silevent);
+
+#if LIVE_DUMP_MARKERS
+      //A2SpillFlow* SpillFlow = flow->A2SpillFlow<A2SpillFlow>();
+      SISEventFlow* SISFlow = flow->Find<SISEventFlow>();
+      if (SISFlow)
+         AddEvent(SISFlow);
+#endif
+
+      auto time_now = std::chrono::high_resolution_clock::now(); //measure time starting here
+      auto dt = std::chrono::duration_cast<std::chrono::milliseconds>( time_now - fLastHistoUpdate);
+      if ( dt.count() < 25)
+         return flow;
+      fLastHistoUpdate = time_now;
 
       //Resise histograms
       for (int j=0; j < 4; j++)
          fOccupancyT[j].GetXaxis()->Set(BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime());
+#if LIVE_DUMP_MARKERS
+      fDumpStart.GetYaxis()->Set(BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime());
+#endif
       fZTvert.GetYaxis()->Set(BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime());
       fZTpass.GetYaxis()->Set(BUFFER_DEPTH, fFIFO.front().GetRunTime(), fFIFO.back().GetRunTime());
 
@@ -251,6 +416,9 @@ public:
          fOccupancyT[j].Reset();
       fXYvert.Reset();
       fXYpass.Reset();
+#if LIVE_DUMP_MARKERS
+      fDumpStart.Reset();
+#endif
       fZTvert.Reset();
       fZTpass.Reset();
       fSVDStyle->SetPalette(kCool);
@@ -284,10 +452,37 @@ public:
       fXYvert.Draw("colz");
       fLiveVertex.cd(2);
       fZTvert.Draw("colz");
+#if LIVE_DUMP_MARKERS
+      for (TSVDDumpMarker& d: fDumpMarkerFIFO)
+      {
+          double t = d.GetRunTime();
+          fDumpStart.Fill(0., t );
+      }
+      fDumpStart.SetFillColor(kBlack)
+      fDumpStart.Draw("colz SAME");
+      gPad->Modified();
+   
+      gPad->Update();
+      gPad->Draw();
+      fLiveVertex.Modified();
+      fLiveVertex.Update();
+      fLiveVertex.Draw();
+        /* auto f1=new TF1("f1","1000*TMath::Abs(sin(x)/x)",-10,10);
+            f1->SetLineColor(kBlue);
+   f1->SetLineWidth(4);
+   f1->Draw("same");
+ */
+#endif
       fLiveVertex.cd(3);
       fXYpass.Draw("colz");
       fLiveVertex.cd(4);
       fZTpass.Draw("colz");
+#if LIVE_DUMP_MARKERS
+      /*for (TSVDDumpMarker& d: fDumpMarkerFIFO)
+      {
+          d.Draw();
+      }*/
+#endif
       for (int i = 0; i < 4; i++)
       {
          fLiveOccupancy.cd(i + 1);
