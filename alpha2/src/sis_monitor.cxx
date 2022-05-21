@@ -207,6 +207,7 @@ public:
             }
          }
       }
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       for (int i = 0; i < fSISChannel.size(); i++)
       {
          if (fSISChannel[i].IsValid())

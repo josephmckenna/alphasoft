@@ -134,6 +134,7 @@ public:
          fLiveOccupancy("LiveOccupancy","LiveOccupancy")
    {
       
+      gStyle->SetPalette(kCool);
       
       fModuleName = "SVDMonitor";
       for (int i = 0; i < BUFFER_DEPTH; i++)
@@ -253,7 +254,9 @@ public:
       fXYpass.Reset();
       fZTvert.Reset();
       fZTpass.Reset();
+      
       fSVDStyle->SetPalette(kCool);
+      //gROOT->ForceStyle();
 
       //Update the histograms
       for (TSVD& s: fFIFO)
@@ -280,6 +283,7 @@ public:
             }
          }
       }
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       fLiveVertex.cd(1);
       fXYvert.Draw("colz");
       fLiveVertex.cd(2);
