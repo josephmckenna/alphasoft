@@ -21,7 +21,6 @@ if [ -z ${RUNNO} ]; then
 fi
 
 
-sleep 3
 
 cd ~/alphasoft
 . agconfig.sh
@@ -31,12 +30,32 @@ if [ ${RUNNO} -lt 55000 ]; then
    exit
 fi
 
-if [ ${RUNNO} -gt 65000 ]; then
+if [ ${RUNNO} -gt 75000 ]; then
    echo "Invalid run Number"
    exit
 fi
 
 cd $AGRELEASE
+
+#Wait for file to open (60 second timeout)
+ROOT_FILE_NAME=${AGOUTPUT}/output${RUNNO}.root
+for i in `seq 1 600`; do
+   # Check timeout ...
+   if [ ${i} -gt 60 ]; then
+      echo "Could not open file after ${i} seconds. Did the analyzer crash?"
+      exit 1
+   fi
+
+   root.exe -b -l -q -e "TFile *f = TFile::Open(\"${ROOT_FILE_NAME}\"); if ((!f) || f->IsZombie() || f->TestBit(TFile::kRecovered)) { cout << \"There is a problem with the file: $filename_to_check\n\"; exit(1); }" > /dev/null
+   if [ $? -ne 0 ]; then
+      echo "${ROOT_FILE_NAME} has error, analysis is probably still running"
+      sleep 1
+      continue;
+   else
+      break;
+   fi
+
+ done
 
 echo "Generating SIS plots..."
 echo ".L alpha2/macros/SaveAllDumps.cxx 
