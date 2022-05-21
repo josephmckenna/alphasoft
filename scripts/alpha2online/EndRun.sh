@@ -21,6 +21,7 @@ if [ -z ${RUNNO} ]; then
 fi
 
 
+sleep 3
 
 cd ~/alphasoft
 . agconfig.sh
@@ -73,6 +74,8 @@ TA2Plot a;
 a.AddDumpGates(FRDs);
 a.LoadData();
 a.GetVertexEvents()->PrintPassCutEvents();
+} else {
+std::cout << \"No FRD in this run\" <<std::endl;
 }
 .q
 " | root -l -b &> AutoSISPlots/R${RUNNO}_FRD_PassCutsEvents.log

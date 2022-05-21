@@ -106,7 +106,6 @@ class TSVD
    {
       return fRunTime;
    }
-
 };
 
 #define LIVE_DUMP_MARKERS 0
@@ -209,6 +208,7 @@ public:
          fLiveOccupancy("LiveOccupancy","LiveOccupancy")
    {
       fLastHistoUpdate = std::chrono::high_resolution_clock::now(); //measure time starting here
+      gStyle->SetPalette(kCool);      
       fModuleName = "SVDMonitor";
       for (int i = 0; i < BUFFER_DEPTH; i++)
       {
@@ -448,6 +448,7 @@ public:
             }
          }
       }
+      std::lock_guard<std::mutex> lock(TAMultithreadHelper::gfLock);
       fLiveVertex.cd(1);
       fXYvert.Draw("colz");
       fLiveVertex.cd(2);

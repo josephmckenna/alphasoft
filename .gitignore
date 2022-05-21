@@ -9,6 +9,7 @@
 *.mid.crc32c
 *.mid.lz4.crc32c
 *.png
+*.jpg
 *.pdf
 *.csv
 *.ods
@@ -19,6 +20,10 @@ run*.json
 *.root
 *.log
 *.db
+midasdata
+midasdata_old
+root_output_files
+AutoSISPlots
 alpha2/SpillLog/*.txt
 alpha2/SpillLog/Sequencers/*.txt
 *.htm

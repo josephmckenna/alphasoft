@@ -9,7 +9,7 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
    TA2Plot* VertexPlot[9][2];
    TA2Plot* DarkVertexPlot[9][2];
    std::vector<double> ActualFreq;
-   if ( runNumber==57181 || runNumber==57195 )
+   if ( runNumber==57181 || runNumber==57195 || runNumber== 61122 )
       ActualFreq={-200,-100,   -50, -25,   0., 25,   50,100, 200};
    if ( runNumber==57208 )
       ActualFreq={-100, -25, -12.5, -0., 12.5, 25, 37.5, 50, 100};
@@ -99,7 +99,10 @@ std::vector<TA2Plot*> Plot_243_Light_And_Dark_Lineshape(int runNumber, bool Draw
          DataLoader.BookPlot(DarkVertexPlot[i][j]);
       }
    }
-   DataLoader.SetLVChannel("D243",2);
+   if (runNumber < 60000)
+      DataLoader.SetLVChannel("D243",2);
+   if (runNumber == 61122 )
+      DataLoader.SetGEMChannel("1S_2S_laser\\A2_cavity_power",0,"LaserPower");
    //Load all data in a single pass of each tree (I am aiming for efficiency)
    DataLoader.LoadData();
 
@@ -262,3 +265,29 @@ int Plot_2018_243_Cooled_Lineshape(bool DrawVerticecs, bool zeroTime)
    return 0;
 }
 
+
+int Plot_2022_243_Lineshape(bool DrawVerticecs, bool zeroTime)
+{
+   std::vector<TA2Plot*> R61122plots = Plot_243_Light_And_Dark_Lineshape(61122,DrawVerticecs, zeroTime);
+     //Example of summing all plots together (not sure why you might want to do it... but its possible)
+   TA2Plot Light(zeroTime);
+   TA2Plot Dark(zeroTime);
+   
+   for ( size_t i = 0; i< R61122plots.size(); i++)
+   {
+      if ( i % 2 == 0)
+         // Operator overloads dont expect a pointer, de-reference the TA2Plot with *
+         Light += *R61122plots.at(i);
+      else
+         Dark += *R61122plots.at(i);
+   }
+   
+   //Re-bin new histograms to desired granularity
+   Light.SetBinNumber(40);
+   Dark.SetBinNumber(40);
+   TCanvas* c1 = Light.DrawCanvas("All Light Vertex for R61122");
+   c1->SaveAs("All_Light_Vertex_for_R61122.png");
+   TCanvas* c2 = Dark.DrawCanvas("All Dark Vertex for R61122");
+   c2->SaveAs("All_Dark_Vertex_for_R61122.png");
+   return 0;
+ }

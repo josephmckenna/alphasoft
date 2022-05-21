@@ -101,3 +101,71 @@ void DumpA2SpillLogToCSV(int runNumber)
     return DumpSpillLogsToCSV(spills,filename);
 }
 #endif
+
+
+//Static function, do not reveal this function to user
+template <typename T>
+static void WriteFEGEMData(const std::string filename, TTreeReader* gemReader, const char* name, double firstTime, double lastTime)
+{
+   std::ofstream gem_data;
+   gem_data.open(filename);
+   
+   gem_data << "Data type:," << name << ",Time cut from," << firstTime << ",to," << lastTime << "\n";
+   gem_data << "RunNumber,Midas RunTime, LabVIEW timestamp, data...\n";
+   gem_data << std::setprecision(17);
+   TTreeReaderValue<TStoreGEMData<T>> gemEvent(*gemReader, name);
+   // I assume that file IO is the slowest part of this function... 
+   // so get multiple channels and multiple time windows in one pass
+   while (gemReader->Next())
+   {
+      double runTime = gemEvent->GetRunTime();
+      //A rough cut on the time window is very fast...
+      if (runTime < firstTime)
+         continue;
+      if (runTime > lastTime)
+         break;
+
+      gem_data << gemEvent->GetRunNumber() << ",";
+      gem_data << gemEvent->GetRunTime() << ",";
+      gem_data << gemEvent->GetLVTimestamp() << ",";
+
+      const std::vector<T> data = gemEvent->GetData();
+      for (const T& d: data)
+         gem_data << d << ",";
+      gem_data <<"\n";
+   }
+   
+   gem_data.close();
+   std::cout<< filename << " saved\n";
+   return;
+}
+
+
+void DumpfeGEMDataToCSV(const int runNumber, const std::string category, const std::string varname,  const double firstTime , const double lastTime )
+{
+   std::string filename  = category + std::string("_") + varname + std::string(".csv");
+   
+   TTreeReader* feGEMReader = Get_feGEM_Tree(runNumber, category, varname);
+   TTree* tree = feGEMReader->GetTree();
+   if  (!tree)
+   {
+      std::cout<<"Warning: " << category << " ("<<varname<<") not found for run " << runNumber << std::endl;
+      return;
+   }
+   if (tree->GetBranchStatus("TStoreGEMData<double>"))
+      WriteFEGEMData<double>(filename, feGEMReader, "TStoreGEMData<double>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<float>"))
+      WriteFEGEMData<float>(filename, feGEMReader, "TStoreGEMData<float>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<bool>"))
+      WriteFEGEMData<bool>( filename,feGEMReader, "TStoreGEMData<bool>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<int32_t>"))
+      WriteFEGEMData<int32_t>( filename, feGEMReader, "TStoreGEMData<int32_t>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<uint32_t>"))
+      WriteFEGEMData<uint32_t>( filename, feGEMReader, "TStoreGEMData<uint32_t>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<uint16_t>"))
+      WriteFEGEMData<uint16_t>( filename, feGEMReader, "TStoreGEMData<uint16_t>", firstTime, lastTime);
+   else if (tree->GetBranchStatus("TStoreGEMData<char>"))
+      WriteFEGEMData<char>( filename, feGEMReader, "TStoreGEMData<char>", firstTime, lastTime);
+   else
+      std::cout << "Warning unable to find TStoreGEMData type" << std::endl;   
+}
