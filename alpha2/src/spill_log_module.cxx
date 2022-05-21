@@ -470,14 +470,20 @@ public:
          spillLogName+="spilllog.log";
          std::cout <<"Log file: "<<spillLogName<<std::endl;
          std::ofstream spillLog (spillLogName);
-         spillLog<<"[code]";
+         if (lines <= 1000)
+            spillLog<<"[code]";
          for (size_t i=0; i<lines; i++)
             spillLog<<InMemorySpillTable[i].c_str()<<std::endl;
-         spillLog<<"[/code]"<<std::endl;
+         if (lines <= 1000)
+            spillLog<<"[/code]"<<std::endl;
          spillLog.close();
 #ifdef HAVE_MIDAS
          char cmd[200]={0};
-         sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8083 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
+         // If spill log too large for message
+         if (lines > 1000)
+            sprintf(cmd,"echo 'elog:/1' | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8083 -l SpillLog -f ${AGRELEASE}/%s -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
+         else
+            sprintf(cmd,"cat %s | ssh -x alpha@alphadaq /home/alpha/packages/elog/elog -h localhost -p 8083 -l SpillLog -a Run=%d -a Author=alpha2online &",spillLogName.Data(),gRunNumber);
          printf("--- Command: \n%s\n", cmd);
          if ( fFlags->fWriteElog )
             system(cmd);
