@@ -13,6 +13,9 @@
 #include "unistd.h"
 #include <time.h>
 #include <iostream>
+#include <numeric>
+#include <deque>
+#include <functional>
 class RealTimeModuleFlags
 {
 public:
@@ -24,7 +27,10 @@ class RealTimeModule: public TARunObject
 private:
    time_t fStartAnalysisTime;
    time_t fODBStartTime;
-   uint32_t FirstEvent=0;
+   uint32_t FirstEvent = 0;
+   uint32_t LastMidasTimeStamp = 0;
+   uint32_t MidasEventsInLastSecond = 0;
+   std::deque<int> MidasEventsPerSecond;
 public:
    RealTimeModuleFlags* fFlags;
    bool fTrace = false;
@@ -85,7 +91,28 @@ public:
       if (fFlags->fFakeRealtime )
       {
          if(!FirstEvent)
-            FirstEvent=me->time_stamp;
+            FirstEvent = me->time_stamp;
+         
+         if (me->time_stamp != LastMidasTimeStamp)
+         {
+            LastMidasTimeStamp = me->time_stamp ;
+            MidasEventsPerSecond.emplace_back(MidasEventsInLastSecond);
+            //std::cout <<MidasEventsInLastSecond << "\n";
+            MidasEventsInLastSecond = 0;
+            if (MidasEventsPerSecond.size() > 10 )
+               MidasEventsPerSecond.pop_front();
+         }
+         else
+         {
+            MidasEventsInLastSecond++;
+         }
+        /* if (MidasEventsPerSecond.size() == 10 )
+         {
+            double average_events_per_second = std::accumulate(MidasEventsPerSecond.begin(), MidasEventsPerSecond.end(),0) / MidasEventsPerSecond.size();
+            //std::cout <<"\t" << average_events_per_second <<"\n";
+            //std::cout <<"sleep for " <<  1000 / average_events_per_second - 10 <<std::endl;
+            usleep ( 0.9 * 1000 * 1000 / average_events_per_second );
+         }*/
          while (true)
          {
 #ifdef HAVE_THTTP_SERVER
