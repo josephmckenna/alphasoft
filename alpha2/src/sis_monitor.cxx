@@ -72,6 +72,9 @@ private:
    std::vector<TH1I> fLiveHisto;
    std::vector<TSISChannel> fSISChannel;
    TStyle* fSISStyle;
+
+   std::chrono::steady_clock::time_point fLastHistoUpdate;
+
 public:
    SisMonitor(TARunInfo* runinfo)
       : TARunObject(runinfo),
@@ -80,6 +83,7 @@ public:
             ),
          fLiveCanvas("LiveSIS","LiveSIS")
    {
+      fLastHistoUpdate = std::chrono::high_resolution_clock::now(); //measure time starting here
       fModuleName = "SisMonitor";
       for (int i = 0; i < BUFFER_DEPTH; i++)
       {
@@ -89,6 +93,7 @@ public:
                )
             );
          fSISStyle = new TStyle("SVDStyle","SVDStyle");
+         fSISStyle->SetPalette(kCool);
       }
 
 
@@ -153,13 +158,9 @@ public:
 #endif
       return flow;
    }
-   
-   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
-   {
-      SISEventFlow* sf=flow->Find<SISEventFlow>();
-      if (!sf)
-         return flow;
 
+   void AddEvent(SISEventFlow* sf)
+   {
       // Obtain time range for incoming data
       double mostmax = 0;
       for ( int j = 0; j < NUM_SIS_MODULES; j++ )
@@ -187,6 +188,21 @@ public:
             fFIFO.at(bin) += e;
          }
       }
+   }
+
+   TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
+   {
+      SISEventFlow* sf=flow->Find<SISEventFlow>();
+      if (sf)
+         AddEvent(sf);
+
+      auto time_now = std::chrono::high_resolution_clock::now(); //measure time starting here
+      auto dt = std::chrono::duration_cast<std::chrono::milliseconds>( time_now - fLastHistoUpdate);
+      if ( dt.count() < 30) // up to ~30fps
+         return flow;
+      fLastHistoUpdate = time_now;
+
+
       //Resise histograms
       for (int i = 0; i < fLiveHisto.size(); i++)
       {
