@@ -14,4 +14,7 @@ void DumpSpillLogsToCSV(std::vector<TA2Spill> dumps, std::string filename);
 void DumpA2SpillLogToCSV(int runNumber);
 #endif 
 
+void DumpfeGEMDataToCSV(const int runNumber, const std::string category, const std::string varname, const double firstTime = 0., const double lastTime = 1E99);
+
+
 #endif
