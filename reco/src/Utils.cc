@@ -18,6 +18,7 @@
 #include "TSpacePoint.hh"
 #include "TFitLine.hh"
 
+#include "TStoreEvent.hh"
 
 Utils::Utils(double B):fHisto(),pmap(),
                        fMagneticField(B),tmax(4500.)
@@ -179,48 +180,31 @@ void Utils::BookRecoHistos()
 }
 
 
-void Utils::FillRecoPointsHistos(const TObjArray* points)
-{  
-   int row,sec;
-   for(int p=0; p<points->GetEntriesFast(); ++p)
-      {
-         TSpacePoint* ap = (TSpacePoint*) points->At(p);
-         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
-         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
-         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
-         pmap.get(ap->GetPad(),sec,row);
-         fHisto.FillHisto("hOccPadpoints",row,sec);
-         
-         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
-      }
-}
-
-void Utils::FillRecoPointsHistos(std::vector<TSpacePoint*>* points)
+void Utils::FillRecoPointsHistos(const std::vector<TSpacePoint>* points)
 {  
    int row,sec;
    for(size_t p=0; p<points->size(); ++p)
       {
-         TSpacePoint* ap = (TSpacePoint*) points->at(p);
-         if( !ap->IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
-         fHisto.FillHisto("hOccAwpoints",ap->GetWire());
-         fHisto.FillHisto("hAwpointsOccIsec",ap->GetWire()%8);
-         pmap.get(ap->GetPad(),sec,row);
+         const TSpacePoint& ap = points->at(p);
+         if( !ap.IsGood(ALPHAg::_cathradius, ALPHAg::_fwradius) ) continue;
+         fHisto.FillHisto("hOccAwpoints",ap.GetWire());
+         fHisto.FillHisto("hAwpointsOccIsec",ap.GetWire()%8);
+         pmap.get(ap.GetPad(),sec,row);
          fHisto.FillHisto("hOccPadpoints",row,sec);
          
-         fHisto.FillHisto("hspzphipoints",ap->GetZ(),ap->GetPhi()*TMath::RadToDeg());
-         fHisto.FillHisto("hspxypoints",ap->GetX(),ap->GetY());
+         fHisto.FillHisto("hspzphipoints",ap.GetZ(),ap.GetPhi()*TMath::RadToDeg());
+         fHisto.FillHisto("hspxypoints",ap.GetX(),ap.GetY());
       }
 }
 
-void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
+void Utils::FillRecoTracksHisto(const std::vector<TTrack>* found_tracks)
 {  
    int row,sec;
    Npointstracks=0;
    for(size_t t=0; t<found_tracks->size(); ++t)
       {
-         TTrack* at = (TTrack*) found_tracks->at(t);
-         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         const TTrack& at = found_tracks->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
          for( const auto& it: *spacepoints )
             {
                fHisto.FillHisto("hOccAwtracks",it.GetWire());
@@ -238,7 +222,7 @@ void Utils::FillRecoTracksHisto(std::vector<TTrack*>* found_tracks)
       }
 }
 
-void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
+void Utils::FillFitTracksHisto(const std::vector<TFitHelix>* tracks_array)
 {  
    int row,sec;
    Npoints=0;
@@ -246,8 +230,8 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
    std::set<int> trXaw;
    for(size_t t=0; t<tracks_array->size(); ++t)
       {
-         TTrack* at = (TTrack*) tracks_array->at(t);
-         const std::vector<TSpacePoint>* spacepoints = at->GetPointsArray();
+         const TFitHelix& at = tracks_array->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
          for(const auto& it: *spacepoints )
             {
                fHisto.FillHisto("hOccAw",it.GetWire());
@@ -277,28 +261,64 @@ void Utils::FillFitTracksHisto(std::vector<TTrack*>* tracks_array)
                fHisto.FillHisto("hTrackXpad",row,sec);                
             }
 
-         if( fMagneticField > 0. )
-            {
-               double chi2 = ((TFitHelix*)at)->GetRchi2();
-               double ndf = (double) ((TFitHelix*)at)->GetRDoF();
-               fHisto.FillHisto("hhchi2R",chi2/ndf);
+            double chi2 = at.GetRchi2();
+            double ndf = (double) at.GetRDoF();
+            fHisto.FillHisto("hhchi2R",chi2/ndf);
 
-               chi2 = ((TFitHelix*)at)->GetZchi2();
-               ndf = (double) ((TFitHelix*)at)->GetZDoF();
-               fHisto.FillHisto("hhchi2Z",chi2/ndf);
+            chi2 = at.GetZchi2();
+            ndf = (double) at.GetZDoF();
+            fHisto.FillHisto("hhchi2Z",chi2/ndf);
 
-               fHisto.FillHisto("hhD", ((TFitHelix*)at)->GetD() );
-            }
-         else
-            {
-               double ndf= (double) ((TFitLine*)at)->GetDoF();
-               double chi2 = ((TFitLine*)at)->GetChi2();
-               fHisto.FillHisto("hchi2",chi2/ndf);
-               // if( gVerb > 1 )
-               //    cout<<"\t"<<t<<" chi^2: "<<chi2<<" ndf: "<<ndf<<endl;
-            }
+            fHisto.FillHisto("hhD", at.GetD() );
+
       }
 }
+
+void Utils::FillFitTracksHisto(const std::vector<TFitLine>* tracks_array)
+{  
+   int row,sec;
+   Npoints=0;
+   std::set<int> trkXpad;
+   std::set<int> trXaw;
+   for(size_t t=0; t<tracks_array->size(); ++t)
+      {
+         const TFitLine& at =tracks_array->at(t);
+         const std::vector<TSpacePoint>* spacepoints = at.GetPointsArray();
+         for(const auto& it: *spacepoints )
+            {
+               fHisto.FillHisto("hOccAw",it.GetWire());
+               fHisto.FillHisto("hAwOccIsec",it.GetWire()%8);
+               trXaw.insert(it.GetWire());
+               pmap.get(it.GetPad(),sec,row);
+               trkXpad.insert(it.GetPad());
+               fHisto.FillHisto("hOccPad",row,sec);
+		  
+               fHisto.FillHisto("hsprad",it.GetR());
+               fHisto.FillHisto("hspphi",it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspzed",it.GetZ());
+		  
+               fHisto.FillHisto("hspzphi",it.GetZ(),it.GetPhi()*TMath::RadToDeg());
+               fHisto.FillHisto("hspxy",it.GetX(),it.GetY());
+
+               ++Npoints;
+            }
+              
+         for(auto iaw = trXaw.begin(); iaw != trXaw.end(); ++iaw)
+            {
+               fHisto.FillHisto("hTrackXaw",*iaw);
+            }
+         for(auto ipd = trkXpad.begin(); ipd != trkXpad.end(); ++ipd)
+            {
+               pmap.get(*ipd,sec,row);
+               fHisto.FillHisto("hTrackXpad",row,sec);                
+            }
+
+            double ndf= (double) at.GetDoF();
+            double chi2 = at.GetChi2();
+            fHisto.FillHisto("hchi2",chi2/ndf);
+      }
+}
+
 
 void Utils::FillRecoVertex(const TFitVertex* Vertex)
 {
@@ -313,7 +333,7 @@ void Utils::FillRecoVertex(const TFitVertex* Vertex)
 
 // ===============================================================================================
 
-void Utils::FillFinalHistos(const Reco* r, int ntracks)
+void Utils::FillFinalHistos(const TStoreEvent* r, int ntracks)
 {
    fHisto.FillHisto("hNpoints",r->GetNumberOfPoints());
    if(Npointstracks) fHisto.FillHisto("hNpointstracks",Npointstracks);
@@ -329,6 +349,26 @@ void Utils::FillFinalHistos(const Reco* r, int ntracks)
       
    if( ntracks > 0 )
       fHisto.FillHisto("hgoodpattreceff", double(Npoints)/double(ntracks));
+   else
+      fHisto.FillHisto("hgoodpattreceff",0.);
+}
+
+void Utils::FillFinalHistos(int total_points, int total_tracks, int good_tracks)
+{
+   fHisto.FillHisto("hNpoints",total_points);
+   if(Npointstracks) fHisto.FillHisto("hNpointstracks",Npointstracks); //This comes from FillRecoTracksHisto. Hence that function HAS to be called before this one
+   if(Npoints) fHisto.FillHisto("hNgoodpoints",Npoints); //This comes from FillFitTracksHisto. Hence that function HAS to be called before this one
+
+   fHisto.FillHisto("hNtracks",total_tracks);
+   fHisto.FillHisto("hNgoodtracks",double(good_tracks));
+
+   if( total_tracks > 0 )
+      fHisto.FillHisto("hpattreceff", double(Npointstracks)/double(total_tracks));
+   else
+      fHisto.FillHisto("hpattreceff",0.);
+      
+   if( good_tracks > 0 )
+      fHisto.FillHisto("hgoodpattreceff", double(Npoints)/double(good_tracks));
    else
       fHisto.FillHisto("hgoodpattreceff",0.);
 }
@@ -434,9 +474,9 @@ void Utils::PlotNeurons(TCanvas* c, const set<NeuralFinder::Neuron*> &neurons, i
 // ===============================================================================================
 
 void Utils::Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
-                    const std::vector<TSpacePoint*>* recopoints,
-                    const std::vector<TTrack*>* tracks,
-                    const std::vector<TFitHelix*>* helices)
+                    const std::vector<TSpacePoint>* recopoints,
+                    const std::vector<TTrack>* tracks,
+                    const std::vector<TFitHelix>* helices)
 {
    PlotMCpoints(creco, mcpoints);
    PlotAWhits(creco, awpoints);
@@ -446,9 +486,9 @@ void Utils::Display(const TClonesArray* mcpoints, const TClonesArray* awpoints,
    DrawTPCxy(creco);
 }
 
-void Utils::Display(const std::vector<TSpacePoint*>* recopoints,
-                    const std::vector<TTrack*>* tracks,
-                    const std::vector<TFitHelix*>* helices)
+void Utils::Display(const std::vector<TSpacePoint>* recopoints,
+                    const std::vector<TTrack>* tracks,
+                    const std::vector<TFitHelix>* helices)
 {
    PlotRecoPoints(creco, recopoints, true);
    PlotTracksFound(creco, tracks);
@@ -461,6 +501,7 @@ void Utils::PlotMCpoints(TCanvas* c, const TClonesArray* points)
 {
    int Npoints = points->GetEntries();
    std::cout<<"[utils]#  GarfHits --> "<<Npoints<<std::endl;
+   if(!Npoints) return;
    TGraph* gxy = new TGraph(Npoints);
    gxy->SetMarkerStyle(6);
    gxy->SetMarkerColor(kGreen+2);
@@ -573,7 +614,7 @@ void Utils::PlotAWhits(TCanvas* c, const TClonesArray* points)
    gzphi->Draw("Psame");
 }
 
-void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
+void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint>* points,
                            bool as)
 {
    int Npoints = points->size();
@@ -597,11 +638,11 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
    for( int i=0; i<Npoints; ++i )
       {
          //TSpacePoint* p = (TSpacePoint*) points->ConstructedAt(i);
-         TSpacePoint* p = (TSpacePoint*) points->at(i);
-         gxy->SetPoint(i,p->GetX(),p->GetY());
-         grz->SetPoint(i,p->GetR(),p->GetZ());
-         grphi->SetPoint(i,p->GetR(),p->GetPhi()*TMath::RadToDeg());
-         gzphi->SetPoint(i,p->GetZ(),p->GetPhi()*TMath::RadToDeg());
+         const TSpacePoint &p = points->at(i);
+         gxy->SetPoint(i,p.GetX(),p.GetY());
+         grz->SetPoint(i,p.GetR(),p.GetZ());
+         grphi->SetPoint(i,p.GetR(),p.GetPhi()*TMath::RadToDeg());
+         gzphi->SetPoint(i,p.GetZ(),p.GetPhi()*TMath::RadToDeg());
       }
    if( Npoints==0 ) as=false;
    if( as )
@@ -649,7 +690,7 @@ void Utils::PlotRecoPoints(TCanvas* c, const std::vector<TSpacePoint*>* points,
       }
 }
 
-void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
+void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack>* tracks)
 {
    const int Ntracks = tracks->size();
    std::cout<<"[utils]#  Reco tracks --> "<<Ntracks<<std::endl;
@@ -659,8 +700,8 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
    // if(Ntracks > 9) Ntracks = 9;
    for(int t=0; t<Ntracks; ++t)
       {
-         TTrack* aTrack = (TTrack*) tracks->at(t);
-         int Npoints = aTrack->GetNumberOfPoints();
+         const TTrack &aTrack = tracks->at(t);
+         int Npoints = aTrack.GetNumberOfPoints();
          std::cout<<"[utils]#  Reco points in track --> "<<Npoints<<std::endl;
          TGraphErrors* gxy = new TGraphErrors(Npoints);
          gxy->SetMarkerStyle(2);
@@ -682,7 +723,7 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
          gzphi->SetMarkerColor(cols[t%ncols]);
          gzphi->SetLineColor(cols[t%ncols]);
          gzphi->SetTitle("Reco Hits Z-#phi;z [mm];#phi [deg]");
-         const std::vector<TSpacePoint>* points = aTrack->GetPointsArray();
+         const std::vector<TSpacePoint>* points = aTrack.GetPointsArray();
          for( uint i=0; i<points->size(); ++i )
             {
                const TSpacePoint& p = points->at(i);
@@ -710,7 +751,7 @@ void Utils::PlotTracksFound(TCanvas* c, const std::vector<TTrack*>* tracks)
       }
 }
 
-void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
+void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix>* tracks)
 {
    const int Ntracks = tracks->size();
    std::cout<<"[utils]#  Reco helices --> "<<Ntracks<<std::endl;
@@ -718,9 +759,9 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
    int ncols = 5;
    for(int t=0; t<Ntracks; ++t)
       {
-         TFitHelix* aTrack = (TFitHelix*) tracks->at(t);
-         //         aTrack->Print();
-         int Npoints = aTrack->GetNumberOfPoints();
+         const TFitHelix &aTrack = tracks->at(t);
+         //         aTrack.Print();
+         int Npoints = aTrack.GetNumberOfPoints();
          std::cout<<"[utils]#  Reco points in helix --> "<<Npoints<<std::endl;
          TPolyLine* hxy = new TPolyLine(Npoints+2);
          hxy->SetLineColor(cols[t%ncols]);
@@ -735,7 +776,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
          hzphi->SetLineColor(cols[t%ncols]);
          hzphi->SetLineWidth(3);
          
-         TVector3 p = aTrack->Evaluate(ALPHAg::_padradius*ALPHAg::_padradius);
+         TVector3 p = aTrack.Evaluate(ALPHAg::_padradius*ALPHAg::_padradius);
          //p.Print();
          hxy->SetNextPoint(p.X(),p.Y());
          //         std::cout<<"Utils::PlotFitHelices\n x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
@@ -746,7 +787,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
             {
                double rad = ALPHAg::_padradius*(1.-double(n)/double(Npoints));
                //std::cout<<"n: "<<n<<" rad: "<<rad<<std::endl;
-               p = aTrack->Evaluate(rad*rad);
+               p = aTrack.Evaluate(rad*rad);
                //p.Print();
                hxy->SetNextPoint(p.X(),p.Y());
                //std::cout<<" x:"<<p.X()<<" y:"<<p.Y()<<std::endl;
@@ -754,7 +795,7 @@ void Utils::PlotFitHelices(TCanvas* c, const std::vector<TFitHelix*>* tracks)
                hrphi->SetNextPoint(p.Perp(),p.Phi()*TMath::RadToDeg());
                hzphi->SetNextPoint(p.z(),p.Phi()*TMath::RadToDeg());
             }
-         p = aTrack->Evaluate(0.);
+         p = aTrack.Evaluate(0.);
          //p.Print();
          hxy->SetNextPoint(p.X(),p.Y());
          //std::cout<<" x:"<<p.X()<<" y:"<<p.Y()<<" -- end"<<std::endl;
@@ -839,13 +880,9 @@ void Utils::DrawTPCxy(TCanvas* c)
    FWrz->Draw("same");
 }
 
-void Utils::PrintSignals(std::vector<ALPHAg::signal>* sig)
-{
-   for(auto s: *sig)
-      s.print();
-}
-
-TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
+// If these template functions are to be used from outside this source file, they must be moved into the header instead
+template<class T>
+TH1D* Utils::PlotSignals(std::vector<T>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hsig"<<name;
@@ -855,15 +892,16 @@ TH1D* Utils::PlotSignals(std::vector<ALPHAg::signal>* sig, std::string name)
    if(sig) {
    for(auto s: *sig)
       {
-         if( s.t < 16. ) continue;
-         h->Fill(s.t,s.height);
+         const ALPHAg::signal &ss = static_cast<ALPHAg::signal>(s);
+         if( ss.t < 16. ) continue;
+         h->Fill(ss.t,ss.height);
       }
    }
    return h;
 }
 
-void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, 
-                 std::vector<ALPHAg::signal>* combpads, bool norm)
+void Utils::Draw(std::vector<ALPHAg::TWireSignal>* awsig, std::vector<ALPHAg::TPadSignal>* padsig, 
+                 std::vector<ALPHAg::TPadSignal>* combpads, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
    if(norm) haw->Scale(1./haw->Integral());
@@ -917,7 +955,7 @@ void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>
    hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
-void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>* padsig, bool norm)
+void Utils::Draw(std::vector<ALPHAg::TWireSignal>* awsig, std::vector<ALPHAg::TPadSignal>* padsig, bool norm)
 {
    TH1D* haw=PlotSignals( awsig, "anodes" );
    if(norm) haw->Scale(1./haw->Integral());
@@ -971,8 +1009,9 @@ void Utils::Draw(std::vector<ALPHAg::signal>* awsig, std::vector<ALPHAg::signal>
    hoccaw->GetXaxis()->SetLabelSize(0.02);
 }
 
-
-TH1D* Utils::PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name)
+// If these template functions are to be used from outside this source file, they must be moved into the header instead
+template <class T>
+TH1D* Utils::PlotOccupancy(std::vector<T>* sig, std::string name)
 {
    std::ostringstream hname;
    hname<<"hocc"<<name;
@@ -981,15 +1020,16 @@ TH1D* Utils::PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name)
    h->SetStats(kFALSE);
    for(auto s: *sig)
       {
-         if( s.t < 16. ) continue;
+         const ALPHAg::signal &ss = static_cast<ALPHAg::signal>(s);
+         if( ss.t < 16. ) continue;
          if( name == "anodes" )
-            h->Fill(s.idx);
+            h->Fill(ss.idx);
          else if( name == "pads" )
             {
-               // int col = s.sec*8+4;
+               // int col = ss.sec*8+4;
                for(int i=0; i<8; ++i)
                   {
-                     int col = s.sec*8+i;
+                     int col = ss.sec*8+i;
                      h->Fill(col);
                   }
             }
@@ -997,12 +1037,12 @@ TH1D* Utils::PlotOccupancy(std::vector<ALPHAg::signal>* sig, std::string name)
    return h;
 }
 
-TH2D* Utils::PlotSignals(std::vector<ALPHAg::signal>* awsignals,
-                         std::vector<ALPHAg::signal>* padsignals, std::string type)
+TH2D* Utils::PlotSignals(std::vector<ALPHAg::TWireSignal>* awsignals,
+                         std::vector<ALPHAg::TPadSignal>* padsignals, std::string type)
 {
-   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> aw_bytime(awsignals->begin(),
+   std::multiset<ALPHAg::TWireSignal, ALPHAg::TWireSignal::timeorder> aw_bytime(awsignals->begin(),
                                                                       awsignals->end());
-   std::multiset<ALPHAg::signal, ALPHAg::signal::timeorder> pad_bytime(padsignals->begin(),
+   std::multiset<ALPHAg::TPadSignal, ALPHAg::TPadSignal::timeorder> pad_bytime(padsignals->begin(),
                                                                        padsignals->end());
    int Nmatch=0;
    std::ostringstream hname;
@@ -1086,28 +1126,28 @@ int Utils::EvaluatePattRec(TClonesArray* lines)
 }
 
 // ===============================================================================================
-double Utils::PointResolution(std::vector<TFitHelix*>* helices, const TVector3* vtx)
+double Utils::PointResolution(std::vector<TFitHelix>* helices, const TVector3* vtx)
 {
    double res=0.,N=double(helices->size());
    for(size_t i=0; i<helices->size(); ++i)
       {
-         TFitHelix* hel = (TFitHelix*) helices->at(i);
-         TVector3 eval = hel->Evaluate( ALPHAg::_trapradius * ALPHAg::_trapradius );
+         TFitHelix &hel = helices->at(i);
+         TVector3 eval = hel.Evaluate( ALPHAg::_trapradius * ALPHAg::_trapradius );
          eval.Print();
          res+=(eval-(*vtx)).Mag();
          std::cout<<i<<"\tPointResolution\tEval 3D: "<<(eval-(*vtx)).Mag()<<" mm"<<std::endl;
          std::cout<<i<<"\tPointResolution\tEval Z: "<<fabs(eval.Z()-vtx->Z())<<" mm"<<std::endl;
 
-         hel->SetPoint( vtx );
+         hel.SetPoint( vtx );
          TVector3 minpoint;
-         hel->MinDistPoint( minpoint );
+         hel.MinDistPoint( minpoint );
          minpoint.Print();
          std::cout<<i<<"\tPointResolution\tMinDistPoint 3D: "<<(minpoint-(*vtx)).Mag()<<" mm"<<std::endl;
          std::cout<<i<<"\tPointResolution\tMinDistPoint R: "<<fabs(minpoint.Perp()-vtx->Perp())<<" mm"<<std::endl;
          std::cout<<i<<"\tPointResolution\tMinDistPoint Z: "<<fabs(minpoint.Z()-vtx->Z())<<" mm"<<std::endl;
 
          TVector3 int1,int2;
-         int s = hel->TubeIntersection( int1, int2 );
+         int s = hel.TubeIntersection( int1, int2 );
          if( s )
             {
                int1.Print();
@@ -1129,23 +1169,23 @@ double Utils::PointResolution(std::vector<TFitHelix*>* helices, const TVector3* 
 }
 
 // ===============================================================================================
-void Utils::HelixPlots(std::vector<TFitHelix*>* helices)
+void Utils::HelixPlots(std::vector<TFitHelix>* helices)
 {
    int nhel=0;
    for(size_t i=0; i<helices->size(); ++i)
       {
-         TFitHelix* hel = helices->at(i);
-         fHisto.FillHisto("hhD",hel->GetD());
-         fHisto.FillHisto("hhc",hel->GetC());
-         fHisto.FillHisto("hhchi2R",hel->GetRchi2());
-         fHisto.FillHisto("hhchi2Z",hel->GetZchi2());
-         TVector3 p = hel->GetMomentumV();
+         TFitHelix &hel = helices->at(i);
+         fHisto.FillHisto("hhD",hel.GetD());
+         fHisto.FillHisto("hhc",hel.GetC());
+         fHisto.FillHisto("hhchi2R",hel.GetRchi2());
+         fHisto.FillHisto("hhchi2Z",hel.GetZchi2());
+         TVector3 p = hel.GetMomentumV();
          fHisto.FillHisto("hpTgood", p.Perp() );
          fHisto.FillHisto("hpZgood", p.Z() );
          fHisto.FillHisto("hpToTgood", p.Mag());
          fHisto.FillHisto("hpTZgood", p.Perp(), p.Z() );
          ++nhel;
-         const vector<TSpacePoint> *sp = hel->GetPointsArray();
+         const vector<TSpacePoint> *sp = hel.GetPointsArray();
          for( uint ip = 0; ip<sp->size(); ++ip )
             {
                const TSpacePoint& ap = sp->at(ip);
@@ -1194,7 +1234,7 @@ void Utils::UsedHelixPlots(const std::vector<TFitHelix*>* helices)
    int nhel = 0;
    for(size_t i=0; i<helices->size(); ++i)
       {
-         TFitHelix* hel =  helices->at(i);
+         TFitHelix *hel =  helices->at(i);
          fHisto.FillHisto("huhD",hel->GetD());
          fHisto.FillHisto("huhc",hel->GetC());
          fHisto.FillHisto("huhchi2R",hel->GetRchi2());
@@ -1271,6 +1311,12 @@ void Utils::WriteHisto()
 
 // ===============================================================================================
 
+TStoreEvent Utils::CreateStoreEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitHelix>* hels, const std::vector<TFitLine>* lines)
+{
+   TStoreEvent evt;
+   evt.SetEvent(points, lines, hels);
+   return evt;
+}
 
 /* emacs
  * Local Variables:

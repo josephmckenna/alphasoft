@@ -101,7 +101,7 @@ public:
   TFitHelix(const TTrack& atrack);
   TFitHelix(TObjArray*);
   TFitHelix( const TFitHelix& right );
-  TFitHelix(TStoreHelix*);
+  TFitHelix(const TStoreHelix&);
 
   TFitHelix& operator=( const TFitHelix& right );
   

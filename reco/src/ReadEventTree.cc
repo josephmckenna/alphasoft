@@ -763,10 +763,10 @@ void ReadEventTree::DisplayHisto()
       }
 }
 
-void ReadEventTree::ProcessLine(TStoreLine* aLine)
+void ReadEventTree::ProcessLine(const TStoreLine& aLine)
 {
-   TVector3 u = *(aLine->GetDirection());
-   TVector3 p = *(aLine->GetPoint());
+   const TVector3 u = *(aLine.GetDirection());
+   const TVector3 p = *(aLine.GetPoint());
 
    fHisto->FillHisto("hlphi",u.Phi()*TMath::RadToDeg());
    fHisto->FillHisto("hltheta",u.Theta()*TMath::RadToDeg());
@@ -789,7 +789,7 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
          fHisto->FillHisto("hlxy", zint.X(), zint.Y() );
       }
 
-   fHisto->FillHisto("hlchi2",aLine->GetChi2());
+   fHisto->FillHisto("hlchi2",aLine.GetChi2());
 
    fHisto->FillHisto("hqr",p.Perp());
    fHisto->FillHisto("hqz",p.Z());
@@ -800,7 +800,7 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
    fHisto->FillHisto("hqrphi",p.Perp(),p.Phi()*TMath::RadToDeg());
 
 
-   const TObjArray* sp = aLine->GetSpacePoints();
+   const TObjArray* sp = aLine.GetSpacePoints();
    for( int ip = 0; ip<sp->GetEntries(); ++ip )
       {
          TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
@@ -815,15 +815,15 @@ void ReadEventTree::ProcessLine(TStoreLine* aLine)
    fHisto->FillHisto("hsprlen", ((TSpacePoint*)sp->Last())->GetR(), maxd );
    fHisto->FillHisto("hspNlen", double(sp->GetEntries()), maxd );
 
-   fHisto->FillHisto("hsplenchi2", maxd, aLine->GetChi2());
+   fHisto->FillHisto("hsplenchi2", maxd, aLine.GetChi2());
 }
 
-double ReadEventTree::LineDistance(TStoreLine* l0, TStoreLine* l1)
+double ReadEventTree::LineDistance(const TStoreLine& l0, const TStoreLine& l1)
 {
-   TVector3 u0 = *(l0->GetDirection());
-   TVector3 u1 = *(l1->GetDirection());
-   TVector3 p0 = *(l0->GetPoint());
-   TVector3 p1 = *(l1->GetPoint());
+   TVector3 u0 = *(l0.GetDirection());
+   TVector3 u1 = *(l1.GetDirection());
+   TVector3 p0 = *(l0.GetPoint());
+   TVector3 p1 = *(l1.GetPoint());
 
    TVector3 n0 = u0.Cross( u1 ); // normal to lines
    TVector3 c =  p1 - p0;
@@ -845,21 +845,21 @@ double ReadEventTree::LineDistance(TStoreLine* l0, TStoreLine* l1)
    return Q.Mag();
 }
 
-void ReadEventTree::ProcessHelix(TStoreHelix* hel)
+void ReadEventTree::ProcessHelix(const TStoreHelix& hel)
 {
-   fHisto->FillHisto("hhD",hel->GetD());
-   fHisto->FillHisto("hhc",hel->GetC());
-   fHisto->FillHisto("hhchi2R",hel->GetRchi2());
-   fHisto->FillHisto("hhchi2Z",hel->GetZchi2());
+   fHisto->FillHisto("hhD",hel.GetD());
+   fHisto->FillHisto("hhc",hel.GetC());
+   fHisto->FillHisto("hhchi2R",hel.GetRchi2());
+   fHisto->FillHisto("hhchi2Z",hel.GetZchi2());
 
-   //  hel->GetMomentumV().Print();
+   //  hel.GetMomentumV().Print();
 
-   fHisto->FillHisto("hpt",hel->GetMomentumV().Perp());
-   fHisto->FillHisto("hpz",hel->GetMomentumV().Z());
-   fHisto->FillHisto("hpp",hel->GetMomentumV().Mag());
-   fHisto->FillHisto("hptz",hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+   fHisto->FillHisto("hpt",hel.GetMomentumV().Perp());
+   fHisto->FillHisto("hpz",hel.GetMomentumV().Z());
+   fHisto->FillHisto("hpp",hel.GetMomentumV().Mag());
+   fHisto->FillHisto("hptz",hel.GetMomentumV().Perp(),hel.GetMomentumV().Z());
 
-   const TObjArray* sp = hel->GetSpacePoints();
+   const TObjArray* sp = hel.GetSpacePoints();
    for( int ip = 0; ip<sp->GetEntries(); ++ip )
       {
          TSpacePoint* ap = (TSpacePoint*) sp->At(ip);
@@ -871,21 +871,21 @@ void ReadEventTree::ProcessHelix(TStoreHelix* hel)
       }
 }
 
-void ReadEventTree::ProcessUsed(TFitHelix* hel)
+void ReadEventTree::ProcessUsed(const TFitHelix& hel)
 {
-   fHisto->FillHisto("huhD",hel->GetD());
-   fHisto->FillHisto("huhc",hel->GetC());
-   fHisto->FillHisto("huhchi2R",hel->GetRchi2());
-   fHisto->FillHisto("huhchi2Z",hel->GetZchi2());
+   fHisto->FillHisto("huhD",hel.GetD());
+   fHisto->FillHisto("huhc",hel.GetC());
+   fHisto->FillHisto("huhchi2R",hel.GetRchi2());
+   fHisto->FillHisto("huhchi2Z",hel.GetZchi2());
 
-   //  hel->GetMomentumV().Print();
+   //  hel.GetMomentumV().Print();
 
-   fHisto->FillHisto("huhpt",hel->GetMomentumV().Perp());
-   fHisto->FillHisto("huhpz",hel->GetMomentumV().Z());
-   fHisto->FillHisto("huhpp",hel->GetMomentumV().Mag());
-   fHisto->FillHisto("huhptz",hel->GetMomentumV().Perp(),hel->GetMomentumV().Z());
+   fHisto->FillHisto("huhpt",hel.GetMomentumV().Perp());
+   fHisto->FillHisto("huhpz",hel.GetMomentumV().Z());
+   fHisto->FillHisto("huhpp",hel.GetMomentumV().Mag());
+   fHisto->FillHisto("huhptz",hel.GetMomentumV().Perp(),hel.GetMomentumV().Z());
 
-   const std::vector<TSpacePoint> *sp = hel->GetPointsArray();
+   const std::vector<TSpacePoint> *sp = hel.GetPointsArray();
    for( unsigned int ip = 0; ip<sp->size(); ++ip )
       {
          const TSpacePoint& ap = sp->at(ip);
@@ -897,17 +897,17 @@ void ReadEventTree::ProcessUsed(TFitHelix* hel)
       }
 }
 
-void ReadEventTree::ProcessVertex(TVector3* v)
+void ReadEventTree::ProcessVertex(const TVector3& v)
 {
-   fHisto->FillHisto("hvr",v->Perp());
-   fHisto->FillHisto("hvphi",v->Phi()*TMath::RadToDeg());
-   fHisto->FillHisto("hvz",v->Z());
-   fHisto->FillHisto("hvxy",v->X(),v->Y());
+   fHisto->FillHisto("hvr",v.Perp());
+   fHisto->FillHisto("hvphi",v.Phi()*TMath::RadToDeg());
+   fHisto->FillHisto("hvz",v.Z());
+   fHisto->FillHisto("hvxy",v.X(),v.Y());
 }
 
-void ReadEventTree::FillCosmicsHisto()
+void ReadEventTree::FillCosmicsHisto(const std::vector<TCosmic>& cosmics)
 {
-   int cf_status = fCosmicFinder->Process();
+   int cf_status = fCosmicFinder->Process(cosmics);
    std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
    // fCosmicFinder->Status();
    if( fCosmicFinder->GetStatus() ) 
@@ -918,9 +918,9 @@ void ReadEventTree::FillCosmicsHisto()
    //  std::cout<<"Filling Cosmics Histo "<<std::endl;
    double res2 = fCosmicFinder->GetResidual();
    fHisto->FillHisto("hcosRes2min",res2);
-
-   const TCosmic* cosmic = fCosmicFinder->GetCosmic();
-   double dca = cosmic->GetDCA(), cosangle = cosmic->GetCosAngle();
+   // This index fetching is some dark voodoo and probably needs a re-write...
+   const TCosmic& cosmic = cosmics.at(fCosmicFinder->GetIdx());
+   double dca = cosmic.GetDCA(), cosangle = cosmic.GetCosAngle();
    int nTracks = fCosmicFinder->GetNumberOfTracks();
    if( nTracks == 2 )
       {
@@ -936,9 +936,9 @@ void ReadEventTree::FillCosmicsHisto()
       }
    else return;
          
-   for( uint i=0; i<cosmic->GetPointsArray()->size(); ++i )
+   for( uint i=0; i<cosmic.GetPointsArray()->size(); ++i )
       {
-         const TSpacePoint& p = cosmic->GetPointsArray()->at( i );
+         const TSpacePoint& p = cosmic.GetPointsArray()->at( i );
          int aw = p.GetWire(), sec,row;
          pmap->get( p.GetPad(), sec,row );
          if( 0 )
@@ -951,12 +951,12 @@ void ReadEventTree::FillCosmicsHisto()
          fHisto->FillHisto("hcospad", double(row), double(sec) );
       }
       
-   TVector3 u = cosmic->GetU();
+   TVector3 u = cosmic.GetU();
    fHisto->FillHisto("hcosphi",u.Phi()*TMath::RadToDeg());
    fHisto->FillHisto("hcostheta",u.Theta()*TMath::RadToDeg());
    fHisto->FillHisto("hcosthetaphi",u.Theta()*TMath::RadToDeg(),u.Phi()*TMath::RadToDeg());
 
-   TVector3 zint = cosmic->Zintersection();
+   TVector3 zint = cosmic.Zintersection();
    double zint_phi = zint.Phi();
    if( zint_phi < 0. ) zint_phi+=TMath::TwoPi();
    zint_phi*=TMath::RadToDeg();
@@ -1013,8 +1013,8 @@ void ReadEventTree::ProcessTree( )
          double Npoints = 0.;
          for(int i=0; i<Ntracks; ++i)
             {
-               TStoreLine* aLine = (TStoreLine*) tracks->At(i);
-               ProcessLine( aLine );
+               const TStoreLine* aLine = (TStoreLine*) tracks->At(i);
+               ProcessLine( *aLine );
                Npoints += double(aLine->GetNumberOfPoints());
             }
          fHisto->FillHisto("hNlines", double(Ntracks) );
@@ -1030,8 +1030,8 @@ void ReadEventTree::ProcessTree( )
          Npoints = 0.;
          for(int i=0; i<Nhelices; ++i)
             {
-               TStoreHelix* aHelix = (TStoreHelix*) helices->At(i);
-               ProcessHelix( aHelix );
+               const TStoreHelix* aHelix = (TStoreHelix*) helices->At(i);
+               ProcessHelix( *aHelix );
                Npoints += double(aHelix->GetNumberOfPoints());
             }
          fHisto->FillHisto("hNhel", double(Nhelices) );
@@ -1042,13 +1042,13 @@ void ReadEventTree::ProcessTree( )
 
          if( Ntracks == 2 )
             {
-               TStoreLine* l0 = (TStoreLine*) tracks->At(0);
+               const TStoreLine* l0 = (TStoreLine*) tracks->At(0);
                TVector3 u0 = *(l0->GetDirection());
-               TStoreLine* l1 = (TStoreLine*) tracks->At(1);
+               const TStoreLine* l1 = (TStoreLine*) tracks->At(1);
                TVector3 u1 = *(l1->GetDirection());
                double cang = u0.Dot(u1);
                fHisto->FillHisto("hlcosang", cang );
-               double dist = LineDistance(l0,l1);
+               double dist = LineDistance(*l0,*l1);
                fHisto->FillHisto("hldist", dist );
                fHisto->FillHisto("hlcosangdist", cang, dist );
             }
@@ -1065,14 +1065,15 @@ void ReadEventTree::ProcessTree( )
             {
                const TObjArray* used_hel = event->GetUsedHelices();
                fHisto->FillHisto("hNusedhel", double(used_hel->GetEntries()) );
-               for(int ih=0; ih<used_hel->GetEntries(); ++ih) ProcessUsed((TFitHelix*) used_hel->At(ih));
-               ProcessVertex(&vtx);
+               for(int ih=0; ih<used_hel->GetEntries(); ++ih) ProcessUsed(*(const TFitHelix*) used_hel->At(ih));
+               ProcessVertex(vtx);
                ++Nvtx;
             }
 
          // Perform Cosmic Analysis
-         fCosmicFinder->Create(event);
-         FillCosmicsHisto();
+         std::vector<TCosmic> cosmics;
+         fCosmicFinder->Create(event, cosmics);
+         FillCosmicsHisto(cosmics);
          //      std::cout<<"End of Event"<<std::endl;
       }// event loop
    std::cout<<"Number of Events Processed: "<<tin->GetEntries()<<std::endl;

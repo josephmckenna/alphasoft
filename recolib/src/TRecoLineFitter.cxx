@@ -1,7 +1,7 @@
 #include "TRecoLineFitter.hh"
 
 
-int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine*>& LinesArray, const int thread_no, const int total_threads) const
+int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<TFitLine>& LinesArray, const int thread_no, const int total_threads) const
 {
 
    if (thread_no == 1)
@@ -22,31 +22,31 @@ int TRecoLineFitter::FitLine(const std::vector<TTrack> TracksArray, std::vector<
    for(int it = start; it < stop; ++it )
       {
          const TTrack& at = TracksArray.at(it);
-         TFitLine* line=new TFitLine(at); //Copy constructor
-         line->SetChi2Cut( fLineChi2Cut );
-         line->SetChi2Min( fLineChi2Min );
-         line->SetPointsCut( fNspacepointsCut );
+         LinesArray.emplace_back(at); //Copy constructor
+         TFitLine& line = LinesArray.back();
+         line.SetChi2Cut( fLineChi2Cut );
+         line.SetChi2Min( fLineChi2Min );
+         line.SetPointsCut( fNspacepointsCut );
 #ifdef __MINUIT2FIT__
-         line->FitM2();
+         line.FitM2();
 #else
-         line->Fit();
+         line.Fit();
 #endif
-         if( line->GetStat() > 0 )
+         if( line.GetStat() > 0 )
             {
-               line->CalculateResiduals();
+               line.CalculateResiduals();
             }
-         if( line->IsGood() )
+         if( line.IsGood() )
             {
                if( fTrace )
-                  line->Print();
+                  line.Print();
                ++n;
-               LinesArray.push_back(line);
             }
          else
             {
                if( fTrace )
-                  line-> Reason();
-               delete line;
+                  line.Reason();
+               LinesArray.pop_back();
             }
       }
    //fLinesArray.Compress();

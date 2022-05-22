@@ -9,7 +9,7 @@
 // #include "TFitHelix.hh"
 #include <iostream>
 
-TracksFinder::TracksFinder(const std::vector<TSpacePoint*>* points):
+TracksFinder::TracksFinder(const std::vector<TSpacePoint>* points):
 						 fNtracks(0),
 						 fSeedRadCut(150.),
 						 fPointsDistCut(8.1),
@@ -20,7 +20,7 @@ TracksFinder::TracksFinder(const std::vector<TSpacePoint*>* points):
    uint size=points->size();
    fPointsArray.reserve(size);
    for (uint i=0; i<size; i++)
-      fPointsArray.push_back((TSpacePoint*)points->at(i));
+      fPointsArray.push_back((TSpacePoint*)&points->at(i));
 #if BUILD_EXCLUSION_LIST
    fExclusionList.clear();
 #endif

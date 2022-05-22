@@ -212,96 +212,18 @@ void DeconvPAD::Reset()
 }
 
 #ifdef BUILD_AG_SIM
-int DeconvPAD::FindAnodeTimes(TClonesArray* AWsignals)
-{
-   int Nentries = AWsignals->GetEntries();
-   // prepare vector with wf to manipulate
-   std::vector<ALPHAg::wfholder*> AnodeWaves;
-   AnodeWaves.reserve( Nentries );
-   // clear/initialize "output" vectors
-   fAnodeIndex.clear();
-   fAnodeIndex.reserve( Nentries );
- 
-   // find intresting channels
-   unsigned int index=0; //wfholder index
-   for( int j=0; j<Nentries; ++j )
-      {
-         TWaveform* w = (TWaveform*) AWsignals->ConstructedAt(j);
-         std::vector<int> data(w->GetWaveform());
-         std::string wname = w->GetElectrode();
-         //std::cout<<"DeconvPAD::FindAnodeTimes "<<j<<" wire: "<<wname<<" size: "<<data.size()<<std::endl;
-         int aw_number = std::stoi( wname.substr(1) );
-         ALPHAg::electrode el(aw_number);
-         //std::cout<<"DeconvPAD::FindAnodeTimes Electrode: "<<el.idx<<std::endl;
 
-         // nothing dumb happens
-         if( (int)data.size() < 410 + pedestal_length )
-            {
-               std::cerr<<"DeconvPAD::FindAnodeTimes ERROR wf samples: "
-                        <<data.size()<<std::endl;
-               continue;
-            }
-
-         // mask hot wires
-         if( MaskWires(aw_number) ) continue;
-
-         double ped = CalculatePedestal(data);
-         double peak_h = GetPeakHeight(data,el.idx,ped,true);
-         //std::cout<<"aw: "<<aw_number<<" PH: "<<peak_h<<" (ped:"<<ped<<")"<<std::endl;
-
-         // CREATE WAVEFORM
-         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
-                                          std::next(data.begin(),pedestal_length),
-                                          data.end());
-         if(peak_h > fADCThres)     // Signal amplitude < thres is considered uninteresting
-            {
-               if(fTrace)
-                  std::cout<<"\tsignal above threshold ch: "<<j<<" aw: "<<aw_number<<std::endl;
-
-               // SUBTRACT PEDESTAL
-               waveform->massage(ped,fAdcRescale.at(el.idx));
-
-               // fill vector with wf to manipulate
-               AnodeWaves.emplace_back( waveform );
-
-               // STORE electrode
-               fAnodeIndex.push_back( el );
-
-               ++index;
-            }// max > thres 
-         else
-            delete waveform;
-      } // channels
-
-   // ============== DECONVOLUTION ==============
-   sanode = Deconvolution(&AnodeWaves,fAnodeIndex,fAnodeResponse,theAnodeBin, true);
-   int nsig=-1;
-   if(!sanode) nsig=0;
-   else nsig = sanode->size();
-   std::cout<<"DeconvPAD::FindAnodeTimes "<<nsig<<" found"<<std::endl;
-   // ===========================================
-
-   
-   for (uint i=0; i<AnodeWaves.size(); i++)
-      {
-         //delete AnodeWaves.at(i)->h;
-         delete AnodeWaves.at(i);
-      }
-   AnodeWaves.clear();
-   
-   return nsig;
-}
-
-int DeconvPAD::FindPadTimes(TClonesArray* PADsignals)
+int DeconvPAD::FindPadTimes(TClonesArray* PADsignals, std::vector<ALPHAg::TPadSignal>& signals)
 {
    int Nentries = PADsignals->GetEntries();
 
    // prepare vector with wf to manipulate
-   std::vector<ALPHAg::wfholder*> PadWaves;
+   std::vector<ALPHAg::wfholder> PadWaves;
    PadWaves.reserve( Nentries );
    // clear/initialize "output" vectors
-   fPadIndex.clear();
-   fPadIndex.reserve( Nentries );
+   std::vector<ALPHAg::electrode> PadIndex;
+   PadIndex.reserve( Nentries );
+   PadIndex.reserve( Nentries );
 
    std::string delimiter = "_";
 
@@ -331,7 +253,7 @@ int DeconvPAD::FindPadTimes(TClonesArray* PADsignals)
          assert(row<576&&row>=0);
 
          int coli = int(col);
-         int pad_index = pmap->index(coli,row);
+         int pad_index = pmap.index(coli,row);
          assert(!std::isnan(pad_index));
          // CREATE electrode
          ALPHAg::electrode el(col,row);
@@ -349,10 +271,10 @@ int DeconvPAD::FindPadTimes(TClonesArray* PADsignals)
          if( MaskPads(col,row) ) continue;
 
          double ped = CalculatePedestal(data);
-         double peak_h = GetPeakHeight(data,pad_index,ped,false);
+         double peak_h = GetPeakHeight(data,pad_index,ped);
 
          // CREATE WAVEFORM
-         ALPHAg::wfholder* waveform=new ALPHAg::wfholder( index, 
+         ALPHAg::wfholder waveform( index, 
                                           std::next(data.begin(),pedestal_length),
                                           data.end());
          
@@ -363,35 +285,24 @@ int DeconvPAD::FindPadTimes(TClonesArray* PADsignals)
                   std::cout<<"\tsignal above threshold ch: "<<j<<" index: "<<index<<std::endl;
 
                // SUBTRACT PEDESTAL
-               waveform->massage(ped,fPwbRescale.at(pad_index));
+               waveform.massage(ped,fPwbRescale.at(pad_index));
 
                // fill vector with wf to manipulate
                PadWaves.emplace_back( waveform );
                   
                // STORE electrode
-               fPadIndex.push_back( el );     
+               PadIndex.push_back( el );     
                   
                ++index;
             }// max > thres
-         else
-            delete waveform;
       }// channels
 
    // ============== DECONVOLUTION ==============
-   spad = Deconvolution(&PadWaves,fPadIndex,fPadResponse,thePadBin,false);
-   int nsig=-1;
-   if(!spad) nsig=0;
-   else nsig = spad->size();
+   Deconvolution(PadWaves,PadIndex,signals, 1, 1);   // no MT for now
+   int nsig=signals.size();
    std::cout<<"DeconvPAD::FindPadTimes "<<nsig<<" found"<<std::endl;
    // ===========================================   
 
-   for (uint i=0; i<PadWaves.size(); i++)
-      {
-         // delete PadWaves.at(i)->h;
-         delete PadWaves.at(i);
-      }
-   PadWaves.clear();
-  
    return nsig;
 }
 #endif
@@ -541,7 +452,7 @@ void DeconvPAD::Deconvolution(
       //I am the last thread
       if (thread_no == total_threads)
          stop = nsamples;
-      assert (start =< stop);
+      assert (start <= stop);
       return DeconvolutionByRange( subtracted, fElectrodeIndex, signals, start ,stop);
    }
 }

@@ -19,14 +19,8 @@ class TTrackBuilder
       const bool fTrace;
    public:
       TTrackBuilder(double B, std::string location, bool trace);
-      void BuildTracks( const std::vector<track_t> track_vector, const std::vector<TSpacePoint*> PointsArray, std::vector<TTrack>& TTrackArray );
-      void UseSTRfromData(int runNumber)
-      {
-         delete fSTR;
-         std::cout<<"Reco::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
-         fSTR = new LookUpTable(runNumber);
-         fMagneticField=0.; // data driven STR valid only for B=0T   
-      }
+      void BuildTracks( const std::vector<track_t> track_vector, const std::vector<TSpacePoint> PointsArray, std::vector<TTrack>& TTrackArray );
+      void UseSTRfromData(int runNumber);
       ~TTrackBuilder()
       {
          delete fSTR;

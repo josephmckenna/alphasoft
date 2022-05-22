@@ -8,7 +8,7 @@
 #include <iostream>
 #include "TSeqCollection.h"
 
-AdaptiveFinder::AdaptiveFinder(const std::vector<TSpacePoint*>* points, const double maxIncrease, const double LastPointRadCut):
+AdaptiveFinder::AdaptiveFinder(const std::vector<TSpacePoint>* points, const double maxIncrease, const double LastPointRadCut):
    TracksFinder(points),
    fLastPointRadCut(LastPointRadCut),
    fPointsRadCut(4.),

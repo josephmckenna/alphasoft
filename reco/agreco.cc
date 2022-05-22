@@ -147,10 +147,9 @@ int main(int argc, char** argv)
   // =============================================
   // Reconstruction All-In-One
   //Reco r( settings, MagneticField );
-  Reco r( ana_settings, MagneticField, location );
+  Reco r( ana_settings, MagneticField, location,bool(Verb));
   // =============================================
-  if( Verb > 0 ) r.SetTrace(true);
-
+ 
   // =============================================
   // Cosmic Analysis
   CosmicFinder cosfind( MagneticField );
@@ -159,59 +158,65 @@ int main(int argc, char** argv)
   for( int n=0; n<Nevents; ++n)
     {
       tEvents->GetEntry(n);
-      const TObjArray* points = anEvent->GetSpacePoints();
+      const TObjArray* Opoints = anEvent->GetSpacePoints();
+      std::vector<TSpacePoint> points;
+      points.reserve(Opoints->GetEntriesFast());
+      for (int i = 0; i < Opoints->GetEntriesFast(); i++)
+         points.emplace_back(*(TSpacePoint*)Opoints->At(i));
       if( n%1000 == 0 || Verb > 0 )
 	std::cout<<n<<"\tEvent Number: "<<anEvent->GetEventNumber()
 	    <<"\tTime of the Event: "<<anEvent->GetTimeOfEvent()<<"s"<<std::endl;
       
-      u.FillRecoPointsHistos(points);
-      // Add Spacepoints
-      r.AddSpacePoint( points );
+      u.FillRecoPointsHistos(&points);
+      // Add Spacepoints... reco no longer owns spacepoints
+      // r.AddSpacePoint( points );
 
       // Tracks Finder
       std::vector<track_t> tracks;
-      int nt = r.FindTracks( tracks, choosen_finder );
+      
+      int nt = r.FindTracks( points, tracks, choosen_finder );
       if( n%1000 == 0 || Verb > 0 )
-	std::cout<<"\t# of Points: "<<std::setw(3)<<points->GetEntriesFast()
+	std::cout<<"\t# of Points: "<<std::setw(3)<<points.size()
             <<"\t# of Tracks: "<<nt<<std::endl;
 
       // Tracks Fitter
       int nlin=0, nhel=0;
+
+      std::vector<TTrack> TTracks;
+      r.BuildTracks(tracks,points,TTracks);
+      std::vector<TFitHelix> helices;
+      std::vector<TFitLine> lines;
       if( MagneticField > 0. )
          {
-            nhel = r.FitHelix();
+            nhel = r.FitHelix(TTracks,helices);
             if( Verb > 1 ) std::cout<<"\tN hel: "<<nhel<<std::endl;
          }
       else 
          {
-            nlin = r.FitLines();
+            nlin = r.FitLine(TTracks,lines);
             if( Verb > 1 ) std::cout<<"\tN Lin: "<<nlin<<std::endl;
          }
 
-      std::vector<TTrack*>* tracks_array=0;
-      if( nhel > 0 ) 
-         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetHelices());
-      else if( nlin > 0 ) 
-         tracks_array = reinterpret_cast<std::vector<TTrack*>*>(r.GetLines());
-      u.FillRecoTracksHisto(tracks_array);
-      
-      if( tracks_array ) 
-	{
-	  u.FillFitTracksHisto(tracks_array);
-          // Setup Cosmic Analysis          
-          cosfind.Create(tracks_array);
-	}
+      u.FillRecoTracksHisto(&TTracks);
+      if (helices.size())
+	     u.FillFitTracksHisto(&helices);
+      if (lines.size())
+         u.FillFitTracksHisto(&lines);
+      // Setup Cosmic Analysis 
+      std::vector<TCosmic> cosmics;         
+      cosfind.Create(&helices,cosmics);
+
 
       // Vertexing
       TFitVertex Vertex(anEvent->GetEventNumber());
-      int sv = r.RecVertex(&Vertex);
+      int sv = r.RecVertex(helices, &Vertex);
       if( sv > 0 && Verb ) Vertex.Print();
       if( sv > 0 ) u.FillRecoVertex(&Vertex);
 
-      u.FillFinalHistos(&r,nhel+nlin);
+      u.FillFinalHistos(points.size(), tracks.size(), nhel+nlin);
 
       // Perform Cosmic Analysis
-      int cf_status = cosfind.Process();
+      int cf_status = cosfind.Process(cosmics);
       if( Verb > 1 )
          {
             std::cout<<"CosmicFinder Status: "<<cf_status<<std::endl;
@@ -221,7 +226,7 @@ int main(int argc, char** argv)
       cosfind.Reset();
 
       anEvent->Reset();
-      r.Reset();
+      //r.Reset();
       if( Verb ) 
          std::cout<<" ============================================="<<std::endl;
     }

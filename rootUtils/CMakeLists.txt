@@ -30,6 +30,13 @@ target_include_directories( rootUtils
 			    )
 target_link_libraries(rootUtils PUBLIC analib GEM TreePlayer)
 
+if (BUILD_AG_SIM)
+target_include_directories( rootUtils
+                            PUBLIC
+                            ${CMAKE_SOURCE_DIR}/simulation/G4out/include
+)
+endif(BUILD_AG_SIM)
+
 if(BUILD_A2)
    target_link_libraries(rootUtils PUBLIC alpha2)
 endif(BUILD_A2)

@@ -54,9 +54,9 @@ public:
 #ifdef ANTI_ALIAS
                   mXftFont(0),
 #endif
-                  mScaling(1) { }
+                  mScaling(1){}
 
-    virtual ~PDrawable()   { }
+    virtual ~PDrawable(){};
     
     XFontStruct   * GetFont()       { return mFont; }
 #ifdef ANTI_ALIAS
@@ -68,14 +68,14 @@ public:
     int             GetScaling()                { return mScaling;  }
     
     virtual int     BeginDrawing(int /*width*/, int /*height*/)         { return 0; }
-    virtual void    EndDrawing()                                { }
+    virtual void    EndDrawing()                                = 0;
     
-    virtual void    SetForeground(int /*col_num*/, int /*alpha=0xffff*/){ }
-    virtual void    SetForegroundPixel(Pixel /*pixel*/, int /*alpha=0xffff*/) { }
+    virtual void    SetForeground(int /*col_num*/, int /*alpha=0xffff*/)= 0;
+    virtual void    SetForegroundPixel(Pixel /*pixel*/, int /*alpha=0xffff*/) = 0;
     virtual void    SetForegroundPixel(Pixel pixel) { mColours=&pixel; }
     virtual int     EqualColours(int /*col1*/, int /*col2*/)            { return 0; }
-    virtual void    SetLineWidth(float /*width*/)                   { }
-    virtual void    SetLineType(ELineType /*type*/)                 { }
+    virtual void    SetLineWidth(float /*width*/)                   = 0;
+    virtual void    SetLineType(ELineType /*type*/)                 = 0;
     virtual void    SetFont(XFontStruct *font)                  { mFont = font; }
     virtual int     GetTextWidth(const char */*str*/)                     { return 0; }
 #ifdef ANTI_ALIAS
@@ -90,18 +90,18 @@ public:
     int             GetFontAscent()  { return mFont? mFont->ascent : 0; }
     int             GetFontDescent() { return mFont? mFont->descent : 0; }
 #endif
-    virtual void    DrawSegments(XSegment* /*segments*/, int /*num*/, int /*smooth=1*/) { }
-    virtual void    DrawPoint(int /*x*/, int /*y*/)                     { }
-    virtual void    DrawLine(int /*x1*/,int /*y1*/,int /*x2*/,int /*y2*/)       { }
-    virtual void    DrawRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      { }
-    virtual void    FillRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      { }
-    virtual void    FillPolygon(XPoint */*point*/, int /*num*/)         { }
-    virtual void    Comment(const char */*str*/)                          { }
-    virtual void    DrawString(int /*x*/, int /*y*/, const char */*str*/, ETextAlign_q /*align*/) { }
-    virtual void    DrawArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) { }
-    virtual void    FillArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) { }
+    virtual void    DrawSegments(XSegment* /*segments*/, int /*num*/, int /*smooth=1*/) = 0;
+    virtual void    DrawPoint(int /*x*/, int /*y*/)                     = 0;
+    virtual void    DrawLine(int /*x1*/,int /*y1*/,int /*x2*/,int /*y2*/)       = 0;
+    virtual void    DrawRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      = 0;
+    virtual void    FillRectangle(int /*x*/,int /*y*/,int /*w*/,int /*h*/)      = 0;
+    virtual void    FillPolygon(XPoint */*point*/, int /*num*/)         = 0;
+    virtual void    Comment(const char */*str*/)                          = 0;
+    virtual void    DrawString(int /*x*/, int /*y*/, const char */*str*/, ETextAlign_q /*align*/) = 0;
+    virtual void    DrawArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) = 0;
+    virtual void    FillArc(int /*cx*/,int /*cy*/,int /*rx*/,int /*ry*/,float /*ang1*/,float /*ang2*/) = 0;
     
-    virtual void    PutImage(XImage */*image*/, int /*dest_x*/, int /*dest_y*/) { }
+    virtual void    PutImage(XImage */*image*/, int /*dest_x*/, int /*dest_y*/) = 0;
     virtual XImage* GetImage(int /*x*/, int /*y*/, int /*width*/, int /*height*/) { return NULL; } 
     virtual int     CopyArea(int /*x*/,int /*y*/,int /*w*/,int /*h*/,Window/* dest*/) { return 0; }
     virtual int     HasPixmap()         { return 0; }

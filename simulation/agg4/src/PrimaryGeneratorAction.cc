@@ -78,7 +78,7 @@ extern double gMagneticField;
 
 PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
 						 fZcenter(50.*cm),fZlength(2.*cm),
-						 fRunAction(0)
+						 mu_minus(0), mu_plus(0), fRunAction(0)
 {
   // create annihilation products
   fHbarAnnihilation = new SecondaryProducer();
@@ -88,6 +88,24 @@ PrimaryGeneratorAction::PrimaryGeneratorAction():fType(0),fGravDir(-1),
   sprintf(fname,"%s/simulation/agg4/annihilation.dat",getenv("AGRELEASE"));
   fin.open(fname,std::ios::in);
     //G4cout<<"Annihilation position loaded from "<<fname<<G4endl;
+
+  ///< Fix the parameters of the EcoMug generator
+  mu_minus = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
+  mu_plus = G4ParticleTable::GetParticleTable()->FindParticle("mu+");
+
+  fMuonGen.SetSkySize({{10000.*mm, 10000.*mm}});
+  fMuonGen.SetSkyCenterPosition({0., 0., 1200.*mm});
+
+  fMuonGen.SetHSphereRadius(2450*mm); ///< To cover all the BV bars (H = 2400*mm)
+  fMuonGen.SetHSphereCenterPosition({{0.,0.,-1200.*mm}}); ///< centered at the base of the BV
+
+  fMuonGen.SetCylinderRadius(250*mm); ///< To cover all the BV bars (R = 250*mm)
+  fMuonGen.SetCylinderHeight(2450*mm); ///< To cover all the BV bars (H = 2400*mm)
+  fMuonGen.SetCylinderCenterPosition({{0.,0.,0.}}); 
+
+//   fMuonGen.SetUseSky();
+//   fMuonGen.SetUseHSphere();
+//   fMuonGen.SetUseCylinder();
 
   // define a particle gun
   fParticleGun = new G4ParticleGun();
@@ -460,6 +478,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
       }
     case 2: // cosmic ray generator
       {
+	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+	mcvtxarray.Clear();
 	fvect->clear();
 	fCosmicGen->genEvent(fvect);
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
@@ -473,6 +493,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	    fParticleGun->SetParticleMomentumDirection(G4ThreeVector( (*fvect)[j]->u(), 
 								      (*fvect)[j]->v(), 
 								      (*fvect)[j]->w() ));
+	    G4ThreeVector V = fParticleGun->GetParticlePosition();
+	    
+	    new(mcvtxarray[j]) TVector3(V.x()/mm,V.y()/mm,V.z()/mm);
 	    fParticleGun->SetParticleTime((*fvect)[j]->t());
 	    
 	    E=fParticleGun->GetParticleEnergy();
@@ -610,6 +633,165 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	  }
 	if( inter )
 	  fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 23: // cosmic ray generator through EcoMug [SKY]
+      {
+	  fMuonGen.SetUseSky();
+	///< Getting references for filling MC vertex info & Gen Mom info
+ 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+ 	mcvtxarray.Clear();
+ 	// TClonesArray& mcpicarray = *(fRunAction->GetMCpionsArray());
+ 	mcpicarray.Clear();
+	fMuonGen.Generate();
+	std::array<double, 3> muon_pos = fMuonGen.GetGenerationPosition();
+	///< EcoMug returns the momentum in GeV/c
+	double muon_ptot = fMuonGen.GetGenerationMomentum()*1000.*MeV; ///< To have it in MeV/c
+	double muon_theta = fMuonGen.GetGenerationTheta();
+	double muon_phi = fMuonGen.GetGenerationPhi();
+
+	///< Setting particle
+	// G4double mass;
+	if (fMuonGen.GetCharge() < 0) {
+	    fParticleGun->SetParticleDefinition(mu_minus);
+		// mass = mu_minus->GetPDGMass()*MeV;
+	} else {
+	    fParticleGun->SetParticleDefinition(mu_plus);
+		// mass = mu_plus->GetPDGMass()*MeV;
+	}
+	///< Setting momentum and energy
+	// E = sqrt(mass*mass + muon_ptot*muon_ptot) - mass;
+
+	// fParticleGun->SetParticleEnergy(E*MeV);
+	fParticleGun->SetParticleMomentum(muon_ptot*MeV);
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector( 
+								sin(muon_theta)*cos(muon_phi), 
+							    sin(muon_theta)*sin(muon_phi), 
+							    cos(muon_theta)));
+
+	// std::cout << "Event " << anEvent->GetEventID() << " Mass " << mass/MeV 
+	//           << " kin E " << E/MeV 
+	// 		  << " p " << muon_ptot/MeV
+	// 		  << std::endl;
+	///< Setting position 
+	fParticleGun->SetParticlePosition(G4ThreeVector(
+	    muon_pos[0]*mm,
+	    muon_pos[1]*mm,
+	    muon_pos[2]*mm
+	));
+
+	// // fParticleGun->SetParticleEnergy(0.); ///< To avoid G4ParticleGun:: "was defined in terms of KineticEnergy" in the output
+	// fParticleGun->SetParticleMomentum(G4ParticleMomentum(
+	//     muon_ptot*sin(muon_theta)*cos(muon_phi)*GeV,
+	//     muon_ptot*sin(muon_theta)*sin(muon_phi)*GeV,
+	//     muon_ptot*cos(muon_theta)*GeV
+	// ));
+
+
+	///< Saving the info for the output root file
+	px = muon_ptot*sin(muon_theta)*cos(muon_phi)*MeV;
+	py = muon_ptot*sin(muon_theta)*sin(muon_phi)*MeV;
+	pz = muon_ptot*cos(muon_theta)*MeV; 
+  	// G4ThreeVector V = fParticleGun->GetParticlePosition();
+  	// G4ParticleMomentum P = fParticleGun->GetParticleMomentumDirection();
+	// G4double E=fParticleGun->GetParticleEnergy();
+	// G4double particle_mass = fParticleGun->GetParticleDefinition()->GetPDGMass();
+	// G4double p = TMath::Sqrt(E*E-particle_mass*particle_mass);
+	// G4double px=p*(fParticleGun->GetParticleMomentumDirection().x());
+	// G4double py=p*(fParticleGun->GetParticleMomentumDirection().y());
+	// G4double pz=p*(fParticleGun->GetParticleMomentumDirection().z());
+  	new(mcvtxarray[0]) 	TVector3(muon_pos[0]*mm,muon_pos[1]*mm,muon_pos[2]*mm); ///< a single particle per event
+  	new(mcpicarray[0]) 	TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+	// std::cout << anEvent->GetEventID() <<  ": Z " << muon_pos[2]*mm 
+	// << " R " << sqrt(muon_pos[0]*muon_pos[0]+muon_pos[1]+muon_pos[1]) << std::endl;
+	fParticleGun->GeneratePrimaryVertex(anEvent);
+	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 24: // cosmic ray generator through EcoMug [HSphere]
+      {
+	  fMuonGen.SetUseHSphere();
+	///< Getting references for filling MC vertex info & Gen Mom info
+ 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+ 	mcvtxarray.Clear();
+ 	// TClonesArray& mcpicarray = *(fRunAction->GetMCpionsArray());
+ 	mcpicarray.Clear();
+	fMuonGen.Generate();
+	std::array<double, 3> muon_pos = fMuonGen.GetGenerationPosition();
+	///< EcoMug returns the momentum in GeV/c
+	double muon_ptot = fMuonGen.GetGenerationMomentum()*1000.*MeV; ///< To have it in MeV/c
+	double muon_theta = fMuonGen.GetGenerationTheta();
+	double muon_phi = fMuonGen.GetGenerationPhi();
+
+	///< Setting particle
+	if (fMuonGen.GetCharge() < 0) {
+	    fParticleGun->SetParticleDefinition(mu_minus);
+	} else {
+	    fParticleGun->SetParticleDefinition(mu_plus);
+	}
+	///< Setting momentum and energy
+	fParticleGun->SetParticleMomentum(muon_ptot*MeV);
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector( 
+								sin(muon_theta)*cos(muon_phi), 
+							    sin(muon_theta)*sin(muon_phi), 
+							    cos(muon_theta)));
+	///< Setting position 
+	fParticleGun->SetParticlePosition(G4ThreeVector(
+	    muon_pos[0]*mm,
+	    muon_pos[1]*mm,
+	    muon_pos[2]*mm
+	));
+	///< Saving the info for the output root file
+	px = muon_ptot*sin(muon_theta)*cos(muon_phi)*MeV;
+	py = muon_ptot*sin(muon_theta)*sin(muon_phi)*MeV;
+	pz = muon_ptot*cos(muon_theta)*MeV; 
+  	new(mcvtxarray[0]) 	TVector3(muon_pos[0]*mm,muon_pos[1]*mm,muon_pos[2]*mm); ///< a single particle per event
+  	new(mcpicarray[0]) 	TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+	fParticleGun->GeneratePrimaryVertex(anEvent);
+	fRunAction->GetMCinfoTree()->Fill();
+	break;
+      }
+    case 25: // cosmic ray generator through EcoMug [Cylinder]
+      {
+	  fMuonGen.SetUseCylinder();
+	///< Getting references for filling MC vertex info & Gen Mom info
+ 	TClonesArray& mcvtxarray = *(fRunAction->GetMCvertexArray());
+ 	mcvtxarray.Clear();
+ 	// TClonesArray& mcpicarray = *(fRunAction->GetMCpionsArray());
+ 	mcpicarray.Clear();
+	fMuonGen.Generate();
+	std::array<double, 3> muon_pos = fMuonGen.GetGenerationPosition();
+	///< EcoMug returns the momentum in GeV/c
+	double muon_ptot = fMuonGen.GetGenerationMomentum()*1000.*MeV; ///< To have it in MeV/c
+	double muon_theta = fMuonGen.GetGenerationTheta();
+	double muon_phi = fMuonGen.GetGenerationPhi();
+
+	///< Setting particle
+	if (fMuonGen.GetCharge() < 0) {
+	    fParticleGun->SetParticleDefinition(mu_minus);
+	} else {
+	    fParticleGun->SetParticleDefinition(mu_plus);
+	}
+	///< Setting momentum and energy
+	fParticleGun->SetParticleMomentum(muon_ptot*MeV);
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector( 
+								sin(muon_theta)*cos(muon_phi), 
+							    sin(muon_theta)*sin(muon_phi), 
+							    cos(muon_theta)));
+	///< Setting position 
+	fParticleGun->SetParticlePosition(G4ThreeVector(
+	    muon_pos[0]*mm,
+	    muon_pos[1]*mm,
+	    muon_pos[2]*mm
+	));
+	///< Saving the info for the output root file
+	px = muon_ptot*sin(muon_theta)*cos(muon_phi)*MeV;
+	py = muon_ptot*sin(muon_theta)*sin(muon_phi)*MeV;
+	pz = muon_ptot*cos(muon_theta)*MeV; 
+  	new(mcvtxarray[0]) 	TVector3(muon_pos[0]*mm,muon_pos[1]*mm,muon_pos[2]*mm); ///< a single particle per event
+  	new(mcpicarray[0]) 	TLorentzVector(px/MeV,py/MeV,pz/MeV,E/MeV);
+	fParticleGun->GeneratePrimaryVertex(anEvent);
+	fRunAction->GetMCinfoTree()->Fill();
 	break;
       }
     case 3: // "leak" from the end of the octupole (no mirror coils)

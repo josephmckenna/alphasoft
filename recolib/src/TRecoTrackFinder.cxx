@@ -30,7 +30,7 @@ TRecoTrackFinder::TRecoTrackFinder(AnaSettings* ana_settings, bool trace ): fTra
     
 
 
-int TRecoTrackFinder::FindTracks(const std::vector<TSpacePoint*> SortedPoints , std::vector<track_t>& TrackVector,  finderChoice finder)
+int TRecoTrackFinder::FindTracks(const std::vector<TSpacePoint> SortedPoints , std::vector<track_t>& TrackVector,  finderChoice finder)
 {
 
    switch(finder)

@@ -51,14 +51,14 @@ public:
    void WriteRunStats();
    void copy_file(const char* srce_file, const char* dest_file);
 
-   void ProcessLine(TStoreLine* aLine);
-   void ProcessHelix(TStoreHelix* hel);
-   void ProcessUsed(TFitHelix* hel);
-   void ProcessVertex(TVector3* v);
+   void ProcessLine(const TStoreLine& aLine);
+   void ProcessHelix(const TStoreHelix& hel);
+   void ProcessUsed(const TFitHelix& hel);
+   void ProcessVertex(const TVector3& v);
 
-   double LineDistance(TStoreLine* l0, TStoreLine* l1);
+   double LineDistance(const TStoreLine& l0, const TStoreLine& l1);
 
-   void FillCosmicsHisto();
+   void FillCosmicsHisto(const std::vector<TCosmic>& cosmics);
 
    inline void SetSavePlots(bool s) {_save_plots=s;}
 

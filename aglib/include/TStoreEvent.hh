@@ -18,8 +18,9 @@
 #include <TVector3.h>
 #include "TBarEvent.hh"
 #include <iomanip>
-class TFitLine;
-class TFitHelix;
+
+#include "TSpacePoint.hh"
+
 class TStoreEvent: public TObject
 {
 private:
@@ -52,10 +53,8 @@ public:
   virtual ~TStoreEvent();  // destructor
 
   TStoreEvent& operator=(const TStoreEvent&);
-  void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine*>* lines, 
+  void SetEvent(const std::vector<TSpacePoint>* points, const std::vector<TFitLine>* lines, 
                 const std::vector<TFitHelix>* helices);
-  void SetEvent(const std::vector<TSpacePoint*>* points, const std::vector<TFitLine*>* lines, 
-                const std::vector<TFitHelix*>* helices);
 
   inline int GetEventNumber() const {return fID;}
   inline void SetEventNumber(int n) {fID = n;}
@@ -127,8 +126,8 @@ public:
     }
   }
 
-  int AddLine(TFitLine* l);
-  int AddHelix(TFitHelix* h);
+  int AddLine(const TFitLine* l);
+  int AddHelix(const TFitHelix* h);
 
   inline const TObjArray* GetSpacePoints() const { return &fSpacePoints; }
 

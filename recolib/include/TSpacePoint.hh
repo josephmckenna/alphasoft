@@ -139,7 +139,7 @@ public:
 
    virtual void Print(Option_t *opt="xy") const;
 
-   ClassDef(TSpacePoint,2)
+   ClassDef(TSpacePoint,3)
 };
 
 int SpacePointCompare(const void* a, const void* b);

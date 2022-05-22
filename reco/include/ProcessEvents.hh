@@ -15,7 +15,8 @@
 
 #include "AnaSettings.hh"
 
-#include "Deconv.hh"
+#include "DeconvAW.h"
+#include "DeconvPAD.h"
 #include "Ledge.hh"
 #include "Match.hh"
 #include "Reco.hh"
@@ -24,7 +25,8 @@
 class ProcessEvents
 {
 private:
-   Deconv d;
+   DeconvAW dAW;
+   DeconvPAD dPad;
    Ledge leaw;
    Ledge lepad;
    Match m;
@@ -36,7 +38,13 @@ private:
    int EventNo;
    bool kDraw;
    int kVerb;
+   double fMagneticField;
    
+   std::vector<TSpacePoint> PointsArray;
+   std::vector<TTrack> TracksArray;
+   std::vector<TFitLine> LineArray;
+   std::vector<TFitHelix> HelixArray;
+
 public:
 
    ProcessEvents(AnaSettings*,double,std::string,bool sim=true);
@@ -48,11 +56,13 @@ public:
 
    void ProcessWaveform_deconv(TClonesArray*,TClonesArray*);
    void ProcessWaveform_led(TClonesArray*,TClonesArray*);
-   void ProcessPoints(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints );
+   void ProcessPoints(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >* spacepoints );
    void ProcessWaveform_2D(TClonesArray*);
-   void ProcessTracks(std::vector< std::pair<ALPHAg::signal,ALPHAg::signal> >* spacepoints);
+   void ProcessTracks(std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> >* spacepoints);
    void ProcessMonteCarlo(TClonesArray*,TVector3*);
    void ProcessVertex(TVector3*);
+
+   TStoreEvent GetStoreEvent();
 
    void Finish();
    void Finish(TClonesArray*,TClonesArray*);

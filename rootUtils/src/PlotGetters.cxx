@@ -14,7 +14,7 @@ TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::
       std::cout << c << std::endl;
    TCanvas* c = new TCanvas();
    AlphaColourWheel colour;
-   TLegend* legend = new TLegend(0.1,0.7,0.48,0.9);
+   TLegend* legend = new TLegend(0.75,0.5,0.99,0.69);
 
    std::vector<std::vector<TH1D*>> hh=Get_Chrono(runNumber, channel,tmin, tmax);
    double max_height = 0;
@@ -35,6 +35,8 @@ TCanvas* Plot_Chrono(Int_t runNumber, std::vector<TChronoChannel> channel, std::
       }
    if (min_height < 10 && min_height >= 0)
       min_height = 0;
+
+   max_height*=1.1;
    
    for (size_t j=0; j<tmin.size(); j++)
       for (size_t i=0; i<channel.size(); i++)

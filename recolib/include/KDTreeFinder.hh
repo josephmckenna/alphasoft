@@ -29,7 +29,7 @@ private:
    uint32_t fClusterID;
 
 public:
-   KDTreeFinder(std::vector<TSpacePoint*>*, const double MaxIncrease, const double LastPointRadCut );
+   KDTreeFinder(const std::vector<TSpacePoint>*, const double MaxIncrease, const double LastPointRadCut );
    ~KDTreeFinder()
    {
        delete fPoints;

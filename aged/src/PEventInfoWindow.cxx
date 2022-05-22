@@ -128,7 +128,7 @@ void PEventInfoWindow::UpdateSelf()
     tw_run.SetStringNow(buff);
     sprintf(buff, "%ld", (long)evt->GetNumberOfPoints());
     tw_nhit.SetStringNow(buff);
-    sprintf(buff, "%ld", (long)data->barhits.num_nodes);
+    sprintf(buff, "%ld", (long)data->barpoints.num_nodes);
     tw_nbarhit.SetStringNow(buff);
     sprintf(buff, "%ld", (long)evt->GetNumberOfTracks());
     tw_tracks.SetStringNow(buff);

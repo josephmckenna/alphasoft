@@ -30,7 +30,7 @@ class OfficialA2Time: public TARunObject
 private:
    
    std::vector<double> VF48ts;
-   //double VF48ZeroTime=0;
+   double VF48ZeroTime = 0;
    
    // int SVD_channel=-1; Unused
 
@@ -200,17 +200,17 @@ public:
              //There is no clock!!!
              //if (SISClock[i]==0) continue;
 
-             double r=ClockRatio(VF48Clock[i],SISClock[i]);
+             double r = ClockRatio(VF48Clock[i],SISClock[i]);
              
              //std::cout<<"R:"<<r-2.<<std::endl;
-             double t=2.*QOD->VF48Timestamp/r;
+             double t = 2.*QOD->VF48Timestamp / r + VF48ZeroTime;
 
              if (t <= SISEventRunTime.at(i) )
              {
                 //std::cout <<"TEST: "<<t <<" < "<<SISEventRunTime[i]<<std::endl;
-                QOD->t=t;
+                QOD->t = t;
                 SaveQODEvent(runinfo,QOD);
-                CleanSISEventsBefore(t-0.1);
+                CleanSISEventsBefore(t);
                 finished_QOD_events.push_back(QOD);
                 SVDEvents.pop_front();
                 fVF48Events++;
@@ -239,7 +239,8 @@ public:
        }
        return flow;
    }
-
+bool firstSISEvent = true;
+bool firstVF48Event = true;
    TAFlowEvent* AnalyzeFlowEvent(TARunInfo* runinfo, TAFlags* flags, TAFlowEvent* flow)
    {
       if (fFlags->fNoSync)
@@ -261,6 +262,15 @@ public:
             SISEventRunTime.push_back(e.GetRunTime());
             SISClock.push_back(e.GetClock());
             VF48Clock.push_back(e.GetVF48Clock());
+            if (e.GetCountsInChannel(6))
+            {
+               if (firstSISEvent )
+               {
+                  firstSISEvent = false;
+                  VF48ZeroTime = e.GetRunTime();
+                  std::cout << "FIRST VF48 EVENT IN SIS:" <<  e.GetRunTime() << std::endl;
+               }
+            }
             //if (e->Channel==CHRONO_SYNC_CHANNEL)
          }
       }
@@ -268,6 +278,7 @@ public:
       SilEventFlow* fe=flow->Find<SilEventFlow>();
       if (fe)
       {
+
          TAlphaEvent* AlphaEvent=fe->alphaevent;
          TSiliconEvent* SiliconEvent=fe->silevent;
 
@@ -277,6 +288,12 @@ public:
             SVD->MVA=(int)mva->pass_online_mva;
          else
             SVD->MVA=-1;
+
+         if (firstVF48Event)
+         {
+            firstVF48Event = false;
+            std::cout << "FIRST VF48 EVENT:"<<  SVD->VF48Timestamp << std::endl;
+         }
 
          SVDEvents.push_back(SVD);
       }

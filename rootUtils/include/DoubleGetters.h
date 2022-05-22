@@ -5,11 +5,11 @@
 #ifndef _DoubleGetter_
 #define _DoubleGetter_
 #include "TTree.h"
-
 #include "TreeGetters.h"
 #include "TChronoChannelGetters.h"
 
 #ifdef BUILD_AG
+
 #include "TStoreEvent.hh"
 Double_t GetTotalRunTimeFromChrono(Int_t runNumber, const std::string& Board);
 Double_t GetTotalRunTimeFromTPC(Int_t runNumber);

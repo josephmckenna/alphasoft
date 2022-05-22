@@ -183,7 +183,7 @@ public:
    void SetupADCs(TFile* fout, int run, bool norm=false, bool diag=false);
 
 #ifdef BUILD_AG_SIM
-   int FindAnodeTimes(TClonesArray*);
+   int FindAnodeTimes(TClonesArray*, std::vector<ALPHAg::TWireSignal>& signals);
 #endif
 
    int FindAnodeTimes(const Alpha16Event*);

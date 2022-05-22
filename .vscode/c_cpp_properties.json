@@ -17,9 +17,12 @@
                 "${workspaceFolder}/analib/include/**",
                 "${workspaceFolder}/reco/include/**",
                 "${workspaceFolder}/recolib/include/**",
-                "${workspaceFolder}/rootUtils/include/**"
+                "${workspaceFolder}/rootUtils/include/**",
+                "${workspaceFolder}/simulation/G4out/include"
             ],
-            "defines": [],
+            "defines": [
+                "BUILD_AG_SIM"
+            ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
             "cppStandard": "c++11",

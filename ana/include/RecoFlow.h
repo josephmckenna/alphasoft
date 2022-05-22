@@ -127,7 +127,7 @@ public:
   std::vector< TSpacePoint> fSpacePoints;
   std::vector< track_t> fTrackVector;
   std::vector<TTrack> fTracksArray;
-  std::vector<TFitLine*> fLinesArray;
+  std::vector<TFitLine> fLinesArray;
   std::vector<TFitHelix> fHelixArray;
 
   std::vector<ALPHAg::wf_ref> AWwf;
@@ -190,8 +190,6 @@ public:
      adc32max.clear();
      pwbMax.clear();
      fHelixArray.clear();
-     for (TFitLine* h: fLinesArray)
-        delete h;
      fLinesArray.clear();
   }
 

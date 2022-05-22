@@ -2,6 +2,7 @@
 #define __SPACEPOINTBUILDER__
 
 #include <vector>
+#include <TClonesArray.h>
 #include "SignalsType.hh"
 #include "TSpacePoint.hh"
 #include "AnaSettings.hh"
@@ -30,19 +31,20 @@ class TSpacePointBuilder
    inline void SetFudgeFactors(double fdgr, double fdgp) {f_rfudge=fdgr; f_pfudge=fdgp;}
    inline void GetFudgeFactors(double& fdgr, double& fdgp) const {fdgr=f_rfudge; fdgp=f_pfudge;}
 
-   void UseSTRfromData(int runNumber)
-   {
-      delete fSTR;
-      std::cout<<"Reco::UseSTRfromData( "<<runNumber<<" )"<<std::endl;
-      fSTR = new LookUpTable(runNumber);
-      fMagneticField=0.; // data driven STR valid only for B=0T   
-   }
+   void UseSTRfromData(int runNumber);
 
    void BuildSpacePointArray( 
       const std::vector< std::pair<ALPHAg::TWireSignal,ALPHAg::TPadSignal> > spacepoints,
       std::vector<TSpacePoint> &PointsArray,
       double z_fid  = std::numeric_limits<double>::infinity() 
       );
+   
+   #ifdef BUILD_AG_SIM
+   void BuildMCSpacePointArray( 
+      const TClonesArray *points,
+      std::vector<TSpacePoint> &PointsArray
+      );
+   #endif
 
 };
 

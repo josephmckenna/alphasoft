@@ -12,14 +12,12 @@
 // #include <TH2D.h>
 //#include "SignalsType.hh"
 #include "TStoreEvent.hh"
-
-class TCosmic;
+#include "TCosmic.hh"
 class CosmicFinder
 {
 private:
    double fMagneticField;
 
-   std::vector<TCosmic*> fLines;
    // std::vector<double> fDCA;
    // std::vector<double> fphi;
 
@@ -69,13 +67,16 @@ public:
    
    ~CosmicFinder();
 
-   int Create(TStoreEvent*);
-   //int Create(TClonesArray*);
-   int Create(std::vector<TTrack*>*);
+   int GetIdx() const { return fIdx; }
 
-   int Process();
+   int Create(TStoreEvent*,std::vector<TCosmic>& cosmics);
+
+   //int Create(TClonesArray*);
+   int Create(const std::vector<TFitHelix>* tracks, std::vector<TCosmic>& cosmics);
+
+   int Process(const std::vector<TCosmic>& lines);
   
-   int Residuals();
+   int Residuals(const std::vector<TCosmic>& lines);
    // void MakeOccupancyHisto();
    // void FillOccupancyHisto();
 
@@ -83,7 +84,6 @@ public:
 
    void Status();
 
-   inline const TCosmic* GetCosmic() const { return fLines.at(fIdx); }
    inline double GetResidual() const { return fRes2; }
    inline int GetStatus() const { return fStatus; }
    inline int GetNumberOfTracks() const { return nTracks; }

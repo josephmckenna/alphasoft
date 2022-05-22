@@ -57,14 +57,16 @@ if (BUILD_AG_SIM)
                     ${headers} ${PROJECT_SOURCE_DIR}/include/ProcessEvents.hh 
 		    ${PROJECT_SOURCE_DIR}/include/fileutility.hh )
   add_dependencies(g4ana.exe agtpc G4out)
-  target_include_directories(g4ana.exe PUBLIC ${CMAKE_SOURCE_DIR}/agana)
-  target_link_libraries(g4ana.exe  ${G4ANA_LINK_LIBS})
+  target_include_directories(g4ana.exe PUBLIC ${CMAKE_SOURCE_DIR}/agana ${CMAKE_SOURCE_DIR}/aged/include)
+  target_link_libraries(g4ana.exe ${G4ANA_LINK_LIBS} rootUtils aged analib)
   install(TARGETS g4ana.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 
   message(STATUS "Building (Geant4) BSC analyzer")
-  add_executable( baranalysis.exe baranalysis.cc )
+  add_executable( baranalysis.exe baranalysis.cc 
+    ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/src/TPCBase.cc
+    ${CMAKE_SOURCE_DIR}/simulation/agg4/src/ElectronDrift.cc )
   add_dependencies(baranalysis.exe agtpc G4dict)
-  target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include)
-  target_link_libraries(baranalysis.exe  ${G4ANA_LINK_LIBS})
+  target_include_directories(baranalysis.exe PUBLIC ${CMAKE_SOURCE_DIR}/simulation/agg4/include ${CMAKE_SOURCE_DIR}/simulation/garfieldpp/include)
+  target_link_libraries(baranalysis.exe  ${G4ANA_LINK_LIBS}  agtpc G4dict)
   install(TARGETS baranalysis.exe DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif(BUILD_AG_SIM)

@@ -181,7 +181,7 @@ public:
    void SetupPWBs(TFile* fout, int run, bool norm=false, bool diag=false);
 
 #ifdef BUILD_AG_SIM
-   int FindPadTimes(TClonesArray*);
+   int FindPadTimes(TClonesArray*, std::vector<ALPHAg::TPadSignal>& signals);
 #endif
 
 void BuildWFContainer(

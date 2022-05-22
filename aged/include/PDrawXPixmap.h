@@ -32,9 +32,10 @@ public:
     virtual void    DrawRectangle(int x,int y,int w,int h);
     virtual void    FillRectangle(int x,int y,int w,int h);
     virtual void    FillPolygon(XPoint *point, int num);
-    virtual void    DrawString(int x, int y, char *str,ETextAlign_q align);
+    virtual void    DrawString(int x, int y, const char *str,ETextAlign_q align);
     virtual void    DrawArc(int cx,int cy,int rx,int ry,float ang1,float ang2);
     virtual void    FillArc(int cx,int cy,int rx,int ry,float ang1,float ang2);
+    virtual void    Comment(const char *str){ printf("PDrawPixmap::Comment(\"%s\") not implemented\n", str); };
 
     virtual void    PutImage(XImage *image, int dest_x, int dest_y);
     virtual XImage* GetImage(int x, int y, int width, int height);  

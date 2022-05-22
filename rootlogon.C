@@ -12,13 +12,15 @@
      exit(1);
   }
 
-  #include "BuildConfig.h"
-  
 
   TString incana("-I"); incana += basedir; incana += "/bin/include";
   cout<<"Including: "<<incana<<endl;
   gSystem->AddIncludePath(incana.Data());
+  #include "BuildConfig.h"
   
+  
+  gSystem->Load("libMinuit2");
+  gSystem->Load("libGeom");
 
    std::vector<TString> LibsToLoad = {"libMinuit2","libGeom"};
 
