@@ -180,7 +180,7 @@ private:
    TString StopNames[NUMSEQ] ={"SIS_PBAR_DUMP_STOP", "SIS_RECATCH_DUMP_STOP", "SIS_ATOM_DUMP_STOP", "SIS_POS_DUMP_STOP","NA","NA","NA","NA","NA"};
 #endif
 
-   std::chrono::steady_clock::time_point fLastHistoUpdate;
+   std::chrono::time_point<std::chrono::high_resolution_clock> fLastHistoUpdate;
 
    TCanvas fLiveVertex;
    TCanvas fLiveOccupancy;

@@ -73,7 +73,7 @@ private:
    std::vector<TSISChannel> fSISChannel;
    TStyle* fSISStyle;
 
-   std::chrono::steady_clock::time_point fLastHistoUpdate;
+   std::chrono::time_point<std::chrono::high_resolution_clock> fLastHistoUpdate;
 
 public:
    SisMonitor(TARunInfo* runinfo)
