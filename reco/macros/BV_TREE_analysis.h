@@ -1,5 +1,5 @@
-#ifndef MC_BV_TREE_analysis_h
-#define MC_BV_TREE_analysis_h
+#ifndef BV_TREE_analysis_h
+#define BV_TREE_analysis_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -10,52 +10,58 @@
 // #include "Riostream.h"
 
 
-class MC_BV_TREE_analysis {
+class BV_TREE_analysis {
 public :
    TTree          *treeMCBV;
-   TString        filename;
+   std::string    filename_core;
    Int_t           fCurrent; //!current Tree number in a TChain
    Int_t          pbar_file_flag;
+   Int_t          mc_file_flag;
    Long64_t        n_tot_events;
+   ///< parameters for histos
+   Double_t        t_event_max;
+   Double_t        A_max;
    // Declaration of leaf types
    Int_t           event;
+   Double_t        t_event;
    Bool_t          pbar; ///< 0 = cosmic, 1 = pbar annihilation
    Bool_t          mc;
    Int_t           nDigi;
    Int_t           nBars;
-   vector<int>     *bars_id;
-   vector<int>     *bars_ntrks;
-   vector<float>   *bars_edep;
-   vector<float>   *bars_path;
-   vector<float>   *bars_z;
-   vector<float>   *bars_t;
-   vector<float>   *bars_phi;
-   vector<float>   *bars_atop;
-   vector<float>   *bars_abot;
-   vector<float>   *bars_ttop;
-   vector<float>   *bars_tbot;
-   vector<float>   *pairs_tof;
-   vector<float>   *pairs_dphi;
-   vector<float>   *pairs_dzeta;
-   vector<float>   *pairs_dist;
-   Float_t         tof_min;
-   Float_t         tof_max;
-   Float_t         tof_mean;
-   Float_t         tof_std;
-   Float_t         dphi_min;
-   Float_t         dphi_max;
-   Float_t         dphi_mean;
-   Float_t         dphi_std;
-   Float_t         dzeta_min;
-   Float_t         dzeta_max;
-   Float_t         dzeta_mean;
-   Float_t         dzeta_std;
-   Float_t         dist_min;
-   Float_t         dist_max;
-   Float_t         dist_mean;
-   Float_t         dist_std;
+   vector<Int_t>     *bars_id;
+   vector<Int_t>     *bars_ntrks;
+   vector<Double_t>   *bars_edep;
+   vector<Double_t>   *bars_path;
+   vector<Double_t>   *bars_z;
+   vector<Double_t>   *bars_t;
+   vector<Double_t>   *bars_phi;
+   vector<Double_t>   *bars_atop;
+   vector<Double_t>   *bars_abot;
+   vector<Double_t>   *bars_ttop;
+   vector<Double_t>   *bars_tbot;
+   vector<Double_t>   *pairs_tof;
+   vector<Double_t>   *pairs_dphi;
+   vector<Double_t>   *pairs_dzeta;
+   vector<Double_t>   *pairs_dist;
+   Double_t         tof_min;
+   Double_t         tof_max;
+   Double_t         tof_mean;
+   Double_t         tof_std;
+   Double_t         dphi_min;
+   Double_t         dphi_max;
+   Double_t         dphi_mean;
+   Double_t         dphi_std;
+   Double_t         dzeta_min;
+   Double_t         dzeta_max;
+   Double_t         dzeta_mean;
+   Double_t         dzeta_std;
+   Double_t         dist_min;
+   Double_t         dist_max;
+   Double_t         dist_mean;
+   Double_t         dist_std;
    // List of branches
    TBranch        *b_event;   //!
+   TBranch        *b_t_event;   //!
    TBranch        *b_pbar;   //!
    TBranch        *b_mc;   //!
    TBranch        *b_nDigi;   //!
@@ -93,60 +99,68 @@ public :
    TBranch        *b_DIST_STD;   //!
 
 
-   MC_BV_TREE_analysis(string file_name);
-   virtual ~MC_BV_TREE_analysis();
+   BV_TREE_analysis(std::string file_name);
+   virtual ~BV_TREE_analysis();
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadMCBVTREE(Long64_t entry);
    virtual void     InitMCBVTREE(TTree *tree);
    virtual void     ShowBV();
 
+   virtual void   SetParameters();
    virtual void   CreateHistos();
    virtual void   FillHistos();
-   virtual void   ShowHistos(Int_t);
+   virtual void   PrepareHistos();
+   virtual void   ShowHistos();
 
 };
 
 #endif
 
-#ifdef MC_BV_TREE_analysis_cxx
+#ifdef BV_TREE_analysis_cxx
 
-MC_BV_TREE_analysis::MC_BV_TREE_analysis(string file_name) : treeMCBV(0) 
+BV_TREE_analysis::BV_TREE_analysis(std::string file_name) : treeMCBV(0) 
 {
    pbar_file_flag = -1;
    if(file_name.find("pbar") != std::string::npos) pbar_file_flag = 1;
    if(file_name.find("cosmic") != std::string::npos) pbar_file_flag = 0;
+   mc_file_flag = -1;
+   if(file_name.find("MC") != std::string::npos) mc_file_flag = 1;
+   if(file_name.find("DATA") != std::string::npos) mc_file_flag = 0;
    // used to generate this class and read the Tree.
-   filename=file_name;
-   Int_t dot = filename.Last('.');
-   Int_t len = filename.Length();
-   filename.Remove(dot,len-dot);
 
-   TString fname =  "simulation/"+filename+".root";
-   
    TTree *tree = 0;
-   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(fname);
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(file_name.c_str());
    if (!f || !f->IsOpen()) {
-      f = new TFile(fname);
+      f = new TFile(file_name.c_str());
    }
-   f->GetObject("tMCBV",tree);
+   if(mc_file_flag) f->GetObject("tMCBV",tree);
+   if(!mc_file_flag) f->GetObject("tDataBV",tree);
    InitMCBVTREE(tree);
 
+   ///< Set the filename_core
+   filename_core=file_name;
+   Int_t dot, slash, len;
+   slash = filename_core.find_first_of('/');
+   len = filename_core.size();
+   filename_core = filename_core.substr(slash+1,len);
+   dot = filename_core.find_last_of('.');
+   filename_core = filename_core.substr(0,dot);
 }
 
-MC_BV_TREE_analysis::~MC_BV_TREE_analysis()
+BV_TREE_analysis::~BV_TREE_analysis()
 {
    if (!treeMCBV) return;
    delete treeMCBV->GetCurrentFile();
 }
 
-Int_t MC_BV_TREE_analysis::GetEntry(Long64_t entry)
+Int_t BV_TREE_analysis::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!treeMCBV) return 0;
    return treeMCBV->GetEntry(entry);
 }
 
-Long64_t MC_BV_TREE_analysis::LoadMCBVTREE(Long64_t entry)
+Long64_t BV_TREE_analysis::LoadMCBVTREE(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!treeMCBV) return -5;
@@ -158,7 +172,7 @@ Long64_t MC_BV_TREE_analysis::LoadMCBVTREE(Long64_t entry)
    return centry;
 }
 
-void MC_BV_TREE_analysis::InitMCBVTREE(TTree *tree)
+void BV_TREE_analysis::InitMCBVTREE(TTree *tree)
 {
    // Set object pointer
    bars_id = 0;
@@ -182,6 +196,7 @@ void MC_BV_TREE_analysis::InitMCBVTREE(TTree *tree)
    fCurrent = -1;
    treeMCBV->SetMakeClass(1);
    treeMCBV->SetBranchAddress("event", &event, &b_event);
+   treeMCBV->SetBranchAddress("t_event", &t_event, &b_t_event);
    treeMCBV->SetBranchAddress("pbar", &pbar, &b_pbar);
    treeMCBV->SetBranchAddress("mc", &mc, &b_mc);
    treeMCBV->SetBranchAddress("nDigi", &nDigi, &b_nDigi);
@@ -220,4 +235,4 @@ void MC_BV_TREE_analysis::InitMCBVTREE(TTree *tree)
 
 }
 
-#endif // #ifdef MC_BV_TREE_analysis_cxx
+#endif // #ifdef BV_TREE_analysis_cxx
