@@ -65,6 +65,9 @@ private:
    int c_hits=0;
    int c_matched=0;
 
+   // TPC only histogram
+   TH1D* hTPCZed;
+
 
 public:
 
@@ -89,6 +92,12 @@ public:
    {
       runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
       if (fFlags->fPrint) { printf("matchingmodule::begin!\n"); };
+
+      runinfo->fRoot->fOutputFile->cd(); // select correct ROOT directory
+      if( !gDirectory->cd("bv_tpc_matching_module") )
+         gDirectory->mkdir("bv_tpc_matching_module")->cd();
+      hTPCZed = new TH1D("hTPCZed","Zed position of TPC track projection into BV;Zed position from centre (m)",200,-3,3);
+      gDirectory->cd("..");
    }
 
 
@@ -222,6 +231,7 @@ public:
             continue;
          }
          c_hits++;
+         hTPCZed->Fill(tpc_point.z()/1000.);
          double min_dist = 999999999.;
          int best_barhit;
          std::vector<TBarHit*> bars = barEvt->GetBars();
