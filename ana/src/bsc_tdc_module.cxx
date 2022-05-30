@@ -60,6 +60,12 @@ private:
    // Time walk correction, dt = A/sqrt(amp)
    const double twA = 1.75e-9;
 
+   // Epoch time
+   int hit_counter = 0;
+   double zero_time = 0;
+   int epoch_third = 0;
+   int epoch_overflow = 0;
+
    // Container declaration
    double BVTdcOffsets[128] = {0};
    double ProtoTOFTdcOffsets[16] = {0};
@@ -320,19 +326,48 @@ public:
             // Skips channels with bad calibration, remember to remove this once they are time calibrated
             if ((48<=barID and barID<=55) or (112<=barID and barID<=119) or (barID==0) or (barID==100) or (barID==101)) continue;
 
+            // Epoch time overflow
+            // Data arriving from the TDC is roughly time ordered, but I will not assume it is completely time ordered.
+            // The epoch counter counts up from 0 to 2^28 = 268435456, at which point it resets to 0.
+            // This takes ~45 minutes. However, it does not start at zero, it starts at a random number, so even for
+            // short runs this is a problem. Here I keep track of which third the epoch counter is in. 
+            // When it changes from third 3 to third 1, I incrmement an overflow counter which adds 268435456 to all 
+            // subsequent epoch counter values. If I think the epoch counter is is third 1 and I get an event in third 3,
+            // I assume it was from the previous cycle and was out of order.
+            int epoch_counter = int(tdchit->epoch);
+            int fixed_epoch = 0;
+            if (epoch_third==1 and epoch_counter > 89478485 and epoch_counter < 178956970) {
+               epoch_third = 2;
+            }
+            else if (epoch_third==2 and epoch_counter > 178956970) {
+               epoch_third = 3;
+            }
+            else if (epoch_third==3 and epoch_counter < 89478485) {
+               epoch_third = 1;
+               epoch_overflow += 1;
+            }
+            
+            if (epoch_third==1 and epoch_counter > 178956970) {
+               fixed_epoch = epoch_counter + (epoch_overflow-1)*268435456;
+            }
+            else {
+               fixed_epoch = epoch_counter + epoch_overflow*268435456;
+            }
+
+
             // Calculates hit time
             double tdc_time;
             double fine_time;
             double coarse_time;
             if (fFlags->fLinearTDC or fFlags->fProtoTOF) {
-               tdc_time = GetFinalTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time); 
-               fine_time = GetFineTimeLinear(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time);
-               coarse_time = GetCoarseTime(tdchit->epoch,tdchit->coarse_time);
+               tdc_time = GetFinalTimeLinear(fixed_epoch,tdchit->coarse_time,tdchit->fine_time); 
+               fine_time = GetFineTimeLinear(fixed_epoch,tdchit->coarse_time,tdchit->fine_time);
+               coarse_time = GetCoarseTime(fixed_epoch,tdchit->coarse_time);
             }
             else {
-               tdc_time = GetFinalTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
-               fine_time = GetFineTime(tdchit->epoch,tdchit->coarse_time,tdchit->fine_time,barID);
-               coarse_time = GetCoarseTime(tdchit->epoch,tdchit->coarse_time);
+               tdc_time = GetFinalTime(fixed_epoch,tdchit->coarse_time,tdchit->fine_time,barID);
+               fine_time = GetFineTime(fixed_epoch,tdchit->coarse_time,tdchit->fine_time,barID);
+               coarse_time = GetCoarseTime(fixed_epoch,tdchit->coarse_time);
             }
 
             // Corrects for tdc time offset
@@ -348,12 +383,24 @@ public:
                }
             }
 
+            // Sets zero time to time of second hit (first hit is "stuck in TDC" from previously)
+            hit_counter+=1;
+            if (hit_counter==1) return;
+            if (hit_counter==2) {
+               zero_time = calib_time;
+               epoch_third = 1+int(TMath::Floor(3* epoch_counter / 268435456. ));
+               if (fFlags->fPrint) printf("bsc_tdc_module: zero time set to %f\n",zero_time);
+            }
+
+            // Subtracts zero time
+            double final_final_time = calib_time - zero_time;
+
             // Fills occupancy histogram
             if (fFlags->fDiag)
                hTDCbar->Fill(barID);
 
             // Writes tdc data to SimpleTdcHit to add back into the flow
-            barEvt->AddTdcHit(barID,calib_time,int(tdchit->fine_time),fine_time,coarse_time);
+            barEvt->AddTdcHit(barID,final_final_time,int(tdchit->fine_time),fine_time,coarse_time);
          }
    }
 
