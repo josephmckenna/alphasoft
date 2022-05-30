@@ -75,6 +75,9 @@ private:
    TH1D* hTdcSingleChannelMultiplicity;
    TH2D* hTdcSingleChannelMultiplicity2d;
    TH1D* hTdcSingleChannelHitTime;
+   TH1D* hTdcSingleChannelHitTime100;
+   TH1D* hTdcSingleChannelHitTime10000;
+   TH1D* hTdcSingleChannelHitTime1000000;
    TH2D* hTdcSingleChannelHitTime2d;
    TH1D* hTdcTimeVsCh0;
    TH2D* hTdcTimeVsCh02d;
@@ -86,8 +89,13 @@ private:
    // Bars
    TH1D* hBarMultiplicity;
    TH1D* hBarOccupancy;
+   TH1D* hTopTime;
+   TH1D* hBotTime;
    TH2D* hBarCorrelation;
    TH1D* hTopBotDiff;
+   TH1D* hTopBotDiff100;
+   TH1D* hTopBotDiff10000;
+   TH1D* hTopBotDiff1000000;
    TH2D* hTopBotDiff2d;
    TH1D* hZed;
    TH2D* hZed2d;
@@ -198,6 +206,9 @@ public:
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",201,-0.5,200.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",16,-0.5,15.5,201,-0.5,200.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
+         hTdcSingleChannelHitTime100 = new TH1D("hTdcSingleChannelHitTime100","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,40000);
+         hTdcSingleChannelHitTime10000 = new TH1D("hTdcSingleChannelHitTime10000","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,4000000);
+         hTdcSingleChannelHitTime1000000 = new TH1D("hTdcSingleChannelHitTime1000000","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400000000);
          hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",16,-0.5,15.5,100,0,400);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel forty;TDC time minus ch40 time (ns)",2000,-5,5);
@@ -208,9 +219,14 @@ public:
          // Bar
          gDirectory->mkdir("bar_histos")->cd();
          hBarOccupancy = new TH1D("hBarOccupancy","Bar occupancy;Bar number;Counts",2,-0.5,1.5);
+         hTopTime = new TH1D("hTopTime","TDC top time;Time (s)",300,-1000,6000);
+         hBotTime = new TH1D("hBotTime","TDC bottom time;Time (s)",300,-1000,6000);
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",3,-0.5,2.5);
             hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-10,10);
+            hTopBotDiff100 = new TH1D("hTopBotDiff100","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-1000,1000);
+            hTopBotDiff10000 = new TH1D("hTopBotDiff10000","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-100000,100000);
+            hTopBotDiff1000000 = new TH1D("hTopBotDiff1000000","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-10000000,10000000);
             hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC bottom time minus TDC top time (ns)",2,-0.5,1.5,200,-10,10);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-2,2);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",2,-0.5,1.5,200,-2,2);
@@ -251,6 +267,9 @@ public:
          hTdcSingleChannelMultiplicity = new TH1D("hTdcSingleChannelMultiplicity","Number of TDC hits on one bar end;Number of TDC hits",11,-0.5,10.5);
          hTdcSingleChannelMultiplicity2d = new TH2D("hTdcSingleChannelMultiplicity2d","Number of TDC hits on one bar end;Channel number;Number of TDC hits",128,-0.5,127.5,11,-0.5,10.5);
          hTdcSingleChannelHitTime = new TH1D("hTdcSingleChannelHitTime","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400);
+         hTdcSingleChannelHitTime100 = new TH1D("hTdcSingleChannelHitTime10","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,40000);
+         hTdcSingleChannelHitTime10000 = new TH1D("hTdcSingleChannelHitTime10000","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,4000000);
+         hTdcSingleChannelHitTime1000000 = new TH1D("hTdcSingleChannelHitTime1000000","Time of subsequent hits on same channel;Time of subsequent hits after first hit (ns)",1000,0,400000000);
          hTdcSingleChannelHitTime2d = new TH2D("hTdcSingleChannelHitTime2d","Time of subsequent hits on same channel;Channel number;Time of subsequent hits after first hit (ns)",128,-0.5,127.5,1000,0,400);
          if (fFlags->fPulser) {
             hTdcTimeVsCh0 = new TH1D("hTdcTimeVsCh0","TDC time with reference to channel forty;TDC time minus ch40 time (ns)",2000,-35,35);
@@ -261,10 +280,15 @@ public:
          // Bar
          gDirectory->mkdir("bar_histos")->cd();
          hBarOccupancy = new TH1D("hBarOccupancy","Bar occupancy;Bar number;Counts",64,-0.5,63.5);
+         hTopTime = new TH1D("hTopTime","TDC top time;Time (s)",300,-1000,6000);
+         hBotTime = new TH1D("hBotTime","TDC bottom time;Time (s)",300,-1000,6000);
          if ( !(fFlags->fPulser) ) {
             hBarMultiplicity = new TH1D("hBarMultiplicity","Bar multiplicity;Number of bars hit",65,-0.5,64.5);
             hBarCorrelation = new TH2D("hBarCorrelation","Bar correlation;Bar number;Bar number",64,-0.5,63.5,64,-0.5,63.5);
             hTopBotDiff = new TH1D("hTopBotDiff","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-30,30);
+            hTopBotDiff100 = new TH1D("hTopBotDiff100","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-3000,3000);
+            hTopBotDiff10000 = new TH1D("hTopBotDiff10000","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-300000,300000);
+            hTopBotDiff1000000 = new TH1D("hTopBotDiff1000000","Top vs bottom time difference;TDC bottom time minus TDC top time (ns)",200,-30000000,30000000);
             hTopBotDiff2d = new TH2D("hTopBotDiff2d","Top vs bottom time difference;Bar number;TDC bottom time minus TDC top time (ns)",64,-0.5,63.5,200,-30,30);
             hZed = new TH1D("hZed","Zed position of bar hit from TDC;Zed position from centre (m)",200,-3,3);
             hZed2d = new TH2D("hZed2d","Zed position of bar hit from TDC;Bar number;Zed position from centre (m)",64,-0.5,63.5,200,-2,2);
@@ -501,6 +525,9 @@ public:
          counts[bar]++;
          if (t0[bar]!=0) {
             hTdcSingleChannelHitTime->Fill(1e9*(time-t0[bar]));
+            hTdcSingleChannelHitTime100->Fill(1e9*(time-t0[bar]));
+            hTdcSingleChannelHitTime10000->Fill(1e9*(time-t0[bar]));
+            hTdcSingleChannelHitTime1000000->Fill(1e9*(time-t0[bar]));
             hTdcSingleChannelHitTime2d->Fill(bar,1e9*(time-t0[bar]));
          }
          if (t0[bar]==0) t0[bar] = time;
@@ -535,12 +562,17 @@ public:
    {
       for (TBarHit* barhit: barhits) {
          hBarOccupancy->Fill(barhit->GetBar());
+         hTopTime->Fill(barhit->GetTDCTop());
+         hBotTime->Fill(barhit->GetTDCBot());
       }
       if (fFlags->fPulser) return;
       hBarMultiplicity->Fill(barhits.size());
       for (TBarHit* barhit: barhits) {
          int bar = barhit->GetBar();
          hTopBotDiff->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
+         hTopBotDiff100->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
+         hTopBotDiff10000->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
+         hTopBotDiff1000000->Fill(1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
          hTopBotDiff2d->Fill(bar,1e9*(barhit->GetTDCBot()-barhit->GetTDCTop()));
          hZed->Fill(barhit->GetTDCZed());
          hZed2d->Fill(bar,barhit->GetTDCZed());
