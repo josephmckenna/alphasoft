@@ -230,10 +230,11 @@ void ProcessEvents::ProcessTracks(std::vector< std::pair<ALPHAg::TWireSignal,ALP
    }
    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   if( nhel > 0 ) 
+   if( fMagneticField > 0. ) {
       u.FillFitTracksHisto(&HelixArray);
-   else if( nlin > 0 )
+   } else {
       u.FillFitTracksHisto(&LineArray);
+   }
 
    u.FillFinalHistos(PointsArray.size(), TrackVector.size(), nhel+nlin);
 }
